@@ -1,4 +1,4 @@
-module terraform-provider-doit-console
+module terraform-provider-doit
 
 go 1.19
 

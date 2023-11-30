@@ -1,13 +1,13 @@
 terraform {
   required_providers {
-    doit-console = {
-      source  = "doitintl/doit-console"
+    doit = {
+      source  = "doitintl/doit"
       version = "0.3.1"
     }
   }
 }
 
-resource "doit-console_report" "my-report" {
+resource "doit_report" "my-report" {
   name = "test10"
   config = {
     metric = {
@@ -65,5 +65,5 @@ resource "doit-console_report" "my-report" {
   }
 }
 
-provider "doit-console" {
+provider "doit" {
 }

@@ -1,4 +1,4 @@
-resource "doit-console_report" "my-report" {
+resource "doit_report" "my-report" {
   name        = "test10"
   description = "test10"
   config = {

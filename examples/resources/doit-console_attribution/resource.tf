@@ -1,5 +1,5 @@
 # Manage Attribution group
-resource "doit-console_attribution" "attri" {
+resource "doit_attribution" "attri" {
   name        = "attritestnewname9"
   description = "attritestdiana8"
   formula     = "A"

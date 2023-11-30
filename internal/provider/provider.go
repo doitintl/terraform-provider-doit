@@ -51,7 +51,7 @@ type doitProvider struct {
 // Metadata returns the provider type name.
 func (p *doitProvider) Metadata(ctx context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
 	tflog.Debug(ctx, "provider Metadata")
-	resp.TypeName = "doit-console"
+	resp.TypeName = "doit"
 	resp.Version = p.version
 }
 
