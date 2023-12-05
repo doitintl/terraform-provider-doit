@@ -128,9 +128,6 @@ func (r *attributionResource) Configure(_ context.Context, req resource.Configur
 // Create creates the resource and sets the initial Terraform state.
 func (r *attributionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	log.Println(" attribution Create")
-	log.Println(r.client.Auth.DoiTAPITOken)
-	log.Println("---------------------------------------------------")
-	log.Println(r.client.Auth.CustomerContext)
 
 	// Retrieve values from plan
 	var plan attributionResourceModel

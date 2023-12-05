@@ -10,6 +10,8 @@ import (
 
 // CreateReport - Create new report
 func (c *ClientTest) CreateReport(report Report) (*Report, error) {
+	log.Println("CreateReport----------------")
+	log.Println(report.Config.Filters)
 	rb, err := json.Marshal(report)
 	if err != nil {
 		return nil, err

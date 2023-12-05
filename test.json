@@ -19,16 +19,7 @@
             }
         ],
         "displayValues": "actuals_only",
-        "filters": [
-            {
-                "id": "attribution",
-                "inverse": false,
-                "type": "attribution",
-                "values": [
-                    "1CE699ZdwN5CRBw0tInY"
-                ]
-            }
-        ],
+        "filters": null,
         "group": [
             {
                 "id": "BSQZmvX6hvuKGPDHX7R3",
@@ -45,8 +36,14 @@
             "type": "basic",
             "value": "cost"
         },
-        "timeInterval": "month"
+        "timeInterval": "month",
+        "timeRange": {
+            "amount": 12,
+            "includeCurrent": true,
+            "mode": "last",
+            "unit": "month"
+        }
     },
-    "id": "LC1RuXGBMHXUllXpvfio",
-    "name": "test10"
+    "description": "-",
+    "name": "test_new_provider"
 }

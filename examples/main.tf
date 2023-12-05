@@ -2,13 +2,13 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.3.1"
+      version = "0.5.0"
     }
   }
 }
 
 resource "doit_report" "my-report" {
-  name = "test10"
+  name = "test_new_provider"
   config = {
     metric = {
       type  = "basic"
@@ -47,6 +47,16 @@ resource "doit_report" "my-report" {
         values = [
           "1CE699ZdwN5CRBw0tInY"
         ]
+      }
+    ]
+    group = [
+      {
+        id   = "BSQZmvX6hvuKGPDHX7R3"
+        type = "attribution_group"
+      },
+      {
+        id   = "cloud_provider"
+        type = "fixed"
       }
     ]
     group = [

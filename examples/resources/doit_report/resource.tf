@@ -1,6 +1,6 @@
 resource "doit_report" "my-report" {
-  name        = "test10"
-  description = "test10"
+  name        = "test_report"
+  description = "test_report"
   config = {
     metric = {
       type  = "basic"

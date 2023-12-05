@@ -60,10 +60,10 @@ type ExternalConfig struct {
 	DisplayValues    string            `json:"displayValues,omitempty"`
 
 	// Filters The filters to use in this report
-	Filters []ExternalConfigFilter `json:"filters,omitempty"`
+	Filters []ExternalConfigFilter `json:"filters"`
 
 	// Group The groups to use in the report.
-	Group []Group `json:"group,omitempty"`
+	Group []Group `json:"group"`
 
 	// IncludePromotionalCredits Whether to include credits or not.
 	// If set, the report must use time interval “month”/”quarter”/”year”

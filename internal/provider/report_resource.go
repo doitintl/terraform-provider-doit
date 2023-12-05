@@ -7,8 +7,12 @@ import (
 
 	"log"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -74,6 +78,25 @@ type AdvancedAnalysisModel struct {
 	NotTrending  types.Bool `tfsdk:"not_trending"`
 	TrendingDown types.Bool `tfsdk:"trending_down"`
 	TrendingUp   types.Bool `tfsdk:"trending_up"`
+}
+
+func (aa AdvancedAnalysisModel) attrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"forecast":      types.BoolType,
+		"not_trending":  types.BoolType,
+		"trending_down": types.BoolType,
+		"trending_up":   types.BoolType,
+	}
+}
+
+func (aa AdvancedAnalysisModel) defaultObject() map[string]attr.Value {
+	log.Println("defaultObject AdvancedAnalysisModel")
+	return map[string]attr.Value{
+		"forecast":      types.BoolValue(false),
+		"not_trending":  types.BoolValue(false),
+		"trending_down": types.BoolValue(false),
+		"trending_up":   types.BoolValue(false),
+	}
 }
 
 // GroupModel represents a group in the report.
@@ -179,6 +202,10 @@ type ExternalConfigFilterModel struct {
 	Values []types.String `tfsdk:"values"`
 }
 
+/*func (ecf ExternalConfigFilterModel) attrType() attr.Type {
+	return types.StringType
+}*/
+
 // Ensure the implementation satisfies the expected interfaces.
 var (
 	_ resource.Resource              = &reportResource{}
@@ -212,23 +239,25 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						Attributes: map[string]schema.Attribute{
 							"forecast": schema.BoolAttribute{
 								Description: "Advanced analysis toggles. Each of these can be set independently",
-								Required:    true,
+								Optional:    true,
 							},
 							"not_trending": schema.BoolAttribute{
 								Description: "",
-								Required:    true,
+								Optional:    true,
 							},
 							"trending_down": schema.BoolAttribute{
 								Description: "",
-								Required:    true,
+								Optional:    true,
 							},
 							"trending_up": schema.BoolAttribute{
 								Description: "",
-								Required:    true,
+								Optional:    true,
 							},
 						},
 						Description: "",
-						Required:    true,
+						Optional:    true,
+						Computed:    true,
+						Default:     objectdefault.StaticValue(types.ObjectValueMust(AdvancedAnalysisModel{}.attrTypes(), AdvancedAnalysisModel{}.defaultObject())),
 					},
 					"aggregation": schema.StringAttribute{
 						Description: "",
@@ -330,7 +359,9 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"include_promotional_credits": schema.BoolAttribute{
 						Description: "Whether to include credits or not. " +
 							"If set, the report must use time interval “month”/”quarter”/”year”",
-						Required: true,
+						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(false),
 					},
 					"layout": schema.StringAttribute{
 						Description: "",
@@ -467,6 +498,8 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"description": schema.StringAttribute{
 				Description: "Report description",
 				Optional:    true,
+				Default:     stringdefault.StaticString("-"),
+				Computed:    true,
 			},
 			"name": schema.StringAttribute{
 				Description: "Report name",
@@ -508,13 +541,10 @@ func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequ
 // Create creates the resource and sets the initial Terraform state.
 func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	log.Println(" report Create")
-	log.Println(r.client.Auth.DoiTAPITOken)
-	log.Println("---------------------------------------------------")
-	log.Println(r.client.Auth.CustomerContext)
 
 	// Retrieve values from plan
 	var plan reportResourceModel
-	log.Println("before getting plan 1")
+	log.Println("before getting plan")
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -522,10 +552,9 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	log.Println("after getting plan")
 	// Generate API request body from plan
+	log.Println("plan.Config:")
 	log.Println(plan.Config)
 	config := ExternalConfig{}
-	log.Println("1")
-
 	if plan.Config.AdvancedAnalysis != nil {
 		advancedAnalysis := AdvancedAnalysis{
 			Forecast:     plan.Config.AdvancedAnalysis.Forecast.ValueBool(),
@@ -534,19 +563,8 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 			TrendingUp:   plan.Config.AdvancedAnalysis.TrendingUp.ValueBool(),
 		}
 		config.AdvancedAnalysis = &advancedAnalysis
-	} /*else {
-		// It needs to be initialized by default because the api return this value
-		// even  if it was not provided when created and the terraform plugin complain
-		// because when creating the resource was null but when read it is not.
-		advancedAnalysis := AdvancedAnalysis{
-			Forecast:     false,
-			NotTrending:  false,
-			TrendingDown: false,
-			TrendingUp:   false,
-		}
-		config.AdvancedAnalysis = &advancedAnalysis
-	}*/
-	log.Println("2")
+	}
+	log.Println("config.AdvancedAnalysis:")
 	log.Println(config.AdvancedAnalysis)
 	config.Aggregation = plan.Config.Aggregation.ValueString()
 	config.Currency = plan.Config.Currency.ValueString()
@@ -560,8 +578,8 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		dimensions = append(dimensions, dimension)
 	}
 	config.Dimensions = dimensions
+	filters := []ExternalConfigFilter{}
 	if plan.Config.Filters != nil {
-		var filters []ExternalConfigFilter
 		log.Println("3")
 		for _, filter := range plan.Config.Filters {
 			var values []string
@@ -580,13 +598,15 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 			filters = append(filters, filter)
 		}
 		log.Println("4")
-		config.Filters = filters
 	}
+	config.Filters = filters
+	log.Println("config.Filters:")
+	log.Println(config.Filters)
 	log.Println("DisplayValues")
 	log.Println(plan.Config.DisplayValues)
 	config.DisplayValues = plan.Config.DisplayValues.ValueString()
+	groups := []Group{}
 	if plan.Config.Group != nil {
-		var groups []Group
 		for _, group := range plan.Config.Group {
 			if group.Limit != nil {
 				log.Println("group.Limit")
@@ -612,9 +632,10 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 				})
 			}
 		}
-		config.Group = groups
 	}
-	log.Println("after group")
+	config.Group = groups
+	log.Println("config.Group:")
+	log.Println(config.Group)
 	// It needs to be initialized by default because the api return this value
 	// even  if it was not provided when created and the terraform plugin complain
 	// because when creating the resource was null but when read it is not.
@@ -649,7 +670,6 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		}
 		config.MetricFilter = &metricFilter
 	}
-	log.Println("8")
 	if plan.Config.Splits != nil {
 		var splits []ExternalSplit
 		for _, split := range plan.Config.Splits {
@@ -678,9 +698,9 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		}
 		config.Splits = splits
 	}
-	log.Println("61")
+	log.Println("plan.Config.Splits:")
 	log.Println(plan.Config.Splits)
-	log.Println("6")
+	log.Println("plan.Config.TimeRange:")
 	log.Println(plan.Config.TimeRange)
 	config.TimeInterval = plan.Config.TimeInterval.ValueString()
 	if plan.Config.TimeRange != nil {
@@ -692,7 +712,7 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		}
 		config.TimeRange = &timeRange
 	}
-	log.Println("7")
+	log.Println("plan.Description")
 	log.Println(plan.Description)
 	report := Report{
 		Config:      config,
@@ -924,6 +944,7 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	report.Config.DisplayValues = plan.Config.DisplayValues.ValueString()
 	log.Println("plan.Config.Filters")
 	log.Println(plan.Config.Filters)
+	report.Config.Filters = []ExternalConfigFilter{}
 	for _, filter := range plan.Config.Filters {
 		var values []string
 		for _, value := range filter.Values {
