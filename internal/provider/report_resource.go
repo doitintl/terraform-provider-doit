@@ -865,10 +865,28 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 	if report.Config.Group != nil {
 		state.Config.Group = []GroupModel{}
 		for _, group := range report.Config.Group {
-			state.Config.Group = append(state.Config.Group, GroupModel{
-				Id:   types.StringValue(group.Id),
-				Type: types.StringValue(group.Type),
-			})
+			limit := LimitModel{}
+			if group.Limit != nil {
+				metric := ExternalMetricModel{
+					Type:  types.StringValue(group.Limit.Metric.Type),
+					Value: types.StringValue(group.Limit.Metric.Value),
+				}
+				limit = LimitModel{
+					Metric: &metric,
+					Sort:   types.StringValue(group.Limit.Sort),
+					Value:  types.Int64Value(group.Limit.Value),
+				}
+				state.Config.Group = append(state.Config.Group, GroupModel{
+					Id:    types.StringValue(group.Id),
+					Type:  types.StringValue(group.Type),
+					Limit: &limit,
+				})
+			} else {
+				state.Config.Group = append(state.Config.Group, GroupModel{
+					Id:   types.StringValue(group.Id),
+					Type: types.StringValue(group.Type),
+				})
+			}
 		}
 	}
 
@@ -1132,10 +1150,32 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	if plan.Config.Group != nil {
 		plan.Config.Group = []GroupModel{}
 		for _, group := range reportResponse.Config.Group {
-			plan.Config.Group = append(plan.Config.Group, GroupModel{
-				Id:   types.StringValue(group.Id),
-				Type: types.StringValue(group.Type),
-			})
+			limit := LimitModel{}
+			if group.Limit != nil {
+				metric := ExternalMetricModel{}
+				if group.Limit.Metric != nil {
+					metric = ExternalMetricModel{
+						Type:  types.StringValue(group.Limit.Metric.Type),
+						Value: types.StringValue(group.Limit.Metric.Value),
+					}
+				}
+				limit = LimitModel{
+					Metric: &metric,
+					Sort:   types.StringValue(group.Limit.Sort),
+					Value:  types.Int64Value(group.Limit.Value),
+				}
+				plan.Config.Group = append(plan.Config.Group, GroupModel{
+					Id:    types.StringValue(group.Id),
+					Type:  types.StringValue(group.Type),
+					Limit: &limit,
+				})
+			} else {
+				plan.Config.Group = append(plan.Config.Group, GroupModel{
+					Id:   types.StringValue(group.Id),
+					Type: types.StringValue(group.Type),
+				})
+			}
+
 		}
 	}
 	if plan.Config.Splits != nil {
