@@ -15,14 +15,12 @@ resource "doit_report" "my-report" {
       type  = "basic"
       value = "cost"
     }
-    aggregation   = "total"
     advanced_analysis = {
       trending_up   = false
       trending_down = false
       not_trending  = false
       forecast      = false
     }
-    time_interval = "day"
     dimensions = [
       {
         id   = "year"
@@ -32,7 +30,7 @@ resource "doit_report" "my-report" {
         id   = "month"
         type = "datetime"
       }
-    ]  
+    ]
     time_range = {
       mode            = "last"
       amount          = 7
@@ -42,7 +40,6 @@ resource "doit_report" "my-report" {
     include_promotional_credits = false
     filters = [
       {
-        inverse = false
         id      = "attribution"
         type    = "attribution"
         values = [
@@ -76,9 +73,6 @@ resource "doit_report" "my-report" {
         }
       }
     ]
-    layout         = "table"
-    display_values = "actuals_only"
-    currency       = "USD"
   }
 }
 
