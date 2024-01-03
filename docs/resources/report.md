@@ -213,18 +213,12 @@ Required:
 - `id` (String)
 - `include_origin` (Boolean)
 - `mode` (String)
-- `origin` (Attributes) (see [below for nested schema](#nestedatt--config--splits--origin))
 - `targets` (Attributes List) (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.The only supported value at the moment: "attribution_group"
 
-<a id="nestedatt--config--splits--origin"></a>
-### Nested Schema for `config.splits.origin`
+Optional:
 
-Required:
-
-- `id` (String)
-- `type` (String)
-
+- `origin` (Attributes) (see [below for nested schema](#nestedatt--config--splits--origin))
 
 <a id="nestedatt--config--splits--targets"></a>
 ### Nested Schema for `config.splits.targets`
@@ -233,7 +227,19 @@ Required:
 
 - `id` (String)
 - `type` (String)
+
+Optional:
+
 - `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom
+
+
+<a id="nestedatt--config--splits--origin"></a>
+### Nested Schema for `config.splits.origin`
+
+Required:
+
+- `id` (String)
+- `type` (String)
 
 
 

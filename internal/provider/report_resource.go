@@ -467,7 +467,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 										},
 									},
 									Description: "",
-									Required:    true,
+									Optional:    true,
 								},
 								"targets": schema.ListNestedAttribute{
 									Description: "",
@@ -484,7 +484,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 											},
 											"value": schema.Float64Attribute{
 												Description: "Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom",
-												Required:    true,
+												Optional:    true,
 											},
 										},
 									},
