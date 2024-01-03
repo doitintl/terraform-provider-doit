@@ -124,7 +124,7 @@ Optional:
 <a id="nestedatt--config--dimensions"></a>
 ### Nested Schema for `config.dimensions`
 
-Optional:
+Required:
 
 - `id` (String)
 - `type` (String)
@@ -135,23 +135,26 @@ Optional:
 
 Required:
 
+- `id` (String) What field we are filtering on
+- `type` (String)
 - `values` (List of String) What values to filter on or exclude
 
 Optional:
 
-- `id` (String) What field we are filtering on
 - `inverse` (Boolean) If set, exclude the values
-- `type` (String)
 
 
 <a id="nestedatt--config--group"></a>
 ### Nested Schema for `config.group`
 
-Optional:
+Required:
 
 - `id` (String)
-- `limit` (Attributes) (see [below for nested schema](#nestedatt--config--group--limit))
 - `type` (String)
+
+Optional:
+
+- `limit` (Attributes) (see [below for nested schema](#nestedatt--config--group--limit))
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
@@ -165,7 +168,7 @@ Optional:
 <a id="nestedatt--config--group--limit--metric"></a>
 ### Nested Schema for `config.group.limit.value`
 
-Optional:
+Required:
 
 - `type` (String)
 - `value` (String)
@@ -176,7 +179,7 @@ Optional:
 <a id="nestedatt--config--metric"></a>
 ### Nested Schema for `config.metric`
 
-Optional:
+Required:
 
 - `type` (String)
 - `value` (String) For basic metrics the value can be one of: ["cost", "usage", "savings" 
@@ -188,17 +191,14 @@ If using custom metrics, the value must refer to an existing custom or calculate
 
 Required:
 
-- `values` (List of Number)
-
-Optional:
-
 - `metric` (Attributes) (see [below for nested schema](#nestedatt--config--metric_filter--metric))
 - `operator` (String)
+- `values` (List of Number)
 
 <a id="nestedatt--config--metric_filter--metric"></a>
 ### Nested Schema for `config.metric_filter.metric`
 
-Optional:
+Required:
 
 - `type` (String)
 - `value` (String)
@@ -208,19 +208,19 @@ Optional:
 <a id="nestedatt--config--splits"></a>
 ### Nested Schema for `config.splits`
 
-Optional:
+Required:
 
 - `id` (String)
 - `include_origin` (Boolean)
 - `mode` (String)
 - `origin` (Attributes) (see [below for nested schema](#nestedatt--config--splits--origin))
 - `targets` (Attributes List) (see [below for nested schema](#nestedatt--config--splits--targets))
-- `type` (String)
+- `type` (String) Type of the split.The only supported value at the moment: "attribution_group"
 
 <a id="nestedatt--config--splits--origin"></a>
 ### Nested Schema for `config.splits.origin`
 
-Optional:
+Required:
 
 - `id` (String)
 - `type` (String)
@@ -229,19 +229,23 @@ Optional:
 <a id="nestedatt--config--splits--targets"></a>
 ### Nested Schema for `config.splits.targets`
 
-Optional:
+Required:
 
 - `id` (String)
 - `type` (String)
+- `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom
 
 
 
 <a id="nestedatt--config--time_range"></a>
 ### Nested Schema for `config.time_range`
 
+Required:
+
+- `mode` (String)
+
 Optional:
 
 - `amount` (Number)
 - `include_current` (Boolean)
-- `mode` (String)
 - `unit` (String)

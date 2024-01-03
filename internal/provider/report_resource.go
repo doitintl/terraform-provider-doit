@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -240,18 +241,26 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 							"forecast": schema.BoolAttribute{
 								Description: "Advanced analysis toggles. Each of these can be set independently",
 								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
 							},
 							"not_trending": schema.BoolAttribute{
 								Description: "",
 								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
 							},
 							"trending_down": schema.BoolAttribute{
 								Description: "",
 								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
 							},
 							"trending_up": schema.BoolAttribute{
 								Description: "",
 								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
 							},
 						},
 						Description: "",
@@ -262,10 +271,14 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"aggregation": schema.StringAttribute{
 						Description: "",
 						Optional:    true,
+						Default:     stringdefault.StaticString("total"),
+						Computed:    true,
 					},
 					"currency": schema.StringAttribute{
 						Description: "",
 						Optional:    true,
+						Default:     stringdefault.StaticString("USD"),
+						Computed:    true,
 					},
 					"dimensions": schema.ListNestedAttribute{
 						Description: "",
@@ -274,11 +287,11 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"type": schema.StringAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 							},
 						},
@@ -286,6 +299,8 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"display_values": schema.StringAttribute{
 						Description: "",
 						Optional:    true,
+						Default:     stringdefault.StaticString("actuals_only"),
+						Computed:    true,
 					},
 					"filters": schema.ListNestedAttribute{
 						Description: "The filters to use in this report",
@@ -294,15 +309,17 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Description: "What field we are filtering on",
-									Optional:    true,
+									Required:    true,
 								},
 								"inverse": schema.BoolAttribute{
 									Description: "If set, exclude the values",
 									Optional:    true,
+									Computed:    true,
+									Default:     booldefault.StaticBool(false),
 								},
 								"type": schema.StringAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"values": schema.ListAttribute{
 									Description: "What values to filter on or exclude",
@@ -319,11 +336,11 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"type": schema.StringAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"limit": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -331,11 +348,11 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 											Attributes: map[string]schema.Attribute{
 												"type": schema.StringAttribute{
 													Description: "",
-													Optional:    true,
+													Required:    true,
 												},
 												"value": schema.StringAttribute{
 													Description: "",
-													Optional:    true,
+													Required:    true,
 												},
 											},
 											Description: "",
@@ -344,10 +361,14 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 										"sort": schema.StringAttribute{
 											Description: "",
 											Optional:    true,
+											Default:     stringdefault.StaticString(""),
+											Computed:    true,
 										},
 										"value": schema.Int64Attribute{
 											Description: "",
 											Optional:    true,
+											Default:     int64default.StaticInt64(0),
+											Computed:    true,
 										},
 									},
 									Description: "",
@@ -366,17 +387,19 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"layout": schema.StringAttribute{
 						Description: "",
 						Optional:    true,
+						Default:     stringdefault.StaticString("stacked_column_chart"),
+						Computed:    true,
 					},
 					"metric": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
 								Description: "",
-								Optional:    true,
+								Required:    true,
 							},
 							"value": schema.StringAttribute{
 								Description: "For basic metrics the value can be one of: [\"cost\", \"usage\", \"savings\" \n" +
 									"If using custom metrics, the value must refer to an existing custom or calculated metric id ",
-								Optional: true,
+								Required: true,
 							},
 						},
 						Description: "",
@@ -388,19 +411,19 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 								Attributes: map[string]schema.Attribute{
 									"type": schema.StringAttribute{
 										Description: "",
-										Optional:    true,
+										Required:    true,
 									},
 									"value": schema.StringAttribute{
 										Description: "",
-										Optional:    true,
+										Required:    true,
 									},
 								},
 								Description: "",
-								Optional:    true,
+								Required:    true,
 							},
 							"operator": schema.StringAttribute{
 								Description: "",
-								Optional:    true,
+								Required:    true,
 							},
 							"values": schema.ListAttribute{
 								Description: "",
@@ -418,46 +441,50 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"include_origin": schema.BoolAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"type": schema.StringAttribute{
-									Description: "",
-									Optional:    true,
+									Description: "Type of the split.The only supported value at the moment: \"attribution_group\"",
+									Required:    true,
 								},
 								"mode": schema.StringAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"origin": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
 											Description: "",
-											Optional:    true,
+											Required:    true,
 										},
 										"type": schema.StringAttribute{
 											Description: "",
-											Optional:    true,
+											Required:    true,
 										},
 									},
 									Description: "",
-									Optional:    true,
+									Required:    true,
 								},
 								"targets": schema.ListNestedAttribute{
 									Description: "",
-									Optional:    true,
+									Required:    true,
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
 											"id": schema.StringAttribute{
 												Description: "",
-												Optional:    true,
+												Required:    true,
 											},
 											"type": schema.StringAttribute{
 												Description: "",
-												Optional:    true,
+												Required:    true,
+											},
+											"value": schema.Float64Attribute{
+												Description: "Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom",
+												Required:    true,
 											},
 										},
 									},
@@ -468,24 +495,32 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"time_interval": schema.StringAttribute{
 						Description: "",
 						Optional:    true,
+						Default:     stringdefault.StaticString("day"),
+						Computed:    true,
 					},
 					"time_range": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"amount": schema.Int64Attribute{
 								Description: "",
 								Optional:    true,
+								Default:     int64default.StaticInt64(0),
+								Computed:    true,
 							},
 							"include_current": schema.BoolAttribute{
 								Description: "",
 								Optional:    true,
+								Default:     booldefault.StaticBool(false),
+								Computed:    true,
 							},
 							"mode": schema.StringAttribute{
 								Description: "",
-								Optional:    true,
+								Required:    true,
 							},
 							"unit": schema.StringAttribute{
 								Description: "",
 								Optional:    true,
+								Default:     stringdefault.StaticString("day"),
+								Computed:    true,
 							},
 						},
 						Description: "",
@@ -1013,15 +1048,19 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		report.Config.Metric = &externalMetric
 	}
 
-	if report.Config.MetricFilter != nil {
+	if plan.Config.MetricFilter != nil {
 		metricFilter := ExternalConfigMetricFilter{}
-		report.Config.MetricFilter.Operator = plan.Config.MetricFilter.Operator.ValueString()
-		report.Config.MetricFilter.Metric.Type = plan.Config.MetricFilter.Metric.Type.ValueString()
-		report.Config.MetricFilter.Metric.Value = plan.Config.MetricFilter.Metric.Value.ValueString()
-		report.Config.MetricFilter.Values = []float64{}
-		for _, value := range plan.Config.MetricFilter.Values {
-			report.Config.MetricFilter.Values = append(report.Config.MetricFilter.Values, value.ValueFloat64())
+		metricFilter.Operator = plan.Config.MetricFilter.Operator.ValueString()
+		if plan.Config.MetricFilter.Metric != nil {
+			metricFilter.Metric = &ExternalMetric{}
+			metricFilter.Metric.Type = plan.Config.MetricFilter.Metric.Type.ValueString()
+			metricFilter.Metric.Value = plan.Config.MetricFilter.Metric.Value.ValueString()
 		}
+		values := []float64{}
+		for _, value := range plan.Config.MetricFilter.Values {
+			values = append(values, value.ValueFloat64())
+		}
+		metricFilter.Values = values
 		report.Config.MetricFilter = &metricFilter
 	}
 	report.Config.Splits = []ExternalSplit{}
@@ -1049,14 +1088,20 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		}
 		esplit.Id = split.Id.ValueString()
 		esplit.IncludeOrigin = split.IncludeOrigin.ValueBool()
+		esplit.Mode = split.Mode.ValueString()
+		esplit.Type = split.Type.ValueString()
 		report.Config.Splits = append(report.Config.Splits, esplit)
 	}
 	report.Config.TimeInterval = plan.Config.TimeInterval.ValueString()
-	if report.Config.TimeRange != nil {
-		report.Config.TimeRange.Amount = plan.Config.TimeRange.Amount.ValueInt64()
-		report.Config.TimeRange.IncludeCurrent = plan.Config.TimeRange.IncludeCurrent.ValueBool()
-		report.Config.TimeRange.Mode = plan.Config.TimeRange.Mode.ValueString()
-		report.Config.TimeRange.Unit = plan.Config.TimeRange.Unit.ValueString()
+	log.Println("report.Config.TimeRange")
+	log.Println("report.Config.TimeRange")
+	if plan.Config.TimeRange != nil {
+		report.Config.TimeRange = &TimeSettings{
+			Amount:         plan.Config.TimeRange.Amount.ValueInt64(),
+			IncludeCurrent: plan.Config.TimeRange.IncludeCurrent.ValueBool(),
+			Mode:           plan.Config.TimeRange.Mode.ValueString(),
+			Unit:           plan.Config.TimeRange.Unit.ValueString(),
+		}
 	}
 	// Update existing report
 	_, err := r.client.UpdateReport(state.Id.ValueString(), report)
@@ -1080,7 +1125,6 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update resource state with updated items and timestamp
-	plan.Id = types.StringValue(reportResponse.Id)
 	plan.Id = types.StringValue(reportResponse.Id)
 	plan.Description = types.StringValue(reportResponse.Description)
 	plan.Name = types.StringValue(reportResponse.Name)
