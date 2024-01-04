@@ -26,14 +26,13 @@ var (
 
 // HostURL - Default DoiT URL
 const HostURL string = "https://api.doit.com"
-const RequestsMinute int = 100
+const RequestsMinute int = 250
 
 // doitProviderModel maps provider schema data to a Go type.
 type doitProviderModel struct {
 	Host            types.String `tfsdk:"host"`
 	DoiTAPITOken    types.String `tfsdk:"api_token"`
 	CustomerContext types.String `tfsdk:"customer_context"`
-	RequestsMinute  types.Int64  `tfsdk:"requests_minute"`
 }
 
 // New is a helper function to simplify provider server and testing implementation.
@@ -82,11 +81,6 @@ func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, res
 					"environment variable. This field is requiered just for DoiT employees ",
 				Optional: true,
 			},
-			"requests_minute": schema.Int64Attribute{
-				Description: "Number of request per minute that DoiT API support. May also be provided by REQUEST_MINUTE " +
-					"environment variable. ",
-				Optional: true,
-			},
 		},
 	}
 }
@@ -105,7 +99,6 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	ctx = tflog.SetField(ctx, "doit_host", host)
 	ctx = tflog.SetField(ctx, "doit_api_token", doiTAPIToken)
 	ctx = tflog.SetField(ctx, "doit_customer_context", customerContext)
-	ctx = tflog.SetField(ctx, "requests_minute", requestsMinute)
 	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "doit_api_token")
 
 	tflog.Debug(ctx, "Creating DoiT Console client")
@@ -170,10 +163,6 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	if !config.DoiTAPITOken.IsNull() {
 		doiTAPIToken = config.DoiTAPITOken.ValueString()
-	}
-
-	if !config.RequestsMinute.IsNull() {
-		requestsMinute = int(config.RequestsMinute.ValueInt64())
 	}
 
 	// If any of the expected configurations are missing, return

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.9.0"
+      version = "0.10.0"
     }
   }
 }
@@ -21,32 +21,6 @@ resource "doit_report" "my-report" {
       not_trending  = false
       forecast      = false
     }
-    "splits" : [
-      {
-        id : "Up44UNhsdbYW6ACYrWny"
-        type : "attribution_group"
-        mode : "even"
-        include_origin : true
-        origin : {
-          id : "abLya6iudCLsZYGTpzt0"
-          type : "attribution"
-        }
-        targets : [
-          {
-            id : "luaETSKhNLhVCbYYTsGF"
-            type : "attribution"
-          },
-          {
-            id : "SSa2bJ4vPRZgjmNBaOgW"
-            type : "attribution"
-          },
-          {
-            id : "gJ8p6YOQwlr45peIpFW3"
-            type : "attribution"
-          }
-        ]
-      }
-    ]
     dimensions = [
       {
         id   = "year"
@@ -100,27 +74,6 @@ resource "doit_report" "my-report" {
       }
     ]
   }
-}
-
-resource "doit_attribution" "attri" {
-  name        = "attritestnewname9"
-  description = "attritestdiana8"
-  formula     = "A"
-  components  = [{ type = "label", key = "iris_location", values = ["us"] }]
-}
-
-resource "doit_attribution" "attri2" {
-  name        = "attritestnewname10"
-  description = "attritestdiana11"
-  formula     = "A"
-  components  = [{ type = "label", key = "iris_location", values = ["us"] }]
-}
-
-resource "doit_attribution" "attri3" {
-  name        = "attritestnewname12"
-  description = "attritestdiana13"
-  formula     = "A"
-  components  = [{ type = "label", key = "iris_location", values = ["us"] }]
 }
 
 provider "doit" {

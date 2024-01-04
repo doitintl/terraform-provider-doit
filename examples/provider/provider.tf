@@ -2,13 +2,12 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.7.0"
+      version = "0.10.0"
     }
   }
 }
 
 provider "doit" {
   # Configuration options prefer to use environment variables
-  # DOIT_API_TOKEN, DOIT_HOST=https://api.doit.com, DOIT_CUSTOMER_CONTEXT and
-  # REQUESTS_MINUTE
+  # DOIT_API_TOKEN, DOIT_HOST=https://api.doit.com, DOIT_CUSTOMER_CONTEXT
 }

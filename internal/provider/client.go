@@ -3,10 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"golang.org/x/time/rate"
 )
 
@@ -31,7 +32,7 @@ type ClientTest struct {
 
 // NewClient -
 func NewClientTest(host, doiTAPIClient, customerContext *string, rl *rate.Limiter) (*ClientTest, error) {
-	
+
 	c := ClientTest{
 		HTTPClient: &http.Client{Timeout: 30 * time.Second},
 		// Default DoiT URL
@@ -95,39 +96,43 @@ func (c *ClientTest) doRequest(req *http.Request) ([]byte, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.Auth.DoiTAPITOken)
-	res, err := c.HTTPClient.Do(req)
+
+	res := &http.Response{}
+	operation := func() (*http.Response, error) {
+		res, err := c.HTTPClient.Do(req)
+		return res, err
+	}
+
+	retryable := func() error {
+		var errRetry error
+		res, errRetry = operation()
+		if res.StatusCode == http.StatusTooManyRequests {
+			return fmt.Errorf("rate limit exceeded")
+		}
+		err = errRetry
+		return nil
+	}
+
+	b := backoff.NewExponentialBackOff()
+	b.MaxElapsedTime = 5 * time.Minute
+	errRetryOutside := backoff.Retry(retryable, b)
+	if errRetryOutside != nil {
+		return nil, errRetryOutside
+	}
+
+	//in case the error is different to rate limit
 	if err != nil {
 		return nil, err
 	}
+
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
-	}
-
-	return body, err
-}
-
-func (c *ClientTest) createAttribution(req *http.Request) ([]byte, error) {
-	req.Header.Set("Authorization", c.Auth.DoiTAPITOken)
-
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
 	}
 
