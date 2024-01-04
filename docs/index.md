@@ -36,3 +36,4 @@ provider "doit" {
 - `api_token` (String, Sensitive) API Token to access DoiT API. May also be provided by DOIT_API_TOKEN environment variable. Refer to https://developer.doit.com/docs/start
 - `customer_context` (String) Customer context. May also be provided by DOIT_CUSTOMER_CONTEXT environment variable. This field is requiered just for DoiT employees
 - `host` (String) URI for DoiT API. May also be provided via DOIT_HOST environment variable.
+- `requests_minute` (Number) Number of request per minute that DoiT API support. May also be provided by REQUEST_MINUTE environment variable.

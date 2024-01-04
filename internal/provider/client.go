@@ -1,10 +1,13 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 type AuthResponseTest struct {
@@ -20,13 +23,15 @@ type AuthStructTest struct {
 
 // Client
 type ClientTest struct {
-	HostURL    string
-	HTTPClient *http.Client
-	Auth       AuthStructTest
+	HostURL     string
+	HTTPClient  *http.Client
+	Auth        AuthStructTest
+	Ratelimiter *rate.Limiter
 }
 
 // NewClient -
-func NewClientTest(host, doiTAPIClient, customerContext *string) (*ClientTest, error) {
+func NewClientTest(host, doiTAPIClient, customerContext *string, rl *rate.Limiter) (*ClientTest, error) {
+	
 	c := ClientTest{
 		HTTPClient: &http.Client{Timeout: 30 * time.Second},
 		// Default DoiT URL
@@ -35,6 +40,7 @@ func NewClientTest(host, doiTAPIClient, customerContext *string) (*ClientTest, e
 			DoiTAPITOken:    *doiTAPIClient,
 			CustomerContext: *customerContext,
 		},
+		Ratelimiter: rl,
 	}
 
 	if host != nil {
@@ -83,6 +89,11 @@ func (c *ClientTest) SignIn() (*AuthResponseTest, error) {
 
 func (c *ClientTest) doRequest(req *http.Request) ([]byte, error) {
 	//req.Header.Set("Authorization", c.Token)
+	ctx := context.Background()
+	err := c.Ratelimiter.Wait(ctx) // This is a blocking call. Honors the rate limit
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("Authorization", "Bearer "+c.Auth.DoiTAPITOken)
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {

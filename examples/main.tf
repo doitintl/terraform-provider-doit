@@ -2,7 +2,7 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.7.0"
+      version = "0.9.0"
     }
   }
 }
@@ -10,7 +10,6 @@ terraform {
 resource "doit_report" "my-report" {
   name        = "my-report"
   description = "description report"
-
   config = {
     metric = {
       type  = "basic"
@@ -101,6 +100,27 @@ resource "doit_report" "my-report" {
       }
     ]
   }
+}
+
+resource "doit_attribution" "attri" {
+  name        = "attritestnewname9"
+  description = "attritestdiana8"
+  formula     = "A"
+  components  = [{ type = "label", key = "iris_location", values = ["us"] }]
+}
+
+resource "doit_attribution" "attri2" {
+  name        = "attritestnewname10"
+  description = "attritestdiana11"
+  formula     = "A"
+  components  = [{ type = "label", key = "iris_location", values = ["us"] }]
+}
+
+resource "doit_attribution" "attri3" {
+  name        = "attritestnewname12"
+  description = "attritestdiana13"
+  formula     = "A"
+  components  = [{ type = "label", key = "iris_location", values = ["us"] }]
 }
 
 provider "doit" {

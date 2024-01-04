@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
+	"log"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -11,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"golang.org/x/time/rate"
 	//"encoding/json"
 	//"strings""
 )
@@ -22,12 +26,14 @@ var (
 
 // HostURL - Default DoiT URL
 const HostURL string = "https://api.doit.com"
+const RequestsMinute int = 100
 
 // doitProviderModel maps provider schema data to a Go type.
 type doitProviderModel struct {
 	Host            types.String `tfsdk:"host"`
 	DoiTAPITOken    types.String `tfsdk:"api_token"`
 	CustomerContext types.String `tfsdk:"customer_context"`
+	RequestsMinute  types.Int64  `tfsdk:"requests_minute"`
 }
 
 // New is a helper function to simplify provider server and testing implementation.
@@ -76,6 +82,11 @@ func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, res
 					"environment variable. This field is requiered just for DoiT employees ",
 				Optional: true,
 			},
+			"requests_minute": schema.Int64Attribute{
+				Description: "Number of request per minute that DoiT API support. May also be provided by REQUEST_MINUTE " +
+					"environment variable. ",
+				Optional: true,
+			},
 		},
 	}
 }
@@ -87,12 +98,14 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	doiTAPIToken := ""
 	host := ""
 	customerContext := ""
+	requestsMinute := RequestsMinute
 	tflog.Info(ctx, "Configuring DoiT client")
 	tflog.Trace(ctx, "[TRACE] Calling Program::")
 
 	ctx = tflog.SetField(ctx, "doit_host", host)
 	ctx = tflog.SetField(ctx, "doit_api_token", doiTAPIToken)
 	ctx = tflog.SetField(ctx, "doit_customer_context", customerContext)
+	ctx = tflog.SetField(ctx, "requests_minute", requestsMinute)
 	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "doit_api_token")
 
 	tflog.Debug(ctx, "Creating DoiT Console client")
@@ -144,6 +157,8 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	doiTAPIToken = os.Getenv("DOIT_API_TOKEN")
 	host = os.Getenv("DOIT_HOST")
 	customerContext = os.Getenv("DOIT_CUSTOMER_CONTEXT")
+	requestsMinuteStr := os.Getenv("REQUESTS_MINUTE")
+	requestsMinute, _ = strconv.Atoi(requestsMinuteStr)
 
 	if !config.Host.IsNull() {
 		host = config.Host.ValueString()
@@ -155,6 +170,10 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	if !config.DoiTAPITOken.IsNull() {
 		doiTAPIToken = config.DoiTAPITOken.ValueString()
+	}
+
+	if !config.RequestsMinute.IsNull() {
+		requestsMinute = int(config.RequestsMinute.ValueInt64())
 	}
 
 	// If any of the expected configurations are missing, return
@@ -191,12 +210,19 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		)
 	}
 
+	if requestsMinute == 0 {
+		requestsMinute = RequestsMinute
+	}
+
+	log.Println("requestsMinute:")
+	log.Println(requestsMinute)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
+	rl := rate.NewLimiter(rate.Every(60*time.Second), requestsMinute) // default 100 requests per minute
 	// Create a new DoiT client using the configuration values
-	client, err := NewClientTest(&host, &doiTAPIToken, &customerContext)
+	client, err := NewClientTest(&host, &doiTAPIToken, &customerContext, rl)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create DoiT API Client",
