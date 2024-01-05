@@ -16,7 +16,7 @@ resource "doit_report" "my-report" {
       value = "cost"
     }
     advanced_analysis = {
-      trending_up   = false
+      trending_up   = true
       trending_down = false
       not_trending  = false
       forecast      = false
