@@ -89,7 +89,9 @@ type ExternalConfig struct {
 	// We set the mode to "last", the amount to 2 and the unit to "day"
 	// If includeCurrent is not set, the range will be the 15th and 16th of April
 	// If it is, then the range will be 16th and 17th
-	TimeRange *TimeSettings `json:"timeRange,omitempty"`
+	TimeRange      *TimeSettings `json:"timeRange,omitempty"`
+	SortGroups     string        `json:"sortGroups,omitempty"`
+	SortDimensions string        `json:"sortDimensions,omitempty"`
 }
 
 // AdvancedAnalysis Advanced analysis toggles. Each of these can be set independently
