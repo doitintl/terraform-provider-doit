@@ -106,6 +106,8 @@ Optional:
 - `layout` (String)
 - `metric` (Attributes) (see [below for nested schema](#nestedatt--config--metric))
 - `metric_filter` (Attributes) (see [below for nested schema](#nestedatt--config--metric_filter))
+- `sort_dimensions` (String) Sort dimensions. This configuration has no impact when reading a report's data via API. Default value is "desc".
+- `sort_groups` (String) Sort groups. This configuration has no impact when reading a report's data via API. Default value is "asc".
 - `splits` (Attributes List) The splits to use in the report. (see [below for nested schema](#nestedatt--config--splits))
 - `time_interval` (String)
 - `time_range` (Attributes) (see [below for nested schema](#nestedatt--config--time_range))

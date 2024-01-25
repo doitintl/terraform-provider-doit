@@ -7,7 +7,7 @@ terraform {
   }
 }
 
-resource "doit_report" "my-report" {
+resource "doit_report" "my-report_january" {
   name        = "my-report"
   description = "description report"
   config = {
@@ -15,8 +15,10 @@ resource "doit_report" "my-report" {
       type  = "basic"
       value = "cost"
     }
+    sort_groups = "asc"
+    sort_dimensions = "asc"
     advanced_analysis = {
-      trending_up   = false
+      trending_up   = true
       trending_down = false
       not_trending  = false
       forecast      = false

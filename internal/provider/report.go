@@ -95,18 +95,16 @@ func (c *ClientTest) GetReport(orderID string) (*Report, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	report := Report{}
 	body, err := c.doRequest(req)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Body----------------")
 	log.Println(string(body))
-	report := Report{}
+
 	err = json.Unmarshal(body, &report)
 	if err != nil {
 		return nil, err
 	}
-
 	return &report, nil
 }

@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -209,7 +208,8 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	rl := rate.NewLimiter(rate.Every(60*time.Second), requestsMinute) // default 100 requests per minute
+
+	rl := rate.NewLimiter(4, 4) // default 250 requests per minute
 	// Create a new DoiT client using the configuration values
 	client, err := NewClientTest(&host, &doiTAPIToken, &customerContext, rl)
 	if err != nil {

@@ -49,6 +49,8 @@ type ExternalConfigModel struct {
 	// If set, the report must use time interval “month”/”quarter”/”year”
 	IncludePromotionalCredits types.Bool           `tfsdk:"include_promotional_credits"`
 	Layout                    types.String         `tfsdk:"layout"`
+	SortGroups                types.String         `tfsdk:"sort_groups"`
+	SortDimensions            types.String         `tfsdk:"sort_dimensions"`
 	Metric                    *ExternalMetricModel `tfsdk:"metric"`
 
 	// MetricFilter {
@@ -526,6 +528,18 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						Description: "",
 						Optional:    true,
 					},
+					"sort_groups": schema.StringAttribute{
+						Description: "Sort groups. This configuration has no impact when reading a report's data via API. Default value is \"asc\".",
+						Optional:    true,
+						Default:     stringdefault.StaticString("asc"),
+						Computed:    true,
+					},
+					"sort_dimensions": schema.StringAttribute{
+						Description: "Sort dimensions. This configuration has no impact when reading a report's data via API. Default value is \"desc\".",
+						Optional:    true,
+						Default:     stringdefault.StaticString("desc"),
+						Computed:    true,
+					},
 				},
 				Description: "Report configuration",
 				Optional:    true,
@@ -680,6 +694,8 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	config.Layout = plan.Config.Layout.ValueString()
+	config.SortGroups = plan.Config.SortGroups.ValueString()
+	config.SortDimensions = plan.Config.SortDimensions.ValueString()
 	if plan.Config.Metric != nil {
 		metric := ExternalMetric{
 			Type:  plan.Config.Metric.Type.ValueString(),
@@ -687,6 +703,7 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		}
 		config.Metric = &metric
 	}
+
 	var metricFilter ExternalConfigMetricFilter
 	if plan.Config.MetricFilter != nil {
 		var values []float64
@@ -838,6 +855,8 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.Config.IncludePromotionalCredits = types.BoolValue(report.Config.IncludePromotionalCredits)
 	log.Print(state.Config.IncludePromotionalCredits)
 	state.Config.Layout = types.StringValue(report.Config.Layout)
+	state.Config.SortGroups = types.StringValue(report.Config.SortGroups)
+	state.Config.SortDimensions = types.StringValue(report.Config.SortDimensions)
 	state.Config.TimeInterval = types.StringValue(report.Config.TimeInterval)
 	log.Print("c1")
 	if report.Config.TimeRange != nil {
@@ -1040,6 +1059,8 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		report.Config.IncludePromotionalCredits = false
 	}
 	report.Config.Layout = plan.Config.Layout.ValueString()
+	report.Config.SortGroups = plan.Config.SortGroups.ValueString()
+	report.Config.SortDimensions = plan.Config.SortDimensions.ValueString()
 	if plan.Config.Metric != nil {
 		externalMetric := ExternalMetric{
 			Type:  plan.Config.Metric.Type.ValueString(),
@@ -1142,6 +1163,8 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	plan.Config.DisplayValues = types.StringValue(reportResponse.Config.DisplayValues)
 	plan.Config.IncludePromotionalCredits = types.BoolValue(reportResponse.Config.IncludePromotionalCredits)
 	plan.Config.Layout = types.StringValue(reportResponse.Config.Layout)
+	plan.Config.SortGroups = types.StringValue(reportResponse.Config.SortGroups)
+	plan.Config.SortDimensions = types.StringValue(reportResponse.Config.SortDimensions)
 	plan.Config.TimeInterval = types.StringValue(reportResponse.Config.TimeInterval)
 	if plan.Config.TimeRange != nil {
 		plan.Config.TimeRange = &TimeSettingsModel{
