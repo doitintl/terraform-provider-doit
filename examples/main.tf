@@ -6,6 +6,18 @@ terraform {
     }
   }
 }
+resource "doit_attribution" "attri" {
+  name        = "attritestnewname"
+  description = "attritestdesc"
+  formula     = "A"
+  components  = [{ type = "label", key = "iris_region", values = ["us-central1"] }]
+}
+
+resource "doit_attribution_group" "attributeGroup" {
+  name         = "attritestnewgroup"
+  description  = "attritestgroup-new-new"
+  attributions = [doit_attribution.attri.id]
+}
 
 resource "doit_report" "my-report_january" {
   name        = "my-report"
@@ -15,7 +27,7 @@ resource "doit_report" "my-report_january" {
       type  = "basic"
       value = "cost"
     }
-    sort_groups = "asc"
+    sort_groups     = "asc"
     sort_dimensions = "asc"
     advanced_analysis = {
       trending_up   = true
