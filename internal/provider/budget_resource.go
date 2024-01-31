@@ -1,0 +1,720 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"log"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+// orderResourceModel maps the resource schema data.
+type budgetResourceModel struct {
+	// Alerts List of up to three thresholds defined as percentage of amount
+	Alerts []ExternalBudgetAlertModel `tfsdk:"alerts"`
+
+	// Amount Budget period amount
+	// Optional: true(if usePrevSpend is false)
+	Amount types.Float64 `tfsdk:"amount"`
+
+	// Collaborators List of permitted users to view/edit the report
+	Collaborators []CollaboratorModel `tfsdk:"collaborators"`
+
+	// Currency Budget currency can be one of: ["USD","ILS","EUR","GBP","AUD","CAD","DKK","NOK","SEK","BRL","SGD","MXN","CHF","MYR","TWD"]
+	Currency types.String `tfsdk:"currency"`
+
+	// Description Budget description
+	Description types.String `tfsdk:"description"`
+
+	// EndPeriod Fixed budget end date
+	// Optional: true(if budget type is fixed)
+	EndPeriod types.Int64 `tfsdk:"end_period"`
+
+	// GrowthPerPeriod Periodical growth percentage in recurring budget
+	GrowthPerPeriod types.Float64 `tfsdk:"growth_per_period"`
+
+	// Id budget ID, identifying the report
+	// in:path
+	Id types.String `tfsdk:"id"`
+
+	// Metric Budget metric - currently fixed to "cost"
+	Metric types.String `tfsdk:"metric"`
+
+	// Name Budget Name
+	Name   types.String `tfsdk:"name"`
+	Public types.String `tfsdk:"public"`
+
+	// Recipients List of emails to notify when reaching alert threshold
+	Recipients []types.String `tfsdk:"recipients"`
+
+	// RecipientsSlackChannels List of slack channels to notify when reaching alert threshold
+	RecipientsSlackChannels []SlackChannelModel `tfsdk:"recipients_slack_channels"`
+
+	// Scope List of budges that defines that budget scope
+	Scope []types.String `tfsdk:"scope"`
+
+	// StartPeriod Budget start Date
+	StartPeriod types.Int64 `tfsdk:"start_period"`
+
+	// TimeInterval Recurring budget interval can be on of: ["day", "week", "month", "quarter","year"]
+	TimeInterval types.String `tfsdk:"time_interval"`
+
+	// Type budget type can be one of: ["fixed", "recurring"]
+	Type types.String `tfsdk:"type"`
+
+	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
+	UsePrevSpend types.Bool `tfsdk:"use_prev_spend"`
+
+	LastUpdated types.String `tfsdk:"last_updated"`
+}
+
+type ExternalBudgetAlertModel struct {
+	ForecastedDate types.Int64   `tfsdk:"forecasted_date"`
+	Percentage     types.Float64 `tfsdk:"percentage"`
+	Triggered      types.Bool    `tfsdk:"triggered"`
+}
+
+type CollaboratorModel struct {
+	Email types.String `tfsdk:"email"`
+	Role  types.String `tfsdk:"role"`
+}
+
+// SlackChannel defines model for SlackChannel.
+type SlackChannelModel struct {
+	CustomerId types.String `tfsdk:"customer_id"`
+	Id         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
+	Shared     types.Bool   `tfsdk:"shared"`
+	Type       types.String `tfsdk:"type"`
+	Workspace  types.String `tfsdk:"workspace"`
+}
+
+// Ensure the implementation satisfies the expected interfaces.
+var (
+	_ resource.Resource              = &budgetResource{}
+	_ resource.ResourceWithConfigure = &budgetResource{}
+)
+
+// NewbudgetResource is a helper function to simplify the provider implementation.
+func NewBudgetResource() resource.Resource {
+	return &budgetResource{}
+}
+
+// budgetResource is the resource implementation.
+type budgetResource struct {
+	client *ClientTest
+}
+
+// Metadata returns the resource type name.
+func (r *budgetResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	log.Print("hello budget Metadata:)")
+	resp.TypeName = req.ProviderTypeName + "_budget"
+}
+
+// Schema defines the schema for the resource.
+func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	log.Print("hello budget Schema:)")
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"last_updated": schema.StringAttribute{
+				Description: "Timestamp of the last Terraform update of" +
+					"the budget group.",
+				Computed: true,
+			},
+			"alerts": schema.ListNestedAttribute{
+				Optional: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"forecasted_date": schema.Int64Attribute{
+							Optional: true,
+							Computed: true,
+							Default:  int64default.StaticInt64(0),
+						},
+						"percentage": schema.Float64Attribute{
+							Optional: true,
+							Computed: true,
+							Default:  float64default.StaticFloat64(0.0),
+						},
+						"triggered": schema.BoolAttribute{
+							Optional: true,
+							Computed: true,
+							Default:  booldefault.StaticBool(false),
+						},
+					},
+				},
+			},
+			"amount": schema.Float64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     float64default.StaticFloat64(0.0),
+				Description: "Budget period required: true(if usePrevSpend is false)",
+			},
+			"collaborators": schema.ListNestedAttribute{
+				Required: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"email": schema.StringAttribute{
+							Required:    true,
+							Description: "Collaborator email",
+						},
+						"role": schema.StringAttribute{
+							Required:    true,
+							Description: "Collaborator role",
+						},
+					},
+				},
+			},
+			"currency": schema.StringAttribute{
+				Required:    true,
+				Description: "Budget currency can be one of: [\"USD\",\"ILS\",\"EUR\",\"GBP\",\"AUD\",\"CAD\",\"DKK\",\"NOK\",\"SEK\",\"BRL\",\"SGD\",\"MXN\",\"CHF\",\"MYR\",\"TWD\",\"EGP\",\"ZAR\"]",
+			},
+			"description": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(""),
+			},
+			"end_period": schema.Int64Attribute{
+				Optional:    true,
+				Description: "Fixed budget end date required: true(if budget type is fixed)",
+			},
+			"growth_per_period": schema.Float64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     float64default.StaticFloat64(0.0),
+				Description: "Periodical growth percentage in recurring budget",
+			},
+			"id": schema.StringAttribute{
+				Computed:    true,
+				Description: "Numeric identifier of the budget",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"metric": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString("cost"),
+				Description: "Budget metric  - currently fixed to \"cost\"",
+			},
+			"name": schema.StringAttribute{
+				Required:    true,
+				Description: "Name Budget Name",
+			},
+			"public": schema.StringAttribute{
+				Optional:    true,
+				Description: "Public",
+			},
+			"recipients": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "List of emails to notify when reaching alert threshold",
+			},
+			"recipients_slack_channels": schema.ListNestedAttribute{
+				Optional: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"customer_id": schema.StringAttribute{
+							Optional: true,
+						},
+						"id": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel ID",
+						},
+						"name": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel name",
+						},
+						"shared": schema.BoolAttribute{
+							Optional:    true,
+							Description: "Slack channel shared",
+						},
+						"type": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel type",
+						},
+						"workspace": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel workspace",
+						},
+					},
+				},
+			},
+			"scope": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "List of budges that defines that budget scope",
+			},
+			"start_period": schema.Int64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     int64default.StaticInt64(0),
+				Description: "Budget start Date",
+			},
+			"time_interval": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(""),
+				Description: "Recurring budget interval can be on of:" +
+					"[\"day\", \"week\", \"month\", \"quarter\",\"year]\"",
+			},
+			"type": schema.StringAttribute{
+				Required: true,
+				Description: "Budget type can be one of: [" +
+					"\"fixed\", \"recurring\"]",
+			},
+			"use_prev_spend": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
+				Description: "Use the last period's spend as the target amount for recurring budgets",
+			},
+		},
+	}
+}
+
+// Configure adds the provider configured client to the resource.
+func (r *budgetResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	log.Print(" budget Configure")
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*ClientTest)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *ClientTest, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.client = client
+}
+
+func budgetModelToBudget(budgetModel *budgetResourceModel, ctx context.Context) Budget {
+	var budget Budget
+	var alerts []ExternalBudgetAlert
+	for _, alert := range budgetModel.Alerts {
+		forecastedDate := alert.ForecastedDate.ValueInt64()
+		percentage := alert.Percentage.ValueFloat64()
+		triggered := alert.Triggered.ValueBool()
+		alerts = append(alerts, ExternalBudgetAlert{
+			ForecastedDate: forecastedDate,
+			Percentage:     percentage,
+			Triggered:      triggered,
+		})
+	}
+	budget.Alerts = alerts
+	amount := budgetModel.Amount.ValueFloat64()
+	budget.Amount = amount
+	var collaborators []Collaborator
+	for _, collaborator := range budgetModel.Collaborators {
+		email := collaborator.Email.ValueString()
+		role := collaborator.Role.ValueString()
+		collaborators = append(collaborators, Collaborator{
+			Email: email,
+			Role:  role,
+		})
+	}
+	budget.Collaborators = collaborators
+	budget.Currency = budgetModel.Currency.ValueString()
+	description := budgetModel.Description.ValueString()
+	budget.Description = description
+	endPeriod := budgetModel.EndPeriod.ValueInt64()
+	budget.EndPeriod = endPeriod
+	growthPerPeriod := budgetModel.GrowthPerPeriod.ValueFloat64()
+	budget.GrowthPerPeriod = growthPerPeriod
+	metric := budgetModel.Metric.ValueString()
+	budget.Metric = metric
+	budget.Name = budgetModel.Name.ValueString()
+	public := budgetModel.Public.ValueString()
+	budget.Public = &public
+	var recipients []string
+	for _, recipient := range budgetModel.Recipients {
+		recipients = append(recipients, recipient.ValueString())
+	}
+	budget.Recipients = recipients
+
+	if budgetModel.RecipientsSlackChannels != nil {
+		var slackChannels []SlackChannel
+		for _, slackChannel := range budgetModel.RecipientsSlackChannels {
+			customerId := slackChannel.CustomerId.ValueString()
+			id := slackChannel.Id.ValueString()
+			name := slackChannel.Name.ValueString()
+			shared := slackChannel.Shared.ValueBool()
+			typee := slackChannel.Type.ValueString()
+			workspace := slackChannel.Workspace.ValueString()
+			slackChannels = append(slackChannels, SlackChannel{
+				CustomerId: customerId,
+				Id:         id,
+				Name:       name,
+				Shared:     shared,
+				Type:       typee,
+				Workspace:  workspace,
+			})
+		}
+		budget.RecipientsSlackChannels = slackChannels
+	}
+	var scope []string
+	for _, scopee := range budgetModel.Scope {
+		scope = append(scope, scopee.ValueString())
+	}
+	budget.Scope = scope
+	budget.StartPeriod = budgetModel.StartPeriod.ValueInt64()
+	budget.TimeInterval = budgetModel.TimeInterval.ValueString()
+	budget.Type = budgetModel.Type.ValueString()
+	usePrevSpend := budgetModel.UsePrevSpend.ValueBool()
+	budget.UsePrevSpend = usePrevSpend
+	return budget
+}
+
+// Create creates the resource and sets the initial Terraform state.
+func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	log.Println(" budget Create")
+	log.Println(r.client.Auth.DoiTAPITOken)
+	log.Println("---------------------------------------------------")
+	log.Println(r.client.Auth.CustomerContext)
+
+	// Retrieve values from plan
+	var plan budgetResourceModel
+	log.Println("before getting plan")
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	log.Println("after getting plan")
+	// Generate API request body from plan
+
+	budget := budgetModelToBudget(&plan, ctx)
+
+	log.Println("before creating budget")
+	// Create new budget
+	budgeResponse, err := r.client.CreateBudget(budget)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating budget",
+			"Could not create budget, unexpected error: "+err.Error(),
+		)
+		return
+	}
+	log.Println("budget response---------------------------------------------------")
+	log.Println(budgeResponse)
+	log.Println("budget id---------------------------------------------------")
+	log.Println(budgeResponse.Id)
+	plan.Id = types.StringValue(budgeResponse.Id)
+	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+
+	// Set state to fully populated data
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+}
+
+func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceModel, ctx context.Context) {
+	budgetModel.Id = types.StringValue(budget.Id)
+	budgetModel.Alerts = []ExternalBudgetAlertModel{}
+	for _, alert := range budget.Alerts {
+		budgetModel.Alerts = append(budgetModel.Alerts, ExternalBudgetAlertModel{
+			ForecastedDate: types.Int64Value(alert.ForecastedDate),
+			Percentage:     types.Float64Value(alert.Percentage),
+			Triggered:      types.BoolValue(alert.Triggered),
+		})
+	}
+	budgetModel.Amount = types.Float64Value(budget.Amount)
+	budgetModel.Collaborators = []CollaboratorModel{}
+	for _, collaborator := range budget.Collaborators {
+		budgetModel.Collaborators = append(budgetModel.Collaborators, CollaboratorModel{
+			Email: types.StringValue(collaborator.Email),
+			Role:  types.StringValue(collaborator.Role),
+		})
+	}
+	budgetModel.Currency = types.StringValue(budget.Currency)
+	budgetModel.Description = types.StringValue(budget.Description)
+	if budget.EndPeriod > 0 && budget.EndPeriod != 2678400000 {
+		budgetModel.EndPeriod = types.Int64Value(budget.EndPeriod)
+	}
+	budgetModel.GrowthPerPeriod = types.Float64Value(budget.GrowthPerPeriod)
+	budgetModel.Metric = types.StringValue(budget.Metric)
+	budgetModel.Type = types.StringValue(budget.Type)
+	budgetModel.Name = types.StringValue(budget.Name)
+	if budget.Public != nil {
+		public := budget.Public
+		if *public != "" {
+			budgetModel.Public = types.StringValue(*public)
+		}
+	}
+	budgetModel.Recipients = []types.String{}
+	for _, recipient := range budget.Recipients {
+		budgetModel.Recipients = append(budgetModel.Recipients, types.StringValue(recipient))
+	}
+	if budget.RecipientsSlackChannels != nil {
+		budgetModel.RecipientsSlackChannels = []SlackChannelModel{}
+		for _, recipient := range budget.RecipientsSlackChannels {
+			budgetModel.RecipientsSlackChannels = append(budgetModel.RecipientsSlackChannels, SlackChannelModel{
+				CustomerId: types.StringValue(recipient.CustomerId),
+				Id:         types.StringValue(recipient.Id),
+				Name:       types.StringValue(recipient.Name),
+				Shared:     types.BoolValue(recipient.Shared),
+				Type:       types.StringValue(recipient.Type),
+				Workspace:  types.StringValue(recipient.Workspace),
+			})
+		}
+	}
+	budgetModel.Scope = []types.String{}
+	for _, scope := range budget.Scope {
+		budgetModel.Scope = append(budgetModel.Scope, types.StringValue(scope))
+	}
+	budgetModel.StartPeriod = types.Int64Value(budget.StartPeriod)
+	budgetModel.TimeInterval = types.StringValue(budget.TimeInterval)
+	budgetModel.Type = types.StringValue(budget.Type)
+	budgetModel.UsePrevSpend = types.BoolValue(budget.UsePrevSpend)
+
+}
+
+// Read refreshes the Terraform state with the latest data.
+func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	log.Print(" budget Read")
+	// Get current state
+
+	var state budgetResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	log.Print("state id::::::::::::::::::::::::::)")
+	log.Print(state.Id.ValueString())
+	// Get refreshed budget value from DoiT
+	budget, err := r.client.GetBudget(state.Id.ValueString())
+	budgetToBudgetResourceModel(budget, &state, ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Doit Console Attribution",
+			"Could not read Doit Console Attribution ID "+state.Id.ValueString()+": "+err.Error(),
+		)
+		return
+	}
+	log.Print("response::::::::::::::::::::::::::)")
+	log.Print(budget)
+	// Set refreshed state
+	diags = resp.State.Set(ctx, &state)
+	log.Print("state read::::::::::::::::::::::::::)")
+	log.Print(state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	log.Print("hello budget Update:)")
+	// Retrieve values from plan
+	var plan budgetResourceModel
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state budgetResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Generate API request body from plan
+	var budget Budget
+	budget = budgetModelToBudget(&plan, ctx)
+	/*budget.Id = state.Id.ValueString()
+	var alerts []ExternalBudgetAlert
+	for _, alert := range plan.Alerts {
+		forecastedDate := alert.ForecastedDate.ValueInt64()
+		percentage := alert.Percentage.ValueFloat64()
+		triggered := alert.Triggered.ValueBool()
+		alerts = append(alerts, ExternalBudgetAlert{
+			ForecastedDate: forecastedDate,
+			Percentage:     percentage,
+			Triggered:      triggered,
+		})
+	}
+	budget.Alerts = alerts
+	amount := plan.Amount.ValueFloat64()
+	budget.Amount = amount
+	var collaborators []Collaborator
+	for _, collaborator := range plan.Collaborators {
+		email := collaborator.Email.ValueString()
+		role := collaborator.Role.ValueString()
+		collaborators = append(collaborators, Collaborator{
+			Email: email,
+			Role:  role,
+		})
+	}
+	budget.Collaborators = collaborators
+	budget.Currency = plan.Currency.ValueString()
+	description := plan.Description.ValueString()
+	budget.Description = description
+	endPeriod := plan.EndPeriod.ValueInt64()
+	budget.EndPeriod = endPeriod
+	growthPerPeriod := plan.GrowthPerPeriod.ValueFloat64()
+	budget.GrowthPerPeriod = growthPerPeriod
+	metric := plan.Metric.ValueString()
+	budget.Metric = metric
+	budget.Name = plan.Name.ValueString()
+	public := plan.Public.ValueString()
+	budget.Public = &public
+	var recipients []string
+	for _, recipient := range plan.Recipients {
+		recipients = append(recipients, recipient.ValueString())
+	}
+	budget.Recipients = recipients
+	var slackChannels []SlackChannel
+	for _, slackChannel := range plan.RecipientsSlackChannels {
+		customerId := slackChannel.CustomerId.ValueString()
+		id := slackChannel.Id.ValueString()
+		name := slackChannel.Name.ValueString()
+		shared := slackChannel.Shared.ValueBool()
+		typee := slackChannel.Type.ValueString()
+		workspace := slackChannel.Workspace.ValueString()
+		slackChannels = append(slackChannels, SlackChannel{
+			CustomerId: customerId,
+			Id:         id,
+			Name:       name,
+			Shared:     shared,
+			Type:       typee,
+			Workspace:  workspace,
+		})
+	}
+	budget.RecipientsSlackChannels = slackChannels
+	var scope []string
+	for _, scopee := range plan.Scope {
+		scope = append(scope, scopee.ValueString())
+	}
+	budget.Scope = scope
+	budget.StartPeriod = plan.StartPeriod.ValueInt64()
+	budget.TimeInterval = plan.TimeInterval.ValueString()
+	budget.Type = plan.Type.ValueString()
+	usePrevSpend := plan.UsePrevSpend.ValueBool()
+	budget.UsePrevSpend = usePrevSpend*/
+
+	// Update existing budget
+	_, err := r.client.UpdateBudget(state.Id.ValueString(), budget)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Budget",
+			"Could not update budget, unexpected error: "+err.Error(),
+		)
+		return
+	}
+
+	// Fetch updated items from GetBudget as UpdateBudget items are not
+	// populated.
+	budgetResponse, err := r.client.GetBudget(state.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Budget",
+			"Could not read budget ID "+plan.Id.ValueString()+": "+err.Error(),
+		)
+		return
+	}
+	budgetToBudgetResourceModel(budgetResponse, &plan, ctx)
+	// Update resource state with updated items and timestamp
+	/*plan.Id = types.StringValue(budgetResponse.Id)
+	plan.Alerts = []ExternalBudgetAlertModel{}
+	for _, alert := range budgetResponse.Alerts {
+		plan.Alerts = append(plan.Alerts, ExternalBudgetAlertModel{
+			ForecastedDate: types.Int64Value(alert.ForecastedDate),
+			Percentage:     types.Float64Value(alert.Percentage),
+			Triggered:      types.BoolValue(alert.Triggered),
+		})
+	}
+	plan.Amount = types.Float64Value(budgetResponse.Amount)
+	plan.Collaborators = []CollaboratorModel{}
+	for _, collaborator := range budgetResponse.Collaborators {
+		plan.Collaborators = append(plan.Collaborators, CollaboratorModel{
+			Email: types.StringValue(collaborator.Email),
+			Role:  types.StringValue(collaborator.Role),
+		})
+	}
+	plan.Currency = types.StringValue(budgetResponse.Currency)
+	plan.Description = types.StringValue(budgetResponse.Description)
+	plan.EndPeriod = types.Int64Value(budgetResponse.EndPeriod)
+	plan.GrowthPerPeriod = types.Float64Value(budgetResponse.GrowthPerPeriod)
+	plan.Metric = types.StringValue(budgetResponse.Metric)
+	plan.Type = types.StringValue(budgetResponse.Type)
+	plan.Name = types.StringValue(budgetResponse.Name)
+	publicResponse := budgetResponse.Public
+	plan.Public = types.StringValue(*publicResponse)
+	plan.Recipients = []types.String{}
+	for _, recipient := range budgetResponse.Recipients {
+		plan.Recipients = append(plan.Recipients, types.StringValue(recipient))
+	}
+	plan.RecipientsSlackChannels = []SlackChannelModel{}
+	for _, recipient := range budgetResponse.RecipientsSlackChannels {
+		plan.RecipientsSlackChannels = append(plan.RecipientsSlackChannels, SlackChannelModel{
+			CustomerId: types.StringValue(recipient.CustomerId),
+			Id:         types.StringValue(recipient.Id),
+			Name:       types.StringValue(recipient.Name),
+			Shared:     types.BoolValue(recipient.Shared),
+			Type:       types.StringValue(recipient.Type),
+			Workspace:  types.StringValue(recipient.Workspace),
+		})
+	}
+	plan.Scope = []types.String{}
+	for _, scope := range budgetResponse.Scope {
+		plan.Scope = append(plan.Scope, types.StringValue(scope))
+	}
+	plan.StartPeriod = types.Int64Value(budgetResponse.StartPeriod)
+	plan.TimeInterval = types.StringValue(budgetResponse.TimeInterval)
+	plan.Type = types.StringValue(budgetResponse.Type)
+	plan.UsePrevSpend = types.BoolValue(budgetResponse.UsePrevSpend)
+	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))*/
+
+	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+// Delete deletes the resource and removes the Terraform state on success.
+
+func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	log.Print("hello budget Delete:)")
+	// Retrieve values from state
+	var state budgetResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Delete existing budge
+	err := r.client.DeleteBudget(state.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting DoiT Attribution",
+			"Could not delete budge, unexpected error: "+err.Error(),
+		)
+		return
+	}
+}

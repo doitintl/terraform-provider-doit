@@ -242,5 +242,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewAttributionResource,
 		NewAttributionGroupResource,
 		NewReportResource,
+		NewBudgetResource,
 	}
 }

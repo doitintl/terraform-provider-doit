@@ -25,6 +25,9 @@ website/node_modules
 *.iml
 *.test
 *.iml
+.nix/
+shell.nix
+*.bk
 
 
 website/vendor

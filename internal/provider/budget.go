@@ -1,0 +1,107 @@
+package provider
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+)
+
+// CreateBudget - Create new budget
+func (c *ClientTest) CreateBudget(budget Budget) (*Budget, error) {
+	rb, err := json.Marshal(budget)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/budgets/?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	log.Println("URL----------------")
+	log.Println(req.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		log.Println("ERROR REQUEST----------------")
+		log.Println(err)
+		return nil, err
+	}
+
+	budgetResponse := Budget{}
+	err = json.Unmarshal(body, &budgetResponse)
+	if err != nil {
+		log.Println("ERROR UNMARSHALL----------------")
+		log.Println(err)
+		return nil, err
+	}
+	log.Println("Budget response----------------")
+	log.Println(budgetResponse)
+	return &budgetResponse, nil
+}
+
+// UpdateBudget - Updates an budget
+func (c *ClientTest) UpdateBudget(budgetID string, budget Budget) (*Budget, error) {
+	rb, err := json.Marshal(budget)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/budgets/%s/?customerContext=%s", c.HostURL, budgetID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	if err != nil {
+		return nil, err
+	}
+	log.Println("Update BODY----------------")
+	log.Println(string(rb))
+	log.Println("Update URL----------------")
+	log.Println(req.URL)
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	log.Println("Update BODY----------------")
+	log.Println(string(body))
+	budgetResponse := Budget{}
+	err = json.Unmarshal(body, &budgetResponse)
+	if err != nil {
+		return nil, err
+	}
+	log.Println("Budget response----------------")
+	log.Println(budgetResponse)
+	return &budgetResponse, nil
+}
+
+func (c *ClientTest) DeleteBudget(budgetID string) error {
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/budgets/%s/?customerContext=%s", c.HostURL, budgetID, c.Auth.CustomerContext), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.doRequest(req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetBudget - Returns a specifc budget
+func (c *ClientTest) GetBudget(orderID string) (*Budget, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/analytics/v1/budgets/%s/?customerContext=%s", c.HostURL, orderID, c.Auth.CustomerContext), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	budget := Budget{}
+	err = json.Unmarshal(body, &budget)
+	if err != nil {
+		return nil, err
+	}
+
+	return &budget, nil
+}
