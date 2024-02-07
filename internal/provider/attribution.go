@@ -15,7 +15,7 @@ func (c *ClientTest) CreateAttribution(attribution Attribution) (*Attribution, e
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/attributions/?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/attributions?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
 	log.Println("URL----------------")
 	log.Println(req.URL)
 	if err != nil {
@@ -47,7 +47,7 @@ func (c *ClientTest) UpdateAttribution(attributionID string, attribution Attribu
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/attributions/%s/?customerContext=%s", c.HostURL, attributionID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/attributions/%s?customerContext=%s", c.HostURL, attributionID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *ClientTest) UpdateAttribution(attributionID string, attribution Attribu
 }
 
 func (c *ClientTest) DeleteAttribution(attributionID string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/attributions/%s/?customerContext=%s", c.HostURL, attributionID, c.Auth.CustomerContext), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/attributions/%s?customerContext=%s", c.HostURL, attributionID, c.Auth.CustomerContext), nil)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (c *ClientTest) DeleteAttribution(attributionID string) error {
 
 // GetAttribution - Returns a specifc attribution
 func (c *ClientTest) GetAttribution(orderID string) (*Attribution, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/analytics/v1/attributions/%s/?customerContext=%s", c.HostURL, orderID, c.Auth.CustomerContext), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/analytics/v1/attributions/%s?customerContext=%s", c.HostURL, orderID, c.Auth.CustomerContext), nil)
 	if err != nil {
 		return nil, err
 	}

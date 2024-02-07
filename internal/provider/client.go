@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -106,6 +107,11 @@ func (c *ClientTest) doRequest(req *http.Request) ([]byte, error) {
 	retryable := func() error {
 		var errRetry error
 		res, errRetry = operation()
+		if res == nil {
+			log.Println("no response")
+			log.Println(errRetry)
+			return fmt.Errorf("no response")
+		}
 		if res.StatusCode == http.StatusTooManyRequests {
 			return fmt.Errorf("rate limit exceeded")
 		}

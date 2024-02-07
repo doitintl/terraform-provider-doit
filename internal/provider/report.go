@@ -19,7 +19,7 @@ func (c *ClientTest) CreateReport(report Report) (*Report, error) {
 	log.Print("Report body----------------")
 	log.Println(string(rb))
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/reports/?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/reports?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
 	log.Println("URL----------------")
 	log.Println(req.URL)
 	if err != nil {
@@ -53,7 +53,7 @@ func (c *ClientTest) UpdateReport(reportID string, report Report) (*Report, erro
 	}
 	log.Print("Report body----------------")
 	log.Println(string(rb))
-	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/reports/%s/?customerContext=%s", c.HostURL, reportID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/reports/%s?customerContext=%s", c.HostURL, reportID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (c *ClientTest) UpdateReport(reportID string, report Report) (*Report, erro
 }
 
 func (c *ClientTest) DeleteReport(reportID string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/reports/%s/?customerContext=%s", c.HostURL, reportID, c.Auth.CustomerContext), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/reports/%s?customerContext=%s", c.HostURL, reportID, c.Auth.CustomerContext), nil)
 	if err != nil {
 		return err
 	}
