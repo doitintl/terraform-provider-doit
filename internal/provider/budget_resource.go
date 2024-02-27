@@ -80,9 +80,7 @@ type budgetResourceModel struct {
 }
 
 type ExternalBudgetAlertModel struct {
-	ForecastedDate types.Int64   `tfsdk:"forecasted_date"`
 	Percentage     types.Float64 `tfsdk:"percentage"`
-	Triggered      types.Bool    `tfsdk:"triggered"`
 }
 
 type CollaboratorModel struct {
@@ -136,20 +134,10 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"forecasted_date": schema.Int64Attribute{
-							Optional: true,
-							Computed: true,
-							Default:  int64default.StaticInt64(0),
-						},
 						"percentage": schema.Float64Attribute{
 							Optional: true,
 							Computed: true,
 							Default:  float64default.StaticFloat64(0.0),
-						},
-						"triggered": schema.BoolAttribute{
-							Optional: true,
-							Computed: true,
-							Default:  booldefault.StaticBool(false),
 						},
 					},
 				},
@@ -308,13 +296,9 @@ func budgetModelToBudget(budgetModel *budgetResourceModel, ctx context.Context) 
 	var budget Budget
 	var alerts []ExternalBudgetAlert
 	for _, alert := range budgetModel.Alerts {
-		forecastedDate := alert.ForecastedDate.ValueInt64()
 		percentage := alert.Percentage.ValueFloat64()
-		triggered := alert.Triggered.ValueBool()
 		alerts = append(alerts, ExternalBudgetAlert{
-			ForecastedDate: forecastedDate,
-			Percentage:     percentage,
-			Triggered:      triggered,
+			Percentage: percentage,
 		})
 	}
 	budget.Alerts = alerts
@@ -433,9 +417,7 @@ func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceMode
 		budgetModel.Alerts = []ExternalBudgetAlertModel{}
 		for _, alert := range budget.Alerts {
 			budgetModel.Alerts = append(budgetModel.Alerts, ExternalBudgetAlertModel{
-				ForecastedDate: types.Int64Value(alert.ForecastedDate),
-				Percentage:     types.Float64Value(alert.Percentage),
-				Triggered:      types.BoolValue(alert.Triggered),
+				Percentage: types.Float64Value(alert.Percentage),
 			})
 		}
 		budgetModel.Amount = types.Float64Value(budget.Amount)
@@ -549,76 +531,6 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Generate API request body from plan
 	var budget Budget
 	budget = budgetModelToBudget(&plan, ctx)
-	/*budget.Id = state.Id.ValueString()
-	var alerts []ExternalBudgetAlert
-	for _, alert := range plan.Alerts {
-		forecastedDate := alert.ForecastedDate.ValueInt64()
-		percentage := alert.Percentage.ValueFloat64()
-		triggered := alert.Triggered.ValueBool()
-		alerts = append(alerts, ExternalBudgetAlert{
-			ForecastedDate: forecastedDate,
-			Percentage:     percentage,
-			Triggered:      triggered,
-		})
-	}
-	budget.Alerts = alerts
-	amount := plan.Amount.ValueFloat64()
-	budget.Amount = amount
-	var collaborators []Collaborator
-	for _, collaborator := range plan.Collaborators {
-		email := collaborator.Email.ValueString()
-		role := collaborator.Role.ValueString()
-		collaborators = append(collaborators, Collaborator{
-			Email: email,
-			Role:  role,
-		})
-	}
-	budget.Collaborators = collaborators
-	budget.Currency = plan.Currency.ValueString()
-	description := plan.Description.ValueString()
-	budget.Description = description
-	endPeriod := plan.EndPeriod.ValueInt64()
-	budget.EndPeriod = endPeriod
-	growthPerPeriod := plan.GrowthPerPeriod.ValueFloat64()
-	budget.GrowthPerPeriod = growthPerPeriod
-	metric := plan.Metric.ValueString()
-	budget.Metric = metric
-	budget.Name = plan.Name.ValueString()
-	public := plan.Public.ValueString()
-	budget.Public = &public
-	var recipients []string
-	for _, recipient := range plan.Recipients {
-		recipients = append(recipients, recipient.ValueString())
-	}
-	budget.Recipients = recipients
-	var slackChannels []SlackChannel
-	for _, slackChannel := range plan.RecipientsSlackChannels {
-		customerId := slackChannel.CustomerId.ValueString()
-		id := slackChannel.Id.ValueString()
-		name := slackChannel.Name.ValueString()
-		shared := slackChannel.Shared.ValueBool()
-		typee := slackChannel.Type.ValueString()
-		workspace := slackChannel.Workspace.ValueString()
-		slackChannels = append(slackChannels, SlackChannel{
-			CustomerId: customerId,
-			Id:         id,
-			Name:       name,
-			Shared:     shared,
-			Type:       typee,
-			Workspace:  workspace,
-		})
-	}
-	budget.RecipientsSlackChannels = slackChannels
-	var scope []string
-	for _, scopee := range plan.Scope {
-		scope = append(scope, scopee.ValueString())
-	}
-	budget.Scope = scope
-	budget.StartPeriod = plan.StartPeriod.ValueInt64()
-	budget.TimeInterval = plan.TimeInterval.ValueString()
-	budget.Type = plan.Type.ValueString()
-	usePrevSpend := plan.UsePrevSpend.ValueBool()
-	budget.UsePrevSpend = usePrevSpend*/
 
 	// Update existing budget
 	_, err := r.client.UpdateBudget(state.Id.ValueString(), budget)
@@ -641,57 +553,6 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 	budgetToBudgetResourceModel(budgetResponse, &plan, ctx)
-	// Update resource state with updated items and timestamp
-	/*plan.Id = types.StringValue(budgetResponse.Id)
-	plan.Alerts = []ExternalBudgetAlertModel{}
-	for _, alert := range budgetResponse.Alerts {
-		plan.Alerts = append(plan.Alerts, ExternalBudgetAlertModel{
-			ForecastedDate: types.Int64Value(alert.ForecastedDate),
-			Percentage:     types.Float64Value(alert.Percentage),
-			Triggered:      types.BoolValue(alert.Triggered),
-		})
-	}
-	plan.Amount = types.Float64Value(budgetResponse.Amount)
-	plan.Collaborators = []CollaboratorModel{}
-	for _, collaborator := range budgetResponse.Collaborators {
-		plan.Collaborators = append(plan.Collaborators, CollaboratorModel{
-			Email: types.StringValue(collaborator.Email),
-			Role:  types.StringValue(collaborator.Role),
-		})
-	}
-	plan.Currency = types.StringValue(budgetResponse.Currency)
-	plan.Description = types.StringValue(budgetResponse.Description)
-	plan.EndPeriod = types.Int64Value(budgetResponse.EndPeriod)
-	plan.GrowthPerPeriod = types.Float64Value(budgetResponse.GrowthPerPeriod)
-	plan.Metric = types.StringValue(budgetResponse.Metric)
-	plan.Type = types.StringValue(budgetResponse.Type)
-	plan.Name = types.StringValue(budgetResponse.Name)
-	publicResponse := budgetResponse.Public
-	plan.Public = types.StringValue(*publicResponse)
-	plan.Recipients = []types.String{}
-	for _, recipient := range budgetResponse.Recipients {
-		plan.Recipients = append(plan.Recipients, types.StringValue(recipient))
-	}
-	plan.RecipientsSlackChannels = []SlackChannelModel{}
-	for _, recipient := range budgetResponse.RecipientsSlackChannels {
-		plan.RecipientsSlackChannels = append(plan.RecipientsSlackChannels, SlackChannelModel{
-			CustomerId: types.StringValue(recipient.CustomerId),
-			Id:         types.StringValue(recipient.Id),
-			Name:       types.StringValue(recipient.Name),
-			Shared:     types.BoolValue(recipient.Shared),
-			Type:       types.StringValue(recipient.Type),
-			Workspace:  types.StringValue(recipient.Workspace),
-		})
-	}
-	plan.Scope = []types.String{}
-	for _, scope := range budgetResponse.Scope {
-		plan.Scope = append(plan.Scope, types.StringValue(scope))
-	}
-	plan.StartPeriod = types.Int64Value(budgetResponse.StartPeriod)
-	plan.TimeInterval = types.StringValue(budgetResponse.TimeInterval)
-	plan.Type = types.StringValue(budgetResponse.Type)
-	plan.UsePrevSpend = types.BoolValue(budgetResponse.UsePrevSpend)
-	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))*/
 
 	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 

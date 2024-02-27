@@ -15,15 +15,12 @@ resource "doit_budget" "my_budget" {
   alerts = [
     {
       percentage = 50
-      triggered  = false
     },
     {
-      "percentage" = 85,
-      "triggered"  = false
+      percentage = 85,
     },
     {
-      "percentage" = 100,
-      "triggered"  = false
+      percentage = 100,
     }
   ]
   recipients = [
@@ -41,8 +38,9 @@ resource "doit_budget" "my_budget" {
   amount            = 200
   currency          = "AUD"
   growth_per_period = 10
-  time_interval = "month"
-  type = "recurring"
+  time_interval     = "month"
+  type              = "recurring"
+  use_prev_spend    = false
 }
 
 resource "doit_attribution" "attri" {

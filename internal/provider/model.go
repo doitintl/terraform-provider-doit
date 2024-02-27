@@ -277,9 +277,7 @@ type Budget struct {
 
 // ExternalBudgetAlert defines model for ExternalBudgetAlert.
 type ExternalBudgetAlert struct {
-	ForecastedDate int64   `json:"forecastedDate"`
-	Percentage     float64 `json:"percentage,omitempty"`
-	Triggered      bool    `json:"triggered,omitempty"`
+	Percentage float64 `json:"percentage,omitempty"`
 }
 
 type Collaborator struct {
