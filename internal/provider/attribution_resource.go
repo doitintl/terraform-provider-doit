@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"strings"
 
 	"fmt"
 	"log"
@@ -201,6 +202,10 @@ func (r *attributionResource) Read(ctx context.Context, req resource.ReadRequest
 	// Get refreshed attribution value from DoiT
 	attribution, err := r.client.GetAttribution(state.Id.ValueString())
 	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Doit Console Attribution",
 			"Could not read Doit Console Attribution ID "+state.Id.ValueString()+": "+err.Error(),

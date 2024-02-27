@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"log"
@@ -427,64 +428,65 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 }
 
 func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceModel, ctx context.Context) {
-	budgetModel.Id = types.StringValue(budget.Id)
-	budgetModel.Alerts = []ExternalBudgetAlertModel{}
-	for _, alert := range budget.Alerts {
-		budgetModel.Alerts = append(budgetModel.Alerts, ExternalBudgetAlertModel{
-			ForecastedDate: types.Int64Value(alert.ForecastedDate),
-			Percentage:     types.Float64Value(alert.Percentage),
-			Triggered:      types.BoolValue(alert.Triggered),
-		})
-	}
-	budgetModel.Amount = types.Float64Value(budget.Amount)
-	budgetModel.Collaborators = []CollaboratorModel{}
-	for _, collaborator := range budget.Collaborators {
-		budgetModel.Collaborators = append(budgetModel.Collaborators, CollaboratorModel{
-			Email: types.StringValue(collaborator.Email),
-			Role:  types.StringValue(collaborator.Role),
-		})
-	}
-	budgetModel.Currency = types.StringValue(budget.Currency)
-	budgetModel.Description = types.StringValue(budget.Description)
-	if budget.EndPeriod > 0 && budget.EndPeriod != 2678400000 {
-		budgetModel.EndPeriod = types.Int64Value(budget.EndPeriod)
-	}
-	budgetModel.GrowthPerPeriod = types.Float64Value(budget.GrowthPerPeriod)
-	budgetModel.Metric = types.StringValue(budget.Metric)
-	budgetModel.Type = types.StringValue(budget.Type)
-	budgetModel.Name = types.StringValue(budget.Name)
-	if budget.Public != nil {
-		public := budget.Public
-		if *public != "" {
-			budgetModel.Public = types.StringValue(*public)
-		}
-	}
-	budgetModel.Recipients = []types.String{}
-	for _, recipient := range budget.Recipients {
-		budgetModel.Recipients = append(budgetModel.Recipients, types.StringValue(recipient))
-	}
-	if budget.RecipientsSlackChannels != nil {
-		budgetModel.RecipientsSlackChannels = []SlackChannelModel{}
-		for _, recipient := range budget.RecipientsSlackChannels {
-			budgetModel.RecipientsSlackChannels = append(budgetModel.RecipientsSlackChannels, SlackChannelModel{
-				CustomerId: types.StringValue(recipient.CustomerId),
-				Id:         types.StringValue(recipient.Id),
-				Name:       types.StringValue(recipient.Name),
-				Shared:     types.BoolValue(recipient.Shared),
-				Type:       types.StringValue(recipient.Type),
-				Workspace:  types.StringValue(recipient.Workspace),
+	if budget != nil {
+		budgetModel.Id = types.StringValue(budget.Id)
+		budgetModel.Alerts = []ExternalBudgetAlertModel{}
+		for _, alert := range budget.Alerts {
+			budgetModel.Alerts = append(budgetModel.Alerts, ExternalBudgetAlertModel{
+				ForecastedDate: types.Int64Value(alert.ForecastedDate),
+				Percentage:     types.Float64Value(alert.Percentage),
+				Triggered:      types.BoolValue(alert.Triggered),
 			})
 		}
+		budgetModel.Amount = types.Float64Value(budget.Amount)
+		budgetModel.Collaborators = []CollaboratorModel{}
+		for _, collaborator := range budget.Collaborators {
+			budgetModel.Collaborators = append(budgetModel.Collaborators, CollaboratorModel{
+				Email: types.StringValue(collaborator.Email),
+				Role:  types.StringValue(collaborator.Role),
+			})
+		}
+		budgetModel.Currency = types.StringValue(budget.Currency)
+		budgetModel.Description = types.StringValue(budget.Description)
+		if budget.EndPeriod > 0 && budget.EndPeriod != 2678400000 {
+			budgetModel.EndPeriod = types.Int64Value(budget.EndPeriod)
+		}
+		budgetModel.GrowthPerPeriod = types.Float64Value(budget.GrowthPerPeriod)
+		budgetModel.Metric = types.StringValue(budget.Metric)
+		budgetModel.Type = types.StringValue(budget.Type)
+		budgetModel.Name = types.StringValue(budget.Name)
+		if budget.Public != nil {
+			public := budget.Public
+			if *public != "" {
+				budgetModel.Public = types.StringValue(*public)
+			}
+		}
+		budgetModel.Recipients = []types.String{}
+		for _, recipient := range budget.Recipients {
+			budgetModel.Recipients = append(budgetModel.Recipients, types.StringValue(recipient))
+		}
+		if budget.RecipientsSlackChannels != nil {
+			budgetModel.RecipientsSlackChannels = []SlackChannelModel{}
+			for _, recipient := range budget.RecipientsSlackChannels {
+				budgetModel.RecipientsSlackChannels = append(budgetModel.RecipientsSlackChannels, SlackChannelModel{
+					CustomerId: types.StringValue(recipient.CustomerId),
+					Id:         types.StringValue(recipient.Id),
+					Name:       types.StringValue(recipient.Name),
+					Shared:     types.BoolValue(recipient.Shared),
+					Type:       types.StringValue(recipient.Type),
+					Workspace:  types.StringValue(recipient.Workspace),
+				})
+			}
+		}
+		budgetModel.Scope = []types.String{}
+		for _, scope := range budget.Scope {
+			budgetModel.Scope = append(budgetModel.Scope, types.StringValue(scope))
+		}
+		budgetModel.StartPeriod = types.Int64Value(budget.StartPeriod)
+		budgetModel.TimeInterval = types.StringValue(budget.TimeInterval)
+		budgetModel.Type = types.StringValue(budget.Type)
+		budgetModel.UsePrevSpend = types.BoolValue(budget.UsePrevSpend)
 	}
-	budgetModel.Scope = []types.String{}
-	for _, scope := range budget.Scope {
-		budgetModel.Scope = append(budgetModel.Scope, types.StringValue(scope))
-	}
-	budgetModel.StartPeriod = types.Int64Value(budget.StartPeriod)
-	budgetModel.TimeInterval = types.StringValue(budget.TimeInterval)
-	budgetModel.Type = types.StringValue(budget.Type)
-	budgetModel.UsePrevSpend = types.BoolValue(budget.UsePrevSpend)
-
 }
 
 // Read refreshes the Terraform state with the latest data.
@@ -503,14 +505,18 @@ func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, res
 	log.Print(state.Id.ValueString())
 	// Get refreshed budget value from DoiT
 	budget, err := r.client.GetBudget(state.Id.ValueString())
-	budgetToBudgetResourceModel(budget, &state, ctx)
 	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
-			"Error Reading Doit Console Attribution",
-			"Could not read Doit Console Attribution ID "+state.Id.ValueString()+": "+err.Error(),
+			"Error Reading Doit Console Budget",
+			"Could not read Doit Console Budget ID "+state.Id.ValueString()+": "+err.Error(),
 		)
 		return
 	}
+	budgetToBudgetResourceModel(budget, &state, ctx)
 	log.Print("response::::::::::::::::::::::::::)")
 	log.Print(budget)
 	// Set refreshed state

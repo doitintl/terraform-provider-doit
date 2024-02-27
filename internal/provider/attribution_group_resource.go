@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"strings"
 
 	"fmt"
 	"time"
@@ -163,6 +164,10 @@ func (r *attributionGroupResource) Read(ctx context.Context, req resource.ReadRe
 	// Get refreshed attributionGroup value from DoiT
 	attributionGroup, err := r.client.GetAttributionGroup(state.Id.ValueString())
 	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Doit Console AttributionGroup",
 			"Could not read Doit Console AttributionGroup ID "+state.Id.ValueString()+": "+err.Error(),

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"log"
@@ -824,6 +825,10 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 	// Get refreshed report value from DoiT
 	report, err := r.client.GetReport(state.Id.ValueString())
 	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Doit Console Attribution",
 			"Could not read Doit Console Attribution ID "+state.Id.ValueString()+": "+err.Error(),
