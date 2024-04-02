@@ -15,7 +15,7 @@ description: |-
 ```terraform
 resource "doit_budget" "my_budget" {
   name        = "test budget terraform"
-  description = "hellogo test2"
+  description = "description"
   alerts = [
     {
       percentage = 50
@@ -28,11 +28,11 @@ resource "doit_budget" "my_budget" {
     }
   ]
   recipients = [
-    "diana@doit.com"
+    "recipient@doit.com"
   ]
   collaborators = [
     {
-      "email" : "diana@doit.com",
+      "email" : "recipient@doit.com",
       "role" : "owner"
     },
   ]

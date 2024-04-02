@@ -3,12 +3,12 @@
 page_title: "doit Provider"
 subcategory: ""
 description: |-
-  
+  DoiT Provider. Notice that this provider is proof of concept and it is not currently supported.
 ---
 
 # doit Provider
 
-
+DoiT Provider. Notice that this provider is proof of concept and it is not currently supported.
 
 ## Example Usage
 
@@ -17,7 +17,7 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.12.0"
+      version = "0.18.0"
     }
   }
 }

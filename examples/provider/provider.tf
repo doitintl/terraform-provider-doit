@@ -2,7 +2,7 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.12.0"
+      version = "0.18.0"
     }
   }
 }

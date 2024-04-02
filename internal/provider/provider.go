@@ -63,6 +63,7 @@ func (p *doitProvider) Metadata(ctx context.Context, _ provider.MetadataRequest,
 func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	tflog.Debug(ctx, "provider Schema")
 	resp.Schema = schema.Schema{
+		Description: "DoiT Provider. Notice that this provider is proof of concept and it is not currently supported.",
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
 				Description: "URI for DoiT API. May also be provided via DOIT_HOST environment variable.",
