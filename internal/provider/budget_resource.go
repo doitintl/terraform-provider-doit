@@ -80,7 +80,7 @@ type budgetResourceModel struct {
 }
 
 type ExternalBudgetAlertModel struct {
-	Percentage     types.Float64 `tfsdk:"percentage"`
+	Percentage types.Float64 `tfsdk:"percentage"`
 }
 
 type CollaboratorModel struct {
@@ -332,8 +332,8 @@ func budgetModelToBudget(budgetModel *budgetResourceModel, ctx context.Context) 
 	}
 	budget.Recipients = recipients
 
+	var slackChannels []SlackChannel
 	if budgetModel.RecipientsSlackChannels != nil {
-		var slackChannels []SlackChannel
 		for _, slackChannel := range budgetModel.RecipientsSlackChannels {
 			customerId := slackChannel.CustomerId.ValueString()
 			id := slackChannel.Id.ValueString()
@@ -447,8 +447,8 @@ func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceMode
 		for _, recipient := range budget.Recipients {
 			budgetModel.Recipients = append(budgetModel.Recipients, types.StringValue(recipient))
 		}
+		budgetModel.RecipientsSlackChannels = []SlackChannelModel{}
 		if budget.RecipientsSlackChannels != nil {
-			budgetModel.RecipientsSlackChannels = []SlackChannelModel{}
 			for _, recipient := range budget.RecipientsSlackChannels {
 				budgetModel.RecipientsSlackChannels = append(budgetModel.RecipientsSlackChannels, SlackChannelModel{
 					CustomerId: types.StringValue(recipient.CustomerId),
