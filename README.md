@@ -1,6 +1,6 @@
 # DoiT Console Provider 
 
-This is a initial Proof of Concept to create a Terraform provider for the  DOiT Console.
+This is a initial Proof of Concept to create a Terraform provider for DoiT Console.
 
 ## Requirements
 
@@ -33,7 +33,7 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using the provider
 
-Please check the docs folder to find example to use the DoiT Console provider
+Please check the docs folder to find example to use the DoiT Console provider.
 
 ## Developing the Provider
 
