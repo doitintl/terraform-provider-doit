@@ -112,9 +112,14 @@ func (c *ClientTest) doRequest(req *http.Request) ([]byte, error) {
 			log.Println(errRetry)
 			return fmt.Errorf("no response")
 		}
-		if res.StatusCode == http.StatusTooManyRequests {
-			return fmt.Errorf("rate limit exceeded")
+		if res.StatusCode == http.StatusTooManyRequests ||
+			res.StatusCode == http.StatusGatewayTimeout{
+			return fmt.Errorf(http.StatusText(res.StatusCode))
 		}
+		if res.StatusCode == 520 {
+			return fmt.Errorf("Cloudflare 520 Error")
+		}
+		
 		err = errRetry
 		return nil
 	}
