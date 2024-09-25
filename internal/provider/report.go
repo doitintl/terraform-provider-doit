@@ -19,7 +19,9 @@ func (c *ClientTest) CreateReport(report Report) (*Report, error) {
 	log.Print("Report body----------------")
 	log.Println(string(rb))
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/reports?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/reports", c.HostURL)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
 	log.Println("URL----------------")
 	log.Println(req.URL)
 	if err != nil {
@@ -53,7 +55,9 @@ func (c *ClientTest) UpdateReport(reportID string, report Report) (*Report, erro
 	}
 	log.Print("Report body----------------")
 	log.Println(string(rb))
-	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/reports/%s?customerContext=%s", c.HostURL, reportID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/reports/%s", c.HostURL, reportID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("PATCH", urlRequestContext, strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +79,9 @@ func (c *ClientTest) UpdateReport(reportID string, report Report) (*Report, erro
 }
 
 func (c *ClientTest) DeleteReport(reportID string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/reports/%s?customerContext=%s", c.HostURL, reportID, c.Auth.CustomerContext), nil)
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/reports/%s", c.HostURL, reportID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
 	if err != nil {
 		return err
 	}
@@ -91,7 +97,10 @@ func (c *ClientTest) DeleteReport(reportID string) error {
 
 // GetReport - Returns a specifc report
 func (c *ClientTest) GetReport(orderID string) (*Report, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/analytics/v1/reports/%s/config?customerContext=%s", c.HostURL, orderID, c.Auth.CustomerContext), nil)
+
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/reports/%s/config", c.HostURL, orderID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("GET", urlRequestContext, nil)
 	if err != nil {
 		return nil, err
 	}

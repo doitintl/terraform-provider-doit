@@ -14,8 +14,9 @@ func (c *ClientTest) CreateBudget(budget Budget) (*Budget, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/budgets?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets", c.HostURL)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
 	log.Println("URL----------------")
 	log.Println(req.URL)
 	if err != nil {
@@ -47,7 +48,9 @@ func (c *ClientTest) UpdateBudget(budgetID string, budget Budget) (*Budget, erro
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/budgets/%s?customerContext=%s", c.HostURL, budgetID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, budgetID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("PATCH",urlRequestContext, strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +75,9 @@ func (c *ClientTest) UpdateBudget(budgetID string, budget Budget) (*Budget, erro
 }
 
 func (c *ClientTest) DeleteBudget(budgetID string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/budgets/%s?customerContext=%s", c.HostURL, budgetID, c.Auth.CustomerContext), nil)
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, budgetID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
 	if err != nil {
 		return err
 	}
@@ -87,7 +92,9 @@ func (c *ClientTest) DeleteBudget(budgetID string) error {
 
 // GetBudget - Returns a specifc budget
 func (c *ClientTest) GetBudget(orderID string) (*Budget, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/analytics/v1/budgets/%s?customerContext=%s", c.HostURL, orderID, c.Auth.CustomerContext), nil)
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, orderID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("GET", urlRequestContext, nil)
 	if err != nil {
 		return nil, err
 	}

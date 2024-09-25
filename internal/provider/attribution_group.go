@@ -18,7 +18,10 @@ func (c *ClientTest) CreateAttributionGroup(attributionGroup AttributionGroup) (
 	}
 	log.Println(strings.NewReader(string(rb)))
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/analytics/v1/attributiongroups?customerContext=%s", c.HostURL, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributiongroups", c.HostURL)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+
+	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
 	log.Println("URL:")
 	log.Println(req.URL)
 	if err != nil {
@@ -48,7 +51,9 @@ func (c *ClientTest) UpdateAttributionGroup(attributionGroupID string, attributi
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/analytics/v1/attributiongroups/%s?customerContext=%s", c.HostURL, attributionGroupID, c.Auth.CustomerContext), strings.NewReader(string(rb)))
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributiongroups/%s", c.HostURL, attributionGroupID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("PATCH", urlRequestContext, strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +70,9 @@ func (c *ClientTest) UpdateAttributionGroup(attributionGroupID string, attributi
 }
 
 func (c *ClientTest) DeleteAttributionGroup(attributionGroupID string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/analytics/v1/attributiongroups/%s?customerContext=%s", c.HostURL, attributionGroupID, c.Auth.CustomerContext), nil)
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributiongroups/%s", c.HostURL, attributionGroupID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
 	if err != nil {
 		return err
 	}
@@ -80,7 +87,9 @@ func (c *ClientTest) DeleteAttributionGroup(attributionGroupID string) error {
 
 // GetAttributionGroup - Returns a specifc attribution
 func (c *ClientTest) GetAttributionGroup(attributionGroupID string) (*AttributionGroup, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/analytics/v1/attributiongroups/%s?customerContext=%s", c.HostURL, attributionGroupID, c.Auth.CustomerContext), nil)
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributiongroups/%s", c.HostURL, attributionGroupID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("GET", urlRequestContext, nil)
 	if err != nil {
 		return nil, err
 	}

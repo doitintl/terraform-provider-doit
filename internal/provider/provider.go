@@ -123,15 +123,6 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		)
 	}
 
-	if config.CustomerContext.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("CustomerContext"),
-			"Unknown DoiT API CustomerContext",
-			"-The provider cannot create the DoiT API client as there is an unknown configuration value for the DoiT API customerContext. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the DOIT_CUSTOMER_CONTEXT environment variable.",
-		)
-	}
-
 	if config.DoiTAPITOken.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("doiTAPITOken"),
@@ -177,16 +168,6 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 				"If either is already set, ensure the value is not empty.",
 		)*/
 		host = HostURL
-	}
-
-	if customerContext == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("customerContext"),
-			"Missing DoiT Customer Context",
-			"The provider cannot create the DoiT API client as there is a missing or empty value for the DoiT API customer Context. "+
-				"Set the CustomerContext value in the configuration or use the DOIT_CUSTOMER_CONTEXT environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
 	}
 
 	if doiTAPIToken == "" {

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.18.0"
+      version = "0.21.0"
     }
   }
 }
@@ -47,7 +47,7 @@ resource "doit_attribution" "attri" {
   name        = "attritestnewname"
   description = "attritestdesc"
   formula     = "A"
-  components  = [{ type = "label", key = "iris_region", values = ["us-central1"] }]
+  components  = [{ type = "system_label", key = "aws/region_code", values = ["us-east-1"] }]
 }
 
 resource "doit_attribution_group" "attributeGroup" {

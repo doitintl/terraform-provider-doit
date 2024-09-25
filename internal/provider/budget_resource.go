@@ -579,7 +579,7 @@ func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	err := r.client.DeleteBudget(state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Deleting DoiT Attribution",
+			"Error Deleting DoiT Budget",
 			"Could not delete budge, unexpected error: "+err.Error(),
 		)
 		return
