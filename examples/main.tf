@@ -2,7 +2,7 @@ terraform {
   required_providers {
     doit = {
       source  = "doitintl/doit"
-      version = "0.23.0"
+      version = "0.24.0"
     }
   }
 }
@@ -24,11 +24,11 @@ resource "doit_budget" "my_budget" {
     }
   ]
   recipients = [
-    "diana@doit.com"
+    "test@doit.com"
   ]
   collaborators = [
     {
-      "email" : "diana@doit.com",
+      "email" : "test@doit.com",
       "role" : "owner"
     },
   ]

@@ -49,7 +49,6 @@ func NewClientTest(host, doiTAPIClient, customerContext *string, rl *rate.Limite
 	if host != nil {
 		c.HostURL = *host
 	}
-
 	_, err := c.SignIn()
 	if err != nil {
 		return nil, err
@@ -67,7 +66,7 @@ func (c *ClientTest) SignIn() (*AuthResponseTest, error) {
 	//	return nil, err
 	//}
 
-	url_ccontext := "/?customerContext=" + c.Auth.CustomerContext
+	url_ccontext := "/auth/v1/validate?customerContext=" + c.Auth.CustomerContext
 	req, err := http.NewRequest("GET", c.HostURL+url_ccontext, nil)
 	if err != nil {
 		return nil, err
@@ -149,7 +148,7 @@ func (c *ClientTest) doRequest(req *http.Request) ([]byte, error) {
 func addContextToURL(context, url string) (urlContext string) {
 	urlContext = url
 	if len(strings.TrimSpace(context)) != 0 {
-		urlContext = fmt.Sprintf("url?customerContext=%s", context)
+		urlContext = fmt.Sprintf(url+"?customerContext=%s", context)
 	}
 	return urlContext
 }
