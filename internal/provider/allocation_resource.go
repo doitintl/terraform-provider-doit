@@ -86,7 +86,7 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 			if resp.Diagnostics.HasError() {
 				return
 			}
-			createComponents := make([]models.AllocationComponent, len(planComponents))
+			createComponents := make([]models.AllocationComponent, 0)
 			allocation.Rule.Components = &[]models.AllocationComponent{}
 			for _, component := range planComponents {
 				createComponent := models.AllocationComponent{
@@ -238,7 +238,7 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 			if resp.Diagnostics.HasError() {
 				return
 			}
-			createComponents := make([]models.AllocationComponent, len(planComponents))
+			createComponents := make([]models.AllocationComponent, 0)
 			allocation.Rule.Components = &[]models.AllocationComponent{}
 			for _, component := range planComponents {
 				createComponent := models.AllocationComponent{
