@@ -16,7 +16,8 @@ func (c *ClientTest) CreateAllocation(allocation models.SingleAllocation) (*mode
 		return nil, err
 	}
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations", c.HostURL)
-	req, err := http.NewRequest("POST", urlRequestBase, strings.NewReader(string(rb)))
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
 	log.Println("URL----------------")
 	log.Println(req.URL)
 	if err != nil {
@@ -50,7 +51,8 @@ func (c *ClientTest) UpdateAllocation(allocationID string, allocation models.Sin
 		return nil, err
 	}
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, allocationID)
-	req, err := http.NewRequest("PATCH", urlRequestBase, strings.NewReader(string(rb)))
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("PATCH", urlRequestContext, strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +75,8 @@ func (c *ClientTest) UpdateAllocation(allocationID string, allocation models.Sin
 
 func (c *ClientTest) DeleteAllocation(allocationID string) error {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, allocationID)
-
-	req, err := http.NewRequest("DELETE", urlRequestBase, nil)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
 	if err != nil {
 		return err
 	}
@@ -90,7 +92,8 @@ func (c *ClientTest) DeleteAllocation(allocationID string) error {
 // GetAllocation - Returns a specifc allocation
 func (c *ClientTest) GetAllocation(orderID string) (*models.SingleAllocation, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, orderID)
-	req, err := http.NewRequest("GET", urlRequestBase, nil)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("GET", urlRequestContext, nil)
 	if err != nil {
 		return nil, err
 	}
