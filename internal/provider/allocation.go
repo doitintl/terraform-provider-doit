@@ -1,13 +1,132 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"terraform-provider-doit/internal/provider/models"
+	"terraform-provider-doit/internal/provider/resource_allocation"
+	"time"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+func (plan *allocationResourceModel) toRequest(ctx context.Context) (allocation models.SingleAllocation, d diag.Diagnostics) {
+	var diags diag.Diagnostics
+	allocationType := models.SingleAllocationAllocationType(plan.AllocationType.ValueString())
+	allocation.AllocationType = &allocationType
+	allocation.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
+	allocation.Description = plan.Description.ValueStringPointer()
+	allocation.Name = plan.Name.ValueStringPointer()
+	allocation.Type = plan.Type.ValueStringPointer()
+	if !plan.Rule.IsNull() {
+		allocation.Rule = &models.AllocationRule{
+			Formula: plan.Rule.Formula.ValueStringPointer(),
+		}
+		if !plan.Rule.Components.IsNull() {
+			planComponents := []resource_allocation.ComponentsValue{}
+			diags = plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
+			d.Append(diags...)
+			if d.HasError() {
+				return
+			}
+			createComponents := make([]models.AllocationComponent, 0)
+			allocation.Rule.Components = &[]models.AllocationComponent{}
+			for _, component := range planComponents {
+				createComponent := models.AllocationComponent{
+					IncludeNull:      component.IncludeNull.ValueBoolPointer(),
+					InverseSelection: component.InverseSelection.ValueBoolPointer(),
+					Key:              component.Key.ValueString(),
+					Mode:             models.AllocationComponentMode(component.Mode.ValueString()),
+					Type:             models.DimensionsTypes(component.ComponentsType.ValueString()),
+				}
+				diags = component.Values.ElementsAs(ctx, &createComponent.Values, false)
+				d.Append(diags...)
+				if d.HasError() {
+					return
+				}
+				createComponents = append(createComponents, createComponent)
+			}
+			allocation.Rule.Components = &createComponents
+		}
+	}
+	return allocation, d
+}
+
+func (state *allocationResourceModel) populate(allocation *models.SingleAllocation, ctx context.Context) (d diag.Diagnostics) {
+	var diags diag.Diagnostics
+	state.Id = types.StringPointerValue(allocation.Id)
+	state.Description = types.StringPointerValue(allocation.Description)
+	state.Type = types.StringPointerValue(allocation.Type)
+	if allocation.AllocationType != nil {
+		allocationType := string(*allocation.AllocationType)
+		state.AllocationType = types.StringValue(allocationType)
+	}
+	state.AnomalyDetection = types.BoolPointerValue(allocation.AnomalyDetection)
+	state.UpdateTime = types.Int64Value(time.Now().Unix())
+	// Overwrite components with refreshed state
+	if allocation.Rule != nil {
+		state.Rule.Formula = types.StringPointerValue(allocation.Rule.Formula)
+		if allocation.Rule.Components != nil {
+			stateComponents := make([]attr.Value, len(*allocation.Rule.Components))
+			for i, component := range *allocation.Rule.Components {
+				stateComponent := resource_allocation.ComponentsValue{
+					IncludeNull:      types.BoolPointerValue(component.IncludeNull),
+					InverseSelection: types.BoolPointerValue(component.InverseSelection),
+					Key:              types.StringValue(component.Key),
+					Mode:             types.StringValue(string(component.Mode)),
+					ComponentsType:   types.StringValue(string(component.Type)),
+				}
+				values := make([]attr.Value, len(component.Values))
+				for j := range component.Values {
+					values[j] = types.StringValue(component.Values[j])
+				}
+				stateComponent.Values, diags = types.ListValue(types.StringType, values)
+				d.Append(diags...)
+				if d.HasError() {
+					return
+				}
+				stateComponents[i], diags = resource_allocation.NewComponentsValue(stateComponent.AttributeTypes(ctx), map[string]attr.Value{
+					"include_null":      stateComponent.IncludeNull,
+					"inverse_selection": stateComponent.InverseSelection,
+					"key":               stateComponent.Key,
+					"mode":              stateComponent.Mode,
+					"type":              stateComponent.ComponentsType,
+					"values":            stateComponent.Values,
+				})
+				d.Append(diags...)
+				if d.HasError() {
+					return
+				}
+			}
+			// Using the first item's type is a bit of a hack and shouldn't be necessary as the list type should be resource_allocation.ComponentsType:
+			// var elementType resource_allocation.ComponentsType
+			// for idx, element := range stateComponents {
+			// 	if !elementType.Equal(element.Type(ctx)) {
+			// 		fmt.Printf("List Element Type: %s\n", elementType.String())
+			// 		fmt.Printf("List Index (%d) Element Type: %s\n", idx, element.Type(ctx))
+			// 		fmt.Printf("Equal to self 1: %v\n", element.Type(ctx).Equal(element.Type(ctx)))
+			// 		fmt.Printf("Equal to self 2: %v\n", elementType.Equal(elementType))
+			// 		fmt.Printf("Other way: %v\n", element.Type(ctx).Equal(elementType))
+			// 	}
+			// }
+			// elements := state.Rule.Components.Elements()
+			// fmt.Println("0 null", elements[0].IsNull())
+			// fmt.Println("1 null", elements[1].IsNull())
+			state.Rule.Components, diags = types.ListValue(stateComponents[0].Type(ctx), stateComponents)
+			d.Append(diags...)
+			if d.HasError() {
+				return
+			}
+		}
+	}
+	return diags
+}
 
 // CreateAllocation - Create new allocation
 func (c *ClientTest) CreateAllocation(allocation models.SingleAllocation) (*models.SingleAllocation, error) {

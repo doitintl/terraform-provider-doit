@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_allocation"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ resource.Resource = (*allocationResource)(nil)
@@ -68,43 +66,10 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 	// Generate API request body from plan
-	var allocation models.SingleAllocation
-	allocationType := models.SingleAllocationAllocationType(plan.AllocationType.ValueString())
-	allocation.AllocationType = &allocationType
-	allocation.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
-	allocation.Description = plan.Description.ValueStringPointer()
-	allocation.Name = plan.Name.ValueStringPointer()
-	allocation.Type = plan.Type.ValueStringPointer()
-	if !plan.Rule.IsNull() {
-		allocation.Rule = &models.AllocationRule{
-			Formula: plan.Rule.Formula.ValueStringPointer(),
-		}
-		if !plan.Rule.Components.IsNull() {
-			planComponents := []resource_allocation.ComponentsValue{}
-			diags = plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			createComponents := make([]models.AllocationComponent, 0)
-			allocation.Rule.Components = &[]models.AllocationComponent{}
-			for _, component := range planComponents {
-				createComponent := models.AllocationComponent{
-					IncludeNull:      component.IncludeNull.ValueBoolPointer(),
-					InverseSelection: component.InverseSelection.ValueBoolPointer(),
-					Key:              component.Key.ValueString(),
-					Mode:             models.AllocationComponentMode(component.Mode.ValueString()),
-					Type:             models.DimensionsTypes(component.ComponentsType.ValueString()),
-				}
-				diags = component.Values.ElementsAs(ctx, &createComponent.Values, false)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				createComponents = append(createComponents, createComponent)
-			}
-			allocation.Rule.Components = &createComponents
-		}
+	allocation, diags := plan.toRequest(ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Save data into Terraform state
@@ -119,7 +84,11 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	log.Println("allocation id---------------------------------------------------")
 	log.Println(allocationResponse.Id)
 	plan.Id = types.StringPointerValue(allocationResponse.Id)
+	plan.Type = types.StringPointerValue(allocationResponse.Type)
+	plan.AnomalyDetection = types.BoolPointerValue(allocationResponse.AnomalyDetection)
+	plan.CreateTime = types.Int64PointerValue(allocationResponse.CreateTime)
 	plan.UpdateTime = types.Int64Value(time.Now().Unix())
+	plan.AllocationType = types.StringValue("single")
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -137,8 +106,11 @@ func (r *allocationResource) Read(ctx context.Context, req resource.ReadRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	log.Println("state read before")
+	log.Println(state)
 	log.Print("state id:::::::::::::::::::::::::")
 	log.Print(state.Id.ValueString())
+
 	// Get refreshed allocation value from DoiT
 	allocation, err := r.client.GetAllocation(state.Id.ValueString())
 	if err != nil {
@@ -152,50 +124,10 @@ func (r *allocationResource) Read(ctx context.Context, req resource.ReadRequest,
 		)
 		return
 	}
-	state.Id = types.StringPointerValue(allocation.Id)
-	state.Description = types.StringPointerValue(allocation.Description)
-	state.Type = types.StringPointerValue(allocation.Type)
-	state.Name = types.StringPointerValue(allocation.Name)
-	if allocation.AllocationType != nil {
-		allocationType := string(*allocation.AllocationType)
-		state.AllocationType = types.StringValue(allocationType)
-	}
-	state.AnomalyDetection = types.BoolPointerValue(allocation.AnomalyDetection)
-	state.UpdateTime = types.Int64Value(time.Now().Unix())
-	// Overwrite components with refreshed state
-	if allocation.Rule != nil {
-		state.Rule = resource_allocation.RuleValue{
-			Formula: types.StringPointerValue(allocation.Rule.Formula),
-		}
-		if allocation.Rule.Components != nil {
-			stateComponents := []resource_allocation.ComponentsValue{}
-			for _, component := range *allocation.Rule.Components {
-				stateComponent := resource_allocation.ComponentsValue{
-					IncludeNull:      types.BoolPointerValue(component.IncludeNull),
-					InverseSelection: types.BoolPointerValue(component.InverseSelection),
-					Key:              types.StringValue(component.Key),
-					Mode:             types.StringValue(string(component.Mode)),
-					ComponentsType:   types.StringValue(string(component.Type)),
-				}
-				stateComponent.Values, diags = basetypes.NewListValueFrom(ctx, types.StringType, stateComponents)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				stateComponents = append(stateComponents, stateComponent)
-			}
-			state.Rule.Components, diags = basetypes.NewListValueFrom(ctx, resource_allocation.ComponentsType{}, stateComponents)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-		}
-	}
+	state.populate(allocation, ctx)
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
-	log.Print("state read")
-	log.Print(state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -220,43 +152,10 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Generate API request body from plan
-	var allocation models.SingleAllocation
-	allocationType := models.SingleAllocationAllocationType(plan.AllocationType.ValueString())
-	allocation.AllocationType = &allocationType
-	allocation.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
-	allocation.Description = plan.Description.ValueStringPointer()
-	allocation.Name = plan.Name.ValueStringPointer()
-	allocation.Type = plan.Type.ValueStringPointer()
-	if !plan.Rule.IsNull() {
-		allocation.Rule = &models.AllocationRule{
-			Formula: plan.Rule.Formula.ValueStringPointer(),
-		}
-		if !plan.Rule.Components.IsNull() {
-			planComponents := []resource_allocation.ComponentsValue{}
-			diags = plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			createComponents := make([]models.AllocationComponent, 0)
-			allocation.Rule.Components = &[]models.AllocationComponent{}
-			for _, component := range planComponents {
-				createComponent := models.AllocationComponent{
-					IncludeNull:      component.IncludeNull.ValueBoolPointer(),
-					InverseSelection: component.InverseSelection.ValueBoolPointer(),
-					Key:              component.Key.ValueString(),
-					Mode:             models.AllocationComponentMode(component.Mode.ValueString()),
-					Type:             models.DimensionsTypes(component.ComponentsType.ValueString()),
-				}
-				diags = component.Values.ElementsAs(ctx, &createComponent.Values, false)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				createComponents = append(createComponents, createComponent)
-			}
-			allocation.Rule.Components = &createComponents
-		}
+	allocation, diags := plan.toRequest(ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Update existing allocation
@@ -279,47 +178,7 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		)
 		return
 	}
-
-	// Update resource state with updated items and timestamp
-	state.Id = types.StringPointerValue(allocationResponse.Id)
-	state.Description = types.StringPointerValue(allocationResponse.Description)
-	state.Type = types.StringPointerValue(allocationResponse.Type)
-	state.Name = types.StringPointerValue(allocationResponse.Name)
-	if allocationResponse.AllocationType != nil {
-		allocationType := string(*allocationResponse.AllocationType)
-		state.AllocationType = types.StringValue(allocationType)
-	}
-	state.AnomalyDetection = types.BoolPointerValue(allocationResponse.AnomalyDetection)
-	state.UpdateTime = types.Int64Value(time.Now().Unix())
-	// Overwrite components with refreshed state
-	if allocationResponse.Rule != nil {
-		state.Rule = resource_allocation.RuleValue{
-			Formula: types.StringPointerValue(allocationResponse.Rule.Formula),
-		}
-		if allocationResponse.Rule.Components != nil {
-			stateComponents := []resource_allocation.ComponentsValue{}
-			for _, component := range *allocationResponse.Rule.Components {
-				stateComponent := resource_allocation.ComponentsValue{
-					IncludeNull:      types.BoolPointerValue(component.IncludeNull),
-					InverseSelection: types.BoolPointerValue(component.InverseSelection),
-					Key:              types.StringValue(component.Key),
-					Mode:             types.StringValue(string(component.Mode)),
-					ComponentsType:   types.StringValue(string(component.Type)),
-				}
-				stateComponent.Values, diags = basetypes.NewListValueFrom(ctx, types.StringType, stateComponents)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				stateComponents = append(stateComponents, stateComponent)
-			}
-			state.Rule.Components, diags = basetypes.NewListValueFrom(ctx, resource_allocation.ComponentsType{}, stateComponents)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-		}
-	}
+	state.populate(allocationResponse, ctx)
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
