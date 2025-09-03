@@ -124,7 +124,11 @@ func (r *allocationResource) Read(ctx context.Context, req resource.ReadRequest,
 		)
 		return
 	}
-	state.populate(allocation, ctx)
+	diags = state.populate(allocation, ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -178,7 +182,11 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		)
 		return
 	}
-	state.populate(allocationResponse, ctx)
+	diags = state.populate(allocationResponse, ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
