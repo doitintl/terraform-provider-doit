@@ -35,22 +35,22 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (allocation 
 			if d.HasError() {
 				return
 			}
-			createComponents := make([]models.AllocationComponent, 0)
-			allocation.Rule.Components = &[]models.AllocationComponent{}
-			for _, component := range planComponents {
+			createComponents := make([]models.AllocationComponent, len(planComponents))
+			allocation.Rule.Components = &createComponents
+			for i := range planComponents {
 				createComponent := models.AllocationComponent{
-					IncludeNull:      component.IncludeNull.ValueBoolPointer(),
-					InverseSelection: component.InverseSelection.ValueBoolPointer(),
-					Key:              component.Key.ValueString(),
-					Mode:             models.AllocationComponentMode(component.Mode.ValueString()),
-					Type:             models.DimensionsTypes(component.ComponentsType.ValueString()),
+					IncludeNull:      planComponents[i].IncludeNull.ValueBoolPointer(),
+					InverseSelection: planComponents[i].InverseSelection.ValueBoolPointer(),
+					Key:              planComponents[i].Key.ValueString(),
+					Mode:             models.AllocationComponentMode(planComponents[i].Mode.ValueString()),
+					Type:             models.DimensionsTypes(planComponents[i].ComponentsType.ValueString()),
 				}
-				diags = component.Values.ElementsAs(ctx, &createComponent.Values, false)
+				diags = planComponents[i].Values.ElementsAs(ctx, &createComponent.Values, false)
 				d.Append(diags...)
 				if d.HasError() {
 					return
 				}
-				createComponents = append(createComponents, createComponent)
+				createComponents[i] = createComponent
 			}
 			allocation.Rule.Components = &createComponents
 		}
