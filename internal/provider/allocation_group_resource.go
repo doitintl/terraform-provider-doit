@@ -210,7 +210,6 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 		)
 		return
 	}
-	fmt.Println("Rules length", len(*allocationResponse.Rules))
 	diags = state.populate(allocationResponse, r.client, actions, ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

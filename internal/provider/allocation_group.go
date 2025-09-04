@@ -49,7 +49,6 @@ func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (groupA
 		}
 		groupAllocationRequest.Rules = make([]models.GroupAllocationRule, len(planRules))
 		for i := range planRules {
-			fmt.Println("Action is nil", planRules[i].Action.IsNull(), planRules[i].Action.ValueString())
 			groupAllocationRequest.Rules[i] = models.GroupAllocationRule{
 				Name:        planRules[i].Name.ValueStringPointer(),
 				Id:          planRules[i].Id.ValueStringPointer(),
