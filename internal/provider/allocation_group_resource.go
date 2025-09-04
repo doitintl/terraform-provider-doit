@@ -228,7 +228,7 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 func (r *allocationGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	log.Print(" allocation group Delete")
 	// Retrieve values from state
-	var state allocationResourceModel
+	var state allocationGroupResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -236,10 +236,10 @@ func (r *allocationGroupResource) Delete(ctx context.Context, req resource.Delet
 	}
 
 	// Delete existing allocation
-	err := r.client.DeleteAllocation(state.Id.ValueString())
+	err := r.client.DeleteAllocationGroup(state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Deleting DoiT Allocation",
+			"Error Deleting DoiT Allocation group",
 			"Could not delete allocation, unexpected error: "+err.Error(),
 		)
 		return
