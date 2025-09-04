@@ -64,6 +64,13 @@ func (r *allocationGroupResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
+	// get actions from plan
+	actions, diags := plan.getActions(ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Generate API request body from plan
 	allocationGroup, diags := plan.toRequest(ctx)
 	resp.Diagnostics.Append(diags...)
@@ -95,7 +102,7 @@ func (r *allocationGroupResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 	plan.Id = types.StringPointerValue(allocationgroupResponse.Id)
-	plan.populate(allocationCreated, r.client, ctx)
+	plan.populate(allocationCreated, r.client, actions, ctx)
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -118,6 +125,13 @@ func (r *allocationGroupResource) Read(ctx context.Context, req resource.ReadReq
 	log.Print("state id:::::::::::::::::::::::::")
 	log.Print(state.Id.ValueString())
 
+	// get actions from state
+	actions, diags := state.getActions(ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Get refreshed allocation value from DoiT
 	allocation, err := r.client.GetAllocationGroup(state.Id.ValueString())
 	if err != nil {
@@ -131,7 +145,7 @@ func (r *allocationGroupResource) Read(ctx context.Context, req resource.ReadReq
 		)
 		return
 	}
-	diags = state.populate(allocation, r.client, ctx)
+	diags = state.populate(allocation, r.client, actions, ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -150,6 +164,13 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 	// Retrieve values from plan
 	var plan allocationGroupResourceModel
 	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// get actions from plan
+	actions, diags := plan.getActions(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -190,7 +211,7 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 	fmt.Println("Rules length", len(*allocationResponse.Rules))
-	diags = state.populate(allocationResponse, r.client, ctx)
+	diags = state.populate(allocationResponse, r.client, actions, ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

@@ -16,6 +16,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+func (plan *allocationGroupResourceModel) getActions(ctx context.Context) (actions map[string]string, d diag.Diagnostics) {
+	actions = make(map[string]string)
+	var diags diag.Diagnostics
+	if !plan.Rules.IsNull() {
+		planRules := []resource_allocation_group.RulesValue{}
+		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
+		d.Append(diags...)
+		if d.HasError() {
+			return
+		}
+		for i := range planRules {
+			if !planRules[i].Id.IsNull() {
+				actions[planRules[i].Id.ValueString()] = planRules[i].Action.ValueString()
+			}
+		}
+	}
+	return
+}
+
 func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (groupAllocationRequest models.GroupAllocationRequest, d diag.Diagnostics) {
 	var diags diag.Diagnostics
 	groupAllocationRequest.UnallocatedCosts = plan.UnallocatedCosts.ValueStringPointer()
@@ -67,7 +86,7 @@ func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (groupA
 	return groupAllocationRequest, d
 }
 
-func (state *allocationGroupResourceModel) populate(groupAllocation *models.GroupAllocation, client *ClientTest, ctx context.Context) (d diag.Diagnostics) {
+func (state *allocationGroupResourceModel) populate(groupAllocation *models.GroupAllocation, client *ClientTest, actions map[string]string, ctx context.Context) (d diag.Diagnostics) {
 	var diags diag.Diagnostics
 	state.Description = types.StringPointerValue(groupAllocation.Description)
 	state.Id = types.StringPointerValue(groupAllocation.Id)
@@ -89,7 +108,17 @@ func (state *allocationGroupResourceModel) populate(groupAllocation *models.Grou
 				Owner:      types.StringPointerValue(rule.Owner),
 				RulesType:  types.StringPointerValue(rule.Type),
 				UpdateTime: types.Int64PointerValue(rule.UpdateTime),
+				// Doesn't exist on the AllocationListItem data model
+				// AllocationType: types.StringPointerValue(string(rule.AllocationType)),
+				// Description:    types.StringPointerValue(rule.Description),
+				// UrlUi:          types.StringPointerValue(rule.UrlUi),
 			}
+			if rule.Id != nil {
+				stateRule.Action = types.StringValue(actions[*rule.Id])
+			} else {
+				stateRule.Action = types.StringValue("create")
+			}
+
 			var singleAllocation *models.SingleAllocation
 			singleAllocation, err := client.GetAllocation(stateRule.Id.ValueString())
 			if err != nil {
@@ -99,6 +128,9 @@ func (state *allocationGroupResourceModel) populate(groupAllocation *models.Grou
 				)
 				return
 			}
+			// This is an ugly hack because we have two different version of the ComponentsValue / ComponentsType and we need to convert between them
+			// This would not be necessary if we could unify resource_allocation and resource_allocation_group but the generator cannot be used with the
+			// "full" OpenAPI spec, so we have to split it
 			singleAllocationState := allocationResourceModel{}
 			diags = singleAllocationState.populate(singleAllocation, ctx)
 			d.Append(diags...)
@@ -138,7 +170,7 @@ func (state *allocationGroupResourceModel) populate(groupAllocation *models.Grou
 			}
 
 			stateRules[i], diags = resource_allocation_group.NewRulesValue(stateRule.AttributeTypes(ctx), map[string]attr.Value{
-				"action":          types.StringValue("select"),
+				"action":          stateRule.Action,
 				"allocation_type": stateRule.AllocationType,
 				"components":      stateRule.Components,
 				"create_time":     stateRule.CreateTime,
