@@ -57,7 +57,8 @@ func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (groupA
 				Description: planRules[i].Description.ValueStringPointer(),
 				Formula:     planRules[i].Formula.ValueStringPointer(),
 			}
-			if !planRules[i].Components.IsNull() {
+			// Don't send components if selecting existing allocation
+			if !planRules[i].Components.IsNull() && planRules[i].Action.ValueString() != "select" {
 				ruleComponents := []resource_allocation_group.ComponentsValue{}
 				diags = planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
 				d.Append(diags...)
@@ -73,10 +74,10 @@ func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (groupA
 						Mode:             models.AllocationComponentMode(ruleComponents[j].Mode.ValueString()),
 						Type:             models.DimensionsTypes(ruleComponents[j].ComponentsType.ValueString()),
 					}
-					values := make([]attr.Value, len(ruleComponents[j].Values.Elements()))
-					for k := range ruleComponents[j].Values.Elements() {
-						values[k] = ruleComponents[j].Values.Elements()[k]
-						createComponents[j].Values[k] = values[k].String()
+					diags := ruleComponents[j].Values.ElementsAs(ctx, &createComponents[j].Values, true)
+					d.Append(diags...)
+					if d.HasError() {
+						return
 					}
 				}
 				groupAllocationRequest.Rules[i].Components = &createComponents
@@ -108,15 +109,18 @@ func (state *allocationGroupResourceModel) populate(groupAllocation *models.Grou
 				Owner:      types.StringPointerValue(rule.Owner),
 				RulesType:  types.StringPointerValue(rule.Type),
 				UpdateTime: types.Int64PointerValue(rule.UpdateTime),
-				// Doesn't exist on the AllocationListItem data model
-				// AllocationType: types.StringPointerValue(string(rule.AllocationType)),
-				// Description:    types.StringPointerValue(rule.Description),
-				// UrlUi:          types.StringPointerValue(rule.UrlUi),
+				UrlUi:      types.StringPointerValue(rule.UrlUI),
 			}
+			if rule.AllocationType != nil {
+				stateRule.AllocationType = types.StringValue(string(*rule.AllocationType))
+			}
+			// if the ruleId is not in the map of actions, it has to be a new rule
 			if rule.Id != nil {
-				stateRule.Action = types.StringValue(actions[*rule.Id])
-			} else {
-				stateRule.Action = types.StringValue("create")
+				action, ok := actions[*rule.Id]
+				if !ok {
+					action = "create"
+				}
+				stateRule.Action = types.StringValue(action)
 			}
 
 			var singleAllocation *models.SingleAllocation
@@ -133,6 +137,11 @@ func (state *allocationGroupResourceModel) populate(groupAllocation *models.Grou
 			// "full" OpenAPI spec, so we have to split it
 			singleAllocationState := allocationResourceModel{}
 			diags = singleAllocationState.populate(singleAllocation, ctx)
+			d.Append(diags...)
+			if d.HasError() {
+				return
+			}
+			stateRule.Description, diags = singleAllocationState.Description.ToStringValue(ctx)
 			d.Append(diags...)
 			if d.HasError() {
 				return
@@ -248,6 +257,9 @@ func (c *ClientTest) UpdateAllocationGroup(allocationID string, allocation model
 	log.Println(req.URL)
 	body, err := c.doRequest(req)
 	if err != nil {
+		fmt.Println("ERROR REQUEST----------------")
+		fmt.Println(err)
+		fmt.Println(string(rb))
 		return nil, err
 	}
 
