@@ -200,7 +200,7 @@ func toAllocationRuleComponentsListValue[T resource_allocation.ComponentsType | 
 		d, diags diag.Diagnostics
 	)
 
-	if components == nil {
+	if components == nil || len(*components) == 0 {
 		return res, nil
 	}
 
