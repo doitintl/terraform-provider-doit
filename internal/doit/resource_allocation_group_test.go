@@ -35,7 +35,7 @@ func TestAccAllocationGroup(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccAllocationGroupUpdate(n1, n2, n3),
+				Config: testAccAllocationGroupUpdated(n1, n2, n3),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -49,7 +49,22 @@ func TestAccAllocationGroup(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_allocation_group.this",
 						tfjsonpath.New("unallocated_costs"),
-						knownvalue.StringExact("unallocated")),
+						knownvalue.StringExact("unallocated"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation_group.this",
+						tfjsonpath.New("rules").AtSliceIndex(1).AtMapKey("components"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation_group.this",
+						tfjsonpath.New("rules").AtSliceIndex(2).AtMapKey("components").AtSliceIndex(0),
+						knownvalue.MapPartial(map[string]knownvalue.Check{
+							"values": knownvalue.ListExact(
+								[]knownvalue.Check{knownvalue.StringExact("FR")},
+							),
+						}),
+					),
 				},
 			},
 		},
@@ -79,9 +94,8 @@ resource "doit_allocation" "name" {
 
 resource "doit_allocation" "name2" {
   name        = "test-%d"
-  description = "Terraform test"
   rule = {
-    formula = "A OR B"
+    formula = "A AND B"
     components = [{
       key    = "country"
       mode   = "is"
@@ -100,23 +114,43 @@ resource "doit_allocation" "name2" {
 resource "doit_allocation_group" "this" {
   name = "test-%d"
   rules = [
-    {
+   {
       action     = "select"
       id         = resource.doit_allocation.name.id
-      components = resource.doit_allocation.name.rule.components
-    },
-    {
-      action     = "update"
+   },
+   {
+      action     = "select"
       id         = resource.doit_allocation.name2.id
+      // support optional provided components case for 'select'
       components = resource.doit_allocation.name2.rule.components
-    },
+   },
+   {
+	  action     = "create"
+      name       = "test-rule-%d"
+      description = "Terraform test rule"
+	  components = [
+		{
+		  key    = "country"
+		  mode   = "is"
+		  type   = "fixed"
+		  values = ["DE"]
+	    },
+        {
+          key    = "project_id"
+		  mode   = "is"
+		  type   = "fixed"
+		  values = ["test-k8s-project-468707"]
+		},
+      ],
+      formula = "A OR B"
+	},
   ]
 }
 
-`, n1, n2, n3)
+`, n1, n2, n3, n3)
 }
 
-func testAccAllocationGroupUpdate(n1, n2, n3 int) string {
+func testAccAllocationGroupUpdated(n1, n2, n3 int) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "name" {
   name        = "test-%d"
@@ -139,9 +173,8 @@ resource "doit_allocation" "name" {
 
 resource "doit_allocation" "name2" {
   name        = "test-%d"
-  description = "Terraform test"
   rule = {
-    formula = "A OR B"
+    formula = "A AND B"
     components = [{
       key    = "country"
       mode   = "is"
@@ -162,18 +195,36 @@ resource "doit_allocation_group" "this" {
   unallocated_costs = "unallocated"
   description = "Terraform test"
   rules = [
-    {
-      action     = "select"
-      id         = resource.doit_allocation.name.id
-      components = resource.doit_allocation.name.rule.components
-    },
-    {
-      action     = "update"
-      id         = resource.doit_allocation.name2.id
-      components = resource.doit_allocation.name2.rule.components
-    },
+	{
+	  action     = "select"
+	  id         = resource.doit_allocation.name.id
+ 	},
+	{
+	  action     = "select"
+	  id         = resource.doit_allocation.name2.id
+	},
+	{
+	  action     = "create"
+      name       = "test-rule-%d"
+      description = "Terraform test rule"
+	  components = [
+		{
+		  key    = "country"
+		  mode   = "is"
+		  type   = "fixed"
+		  values = ["FR"]
+	    },
+        {
+          key    = "project_id"
+		  mode   = "is"
+		  type   = "fixed"
+		  values = ["test-k8s-project-468707"]
+		},
+      ],
+      formula = "A OR B"
+	},
   ]
 }
 
-`, n1, n2, n3)
+`, n1, n2, n3, n3)
 }

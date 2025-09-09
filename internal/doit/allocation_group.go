@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 
 	"terraform-provider-doit/internal/doit/models"
@@ -14,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // GroupAllocationsModelOverride overrides the model generated from the OpenAPI spec, as it is currently wrong.
@@ -99,7 +99,7 @@ func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (models
 }
 
 func (r *allocationGroupResource) populateState(ctx context.Context, plan, state *allocationGroupResourceModel) diag.Diagnostics {
-	var d, diags diag.Diagnostics
+	var d diag.Diagnostics
 
 	respAlg, err := r.client.GetAllocationGroup(ctx, state.Id.ValueString())
 	if err != nil {
@@ -127,16 +127,15 @@ func (r *allocationGroupResource) populateState(ctx context.Context, plan, state
 	state.Name = types.StringPointerValue(respAlg.Name)
 	state.Cloud = types.StringPointerValue(respAlg.Cloud)
 	state.UnallocatedCosts = types.StringPointerValue(respAlg.UnallocatedCosts)
-	state.TimeCreated = types.Int64PointerValue(respAlg.TimeCreated)
-	state.TimeModified = types.Int64PointerValue(respAlg.TimeModified)
+	state.TimeCreated = types.Int64PointerValue(respAlg.CreateTime)  // WARN, overridden
+	state.TimeModified = types.Int64PointerValue(respAlg.UpdateTime) // WARN, overridden
 
 	if respAlg.Rules != nil && len(*respAlg.Rules) > 0 {
 
 		var planRules []resource_allocation_group.RulesValue
 
-		// Merge user-provided data with incomplete data returned from the server
 		planRules = make([]resource_allocation_group.RulesValue, len(plan.Rules.Elements()))
-		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
+		diags := plan.Rules.ElementsAs(ctx, &planRules, false)
 		d.Append(diags...)
 		if diags.HasError() {
 			return diags
@@ -182,7 +181,7 @@ func (r *allocationGroupResource) populateState(ctx context.Context, plan, state
 				Description: types.StringPointerValue(respAl.Description),
 			}
 
-			stateRule.Components, diags = toAllocationRuleComponentsListValue[resource_allocation_group.ComponentsType](ctx, respAl.Rule.Components)
+			respAlComponents, diags := toAllocationRuleComponentsListValue[resource_allocation_group.ComponentsType](ctx, respAl.Rule.Components)
 			d.Append(diags...)
 			if d.HasError() {
 				return d
@@ -194,13 +193,27 @@ func (r *allocationGroupResource) populateState(ctx context.Context, plan, state
 
 			// Finally, we merge plan data that is never returned by the API responses to prevent a perma-diff
 			for _, pr := range planRules {
-				if slices.Contains([]string{"select", "update"}, strings.ToLower(pr.Action.ValueString())) && pr.Id.ValueString() == stateRule.Id.ValueString() {
-					stateRule.Action = pr.Action
-					continue
-				}
-				if strings.ToLower(pr.Action.ValueString()) == "create" && pr.Name.ValueString() == stateRule.Name.ValueString() {
-					stateRule.Action = pr.Action
-					continue
+				switch pr.Action.ValueString() {
+				case string(models.Select):
+					if pr.Id.Equal(stateRule.Id) {
+						stateRule.Action = pr.Action
+						// Only include 'select' plan rule components  to avoid a perma-diff
+						if pr.Components.IsUnknown() {
+							stateRule.Components = basetypes.NewListNull(respAlComponents.ElementType(ctx))
+						} else {
+							stateRule.Components = pr.Components
+						}
+					}
+				case string(models.Update):
+					if pr.Id.Equal(stateRule.Id) {
+						stateRule.Action = pr.Action
+						stateRule.Components = respAlComponents
+					}
+				case string(models.Create):
+					if pr.Name.Equal(stateRule.Name) {
+						stateRule.Action = pr.Action
+						stateRule.Components = respAlComponents
+					}
 				}
 			}
 
