@@ -1,6 +1,7 @@
-package provider
+package doit
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,7 +10,7 @@ import (
 )
 
 // CreateAttribution - Create new attribution
-func (c *ClientTest) CreateAttribution(attribution Attribution) (*Attribution, error) {
+func (c *Client) CreateAttribution(ctx context.Context, attribution Attribution) (*Attribution, error) {
 	rb, err := json.Marshal(attribution)
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func (c *ClientTest) CreateAttribution(attribution Attribution) (*Attribution, e
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		log.Println("ERROR REQUEST----------------")
 		log.Println(err)
@@ -43,7 +44,7 @@ func (c *ClientTest) CreateAttribution(attribution Attribution) (*Attribution, e
 }
 
 // UpdateAttribution - Updates an attribution
-func (c *ClientTest) UpdateAttribution(attributionID string, attribution Attribution) (*Attribution, error) {
+func (c *Client) UpdateAttribution(ctx context.Context, attributionID string, attribution Attribution) (*Attribution, error) {
 	rb, err := json.Marshal(attribution)
 	if err != nil {
 		return nil, err
@@ -56,7 +57,7 @@ func (c *ClientTest) UpdateAttribution(attributionID string, attribution Attribu
 	}
 	log.Println("Update URL----------------")
 	log.Println(req.URL)
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func (c *ClientTest) UpdateAttribution(attributionID string, attribution Attribu
 	return &attributionResponse, nil
 }
 
-func (c *ClientTest) DeleteAttribution(attributionID string) error {
+func (c *Client) DeleteAttribution(ctx context.Context, attributionID string) error {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributions/%s", c.HostURL, attributionID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 
@@ -80,7 +81,7 @@ func (c *ClientTest) DeleteAttribution(attributionID string) error {
 		return err
 	}
 
-	_, err = c.doRequest(req)
+	_, err = c.doRequest(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -89,7 +90,7 @@ func (c *ClientTest) DeleteAttribution(attributionID string) error {
 }
 
 // GetAttribution - Returns a specifc attribution
-func (c *ClientTest) GetAttribution(orderID string) (*Attribution, error) {
+func (c *Client) GetAttribution(ctx context.Context, orderID string) (*Attribution, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributions/%s", c.HostURL, orderID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("GET", urlRequestContext, nil)
@@ -97,7 +98,7 @@ func (c *ClientTest) GetAttribution(orderID string) (*Attribution, error) {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}

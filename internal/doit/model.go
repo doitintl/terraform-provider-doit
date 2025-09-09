@@ -1,4 +1,4 @@
-package provider
+package doit
 
 // Attribution -
 type Attribution struct {
@@ -248,7 +248,7 @@ type Budget struct {
 
 	// Name Budget Name
 	Name string `json:"name"`
-	//Public *BudgetPublic `json:"public,omitempty"`
+	// Public *BudgetPublic `json:"public,omitempty"`
 	Public *string `json:"public,omitempty"`
 
 	// Recipients List of emails to notify when reaching alert threshold

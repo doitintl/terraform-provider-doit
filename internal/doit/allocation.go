@@ -1,42 +1,45 @@
-package provider
+package doit
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
-	"terraform-provider-doit/internal/provider/models"
-	"terraform-provider-doit/internal/provider/resource_allocation"
-	"time"
+
+	"terraform-provider-doit/internal/doit/models"
+	"terraform-provider-doit/internal/doit/resource_allocation"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func (plan *allocationResourceModel) toRequest(ctx context.Context) (allocation models.SingleAllocation, d diag.Diagnostics) {
-	var diags diag.Diagnostics
+func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.SingleAllocation, diag.Diagnostics) {
+	var (
+		req   models.SingleAllocation
+		diags diag.Diagnostics
+	)
+
 	allocationType := models.SingleAllocationAllocationType(plan.AllocationType.ValueString())
-	allocation.AllocationType = &allocationType
-	allocation.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
-	allocation.Description = plan.Description.ValueStringPointer()
-	allocation.Name = plan.Name.ValueStringPointer()
-	allocation.Type = plan.Type.ValueStringPointer()
+	req.AllocationType = &allocationType
+	req.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
+	req.Description = plan.Description.ValueStringPointer()
+	req.Name = plan.Name.ValueStringPointer()
+	req.Type = plan.Type.ValueStringPointer()
 	if !plan.Rule.IsNull() {
-		allocation.Rule = &models.AllocationRule{
+		req.Rule = &models.AllocationRule{
 			Formula: plan.Rule.Formula.ValueStringPointer(),
 		}
 		if !plan.Rule.Components.IsNull() {
 			planComponents := []resource_allocation.ComponentsValue{}
 			diags = plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
-			d.Append(diags...)
-			if d.HasError() {
-				return
+			diags.Append(diags...)
+			if diags.HasError() {
+				return req, diags
 			}
 			createComponents := make([]models.AllocationComponent, len(planComponents))
-			allocation.Rule.Components = &createComponents
+			req.Rule.Components = &createComponents
 			for i := range planComponents {
 				createComponent := models.AllocationComponent{
 					IncludeNull:      planComponents[i].IncludeNull.ValueBoolPointer(),
@@ -46,35 +49,54 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (allocation 
 					Type:             models.DimensionsTypes(planComponents[i].ComponentsType.ValueString()),
 				}
 				diags = planComponents[i].Values.ElementsAs(ctx, &createComponent.Values, false)
-				d.Append(diags...)
-				if d.HasError() {
-					return
+				diags.Append(diags...)
+				if diags.HasError() {
+					return req, diags
 				}
 				createComponents[i] = createComponent
 			}
-			allocation.Rule.Components = &createComponents
+			req.Rule.Components = &createComponents
 		}
 	}
-	return allocation, d
+	return req, diags
 }
 
-func (state *allocationResourceModel) populate(allocation *models.SingleAllocation, ctx context.Context) (d diag.Diagnostics) {
+func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
-	state.Id = types.StringPointerValue(allocation.Id)
-	state.Description = types.StringPointerValue(allocation.Description)
-	state.Type = types.StringPointerValue(allocation.Type)
-	if allocation.AllocationType != nil {
-		allocationType := string(*allocation.AllocationType)
-		state.AllocationType = types.StringValue(allocationType)
+
+	// Get refreshed allocation value from DoiT using the ID from the state.
+	resp, err := r.client.GetAllocation(ctx, state.Id.ValueString())
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			// The resource was deleted. This is an edge case for create,
+			// but necessary for the read function.
+			state.Id = types.StringNull()
+			return diags
+		}
+		diags.AddError(
+			"Error Reading Doit Console Allocation",
+			"Could not read Doit Console Allocation ID "+state.Id.ValueString()+": "+err.Error(),
+		)
+		return diags
 	}
-	state.AnomalyDetection = types.BoolPointerValue(allocation.AnomalyDetection)
-	state.UpdateTime = types.Int64Value(time.Now().Unix())
-	// Overwrite components with refreshed state
-	if allocation.Rule != nil {
-		state.Rule.Formula = types.StringPointerValue(allocation.Rule.Formula)
-		if allocation.Rule.Components != nil {
-			stateComponents := make([]attr.Value, len(*allocation.Rule.Components))
-			for i, component := range *allocation.Rule.Components {
+
+	state.Id = types.StringPointerValue(resp.Id)
+	state.Type = types.StringPointerValue(resp.Type)
+	state.Description = types.StringPointerValue(resp.Description)
+	state.AnomalyDetection = types.BoolPointerValue(resp.AnomalyDetection)
+	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
+	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
+	state.Name = types.StringPointerValue(resp.Name)
+
+	if resp.AllocationType != nil {
+		state.AllocationType = types.StringValue(string(*resp.AllocationType))
+	}
+
+	if resp.Rule != nil {
+		state.Rule.Formula = types.StringPointerValue(resp.Rule.Formula)
+		if resp.Rule.Components != nil {
+			stateComponents := make([]attr.Value, len(*resp.Rule.Components))
+			for i, component := range *resp.Rule.Components {
 				stateComponent := resource_allocation.ComponentsValue{
 					IncludeNull:      types.BoolPointerValue(component.IncludeNull),
 					InverseSelection: types.BoolPointerValue(component.InverseSelection),
@@ -87,9 +109,9 @@ func (state *allocationResourceModel) populate(allocation *models.SingleAllocati
 					values[j] = types.StringValue(component.Values[j])
 				}
 				stateComponent.Values, diags = types.ListValue(types.StringType, values)
-				d.Append(diags...)
-				if d.HasError() {
-					return
+				diags.Append(diags...)
+				if diags.HasError() {
+					return diags
 				}
 				stateComponents[i], diags = resource_allocation.NewComponentsValue(stateComponent.AttributeTypes(ctx), map[string]attr.Value{
 					"include_null":      stateComponent.IncludeNull,
@@ -99,9 +121,9 @@ func (state *allocationResourceModel) populate(allocation *models.SingleAllocati
 					"type":              stateComponent.ComponentsType,
 					"values":            stateComponent.Values,
 				})
-				d.Append(diags...)
-				if d.HasError() {
-					return
+				diags.Append(diags...)
+				if diags.HasError() {
+					return diags
 				}
 			}
 			// Using the first item's type is a bit of a hack and shouldn't be necessary as the list type should be resource_allocation.ComponentsType:
@@ -119,17 +141,16 @@ func (state *allocationResourceModel) populate(allocation *models.SingleAllocati
 			// fmt.Println("0 null", elements[0].IsNull())
 			// fmt.Println("1 null", elements[1].IsNull())
 			state.Rule.Components, diags = types.ListValue(stateComponents[0].Type(ctx), stateComponents)
-			d.Append(diags...)
-			if d.HasError() {
-				return
+			diags.Append(diags...)
+			if diags.HasError() {
+				return diags
 			}
 		}
 	}
 	return diags
 }
 
-// CreateAllocation - Create new allocation
-func (c *ClientTest) CreateAllocation(allocation models.SingleAllocation) (*models.SingleAllocation, error) {
+func (c *Client) CreateAllocation(ctx context.Context, allocation models.SingleAllocation) (*models.SingleAllocation, error) {
 	rb, err := json.Marshal(allocation)
 	if err != nil {
 		return nil, err
@@ -137,34 +158,24 @@ func (c *ClientTest) CreateAllocation(allocation models.SingleAllocation) (*mode
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations", c.HostURL)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
-	log.Println("URL----------------")
-	log.Println(req.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
-		log.Println("ERROR REQUEST----------------")
-		log.Println(err)
-		log.Println(string(rb))
 		return nil, err
 	}
 
 	allocationResponse := models.SingleAllocation{}
 	err = json.Unmarshal(body, &allocationResponse)
 	if err != nil {
-		log.Println("ERROR UNMARSHALL----------------")
-		log.Println(err)
 		return nil, err
 	}
-	log.Println("Allocation response----------------")
-	log.Println(allocationResponse)
 	return &allocationResponse, nil
 }
 
-// UpdateAllocation - Updates an allocation
-func (c *ClientTest) UpdateAllocation(allocationID string, allocation models.SingleAllocation) (*models.SingleAllocation, error) {
+func (c *Client) UpdateAllocation(ctx context.Context, allocationID string, allocation models.SingleAllocation) (*models.SingleAllocation, error) {
 	rb, err := json.Marshal(allocation)
 	if err != nil {
 		return nil, err
@@ -175,9 +186,7 @@ func (c *ClientTest) UpdateAllocation(allocationID string, allocation models.Sin
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Update URL----------------")
-	log.Println(req.URL)
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -187,12 +196,10 @@ func (c *ClientTest) UpdateAllocation(allocationID string, allocation models.Sin
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Allocation response----------------")
-	log.Println(allocationResponse)
 	return &allocationResponse, nil
 }
 
-func (c *ClientTest) DeleteAllocation(allocationID string) error {
+func (c *Client) DeleteAllocation(ctx context.Context, allocationID string) error {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, allocationID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
@@ -200,7 +207,7 @@ func (c *ClientTest) DeleteAllocation(allocationID string) error {
 		return err
 	}
 
-	_, err = c.doRequest(req)
+	_, err = c.doRequest(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -208,16 +215,15 @@ func (c *ClientTest) DeleteAllocation(allocationID string) error {
 	return nil
 }
 
-// GetAllocation - Returns a specifc allocation
-func (c *ClientTest) GetAllocation(orderID string) (*models.SingleAllocation, error) {
-	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, orderID)
+func (c *Client) GetAllocation(ctx context.Context, id string) (*models.SingleAllocation, error) {
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, id)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("GET", urlRequestContext, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}

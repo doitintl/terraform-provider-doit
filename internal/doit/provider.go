@@ -1,4 +1,4 @@
-package provider
+package doit
 
 import (
 	"context"
@@ -14,8 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/time/rate"
-	//"encoding/json"
-	//"strings""
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -41,7 +39,6 @@ func New(version string) func() provider.Provider {
 			version: version,
 		}
 	}
-
 }
 
 // doitProvider is the provider implementation.
@@ -193,7 +190,7 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	rl := rate.NewLimiter(4, 4) // default 250 requests per minute
 	// Create a new DoiT client using the configuration values
-	client, err := NewClientTest(&host, &doiTAPIToken, &customerContext, rl)
+	client, err := NewClient(ctx, &host, &doiTAPIToken, &customerContext, rl)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create DoiT API Client",

@@ -1609,7 +1609,7 @@ paths:
               properties:
                 provider:
                   type: string
-                  description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
+                  description: "The identifier of the data doit. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
                   example: "Datadog"
                 file:
                   type: string
@@ -1663,7 +1663,7 @@ paths:
                     properties:
                       provider:
                         type: string
-                        description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
+                        description: "The identifier of the data doit. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
                         example: "Datadog"
                       id:
                         type: string
@@ -1786,7 +1786,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    description: The provider (dataset) of the events to be deleted.
+                    description: The doit (dataset) of the events to be deleted.
                     example: "Datadog"
               minProperties: 1
               maxProperties: 1
@@ -4203,7 +4203,7 @@ components:
             - group
         cloud:
           type: string
-          description: Cloud provider
+          description: Cloud doit
           nullable: true
         unallocatedCosts:
           type: string

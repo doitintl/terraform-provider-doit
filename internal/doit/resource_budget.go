@@ -1,12 +1,11 @@
-package provider
+package doit
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
-
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -111,7 +110,7 @@ func NewBudgetResource() resource.Resource {
 
 // budgetResource is the resource implementation.
 type budgetResource struct {
-	client *ClientTest
+	client *Client
 }
 
 // Metadata returns the resource type name.
@@ -278,12 +277,12 @@ func (r *budgetResource) Configure(_ context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, ok := req.ProviderData.(*ClientTest)
+	client, ok := req.ProviderData.(*Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *ClientTest, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -292,7 +291,7 @@ func (r *budgetResource) Configure(_ context.Context, req resource.ConfigureRequ
 	r.client = client
 }
 
-func budgetModelToBudget(budgetModel *budgetResourceModel, ctx context.Context) Budget {
+func budgetModelToBudget(budgetModel *budgetResourceModel) Budget {
 	var budget Budget
 	var alerts []ExternalBudgetAlert
 	for _, alert := range budgetModel.Alerts {
@@ -383,11 +382,11 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	log.Println("after getting plan")
 	// Generate API request body from plan
 
-	budget := budgetModelToBudget(&plan, ctx)
+	budget := budgetModelToBudget(&plan)
 
 	log.Println("before creating budget")
 	// Create new budget
-	budgeResponse, err := r.client.CreateBudget(budget)
+	budgeResponse, err := r.client.CreateBudget(ctx, budget)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating budget",
@@ -486,7 +485,7 @@ func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, res
 	log.Print("state id::::::::::::::::::::::::::)")
 	log.Print(state.Id.ValueString())
 	// Get refreshed budget value from DoiT
-	budget, err := r.client.GetBudget(state.Id.ValueString())
+	budget, err := r.client.GetBudget(ctx, state.Id.ValueString())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			resp.State.RemoveResource(ctx)
@@ -530,10 +529,10 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	// Generate API request body from plan
 	var budget Budget
-	budget = budgetModelToBudget(&plan, ctx)
+	budget = budgetModelToBudget(&plan)
 
 	// Update existing budget
-	_, err := r.client.UpdateBudget(state.Id.ValueString(), budget)
+	_, err := r.client.UpdateBudget(ctx, state.Id.ValueString(), budget)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Budget",
@@ -544,7 +543,7 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	// Fetch updated items from GetBudget as UpdateBudget items are not
 	// populated.
-	budgetResponse, err := r.client.GetBudget(state.Id.ValueString())
+	budgetResponse, err := r.client.GetBudget(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Budget",
@@ -576,7 +575,7 @@ func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	}
 
 	// Delete existing budge
-	err := r.client.DeleteBudget(state.Id.ValueString())
+	err := r.client.DeleteBudget(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Budget",

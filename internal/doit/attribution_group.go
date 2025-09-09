@@ -1,6 +1,7 @@
-package provider
+package doit
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,7 +10,7 @@ import (
 )
 
 // CreateAttributionGroup - Create new attributionGroup
-func (c *ClientTest) CreateAttributionGroup(attributionGroup AttributionGroup) (*AttributionGroup, error) {
+func (c *Client) CreateAttributionGroup(ctx context.Context, attributionGroup AttributionGroup) (*AttributionGroup, error) {
 	log.Println("CreateAttributionGroup")
 	log.Println(attributionGroup)
 	rb, err := json.Marshal(attributionGroup)
@@ -28,7 +29,7 @@ func (c *ClientTest) CreateAttributionGroup(attributionGroup AttributionGroup) (
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		log.Println("ERROR REQUEST----------------")
 		log.Println(err)
@@ -46,7 +47,7 @@ func (c *ClientTest) CreateAttributionGroup(attributionGroup AttributionGroup) (
 }
 
 // UpdateAttributionGroup - Updates an attributionGroup
-func (c *ClientTest) UpdateAttributionGroup(attributionGroupID string, attributionGroup AttributionGroup) (*AttributionGroup, error) {
+func (c *Client) UpdateAttributionGroup(ctx context.Context, attributionGroupID string, attributionGroup AttributionGroup) (*AttributionGroup, error) {
 	rb, err := json.Marshal(attributionGroup)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func (c *ClientTest) UpdateAttributionGroup(attributionGroupID string, attributi
 	}
 	log.Println("Update UR:")
 	log.Println(req.URL)
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	log.Println("body:")
 	log.Println(string(body))
 	if err != nil {
@@ -69,7 +70,7 @@ func (c *ClientTest) UpdateAttributionGroup(attributionGroupID string, attributi
 	return &attributionGroup, nil
 }
 
-func (c *ClientTest) DeleteAttributionGroup(attributionGroupID string) error {
+func (c *Client) DeleteAttributionGroup(ctx context.Context, attributionGroupID string) error {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributiongroups/%s", c.HostURL, attributionGroupID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
@@ -77,7 +78,7 @@ func (c *ClientTest) DeleteAttributionGroup(attributionGroupID string) error {
 		return err
 	}
 
-	_, err = c.doRequest(req)
+	_, err = c.doRequest(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (c *ClientTest) DeleteAttributionGroup(attributionGroupID string) error {
 }
 
 // GetAttributionGroup - Returns a specifc attribution
-func (c *ClientTest) GetAttributionGroup(attributionGroupID string) (*AttributionGroup, error) {
+func (c *Client) GetAttributionGroup(ctx context.Context, attributionGroupID string) (*AttributionGroup, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributiongroups/%s", c.HostURL, attributionGroupID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("GET", urlRequestContext, nil)
@@ -94,7 +95,7 @@ func (c *ClientTest) GetAttributionGroup(attributionGroupID string) (*Attributio
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -107,13 +108,13 @@ func (c *ClientTest) GetAttributionGroup(attributionGroupID string) (*Attributio
 		return nil, err
 	}
 
-	//code that copy attributeGroupGet in attributionGroup
+	// code that copy attributeGroupGet in attributionGroup
 	attributionGroup.Id = attributionGroupGet.Id
 	attributionGroup.Name = attributionGroupGet.Name
 	attributionGroup.Description = attributionGroupGet.Description
-	//code to intialise attributionGroup.Attribution as empty array
+	// code to intialise attributionGroup.Attribution as empty array
 	attributionGroup.Attributions = []string{}
-	//code that iterate attributionGroupGet.Attribution
+	// code that iterate attributionGroupGet.Attribution
 	for _, attribution := range attributionGroupGet.Attributions {
 		attributionGroup.Attributions = append(attributionGroup.Attributions, attribution.Id)
 	}

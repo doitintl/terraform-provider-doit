@@ -1,12 +1,11 @@
-package provider
+package doit
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
-
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -225,7 +224,7 @@ func NewReportResource() resource.Resource {
 
 // reportResource is the resource implementation.
 type reportResource struct {
-	client *ClientTest
+	client *Client
 }
 
 // Metadata returns the resource type name.
@@ -579,12 +578,12 @@ func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, ok := req.ProviderData.(*ClientTest)
+	client, ok := req.ProviderData.(*Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *ClientTest, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -782,7 +781,7 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 	log.Println(report.Config.AdvancedAnalysis)
 	log.Println("before creating report")
 	// Create new report
-	budgeResponse, err := r.client.CreateReport(report)
+	budgeResponse, err := r.client.CreateReport(ctx, report)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating report",
@@ -823,7 +822,7 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 	log.Print("state id")
 	log.Print(state.Id.ValueString())
 	// Get refreshed report value from DoiT
-	report, err := r.client.GetReport(state.Id.ValueString())
+	report, err := r.client.GetReport(ctx, state.Id.ValueString())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			resp.State.RemoveResource(ctx)
@@ -1135,7 +1134,7 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		}
 	}
 	// Update existing report
-	_, err := r.client.UpdateReport(state.Id.ValueString(), report)
+	_, err := r.client.UpdateReport(ctx, state.Id.ValueString(), report)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Report",
@@ -1146,7 +1145,7 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	// Fetch updated items from GetReport as UpdateReport items are not
 	// populated.
-	reportResponse, err := r.client.GetReport(state.Id.ValueString())
+	reportResponse, err := r.client.GetReport(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Report",
@@ -1286,7 +1285,7 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	}
 
 	// Delete existing report
-	err := r.client.DeleteReport(state.Id.ValueString())
+	err := r.client.DeleteReport(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Report",

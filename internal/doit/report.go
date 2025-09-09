@@ -1,6 +1,7 @@
-package provider
+package doit
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,7 +10,7 @@ import (
 )
 
 // CreateReport - Create new report
-func (c *ClientTest) CreateReport(report Report) (*Report, error) {
+func (c *Client) CreateReport(ctx context.Context, report Report) (*Report, error) {
 	log.Println("CreateReport----------------")
 	log.Println(report.Config.Filters)
 	rb, err := json.Marshal(report)
@@ -28,7 +29,7 @@ func (c *ClientTest) CreateReport(report Report) (*Report, error) {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		log.Println("ERROR REQUEST----------------")
 		log.Println(err)
@@ -48,7 +49,7 @@ func (c *ClientTest) CreateReport(report Report) (*Report, error) {
 }
 
 // UpdateReport - Updates an report
-func (c *ClientTest) UpdateReport(reportID string, report Report) (*Report, error) {
+func (c *Client) UpdateReport(ctx context.Context, reportID string, report Report) (*Report, error) {
 	rb, err := json.Marshal(report)
 	if err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func (c *ClientTest) UpdateReport(reportID string, report Report) (*Report, erro
 	}
 	log.Println("Update URL----------------")
 	log.Println(req.URL)
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (c *ClientTest) UpdateReport(reportID string, report Report) (*Report, erro
 	return &reportResponse, nil
 }
 
-func (c *ClientTest) DeleteReport(reportID string) error {
+func (c *Client) DeleteReport(ctx context.Context, reportID string) error {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/reports/%s", c.HostURL, reportID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
@@ -86,7 +87,7 @@ func (c *ClientTest) DeleteReport(reportID string) error {
 		return err
 	}
 
-	res, err := c.doRequest(req)
+	res, err := c.doRequest(ctx, req)
 	log.Println(res)
 	if err != nil {
 		return err
@@ -96,7 +97,7 @@ func (c *ClientTest) DeleteReport(reportID string) error {
 }
 
 // GetReport - Returns a specifc report
-func (c *ClientTest) GetReport(orderID string) (*Report, error) {
+func (c *Client) GetReport(ctx context.Context, orderID string) (*Report, error) {
 
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/reports/%s/config", c.HostURL, orderID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
@@ -105,7 +106,7 @@ func (c *ClientTest) GetReport(orderID string) (*Report, error) {
 		return nil, err
 	}
 	report := Report{}
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
