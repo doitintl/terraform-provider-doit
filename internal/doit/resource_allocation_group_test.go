@@ -103,6 +103,7 @@ resource "doit_allocation_group" "this" {
     {
       action     = "select"
       id         = resource.doit_allocation.name.id
+      components = resource.doit_allocation.name.rule.components
     },
     {
       action     = "update"
@@ -164,6 +165,7 @@ resource "doit_allocation_group" "this" {
     {
       action     = "select"
       id         = resource.doit_allocation.name.id
+      components = resource.doit_allocation.name.rule.components
     },
     {
       action     = "update"

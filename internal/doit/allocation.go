@@ -9,10 +9,12 @@ import (
 
 	"terraform-provider-doit/internal/doit/models"
 	"terraform-provider-doit/internal/doit/resource_allocation"
+	"terraform-provider-doit/internal/doit/resource_allocation_group"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.SingleAllocation, diag.Diagnostics) {
@@ -62,7 +64,7 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Sing
 }
 
 func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var d diag.Diagnostics
 
 	// Get refreshed allocation value from DoiT using the ID from the state.
 	resp, err := r.client.GetAllocation(ctx, state.Id.ValueString())
@@ -71,13 +73,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			// The resource was deleted. This is an edge case for create,
 			// but necessary for the read function.
 			state.Id = types.StringNull()
-			return diags
+			return d
 		}
-		diags.AddError(
+		d.AddError(
 			"Error Reading Doit Console Allocation",
 			"Could not read Doit Console Allocation ID "+state.Id.ValueString()+": "+err.Error(),
 		)
-		return diags
+		return d
 	}
 
 	state.Id = types.StringPointerValue(resp.Id)
@@ -93,61 +95,16 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 	}
 
 	if resp.Rule != nil {
+		var diags diag.Diagnostics
 		state.Rule.Formula = types.StringPointerValue(resp.Rule.Formula)
-		if resp.Rule.Components != nil {
-			stateComponents := make([]attr.Value, len(*resp.Rule.Components))
-			for i, component := range *resp.Rule.Components {
-				stateComponent := resource_allocation.ComponentsValue{
-					IncludeNull:      types.BoolPointerValue(component.IncludeNull),
-					InverseSelection: types.BoolPointerValue(component.InverseSelection),
-					Key:              types.StringValue(component.Key),
-					Mode:             types.StringValue(string(component.Mode)),
-					ComponentsType:   types.StringValue(string(component.Type)),
-				}
-				values := make([]attr.Value, len(component.Values))
-				for j := range component.Values {
-					values[j] = types.StringValue(component.Values[j])
-				}
-				stateComponent.Values, diags = types.ListValue(types.StringType, values)
-				diags.Append(diags...)
-				if diags.HasError() {
-					return diags
-				}
-				stateComponents[i], diags = resource_allocation.NewComponentsValue(stateComponent.AttributeTypes(ctx), map[string]attr.Value{
-					"include_null":      stateComponent.IncludeNull,
-					"inverse_selection": stateComponent.InverseSelection,
-					"key":               stateComponent.Key,
-					"mode":              stateComponent.Mode,
-					"type":              stateComponent.ComponentsType,
-					"values":            stateComponent.Values,
-				})
-				diags.Append(diags...)
-				if diags.HasError() {
-					return diags
-				}
-			}
-			// Using the first item's type is a bit of a hack and shouldn't be necessary as the list type should be resource_allocation.ComponentsType:
-			// var elementType resource_allocation.ComponentsType
-			// for idx, element := range stateComponents {
-			// 	if !elementType.Equal(element.Type(ctx)) {
-			// 		fmt.Printf("List Element Type: %s\n", elementType.String())
-			// 		fmt.Printf("List Index (%d) Element Type: %s\n", idx, element.Type(ctx))
-			// 		fmt.Printf("Equal to self 1: %v\n", element.Type(ctx).Equal(element.Type(ctx)))
-			// 		fmt.Printf("Equal to self 2: %v\n", elementType.Equal(elementType))
-			// 		fmt.Printf("Other way: %v\n", element.Type(ctx).Equal(elementType))
-			// 	}
-			// }
-			// elements := state.Rule.Components.Elements()
-			// fmt.Println("0 null", elements[0].IsNull())
-			// fmt.Println("1 null", elements[1].IsNull())
-			state.Rule.Components, diags = types.ListValue(stateComponents[0].Type(ctx), stateComponents)
-			diags.Append(diags...)
-			if diags.HasError() {
-				return diags
-			}
+		state.Rule.Components, diags = toAllocationRuleComponentsListValue[resource_allocation.ComponentsType](ctx, resp.Rule.Components)
+		d.Append(diags...)
+		if d.HasError() {
+			return d
 		}
 	}
-	return diags
+
+	return d
 }
 
 func (c *Client) CreateAllocation(ctx context.Context, allocation models.SingleAllocation) (*models.SingleAllocation, error) {
@@ -235,4 +192,86 @@ func (c *Client) GetAllocation(ctx context.Context, id string) (*models.SingleAl
 	}
 
 	return &allocation, nil
+}
+
+func toAllocationRuleComponentsListValue[T resource_allocation.ComponentsType | resource_allocation_group.ComponentsType](ctx context.Context, components *[]models.AllocationComponent) (basetypes.ListValue, diag.Diagnostics) {
+	var (
+		res      basetypes.ListValue
+		d, diags diag.Diagnostics
+	)
+
+	if components == nil {
+		return res, nil
+	}
+
+	stateComponents := make([]attr.Value, len(*components))
+	for i, component := range *components {
+
+		values := make([]attr.Value, len(component.Values))
+		for j := range component.Values {
+			values[j] = types.StringValue(component.Values[j])
+		}
+
+		switch any(T{}).(type) {
+		case resource_allocation.ComponentsType:
+			v := resource_allocation.ComponentsValue{
+				IncludeNull:      types.BoolPointerValue(component.IncludeNull),
+				InverseSelection: types.BoolPointerValue(component.InverseSelection),
+				Key:              types.StringValue(component.Key),
+				Mode:             types.StringValue(string(component.Mode)),
+				ComponentsType:   types.StringValue(string(component.Type)),
+			}
+			v.Values, diags = types.ListValue(types.StringType, values)
+			d.Append(diags...)
+			if d.HasError() {
+				return res, d
+			}
+
+			stateComponents[i], diags = resource_allocation.NewComponentsValue(v.AttributeTypes(ctx), map[string]attr.Value{
+				"include_null":      v.IncludeNull,
+				"inverse_selection": v.InverseSelection,
+				"key":               v.Key,
+				"mode":              v.Mode,
+				"type":              v.ComponentsType,
+				"values":            v.Values,
+			})
+			d.Append(diags...)
+			if d.HasError() {
+				return res, d
+			}
+
+		case resource_allocation_group.ComponentsType:
+			v := resource_allocation_group.ComponentsValue{
+				IncludeNull:      types.BoolPointerValue(component.IncludeNull),
+				InverseSelection: types.BoolPointerValue(component.InverseSelection),
+				Key:              types.StringValue(component.Key),
+				Mode:             types.StringValue(string(component.Mode)),
+				ComponentsType:   types.StringValue(string(component.Type)),
+			}
+
+			v.Values, diags = types.ListValue(types.StringType, values)
+			d.Append(diags...)
+			if d.HasError() {
+				return res, d
+			}
+
+			stateComponents[i], diags = resource_allocation_group.NewComponentsValue(v.AttributeTypes(ctx), map[string]attr.Value{
+				"include_null":      v.IncludeNull,
+				"inverse_selection": v.InverseSelection,
+				"key":               v.Key,
+				"mode":              v.Mode,
+				"type":              v.ComponentsType,
+				"values":            v.Values,
+			})
+			d.Append(diags...)
+			if d.HasError() {
+				return res, d
+			}
+		}
+	}
+
+	res, diags = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
+	d.Append(diags...)
+
+	return res, d
 }

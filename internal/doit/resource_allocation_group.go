@@ -92,7 +92,8 @@ func (r *allocationGroupResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	diags = r.populateState(ctx, nil, state)
+	// as there's no plan in the read phase, we assimilate the plan to the current state of the resource
+	diags = r.populateState(ctx, state, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -128,7 +129,7 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	_, err := r.client.UpdateAllocationGroup(ctx, state.Id.ValueString(), allocationGroup)
+	respUpdateAlg, err := r.client.UpdateAllocationGroup(ctx, state.Id.ValueString(), allocationGroup)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating DoiT Allocation Group",
@@ -137,6 +138,8 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
+	print(respUpdateAlg)
+	
 	diags = r.populateState(ctx, plan, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

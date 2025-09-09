@@ -16,6 +16,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// GroupAllocationsModelOverride overrides the model generated from the OpenAPI spec, as it is currently wrong.
+// Issue has been created to the appropriate team owning Allocations.
+type GroupAllocationsModelOverride struct {
+	models.GroupAllocation
+	CreateTime *int64 `json:"createTime,omitempty"`
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+}
+
 func (plan *allocationGroupResourceModel) getActions(ctx context.Context) (map[string]string, diag.Diagnostics) {
 	actions := make(map[string]string)
 	var diags diag.Diagnostics
@@ -93,7 +101,7 @@ func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (models
 func (r *allocationGroupResource) populateState(ctx context.Context, plan, state *allocationGroupResourceModel) diag.Diagnostics {
 	var d, diags diag.Diagnostics
 
-	resp, err := r.client.GetAllocationGroup(ctx, state.Id.ValueString())
+	respAlg, err := r.client.GetAllocationGroup(ctx, state.Id.ValueString())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			// The resource was deleted. This is an edge case for create,
@@ -108,66 +116,94 @@ func (r *allocationGroupResource) populateState(ctx context.Context, plan, state
 		return d
 	}
 
-	state.Description = types.StringPointerValue(resp.Description)
-	state.Id = types.StringPointerValue(resp.Id)
-	if resp.AllocationType != nil {
-		state.AllocationType = types.StringValue(string(*resp.AllocationType))
+	if plan.Description.ValueString() != "" {
+		state.Description = plan.Description // WARN: not persisted at all by the API
 	}
-	state.Type = types.StringPointerValue(resp.Type)
-	state.Name = types.StringPointerValue(resp.Name)
-	state.Cloud = types.StringPointerValue(resp.Cloud)
-	state.UnallocatedCosts = types.StringPointerValue(resp.UnallocatedCosts)
-	state.TimeCreated = types.Int64PointerValue(resp.TimeCreated)
-	state.TimeModified = types.Int64PointerValue(resp.TimeModified)
+	state.Id = types.StringPointerValue(respAlg.Id)
+	if respAlg.AllocationType != nil {
+		state.AllocationType = types.StringValue(string(*respAlg.AllocationType))
+	}
+	state.Type = types.StringPointerValue(respAlg.Type)
+	state.Name = types.StringPointerValue(respAlg.Name)
+	state.Cloud = types.StringPointerValue(respAlg.Cloud)
+	state.UnallocatedCosts = types.StringPointerValue(respAlg.UnallocatedCosts)
+	state.TimeCreated = types.Int64PointerValue(respAlg.TimeCreated)
+	state.TimeModified = types.Int64PointerValue(respAlg.TimeModified)
 
-	if resp.Rules != nil && len(*resp.Rules) > 0 {
+	if respAlg.Rules != nil && len(*respAlg.Rules) > 0 {
 
 		var planRules []resource_allocation_group.RulesValue
 
-		if plan != nil {
-			// Merge user-provided data with incomplete data returned from the server
-			planRules = make([]resource_allocation_group.RulesValue, len(plan.Rules.Elements()))
-			diags = plan.Rules.ElementsAs(ctx, &planRules, false)
-			d.Append(diags...)
-			if diags.HasError() {
-				return diags
-			}
+		// Merge user-provided data with incomplete data returned from the server
+		planRules = make([]resource_allocation_group.RulesValue, len(plan.Rules.Elements()))
+		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
+		d.Append(diags...)
+		if diags.HasError() {
+			return diags
 		}
 
-		stateRules := make([]attr.Value, len(*resp.Rules))
-		for i, rule := range *resp.Rules {
+		stateRules := make([]attr.Value, len(*respAlg.Rules))
+		for i, respAlgRule := range *respAlg.Rules {
+
+			if respAlgRule.Id == nil {
+				d.AddError("Allocation Rule present in the Allocation Group response had no ID", fmt.Sprintf("rule response: %+v", respAlgRule))
+				return d
+			}
+
+			respAl, err := r.client.GetAllocation(ctx, *respAlgRule.Id)
+			if err != nil {
+				d.AddError(
+					"Error Reading Doit Console Allocation",
+					"Could not read Doit Console Allocation ID `"+*respAlgRule.Id+"`: "+err.Error(),
+				)
+				return d
+			}
+
+			if respAl.Rule == nil {
+				d.AddError("Allocation had no Rule", fmt.Sprintf("rule response: %+v", respAl))
+				return d
+			}
+
 			stateRule := resource_allocation_group.RulesValue{
-				Id:         types.StringPointerValue(rule.Id),
-				Name:       types.StringPointerValue(rule.Name),
-				Owner:      types.StringPointerValue(rule.Owner),
-				RulesType:  types.StringPointerValue(rule.Type),
-				CreateTime: types.Int64PointerValue(rule.CreateTime),
-				UpdateTime: types.Int64PointerValue(rule.UpdateTime),
-				UrlUi:      types.StringPointerValue(rule.UrlUI),
+				// The GetAllocationGroup API method only returns an incomplete representation of the actual rule
+				// therefore we merge data from the AllocationGroup and Allocation GET API responses.
+
+				// Allocation Group GET data
+				Id:         types.StringPointerValue(respAlgRule.Id),
+				Name:       types.StringPointerValue(respAlgRule.Name),
+				Owner:      types.StringPointerValue(respAlgRule.Owner),
+				RulesType:  types.StringPointerValue(respAlgRule.Type),
+				CreateTime: types.Int64PointerValue(respAlgRule.CreateTime),
+				UpdateTime: types.Int64PointerValue(respAlgRule.UpdateTime),
+				UrlUi:      types.StringPointerValue(respAlgRule.UrlUI),
+
+				// Allocation GET data
+				Formula:     types.StringPointerValue(respAl.Rule.Formula),
+				Description: types.StringPointerValue(respAl.Description),
 			}
 
-			if rule.AllocationType != nil {
-				stateRule.AllocationType = types.StringValue(string(*rule.AllocationType))
+			stateRule.Components, diags = toAllocationRuleComponentsListValue[resource_allocation_group.ComponentsType](ctx, respAl.Rule.Components)
+			d.Append(diags...)
+			if d.HasError() {
+				return d
 			}
 
+			if respAl.AllocationType != nil {
+				stateRule.AllocationType = types.StringValue(string(*respAl.AllocationType))
+			}
+
+			// Finally, we merge plan data that is never returned by the API responses to prevent a perma-diff
 			for _, pr := range planRules {
 				if slices.Contains([]string{"select", "update"}, strings.ToLower(pr.Action.ValueString())) && pr.Id.ValueString() == stateRule.Id.ValueString() {
-					stateRule.Components = pr.Components
 					stateRule.Action = pr.Action
-					stateRule.Description = pr.Description
-					stateRule.Formula = pr.Formula
 					continue
 				}
 				if strings.ToLower(pr.Action.ValueString()) == "create" && pr.Name.ValueString() == stateRule.Name.ValueString() {
-					stateRule.Components = pr.Components
 					stateRule.Action = pr.Action
-					stateRule.Description = pr.Description
-					stateRule.Formula = pr.Formula
 					continue
 				}
 			}
 
-			// TODO: apparently missing things
 			stateRules[i], diags = resource_allocation_group.NewRulesValue(stateRule.AttributeTypes(ctx), map[string]attr.Value{
 				"id":              stateRule.Id,
 				"name":            stateRule.Name,
@@ -198,7 +234,7 @@ func (r *allocationGroupResource) populateState(ctx context.Context, plan, state
 	return d
 }
 
-func (c *Client) CreateAllocationGroup(ctx context.Context, groupAllocation models.GroupAllocationRequest) (*models.GroupAllocation, error) {
+func (c *Client) CreateAllocationGroup(ctx context.Context, groupAllocation models.GroupAllocationRequest) (*GroupAllocationsModelOverride, error) {
 	rb, err := json.Marshal(groupAllocation)
 	if err != nil {
 		return nil, err
@@ -217,7 +253,7 @@ func (c *Client) CreateAllocationGroup(ctx context.Context, groupAllocation mode
 		return nil, err
 	}
 
-	allocationResponse := new(models.GroupAllocation)
+	allocationResponse := new(GroupAllocationsModelOverride)
 	err = json.Unmarshal(body, allocationResponse)
 	if err != nil {
 		return nil, err
@@ -226,7 +262,7 @@ func (c *Client) CreateAllocationGroup(ctx context.Context, groupAllocation mode
 	return allocationResponse, nil
 }
 
-func (c *Client) UpdateAllocationGroup(ctx context.Context, id string, allocationReq models.GroupAllocationRequest) (*models.GroupAllocation, error) {
+func (c *Client) UpdateAllocationGroup(ctx context.Context, id string, allocationReq models.GroupAllocationRequest) (*GroupAllocationsModelOverride, error) {
 	rb, err := json.Marshal(allocationReq)
 	if err != nil {
 		return nil, err
@@ -242,7 +278,7 @@ func (c *Client) UpdateAllocationGroup(ctx context.Context, id string, allocatio
 		return nil, err
 	}
 
-	groupAllocation := new(models.GroupAllocation)
+	groupAllocation := new(GroupAllocationsModelOverride)
 	err = json.Unmarshal(body, groupAllocation)
 	if err != nil {
 		return nil, err
@@ -266,7 +302,7 @@ func (c *Client) DeleteAllocationGroup(ctx context.Context, id string) error {
 	return nil
 }
 
-func (c *Client) GetAllocationGroup(ctx context.Context, id string) (*models.GroupAllocation, error) {
+func (c *Client) GetAllocationGroup(ctx context.Context, id string) (*GroupAllocationsModelOverride, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, id)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlRequestContext, nil)
@@ -279,7 +315,7 @@ func (c *Client) GetAllocationGroup(ctx context.Context, id string) (*models.Gro
 		return nil, err
 	}
 
-	allocation := new(models.GroupAllocation)
+	allocation := new(GroupAllocationsModelOverride)
 	err = json.Unmarshal(body, allocation)
 	if err != nil {
 		return nil, err
