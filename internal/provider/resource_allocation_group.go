@@ -1,10 +1,10 @@
-package doit
+package provider
 
 import (
 	"context"
 	"fmt"
 
-	"terraform-provider-doit/internal/doit/resource_allocation_group"
+	"terraform-provider-doit/internal/provider/resource_allocation_group"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -139,7 +139,7 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	print(respUpdateAlg)
-	
+
 	diags = r.populateState(ctx, plan, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

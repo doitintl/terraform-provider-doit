@@ -1,4 +1,4 @@
-package doit
+package provider
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 	"strings"
 )
 
-// CreateAttribution - Create new attribution
-func (c *Client) CreateAttribution(ctx context.Context, attribution Attribution) (*Attribution, error) {
-	rb, err := json.Marshal(attribution)
+// CreateBudget - Create new budget
+func (c *Client) CreateBudget(ctx context.Context, budget Budget) (*Budget, error) {
+	rb, err := json.Marshal(budget)
 	if err != nil {
 		return nil, err
 	}
-	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributions", c.HostURL)
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets", c.HostURL)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
 	log.Println("URL----------------")
@@ -31,51 +31,53 @@ func (c *Client) CreateAttribution(ctx context.Context, attribution Attribution)
 		return nil, err
 	}
 
-	attributionResponse := Attribution{}
-	err = json.Unmarshal(body, &attributionResponse)
+	budgetResponse := Budget{}
+	err = json.Unmarshal(body, &budgetResponse)
 	if err != nil {
 		log.Println("ERROR UNMARSHALL----------------")
 		log.Println(err)
 		return nil, err
 	}
-	log.Println("Attribution response----------------")
-	log.Println(attributionResponse)
-	return &attributionResponse, nil
+	log.Println("Budget response----------------")
+	log.Println(budgetResponse)
+	return &budgetResponse, nil
 }
 
-// UpdateAttribution - Updates an attribution
-func (c *Client) UpdateAttribution(ctx context.Context, attributionID string, attribution Attribution) (*Attribution, error) {
-	rb, err := json.Marshal(attribution)
+// UpdateBudget - Updates an budget
+func (c *Client) UpdateBudget(ctx context.Context, budgetID string, budget Budget) (*Budget, error) {
+	rb, err := json.Marshal(budget)
 	if err != nil {
 		return nil, err
 	}
-	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributions/%s", c.HostURL, attributionID)
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, budgetID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("PATCH", urlRequestContext, strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
+	log.Println("Update BODY----------------")
+	log.Println(string(rb))
 	log.Println("Update URL----------------")
 	log.Println(req.URL)
 	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	attributionResponse := Attribution{}
-	err = json.Unmarshal(body, &attributionResponse)
+	log.Println("Update BODY----------------")
+	log.Println(string(body))
+	budgetResponse := Budget{}
+	err = json.Unmarshal(body, &budgetResponse)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Attribution response----------------")
-	log.Println(attributionResponse)
-	return &attributionResponse, nil
+	log.Println("Budget response----------------")
+	log.Println(budgetResponse)
+	return &budgetResponse, nil
 }
 
-func (c *Client) DeleteAttribution(ctx context.Context, attributionID string) error {
-	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributions/%s", c.HostURL, attributionID)
+func (c *Client) DeleteBudget(ctx context.Context, budgetID string) error {
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, budgetID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
-
 	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
 	if err != nil {
 		return err
@@ -89,9 +91,9 @@ func (c *Client) DeleteAttribution(ctx context.Context, attributionID string) er
 	return nil
 }
 
-// GetAttribution - Returns a specifc attribution
-func (c *Client) GetAttribution(ctx context.Context, orderID string) (*Attribution, error) {
-	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributions/%s", c.HostURL, orderID)
+// GetBudget - Returns a specifc budget
+func (c *Client) GetBudget(ctx context.Context, orderID string) (*Budget, error) {
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, orderID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("GET", urlRequestContext, nil)
 	if err != nil {
@@ -103,11 +105,11 @@ func (c *Client) GetAttribution(ctx context.Context, orderID string) (*Attributi
 		return nil, err
 	}
 
-	attribution := Attribution{}
-	err = json.Unmarshal(body, &attribution)
+	budget := Budget{}
+	err = json.Unmarshal(body, &budget)
 	if err != nil {
 		return nil, err
 	}
 
-	return &attribution, nil
+	return &budget, nil
 }

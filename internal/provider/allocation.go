@@ -1,4 +1,4 @@
-package doit
+package provider
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"terraform-provider-doit/internal/doit/models"
-	"terraform-provider-doit/internal/doit/resource_allocation"
-	"terraform-provider-doit/internal/doit/resource_allocation_group"
+	"terraform-provider-doit/internal/provider/models"
+	"terraform-provider-doit/internal/provider/resource_allocation"
+	"terraform-provider-doit/internal/provider/resource_allocation_group"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"

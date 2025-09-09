@@ -1,4 +1,4 @@
-package doit
+package provider
 
 // Attribution -
 type Attribution struct {

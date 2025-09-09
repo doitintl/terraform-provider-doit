@@ -47,7 +47,7 @@ func main() {
 		Address: "registry.terraform.io/doitintl/doit",
 		Debug:   debug,
 	}
-	err := providerserver.Serve(context.Background(), doit.New(version), opts)
+	err := providerserver.Serve(context.Background(), provider.New(version), opts)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

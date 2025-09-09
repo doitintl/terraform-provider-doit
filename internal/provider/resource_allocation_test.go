@@ -1,4 +1,4 @@
-package doit_test
+package provider_test
 
 import (
 	"fmt"

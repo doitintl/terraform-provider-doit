@@ -1,10 +1,10 @@
-package doit
+package provider
 
 import (
 	"context"
 	"fmt"
 
-	"terraform-provider-doit/internal/doit/resource_allocation"
+	"terraform-provider-doit/internal/provider/resource_allocation"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"

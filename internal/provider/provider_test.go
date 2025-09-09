@@ -1,10 +1,10 @@
-package doit_test
+package provider_test
 
 import (
 	"os"
 	"testing"
 
-	"terraform-provider-doit/internal/doit"
+	"terraform-provider-doit/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -13,7 +13,7 @@ import (
 
 var (
 	testAccProvidersProtoV6Factories = map[string]func() (tfprotov6.ProviderServer, error){
-		"doit": providerserver.NewProtocol6WithError(doit.New("dev")()),
+		"doit": providerserver.NewProtocol6WithError(provider.New("dev")()),
 	}
 	testAccTFVersionChecks = []tfversion.TerraformVersionCheck{
 		tfversion.RequireAbove(tfversion.Version1_10_0),

@@ -1,4 +1,4 @@
-package doit
+package provider
 
 import (
 	"context"
