@@ -2,12 +2,10 @@ package provider
 
 import (
 	"context"
-	"strings"
-
 	"fmt"
-	"time"
-
 	"log"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -38,17 +36,17 @@ func NewAttributionGroupResource() resource.Resource {
 
 // attributionGroupResource is the resource implementation.
 type attributionGroupResource struct {
-	client *ClientTest
+	client *Client
 }
 
 // Metadata returns the resource type name.
-func (r *attributionGroupResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *attributionGroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	log.Println("attribution group Metadata")
 	resp.TypeName = req.ProviderTypeName + "_attribution_group"
 }
 
 // Schema defines the schema for the resource.
-func (r *attributionGroupResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *attributionGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print("attributionGroup Schema")
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
@@ -82,18 +80,18 @@ func (r *attributionGroupResource) Schema(ctx context.Context, _ resource.Schema
 }
 
 // Configure adds the provider configured client to the resource.
-func (r *attributionGroupResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *attributionGroupResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	log.Print("attributionGroup Configure")
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*ClientTest)
+	client, ok := req.ProviderData.(*Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *ClientTest, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -127,7 +125,7 @@ func (r *attributionGroupResource) Create(ctx context.Context, req resource.Crea
 	log.Println(attributionGroup)
 
 	// Create new attributionGroup
-	attributionGroupResponse, err := r.client.CreateAttributionGroup(attributionGroup)
+	attributionGroupResponse, err := r.client.CreateAttributionGroup(ctx, attributionGroup)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating attributionGrouppp",
@@ -162,7 +160,7 @@ func (r *attributionGroupResource) Read(ctx context.Context, req resource.ReadRe
 	log.Print("state id")
 	log.Print(state.Id.ValueString())
 	// Get refreshed attributionGroup value from DoiT
-	attributionGroup, err := r.client.GetAttributionGroup(state.Id.ValueString())
+	attributionGroup, err := r.client.GetAttributionGroup(ctx, state.Id.ValueString())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			resp.State.RemoveResource(ctx)
@@ -174,7 +172,7 @@ func (r *attributionGroupResource) Read(ctx context.Context, req resource.ReadRe
 		)
 		return
 	}
-	//state.Id = types.StringValue(attributionGroup.Id)
+	// state.Id = types.StringValue(attributionGroup.Id)
 	state.Description = types.StringValue(attributionGroup.Description)
 	state.Name = types.StringValue(attributionGroup.Name)
 
@@ -227,7 +225,7 @@ func (r *attributionGroupResource) Update(ctx context.Context, req resource.Upda
 	log.Println(attributionGroup)
 
 	// Update existing attributionGroup
-	_, err := r.client.UpdateAttributionGroup(state.Id.ValueString(), attributionGroup)
+	_, err := r.client.UpdateAttributionGroup(ctx, state.Id.ValueString(), attributionGroup)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating DoiT AttributionGroup",
@@ -238,7 +236,7 @@ func (r *attributionGroupResource) Update(ctx context.Context, req resource.Upda
 
 	// Fetch updated items from GetAttributionGroup as UpdateAttributionGroup items are not
 	// populated.
-	attributionGroupResponse, err := r.client.GetAttributionGroup(state.Id.ValueString())
+	attributionGroupResponse, err := r.client.GetAttributionGroup(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Doit Console AttributionGroup",
@@ -277,7 +275,7 @@ func (r *attributionGroupResource) Delete(ctx context.Context, req resource.Dele
 	}
 
 	// Delete existing attributionGroup
-	err := r.client.DeleteAttributionGroup(state.Id.ValueString())
+	err := r.client.DeleteAttributionGroup(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT AttributionGroup",

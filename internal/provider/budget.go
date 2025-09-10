@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,7 +10,7 @@ import (
 )
 
 // CreateBudget - Create new budget
-func (c *ClientTest) CreateBudget(budget Budget) (*Budget, error) {
+func (c *Client) CreateBudget(ctx context.Context, budget Budget) (*Budget, error) {
 	rb, err := json.Marshal(budget)
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func (c *ClientTest) CreateBudget(budget Budget) (*Budget, error) {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		log.Println("ERROR REQUEST----------------")
 		log.Println(err)
@@ -43,14 +44,14 @@ func (c *ClientTest) CreateBudget(budget Budget) (*Budget, error) {
 }
 
 // UpdateBudget - Updates an budget
-func (c *ClientTest) UpdateBudget(budgetID string, budget Budget) (*Budget, error) {
+func (c *Client) UpdateBudget(ctx context.Context, budgetID string, budget Budget) (*Budget, error) {
 	rb, err := json.Marshal(budget)
 	if err != nil {
 		return nil, err
 	}
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, budgetID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
-	req, err := http.NewRequest("PATCH",urlRequestContext, strings.NewReader(string(rb)))
+	req, err := http.NewRequest("PATCH", urlRequestContext, strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func (c *ClientTest) UpdateBudget(budgetID string, budget Budget) (*Budget, erro
 	log.Println(string(rb))
 	log.Println("Update URL----------------")
 	log.Println(req.URL)
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,7 @@ func (c *ClientTest) UpdateBudget(budgetID string, budget Budget) (*Budget, erro
 	return &budgetResponse, nil
 }
 
-func (c *ClientTest) DeleteBudget(budgetID string) error {
+func (c *Client) DeleteBudget(ctx context.Context, budgetID string) error {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, budgetID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
@@ -82,7 +83,7 @@ func (c *ClientTest) DeleteBudget(budgetID string) error {
 		return err
 	}
 
-	_, err = c.doRequest(req)
+	_, err = c.doRequest(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -91,7 +92,7 @@ func (c *ClientTest) DeleteBudget(budgetID string) error {
 }
 
 // GetBudget - Returns a specifc budget
-func (c *ClientTest) GetBudget(orderID string) (*Budget, error) {
+func (c *Client) GetBudget(ctx context.Context, orderID string) (*Budget, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, orderID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("GET", urlRequestContext, nil)
@@ -99,7 +100,7 @@ func (c *ClientTest) GetBudget(orderID string) (*Budget, error) {
 		return nil, err
 	}
 
-	body, err := c.doRequest(req)
+	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}

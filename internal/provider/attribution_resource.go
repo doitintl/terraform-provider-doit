@@ -2,10 +2,9 @@ package provider
 
 import (
 	"context"
-	"strings"
-
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -45,7 +44,7 @@ func NewAttributionResource() resource.Resource {
 
 // attributionResource is the resource implementation.
 type attributionResource struct {
-	client *ClientTest
+	client *Client
 }
 
 // Metadata returns the resource type name.
@@ -117,12 +116,12 @@ func (r *attributionResource) Configure(_ context.Context, req resource.Configur
 		return
 	}
 
-	client, ok := req.ProviderData.(*ClientTest)
+	client, ok := req.ProviderData.(*Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *ClientTest, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -165,7 +164,7 @@ func (r *attributionResource) Create(ctx context.Context, req resource.CreateReq
 	log.Println(attribution)
 
 	// Create new attribution
-	attributionResponse, err := r.client.CreateAttribution(attribution)
+	attributionResponse, err := r.client.CreateAttribution(ctx, attribution)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating attribution",
@@ -200,7 +199,7 @@ func (r *attributionResource) Read(ctx context.Context, req resource.ReadRequest
 	log.Print("state id:::::::::::::::::::::::::")
 	log.Print(state.Id.ValueString())
 	// Get refreshed attribution value from DoiT
-	attribution, err := r.client.GetAttribution(state.Id.ValueString())
+	attribution, err := r.client.GetAttribution(ctx, state.Id.ValueString())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			resp.State.RemoveResource(ctx)
@@ -282,7 +281,7 @@ func (r *attributionResource) Update(ctx context.Context, req resource.UpdateReq
 	log.Println(attribution)
 
 	// Update existing attribution
-	_, err := r.client.UpdateAttribution(state.Id.ValueString(), attribution)
+	_, err := r.client.UpdateAttribution(ctx, state.Id.ValueString(), attribution)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating DoiT Attribution",
@@ -293,7 +292,7 @@ func (r *attributionResource) Update(ctx context.Context, req resource.UpdateReq
 
 	// Fetch updated items from GetAttribution as UpdateAttribution items are not
 	// populated.
-	attributionResponse, err := r.client.GetAttribution(state.Id.ValueString())
+	attributionResponse, err := r.client.GetAttribution(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Doit Console Attribution",
@@ -341,7 +340,7 @@ func (r *attributionResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Delete existing attribution
-	err := r.client.DeleteAttribution(state.Id.ValueString())
+	err := r.client.DeleteAttribution(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Attribution",

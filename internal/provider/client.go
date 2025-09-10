@@ -13,33 +13,30 @@ import (
 	"golang.org/x/time/rate"
 )
 
-type AuthResponseTest struct {
+type AuthResponse struct {
 	DoiTAPITOken    string `json:"doiTAPITOken"`
 	CustomerContext string `json:"customerContext"`
 }
 
-// AuthStruct -
-type AuthStructTest struct {
+type Auth struct {
 	DoiTAPITOken    string `json:"doiTAPITOken"`
 	CustomerContext string `json:"customerContext"`
 }
 
-// Client
-type ClientTest struct {
+type Client struct {
 	HostURL     string
 	HTTPClient  *http.Client
-	Auth        AuthStructTest
+	Auth        Auth
 	Ratelimiter *rate.Limiter
 }
 
-// NewClient -
-func NewClientTest(host, doiTAPIClient, customerContext *string, rl *rate.Limiter) (*ClientTest, error) {
+func NewClient(ctx context.Context, host, doiTAPIClient, customerContext *string, rl *rate.Limiter) (*Client, error) {
 
-	c := ClientTest{
+	c := Client{
 		HTTPClient: &http.Client{Timeout: 30 * time.Second},
 		// Default DoiT URL
 		HostURL: HostURL,
-		Auth: AuthStructTest{
+		Auth: Auth{
 			DoiTAPITOken:    *doiTAPIClient,
 			CustomerContext: *customerContext,
 		},
@@ -49,7 +46,7 @@ func NewClientTest(host, doiTAPIClient, customerContext *string, rl *rate.Limite
 	if host != nil {
 		c.HostURL = *host
 	}
-	_, err := c.SignIn()
+	_, err := c.SignIn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -57,41 +54,31 @@ func NewClientTest(host, doiTAPIClient, customerContext *string, rl *rate.Limite
 	return &c, nil
 }
 
-func (c *ClientTest) SignIn() (*AuthResponseTest, error) {
+func (c *Client) SignIn(ctx context.Context) (*AuthResponse, error) {
 	if c.Auth.DoiTAPITOken == "" {
 		return nil, fmt.Errorf("define Doit API Token")
 	}
-	//rb, err := json.Marshal(c.Auth)
-	//if err != nil {
-	//	return nil, err
-	//}
 
-	url_ccontext := "/auth/v1/validate?customerContext=" + c.Auth.CustomerContext
-	req, err := http.NewRequest("GET", c.HostURL+url_ccontext, nil)
+	urlCcontext := "/auth/v1/validate?customerContext=" + c.Auth.CustomerContext
+	req, err := http.NewRequest("GET", c.HostURL+urlCcontext, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = c.doRequest(req)
+	_, err = c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	ar := AuthResponseTest{
+	ar := AuthResponse{
 		DoiTAPITOken:    c.Auth.DoiTAPITOken,
 		CustomerContext: c.Auth.CustomerContext,
-	}
-	//err = json.Unmarshal(body, &ar)
-	if err != nil {
-		return nil, err
 	}
 
 	return &ar, nil
 }
 
-func (c *ClientTest) doRequest(req *http.Request) ([]byte, error) {
-	//req.Header.Set("Authorization", c.Token)
-	ctx := context.Background()
+func (c *Client) doRequest(ctx context.Context, req *http.Request) ([]byte, error) {
 	err := c.Ratelimiter.Wait(ctx) // This is a blocking call. Honors the rate limit
 	if err != nil {
 		return nil, err
@@ -126,7 +113,7 @@ func (c *ClientTest) doRequest(req *http.Request) ([]byte, error) {
 		return nil, errRetryOutside
 	}
 
-	//in case the error is different to rate limit
+	// in case the error is different to rate limit
 	if err != nil {
 		return nil, err
 	}
