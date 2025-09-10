@@ -7,8 +7,7 @@ import (
 	"context"
 	"flag"
 	"log"
-
-	"terraform-provider-doit/internal/doit"
+	"terraform-provider-doit/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
