@@ -1,6 +1,6 @@
-# DoiT Console Provider 
+# DoiT Cloud Intelligence Provider 
 
-This is a initial Proof of Concept to create a Terraform provider for DoiT Console.
+This is an initial Proof of Concept to create a Terraform provider for DoiT Cloud Intelligence(tm)
 
 ## Requirements
 
@@ -20,7 +20,7 @@ go install
 ## Adding Dependencies
 
 This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please see the Go documentation for the most up to date information about using Go modules.
+Please refer to the Go documentation for the most up-to-date information on using Go modules.
 
 To add a new dependency `github.com/author/dependency` to your Terraform provider:
 
@@ -33,7 +33,7 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using the provider
 
-Please check the docs folder to find example to use the DoiT Console provider.
+Please check the docs folder to find an example to use the DoiT Console provider.
 
 ## Developing the Provider
 
