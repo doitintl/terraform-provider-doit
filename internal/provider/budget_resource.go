@@ -528,8 +528,7 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Generate API request body from plan
-	var budget Budget
-	budget = budgetModelToBudget(&plan)
+	budget := budgetModelToBudget(&plan)
 
 	// Update existing budget
 	_, err := r.client.UpdateBudget(ctx, state.Id.ValueString(), budget)
