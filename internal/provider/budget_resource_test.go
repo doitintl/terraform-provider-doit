@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"testing"
 
+	"math/rand/v2"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-	"golang.org/x/exp/rand"
 )
 
 func TestAccBudget(t *testing.T) {
