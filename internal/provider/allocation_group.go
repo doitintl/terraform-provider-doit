@@ -113,9 +113,7 @@ func (r *allocationGroupResource) populateState(ctx context.Context, plan, state
 
 	if respAlg.Rules != nil && len(*respAlg.Rules) > 0 {
 
-		var planRules []resource_allocation_group.RulesValue
-
-		planRules = make([]resource_allocation_group.RulesValue, len(plan.Rules.Elements()))
+		planRules := make([]resource_allocation_group.RulesValue, len(plan.Rules.Elements()))
 		diags := plan.Rules.ElementsAs(ctx, &planRules, false)
 		d.Append(diags...)
 		if diags.HasError() {
