@@ -410,7 +410,7 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 
 }
 
-func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceModel, ctx context.Context) {
+func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceModel, _ context.Context) {
 	if budget != nil {
 		budgetModel.Id = types.StringValue(budget.Id)
 		budgetModel.Alerts = []ExternalBudgetAlertModel{}
