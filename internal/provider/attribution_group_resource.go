@@ -107,7 +107,7 @@ func (r *attributionGroupResource) Configure(_ context.Context, req resource.Con
 // Create creates the resource and sets the initial Terraform state.
 func (r *attributionGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	resp.Diagnostics.Append(
-		diag.NewErrorDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
 	)
 	log.Println("attributionGroup Create")
 
@@ -157,7 +157,7 @@ func (r *attributionGroupResource) Create(ctx context.Context, req resource.Crea
 // Read refreshes the Terraform state with the latest data.
 func (r *attributionGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	resp.Diagnostics.Append(
-		diag.NewErrorDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
 	)
 	log.Print("attributionGroup Read")
 	// Get current state
@@ -204,7 +204,7 @@ func (r *attributionGroupResource) Read(ctx context.Context, req resource.ReadRe
 
 func (r *attributionGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	resp.Diagnostics.Append(
-		diag.NewErrorDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
 	)
 	log.Println("attributionGroup Update")
 	// Retrieve values from plan
@@ -279,7 +279,7 @@ func (r *attributionGroupResource) Update(ctx context.Context, req resource.Upda
 
 func (r *attributionGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	resp.Diagnostics.Append(
-		diag.NewErrorDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
 	)
 	log.Println("attributionGroup Delete")
 	// Retrieve values from state
