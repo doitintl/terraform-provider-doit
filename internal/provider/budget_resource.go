@@ -410,7 +410,7 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 
 }
 
-func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceModel, ctx context.Context) {
+func budgetToBudgetResourceModel(budget *Budget, budgetModel *budgetResourceModel, _ context.Context) {
 	if budget != nil {
 		budgetModel.Id = types.StringValue(budget.Id)
 		budgetModel.Alerts = []ExternalBudgetAlertModel{}
@@ -528,8 +528,7 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Generate API request body from plan
-	var budget Budget
-	budget = budgetModelToBudget(&plan)
+	budget := budgetModelToBudget(&plan)
 
 	// Update existing budget
 	_, err := r.client.UpdateBudget(ctx, state.Id.ValueString(), budget)
