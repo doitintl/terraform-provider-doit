@@ -203,7 +203,7 @@ func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	}
 }
 
-// modelToBudget converts the Terraform model to the API Budget type
+// modelToBudget converts the Terraform model to the API Budget type.
 func modelToBudget(ctx context.Context, model *resource_budget.BudgetModel) (Budget, diag.Diagnostics) {
 	var budget Budget
 	var diags diag.Diagnostics
@@ -378,7 +378,7 @@ func modelToBudget(ctx context.Context, model *resource_budget.BudgetModel) (Bud
 	return budget, diags
 }
 
-// budgetToModel converts the API Budget type to the Terraform model
+// budgetToModel converts the API Budget type to the Terraform model.
 func budgetToModel(ctx context.Context, budget *Budget, model *resource_budget.BudgetModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -388,12 +388,10 @@ func budgetToModel(ctx context.Context, budget *Budget, model *resource_budget.B
 
 	model.Id = types.StringValue(budget.Id)
 
-	// Convert alerts - note: new fields forecasted_date and triggered will be populated from API
-	if budget.Alerts != nil {
-		// This will be populated from the API response which should include the new fields
-		// For now, keep the implementation simple and let the generated code handle it
-		// The state upgrader will have already converted old alerts to the new format
-	}
+	// Convert alerts - note: new fields forecasted_date and triggered will be populated from API.
+	// This will be populated from the API response which should include the new fields.
+	// For now, keep the implementation simple and let the generated code handle it.
+	// The state upgrader will have already converted old alerts to the new format.
 
 	model.Amount = types.Float64Value(budget.Amount)
 
