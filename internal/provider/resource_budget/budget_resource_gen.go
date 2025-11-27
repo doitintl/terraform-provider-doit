@@ -55,213 +55,6 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Budget period amount\nrequired: true(if usePrevSpend is false)",
 				MarkdownDescription: "Budget period amount\nrequired: true(if usePrevSpend is false)",
 			},
-			"budget": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{
-					"alerts": schema.ListNestedAttribute{
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"forecasted_date": schema.Int64Attribute{
-									Computed: true,
-								},
-								"percentage": schema.Float64Attribute{
-									Computed: true,
-								},
-								"triggered": schema.BoolAttribute{
-									Computed: true,
-								},
-							},
-							CustomType: AlertsType{
-								ObjectType: types.ObjectType{
-									AttrTypes: AlertsValue{}.AttributeTypes(ctx),
-								},
-							},
-						},
-						Computed:            true,
-						Description:         "List of up to three thresholds defined as percentage of amount",
-						MarkdownDescription: "List of up to three thresholds defined as percentage of amount",
-					},
-					"amount": schema.Float64Attribute{
-						Computed:            true,
-						Description:         "Budget period amount\nrequired: true(if usePrevSpend is false)",
-						MarkdownDescription: "Budget period amount\nrequired: true(if usePrevSpend is false)",
-					},
-					"collaborators": schema.ListNestedAttribute{
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"email": schema.StringAttribute{
-									Computed: true,
-								},
-								"role": schema.StringAttribute{
-									Computed: true,
-								},
-							},
-							CustomType: CollaboratorsType{
-								ObjectType: types.ObjectType{
-									AttrTypes: CollaboratorsValue{}.AttributeTypes(ctx),
-								},
-							},
-						},
-						Computed:            true,
-						Description:         "List of permitted users to view/edit the report",
-						MarkdownDescription: "List of permitted users to view/edit the report",
-					},
-					"create_time": schema.Int64Attribute{
-						Computed:            true,
-						Description:         "Creation time (in UNIX timestamp)",
-						MarkdownDescription: "Creation time (in UNIX timestamp)",
-					},
-					"currency": schema.StringAttribute{
-						Computed: true,
-					},
-					"current_utilization": schema.Float64Attribute{
-						Computed: true,
-					},
-					"description": schema.StringAttribute{
-						Computed:            true,
-						Description:         "Budget description",
-						MarkdownDescription: "Budget description",
-					},
-					"end_period": schema.Int64Attribute{
-						Computed:            true,
-						Description:         "Fixed budget end date (in UNIX timestamp)\nrequired: true(if budget type is fixed)",
-						MarkdownDescription: "Fixed budget end date (in UNIX timestamp)\nrequired: true(if budget type is fixed)",
-					},
-					"forecasted_utilization": schema.Float64Attribute{
-						Computed: true,
-					},
-					"growth_per_period": schema.Float64Attribute{
-						Computed:            true,
-						Description:         "Periodical growth percentage in recurring budget",
-						MarkdownDescription: "Periodical growth percentage in recurring budget",
-						Default:             float64default.StaticFloat64(0),
-					},
-					"id": schema.StringAttribute{
-						Computed:            true,
-						Description:         "budget ID, identifying the report\nin:path",
-						MarkdownDescription: "budget ID, identifying the report\nin:path",
-					},
-					"metric": schema.StringAttribute{
-						Computed:            true,
-						Description:         "Budget metric - currently fixed to \"cost\"",
-						MarkdownDescription: "Budget metric - currently fixed to \"cost\"",
-						Default:             stringdefault.StaticString("cost"),
-					},
-					"name": schema.StringAttribute{
-						Computed:            true,
-						Description:         "Budget Name",
-						MarkdownDescription: "Budget Name",
-					},
-					"public": schema.StringAttribute{
-						Computed: true,
-					},
-					"recipients": schema.ListAttribute{
-						ElementType:         types.StringType,
-						Computed:            true,
-						Description:         "List of emails to notify when reaching alert threshold",
-						MarkdownDescription: "List of emails to notify when reaching alert threshold",
-					},
-					"recipients_slack_channels": schema.ListNestedAttribute{
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"customer_id": schema.StringAttribute{
-									Computed: true,
-								},
-								"id": schema.StringAttribute{
-									Computed: true,
-								},
-								"name": schema.StringAttribute{
-									Computed: true,
-								},
-								"shared": schema.BoolAttribute{
-									Computed: true,
-								},
-								"type": schema.StringAttribute{
-									Computed: true,
-								},
-								"workspace": schema.StringAttribute{
-									Computed: true,
-								},
-							},
-							CustomType: RecipientsSlackChannelsType{
-								ObjectType: types.ObjectType{
-									AttrTypes: RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
-								},
-							},
-						},
-						Computed:            true,
-						Description:         "List of slack channels to notify when reaching alert threshold",
-						MarkdownDescription: "List of slack channels to notify when reaching alert threshold",
-					},
-					"scopes": schema.ListNestedAttribute{
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"include_null": schema.BoolAttribute{
-									Computed: true,
-								},
-								"inverse_selection": schema.BoolAttribute{
-									Computed:            true,
-									Description:         "If set to true, all the selected values will be excluded.",
-									MarkdownDescription: "If set to true, all the selected values will be excluded.",
-								},
-								"key": schema.StringAttribute{
-									Computed: true,
-									Default:  stringdefault.StaticString("service_id"),
-								},
-								"regexp": schema.StringAttribute{
-									Computed: true,
-								},
-								"type": schema.StringAttribute{
-									Computed: true,
-								},
-								"values": schema.ListAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
-								},
-							},
-							CustomType: ScopesType{
-								ObjectType: types.ObjectType{
-									AttrTypes: ScopesValue{}.AttributeTypes(ctx),
-								},
-							},
-						},
-						Computed:            true,
-						Description:         "The filters selected define the scope of the budget.",
-						MarkdownDescription: "The filters selected define the scope of the budget.",
-					},
-					"start_period": schema.Int64Attribute{
-						Computed:            true,
-						Description:         "Budget start Date (in UNIX timestamp)",
-						MarkdownDescription: "Budget start Date (in UNIX timestamp)",
-					},
-					"time_interval": schema.StringAttribute{
-						Computed:            true,
-						Description:         "Recurring budget interval can be one of: [\"day\", \"week\", \"month\",\"quarter\",\"year\"]",
-						MarkdownDescription: "Recurring budget interval can be one of: [\"day\", \"week\", \"month\",\"quarter\",\"year\"]",
-					},
-					"type": schema.StringAttribute{
-						Computed:            true,
-						Description:         "budget type can be one of: [\"fixed\", \"recurring\"]",
-						MarkdownDescription: "budget type can be one of: [\"fixed\", \"recurring\"]",
-					},
-					"update_time": schema.Int64Attribute{
-						Computed:            true,
-						Description:         "Update time (in UNIX timestamp)",
-						MarkdownDescription: "Update time (in UNIX timestamp)",
-					},
-					"use_prev_spend": schema.BoolAttribute{
-						Computed:            true,
-						Description:         "Use the last period's spend as the target amount for recurring budgets",
-						MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets",
-						Default:             booldefault.StaticBool(false),
-					},
-				},
-				CustomType: BudgetType{
-					ObjectType: types.ObjectType{
-						AttrTypes: BudgetValue{}.AttributeTypes(ctx),
-					},
-				},
-				Computed: true,
-			},
 			"collaborators": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -463,7 +256,6 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 type BudgetModel struct {
 	Alerts                  types.List    `tfsdk:"alerts"`
 	Amount                  types.Float64 `tfsdk:"amount"`
-	Budget                  BudgetValue   `tfsdk:"budget"`
 	Collaborators           types.List    `tfsdk:"collaborators"`
 	Currency                types.String  `tfsdk:"currency"`
 	Description             types.String  `tfsdk:"description"`
@@ -484,6 +276,10 @@ type BudgetModel struct {
 }
 
 var _ basetypes.ObjectTypable = AlertsType{}
+
+type AlertsType struct {
+	basetypes.ObjectType
+}
 
 func (t AlertsType) Equal(o attr.Type) bool {
 	other, ok := o.(AlertsType)
@@ -568,1872 +364,6 @@ func (t AlertsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		Triggered:      triggeredVal,
 		state:          attr.ValueStateKnown,
 	}, diags
-}
-
-func (t AlertsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewAlertsValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewAlertsValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewAlertsValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewAlertsValueMust(AlertsValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t AlertsType) ValueType(ctx context.Context) attr.Value {
-	return AlertsValue{}
-}
-
-var _ basetypes.ObjectValuable = AlertsValue{}
-
-func (v AlertsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["forecasted_date"] = basetypes.Int64Type{}.TerraformType(ctx)
-	attrTypes["percentage"] = basetypes.Float64Type{}.TerraformType(ctx)
-	attrTypes["triggered"] = basetypes.BoolType{}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
-
-		val, err = v.ForecastedDate.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["forecasted_date"] = val
-
-		val, err = v.Percentage.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["percentage"] = val
-
-		val, err = v.Triggered.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["triggered"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v AlertsValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v AlertsValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v AlertsValue) String() string {
-	return "AlertsValue"
-}
-
-func (v AlertsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := map[string]attr.Type{
-		"forecasted_date": basetypes.Int64Type{},
-		"percentage":      basetypes.Float64Type{},
-		"triggered":       basetypes.BoolType{},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"forecasted_date": v.ForecastedDate,
-			"percentage":      v.Percentage,
-			"triggered":       v.Triggered,
-		})
-
-	return objVal, diags
-}
-
-func (v AlertsValue) Equal(o attr.Value) bool {
-	other, ok := o.(AlertsValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.ForecastedDate.Equal(other.ForecastedDate) {
-		return false
-	}
-
-	if !v.Percentage.Equal(other.Percentage) {
-		return false
-	}
-
-	if !v.Triggered.Equal(other.Triggered) {
-		return false
-	}
-
-	return true
-}
-
-func (v AlertsValue) Type(ctx context.Context) attr.Type {
-	return AlertsType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v AlertsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"forecasted_date": basetypes.Int64Type{},
-		"percentage":      basetypes.Float64Type{},
-		"triggered":       basetypes.BoolType{},
-	}
-}
-
-var _ basetypes.ObjectTypable = BudgetType{}
-
-type BudgetType struct {
-	basetypes.ObjectType
-}
-
-func (t BudgetType) Equal(o attr.Type) bool {
-	other, ok := o.(BudgetType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t BudgetType) String() string {
-	return "BudgetType"
-}
-
-func (t BudgetType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributes := in.Attributes()
-
-	alertsAttribute, ok := attributes["alerts"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`alerts is missing from object`)
-
-		return nil, diags
-	}
-
-	alertsVal, ok := alertsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`alerts expected to be basetypes.ListValue, was: %T`, alertsAttribute))
-	}
-
-	amountAttribute, ok := attributes["amount"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`amount is missing from object`)
-
-		return nil, diags
-	}
-
-	amountVal, ok := amountAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`amount expected to be basetypes.Float64Value, was: %T`, amountAttribute))
-	}
-
-	collaboratorsAttribute, ok := attributes["collaborators"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`collaborators is missing from object`)
-
-		return nil, diags
-	}
-
-	collaboratorsVal, ok := collaboratorsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`collaborators expected to be basetypes.ListValue, was: %T`, collaboratorsAttribute))
-	}
-
-	createTimeAttribute, ok := attributes["create_time"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`create_time is missing from object`)
-
-		return nil, diags
-	}
-
-	createTimeVal, ok := createTimeAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`create_time expected to be basetypes.Int64Value, was: %T`, createTimeAttribute))
-	}
-
-	currencyAttribute, ok := attributes["currency"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`currency is missing from object`)
-
-		return nil, diags
-	}
-
-	currencyVal, ok := currencyAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`currency expected to be basetypes.StringValue, was: %T`, currencyAttribute))
-	}
-
-	currentUtilizationAttribute, ok := attributes["current_utilization"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`current_utilization is missing from object`)
-
-		return nil, diags
-	}
-
-	currentUtilizationVal, ok := currentUtilizationAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`current_utilization expected to be basetypes.Float64Value, was: %T`, currentUtilizationAttribute))
-	}
-
-	descriptionAttribute, ok := attributes["description"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`description is missing from object`)
-
-		return nil, diags
-	}
-
-	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
-	}
-
-	endPeriodAttribute, ok := attributes["end_period"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`end_period is missing from object`)
-
-		return nil, diags
-	}
-
-	endPeriodVal, ok := endPeriodAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`end_period expected to be basetypes.Int64Value, was: %T`, endPeriodAttribute))
-	}
-
-	forecastedUtilizationAttribute, ok := attributes["forecasted_utilization"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`forecasted_utilization is missing from object`)
-
-		return nil, diags
-	}
-
-	forecastedUtilizationVal, ok := forecastedUtilizationAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`forecasted_utilization expected to be basetypes.Float64Value, was: %T`, forecastedUtilizationAttribute))
-	}
-
-	growthPerPeriodAttribute, ok := attributes["growth_per_period"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`growth_per_period is missing from object`)
-
-		return nil, diags
-	}
-
-	growthPerPeriodVal, ok := growthPerPeriodAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`growth_per_period expected to be basetypes.Float64Value, was: %T`, growthPerPeriodAttribute))
-	}
-
-	idAttribute, ok := attributes["id"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`id is missing from object`)
-
-		return nil, diags
-	}
-
-	idVal, ok := idAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
-	}
-
-	metricAttribute, ok := attributes["metric"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`metric is missing from object`)
-
-		return nil, diags
-	}
-
-	metricVal, ok := metricAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.StringValue, was: %T`, metricAttribute))
-	}
-
-	nameAttribute, ok := attributes["name"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`name is missing from object`)
-
-		return nil, diags
-	}
-
-	nameVal, ok := nameAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
-	}
-
-	publicAttribute, ok := attributes["public"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`public is missing from object`)
-
-		return nil, diags
-	}
-
-	publicVal, ok := publicAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`public expected to be basetypes.StringValue, was: %T`, publicAttribute))
-	}
-
-	recipientsAttribute, ok := attributes["recipients"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`recipients is missing from object`)
-
-		return nil, diags
-	}
-
-	recipientsVal, ok := recipientsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`recipients expected to be basetypes.ListValue, was: %T`, recipientsAttribute))
-	}
-
-	recipientsSlackChannelsAttribute, ok := attributes["recipients_slack_channels"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`recipients_slack_channels is missing from object`)
-
-		return nil, diags
-	}
-
-	recipientsSlackChannelsVal, ok := recipientsSlackChannelsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`recipients_slack_channels expected to be basetypes.ListValue, was: %T`, recipientsSlackChannelsAttribute))
-	}
-
-	scopesAttribute, ok := attributes["scopes"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`scopes is missing from object`)
-
-		return nil, diags
-	}
-
-	scopesVal, ok := scopesAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`scopes expected to be basetypes.ListValue, was: %T`, scopesAttribute))
-	}
-
-	startPeriodAttribute, ok := attributes["start_period"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`start_period is missing from object`)
-
-		return nil, diags
-	}
-
-	startPeriodVal, ok := startPeriodAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`start_period expected to be basetypes.Int64Value, was: %T`, startPeriodAttribute))
-	}
-
-	timeIntervalAttribute, ok := attributes["time_interval"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`time_interval is missing from object`)
-
-		return nil, diags
-	}
-
-	timeIntervalVal, ok := timeIntervalAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`time_interval expected to be basetypes.StringValue, was: %T`, timeIntervalAttribute))
-	}
-
-	typeAttribute, ok := attributes["type"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`type is missing from object`)
-
-		return nil, diags
-	}
-
-	typeVal, ok := typeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
-	}
-
-	updateTimeAttribute, ok := attributes["update_time"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`update_time is missing from object`)
-
-		return nil, diags
-	}
-
-	updateTimeVal, ok := updateTimeAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`update_time expected to be basetypes.Int64Value, was: %T`, updateTimeAttribute))
-	}
-
-	usePrevSpendAttribute, ok := attributes["use_prev_spend"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`use_prev_spend is missing from object`)
-
-		return nil, diags
-	}
-
-	usePrevSpendVal, ok := usePrevSpendAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`use_prev_spend expected to be basetypes.BoolValue, was: %T`, usePrevSpendAttribute))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return BudgetValue{
-		Alerts:                  alertsVal,
-		Amount:                  amountVal,
-		Collaborators:           collaboratorsVal,
-		CreateTime:              createTimeVal,
-		Currency:                currencyVal,
-		CurrentUtilization:      currentUtilizationVal,
-		Description:             descriptionVal,
-		EndPeriod:               endPeriodVal,
-		ForecastedUtilization:   forecastedUtilizationVal,
-		GrowthPerPeriod:         growthPerPeriodVal,
-		Id:                      idVal,
-		Metric:                  metricVal,
-		Name:                    nameVal,
-		Public:                  publicVal,
-		Recipients:              recipientsVal,
-		RecipientsSlackChannels: recipientsSlackChannelsVal,
-		Scopes:                  scopesVal,
-		StartPeriod:             startPeriodVal,
-		TimeInterval:            timeIntervalVal,
-		BudgetType:              typeVal,
-		UpdateTime:              updateTimeVal,
-		UsePrevSpend:            usePrevSpendVal,
-		state:                   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewBudgetValueNull() BudgetValue {
-	return BudgetValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewBudgetValueUnknown() BudgetValue {
-	return BudgetValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewBudgetValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BudgetValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing BudgetValue Attribute Value",
-				"While creating a BudgetValue value, a missing attribute value was detected. "+
-					"A BudgetValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("BudgetValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid BudgetValue Attribute Type",
-				"While creating a BudgetValue value, an invalid attribute value was detected. "+
-					"A BudgetValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("BudgetValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("BudgetValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra BudgetValue Attribute Value",
-				"While creating a BudgetValue value, an extra attribute value was detected. "+
-					"A BudgetValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra BudgetValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewBudgetValueUnknown(), diags
-	}
-
-	alertsAttribute, ok := attributes["alerts"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`alerts is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	alertsVal, ok := alertsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`alerts expected to be basetypes.ListValue, was: %T`, alertsAttribute))
-	}
-
-	amountAttribute, ok := attributes["amount"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`amount is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	amountVal, ok := amountAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`amount expected to be basetypes.Float64Value, was: %T`, amountAttribute))
-	}
-
-	collaboratorsAttribute, ok := attributes["collaborators"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`collaborators is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	collaboratorsVal, ok := collaboratorsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`collaborators expected to be basetypes.ListValue, was: %T`, collaboratorsAttribute))
-	}
-
-	createTimeAttribute, ok := attributes["create_time"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`create_time is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	createTimeVal, ok := createTimeAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`create_time expected to be basetypes.Int64Value, was: %T`, createTimeAttribute))
-	}
-
-	currencyAttribute, ok := attributes["currency"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`currency is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	currencyVal, ok := currencyAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`currency expected to be basetypes.StringValue, was: %T`, currencyAttribute))
-	}
-
-	currentUtilizationAttribute, ok := attributes["current_utilization"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`current_utilization is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	currentUtilizationVal, ok := currentUtilizationAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`current_utilization expected to be basetypes.Float64Value, was: %T`, currentUtilizationAttribute))
-	}
-
-	descriptionAttribute, ok := attributes["description"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`description is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
-	}
-
-	endPeriodAttribute, ok := attributes["end_period"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`end_period is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	endPeriodVal, ok := endPeriodAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`end_period expected to be basetypes.Int64Value, was: %T`, endPeriodAttribute))
-	}
-
-	forecastedUtilizationAttribute, ok := attributes["forecasted_utilization"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`forecasted_utilization is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	forecastedUtilizationVal, ok := forecastedUtilizationAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`forecasted_utilization expected to be basetypes.Float64Value, was: %T`, forecastedUtilizationAttribute))
-	}
-
-	growthPerPeriodAttribute, ok := attributes["growth_per_period"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`growth_per_period is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	growthPerPeriodVal, ok := growthPerPeriodAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`growth_per_period expected to be basetypes.Float64Value, was: %T`, growthPerPeriodAttribute))
-	}
-
-	idAttribute, ok := attributes["id"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`id is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	idVal, ok := idAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
-	}
-
-	metricAttribute, ok := attributes["metric"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`metric is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	metricVal, ok := metricAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.StringValue, was: %T`, metricAttribute))
-	}
-
-	nameAttribute, ok := attributes["name"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`name is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	nameVal, ok := nameAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
-	}
-
-	publicAttribute, ok := attributes["public"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`public is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	publicVal, ok := publicAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`public expected to be basetypes.StringValue, was: %T`, publicAttribute))
-	}
-
-	recipientsAttribute, ok := attributes["recipients"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`recipients is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	recipientsVal, ok := recipientsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`recipients expected to be basetypes.ListValue, was: %T`, recipientsAttribute))
-	}
-
-	recipientsSlackChannelsAttribute, ok := attributes["recipients_slack_channels"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`recipients_slack_channels is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	recipientsSlackChannelsVal, ok := recipientsSlackChannelsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`recipients_slack_channels expected to be basetypes.ListValue, was: %T`, recipientsSlackChannelsAttribute))
-	}
-
-	scopesAttribute, ok := attributes["scopes"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`scopes is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	scopesVal, ok := scopesAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`scopes expected to be basetypes.ListValue, was: %T`, scopesAttribute))
-	}
-
-	startPeriodAttribute, ok := attributes["start_period"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`start_period is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	startPeriodVal, ok := startPeriodAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`start_period expected to be basetypes.Int64Value, was: %T`, startPeriodAttribute))
-	}
-
-	timeIntervalAttribute, ok := attributes["time_interval"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`time_interval is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	timeIntervalVal, ok := timeIntervalAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`time_interval expected to be basetypes.StringValue, was: %T`, timeIntervalAttribute))
-	}
-
-	typeAttribute, ok := attributes["type"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`type is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	typeVal, ok := typeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
-	}
-
-	updateTimeAttribute, ok := attributes["update_time"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`update_time is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	updateTimeVal, ok := updateTimeAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`update_time expected to be basetypes.Int64Value, was: %T`, updateTimeAttribute))
-	}
-
-	usePrevSpendAttribute, ok := attributes["use_prev_spend"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`use_prev_spend is missing from object`)
-
-		return NewBudgetValueUnknown(), diags
-	}
-
-	usePrevSpendVal, ok := usePrevSpendAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`use_prev_spend expected to be basetypes.BoolValue, was: %T`, usePrevSpendAttribute))
-	}
-
-	if diags.HasError() {
-		return NewBudgetValueUnknown(), diags
-	}
-
-	return BudgetValue{
-		Alerts:                  alertsVal,
-		Amount:                  amountVal,
-		Collaborators:           collaboratorsVal,
-		CreateTime:              createTimeVal,
-		Currency:                currencyVal,
-		CurrentUtilization:      currentUtilizationVal,
-		Description:             descriptionVal,
-		EndPeriod:               endPeriodVal,
-		ForecastedUtilization:   forecastedUtilizationVal,
-		GrowthPerPeriod:         growthPerPeriodVal,
-		Id:                      idVal,
-		Metric:                  metricVal,
-		Name:                    nameVal,
-		Public:                  publicVal,
-		Recipients:              recipientsVal,
-		RecipientsSlackChannels: recipientsSlackChannelsVal,
-		Scopes:                  scopesVal,
-		StartPeriod:             startPeriodVal,
-		TimeInterval:            timeIntervalVal,
-		BudgetType:              typeVal,
-		UpdateTime:              updateTimeVal,
-		UsePrevSpend:            usePrevSpendVal,
-		state:                   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewBudgetValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BudgetValue {
-	object, diags := NewBudgetValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewBudgetValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t BudgetType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewBudgetValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewBudgetValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewBudgetValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewBudgetValueMust(BudgetValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t BudgetType) ValueType(ctx context.Context) attr.Value {
-	return BudgetValue{}
-}
-
-var _ basetypes.ObjectValuable = BudgetValue{}
-
-type BudgetValue struct {
-	Alerts                  basetypes.ListValue    `tfsdk:"alerts"`
-	Amount                  basetypes.Float64Value `tfsdk:"amount"`
-	Collaborators           basetypes.ListValue    `tfsdk:"collaborators"`
-	CreateTime              basetypes.Int64Value   `tfsdk:"create_time"`
-	Currency                basetypes.StringValue  `tfsdk:"currency"`
-	CurrentUtilization      basetypes.Float64Value `tfsdk:"current_utilization"`
-	Description             basetypes.StringValue  `tfsdk:"description"`
-	EndPeriod               basetypes.Int64Value   `tfsdk:"end_period"`
-	ForecastedUtilization   basetypes.Float64Value `tfsdk:"forecasted_utilization"`
-	GrowthPerPeriod         basetypes.Float64Value `tfsdk:"growth_per_period"`
-	Id                      basetypes.StringValue  `tfsdk:"id"`
-	Metric                  basetypes.StringValue  `tfsdk:"metric"`
-	Name                    basetypes.StringValue  `tfsdk:"name"`
-	Public                  basetypes.StringValue  `tfsdk:"public"`
-	Recipients              basetypes.ListValue    `tfsdk:"recipients"`
-	RecipientsSlackChannels basetypes.ListValue    `tfsdk:"recipients_slack_channels"`
-	Scopes                  basetypes.ListValue    `tfsdk:"scopes"`
-	StartPeriod             basetypes.Int64Value   `tfsdk:"start_period"`
-	TimeInterval            basetypes.StringValue  `tfsdk:"time_interval"`
-	BudgetType              basetypes.StringValue  `tfsdk:"type"`
-	UpdateTime              basetypes.Int64Value   `tfsdk:"update_time"`
-	UsePrevSpend            basetypes.BoolValue    `tfsdk:"use_prev_spend"`
-	state                   attr.ValueState
-}
-
-func (v BudgetValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 22)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["alerts"] = basetypes.ListType{
-		ElemType: AlertsValue{}.Type(ctx),
-	}.TerraformType(ctx)
-	attrTypes["amount"] = basetypes.Float64Type{}.TerraformType(ctx)
-	attrTypes["collaborators"] = basetypes.ListType{
-		ElemType: CollaboratorsValue{}.Type(ctx),
-	}.TerraformType(ctx)
-	attrTypes["create_time"] = basetypes.Int64Type{}.TerraformType(ctx)
-	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["current_utilization"] = basetypes.Float64Type{}.TerraformType(ctx)
-	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["end_period"] = basetypes.Int64Type{}.TerraformType(ctx)
-	attrTypes["forecasted_utilization"] = basetypes.Float64Type{}.TerraformType(ctx)
-	attrTypes["growth_per_period"] = basetypes.Float64Type{}.TerraformType(ctx)
-	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["metric"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["public"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["recipients"] = basetypes.ListType{
-		ElemType: types.StringType,
-	}.TerraformType(ctx)
-	attrTypes["recipients_slack_channels"] = basetypes.ListType{
-		ElemType: RecipientsSlackChannelsValue{}.Type(ctx),
-	}.TerraformType(ctx)
-	attrTypes["scopes"] = basetypes.ListType{
-		ElemType: ScopesValue{}.Type(ctx),
-	}.TerraformType(ctx)
-	attrTypes["start_period"] = basetypes.Int64Type{}.TerraformType(ctx)
-	attrTypes["time_interval"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["update_time"] = basetypes.Int64Type{}.TerraformType(ctx)
-	attrTypes["use_prev_spend"] = basetypes.BoolType{}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 22)
-
-		val, err = v.Alerts.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["alerts"] = val
-
-		val, err = v.Amount.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["amount"] = val
-
-		val, err = v.Collaborators.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["collaborators"] = val
-
-		val, err = v.CreateTime.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["create_time"] = val
-
-		val, err = v.Currency.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["currency"] = val
-
-		val, err = v.CurrentUtilization.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["current_utilization"] = val
-
-		val, err = v.Description.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["description"] = val
-
-		val, err = v.EndPeriod.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["end_period"] = val
-
-		val, err = v.ForecastedUtilization.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["forecasted_utilization"] = val
-
-		val, err = v.GrowthPerPeriod.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["growth_per_period"] = val
-
-		val, err = v.Id.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["id"] = val
-
-		val, err = v.Metric.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["metric"] = val
-
-		val, err = v.Name.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["name"] = val
-
-		val, err = v.Public.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["public"] = val
-
-		val, err = v.Recipients.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["recipients"] = val
-
-		val, err = v.RecipientsSlackChannels.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["recipients_slack_channels"] = val
-
-		val, err = v.Scopes.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["scopes"] = val
-
-		val, err = v.StartPeriod.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["start_period"] = val
-
-		val, err = v.TimeInterval.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["time_interval"] = val
-
-		val, err = v.BudgetType.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["type"] = val
-
-		val, err = v.UpdateTime.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["update_time"] = val
-
-		val, err = v.UsePrevSpend.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["use_prev_spend"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v BudgetValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v BudgetValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v BudgetValue) String() string {
-	return "BudgetValue"
-}
-
-func (v BudgetValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	alerts := types.ListValueMust(
-		AlertsType{
-			basetypes.ObjectType{
-				AttrTypes: AlertsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Alerts.Elements(),
-	)
-
-	if v.Alerts.IsNull() {
-		alerts = types.ListNull(
-			AlertsType{
-				basetypes.ObjectType{
-					AttrTypes: AlertsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Alerts.IsUnknown() {
-		alerts = types.ListUnknown(
-			AlertsType{
-				basetypes.ObjectType{
-					AttrTypes: AlertsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	collaborators := types.ListValueMust(
-		CollaboratorsType{
-			basetypes.ObjectType{
-				AttrTypes: CollaboratorsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Collaborators.Elements(),
-	)
-
-	if v.Collaborators.IsNull() {
-		collaborators = types.ListNull(
-			CollaboratorsType{
-				basetypes.ObjectType{
-					AttrTypes: CollaboratorsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Collaborators.IsUnknown() {
-		collaborators = types.ListUnknown(
-			CollaboratorsType{
-				basetypes.ObjectType{
-					AttrTypes: CollaboratorsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	recipientsSlackChannels := types.ListValueMust(
-		RecipientsSlackChannelsType{
-			basetypes.ObjectType{
-				AttrTypes: RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.RecipientsSlackChannels.Elements(),
-	)
-
-	if v.RecipientsSlackChannels.IsNull() {
-		recipientsSlackChannels = types.ListNull(
-			RecipientsSlackChannelsType{
-				basetypes.ObjectType{
-					AttrTypes: RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.RecipientsSlackChannels.IsUnknown() {
-		recipientsSlackChannels = types.ListUnknown(
-			RecipientsSlackChannelsType{
-				basetypes.ObjectType{
-					AttrTypes: RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	scopes := types.ListValueMust(
-		ScopesType{
-			basetypes.ObjectType{
-				AttrTypes: ScopesValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Scopes.Elements(),
-	)
-
-	if v.Scopes.IsNull() {
-		scopes = types.ListNull(
-			ScopesType{
-				basetypes.ObjectType{
-					AttrTypes: ScopesValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Scopes.IsUnknown() {
-		scopes = types.ListUnknown(
-			ScopesType{
-				basetypes.ObjectType{
-					AttrTypes: ScopesValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	var recipientsVal basetypes.ListValue
-	switch {
-	case v.Recipients.IsUnknown():
-		recipientsVal = types.ListUnknown(types.StringType)
-	case v.Recipients.IsNull():
-		recipientsVal = types.ListNull(types.StringType)
-	default:
-		var d diag.Diagnostics
-		recipientsVal, d = types.ListValue(types.StringType, v.Recipients.Elements())
-		diags.Append(d...)
-	}
-
-	if diags.HasError() {
-		return types.ObjectUnknown(map[string]attr.Type{
-			"alerts": basetypes.ListType{
-				ElemType: AlertsValue{}.Type(ctx),
-			},
-			"amount": basetypes.Float64Type{},
-			"collaborators": basetypes.ListType{
-				ElemType: CollaboratorsValue{}.Type(ctx),
-			},
-			"create_time":            basetypes.Int64Type{},
-			"currency":               basetypes.StringType{},
-			"current_utilization":    basetypes.Float64Type{},
-			"description":            basetypes.StringType{},
-			"end_period":             basetypes.Int64Type{},
-			"forecasted_utilization": basetypes.Float64Type{},
-			"growth_per_period":      basetypes.Float64Type{},
-			"id":                     basetypes.StringType{},
-			"metric":                 basetypes.StringType{},
-			"name":                   basetypes.StringType{},
-			"public":                 basetypes.StringType{},
-			"recipients": basetypes.ListType{
-				ElemType: types.StringType,
-			},
-			"recipients_slack_channels": basetypes.ListType{
-				ElemType: RecipientsSlackChannelsValue{}.Type(ctx),
-			},
-			"scopes": basetypes.ListType{
-				ElemType: ScopesValue{}.Type(ctx),
-			},
-			"start_period":   basetypes.Int64Type{},
-			"time_interval":  basetypes.StringType{},
-			"type":           basetypes.StringType{},
-			"update_time":    basetypes.Int64Type{},
-			"use_prev_spend": basetypes.BoolType{},
-		}), diags
-	}
-
-	attributeTypes := map[string]attr.Type{
-		"alerts": basetypes.ListType{
-			ElemType: AlertsValue{}.Type(ctx),
-		},
-		"amount": basetypes.Float64Type{},
-		"collaborators": basetypes.ListType{
-			ElemType: CollaboratorsValue{}.Type(ctx),
-		},
-		"create_time":            basetypes.Int64Type{},
-		"currency":               basetypes.StringType{},
-		"current_utilization":    basetypes.Float64Type{},
-		"description":            basetypes.StringType{},
-		"end_period":             basetypes.Int64Type{},
-		"forecasted_utilization": basetypes.Float64Type{},
-		"growth_per_period":      basetypes.Float64Type{},
-		"id":                     basetypes.StringType{},
-		"metric":                 basetypes.StringType{},
-		"name":                   basetypes.StringType{},
-		"public":                 basetypes.StringType{},
-		"recipients": basetypes.ListType{
-			ElemType: types.StringType,
-		},
-		"recipients_slack_channels": basetypes.ListType{
-			ElemType: RecipientsSlackChannelsValue{}.Type(ctx),
-		},
-		"scopes": basetypes.ListType{
-			ElemType: ScopesValue{}.Type(ctx),
-		},
-		"start_period":   basetypes.Int64Type{},
-		"time_interval":  basetypes.StringType{},
-		"type":           basetypes.StringType{},
-		"update_time":    basetypes.Int64Type{},
-		"use_prev_spend": basetypes.BoolType{},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"alerts":                    alerts,
-			"amount":                    v.Amount,
-			"collaborators":             collaborators,
-			"create_time":               v.CreateTime,
-			"currency":                  v.Currency,
-			"current_utilization":       v.CurrentUtilization,
-			"description":               v.Description,
-			"end_period":                v.EndPeriod,
-			"forecasted_utilization":    v.ForecastedUtilization,
-			"growth_per_period":         v.GrowthPerPeriod,
-			"id":                        v.Id,
-			"metric":                    v.Metric,
-			"name":                      v.Name,
-			"public":                    v.Public,
-			"recipients":                recipientsVal,
-			"recipients_slack_channels": recipientsSlackChannels,
-			"scopes":                    scopes,
-			"start_period":              v.StartPeriod,
-			"time_interval":             v.TimeInterval,
-			"type":                      v.BudgetType,
-			"update_time":               v.UpdateTime,
-			"use_prev_spend":            v.UsePrevSpend,
-		})
-
-	return objVal, diags
-}
-
-func (v BudgetValue) Equal(o attr.Value) bool {
-	other, ok := o.(BudgetValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.Alerts.Equal(other.Alerts) {
-		return false
-	}
-
-	if !v.Amount.Equal(other.Amount) {
-		return false
-	}
-
-	if !v.Collaborators.Equal(other.Collaborators) {
-		return false
-	}
-
-	if !v.CreateTime.Equal(other.CreateTime) {
-		return false
-	}
-
-	if !v.Currency.Equal(other.Currency) {
-		return false
-	}
-
-	if !v.CurrentUtilization.Equal(other.CurrentUtilization) {
-		return false
-	}
-
-	if !v.Description.Equal(other.Description) {
-		return false
-	}
-
-	if !v.EndPeriod.Equal(other.EndPeriod) {
-		return false
-	}
-
-	if !v.ForecastedUtilization.Equal(other.ForecastedUtilization) {
-		return false
-	}
-
-	if !v.GrowthPerPeriod.Equal(other.GrowthPerPeriod) {
-		return false
-	}
-
-	if !v.Id.Equal(other.Id) {
-		return false
-	}
-
-	if !v.Metric.Equal(other.Metric) {
-		return false
-	}
-
-	if !v.Name.Equal(other.Name) {
-		return false
-	}
-
-	if !v.Public.Equal(other.Public) {
-		return false
-	}
-
-	if !v.Recipients.Equal(other.Recipients) {
-		return false
-	}
-
-	if !v.RecipientsSlackChannels.Equal(other.RecipientsSlackChannels) {
-		return false
-	}
-
-	if !v.Scopes.Equal(other.Scopes) {
-		return false
-	}
-
-	if !v.StartPeriod.Equal(other.StartPeriod) {
-		return false
-	}
-
-	if !v.TimeInterval.Equal(other.TimeInterval) {
-		return false
-	}
-
-	if !v.BudgetType.Equal(other.BudgetType) {
-		return false
-	}
-
-	if !v.UpdateTime.Equal(other.UpdateTime) {
-		return false
-	}
-
-	if !v.UsePrevSpend.Equal(other.UsePrevSpend) {
-		return false
-	}
-
-	return true
-}
-
-func (v BudgetValue) Type(ctx context.Context) attr.Type {
-	return BudgetType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v BudgetValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"alerts": basetypes.ListType{
-			ElemType: AlertsValue{}.Type(ctx),
-		},
-		"amount": basetypes.Float64Type{},
-		"collaborators": basetypes.ListType{
-			ElemType: CollaboratorsValue{}.Type(ctx),
-		},
-		"create_time":            basetypes.Int64Type{},
-		"currency":               basetypes.StringType{},
-		"current_utilization":    basetypes.Float64Type{},
-		"description":            basetypes.StringType{},
-		"end_period":             basetypes.Int64Type{},
-		"forecasted_utilization": basetypes.Float64Type{},
-		"growth_per_period":      basetypes.Float64Type{},
-		"id":                     basetypes.StringType{},
-		"metric":                 basetypes.StringType{},
-		"name":                   basetypes.StringType{},
-		"public":                 basetypes.StringType{},
-		"recipients": basetypes.ListType{
-			ElemType: types.StringType,
-		},
-		"recipients_slack_channels": basetypes.ListType{
-			ElemType: RecipientsSlackChannelsValue{}.Type(ctx),
-		},
-		"scopes": basetypes.ListType{
-			ElemType: ScopesValue{}.Type(ctx),
-		},
-		"start_period":   basetypes.Int64Type{},
-		"time_interval":  basetypes.StringType{},
-		"type":           basetypes.StringType{},
-		"update_time":    basetypes.Int64Type{},
-		"use_prev_spend": basetypes.BoolType{},
-	}
-}
-
-var _ basetypes.ObjectTypable = AlertsType{}
-
-type AlertsType struct {
-	basetypes.ObjectType
 }
 
 func NewAlertsValueNull() AlertsValue {
@@ -2586,6 +516,50 @@ func NewAlertsValueMust(attributeTypes map[string]attr.Type, attributes map[stri
 	return object
 }
 
+func (t AlertsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewAlertsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewAlertsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewAlertsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewAlertsValueMust(AlertsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t AlertsType) ValueType(ctx context.Context) attr.Value {
+	return AlertsValue{}
+}
+
 var _ basetypes.ObjectValuable = AlertsValue{}
 
 type AlertsValue struct {
@@ -2595,7 +569,151 @@ type AlertsValue struct {
 	state          attr.ValueState
 }
 
+func (v AlertsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["forecasted_date"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["percentage"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["triggered"] = basetypes.BoolType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.ForecastedDate.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["forecasted_date"] = val
+
+		val, err = v.Percentage.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["percentage"] = val
+
+		val, err = v.Triggered.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["triggered"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v AlertsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v AlertsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v AlertsValue) String() string {
+	return "AlertsValue"
+}
+
+func (v AlertsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"forecasted_date": basetypes.Int64Type{},
+		"percentage":      basetypes.Float64Type{},
+		"triggered":       basetypes.BoolType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"forecasted_date": v.ForecastedDate,
+			"percentage":      v.Percentage,
+			"triggered":       v.Triggered,
+		})
+
+	return objVal, diags
+}
+
+func (v AlertsValue) Equal(o attr.Value) bool {
+	other, ok := o.(AlertsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.ForecastedDate.Equal(other.ForecastedDate) {
+		return false
+	}
+
+	if !v.Percentage.Equal(other.Percentage) {
+		return false
+	}
+
+	if !v.Triggered.Equal(other.Triggered) {
+		return false
+	}
+
+	return true
+}
+
+func (v AlertsValue) Type(ctx context.Context) attr.Type {
+	return AlertsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v AlertsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"forecasted_date": basetypes.Int64Type{},
+		"percentage":      basetypes.Float64Type{},
+		"triggered":       basetypes.BoolType{},
+	}
+}
+
 var _ basetypes.ObjectTypable = CollaboratorsType{}
+
+type CollaboratorsType struct {
+	basetypes.ObjectType
+}
 
 func (t CollaboratorsType) Equal(o attr.Type) bool {
 	other, ok := o.(CollaboratorsType)
@@ -2663,6 +781,137 @@ func (t CollaboratorsType) ValueFromObject(ctx context.Context, in basetypes.Obj
 	}, diags
 }
 
+func NewCollaboratorsValueNull() CollaboratorsValue {
+	return CollaboratorsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCollaboratorsValueUnknown() CollaboratorsValue {
+	return CollaboratorsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCollaboratorsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CollaboratorsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CollaboratorsValue Attribute Value",
+				"While creating a CollaboratorsValue value, a missing attribute value was detected. "+
+					"A CollaboratorsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CollaboratorsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CollaboratorsValue Attribute Type",
+				"While creating a CollaboratorsValue value, an invalid attribute value was detected. "+
+					"A CollaboratorsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CollaboratorsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CollaboratorsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CollaboratorsValue Attribute Value",
+				"While creating a CollaboratorsValue value, an extra attribute value was detected. "+
+					"A CollaboratorsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CollaboratorsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCollaboratorsValueUnknown(), diags
+	}
+
+	emailAttribute, ok := attributes["email"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`email is missing from object`)
+
+		return NewCollaboratorsValueUnknown(), diags
+	}
+
+	emailVal, ok := emailAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`email expected to be basetypes.StringValue, was: %T`, emailAttribute))
+	}
+
+	roleAttribute, ok := attributes["role"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role is missing from object`)
+
+		return NewCollaboratorsValueUnknown(), diags
+	}
+
+	roleVal, ok := roleAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role expected to be basetypes.StringValue, was: %T`, roleAttribute))
+	}
+
+	if diags.HasError() {
+		return NewCollaboratorsValueUnknown(), diags
+	}
+
+	return CollaboratorsValue{
+		Email: emailVal,
+		Role:  roleVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCollaboratorsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CollaboratorsValue {
+	object, diags := NewCollaboratorsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCollaboratorsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
 func (t CollaboratorsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
 	if in.Type() == nil {
 		return NewCollaboratorsValueNull(), nil
@@ -2708,6 +957,12 @@ func (t CollaboratorsType) ValueType(ctx context.Context) attr.Value {
 }
 
 var _ basetypes.ObjectValuable = CollaboratorsValue{}
+
+type CollaboratorsValue struct {
+	Email basetypes.StringValue `tfsdk:"email"`
+	Role  basetypes.StringValue `tfsdk:"role"`
+	state attr.ValueState
+}
 
 func (v CollaboratorsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
 	attrTypes := make(map[string]tftypes.Type, 2)
@@ -2834,6 +1089,10 @@ func (v CollaboratorsValue) AttributeTypes(ctx context.Context) map[string]attr.
 }
 
 var _ basetypes.ObjectTypable = RecipientsSlackChannelsType{}
+
+type RecipientsSlackChannelsType struct {
+	basetypes.ObjectType
+}
 
 func (t RecipientsSlackChannelsType) Equal(o attr.Type) bool {
 	other, ok := o.(RecipientsSlackChannelsType)
@@ -2975,1021 +1234,6 @@ func (t RecipientsSlackChannelsType) ValueFromObject(ctx context.Context, in bas
 		Workspace:                   workspaceVal,
 		state:                       attr.ValueStateKnown,
 	}, diags
-}
-
-func (t RecipientsSlackChannelsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewRecipientsSlackChannelsValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewRecipientsSlackChannelsValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewRecipientsSlackChannelsValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewRecipientsSlackChannelsValueMust(RecipientsSlackChannelsValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t RecipientsSlackChannelsType) ValueType(ctx context.Context) attr.Value {
-	return RecipientsSlackChannelsValue{}
-}
-
-var _ basetypes.ObjectValuable = RecipientsSlackChannelsValue{}
-
-func (v RecipientsSlackChannelsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 6)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["customer_id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["shared"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["workspace"] = basetypes.StringType{}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 6)
-
-		val, err = v.CustomerId.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["customer_id"] = val
-
-		val, err = v.Id.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["id"] = val
-
-		val, err = v.Name.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["name"] = val
-
-		val, err = v.Shared.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["shared"] = val
-
-		val, err = v.RecipientsSlackChannelsType.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["type"] = val
-
-		val, err = v.Workspace.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["workspace"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v RecipientsSlackChannelsValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v RecipientsSlackChannelsValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v RecipientsSlackChannelsValue) String() string {
-	return "RecipientsSlackChannelsValue"
-}
-
-func (v RecipientsSlackChannelsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := map[string]attr.Type{
-		"customer_id": basetypes.StringType{},
-		"id":          basetypes.StringType{},
-		"name":        basetypes.StringType{},
-		"shared":      basetypes.BoolType{},
-		"type":        basetypes.StringType{},
-		"workspace":   basetypes.StringType{},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"customer_id": v.CustomerId,
-			"id":          v.Id,
-			"name":        v.Name,
-			"shared":      v.Shared,
-			"type":        v.RecipientsSlackChannelsType,
-			"workspace":   v.Workspace,
-		})
-
-	return objVal, diags
-}
-
-func (v RecipientsSlackChannelsValue) Equal(o attr.Value) bool {
-	other, ok := o.(RecipientsSlackChannelsValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.CustomerId.Equal(other.CustomerId) {
-		return false
-	}
-
-	if !v.Id.Equal(other.Id) {
-		return false
-	}
-
-	if !v.Name.Equal(other.Name) {
-		return false
-	}
-
-	if !v.Shared.Equal(other.Shared) {
-		return false
-	}
-
-	if !v.RecipientsSlackChannelsType.Equal(other.RecipientsSlackChannelsType) {
-		return false
-	}
-
-	if !v.Workspace.Equal(other.Workspace) {
-		return false
-	}
-
-	return true
-}
-
-func (v RecipientsSlackChannelsValue) Type(ctx context.Context) attr.Type {
-	return RecipientsSlackChannelsType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v RecipientsSlackChannelsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"customer_id": basetypes.StringType{},
-		"id":          basetypes.StringType{},
-		"name":        basetypes.StringType{},
-		"shared":      basetypes.BoolType{},
-		"type":        basetypes.StringType{},
-		"workspace":   basetypes.StringType{},
-	}
-}
-
-var _ basetypes.ObjectTypable = ScopesType{}
-
-type ScopesType struct {
-	basetypes.ObjectType
-}
-
-func (t ScopesType) Equal(o attr.Type) bool {
-	other, ok := o.(ScopesType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t ScopesType) String() string {
-	return "ScopesType"
-}
-
-func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributes := in.Attributes()
-
-	includeNullAttribute, ok := attributes["include_null"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`include_null is missing from object`)
-
-		return nil, diags
-	}
-
-	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
-	}
-
-	inverseSelectionAttribute, ok := attributes["inverse_selection"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`inverse_selection is missing from object`)
-
-		return nil, diags
-	}
-
-	inverseSelectionVal, ok := inverseSelectionAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`inverse_selection expected to be basetypes.BoolValue, was: %T`, inverseSelectionAttribute))
-	}
-
-	keyAttribute, ok := attributes["key"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`key is missing from object`)
-
-		return nil, diags
-	}
-
-	keyVal, ok := keyAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
-	}
-
-	regexpAttribute, ok := attributes["regexp"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`regexp is missing from object`)
-
-		return nil, diags
-	}
-
-	regexpVal, ok := regexpAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`regexp expected to be basetypes.StringValue, was: %T`, regexpAttribute))
-	}
-
-	typeAttribute, ok := attributes["type"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`type is missing from object`)
-
-		return nil, diags
-	}
-
-	typeVal, ok := typeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
-	}
-
-	valuesAttribute, ok := attributes["values"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`values is missing from object`)
-
-		return nil, diags
-	}
-
-	valuesVal, ok := valuesAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`values expected to be basetypes.ListValue, was: %T`, valuesAttribute))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return ScopesValue{
-		IncludeNull:      includeNullVal,
-		InverseSelection: inverseSelectionVal,
-		Key:              keyVal,
-		Regexp:           regexpVal,
-		ScopesType:       typeVal,
-		Values:           valuesVal,
-		state:            attr.ValueStateKnown,
-	}, diags
-}
-
-func NewScopesValueNull() ScopesValue {
-	return ScopesValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewScopesValueUnknown() ScopesValue {
-	return ScopesValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewScopesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ScopesValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing ScopesValue Attribute Value",
-				"While creating a ScopesValue value, a missing attribute value was detected. "+
-					"A ScopesValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ScopesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid ScopesValue Attribute Type",
-				"While creating a ScopesValue value, an invalid attribute value was detected. "+
-					"A ScopesValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ScopesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("ScopesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra ScopesValue Attribute Value",
-				"While creating a ScopesValue value, an extra attribute value was detected. "+
-					"A ScopesValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra ScopesValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewScopesValueUnknown(), diags
-	}
-
-	includeNullAttribute, ok := attributes["include_null"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`include_null is missing from object`)
-
-		return NewScopesValueUnknown(), diags
-	}
-
-	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
-	}
-
-	inverseSelectionAttribute, ok := attributes["inverse_selection"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`inverse_selection is missing from object`)
-
-		return NewScopesValueUnknown(), diags
-	}
-
-	inverseSelectionVal, ok := inverseSelectionAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`inverse_selection expected to be basetypes.BoolValue, was: %T`, inverseSelectionAttribute))
-	}
-
-	keyAttribute, ok := attributes["key"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`key is missing from object`)
-
-		return NewScopesValueUnknown(), diags
-	}
-
-	keyVal, ok := keyAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
-	}
-
-	regexpAttribute, ok := attributes["regexp"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`regexp is missing from object`)
-
-		return NewScopesValueUnknown(), diags
-	}
-
-	regexpVal, ok := regexpAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`regexp expected to be basetypes.StringValue, was: %T`, regexpAttribute))
-	}
-
-	typeAttribute, ok := attributes["type"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`type is missing from object`)
-
-		return NewScopesValueUnknown(), diags
-	}
-
-	typeVal, ok := typeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
-	}
-
-	valuesAttribute, ok := attributes["values"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`values is missing from object`)
-
-		return NewScopesValueUnknown(), diags
-	}
-
-	valuesVal, ok := valuesAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`values expected to be basetypes.ListValue, was: %T`, valuesAttribute))
-	}
-
-	if diags.HasError() {
-		return NewScopesValueUnknown(), diags
-	}
-
-	return ScopesValue{
-		IncludeNull:      includeNullVal,
-		InverseSelection: inverseSelectionVal,
-		Key:              keyVal,
-		Regexp:           regexpVal,
-		ScopesType:       typeVal,
-		Values:           valuesVal,
-		state:            attr.ValueStateKnown,
-	}, diags
-}
-
-func NewScopesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ScopesValue {
-	object, diags := NewScopesValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewScopesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t ScopesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewScopesValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewScopesValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewScopesValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewScopesValueMust(ScopesValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t ScopesType) ValueType(ctx context.Context) attr.Value {
-	return ScopesValue{}
-}
-
-var _ basetypes.ObjectValuable = ScopesValue{}
-
-type ScopesValue struct {
-	IncludeNull      basetypes.BoolValue   `tfsdk:"include_null"`
-	InverseSelection basetypes.BoolValue   `tfsdk:"inverse_selection"`
-	Key              basetypes.StringValue `tfsdk:"key"`
-	Regexp           basetypes.StringValue `tfsdk:"regexp"`
-	ScopesType       basetypes.StringValue `tfsdk:"type"`
-	Values           basetypes.ListValue   `tfsdk:"values"`
-	state            attr.ValueState
-}
-
-func (v ScopesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 6)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["inverse_selection"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["regexp"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["values"] = basetypes.ListType{
-		ElemType: types.StringType,
-	}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 6)
-
-		val, err = v.IncludeNull.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["include_null"] = val
-
-		val, err = v.InverseSelection.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["inverse_selection"] = val
-
-		val, err = v.Key.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["key"] = val
-
-		val, err = v.Regexp.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["regexp"] = val
-
-		val, err = v.ScopesType.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["type"] = val
-
-		val, err = v.Values.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["values"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v ScopesValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v ScopesValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v ScopesValue) String() string {
-	return "ScopesValue"
-}
-
-func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var valuesVal basetypes.ListValue
-	switch {
-	case v.Values.IsUnknown():
-		valuesVal = types.ListUnknown(types.StringType)
-	case v.Values.IsNull():
-		valuesVal = types.ListNull(types.StringType)
-	default:
-		var d diag.Diagnostics
-		valuesVal, d = types.ListValue(types.StringType, v.Values.Elements())
-		diags.Append(d...)
-	}
-
-	if diags.HasError() {
-		return types.ObjectUnknown(map[string]attr.Type{
-			"include_null":      basetypes.BoolType{},
-			"inverse_selection": basetypes.BoolType{},
-			"key":               basetypes.StringType{},
-			"regexp":            basetypes.StringType{},
-			"type":              basetypes.StringType{},
-			"values": basetypes.ListType{
-				ElemType: types.StringType,
-			},
-		}), diags
-	}
-
-	attributeTypes := map[string]attr.Type{
-		"include_null":      basetypes.BoolType{},
-		"inverse_selection": basetypes.BoolType{},
-		"key":               basetypes.StringType{},
-		"regexp":            basetypes.StringType{},
-		"type":              basetypes.StringType{},
-		"values": basetypes.ListType{
-			ElemType: types.StringType,
-		},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"include_null":      v.IncludeNull,
-			"inverse_selection": v.InverseSelection,
-			"key":               v.Key,
-			"regexp":            v.Regexp,
-			"type":              v.ScopesType,
-			"values":            valuesVal,
-		})
-
-	return objVal, diags
-}
-
-func (v ScopesValue) Equal(o attr.Value) bool {
-	other, ok := o.(ScopesValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.IncludeNull.Equal(other.IncludeNull) {
-		return false
-	}
-
-	if !v.InverseSelection.Equal(other.InverseSelection) {
-		return false
-	}
-
-	if !v.Key.Equal(other.Key) {
-		return false
-	}
-
-	if !v.Regexp.Equal(other.Regexp) {
-		return false
-	}
-
-	if !v.ScopesType.Equal(other.ScopesType) {
-		return false
-	}
-
-	if !v.Values.Equal(other.Values) {
-		return false
-	}
-
-	return true
-}
-
-func (v ScopesValue) Type(ctx context.Context) attr.Type {
-	return ScopesType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v ScopesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"include_null":      basetypes.BoolType{},
-		"inverse_selection": basetypes.BoolType{},
-		"key":               basetypes.StringType{},
-		"regexp":            basetypes.StringType{},
-		"type":              basetypes.StringType{},
-		"values": basetypes.ListType{
-			ElemType: types.StringType,
-		},
-	}
-}
-
-var _ basetypes.ObjectTypable = CollaboratorsType{}
-
-type CollaboratorsType struct {
-	basetypes.ObjectType
-}
-
-func NewCollaboratorsValueNull() CollaboratorsValue {
-	return CollaboratorsValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewCollaboratorsValueUnknown() CollaboratorsValue {
-	return CollaboratorsValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewCollaboratorsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CollaboratorsValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing CollaboratorsValue Attribute Value",
-				"While creating a CollaboratorsValue value, a missing attribute value was detected. "+
-					"A CollaboratorsValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("CollaboratorsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid CollaboratorsValue Attribute Type",
-				"While creating a CollaboratorsValue value, an invalid attribute value was detected. "+
-					"A CollaboratorsValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("CollaboratorsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("CollaboratorsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra CollaboratorsValue Attribute Value",
-				"While creating a CollaboratorsValue value, an extra attribute value was detected. "+
-					"A CollaboratorsValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra CollaboratorsValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewCollaboratorsValueUnknown(), diags
-	}
-
-	emailAttribute, ok := attributes["email"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`email is missing from object`)
-
-		return NewCollaboratorsValueUnknown(), diags
-	}
-
-	emailVal, ok := emailAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`email expected to be basetypes.StringValue, was: %T`, emailAttribute))
-	}
-
-	roleAttribute, ok := attributes["role"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`role is missing from object`)
-
-		return NewCollaboratorsValueUnknown(), diags
-	}
-
-	roleVal, ok := roleAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`role expected to be basetypes.StringValue, was: %T`, roleAttribute))
-	}
-
-	if diags.HasError() {
-		return NewCollaboratorsValueUnknown(), diags
-	}
-
-	return CollaboratorsValue{
-		Email: emailVal,
-		Role:  roleVal,
-		state: attr.ValueStateKnown,
-	}, diags
-}
-
-func NewCollaboratorsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CollaboratorsValue {
-	object, diags := NewCollaboratorsValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewCollaboratorsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-var _ basetypes.ObjectValuable = CollaboratorsValue{}
-
-type CollaboratorsValue struct {
-	Email basetypes.StringValue `tfsdk:"email"`
-	Role  basetypes.StringValue `tfsdk:"role"`
-	state attr.ValueState
-}
-
-var _ basetypes.ObjectTypable = RecipientsSlackChannelsType{}
-
-type RecipientsSlackChannelsType struct {
-	basetypes.ObjectType
 }
 
 func NewRecipientsSlackChannelsValueNull() RecipientsSlackChannelsValue {
@@ -4199,6 +1443,50 @@ func NewRecipientsSlackChannelsValueMust(attributeTypes map[string]attr.Type, at
 	return object
 }
 
+func (t RecipientsSlackChannelsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRecipientsSlackChannelsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRecipientsSlackChannelsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRecipientsSlackChannelsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRecipientsSlackChannelsValueMust(RecipientsSlackChannelsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RecipientsSlackChannelsType) ValueType(ctx context.Context) attr.Value {
+	return RecipientsSlackChannelsValue{}
+}
+
 var _ basetypes.ObjectValuable = RecipientsSlackChannelsValue{}
 
 type RecipientsSlackChannelsValue struct {
@@ -4209,4 +1497,192 @@ type RecipientsSlackChannelsValue struct {
 	RecipientsSlackChannelsType basetypes.StringValue `tfsdk:"type"`
 	Workspace                   basetypes.StringValue `tfsdk:"workspace"`
 	state                       attr.ValueState
+}
+
+func (v RecipientsSlackChannelsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 6)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["customer_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["shared"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["workspace"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 6)
+
+		val, err = v.CustomerId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["customer_id"] = val
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.Shared.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["shared"] = val
+
+		val, err = v.RecipientsSlackChannelsType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
+
+		val, err = v.Workspace.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["workspace"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RecipientsSlackChannelsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RecipientsSlackChannelsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RecipientsSlackChannelsValue) String() string {
+	return "RecipientsSlackChannelsValue"
+}
+
+func (v RecipientsSlackChannelsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"customer_id": basetypes.StringType{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"shared":      basetypes.BoolType{},
+		"type":        basetypes.StringType{},
+		"workspace":   basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"customer_id": v.CustomerId,
+			"id":          v.Id,
+			"name":        v.Name,
+			"shared":      v.Shared,
+			"type":        v.RecipientsSlackChannelsType,
+			"workspace":   v.Workspace,
+		})
+
+	return objVal, diags
+}
+
+func (v RecipientsSlackChannelsValue) Equal(o attr.Value) bool {
+	other, ok := o.(RecipientsSlackChannelsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.CustomerId.Equal(other.CustomerId) {
+		return false
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.Shared.Equal(other.Shared) {
+		return false
+	}
+
+	if !v.RecipientsSlackChannelsType.Equal(other.RecipientsSlackChannelsType) {
+		return false
+	}
+
+	if !v.Workspace.Equal(other.Workspace) {
+		return false
+	}
+
+	return true
+}
+
+func (v RecipientsSlackChannelsValue) Type(ctx context.Context) attr.Type {
+	return RecipientsSlackChannelsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RecipientsSlackChannelsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"customer_id": basetypes.StringType{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"shared":      basetypes.BoolType{},
+		"type":        basetypes.StringType{},
+		"workspace":   basetypes.StringType{},
+	}
 }

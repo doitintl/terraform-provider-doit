@@ -326,8 +326,6 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 
 	// Initialize new fields
 	newModel.SeasonalAmounts = types.ListNull(types.Float64Type) // New field in v1
-	// Budget field is computed and will be populated on next read
-	newModel.Budget = resource_budget.NewBudgetValueNull() // Placeholder, will be properly populated on read
 
 	// last_updated is intentionally NOT included (doesn't exist in new schema)
 
