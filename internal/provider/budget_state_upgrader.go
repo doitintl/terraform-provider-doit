@@ -3,8 +3,9 @@ package provider
 import (
 	"context"
 
+	"terraform-provider-doit/internal/provider/resource_budget"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -132,7 +133,7 @@ func (r *budgetResource) UpgradeState(ctx context.Context) map[int64]resource.St
 	}
 }
 
-// upgradeBudgetStateV0ToV1 handles the actual state transformation
+// upgradeBudgetStateV0ToV1 handles the actual state transformation.
 func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
 	// Define the old state structure
 	type oldAlertModel struct {
@@ -182,10 +183,29 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 		return
 	}
 
-	// Transform alerts list
+	// Create new state model
+	newModel := resource_budget.BudgetModel{
+		// Copy simple fields directly
+		Id:              oldState.Id,
+		Name:            oldState.Name,
+		Currency:        oldState.Currency,
+		Description:     oldState.Description,
+		EndPeriod:       oldState.EndPeriod,
+		GrowthPerPeriod: oldState.GrowthPerPeriod,
+		Metric:          oldState.Metric,
+		Public:          oldState.Public,
+		StartPeriod:     oldState.StartPeriod,
+		TimeInterval:    oldState.TimeInterval,
+		Type:            oldState.Type,
+		UsePrevSpend:    oldState.UsePrevSpend,
+		Amount:          oldState.Amount,
+		Recipients:      oldState.Recipients,
+		Scope:           oldState.Scope,
+	}
+
+	// Transform alerts list - add new computed fields
 	// Old schema: only percentage field
-	// New schema: percentage, forecasted_date, triggered (both computed)
-	var newAlerts types.List
+	// New schema: percentage, forecasted_date, triggered (both computed, will be populated on next read)
 	if len(oldState.Alerts) > 0 {
 		alertElements := make([]attr.Value, 0, len(oldState.Alerts))
 		for _, alert := range oldState.Alerts {
@@ -202,7 +222,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 				},
 			))
 		}
-		newAlerts = types.ListValueMust(
+		newModel.Alerts = types.ListValueMust(
 			types.ObjectType{
 				AttrTypes: map[string]attr.Type{
 					"percentage":      types.Float64Type,
@@ -213,7 +233,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			alertElements,
 		)
 	} else {
-		newAlerts = types.ListNull(types.ObjectType{
+		newModel.Alerts = types.ListNull(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"percentage":      types.Float64Type,
 				"forecasted_date": types.Int64Type,
@@ -223,7 +243,6 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 	}
 
 	// Transform collaborators list
-	var newCollaborators types.List
 	if len(oldState.Collaborators) > 0 {
 		collabElements := make([]attr.Value, 0, len(oldState.Collaborators))
 		for _, collab := range oldState.Collaborators {
@@ -238,7 +257,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 				},
 			))
 		}
-		newCollaborators = types.ListValueMust(
+		newModel.Collaborators = types.ListValueMust(
 			types.ObjectType{
 				AttrTypes: map[string]attr.Type{
 					"email": types.StringType,
@@ -248,7 +267,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			collabElements,
 		)
 	} else {
-		newCollaborators = types.ListNull(types.ObjectType{
+		newModel.Collaborators = types.ListNull(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"email": types.StringType,
 				"role":  types.StringType,
@@ -257,7 +276,6 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 	}
 
 	// Transform slack channels list
-	var newSlackChannels types.List
 	if len(oldState.RecipientsSlackChannels) > 0 {
 		slackElements := make([]attr.Value, 0, len(oldState.RecipientsSlackChannels))
 		for _, slack := range oldState.RecipientsSlackChannels {
@@ -280,7 +298,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 				},
 			))
 		}
-		newSlackChannels = types.ListValueMust(
+		newModel.RecipientsSlackChannels = types.ListValueMust(
 			types.ObjectType{
 				AttrTypes: map[string]attr.Type{
 					"customer_id": types.StringType,
@@ -294,7 +312,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			slackElements,
 		)
 	} else {
-		newSlackChannels = types.ListNull(types.ObjectType{
+		newModel.RecipientsSlackChannels = types.ListNull(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"customer_id": types.StringType,
 				"id":          types.StringType,
@@ -306,37 +324,14 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 		})
 	}
 
-	// Create the new state structure
-	// Most fields can be copied directly
-	// The new schema adds seasonal_amounts which we initialize as null
-	// The last_updated field is dropped (doesn't exist in new schema)
-	newState := map[string]attr.Value{
-		"alerts":                    newAlerts,
-		"amount":                    oldState.Amount,
-		"budget":                    types.ObjectNull(map[string]attr.Type{}), // Computed field, will be populated on read
-		"collaborators":             newCollaborators,
-		"currency":                  oldState.Currency,
-		"description":               oldState.Description,
-		"end_period":                oldState.EndPeriod,
-		"growth_per_period":         oldState.GrowthPerPeriod,
-		"id":                        oldState.Id,
-		"metric":                    oldState.Metric,
-		"name":                      oldState.Name,
-		"public":                    oldState.Public,
-		"recipients":                oldState.Recipients,
-		"recipients_slack_channels": newSlackChannels,
-		"scope":                     oldState.Scope,
-		"seasonal_amounts":          types.ListNull(types.Float64Type), // New field in v1
-		"start_period":              oldState.StartPeriod,
-		"time_interval":             oldState.TimeInterval,
-		"type":                      oldState.Type,
-		"use_prev_spend":            oldState.UsePrevSpend,
-		// last_updated is intentionally NOT included (doesn't exist in new schema)
-	}
+	// Initialize new fields
+	newModel.SeasonalAmounts = types.ListNull(types.Float64Type) // New field in v1
+	// Budget field is computed and will be populated on next read
+	newModel.Budget = resource_budget.NewBudgetValueNull() // Placeholder, will be properly populated on read
 
-	// Set the upgraded state
-	for key, value := range newState {
-		setDiags := resp.State.SetAttribute(ctx, path.Root(key), value)
-		resp.Diagnostics.Append(setDiags...)
-	}
+	// last_updated is intentionally NOT included (doesn't exist in new schema)
+
+	// Set the entire upgraded state at once
+	diags = resp.State.Set(ctx, newModel)
+	resp.Diagnostics.Append(diags...)
 }
