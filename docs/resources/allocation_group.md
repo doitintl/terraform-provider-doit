@@ -17,22 +17,22 @@ description: |-
 
 ### Required
 
-- `name` (String) Allocation group name
-- `rules` (Attributes List) Array of allocation rules for this group (see [below for nested schema](#nestedatt--rules))
+- `name` (String) The name of the allocation group. Must be unique within the organization.
+- `rules` (Attributes List) The list of allocation rules that make up this group. (see [below for nested schema](#nestedatt--rules))
 
 ### Optional
 
-- `description` (String) Allocation group description
-- `unallocated_costs` (String) Custom label for any values that do not fit into attributions
+- `description` (String) A description of the allocation group.
+- `unallocated_costs` (String) Custom label for any values that do not fit into attributions.
 
 ### Read-Only
 
-- `allocation_type` (String) Type of the created allocation
-- `cloud` (String) Cloud provider
+- `allocation_type` (String) Type of the allocation (e.g., 'preset', 'custom').
+- `cloud` (String) The cloud provider (e.g., 'google-cloud', 'aws').
 - `id` (String) ID of the created allocation
-- `time_created` (Number) The time when this allocation group was created (in UNIX timestamp).
-- `time_modified` (Number) Last time the allocation group was modified (in UNIX timestamp).
-- `type` (String) Type of allocation (preset or custom)
+- `time_created` (Number) The time when the allocation group was created, in milliseconds since the epoch (i.e. UNIX timestamp).
+- `time_modified` (Number) The time when the allocation group was last modified, in milliseconds since the epoch (i.e. UNIX timestamp).
+- `type` (String) The type of the allocation. Can be 'preset' or 'custom'.
 
 <a id="nestedatt--rules"></a>
 ### Nested Schema for `rules`
