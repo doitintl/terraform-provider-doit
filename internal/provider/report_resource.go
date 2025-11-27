@@ -32,7 +32,7 @@ type reportResourceModel struct {
 	LastUpdated types.String `tfsdk:"last_updated"`
 }
 
-// ExternalConfig Report configuration
+// ExternalConfigModel Report configuration.
 type ExternalConfigModel struct {
 	// AdvancedAnalysis Advanced analysis toggles. Each of these can be set independently
 	AdvancedAnalysis *AdvancedAnalysisModel `tfsdk:"advanced_analysis"`
@@ -77,7 +77,7 @@ type ExternalConfigModel struct {
 	TimeRange *TimeSettingsModel `tfsdk:"time_range"`
 }
 
-// AdvancedAnalysis Advanced analysis toggles. Each of these can be set independently
+// AdvancedAnalysis Advanced analysis toggles. Each of these can be set independently.
 type AdvancedAnalysisModel struct {
 	Forecast     types.Bool `tfsdk:"forecast"`
 	NotTrending  types.Bool `tfsdk:"not_trending"`
@@ -171,7 +171,7 @@ type ExternalSplitTargetModel struct {
 // Description: Today is the 17th of April of 2023
 // We set the mode to "last", the amount to 2 and the unit to "day"
 // If includeCurrent is not set, the range will be the 15th and 16th of April
-// If it is, then the range will be 16th and 17th
+// If it is, then the range will be 16th and 17th.
 type TimeSettingsModel struct {
 	Amount         types.Int64  `tfsdk:"amount"`
 	IncludeCurrent types.Bool   `tfsdk:"include_current"`
@@ -182,7 +182,7 @@ type TimeSettingsModel struct {
 // Dimension {
 // "id" : "sku_description",
 // "type" : "fixed"
-// }
+// }.
 type DimensionModel struct {
 	// Id The field to apply to the dimension.
 	Id   types.String `tfsdk:"id"`

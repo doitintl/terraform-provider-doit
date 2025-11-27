@@ -1,6 +1,6 @@
 package provider
 
-// Attribution -
+// Attribution - .
 type Attribution struct {
 	Id          string      `json:"id,omitempty"`
 	Name        string      `json:"name"`
@@ -10,14 +10,14 @@ type Attribution struct {
 	Components  []Component `json:"components,omitempty"`
 }
 
-// Component -
+// Component - .
 type Component struct {
 	TypeComponent string   `json:"type"`
 	Key           string   `json:"key"`
 	Values        []string `json:"values"`
 }
 
-// Attribution -
+// Attribution - .
 type AttributionGroup struct {
 	Id           string   `json:"id,omitempty"`
 	Name         string   `json:"name"`
@@ -26,7 +26,7 @@ type AttributionGroup struct {
 	Attributions []string `json:"attributions"`
 }
 
-// Attribution -
+// Attribution - .
 type AttributionGroupGet struct {
 	Id           string        `json:"id,omitempty"`
 	Name         string        `json:"name"`
@@ -50,7 +50,7 @@ type Report struct {
 	Name string `json:"name"`
 }
 
-// ExternalConfig Report configuration
+// ExternalConfig - Report configuration.
 type ExternalConfig struct {
 	// AdvancedAnalysis Advanced analysis toggles. Each of these can be set independently
 	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
@@ -94,7 +94,7 @@ type ExternalConfig struct {
 	SortDimensions string        `json:"sortDimensions,omitempty"`
 }
 
-// AdvancedAnalysis Advanced analysis toggles. Each of these can be set independently
+// AdvancedAnalysis Advanced analysis toggles. Each of these can be set independently.
 type AdvancedAnalysis struct {
 	Forecast     bool `json:"forecast"`
 	NotTrending  bool `json:"notTrending"`
@@ -105,7 +105,7 @@ type AdvancedAnalysis struct {
 // Dimension {
 // "id" : "sku_description",
 // "type" : "fixed"
-// }
+// }.
 type Dimension struct {
 	// Id The field to apply to the dimension.
 	Id   string `json:"id,omitempty"`
@@ -162,7 +162,7 @@ type ExternalConfigMetricFilter struct {
 	Values   []float64       `json:"values,omitempty"`
 }
 
-// ExternalSplit A split to apply to the report
+// ExternalSplit - A split to apply to the report.
 type ExternalSplit struct {
 	// Id ID of the field to split
 	Id string `json:"id,omitempty"`
@@ -207,7 +207,7 @@ type ExternalSplitTarget struct {
 // Description: Today is the 17th of April of 2023
 // We set the mode to "last", the amount to 2 and the unit to "day"
 // If includeCurrent is not set, the range will be the 15th and 16th of April
-// If it is, then the range will be 16th and 17th
+// If it is, then the range will be 16th and 17th.
 type TimeSettings struct {
 	Amount         int64  `json:"amount,omitempty"`
 	IncludeCurrent bool   `json:"includeCurrent"`

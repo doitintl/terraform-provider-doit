@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// CreateBudget - Create new budget
+// CreateBudget - Create new budget.
 func (c *Client) CreateBudget(ctx context.Context, budget Budget) (*Budget, error) {
 	rb, err := json.Marshal(budget)
 	if err != nil {
@@ -43,7 +43,7 @@ func (c *Client) CreateBudget(ctx context.Context, budget Budget) (*Budget, erro
 	return &budgetResponse, nil
 }
 
-// UpdateBudget - Updates an budget
+// UpdateBudget - Updates an budget.
 func (c *Client) UpdateBudget(ctx context.Context, budgetID string, budget Budget) (*Budget, error) {
 	rb, err := json.Marshal(budget)
 	if err != nil {
@@ -91,7 +91,7 @@ func (c *Client) DeleteBudget(ctx context.Context, budgetID string) error {
 	return nil
 }
 
-// GetBudget - Returns a specifc budget
+// GetBudget - Returns a specifc budget.
 func (c *Client) GetBudget(ctx context.Context, orderID string) (*Budget, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/budgets/%s", c.HostURL, orderID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)

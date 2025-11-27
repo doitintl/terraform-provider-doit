@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// CreateAttributionGroup - Create new attributionGroup
+// CreateAttributionGroup - Create new attributionGroup.
 func (c *Client) CreateAttributionGroup(ctx context.Context, attributionGroup AttributionGroup) (*AttributionGroup, error) {
 	log.Println("CreateAttributionGroup")
 	log.Println(attributionGroup)
@@ -46,7 +46,7 @@ func (c *Client) CreateAttributionGroup(ctx context.Context, attributionGroup At
 	return &attributionGroupResponse, nil
 }
 
-// UpdateAttributionGroup - Updates an attributionGroup
+// UpdateAttributionGroup - Updates an attributionGroup.
 func (c *Client) UpdateAttributionGroup(ctx context.Context, attributionGroupID string, attributionGroup AttributionGroup) (*AttributionGroup, error) {
 	rb, err := json.Marshal(attributionGroup)
 	if err != nil {
@@ -86,7 +86,7 @@ func (c *Client) DeleteAttributionGroup(ctx context.Context, attributionGroupID 
 	return nil
 }
 
-// GetAttributionGroup - Returns a specifc attribution
+// GetAttributionGroup - Returns a specifc attribution.
 func (c *Client) GetAttributionGroup(ctx context.Context, attributionGroupID string) (*AttributionGroup, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributiongroups/%s", c.HostURL, attributionGroupID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)

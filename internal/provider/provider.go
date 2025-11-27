@@ -21,7 +21,7 @@ var (
 	_ provider.Provider = &doitProvider{}
 )
 
-// HostURL - Default DoiT URL
+// HostURL - Default DoiT URL.
 const HostURL string = "https://api.doit.com"
 const RequestsMinute int = 250
 
@@ -89,7 +89,7 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	doiTAPIToken := ""
 	host := ""
 	customerContext := ""
-	requestsMinute := RequestsMinute
+	var requestsMinute int
 	tflog.Info(ctx, "Configuring DoiT client")
 	tflog.Trace(ctx, "[TRACE] Calling Program::")
 
