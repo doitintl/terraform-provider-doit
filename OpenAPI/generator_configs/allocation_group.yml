@@ -1,0 +1,16 @@
+provider:
+  name: doit
+resources:
+  allocation_group:
+    create:
+      path: /analytics/v1/allocations
+      method: POST
+    read:
+      path: /analytics/v1/allocations/{id}
+      method: GET
+    update:
+      path: /analytics/v1/allocations/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/allocations/{id}
+      method: DELETE
