@@ -46,5 +46,16 @@ resource "doit_attribution" "attri" {
 Required:
 
 - `key` (String) Key of the type to validate
-- `type` (String) Type of the component (Standard, Labels, Google Kubernetes Engin, Tags etc. )
+- `type` (String) Type of the component. Possibe values are:
+'datetime'
+'fixed' (Used for AWS account IDs and Google project IDs)
+'optional'
+'label'
+'tag'
+'project_label'
+'system_label'
+'attribution'
+'attribution_group'
+'gke'
+'gke_label'
 - `values` (List of String) Value of the key to validate

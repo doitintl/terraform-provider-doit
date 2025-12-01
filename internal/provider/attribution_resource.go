@@ -89,8 +89,18 @@ func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Description: "Type of the component (Standard, " +
-								"Labels, Google Kubernetes Engin, Tags etc. )",
+							Description: `Type of the component. Possibe values are:
+'datetime'
+'fixed' (Used for AWS account IDs and Google project IDs)
+'optional'
+'label'
+'tag'
+'project_label'
+'system_label'
+'attribution'
+'attribution_group'
+'gke'
+'gke_label'`,
 							Required: true,
 						},
 						"key": schema.StringAttribute{

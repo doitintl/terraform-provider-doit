@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -240,12 +239,10 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"scope": schema.ListAttribute{
 				Required:    true,
 				ElementType: types.StringType,
-				Description: "List of budges that defines that budget scope",
+				Description: "List of attribution IDs that define the budget scope",
 			},
 			"start_period": schema.Int64Attribute{
-				Optional:    true,
-				Computed:    true,
-				Default:     int64default.StaticInt64(0),
+				Required:    true,
 				Description: "Budget start Date",
 			},
 			"time_interval": schema.StringAttribute{

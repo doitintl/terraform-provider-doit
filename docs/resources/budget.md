@@ -13,38 +13,38 @@ description: |-
 ## Example Usage
 
 ```terraform
+# Create an attribution for the budget
+resource "doit_attribution" "attribution" {
+  name        = "My Attribution"
+  description = "My Attribution Description"
+  formula     = "A"
+  components  = [{ type = "fixed", key = "project_id", values = ["847764956835"] }] # Note that 'project_id' is also used for AWS account IDs
+}
+
+# Create a timestamp for the start period
+resource "time_static" "now" {
+  rfc3339 = "2025-12-01T16:52:23.000Z"
+}
+
 resource "doit_budget" "my_budget" {
-  name        = "test budget terraform"
-  description = "description"
-  alerts = [
-    {
-      percentage = 50
-    },
-    {
-      percentage = 85,
-    },
-    {
-      percentage = 100,
-    }
-  ]
+  name          = "test budget terraform"
+  currency      = "AUD"
+  type          = "recurring"
+  amount        = 100
+  time_interval = "month"
+  start_period  = time_static.now.unix * 1000 # This is a UNIX timestamp in milliseconds
   recipients = [
-    "recipient@doit.com"
+    "me@company.com"
   ]
   collaborators = [
     {
-      "email" : "recipient@doit.com",
+      "email" : "me@company.com",
       "role" : "owner"
     },
   ]
   scope = [
-    "Evct3J0DYcyXIVuAXORd"
+    doit_attribution.attri.id
   ]
-  amount            = 200
-  currency          = "AUD"
-  growth_per_period = 10
-  time_interval     = "month"
-  type              = "recurring"
-  use_prev_spend    = false
 }
 ```
 
@@ -57,7 +57,8 @@ resource "doit_budget" "my_budget" {
 - `currency` (String) Budget currency can be one of: ["USD","ILS","EUR","GBP","AUD","CAD","DKK","NOK","SEK","BRL","SGD","MXN","CHF","MYR","TWD","EGP","ZAR"]
 - `name` (String) Name Budget Name
 - `recipients` (List of String) List of emails to notify when reaching alert threshold
-- `scope` (List of String) List of budges that defines that budget scope
+- `scope` (List of String) List of attribution IDs that define the budget scope
+- `start_period` (Number) Budget start Date
 - `type` (String) Budget type can be one of: ["fixed", "recurring"]
 
 ### Optional
@@ -70,7 +71,6 @@ resource "doit_budget" "my_budget" {
 - `metric` (String) Budget metric  - currently fixed to "cost"
 - `public` (String) Public
 - `recipients_slack_channels` (Attributes List) (see [below for nested schema](#nestedatt--recipients_slack_channels))
-- `start_period` (Number) Budget start Date
 - `time_interval` (String) Recurring budget interval can be on of:["day", "week", "month", "quarter","year]"
 - `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets
 
