@@ -5,6 +5,8 @@ package resource_allocation_group
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -13,13 +15,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		DeprecationMessage: `Allocation groups are deprecated.
+All of the features of the allocation group will be moved to the allocation resource in the next major version of the provider.
+The allocation group resource will be removed in the next major version of the provider.`,
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
