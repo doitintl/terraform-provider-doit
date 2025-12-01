@@ -190,7 +190,7 @@ paths:
           in: query
           description: |-
             An expression for filtering the results.
-            Valid fields: **type**, **allocationType**, **owner**, **name**.
+            Valid fields: **type**, **owner**, **name**.
           example: type:custom
           schema:
             type: string
@@ -200,10 +200,11 @@ paths:
           schema:
             type: string
             enum:
+              - id
               - name
               - owner
+              - description
               - type
-              - allocationType
               - createTime
               - updateTime
         - $ref: "#/components/parameters/sortOrder"
@@ -219,6 +220,9 @@ paths:
                   pageToken:
                     type: string
                     description: Page token, returned by a previous call, to request the next page of results
+                  rowCount:
+                    type: integer
+                    description: Total number of allocations in the result set
                   allocations:
                     type: array
                     items:
@@ -241,9 +245,7 @@ paths:
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: "#/components/schemas/SingleAllocationRequest"
-                - $ref: "#/components/schemas/GroupAllocationRequest"
+              $ref: "#/components/schemas/CreateAllocationRequest"
       responses:
         "200":
           description: >-
@@ -282,9 +284,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: "#/components/schemas/SingleAllocation"
-                  - $ref: "#/components/schemas/GroupAllocation"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -343,20 +343,190 @@ paths:
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: "#/components/schemas/SingleAllocationRequest"
-                - $ref: "#/components/schemas/GroupAllocationRequest"
+              $ref: "#/components/schemas/UpdateAllocationRequest"
       responses:
         "200":
           description: OK - Allocation updated.
           content:
             application/json:
               schema:
-                oneOf:
-                  - type: string
-                    description: ID of the updated allocation
-                  - $ref: "#/components/schemas/SingleAllocation"
-                  - $ref: "#/components/schemas/GroupAllocation"
+                $ref: "#/components/schemas/NewAllocationResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  /analytics/v1/annotations:
+    get:
+      tags:
+        - Annotations
+      summary: List annotations
+      description: |-
+        Returns a list of annotations that your account has access to.
+        Annotations are listed in reverse chronological order by default.
+      operationId: listAnnotations
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+        - name: filter
+          in: query
+          description: |-
+            An expression for filtering the results.
+            Valid fields: **content**, **timestamp**, **labels**.
+          example: content:budget
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: A field by which the results will be sorted.
+          schema:
+            type: string
+            enum:
+              - id
+              - content
+              - timestamp
+              - timeCreated
+              - timeModified
+        - $ref: "#/components/parameters/sortOrder"
+      responses:
+        "200":
+          description: >-
+            OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pageToken:
+                    type: string
+                    description: Page token, returned by a previous call, to request the next page of results
+                  rowCount:
+                    type: integer
+                    description: Total number of annotations in the result set
+                  annotations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AnnotationListItem"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Annotations
+      summary: Create an annotation
+      description: Creates a new annotation.
+      operationId: createAnnotation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnnotationRequest"
+        required: true
+      responses:
+        "201":
+          description: >-
+            Created - Annotation created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnotationListItem"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/annotations/{id}":
+    get:
+      tags:
+        - Annotations
+      summary: Retrieve an annotation
+      description: Returns an annotation by the specified Id.
+      operationId: getAnnotation
+      parameters:
+        - name: id
+          in: path
+          description: Annotation ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: >-
+            OK - Annotation returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnotationListItem"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      tags:
+        - Annotations
+      summary: Delete an annotation
+      description: Deletes the annotation specified by the Id.
+      operationId: deleteAnnotation
+      parameters:
+        - name: id
+          in: path
+          description: Annotation ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Annotation deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      tags:
+        - Annotations
+      summary: Update an annotation
+      description: Updates the annotation specified by the Id.
+      operationId: updateAnnotation
+      parameters:
+        - name: id
+          in: path
+          description: Annotation ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAnnotationRequest"
+      responses:
+        "200":
+          description: OK - Annotation updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnotationListItem"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -833,7 +1003,7 @@ paths:
       tags:
         - Budgets
       summary: Create a budget
-      description: Creats a new budget
+      description: Create a new budget
       operationId: createBudget
       requestBody:
         content:
@@ -1516,6 +1686,8 @@ paths:
                     description: "Timeframe: Daily or Hourly"
                   top3SKUs:
                     $ref: "#/components/schemas/AnomalySKUArray"
+                  resourceData:
+                    $ref: "#/components/schemas/AnomalyResourceArray"
                   status:
                     type: string
                     nullable: true
@@ -1604,7 +1776,7 @@ paths:
       tags:
         - DataHub
       summary: Ingest CSV file
-      description: Send a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
+      description: Sends a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
       operationId: datahubEventsCSVFile
       requestBody:
         required: true
@@ -1615,7 +1787,7 @@ paths:
               properties:
                 provider:
                   type: string
-                  description: "The identifier of the data doit. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
+                  description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
                   example: "Datadog"
                 file:
                   type: string
@@ -1650,7 +1822,7 @@ paths:
       tags:
         - DataHub
       summary: Ingest JSON
-      description: Sends batch of events to DataHub.
+      description: Sends a batch of events to DataHub.
       operationId: datahubEvents
       requestBody:
         required: true
@@ -1669,7 +1841,7 @@ paths:
                     properties:
                       provider:
                         type: string
-                        description: "The identifier of the data doit. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
+                        description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
                         example: "Datadog"
                       id:
                         type: string
@@ -1792,7 +1964,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    description: The doit (dataset) of the events to be deleted.
+                    description: The provider (dataset) of the events to be deleted.
                     example: "Datadog"
               minProperties: 1
               maxProperties: 1
@@ -2550,7 +2722,7 @@ components:
           type: string
           description: The user's job function
           enum:
-            - "Data Engineer/Data Analysts"
+            - "Data Engineer / Data Analysts"
             - "Executive Team"
             - "Finance / Accounting"
             - "Founder"
@@ -2611,7 +2783,7 @@ components:
           type: string
           description: The user's job function
           enum:
-            - "Data Engineer/Data Analysts"
+            - "Data Engineer / Data Analysts"
             - "Executive Team"
             - "Finance / Accounting"
             - "Founder"
@@ -2666,7 +2838,7 @@ components:
           type: string
           description: The user's job function
           enum:
-            - "Data Engineer/Data Analysts"
+            - "Data Engineer / Data Analysts"
             - "Executive Team"
             - "Finance / Accounting"
             - "Founder"
@@ -2907,12 +3079,55 @@ components:
         id:
           type: string
           description: ID of the created allocation
-        allocationType:
+        type:
           type: string
           description: Type of the created allocation
           enum:
             - single
             - group
+    CreateAllocationRequest:
+      required:
+        - name
+        - description
+      type: object
+      properties:
+        name:
+          type: string
+          description: Allocation name
+        description:
+          type: string
+          description: Allocation description
+        rule:
+          $ref: "#/components/schemas/AllocationRule"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupAllocationRule"
+        unallocatedCosts:
+          type: string
+          description: Custom label for any values that do not fit into allocation (required for group type allocation)
+          nullable: true
+    UpdateAllocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Allocation name
+          nullable: true
+        description:
+          type: string
+          description: Allocation description
+          nullable: true
+        rule:
+          $ref: "#/components/schemas/AllocationRule"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupAllocationRule"
+        unallocatedCosts:
+          type: string
+          description: Custom label for any values that do not fit into allocation (required for group type allocation)
+          nullable: true
     AllocationListItem:
       type: object
       properties:
@@ -2925,6 +3140,9 @@ components:
         owner:
           type: string
           description: Allocation owner
+        description:
+          type: string
+          description: Allocation description
         type:
           type: string
           description: Type of allocation (preset or custom)
@@ -2947,10 +3165,11 @@ components:
           description: URL to view the allocation in DoiT Cloud Navigator.
     AllocationRule:
       type: object
+      description: Single allocation rule (required for single type allocation)
+      nullable: true
       properties:
         components:
           type: array
-          description: List of allocation filter components
           items:
             $ref: "#/components/schemas/AllocationComponent"
         formula:
@@ -3042,6 +3261,8 @@ components:
           description: "Timeframe: Daily or Hourly"
         top3SKUs:
           $ref: "#/components/schemas/AnomalySKUArray"
+        resourceData:
+          $ref: "#/components/schemas/AnomalyResourceArray"
         status:
           type: string
           nullable: true
@@ -3064,6 +3285,24 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/AnomalySKU"
+    AnomalyResource:
+      type: object
+      properties:
+        cost:
+          type: number
+          format: double
+        resourceId:
+          type: string
+        skuDescription:
+          type: string
+        operation:
+          description: "For anomalies related to AWS S3"
+          type: string
+    AnomalyResourceArray:
+      type: array
+      description: "Resources contributing to the anomaly"
+      items:
+        $ref: "#/components/schemas/AnomalyResource"
     AssetResponse:
       type: object
       properties:
@@ -3226,6 +3465,72 @@ components:
           type: integer
           description: AttributionGroup rows count
           format: int64
+    AnnotationListItem:
+      required:
+        - id
+        - content
+        - timestamp
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the annotation
+        content:
+          type: string
+          description: The content of the annotation
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation
+        createTime:
+          type: string
+          format: date-time
+          description: The time when the annotation was created
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the annotation was last updated
+    CreateAnnotationRequest:
+      required:
+        - content
+        - timestamp
+      type: object
+      properties:
+        content:
+          type: string
+          description: The content of the annotation
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation
+    UpdateAnnotationRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: The content of the annotation
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation
+          nullable: true
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation
+          nullable: true
     AttributionListItem:
       required:
         - name
@@ -3371,6 +3676,12 @@ components:
             Budget period amount
             required: true(if usePrevSpend is false)
           format: double
+        seasonalAmounts:
+          type: array
+          description: List of seasonal amounts for recurring budgets with different amounts per period
+          items:
+            type: number
+            format: double
         collaborators:
           type: array
           description: List of permitted users to view/edit the report
@@ -3942,6 +4253,15 @@ components:
             - attribution_group
             - gke
             - gke_label
+        mode:
+          type: string
+          description: Filter mode to apply
+          enum:
+            - is
+            - starts_with
+            - ends_with
+            - contains
+            - regexp
         inverse:
           type: boolean
           description: Set to `true` to exclude the values.
@@ -4164,72 +4484,55 @@ components:
           timeInterval: week
         description: An update via API
         name: A new name
-    GroupAllocation:
+    Allocation:
       type: object
       properties:
         id:
           type: string
-          description: Allocation group ID
+          description: Allocation ID
         name:
           type: string
-          description: Allocation group name
+          description: Allocation name
         description:
           type: string
-          description: Allocation group description
-        timeCreated:
-          type: integer
-          description: The time when this allocation group was created (in UNIX timestamp).
-          format: int64
-        timeModified:
-          type: integer
-          description: Last time the allocation group was modified (in UNIX timestamp).
-          format: int64
-        rules:
-          type: array
-          description: List of allocation rules in this group
-          items:
-            $ref: "#/components/schemas/AllocationListItem"
+          description: Allocation description
         type:
           type: string
           description: Type of allocation (preset or custom)
         allocationType:
           type: string
-          description: Type of allocation (group)
+          description: Type of allocation (single or group)
           enum:
+            - single
             - group
-        cloud:
-          type: string
-          description: Cloud doit
+        createTime:
+          type: integer
+          description: The time when the allocation was created (in UNIX timestamp).
+          format: int64
+        updateTime:
+          type: integer
+          description: Last time the allocation was modified (in UNIX timestamp).
+          format: int64
+        anomalyDetection:
+          type: boolean
+          description: Whether anomaly detection is enabled for this allocation
           nullable: true
-        unallocatedCosts:
-          type: string
-          description: Custom label for any values that do not fit into attributions
-          nullable: true
-    GroupAllocationRequest:
-      required:
-        - name
-        - rules
-      type: object
-      properties:
-        name:
-          type: string
-          description: Allocation group name
-        description:
-          type: string
-          description: Allocation group description
+        rule:
+          $ref: "#/components/schemas/AllocationRule"
         rules:
           type: array
-          description: Array of allocation rules for this group
           items:
             $ref: "#/components/schemas/GroupAllocationRule"
         unallocatedCosts:
           type: string
-          description: Custom label for any values that do not fit into attributions
+          description: Custom label for any values that do not fit into allocation (required for group type allocation)
           nullable: true
     GroupAllocationRule:
       required:
         - action
       type: object
+      nullable: true
+      description: Allocation rule for a group (required for group type allocation)
       properties:
         name:
           type: string
@@ -4249,7 +4552,6 @@ components:
           description: ID of existing allocation (required for 'update' or 'select' action)
         components:
           type: array
-          description: List of allocation filter components (required for 'create' or 'update' action)
           items:
             $ref: "#/components/schemas/AllocationComponent"
         formula:
@@ -4300,53 +4602,6 @@ components:
             - owner
             - editor
             - viewer
-    SingleAllocation:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Allocation ID
-        name:
-          type: string
-          description: Allocation name
-        description:
-          type: string
-          description: Allocation description
-        type:
-          type: string
-          description: Type of allocation (preset or custom)
-        allocationType:
-          type: string
-          description: Type of allocation (single)
-          enum:
-            - single
-        createTime:
-          type: integer
-          description: The time when the allocation was created (in UNIX timestamp).
-          format: int64
-        updateTime:
-          type: integer
-          description: Last time the allocation was modified (in UNIX timestamp).
-          format: int64
-        anomalyDetection:
-          type: boolean
-          description: Whether anomaly detection is enabled for this allocation
-        rule:
-          $ref: "#/components/schemas/AllocationRule"
-    SingleAllocationRequest:
-      required:
-        - name
-        - rule
-      type: object
-      properties:
-        name:
-          type: string
-          description: Allocation name
-        description:
-          type: string
-          description: Allocation description
-        rule:
-          $ref: "#/components/schemas/AllocationRule"
     Filter:
       type: string
       description: >-
@@ -5216,6 +5471,8 @@ components:
                 description: "Timeframe: Daily or Hourly"
               top3SKUs:
                 $ref: "#/components/schemas/AnomalySKUArray"
+              resourceData:
+                $ref: "#/components/schemas/AnomalyResourceArray"
     assetPost:
       description: Creates a new amazon-web-services asset (account)
       content:
