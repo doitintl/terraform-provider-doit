@@ -9,7 +9,6 @@ import (
 
 	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_allocation"
-	"terraform-provider-doit/internal/provider/resource_allocation_group"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -17,13 +16,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.SingleAllocation, diag.Diagnostics) {
+func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allocation, diag.Diagnostics) {
 	var (
-		req   models.SingleAllocation
+		req   models.Allocation
 		diags diag.Diagnostics
 	)
 
-	allocationType := models.SingleAllocationAllocationType(plan.AllocationType.ValueString())
+	allocationType := models.AllocationAllocationType(plan.AllocationType.ValueString())
 	req.AllocationType = &allocationType
 	req.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
 	req.Description = plan.Description.ValueStringPointer()
@@ -59,6 +58,50 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Sing
 			}
 			req.Rule.Components = &createComponents
 		}
+	}
+	if !plan.Rules.IsNull() {
+		var planRules []resource_allocation.RulesValue
+		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
+		diags.Append(diags...)
+		if diags.HasError() {
+			return req, diags
+		}
+		rules := make([]models.GroupAllocationRule, len(planRules))
+		for i := range planRules {
+			rules[i] = models.GroupAllocationRule{
+				Name:        planRules[i].Name.ValueStringPointer(),
+				Id:          planRules[i].Id.ValueStringPointer(),
+				Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
+				Description: planRules[i].Description.ValueStringPointer(),
+				Formula:     planRules[i].Formula.ValueStringPointer(),
+			}
+			// Don't send components if selecting existing allocation
+			if !planRules[i].Components.IsNull() && planRules[i].Action.ValueString() != "select" {
+				var ruleComponents []resource_allocation.ComponentsValue
+				diags = planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
+				diags.Append(diags...)
+				if diags.HasError() {
+					return req, diags
+				}
+				createComponents := make([]models.AllocationComponent, len(ruleComponents))
+				for j := range ruleComponents {
+					createComponents[j] = models.AllocationComponent{
+						IncludeNull:      ruleComponents[j].IncludeNull.ValueBoolPointer(),
+						InverseSelection: ruleComponents[j].InverseSelection.ValueBoolPointer(),
+						Key:              ruleComponents[j].Key.ValueString(),
+						Mode:             models.AllocationComponentMode(ruleComponents[j].Mode.ValueString()),
+						Type:             models.DimensionsTypes(ruleComponents[j].ComponentsType.ValueString()),
+					}
+					diags = ruleComponents[j].Values.ElementsAs(ctx, &createComponents[j].Values, true)
+					diags.Append(diags...)
+					if diags.HasError() {
+						return req, diags
+					}
+				}
+				rules[i].Components = &createComponents
+			}
+		}
+		req.Rules = &rules
 	}
 	return req, diags
 }
@@ -97,7 +140,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 	if resp.Rule != nil {
 		var diags diag.Diagnostics
 		state.Rule.Formula = types.StringPointerValue(resp.Rule.Formula)
-		state.Rule.Components, diags = toAllocationRuleComponentsListValue[resource_allocation.ComponentsType](ctx, resp.Rule.Components)
+		state.Rule.Components, diags = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
 		d.Append(diags...)
 		if d.HasError() {
 			return d
@@ -107,7 +150,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 	return d
 }
 
-func (c *Client) CreateAllocation(ctx context.Context, allocation models.SingleAllocation) (*models.SingleAllocation, error) {
+func (c *Client) CreateAllocation(ctx context.Context, allocation models.Allocation) (*models.Allocation, error) {
 	rb, err := json.Marshal(allocation)
 	if err != nil {
 		return nil, err
@@ -124,7 +167,7 @@ func (c *Client) CreateAllocation(ctx context.Context, allocation models.SingleA
 		return nil, err
 	}
 
-	allocationResponse := models.SingleAllocation{}
+	allocationResponse := models.Allocation{}
 	err = json.Unmarshal(body, &allocationResponse)
 	if err != nil {
 		return nil, err
@@ -132,7 +175,7 @@ func (c *Client) CreateAllocation(ctx context.Context, allocation models.SingleA
 	return &allocationResponse, nil
 }
 
-func (c *Client) UpdateAllocation(ctx context.Context, allocationID string, allocation models.SingleAllocation) (*models.SingleAllocation, error) {
+func (c *Client) UpdateAllocation(ctx context.Context, allocationID string, allocation models.Allocation) (*models.Allocation, error) {
 	rb, err := json.Marshal(allocation)
 	if err != nil {
 		return nil, err
@@ -148,7 +191,7 @@ func (c *Client) UpdateAllocation(ctx context.Context, allocationID string, allo
 		return nil, err
 	}
 
-	allocationResponse := models.SingleAllocation{}
+	allocationResponse := models.Allocation{}
 	err = json.Unmarshal(body, &allocationResponse)
 	if err != nil {
 		return nil, err
@@ -172,7 +215,7 @@ func (c *Client) DeleteAllocation(ctx context.Context, allocationID string) erro
 	return nil
 }
 
-func (c *Client) GetAllocation(ctx context.Context, id string) (*models.SingleAllocation, error) {
+func (c *Client) GetAllocation(ctx context.Context, id string) (*models.Allocation, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, id)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("GET", urlRequestContext, nil)
@@ -185,7 +228,7 @@ func (c *Client) GetAllocation(ctx context.Context, id string) (*models.SingleAl
 		return nil, err
 	}
 
-	allocation := models.SingleAllocation{}
+	allocation := models.Allocation{}
 	err = json.Unmarshal(body, &allocation)
 	if err != nil {
 		return nil, err
@@ -194,84 +237,43 @@ func (c *Client) GetAllocation(ctx context.Context, id string) (*models.SingleAl
 	return &allocation, nil
 }
 
-func toAllocationRuleComponentsListValue[T resource_allocation.ComponentsType | resource_allocation_group.ComponentsType](ctx context.Context, components *[]models.AllocationComponent) (basetypes.ListValue, diag.Diagnostics) {
-	var (
-		res      basetypes.ListValue
-		d, diags diag.Diagnostics
-	)
-
+func toAllocationRuleComponentsListValue(ctx context.Context, components *[]models.AllocationComponent) (res basetypes.ListValue, diags diag.Diagnostics) {
 	if components == nil || len(*components) == 0 {
-		return res, nil
+		return
 	}
-
+	var d diag.Diagnostics
 	stateComponents := make([]attr.Value, len(*components))
 	for i, component := range *components {
-
 		values := make([]attr.Value, len(component.Values))
 		for j := range component.Values {
 			values[j] = types.StringValue(component.Values[j])
 		}
-
-		switch any(T{}).(type) {
-		case resource_allocation.ComponentsType:
-			v := resource_allocation.ComponentsValue{
-				IncludeNull:      types.BoolPointerValue(component.IncludeNull),
-				InverseSelection: types.BoolPointerValue(component.InverseSelection),
-				Key:              types.StringValue(component.Key),
-				Mode:             types.StringValue(string(component.Mode)),
-				ComponentsType:   types.StringValue(string(component.Type)),
-			}
-			v.Values, diags = types.ListValue(types.StringType, values)
-			d.Append(diags...)
-			if d.HasError() {
-				return res, d
-			}
-
-			stateComponents[i], diags = resource_allocation.NewComponentsValue(v.AttributeTypes(ctx), map[string]attr.Value{
-				"include_null":      v.IncludeNull,
-				"inverse_selection": v.InverseSelection,
-				"key":               v.Key,
-				"mode":              v.Mode,
-				"type":              v.ComponentsType,
-				"values":            v.Values,
-			})
-			d.Append(diags...)
-			if d.HasError() {
-				return res, d
-			}
-
-		case resource_allocation_group.ComponentsType:
-			v := resource_allocation_group.ComponentsValue{
-				IncludeNull:      types.BoolPointerValue(component.IncludeNull),
-				InverseSelection: types.BoolPointerValue(component.InverseSelection),
-				Key:              types.StringValue(component.Key),
-				Mode:             types.StringValue(string(component.Mode)),
-				ComponentsType:   types.StringValue(string(component.Type)),
-			}
-
-			v.Values, diags = types.ListValue(types.StringType, values)
-			d.Append(diags...)
-			if d.HasError() {
-				return res, d
-			}
-
-			stateComponents[i], diags = resource_allocation_group.NewComponentsValue(v.AttributeTypes(ctx), map[string]attr.Value{
-				"include_null":      v.IncludeNull,
-				"inverse_selection": v.InverseSelection,
-				"key":               v.Key,
-				"mode":              v.Mode,
-				"type":              v.ComponentsType,
-				"values":            v.Values,
-			})
-			d.Append(diags...)
-			if d.HasError() {
-				return res, d
-			}
+		v := resource_allocation.ComponentsValue{
+			IncludeNull:      types.BoolPointerValue(component.IncludeNull),
+			InverseSelection: types.BoolPointerValue(component.InverseSelection),
+			Key:              types.StringValue(component.Key),
+			Mode:             types.StringValue(string(component.Mode)),
+			ComponentsType:   types.StringValue(string(component.Type)),
+		}
+		v.Values, d = types.ListValue(types.StringType, values)
+		diags.Append(d...)
+		if diags.HasError() {
+			return
+		}
+		stateComponents[i], d = resource_allocation.NewComponentsValue(v.AttributeTypes(ctx), map[string]attr.Value{
+			"include_null":      v.IncludeNull,
+			"inverse_selection": v.InverseSelection,
+			"key":               v.Key,
+			"mode":              v.Mode,
+			"type":              v.ComponentsType,
+			"values":            v.Values,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return
 		}
 	}
-
 	res, diags = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
 	d.Append(diags...)
-
-	return res, d
+	return
 }
