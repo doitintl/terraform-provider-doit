@@ -33,13 +33,19 @@ const (
 	AlertConfigTimeIntervalYear    AlertConfigTimeInterval = "year"
 )
 
+// Defines values for AllocationAllocationType.
+const (
+	AllocationAllocationTypeGroup  AllocationAllocationType = "group"
+	AllocationAllocationTypeSingle AllocationAllocationType = "single"
+)
+
 // Defines values for AllocationComponentMode.
 const (
-	Contains   AllocationComponentMode = "contains"
-	EndsWith   AllocationComponentMode = "ends_with"
-	Is         AllocationComponentMode = "is"
-	Regexp     AllocationComponentMode = "regexp"
-	StartsWith AllocationComponentMode = "starts_with"
+	AllocationComponentModeContains   AllocationComponentMode = "contains"
+	AllocationComponentModeEndsWith   AllocationComponentMode = "ends_with"
+	AllocationComponentModeIs         AllocationComponentMode = "is"
+	AllocationComponentModeRegexp     AllocationComponentMode = "regexp"
+	AllocationComponentModeStartsWith AllocationComponentMode = "starts_with"
 )
 
 // Defines values for AllocationDeleteValidationType.
@@ -193,6 +199,15 @@ const (
 	ExternalConfigTimeIntervalYear      ExternalConfigTimeInterval = "year"
 )
 
+// Defines values for ExternalConfigFilterMode.
+const (
+	ExternalConfigFilterModeContains   ExternalConfigFilterMode = "contains"
+	ExternalConfigFilterModeEndsWith   ExternalConfigFilterMode = "ends_with"
+	ExternalConfigFilterModeIs         ExternalConfigFilterMode = "is"
+	ExternalConfigFilterModeRegexp     ExternalConfigFilterMode = "regexp"
+	ExternalConfigFilterModeStartsWith ExternalConfigFilterMode = "starts_with"
+)
+
 // Defines values for ExternalConfigFilterType.
 const (
 	ExternalConfigFilterTypeAttribution      ExternalConfigFilterType = "attribution"
@@ -307,11 +322,6 @@ const (
 	ExternalSplitTargetTypeTag              ExternalSplitTargetType = "tag"
 )
 
-// Defines values for GroupAllocationAllocationType.
-const (
-	GroupAllocationAllocationTypeGroup GroupAllocationAllocationType = "group"
-)
-
 // Defines values for GroupAllocationRuleAction.
 const (
 	Create GroupAllocationRuleAction = "create"
@@ -351,10 +361,10 @@ const (
 	LimitSortDesc LimitSort = "desc"
 )
 
-// Defines values for NewAllocationResponseAllocationType.
+// Defines values for NewAllocationResponseType.
 const (
-	NewAllocationResponseAllocationTypeGroup  NewAllocationResponseAllocationType = "group"
-	NewAllocationResponseAllocationTypeSingle NewAllocationResponseAllocationType = "single"
+	NewAllocationResponseTypeGroup  NewAllocationResponseType = "group"
+	NewAllocationResponseTypeSingle NewAllocationResponseType = "single"
 )
 
 // Defines values for ReportType.
@@ -455,7 +465,7 @@ const (
 
 // Defines values for UpdateUserRequestJobFunction.
 const (
-	UpdateUserRequestJobFunctionDataEngineerDataAnalysts UpdateUserRequestJobFunction = "Data Engineer/Data Analysts"
+	UpdateUserRequestJobFunctionDataEngineerDataAnalysts UpdateUserRequestJobFunction = "Data Engineer / Data Analysts"
 	UpdateUserRequestJobFunctionExecutiveTeam            UpdateUserRequestJobFunction = "Executive Team"
 	UpdateUserRequestJobFunctionFinanceAccounting        UpdateUserRequestJobFunction = "Finance / Accounting"
 	UpdateUserRequestJobFunctionFounder                  UpdateUserRequestJobFunction = "Founder"
@@ -473,7 +483,7 @@ const (
 
 // Defines values for UpdatedUserBodyJobFunction.
 const (
-	UpdatedUserBodyJobFunctionDataEngineerDataAnalysts UpdatedUserBodyJobFunction = "Data Engineer/Data Analysts"
+	UpdatedUserBodyJobFunctionDataEngineerDataAnalysts UpdatedUserBodyJobFunction = "Data Engineer / Data Analysts"
 	UpdatedUserBodyJobFunctionExecutiveTeam            UpdatedUserBodyJobFunction = "Executive Team"
 	UpdatedUserBodyJobFunctionFinanceAccounting        UpdatedUserBodyJobFunction = "Finance / Accounting"
 	UpdatedUserBodyJobFunctionFounder                  UpdatedUserBodyJobFunction = "Founder"
@@ -491,7 +501,7 @@ const (
 
 // Defines values for UserListItemJobFunction.
 const (
-	DataEngineerDataAnalysts UserListItemJobFunction = "Data Engineer/Data Analysts"
+	DataEngineerDataAnalysts UserListItemJobFunction = "Data Engineer / Data Analysts"
 	ExecutiveTeam            UserListItemJobFunction = "Executive Team"
 	FinanceAccounting        UserListItemJobFunction = "Finance / Accounting"
 	Founder                  UserListItemJobFunction = "Founder"
@@ -545,18 +555,34 @@ const (
 
 // Defines values for ListAllocationsParamsSortBy.
 const (
-	ListAllocationsParamsSortByAllocationType ListAllocationsParamsSortBy = "allocationType"
-	ListAllocationsParamsSortByCreateTime     ListAllocationsParamsSortBy = "createTime"
-	ListAllocationsParamsSortByName           ListAllocationsParamsSortBy = "name"
-	ListAllocationsParamsSortByOwner          ListAllocationsParamsSortBy = "owner"
-	ListAllocationsParamsSortByType           ListAllocationsParamsSortBy = "type"
-	ListAllocationsParamsSortByUpdateTime     ListAllocationsParamsSortBy = "updateTime"
+	ListAllocationsParamsSortByCreateTime  ListAllocationsParamsSortBy = "createTime"
+	ListAllocationsParamsSortByDescription ListAllocationsParamsSortBy = "description"
+	ListAllocationsParamsSortById          ListAllocationsParamsSortBy = "id"
+	ListAllocationsParamsSortByName        ListAllocationsParamsSortBy = "name"
+	ListAllocationsParamsSortByOwner       ListAllocationsParamsSortBy = "owner"
+	ListAllocationsParamsSortByType        ListAllocationsParamsSortBy = "type"
+	ListAllocationsParamsSortByUpdateTime  ListAllocationsParamsSortBy = "updateTime"
 )
 
 // Defines values for ListAllocationsParamsSortOrder.
 const (
 	ListAllocationsParamsSortOrderAsc  ListAllocationsParamsSortOrder = "asc"
 	ListAllocationsParamsSortOrderDesc ListAllocationsParamsSortOrder = "desc"
+)
+
+// Defines values for ListAnnotationsParamsSortBy.
+const (
+	Content      ListAnnotationsParamsSortBy = "content"
+	Id           ListAnnotationsParamsSortBy = "id"
+	TimeCreated  ListAnnotationsParamsSortBy = "timeCreated"
+	TimeModified ListAnnotationsParamsSortBy = "timeModified"
+	Timestamp    ListAnnotationsParamsSortBy = "timestamp"
+)
+
+// Defines values for ListAnnotationsParamsSortOrder.
+const (
+	ListAnnotationsParamsSortOrderAsc  ListAnnotationsParamsSortOrder = "asc"
+	ListAnnotationsParamsSortOrderDesc ListAnnotationsParamsSortOrder = "desc"
 )
 
 // Defines values for ListAttributionGroupsParamsSortBy.
@@ -601,8 +627,8 @@ const (
 
 // Defines values for ListDimensionsParamsSortOrder.
 const (
-	Asc  ListDimensionsParamsSortOrder = "asc"
-	Desc ListDimensionsParamsSortOrder = "desc"
+	ListDimensionsParamsSortOrderAsc  ListDimensionsParamsSortOrder = "asc"
+	ListDimensionsParamsSortOrderDesc ListDimensionsParamsSortOrder = "desc"
 )
 
 // Defines values for DatahubEventsJSONBodyEventsDimensionsType.
@@ -731,6 +757,43 @@ type AlertUpdateRequest struct {
 	Recipients *[]string `json:"recipients,omitempty"`
 }
 
+// Allocation defines model for Allocation.
+type Allocation struct {
+	// AllocationType Type of allocation (single or group)
+	AllocationType *AllocationAllocationType `json:"allocationType,omitempty"`
+
+	// AnomalyDetection Whether anomaly detection is enabled for this allocation
+	AnomalyDetection *bool `json:"anomalyDetection"`
+
+	// CreateTime The time when the allocation was created (in UNIX timestamp).
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Description Allocation description
+	Description *string `json:"description,omitempty"`
+
+	// Id Allocation ID
+	Id *string `json:"id,omitempty"`
+
+	// Name Allocation name
+	Name *string `json:"name,omitempty"`
+
+	// Rule Single allocation rule (required for single type allocation)
+	Rule  *AllocationRule        `json:"rule"`
+	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
+
+	// Type Type of allocation (preset or custom)
+	Type *string `json:"type,omitempty"`
+
+	// UnallocatedCosts Custom label for any values that do not fit into allocation (required for group type allocation)
+	UnallocatedCosts *string `json:"unallocatedCosts"`
+
+	// UpdateTime Last time the allocation was modified (in UNIX timestamp).
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+}
+
+// AllocationAllocationType Type of allocation (single or group)
+type AllocationAllocationType string
+
 // AllocationComponent defines model for AllocationComponent.
 type AllocationComponent struct {
 	// IncludeNull Include null values
@@ -777,6 +840,9 @@ type AllocationListItem struct {
 	// CreateTime The time when the allocation was created (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
+	// Description Allocation description
+	Description *string `json:"description,omitempty"`
+
 	// Id Allocation ID
 	Id *string `json:"id,omitempty"`
 
@@ -799,13 +865,34 @@ type AllocationListItem struct {
 // AllocationListItemAllocationType Type of allocation (single or group)
 type AllocationListItemAllocationType string
 
-// AllocationRule defines model for AllocationRule.
+// AllocationRule Single allocation rule (required for single type allocation)
 type AllocationRule struct {
 	// Components List of allocation filter components
 	Components *[]AllocationComponent `json:"components,omitempty"`
 
 	// Formula Formula for combining components (A is the first component, B is the second one, etc.)
 	Formula *string `json:"formula,omitempty"`
+}
+
+// AnnotationListItem defines model for AnnotationListItem.
+type AnnotationListItem struct {
+	// Content The content of the annotation
+	Content string `json:"content"`
+
+	// CreateTime The time when the annotation was created
+	CreateTime *time.Time `json:"createTime,omitempty"`
+
+	// Id The unique identifier of the annotation
+	Id string `json:"id"`
+
+	// Reports List of report IDs associated with the annotation
+	Reports *[]string `json:"reports,omitempty"`
+
+	// Timestamp The date associated with the annotation
+	Timestamp time.Time `json:"timestamp"`
+
+	// UpdateTime The time when the annotation was last updated
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
 }
 
 // AnomaliesResponse defines model for AnomaliesResponse.
@@ -836,6 +923,9 @@ type AnomalyItem struct {
 	// Platform Cloud Provider name
 	Platform string `json:"platform"`
 
+	// ResourceData Resources contributing to the anomaly
+	ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
+
 	// Scope Scope: Project or Account
 	Scope string `json:"scope"`
 
@@ -856,6 +946,19 @@ type AnomalyItem struct {
 
 // AnomalyItemStatus defines model for AnomalyItem.Status.
 type AnomalyItemStatus string
+
+// AnomalyResource defines model for AnomalyResource.
+type AnomalyResource struct {
+	Cost *float64 `json:"cost,omitempty"`
+
+	// Operation For anomalies related to AWS S3
+	Operation      *string `json:"operation,omitempty"`
+	ResourceId     *string `json:"resourceId,omitempty"`
+	SkuDescription *string `json:"skuDescription,omitempty"`
+}
+
+// AnomalyResourceArray Resources contributing to the anomaly
+type AnomalyResourceArray = []AnomalyResource
 
 // AnomalySKU defines model for AnomalySKU.
 type AnomalySKU struct {
@@ -1177,6 +1280,9 @@ type BudgetAPI struct {
 	// Scopes The filters selected define the scope of the budget.
 	Scopes []Scope `json:"scopes"`
 
+	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
+	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
+
 	// StartPeriod Budget start Date (in UNIX timestamp)
 	StartPeriod int64 `json:"startPeriod"`
 
@@ -1328,6 +1434,34 @@ type CollectionRef struct {
 
 // Condition defines model for Condition.
 type Condition = string
+
+// CreateAllocationRequest defines model for CreateAllocationRequest.
+type CreateAllocationRequest struct {
+	// Description Allocation description
+	Description string `json:"description"`
+
+	// Name Allocation name
+	Name string `json:"name"`
+
+	// Rule Single allocation rule (required for single type allocation)
+	Rule  *AllocationRule        `json:"rule"`
+	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
+
+	// UnallocatedCosts Custom label for any values that do not fit into allocation (required for group type allocation)
+	UnallocatedCosts *string `json:"unallocatedCosts"`
+}
+
+// CreateAnnotationRequest defines model for CreateAnnotationRequest.
+type CreateAnnotationRequest struct {
+	// Content The content of the annotation
+	Content string `json:"content"`
+
+	// Reports List of report IDs associated with the annotation
+	Reports *[]string `json:"reports,omitempty"`
+
+	// Timestamp The date associated with the annotation
+	Timestamp time.Time `json:"timestamp"`
+}
 
 // Currency defines model for Currency.
 type Currency string
@@ -1494,12 +1628,18 @@ type ExternalConfigFilter struct {
 	Id *string `json:"id,omitempty"`
 
 	// Inverse Set to `true` to exclude the values.
-	Inverse *bool                     `json:"inverse,omitempty"`
-	Type    *ExternalConfigFilterType `json:"type,omitempty"`
+	Inverse *bool `json:"inverse,omitempty"`
+
+	// Mode Filter mode to apply
+	Mode *ExternalConfigFilterMode `json:"mode,omitempty"`
+	Type *ExternalConfigFilterType `json:"type,omitempty"`
 
 	// Values Values to filter on
 	Values *[]string `json:"values,omitempty"`
 }
+
+// ExternalConfigFilterMode Filter mode to apply
+type ExternalConfigFilterMode string
 
 // ExternalConfigFilterType defines model for ExternalConfigFilter.Type.
 type ExternalConfigFilterType string
@@ -1688,7 +1828,7 @@ type GroupAllocationRule struct {
 	// Action Action to perform with this rule
 	Action GroupAllocationRuleAction `json:"action"`
 
-	// Components List of allocation filter components (required for 'create' or 'update' action)
+	// Components List of allocation filter components
 	Components *[]AllocationComponent `json:"components,omitempty"`
 
 	// Description Description for the allocation rule
@@ -1823,15 +1963,15 @@ type MetricType = string
 
 // NewAllocationResponse defines model for NewAllocationResponse.
 type NewAllocationResponse struct {
-	// AllocationType Type of the created allocation
-	AllocationType *NewAllocationResponseAllocationType `json:"allocationType,omitempty"`
-
 	// Id ID of the created allocation
 	Id *string `json:"id,omitempty"`
+
+	// Type Type of the created allocation
+	Type *NewAllocationResponseType `json:"type,omitempty"`
 }
 
-// NewAllocationResponseAllocationType Type of the created allocation
-type NewAllocationResponseAllocationType string
+// NewAllocationResponseType Type of the created allocation
+type NewAllocationResponseType string
 
 // ObjectType defines model for ObjectType.
 type ObjectType = string
@@ -2003,47 +2143,6 @@ type Seats struct {
 	LicensedNumberOfSeats *int64 `json:"licensedNumberOfSeats,omitempty"`
 	MaximumNumberOfSeats  *int64 `json:"maximumNumberOfSeats,omitempty"`
 	NumberOfSeats         *int64 `json:"numberOfSeats,omitempty"`
-}
-
-// SingleAllocation defines model for SingleAllocation.
-type SingleAllocation struct {
-	// AllocationType Type of allocation (single)
-	AllocationType *SingleAllocationAllocationType `json:"allocationType,omitempty"`
-
-	// AnomalyDetection Whether anomaly detection is enabled for this allocation
-	AnomalyDetection *bool `json:"anomalyDetection,omitempty"`
-
-	// CreateTime The time when the allocation was created (in UNIX timestamp).
-	CreateTime *int64 `json:"createTime,omitempty"`
-
-	// Description Allocation description
-	Description *string `json:"description,omitempty"`
-
-	// Id Allocation ID
-	Id *string `json:"id,omitempty"`
-
-	// Name Allocation name
-	Name *string         `json:"name,omitempty"`
-	Rule *AllocationRule `json:"rule,omitempty"`
-
-	// Type Type of allocation (preset or custom)
-	Type *string `json:"type,omitempty"`
-
-	// UpdateTime Last time the allocation was modified (in UNIX timestamp).
-	UpdateTime *int64 `json:"updateTime,omitempty"`
-}
-
-// SingleAllocationAllocationType Type of allocation (single)
-type SingleAllocationAllocationType string
-
-// SingleAllocationRequest defines model for SingleAllocationRequest.
-type SingleAllocationRequest struct {
-	// Description Allocation description
-	Description *string `json:"description,omitempty"`
-
-	// Name Allocation name
-	Name string         `json:"name"`
-	Rule AllocationRule `json:"rule"`
 }
 
 // SlackChannel defines model for SlackChannel.
@@ -2224,6 +2323,34 @@ type TimeSettingsMode string
 
 // TimeSettingsUnit defines model for TimeSettings.Unit.
 type TimeSettingsUnit string
+
+// UpdateAllocationRequest defines model for UpdateAllocationRequest.
+type UpdateAllocationRequest struct {
+	// Description Allocation description
+	Description *string `json:"description"`
+
+	// Name Allocation name
+	Name *string `json:"name"`
+
+	// Rule Single allocation rule (required for single type allocation)
+	Rule  *AllocationRule        `json:"rule"`
+	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
+
+	// UnallocatedCosts Custom label for any values that do not fit into allocation (required for group type allocation)
+	UnallocatedCosts *string `json:"unallocatedCosts"`
+}
+
+// UpdateAnnotationRequest defines model for UpdateAnnotationRequest.
+type UpdateAnnotationRequest struct {
+	// Content The content of the annotation
+	Content *string `json:"content"`
+
+	// Reports List of report IDs associated with the annotation
+	Reports *[]string `json:"reports"`
+
+	// Timestamp The date associated with the annotation
+	Timestamp *time.Time `json:"timestamp"`
+}
 
 // UpdateUserRequest defines model for UpdateUserRequest.
 type UpdateUserRequest struct {
@@ -2431,7 +2558,7 @@ type ListAllocationsParams struct {
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
-	// Valid fields: **type**, **allocationType**, **owner**, **name**.
+	// Valid fields: **type**, **owner**, **name**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// SortBy A field by which the results will be sorted.
