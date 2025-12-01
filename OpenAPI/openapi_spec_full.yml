@@ -1046,10 +1046,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  Budget:
-                    $ref: "#/components/schemas/BudgetAPI"
+                $ref: "#/components/schemas/BudgetAPI"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3170,6 +3167,7 @@ components:
       properties:
         components:
           type: array
+          description: List of allocation filter components
           items:
             $ref: "#/components/schemas/AllocationComponent"
         formula:
@@ -4552,6 +4550,7 @@ components:
           description: ID of existing allocation (required for 'update' or 'select' action)
         components:
           type: array
+          description: List of allocation filter components (required for 'create' or 'update' action)
           items:
             $ref: "#/components/schemas/AllocationComponent"
         formula:
@@ -5659,10 +5658,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              Budget:
-                $ref: "#/components/schemas/BudgetAPI"
+            $ref: "#/components/schemas/BudgetAPI"
     successRespWithBudgets:
       description: Lists cloud budgets available for the user
       content:
