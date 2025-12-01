@@ -59,7 +59,7 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 			req.Rule.Components = &createComponents
 		}
 	}
-	if !plan.Rules.IsNull() {
+	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
 		var planRules []resource_allocation.RulesValue
 		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
 		diags.Append(diags...)
@@ -106,7 +106,7 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 	return req, diags
 }
 
-func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) diag.Diagnostics {
+func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) (diags diag.Diagnostics) {
 	var d diag.Diagnostics
 
 	// Get refreshed allocation value from DoiT using the ID from the state.
@@ -116,13 +116,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			// The resource was deleted. This is an edge case for create,
 			// but necessary for the read function.
 			state.Id = types.StringNull()
-			return d
+			return
 		}
-		d.AddError(
+		diags.AddError(
 			"Error Reading Doit Console Allocation",
 			"Could not read Doit Console Allocation ID "+state.Id.ValueString()+": "+err.Error(),
 		)
-		return d
+		return
 	}
 
 	state.Id = types.StringPointerValue(resp.Id)
@@ -132,22 +132,62 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
 	state.Name = types.StringPointerValue(resp.Name)
+	state.UnallocatedCosts = types.StringPointerValue(resp.UnallocatedCosts)
 
 	if resp.AllocationType != nil {
 		state.AllocationType = types.StringValue(string(*resp.AllocationType))
 	}
 
 	if resp.Rule != nil {
-		var diags diag.Diagnostics
-		state.Rule.Formula = types.StringPointerValue(resp.Rule.Formula)
-		state.Rule.Components, diags = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
-		d.Append(diags...)
-		if d.HasError() {
-			return d
+		m := map[string]attr.Value{
+			"formula": types.StringPointerValue(resp.Rule.Formula),
+		}
+		if resp.Rule.Components != nil {
+			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
+			diags.Append(d...)
+			if diags.HasError() {
+				return
+			}
+		}
+		state.Rule, d = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
+		diags.Append(d...)
+		if diags.HasError() {
+			return
 		}
 	}
 
-	return d
+	if resp.Rules != nil && len(*resp.Rules) > 0 {
+		rules := make([]attr.Value, len(*resp.Rules))
+		for i, rule := range *resp.Rules {
+			m := map[string]attr.Value{
+				"action":      types.StringValue(string(rule.Action)),
+				"description": types.StringPointerValue(rule.Description),
+				"formula":     types.StringPointerValue(rule.Formula),
+				"id":          types.StringPointerValue(rule.Id),
+				"name":        types.StringPointerValue(rule.Name),
+			}
+			if rule.Components != nil {
+				m["components"], d = toAllocationRuleComponentsListValue(ctx, rule.Components)
+				diags.Append(d...)
+				if diags.HasError() {
+					return
+				}
+			}
+			rules[i], d = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
+			diags.Append(d...)
+			if diags.HasError() {
+				return
+			}
+		}
+		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
+		diags.Append(d...)
+		if diags.HasError() {
+			return
+		}
+	} else {
+		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
+	}
+	return
 }
 
 func (c *Client) CreateAllocation(ctx context.Context, allocation models.Allocation) (*models.Allocation, error) {
@@ -244,30 +284,23 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components *[]mode
 	var d diag.Diagnostics
 	stateComponents := make([]attr.Value, len(*components))
 	for i, component := range *components {
+		m := map[string]attr.Value{
+			"include_null":      types.BoolPointerValue(component.IncludeNull),
+			"inverse_selection": types.BoolPointerValue(component.InverseSelection),
+			"key":               types.StringValue(component.Key),
+			"mode":              types.StringValue(string(component.Mode)),
+			"type":              types.StringValue(string(component.Type)),
+		}
 		values := make([]attr.Value, len(component.Values))
 		for j := range component.Values {
 			values[j] = types.StringValue(component.Values[j])
 		}
-		v := resource_allocation.ComponentsValue{
-			IncludeNull:      types.BoolPointerValue(component.IncludeNull),
-			InverseSelection: types.BoolPointerValue(component.InverseSelection),
-			Key:              types.StringValue(component.Key),
-			Mode:             types.StringValue(string(component.Mode)),
-			ComponentsType:   types.StringValue(string(component.Type)),
-		}
-		v.Values, d = types.ListValue(types.StringType, values)
+		m["values"], d = types.ListValue(types.StringType, values)
 		diags.Append(d...)
 		if diags.HasError() {
 			return
 		}
-		stateComponents[i], d = resource_allocation.NewComponentsValue(v.AttributeTypes(ctx), map[string]attr.Value{
-			"include_null":      v.IncludeNull,
-			"inverse_selection": v.InverseSelection,
-			"key":               v.Key,
-			"mode":              v.Mode,
-			"type":              v.ComponentsType,
-			"values":            v.Values,
-		})
+		stateComponents[i], d = resource_allocation.NewComponentsValue(resource_allocation.ComponentsValue{}.AttributeTypes(ctx), m)
 		diags.Append(d...)
 		if diags.HasError() {
 			return
