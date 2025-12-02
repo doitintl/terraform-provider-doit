@@ -17,21 +17,21 @@ description: |-
 
 ### Required
 
-- `name` (String) Allocation name
-- `rule` (Attributes) (see [below for nested schema](#nestedatt--rule))
+- `name` (String) The name of the allocation. Must be unique within the organization.
+- `rule` (Attributes) The configuration that defines the allocation rules and matching conditions. (see [below for nested schema](#nestedatt--rule))
 
 ### Optional
 
-- `description` (String) Allocation description
+- `description` (String) A description of the allocation.
 
 ### Read-Only
 
-- `allocation_type` (String) Type of the created allocation
+- `allocation_type` (String) Type of the allocation (e.g., 'preset', 'custom').
 - `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation
-- `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
+- `create_time` (Number) The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).
 - `id` (String) ID of the created allocation
-- `type` (String) Type of allocation (preset or custom)
-- `update_time` (Number) Last time the allocation was modified (in UNIX timestamp).
+- `type` (String) The type of the allocation. Can be 'preset' or 'custom'.
+- `update_time` (Number) The time when the allocation was last updated, in milliseconds since the epoch.
 
 <a id="nestedatt--rule"></a>
 ### Nested Schema for `rule`

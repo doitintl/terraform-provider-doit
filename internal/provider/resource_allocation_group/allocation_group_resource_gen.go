@@ -24,19 +24,19 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (single or group)",
-				MarkdownDescription: "Type of allocation (single or group)",
+				Description:         "Type of the allocation (e.g., 'preset', 'custom').",
+				MarkdownDescription: "Type of the allocation (e.g., 'preset', 'custom').",
 			},
 			"cloud": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Cloud provider",
-				MarkdownDescription: "Cloud provider",
+				Description:         "The cloud provider (e.g., 'google-cloud', 'aws').",
+				MarkdownDescription: "The cloud provider (e.g., 'google-cloud', 'aws').",
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Allocation description",
-				MarkdownDescription: "Allocation description",
+				Description:         "A description of the allocation group.",
+				MarkdownDescription: "A description of the allocation group.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -45,8 +45,8 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Allocation name",
-				MarkdownDescription: "Allocation name",
+				Description:         "The name of the allocation group. Must be unique within the organization.",
+				MarkdownDescription: "The name of the allocation group. Must be unique within the organization.",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -195,29 +195,29 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Required:            true,
-				Description:         "Array of allocation rules for this group",
-				MarkdownDescription: "Array of allocation rules for this group",
+				Description:         "The list of allocation rules that make up this group.",
+				MarkdownDescription: "The list of allocation rules that make up this group.",
 			},
 			"time_created": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the allocation was created (in UNIX timestamp).",
-				MarkdownDescription: "The time when the allocation was created (in UNIX timestamp).",
+				Description:         "The time when the allocation group was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation group was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
 			},
 			"time_modified": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Last time the allocation was modified (in UNIX timestamp).",
-				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
+				Description:         "The time when the allocation group was last modified, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation group was last modified, in milliseconds since the epoch (i.e. UNIX timestamp).",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (preset or custom)",
-				MarkdownDescription: "Type of allocation (preset or custom)",
+				Description:         "The type of the allocation. Can be 'preset' or 'custom'.",
+				MarkdownDescription: "The type of the allocation. Can be 'preset' or 'custom'.",
 			},
 			"unallocated_costs": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Custom label for any values that do not fit into allocation (required for group type allocation)",
-				MarkdownDescription: "Custom label for any values that do not fit into allocation (required for group type allocation)",
+				Description:         "Custom label for any values that do not fit into attributions.",
+				MarkdownDescription: "Custom label for any values that do not fit into attributions.",
 			},
 		},
 	}

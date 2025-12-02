@@ -24,8 +24,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (single or group)",
-				MarkdownDescription: "Type of allocation (single or group)",
+				Description:         "Type of the allocation (e.g., 'preset', 'custom').",
+				MarkdownDescription: "Type of the allocation (e.g., 'preset', 'custom').",
 			},
 			"anomaly_detection": schema.BoolAttribute{
 				Computed:            true,
@@ -34,14 +34,14 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the allocation was created (in UNIX timestamp).",
-				MarkdownDescription: "The time when the allocation was created (in UNIX timestamp).",
+				Description:         "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Allocation description",
-				MarkdownDescription: "Allocation description",
+				Description:         "A description of the allocation.",
+				MarkdownDescription: "A description of the allocation.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -50,8 +50,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Allocation name",
-				MarkdownDescription: "Allocation name",
+				Description:         "The name of the allocation. Must be unique within the organization.",
+				MarkdownDescription: "The name of the allocation. Must be unique within the organization.",
 			},
 			"rule": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -139,17 +139,19 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: RuleValue{}.AttributeTypes(ctx),
 					},
 				},
-				Required: true,
+				Required:            true,
+				Description:         "The configuration that defines the allocation rules and matching conditions.",
+				MarkdownDescription: "The configuration that defines the allocation rules and matching conditions.",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (preset or custom)",
-				MarkdownDescription: "Type of allocation (preset or custom)",
+				Description:         "The type of the allocation. Can be 'preset' or 'custom'.",
+				MarkdownDescription: "The type of the allocation. Can be 'preset' or 'custom'.",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Last time the allocation was modified (in UNIX timestamp).",
-				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
+				Description:         "The time when the allocation was last updated, in milliseconds since the epoch.",
+				MarkdownDescription: "The time when the allocation was last updated, in milliseconds since the epoch.",
 			},
 		},
 	}
