@@ -49,6 +49,8 @@ func (r *attributionGroupResource) Metadata(_ context.Context, req resource.Meta
 func (r *attributionGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print("attributionGroup Schema")
 	resp.Schema = schema.Schema{
+		Description:         "Attribution Groups allow you to group multiple attributions together.",
+		MarkdownDescription: "Attribution Groups allow you to group multiple attributions together.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Attribution group ID",

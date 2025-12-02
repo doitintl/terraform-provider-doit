@@ -3,12 +3,12 @@
 page_title: "doit_budget Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  
+  Budgets allow you to monitor and control your cloud spending by setting limits and alerts.
 ---
 
 # doit_budget (Resource)
 
-
+Budgets allow you to monitor and control your cloud spending by setting limits and alerts.
 
 ## Example Usage
 
@@ -53,57 +53,79 @@ resource "doit_budget" "my_budget" {
 
 ### Required
 
-- `collaborators` (Attributes List) (see [below for nested schema](#nestedatt--collaborators))
-- `currency` (String) Budget currency can be one of: ["USD","ILS","EUR","GBP","AUD","CAD","DKK","NOK","SEK","BRL","SGD","MXN","CHF","MYR","TWD","EGP","ZAR"]
-- `name` (String) Name Budget Name
-- `recipients` (List of String) List of emails to notify when reaching alert threshold
-- `scope` (List of String) List of attribution IDs that define the budget scope
-- `start_period` (Number) Budget start Date
+- `currency` (String) Budget currency. Possibe values are:
+'USD'
+'ILS'
+'EUR'
+'AUD'
+'CAD'
+'GBP'
+'DKK'
+'NOK'
+'SEK'
+'BRL'
+'SGD'
+'MXN'
+'CHF'
+'MYR'
+'TWD'
+'EGP'
+'ZAR'
+'JPY'
+'IDR'
+'AED'
+'COP'
+'THB'
+- `name` (String) Budget Name
+- `scope` (List of String) List of attributions that defines that budget scope
+- `start_period` (Number) Budget start Date, in milliseconds since the epoch.
 - `type` (String) Budget type can be one of: ["fixed", "recurring"]
 
 ### Optional
 
-- `alerts` (Attributes List) (see [below for nested schema](#nestedatt--alerts))
-- `amount` (Number) Budget period required: true(if usePrevSpend is false)
-- `description` (String)
-- `end_period` (Number) Fixed budget end date required: true(if budget type is fixed)
+- `alerts` (Attributes List) List of up to three thresholds defined as percentage of amount (see [below for nested schema](#nestedatt--alerts))
+- `amount` (Number) Budget period amount. Required if usePrevSpend is false.
+- `collaborators` (Attributes List) List of permitted users to view/edit the report (see [below for nested schema](#nestedatt--collaborators))
+- `description` (String) Budget description
+- `end_period` (Number) Fixed budget end date. Required if budget type is fixed. In milliseconds since the epoch.
 - `growth_per_period` (Number) Periodical growth percentage in recurring budget
 - `metric` (String) Budget metric  - currently fixed to "cost"
 - `public` (String) Public
-- `recipients_slack_channels` (Attributes List) (see [below for nested schema](#nestedatt--recipients_slack_channels))
+- `recipients` (List of String) List of emails to notify when reaching alert threshold
+- `recipients_slack_channels` (Attributes List) List of slack channels to notify when reaching alert threshold (see [below for nested schema](#nestedatt--recipients_slack_channels))
 - `time_interval` (String) Recurring budget interval can be on of:["day", "week", "month", "quarter","year]"
 - `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets
 
 ### Read-Only
 
-- `id` (String) Numeric identifier of the budget
+- `id` (String) Budget ID
 - `last_updated` (String) Timestamp of the last Terraform update ofthe budget group.
+
+<a id="nestedatt--alerts"></a>
+### Nested Schema for `alerts`
+
+Required:
+
+- `percentage` (Number) Percentage of the budget amount
+
 
 <a id="nestedatt--collaborators"></a>
 ### Nested Schema for `collaborators`
 
 Required:
 
-- `email` (String) Collaborator email
-- `role` (String) Collaborator role
-
-
-<a id="nestedatt--alerts"></a>
-### Nested Schema for `alerts`
-
-Optional:
-
-- `percentage` (Number)
+- `email` (String) Email of the collaborator
+- `role` (String) Role of the collaborator
 
 
 <a id="nestedatt--recipients_slack_channels"></a>
 ### Nested Schema for `recipients_slack_channels`
 
-Optional:
+Required:
 
-- `customer_id` (String)
+- `customer_id` (String) Customer ID
 - `id` (String) Slack channel ID
 - `name` (String) Slack channel name
-- `shared` (Boolean) Slack channel shared
-- `type` (String) Slack channel type
-- `workspace` (String) Slack channel workspace
+- `shared` (Boolean) Whether the channel is shared
+- `type` (String) Type of the channel
+- `workspace` (String) Slack workspace

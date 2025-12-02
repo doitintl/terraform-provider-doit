@@ -57,6 +57,8 @@ func (r *attributionResource) Metadata(_ context.Context, req resource.MetadataR
 func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print(" attribution Schema")
 	resp.Schema = schema.Schema{
+		Description:         "Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.",
+		MarkdownDescription: "Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "attribution ID, identifying the attribution",

@@ -3,12 +3,12 @@
 page_title: "doit_attribution_group Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  
+  Attribution Groups allow you to group multiple attributions together.
 ---
 
 # doit_attribution_group (Resource)
 
-
+Attribution Groups allow you to group multiple attributions together.
 
 ## Example Usage
 
@@ -26,7 +26,7 @@ resource "doit_attribution_group" "attributeGroup" {
 
 ### Required
 
-- `attributions` (List of String) list of the attributions IDs
+- `attributions` (List of String) List of the attributions that are part of the attribution group
 - `name` (String) Name of the attribution group
 
 ### Optional
@@ -35,5 +35,5 @@ resource "doit_attribution_group" "attributeGroup" {
 
 ### Read-Only
 
-- `id` (String) Numeric identifier of the attribution group
+- `id` (String) Attribution group ID
 - `last_updated` (String) Timestamp of the last Terraform update ofthe attribution group.

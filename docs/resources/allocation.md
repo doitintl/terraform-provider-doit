@@ -3,12 +3,12 @@
 page_title: "doit_allocation Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  
+  Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
 ---
 
 # doit_allocation (Resource)
 
-
+Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
 
 
 
@@ -29,7 +29,7 @@ description: |-
 - `allocation_type` (String) Type of the allocation (e.g., 'preset', 'custom').
 - `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation
 - `create_time` (Number) The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).
-- `id` (String) ID of the created allocation
+- `id` (String) Allocation ID
 - `type` (String) The type of the allocation. Can be 'preset' or 'custom'.
 - `update_time` (Number) The time when the allocation was last updated, in milliseconds since the epoch.
 
@@ -49,7 +49,7 @@ Required:
 - `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc.
 - `mode` (String) Filter mode to apply
 - `type` (String)
-- `values` (List of String)
+- `values` (List of String) Values to filter on
 
 Optional:
 

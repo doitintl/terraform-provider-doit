@@ -237,6 +237,8 @@ func (r *reportResource) Metadata(_ context.Context, req resource.MetadataReques
 func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print(" report Schema")
 	resp.Schema = schema.Schema{
+		Description:         "Reports allow you to analyze and visualize your cloud costs, usage, and savings.",
+		MarkdownDescription: "Reports allow you to analyze and visualize your cloud costs, usage, and savings.",
 		Attributes: map[string]schema.Attribute{
 			"config": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -405,7 +407,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 								Required: true,
 							},
 						},
-						Description: "",
+						Description: "The metric to apply.",
 						Optional:    true,
 					},
 					"metric_filter": schema.SingleNestedAttribute{
@@ -434,7 +436,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 								Required:    true,
 							},
 						},
-						Description: "",
+						Description: "The metric filter to limit the report results by value",
 						Optional:    true,
 					},
 					"splits": schema.ListNestedAttribute{
@@ -526,7 +528,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 								Computed:    true,
 							},
 						},
-						Description: "",
+						Description: "Time settings for the report",
 						Optional:    true,
 					},
 					"sort_groups": schema.StringAttribute{
@@ -556,7 +558,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Required:    true,
 			},
 			"last_updated": schema.StringAttribute{
-				Description: "",
+				Description: "Timestamp of the last Terraform update of the report.",
 				Computed:    true,
 			},
 			"id": schema.StringAttribute{

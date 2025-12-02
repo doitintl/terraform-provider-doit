@@ -21,6 +21,8 @@ import (
 
 func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description:         "Allocation Groups allow you to group multiple allocations together.",
+		MarkdownDescription: "Allocation Groups allow you to group multiple allocations together.",
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,

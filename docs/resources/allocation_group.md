@@ -3,12 +3,12 @@
 page_title: "doit_allocation_group Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  
+  Allocation Groups allow you to group multiple allocations together.
 ---
 
 # doit_allocation_group (Resource)
 
-
+Allocation Groups allow you to group multiple allocations together.
 
 
 
@@ -29,7 +29,7 @@ description: |-
 
 - `allocation_type` (String) Type of the allocation (e.g., 'preset', 'custom').
 - `cloud` (String) The cloud provider (e.g., 'google-cloud', 'aws').
-- `id` (String) ID of the created allocation
+- `id` (String) Allocation ID
 - `time_created` (Number) The time when the allocation group was created, in milliseconds since the epoch (i.e. UNIX timestamp).
 - `time_modified` (Number) The time when the allocation group was last modified, in milliseconds since the epoch (i.e. UNIX timestamp).
 - `type` (String) The type of the allocation. Can be 'preset' or 'custom'.

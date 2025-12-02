@@ -121,6 +121,8 @@ func (r *budgetResource) Metadata(_ context.Context, req resource.MetadataReques
 func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print("hello budget Schema:)")
 	resp.Schema = schema.Schema{
+		Description:         "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
+		MarkdownDescription: "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
 		Attributes: map[string]schema.Attribute{
 			"last_updated": schema.StringAttribute{
 				Description: "Timestamp of the last Terraform update of" +
