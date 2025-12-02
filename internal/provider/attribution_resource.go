@@ -58,8 +58,6 @@ func (r *attributionResource) Metadata(_ context.Context, req resource.MetadataR
 func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print(" attribution Schema")
 	resp.Schema = schema.Schema{
-		Description:         "Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.",
-		MarkdownDescription: "Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.",
 		DeprecationMessage: `Attributions and the associated resources are deprecated and no longer supported.
 Please consider switching to allocations before upgrading to the next major version of the provider to prevent breaking changes.
 The attribution resource will be removed in the next major version of the provider.`,
