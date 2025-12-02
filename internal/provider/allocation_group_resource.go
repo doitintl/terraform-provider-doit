@@ -6,6 +6,7 @@ import (
 
 	"terraform-provider-doit/internal/provider/resource_allocation_group"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -50,6 +51,9 @@ func (r *allocationGroupResource) Schema(ctx context.Context, _ resource.SchemaR
 }
 
 func (r *allocationGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_allocation_group resource is deprecated", "use doit_allocation instead"),
+	)
 	plan := new(allocationGroupResourceModel)
 	diags := req.Plan.Get(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -85,6 +89,9 @@ func (r *allocationGroupResource) Create(ctx context.Context, req resource.Creat
 }
 
 func (r *allocationGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_allocation_group resource is deprecated", "use doit_allocation instead"),
+	)
 	state := new(allocationGroupResourceModel)
 	diags := req.State.Get(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -108,6 +115,9 @@ func (r *allocationGroupResource) Read(ctx context.Context, req resource.ReadReq
 }
 
 func (r *allocationGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_allocation_group resource is deprecated", "use doit_allocation instead"),
+	)
 	plan := new(allocationGroupResourceModel)
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -150,6 +160,9 @@ func (r *allocationGroupResource) Update(ctx context.Context, req resource.Updat
 }
 
 func (r *allocationGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_allocation_group resource is deprecated", "use doit_allocation instead"),
+	)
 	// Retrieve values from state
 	state := new(allocationGroupResourceModel)
 	diags := req.State.Get(ctx, state)
