@@ -59,10 +59,14 @@ resource "doit_allocation_group" "this" {
     {
       action = "select"
       id     = doit_allocation.name.id
+      components = doit_allocation.name.rule.components
+      formula    = doit_allocation.name.rule.formula
     },
     {
       action = "select"
       id     = doit_allocation.name2.id
+      components = doit_allocation.name2.rule.components
+      formula    = doit_allocation.name2.rule.formula
     },
     {
       action      = "create"
@@ -82,7 +86,7 @@ resource "doit_allocation_group" "this" {
           values = ["test-k8s-project-468707"]
         },
       ],
-      formula = "A OR B"
+      formula = "A AND B"
     },
   ]
 }
