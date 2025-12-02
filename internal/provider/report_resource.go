@@ -243,65 +243,65 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"advanced_analysis": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"forecast": schema.BoolAttribute{
-								Description: "Advanced analysis toggles. Each of these can be set independently",
+								Description: "Whether to enable forecast",
 								Optional:    true,
 								Computed:    true,
 								Default:     booldefault.StaticBool(false),
 							},
 							"not_trending": schema.BoolAttribute{
-								Description: "",
+								Description: "Whether to enable not trending analysis",
 								Optional:    true,
 								Computed:    true,
 								Default:     booldefault.StaticBool(false),
 							},
 							"trending_down": schema.BoolAttribute{
-								Description: "",
+								Description: "Whether to enable trending down analysis",
 								Optional:    true,
 								Computed:    true,
 								Default:     booldefault.StaticBool(false),
 							},
 							"trending_up": schema.BoolAttribute{
-								Description: "",
+								Description: "Whether to enable trending up analysis",
 								Optional:    true,
 								Computed:    true,
 								Default:     booldefault.StaticBool(false),
 							},
 						},
-						Description: "",
+						Description: "Advanced analysis options. Each of these can be set independently",
 						Optional:    true,
 						Computed:    true,
 						Default:     objectdefault.StaticValue(types.ObjectValueMust(AdvancedAnalysisModel{}.attrTypes(), AdvancedAnalysisModel{}.defaultObject())),
 					},
 					"aggregation": schema.StringAttribute{
-						Description: "",
+						Description: "The aggregation to apply to the report. Possible values: 'total', 'percent_total', 'percent_col', 'percent_row'",
 						Optional:    true,
 						Default:     stringdefault.StaticString("total"),
 						Computed:    true,
 					},
 					"currency": schema.StringAttribute{
-						Description: "",
+						Description: "The currency to use for the report.",
 						Optional:    true,
 						Default:     stringdefault.StaticString("USD"),
 						Computed:    true,
 					},
 					"dimensions": schema.ListNestedAttribute{
-						Description: "",
+						Description: "See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).",
 						Optional:    true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description: "",
+									Description: "The field to apply to the dimension.",
 									Required:    true,
 								},
 								"type": schema.StringAttribute{
-									Description: "",
+									Description: "Type of the dimension",
 									Required:    true,
 								},
 							},
 						},
 					},
 					"display_values": schema.StringAttribute{
-						Description: "",
+						Description: "See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as). Possible values: 'actuals_only', 'absolute_change', 'percentage_change', 'absolute_and_percentage'",
 						Optional:    true,
 						Default:     stringdefault.StaticString("actuals_only"),
 						Computed:    true,
@@ -312,21 +312,21 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description: "What field we are filtering on",
+									Description: "The field to filter on",
 									Required:    true,
 								},
 								"inverse": schema.BoolAttribute{
-									Description: "If set, exclude the values",
+									Description: "Set to `true` to exclude the values.",
 									Optional:    true,
 									Computed:    true,
 									Default:     booldefault.StaticBool(false),
 								},
 								"type": schema.StringAttribute{
-									Description: "",
+									Description: "Type of the filter",
 									Required:    true,
 								},
 								"values": schema.ListAttribute{
-									Description: "What values to filter on or exclude",
+									Description: "Values to filter on",
 									ElementType: types.StringType,
 									Required:    true,
 								},
@@ -334,16 +334,16 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						},
 					},
 					"group": schema.ListNestedAttribute{
-						Description: "The groups to use in the report.",
+						Description: "The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by).",
 						Optional:    true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description: "",
+									Description: "Dimension ID.",
 									Required:    true,
 								},
 								"type": schema.StringAttribute{
-									Description: "",
+									Description: "Type of the dimension",
 									Required:    true,
 								},
 								"limit": schema.SingleNestedAttribute{
@@ -351,45 +351,44 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 										"metric": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
 												"type": schema.StringAttribute{
-													Description: "",
+													Description: "Type of the metric",
 													Required:    true,
 												},
 												"value": schema.StringAttribute{
-													Description: "",
+													Description: "Value of the metric",
 													Required:    true,
 												},
 											},
-											Description: "",
+											Description: "Metric to sort by",
 											Optional:    true,
 										},
 										"sort": schema.StringAttribute{
-											Description: "",
+											Description: "Sort order",
 											Optional:    true,
 											Default:     stringdefault.StaticString(""),
 											Computed:    true,
 										},
 										"value": schema.Int64Attribute{
-											Description: "",
+											Description: "The number of items to show",
 											Optional:    true,
 											Default:     int64default.StaticInt64(0),
 											Computed:    true,
 										},
 									},
-									Description: "",
+									Description: "Limit the number of rows",
 									Optional:    true,
 								},
 							},
 						},
 					},
 					"include_promotional_credits": schema.BoolAttribute{
-						Description: "Whether to include credits or not. " +
-							"If set, the report must use time interval “month”/”quarter”/”year”",
-						Optional: true,
-						Computed: true,
-						Default:  booldefault.StaticBool(false),
+						Description: "Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits). If set to **true**, the report must use time interval `month`, `quarter`, or `year`.",
+						Optional:    true,
+						Computed:    true,
+						Default:     booldefault.StaticBool(false),
 					},
 					"layout": schema.StringAttribute{
-						Description: "",
+						Description: "The visualization of the report. Possible values: 'column_chart', 'stacked_column_chart', 'bar_chart', 'stacked_bar_chart', 'line_chart', 'spline_chart'",
 						Optional:    true,
 						Default:     stringdefault.StaticString("stacked_column_chart"),
 						Computed:    true,
@@ -397,7 +396,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"metric": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
-								Description: "",
+								Description: "Type of the metric",
 								Required:    true,
 							},
 							"value": schema.StringAttribute{
@@ -414,23 +413,23 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 							"metric": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"type": schema.StringAttribute{
-										Description: "",
+										Description: "Type of the metric",
 										Required:    true,
 									},
 									"value": schema.StringAttribute{
-										Description: "",
+										Description: "Value of the metric",
 										Required:    true,
 									},
 								},
-								Description: "",
+								Description: "The metric to apply",
 								Required:    true,
 							},
 							"operator": schema.StringAttribute{
-								Description: "",
+								Description: "Operator to apply",
 								Required:    true,
 							},
 							"values": schema.ListAttribute{
-								Description: "",
+								Description: "Values to filter on",
 								ElementType: types.Float64Type,
 								Required:    true,
 							},
@@ -444,11 +443,11 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description: "",
+									Description: "ID of the field to split",
 									Required:    true,
 								},
 								"include_origin": schema.BoolAttribute{
-									Description: "",
+									Description: "if set, include the origin",
 									Required:    true,
 								},
 								"type": schema.StringAttribute{
@@ -456,34 +455,34 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 									Required:    true,
 								},
 								"mode": schema.StringAttribute{
-									Description: "",
+									Description: "Mode of the split",
 									Required:    true,
 								},
 								"origin": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
-											Description: "",
+											Description: "Origin ID",
 											Required:    true,
 										},
 										"type": schema.StringAttribute{
-											Description: "",
+											Description: "Origin Type",
 											Required:    true,
 										},
 									},
-									Description: "",
+									Description: "Origin of the split",
 									Optional:    true,
 								},
 								"targets": schema.ListNestedAttribute{
-									Description: "",
+									Description: "Targets for the split",
 									Required:    true,
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
 											"id": schema.StringAttribute{
-												Description: "",
+												Description: "Target ID",
 												Required:    true,
 											},
 											"type": schema.StringAttribute{
-												Description: "",
+												Description: "Target Type",
 												Required:    true,
 											},
 											"value": schema.Float64Attribute{
@@ -497,7 +496,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						},
 					},
 					"time_interval": schema.StringAttribute{
-						Description: "",
+						Description: "Time interval. Possible values: 'hour', 'day', 'dayCumSum', 'week', 'isoweek', 'month', 'quarter', 'year', 'week_day'",
 						Optional:    true,
 						Default:     stringdefault.StaticString("day"),
 						Computed:    true,
@@ -505,23 +504,23 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"time_range": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"amount": schema.Int64Attribute{
-								Description: "",
+								Description: "Amount of time units",
 								Optional:    true,
 								Default:     int64default.StaticInt64(0),
 								Computed:    true,
 							},
 							"include_current": schema.BoolAttribute{
-								Description: "",
+								Description: "Whether to include current time unit",
 								Optional:    true,
 								Default:     booldefault.StaticBool(false),
 								Computed:    true,
 							},
 							"mode": schema.StringAttribute{
-								Description: "",
+								Description: "Time range mode. Possible values: 'last', 'current', 'custom'",
 								Required:    true,
 							},
 							"unit": schema.StringAttribute{
-								Description: "",
+								Description: "Time unit. Possible values: 'day', 'week'",
 								Optional:    true,
 								Default:     stringdefault.StaticString("day"),
 								Computed:    true,
@@ -531,13 +530,13 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						Optional:    true,
 					},
 					"sort_groups": schema.StringAttribute{
-						Description: "Sort groups. This configuration has no impact when reading a report's data via API. Default value is \"asc\".",
+						Description: "Sort groups. This option has no impact when reading reports via API. Possible values: 'asc', 'desc', 'a_to_z'",
 						Optional:    true,
 						Default:     stringdefault.StaticString("asc"),
 						Computed:    true,
 					},
 					"sort_dimensions": schema.StringAttribute{
-						Description: "Sort dimensions. This configuration has no impact when reading a report's data via API. Default value is \"desc\".",
+						Description: "Sort dimensions. This option has no impact when reading reports via API. Possible values: 'asc', 'desc', 'a_to_z'",
 						Optional:    true,
 						Default:     stringdefault.StaticString("desc"),
 						Computed:    true,
@@ -562,7 +561,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"id": schema.StringAttribute{
 				Computed:    true,
-				Description: "Report id",
+				Description: "Report id.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

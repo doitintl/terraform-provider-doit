@@ -5,6 +5,8 @@ package resource_allocation
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -13,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
@@ -23,8 +24,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the created allocation",
-				MarkdownDescription: "Type of the created allocation",
+				Description:         "Type of allocation (single or group)",
+				MarkdownDescription: "Type of allocation (single or group)",
 			},
 			"anomaly_detection": schema.BoolAttribute{
 				Computed:            true,
@@ -44,8 +45,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the created allocation",
-				MarkdownDescription: "ID of the created allocation",
+				Description:         "Allocation ID",
+				MarkdownDescription: "Allocation ID",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
@@ -109,8 +110,10 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"values": schema.ListAttribute{
-									ElementType: types.StringType,
-									Required:    true,
+									ElementType:         types.StringType,
+									Required:            true,
+									Description:         "Values to filter on",
+									MarkdownDescription: "Values to filter on",
 								},
 							},
 							CustomType: ComponentsType{

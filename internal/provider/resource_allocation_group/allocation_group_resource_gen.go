@@ -5,6 +5,8 @@ package resource_allocation_group
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -13,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
@@ -23,8 +24,8 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the created allocation",
-				MarkdownDescription: "Type of the created allocation",
+				Description:         "Type of allocation (single or group)",
+				MarkdownDescription: "Type of allocation (single or group)",
 			},
 			"cloud": schema.StringAttribute{
 				Computed:            true,
@@ -34,18 +35,18 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Allocation group description",
-				MarkdownDescription: "Allocation group description",
+				Description:         "Allocation description",
+				MarkdownDescription: "Allocation description",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the created allocation",
-				MarkdownDescription: "ID of the created allocation",
+				Description:         "Allocation ID",
+				MarkdownDescription: "Allocation ID",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Allocation group name",
-				MarkdownDescription: "Allocation group name",
+				Description:         "Allocation name",
+				MarkdownDescription: "Allocation name",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -199,13 +200,13 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"time_created": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when this allocation group was created (in UNIX timestamp).",
-				MarkdownDescription: "The time when this allocation group was created (in UNIX timestamp).",
+				Description:         "The time when the allocation was created (in UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation was created (in UNIX timestamp).",
 			},
 			"time_modified": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Last time the allocation group was modified (in UNIX timestamp).",
-				MarkdownDescription: "Last time the allocation group was modified (in UNIX timestamp).",
+				Description:         "Last time the allocation was modified (in UNIX timestamp).",
+				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
@@ -215,8 +216,8 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 			"unallocated_costs": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Custom label for any values that do not fit into attributions",
-				MarkdownDescription: "Custom label for any values that do not fit into attributions",
+				Description:         "Custom label for any values that do not fit into allocation (required for group type allocation)",
+				MarkdownDescription: "Custom label for any values that do not fit into allocation (required for group type allocation)",
 			},
 		},
 	}

@@ -59,7 +59,7 @@ func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Numeric identifier of the attribution",
+				Description: "attribution ID, identifying the attribution",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -71,20 +71,19 @@ func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Computed: true,
 			},
 			"name": schema.StringAttribute{
-				Description: "Name of the attribution",
+				Description: "Attribution Name",
 				Required:    true,
 			},
 			"description": schema.StringAttribute{
-				Description: "Description of the attribution",
+				Description: "Attribution description",
 				Optional:    true,
 			},
 			"formula": schema.StringAttribute{
-				Description: "Attribution formula (A is first component, " +
-					"B is second component, C is third component, etc.)",
-				Optional: true,
+				Description: "Attribution formula (A is first component, B is second component, C is third component, etc.)",
+				Optional:    true,
 			},
 			"components": schema.ListNestedAttribute{
-				Description: "List of Attributions filters",
+				Description: "List of Attribution filters",
 				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -104,11 +103,11 @@ func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest
 							Required: true,
 						},
 						"key": schema.StringAttribute{
-							Description: "Key of the type to validate",
+							Description: "Key of a dimension. Examples: \"service_id\", \"cloud_provider\", \"sku_description\"",
 							Required:    true,
 						},
 						"values": schema.ListAttribute{
-							Description: "Value of the key to validate",
+							Description: "Value of the dimension. Examples: \"152E-C115-5142\", \"google-cloud\", \"team-a\"",
 							Required:    true,
 							ElementType: types.StringType,
 						},
