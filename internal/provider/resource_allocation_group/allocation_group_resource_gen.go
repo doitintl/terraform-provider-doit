@@ -92,8 +92,8 @@ The allocation group resource will be removed in the next major version of the p
 									},
 									"key": schema.StringAttribute{
 										Required:            true,
-										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
-										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
+										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
 									},
 									"mode": schema.StringAttribute{
 										Required:            true,
@@ -138,8 +138,7 @@ The allocation group resource will be removed in the next major version of the p
 									},
 								},
 							},
-							Optional:            true,
-							Computed:            true,
+							Required:            true,
 							Description:         "List of allocation filter components (required for 'create' or 'update' action)",
 							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action)",
 						},
@@ -155,8 +154,7 @@ The allocation group resource will be removed in the next major version of the p
 							MarkdownDescription: "Description for the allocation rule",
 						},
 						"formula": schema.StringAttribute{
-							Optional:            true,
-							Computed:            true,
+							Required:            true,
 							Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
 							MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
 						},
