@@ -55,7 +55,16 @@ func TestAccAllocationGroup(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_allocation_group.this",
 						tfjsonpath.New("rules").AtSliceIndex(1).AtMapKey("components"),
-						knownvalue.Null(),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.MapPartial(map[string]knownvalue.Check{
+								"key":  knownvalue.StringExact("country"),
+								"mode": knownvalue.StringExact("is"),
+								"type": knownvalue.StringExact("fixed"),
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("DE"),
+								}),
+							}),
+						}),
 					),
 					statecheck.ExpectKnownValue(
 						"doit_allocation_group.this",
@@ -118,12 +127,14 @@ resource "doit_allocation_group" "this" {
    {
       action     = "select"
       id         = resource.doit_allocation.name.id
+	  components = resource.doit_allocation.name.rule.components
+	  formula    = resource.doit_allocation.name.rule.formula
    },
    {
       action     = "select"
       id         = resource.doit_allocation.name2.id
-      // support optional provided components case for 'select'
       components = resource.doit_allocation.name2.rule.components
+      formula    = resource.doit_allocation.name2.rule.formula
    },
    {
 	  action     = "create"
@@ -199,10 +210,14 @@ resource "doit_allocation_group" "this" {
 	{
 	  action     = "select"
 	  id         = resource.doit_allocation.name.id
+	  components = resource.doit_allocation.name.rule.components
+	  formula    = resource.doit_allocation.name.rule.formula
  	},
 	{
 	  action     = "select"
 	  id         = resource.doit_allocation.name2.id
+	  components = resource.doit_allocation.name2.rule.components
+	  formula    = resource.doit_allocation.name2.rule.formula
 	},
 	{
 	  action     = "create"
