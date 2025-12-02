@@ -168,7 +168,7 @@ Optional:
 - `value` (Number)
 
 <a id="nestedatt--config--group--limit--metric"></a>
-### Nested Schema for `config.group.limit.value`
+### Nested Schema for `config.group.limit.metric`
 
 Required:
 

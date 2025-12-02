@@ -24,25 +24,6 @@ type GroupAllocationsModelOverride struct {
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
-func (plan *allocationGroupResourceModel) getActions(ctx context.Context) (map[string]string, diag.Diagnostics) {
-	actions := make(map[string]string)
-	var diags diag.Diagnostics
-	if !plan.Rules.IsNull() {
-		var planRules []resource_allocation_group.RulesValue
-		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
-		diags.Append(diags...)
-		if diags.HasError() {
-			return nil, diags
-		}
-		for i := range planRules {
-			if !planRules[i].Id.IsNull() {
-				actions[planRules[i].Id.ValueString()] = planRules[i].Action.ValueString()
-			}
-		}
-	}
-	return actions, diags
-}
-
 func (plan *allocationGroupResourceModel) toRequest(ctx context.Context) (models.GroupAllocationRequest, diag.Diagnostics) {
 	var (
 		req   models.GroupAllocationRequest
@@ -132,9 +113,7 @@ func (r *allocationGroupResource) populateState(ctx context.Context, plan, state
 
 	if respAlg.Rules != nil && len(*respAlg.Rules) > 0 {
 
-		var planRules []resource_allocation_group.RulesValue
-
-		planRules = make([]resource_allocation_group.RulesValue, len(plan.Rules.Elements()))
+		planRules := make([]resource_allocation_group.RulesValue, len(plan.Rules.Elements()))
 		diags := plan.Rules.ElementsAs(ctx, &planRules, false)
 		d.Append(diags...)
 		if diags.HasError() {

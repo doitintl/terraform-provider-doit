@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// CreateReport - Create new report
+// CreateReport - Create new report.
 func (c *Client) CreateReport(ctx context.Context, report Report) (*Report, error) {
 	log.Println("CreateReport----------------")
 	log.Println(report.Config.Filters)
@@ -48,7 +48,7 @@ func (c *Client) CreateReport(ctx context.Context, report Report) (*Report, erro
 	return &reportResponse, nil
 }
 
-// UpdateReport - Updates an report
+// UpdateReport - Updates an report.
 func (c *Client) UpdateReport(ctx context.Context, reportID string, report Report) (*Report, error) {
 	rb, err := json.Marshal(report)
 	if err != nil {
@@ -88,7 +88,7 @@ func (c *Client) DeleteReport(ctx context.Context, reportID string) error {
 	}
 
 	res, err := c.doRequest(ctx, req)
-	log.Println(res)
+	log.Println(string(res))
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (c *Client) DeleteReport(ctx context.Context, reportID string) error {
 	return nil
 }
 
-// GetReport - Returns a specifc report
+// GetReport - Returns a specifc report.
 func (c *Client) GetReport(ctx context.Context, orderID string) (*Report, error) {
 
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/reports/%s/config", c.HostURL, orderID)

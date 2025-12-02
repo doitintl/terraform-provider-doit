@@ -82,6 +82,7 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 

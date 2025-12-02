@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// CreateAttribution - Create new attribution
+// CreateAttribution - Create new attribution.
 func (c *Client) CreateAttribution(ctx context.Context, attribution Attribution) (*Attribution, error) {
 	rb, err := json.Marshal(attribution)
 	if err != nil {
@@ -43,7 +43,7 @@ func (c *Client) CreateAttribution(ctx context.Context, attribution Attribution)
 	return &attributionResponse, nil
 }
 
-// UpdateAttribution - Updates an attribution
+// UpdateAttribution - Updates an attribution.
 func (c *Client) UpdateAttribution(ctx context.Context, attributionID string, attribution Attribution) (*Attribution, error) {
 	rb, err := json.Marshal(attribution)
 	if err != nil {
@@ -89,7 +89,7 @@ func (c *Client) DeleteAttribution(ctx context.Context, attributionID string) er
 	return nil
 }
 
-// GetAttribution - Returns a specifc attribution
+// GetAttribution - Returns a specifc attribution.
 func (c *Client) GetAttribution(ctx context.Context, orderID string) (*Attribution, error) {
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/attributions/%s", c.HostURL, orderID)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)

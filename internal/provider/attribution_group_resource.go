@@ -51,7 +51,7 @@ func (r *attributionGroupResource) Schema(_ context.Context, _ resource.SchemaRe
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Numeric identifier of the attribution group",
+				Description: "Attribution group ID",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -71,7 +71,7 @@ func (r *attributionGroupResource) Schema(_ context.Context, _ resource.SchemaRe
 				Optional:    true,
 			},
 			"attributions": schema.ListAttribute{
-				Description: "list of the attributions IDs",
+				Description: "List of the attributions that are part of the attribution group",
 				Required:    true,
 				ElementType: types.StringType,
 			},

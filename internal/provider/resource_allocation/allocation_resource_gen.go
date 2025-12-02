@@ -45,8 +45,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the created allocation",
-				MarkdownDescription: "ID of the created allocation",
+				Description:         "Allocation ID",
+				MarkdownDescription: "Allocation ID",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
@@ -110,8 +110,10 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"values": schema.ListAttribute{
-									ElementType: types.StringType,
-									Required:    true,
+									ElementType:         types.StringType,
+									Required:            true,
+									Description:         "Values to filter on",
+									MarkdownDescription: "Values to filter on",
 								},
 							},
 							CustomType: ComponentsType{
