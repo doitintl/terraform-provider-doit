@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -57,6 +58,9 @@ func (r *attributionResource) Metadata(_ context.Context, req resource.MetadataR
 func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print(" attribution Schema")
 	resp.Schema = schema.Schema{
+		DeprecationMessage: `Attributions and the associated resources are deprecated and no longer supported.
+Please consider switching to allocations before upgrading to the next major version of the provider to prevent breaking changes.
+The attribution resource will be removed in the next major version of the provider.`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Numeric identifier of the attribution",
@@ -132,6 +136,9 @@ func (r *attributionResource) Configure(_ context.Context, req resource.Configur
 
 // Create creates the resource and sets the initial Terraform state.
 func (r *attributionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution resource is deprecated", "use doit_allocation instead"),
+	)
 	log.Println(" attribution Create")
 
 	// Retrieve values from plan
@@ -188,6 +195,9 @@ func (r *attributionResource) Create(ctx context.Context, req resource.CreateReq
 
 // Read refreshes the Terraform state with the latest data.
 func (r *attributionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution resource is deprecated", "use doit_allocation instead"),
+	)
 	log.Print(" attribution Read")
 	// Get current state
 	var state attributionResourceModel
@@ -241,6 +251,9 @@ func (r *attributionResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *attributionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution resource is deprecated", "use doit_allocation instead"),
+	)
 	log.Print("attribution Update")
 	// Retrieve values from plan
 	var plan attributionResourceModel
@@ -330,6 +343,9 @@ func (r *attributionResource) Update(ctx context.Context, req resource.UpdateReq
 // Delete deletes the resource and removes the Terraform state on success.
 
 func (r *attributionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution resource is deprecated", "use doit_allocation instead"),
+	)
 	log.Print(" attribution Delete")
 	// Retrieve values from state
 	var state attributionResourceModel
