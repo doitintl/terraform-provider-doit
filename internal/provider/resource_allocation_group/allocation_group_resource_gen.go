@@ -23,6 +23,9 @@ func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Description:         "Allocation Groups allow you to group multiple allocations together.",
 		MarkdownDescription: "Allocation Groups allow you to group multiple allocations together.",
+		DeprecationMessage: `Allocation groups are deprecated.
+All of the features of the allocation group will be moved to the allocation resource in the next major version of the provider.
+The allocation group resource will be removed in the next major version of the provider.`,
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,

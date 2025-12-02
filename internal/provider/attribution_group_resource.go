@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -51,6 +52,9 @@ func (r *attributionGroupResource) Schema(_ context.Context, _ resource.SchemaRe
 	resp.Schema = schema.Schema{
 		Description:         "Attribution Groups allow you to group multiple attributions together.",
 		MarkdownDescription: "Attribution Groups allow you to group multiple attributions together.",
+		DeprecationMessage: `Attribution groups and the associated resources are deprecated and no longer supported.
+Please consider switching to allocation groups before upgrading to the next major version of the provider to prevent breaking changes.
+The attribution group resource will be removed in the next major version of the provider.`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Attribution group ID",
@@ -104,6 +108,9 @@ func (r *attributionGroupResource) Configure(_ context.Context, req resource.Con
 
 // Create creates the resource and sets the initial Terraform state.
 func (r *attributionGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+	)
 	log.Println("attributionGroup Create")
 
 	// Retrieve values from plan
@@ -151,6 +158,9 @@ func (r *attributionGroupResource) Create(ctx context.Context, req resource.Crea
 
 // Read refreshes the Terraform state with the latest data.
 func (r *attributionGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+	)
 	log.Print("attributionGroup Read")
 	// Get current state
 	var state attributionGroupResourceModel
@@ -195,6 +205,9 @@ func (r *attributionGroupResource) Read(ctx context.Context, req resource.ReadRe
 }
 
 func (r *attributionGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+	)
 	log.Println("attributionGroup Update")
 	// Retrieve values from plan
 	var plan attributionGroupResourceModel
@@ -267,6 +280,9 @@ func (r *attributionGroupResource) Update(ctx context.Context, req resource.Upda
 // Delete deletes the resource and removes the Terraform state on success.
 
 func (r *attributionGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	resp.Diagnostics.Append(
+		diag.NewWarningDiagnostic("doit_attribution_group resource is deprecated", "use doit_allocation_group instead"),
+	)
 	log.Println("attributionGroup Delete")
 	// Retrieve values from state
 	var state attributionGroupResourceModel
