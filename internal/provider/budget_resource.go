@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -247,6 +248,7 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:    true,
 				Default:     int64default.StaticInt64(0),
 				Description: "Budget start Date",
+				Validators:  []validator.Int64{budgetStartPeriodValidator{}},
 			},
 			"time_interval": schema.StringAttribute{
 				Optional: true,
