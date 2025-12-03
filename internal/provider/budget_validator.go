@@ -101,8 +101,8 @@ func validateBudgetStartPeriod(budgetType, timeInterval string, startPeriodMs in
 
 	if startPeriodMs != expectedStartMs {
 		return fmt.Errorf("start_period %d (%s) must be at the beginning of the period %d (%s) for recurring budget with interval %q",
-			startPeriodMs, startPeriodTime.Format(time.RFC1123),
-			expectedStartMs, expectedStart.Format(time.RFC1123),
+			startPeriodMs, startPeriodTime.Format(time.RFC3339),
+			expectedStartMs, expectedStart.Format(time.RFC3339),
 			timeInterval)
 	}
 	return nil
