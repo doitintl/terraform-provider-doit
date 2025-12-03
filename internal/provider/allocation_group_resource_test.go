@@ -64,6 +64,14 @@ func TestAccAllocationGroup(t *testing.T) {
 									knownvalue.StringExact("DE"),
 								}),
 							}),
+							knownvalue.MapPartial(map[string]knownvalue.Check{
+								"key":  knownvalue.StringExact("project_id"),
+								"mode": knownvalue.StringExact("is"),
+								"type": knownvalue.StringExact("fixed"),
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("test-k8s-project-468707"),
+								}),
+							}),
 						}),
 					),
 					statecheck.ExpectKnownValue(
