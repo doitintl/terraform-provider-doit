@@ -1,0 +1,34 @@
+# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-system
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: terraform-provider-doit
+  description: A proof-of-concept infrastructure-as-code plugin that allows users to manage DoiT cloud resources through Terraform.
+spec:
+  owner: group:cre
+  domain: doit
+---
+# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-provider-doit
+  description: A proof-of-concept infrastructure-as-code plugin that allows users to manage DoiT cloud resources through Terraform.
+  annotations:
+    github.com/project-slug: doitintl/terraform-provider-doit
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - terraform-provider-doit
+    - terraform-plugin
+    - terraform
+    - iac
+  links:
+    - url: https://doitintl.slack.com/archives/C03T35W9361
+      title: Support Slack Channel (#terraform-and-iac)
+      icon: help
+      type: support-slack
+spec:
+  type: plugin
+  owner: group:cre
+  lifecycle: production
+  system: terraform-provider-doit
