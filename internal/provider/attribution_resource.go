@@ -94,7 +94,7 @@ The attribution resource will be removed in the next major version of the provid
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Description: `Type of the component. Possibe values are:
+							Description: `Type of the component. Possible values are:
 'datetime'
 'fixed' (Used for AWS account IDs and Google project IDs)
 'optional'
