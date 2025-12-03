@@ -92,9 +92,8 @@ func validateBudgetStartPeriod(budgetType, timeInterval string, startPeriodMs in
 	case "day":
 		expectedStart = time.Date(startPeriodTime.Year(), startPeriodTime.Month(), startPeriodTime.Day(), 0, 0, 0, 0, time.UTC)
 	default:
-		// Unknown interval, skip validation or handle error?
-		// Assuming other validation handles valid enum values.
-		return nil
+		// ValidateBudgetTimeInterval should have handled this but we will return an error anyway if we arrive here
+		return fmt.Errorf("time_interval must be one of: day, week, month, quarter, year. Provided: %s", timeInterval)
 	}
 
 	expectedStartMs := expectedStart.UnixMilli()
