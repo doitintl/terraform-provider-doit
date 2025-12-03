@@ -107,3 +107,39 @@ func validateBudgetStartPeriod(budgetType, timeInterval string, startPeriodMs in
 	}
 	return nil
 }
+
+var _ validator.String = budgetTimeIntervalValidator{}
+
+type budgetTimeIntervalValidator struct{}
+
+func (v budgetTimeIntervalValidator) Description(ctx context.Context) string {
+	return "Ensures that the time_interval is one of: day, week, month, quarter, year."
+}
+
+func (v budgetTimeIntervalValidator) MarkdownDescription(ctx context.Context) string {
+	return "Ensures that the time_interval is one of: day, week, month, quarter, year."
+}
+
+func (v budgetTimeIntervalValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	timeInterval := req.ConfigValue.ValueString()
+	if err := validateBudgetTimeInterval(timeInterval); err != nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid Budget Time Interval",
+			err.Error(),
+		)
+	}
+}
+
+func validateBudgetTimeInterval(timeInterval string) error {
+	switch timeInterval {
+	case "day", "week", "month", "quarter", "year":
+		return nil
+	default:
+		return fmt.Errorf("time_interval must be one of: day, week, month, quarter, year. Provided: %s", timeInterval)
+	}
+}

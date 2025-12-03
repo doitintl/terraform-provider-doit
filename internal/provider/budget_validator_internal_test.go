@@ -87,3 +87,56 @@ func TestValidateBudgetStartPeriod(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateBudgetTimeInterval(t *testing.T) {
+	tests := []struct {
+		name          string
+		timeInterval  string
+		expectedError bool
+	}{
+		{
+			name:          "Valid day",
+			timeInterval:  "day",
+			expectedError: false,
+		},
+		{
+			name:          "Valid week",
+			timeInterval:  "week",
+			expectedError: false,
+		},
+		{
+			name:          "Valid month",
+			timeInterval:  "month",
+			expectedError: false,
+		},
+		{
+			name:          "Valid quarter",
+			timeInterval:  "quarter",
+			expectedError: false,
+		},
+		{
+			name:          "Valid year",
+			timeInterval:  "year",
+			expectedError: false,
+		},
+		{
+			name:          "Invalid interval",
+			timeInterval:  "decade",
+			expectedError: true,
+		},
+		{
+			name:          "Empty interval",
+			timeInterval:  "",
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateBudgetTimeInterval(tt.timeInterval)
+			if (err != nil) != tt.expectedError {
+				t.Errorf("validateBudgetTimeInterval() error = %v, expectedError %v", err, tt.expectedError)
+			}
+		})
+	}
+}

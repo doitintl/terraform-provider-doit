@@ -256,6 +256,7 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Default:  stringdefault.StaticString(""),
 				Description: "Recurring budget interval can be on of:" +
 					"[\"day\", \"week\", \"month\", \"quarter\",\"year]\"",
+				Validators: []validator.String{budgetTimeIntervalValidator{}},
 			},
 			"type": schema.StringAttribute{
 				Required: true,
