@@ -49,6 +49,20 @@ func TestValidateBudgetStartPeriod(t *testing.T) {
 			expectedError: true,
 		},
 		{
+			name:          "Recurring Quarter Valid",
+			budgetType:    "recurring",
+			timeInterval:  "quarter",
+			startPeriod:   time.Date(2025, 4, 1, 0, 0, 0, 0, time.UTC), // Apr 1st is start of Q2
+			expectedError: false,
+		},
+		{
+			name:          "Recurring Quarter Invalid",
+			budgetType:    "recurring",
+			timeInterval:  "quarter",
+			startPeriod:   time.Date(2025, 2, 1, 0, 0, 0, 0, time.UTC), // Feb 1st is not start of a quarter
+			expectedError: true,
+		},
+		{
 			name:          "Recurring Week Valid (Monday)",
 			budgetType:    "recurring",
 			timeInterval:  "week",
