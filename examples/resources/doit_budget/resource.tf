@@ -28,6 +28,6 @@ resource "doit_budget" "my_budget" {
     },
   ]
   scope = [
-    doit_attribution.attri.id
+    doit_attribution.attribution.id
   ]
 }

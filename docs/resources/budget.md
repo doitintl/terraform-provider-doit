@@ -53,7 +53,7 @@ resource "doit_budget" "my_budget" {
 
 ### Required
 
-- `currency` (String) Budget currency. Possibe values are:
+- `currency` (String) Budget currency. Possible values are:
 'USD'
 'ILS'
 'EUR'

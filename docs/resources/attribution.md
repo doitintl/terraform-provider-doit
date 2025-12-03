@@ -46,7 +46,7 @@ resource "doit_attribution" "attri" {
 Required:
 
 - `key` (String) Key of a dimension. Examples: "service_id", "cloud_provider", "sku_description"
-- `type` (String) Type of the component. Possibe values are:
+- `type` (String) Type of the component. Possible values are:
 'datetime'
 'fixed' (Used for AWS account IDs and Google project IDs)
 'optional'

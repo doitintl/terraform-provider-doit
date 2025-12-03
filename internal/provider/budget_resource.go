@@ -163,7 +163,7 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"currency": schema.StringAttribute{
 				Required: true,
-				Description: `Budget currency. Possibe values are:
+				Description: `Budget currency. Possible values are:
 'USD'
 'ILS'
 'EUR'

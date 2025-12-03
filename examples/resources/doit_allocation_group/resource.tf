@@ -37,7 +37,7 @@ resource "doit_allocation" "name2" {
   }
 }
 
-# Create an allocation group for the allocations, referencinng the allocations for Germany and Japan and adding another one in-line for the US
+# Create an allocation group for the allocations, referencing the allocations for Germany and Japan and adding another one in-line for the US
 resource "doit_allocation_group" "this" {
   name = "My Allocation Group"
   rules = [

@@ -213,7 +213,7 @@ Required:
 Required:
 
 - `id` (String) ID of the field to split
-- `include_origin` (Boolean) if set, include the origin
+- `include_origin` (Boolean) If set, include the origin
 - `mode` (String) Mode of the split
 - `targets` (Attributes List) Targets for the split (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.The only supported value at the moment: "attribution_group"

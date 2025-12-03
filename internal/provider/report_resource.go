@@ -449,7 +449,7 @@ func (r *reportResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 									Required:    true,
 								},
 								"include_origin": schema.BoolAttribute{
-									Description: "if set, include the origin",
+									Description: "If set, include the origin",
 									Required:    true,
 								},
 								"type": schema.StringAttribute{
