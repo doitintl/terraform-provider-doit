@@ -21,35 +21,37 @@ import (
 
 func AllocationGroupResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description:         "Allocation Groups allow you to group multiple allocations together.",
+		MarkdownDescription: "Allocation Groups allow you to group multiple allocations together.",
 		DeprecationMessage: `Allocation groups are deprecated.
 All of the features of the allocation group will be moved to the allocation resource in the next major version of the provider.
 The allocation group resource will be removed in the next major version of the provider.`,
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the created allocation",
-				MarkdownDescription: "Type of the created allocation",
+				Description:         "Type of the allocation (e.g., 'preset', 'custom').",
+				MarkdownDescription: "Type of the allocation (e.g., 'preset', 'custom').",
 			},
 			"cloud": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Cloud provider",
-				MarkdownDescription: "Cloud provider",
+				Description:         "The cloud provider (e.g., 'google-cloud', 'aws').",
+				MarkdownDescription: "The cloud provider (e.g., 'google-cloud', 'aws').",
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Allocation group description",
-				MarkdownDescription: "Allocation group description",
+				Description:         "A description of the allocation group.",
+				MarkdownDescription: "A description of the allocation group.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the created allocation",
-				MarkdownDescription: "ID of the created allocation",
+				Description:         "Allocation ID",
+				MarkdownDescription: "Allocation ID",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Allocation group name",
-				MarkdownDescription: "Allocation group name",
+				Description:         "The name of the allocation group. Must be unique within the organization.",
+				MarkdownDescription: "The name of the allocation group. Must be unique within the organization.",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -90,8 +92,8 @@ The allocation group resource will be removed in the next major version of the p
 									},
 									"key": schema.StringAttribute{
 										Required:            true,
-										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
-										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
+										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
 									},
 									"mode": schema.StringAttribute{
 										Required:            true,
@@ -136,8 +138,7 @@ The allocation group resource will be removed in the next major version of the p
 									},
 								},
 							},
-							Optional:            true,
-							Computed:            true,
+							Required:            true,
 							Description:         "List of allocation filter components (required for 'create' or 'update' action)",
 							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action)",
 						},
@@ -153,8 +154,7 @@ The allocation group resource will be removed in the next major version of the p
 							MarkdownDescription: "Description for the allocation rule",
 						},
 						"formula": schema.StringAttribute{
-							Optional:            true,
-							Computed:            true,
+							Required:            true,
 							Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
 							MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
 						},
@@ -198,29 +198,29 @@ The allocation group resource will be removed in the next major version of the p
 					},
 				},
 				Required:            true,
-				Description:         "Array of allocation rules for this group",
-				MarkdownDescription: "Array of allocation rules for this group",
+				Description:         "The list of allocation rules that make up this group.",
+				MarkdownDescription: "The list of allocation rules that make up this group.",
 			},
 			"time_created": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when this allocation group was created (in UNIX timestamp).",
-				MarkdownDescription: "The time when this allocation group was created (in UNIX timestamp).",
+				Description:         "The time when the allocation group was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation group was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
 			},
 			"time_modified": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Last time the allocation group was modified (in UNIX timestamp).",
-				MarkdownDescription: "Last time the allocation group was modified (in UNIX timestamp).",
+				Description:         "The time when the allocation group was last modified, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation group was last modified, in milliseconds since the epoch (i.e. UNIX timestamp).",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (preset or custom)",
-				MarkdownDescription: "Type of allocation (preset or custom)",
+				Description:         "The type of the allocation. Can be 'preset' or 'custom'.",
+				MarkdownDescription: "The type of the allocation. Can be 'preset' or 'custom'.",
 			},
 			"unallocated_costs": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Custom label for any values that do not fit into attributions",
-				MarkdownDescription: "Custom label for any values that do not fit into attributions",
+				Description:         "Custom label for any values that do not fit into attributions.",
+				MarkdownDescription: "Custom label for any values that do not fit into attributions.",
 			},
 		},
 	}
