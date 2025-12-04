@@ -73,8 +73,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Required:            true,
-									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
-									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
@@ -119,14 +119,12 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 						},
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Description:         "List of allocation filter components",
 						MarkdownDescription: "List of allocation filter components",
 					},
 					"formula": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
 						MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
 					},
@@ -175,8 +173,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"key": schema.StringAttribute{
 										Required:            true,
-										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
-										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
 									},
 									"mode": schema.StringAttribute{
 										Required:            true,

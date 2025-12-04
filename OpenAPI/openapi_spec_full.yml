@@ -651,7 +651,7 @@ paths:
       responses:
         "200":
           description: >-
-            OK - Aattribution group deleted.
+            OK - Attribution group deleted.
           content: {}
         "400":
           $ref: "#/components/responses/400"
@@ -1374,7 +1374,9 @@ paths:
           in: query
           description: >-
             An optional parameter to override the report time settings. Value
-            should represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
+            should be represented in the format P[n]Y[n]M[n]D[n]. In the
+            representations, the [n] is replaced by the value for each of the
+            date and time elements that follow the [n].
           schema:
             type: string
         - name: startDate
@@ -2036,7 +2038,7 @@ paths:
                     description: Page token. Can be used to request the next page of results.
                   rowCount:
                     type: integer
-                    description: Invoices rows count
+                    description: Invoice rows count
                     format: int64
         "400":
           $ref: "#/components/responses/400"
@@ -2257,7 +2259,7 @@ paths:
       operationId: listAccountTeam
       responses:
         "200":
-          description: OK - List of account managerss returned.
+          description: OK - List of account managers returned.
           content:
             application/json:
               schema:
@@ -2328,7 +2330,7 @@ paths:
       tags:
         - Users
       summary: Update user
-      description: Updates user information including name, job function, phone, language, and role.
+      description: Updates user information, including name, job function, phone, language, and role.
       operationId: updateUser
       parameters:
         - name: id
@@ -2470,7 +2472,7 @@ paths:
         - Assets
       summary: List assets
       description: >-
-        Returns a list of all available customer assets such as Google Cloud billing
+        Returns a list of all available customer assets, such as Google Cloud billing
         accounts, G Suite/Workspace subscriptions, etc.
 
         Assets are returned in reverse chronological order by default.
@@ -2527,7 +2529,7 @@ paths:
       tags:
         - Assets
       summary: Update an asset
-      description: Updates an existing asset such as G Suite/Workspace or Office 365 subscription to add or remove licenses.
+      description: Updates an existing asset, such as G Suite/Workspace or Office 365 subscription, to add or remove licenses.
       operationId: idOfAsset
       parameters:
         - name: id
@@ -3045,7 +3047,7 @@ components:
       properties:
         key:
           type: string
-          description: 'Key of a dimension. Examples: "billing_account_id", "country", etc.'
+          description: 'Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.'
         type:
           $ref: "#/components/schemas/DimensionsTypes"
         values:
@@ -3161,6 +3163,9 @@ components:
           type: string
           description: URL to view the allocation in DoiT Cloud Navigator.
     AllocationRule:
+      required:
+        - components
+        - formula
       type: object
       description: Single allocation rule (required for single type allocation)
       nullable: true
@@ -3329,7 +3334,7 @@ components:
           default: ""
         formula:
           type: string
-          description: Attribution formula (A is first component, B is second component, C is third component, etc.)
+          description: Attribution formula (A is the first component, B is the second component, C is the third component, etc.)
         id:
           type: string
           description: |-
@@ -3363,7 +3368,7 @@ components:
           example: "service_id"
         regexp:
           type: string
-          description: Filter the dimension values using regular expression.
+          description: Filter the dimension values using a regular expression.
         type:
           $ref: "#/components/schemas/DimensionsTypes"
         values:
@@ -3573,7 +3578,7 @@ components:
       properties:
         alerts:
           type: array
-          description: List of up to three thresholds defined as percentage of amount
+          description: List of up to three thresholds defined as a percentage of amount
           items:
             $ref: "#/components/schemas/ExternalBudgetAlert"
         amount:
@@ -3634,7 +3639,7 @@ components:
             $ref: "#/components/schemas/SlackChannel"
         scope:
           type: array
-          description: List of attributions that defines that budget scope
+          description: List of attributions that defines the budget scope
           items:
             type: string
         startPeriod:
@@ -3643,8 +3648,8 @@ components:
           format: int64
         timeInterval:
           type: string
-          description: 'Recurring budget interval can be on of: ["day", "week", "month",
-            "quarter","year"]'
+          description: 'Recurring budget interval can be one of: ["day", "week", "month",
+            "quarter", "year"]'
         type:
           type: string
           description: 'budget type can be one of: ["fixed", "recurring"]'
@@ -3665,7 +3670,7 @@ components:
       properties:
         alerts:
           type: array
-          description: List of up to three thresholds defined as percentage of amount
+          description: List of up to three thresholds defined as a percentage of amount
           items:
             $ref: "#/components/schemas/ExternalBudgetAlert"
         amount:
@@ -3736,9 +3741,14 @@ components:
             type: string
         recipientsSlackChannels:
           type: array
-          description: List of slack channels to notify when reaching alert threshold
+          description: List of Slack channels to notify when reaching alert threshold
           items:
             $ref: "#/components/schemas/SlackChannel"
+        scope:
+          type: array
+          description: List of attributions that defines the budget scope
+          items:
+            type: string
         scopes:
           type: array
           description: The filters selected define the scope of the budget.
@@ -3750,7 +3760,7 @@ components:
           format: int64
         timeInterval:
           type: string
-          description: 'Recurring budget interval can be one of: ["day", "week", "month","quarter","year"]'
+          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter" ,"year"]'
         type:
           type: string
           description: 'budget type can be one of: ["fixed", "recurring"]'
@@ -3795,8 +3805,15 @@ components:
           type: string
         scope:
           type: array
+          description: List of attributions that define the budget scope.
           items:
             type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: "#/components/schemas/Scope"
         startPeriod:
           type: integer
           format: int64
@@ -3818,7 +3835,7 @@ components:
       properties:
         alerts:
           type: array
-          description: List of up to three thresholds defined as percentage of amount
+          description: List of up to three thresholds defined as a percentage of the amount
           items:
             $ref: "#/components/schemas/BudgetCreateUpdateAlert"
         amount:
@@ -3875,22 +3892,28 @@ components:
             type: string
         recipientsSlackChannels:
           type: array
-          description: List of slack channels to notify when reaching alert threshold
+          description: List of Slack channels to notify when reaching alert threshold
           items:
             $ref: "#/components/schemas/SlackChannel"
         scope:
           type: array
-          description: List of attributions that defines that budget scope
+          description: List of attributions that define the budget scope.
           items:
             type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: "#/components/schemas/Scope"
         startPeriod:
           type: integer
           description: Budget start Date
           format: int64
         timeInterval:
           type: string
-          description: 'Recurring budget interval can be on of: ["day", "week", "month",
-            "quarter","year"]'
+          description: 'Recurring budget interval can be one of: ["day", "week", "month",
+            "quarter", "year"]'
         type:
           type: string
           description: 'budget type can be one of: ["fixed", "recurring"]'
@@ -4688,7 +4711,7 @@ components:
           description: cloud incident id, uniquely identifying the cloud incident
         platform:
           type: string
-          description: The cloud Platform
+          description: The Cloud Platform
           enum:
             - google-cloud
             - amazon-web-services
@@ -4704,7 +4727,7 @@ components:
             - archived
         title:
           type: string
-          description: Cloud incident name as provided by cloud platform vendor
+          description: Cloud incident name as provided by the cloud platform vendor
     Limit:
       type: object
       description: |-
@@ -4788,7 +4811,7 @@ components:
           description: The name of the report.
         owner:
           type: string
-          description: The report owner in a form of user@domain.com
+          description: The report owner in the form of user@domain.com
         type:
           type: string
           enum:
@@ -5101,7 +5124,7 @@ components:
           format: int64
         id:
           type: integer
-          description: ticket id, identifying the report (e.g. "33234")
+          description: ticket id, identifying the report (e.g., "33234")
           format: int64
         is_public:
           type: boolean
@@ -5119,7 +5142,7 @@ components:
           description: Ticket product
         requester:
           type: string
-          description: The ticket requester in a form of user@domain.com
+          description: The ticket requester in the form of user@domain.com
         severity:
           type: string
           description: Ticket severity
@@ -5360,7 +5383,7 @@ components:
   responses:
     "400":
       description: >-
-        Bad Request - The server cannot process the request, often due to malformed request.
+        Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
@@ -5677,7 +5700,7 @@ components:
                   of results
               rowCount:
                 type: integer
-                description: Budgets rows count
+                description: Budget rows count
                 format: int64
     successRespWithInvoice:
       description: Return invoice details by invoiceId
@@ -5699,7 +5722,7 @@ components:
                 format: int64
               id:
                 type: string
-                description: invoice number, identifying the invoice (e.g. "IN204005474")
+                description: invoice number, identifying the invoice (e.g., "IN204005474")
               invoiceDate:
                 type: integer
                 description: The time when this invoice was issued, in milliseconds since the
@@ -5764,7 +5787,7 @@ components:
                 description: cloud incident id, uniquely identifying the cloud incident
               platform:
                 type: string
-                description: The cloud Platform
+                description: The Cloud Platform
                 enum:
                   - google-cloud
                   - amazon-web-services
@@ -5786,7 +5809,7 @@ components:
                 description: Cloud incident symptoms, if available
               title:
                 type: string
-                description: Cloud incident name as provided by cloud platform vendor
+                description: Cloud incident name as provided by the cloud platform vendor
               workaround:
                 type: string
                 description: Mitigation workaround for the cloud incident, if available.
