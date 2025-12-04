@@ -11,9 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -58,6 +56,8 @@ func (r *budgetResource) Metadata(_ context.Context, req resource.MetadataReques
 func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print("hello budget Schema:)")
 	resp.Schema = schema.Schema{
+		Description:         "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
+		MarkdownDescription: "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
 		Attributes: map[string]schema.Attribute{
 			"last_updated": schema.StringAttribute{
 				Description: "Timestamp of the last Terraform update of" +
@@ -65,50 +65,71 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed: true,
 			},
 			"alerts": schema.ListNestedAttribute{
-				Optional: true,
+				Description: "List of up to three thresholds defined as percentage of amount",
+				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"percentage": schema.Float64Attribute{
-							Optional: true,
-							Computed: true,
-							Default:  float64default.StaticFloat64(0.0),
+							Description: "Percentage of the budget amount",
+							Required:    true,
 						},
 					},
 				},
 			},
 			"amount": schema.Float64Attribute{
+				Description: "Budget period amount. Required if usePrevSpend is false.",
 				Optional:    true,
-				Computed:    true,
-				Default:     float64default.StaticFloat64(0.0),
-				Description: "Budget period required: true(if usePrevSpend is false)",
 			},
 			"collaborators": schema.ListNestedAttribute{
-				Required: true,
+				Description: "List of permitted users to view/edit the report",
+				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
+							Description: "Email of the collaborator",
 							Required:    true,
-							Description: "Collaborator email",
 						},
 						"role": schema.StringAttribute{
+							Description: "Role of the collaborator",
 							Required:    true,
-							Description: "Collaborator role",
 						},
 					},
 				},
 			},
 			"currency": schema.StringAttribute{
-				Required:    true,
-				Description: "Budget currency can be one of: [\"USD\",\"ILS\",\"EUR\",\"GBP\",\"AUD\",\"CAD\",\"DKK\",\"NOK\",\"SEK\",\"BRL\",\"SGD\",\"MXN\",\"CHF\",\"MYR\",\"TWD\",\"EGP\",\"ZAR\"]",
+				Required: true,
+				Description: `Budget currency. Possible values are:
+'USD'
+'ILS'
+'EUR'
+'AUD'
+'CAD'
+'GBP'
+'DKK'
+'NOK'
+'SEK'
+'BRL'
+'SGD'
+'MXN'
+'CHF'
+'MYR'
+'TWD'
+'EGP'
+'ZAR'
+'JPY'
+'IDR'
+'AED'
+'COP'
+'THB'`,
 			},
 			"description": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				Default:  stringdefault.StaticString(""),
+				Description: "Budget description",
+				Optional:    true, Computed: true,
+				Default: stringdefault.StaticString(""),
 			},
 			"end_period": schema.Int64Attribute{
+				Description: "Fixed budget end date. Required if budget type is fixed. In milliseconds since the epoch.",
 				Optional:    true,
-				Description: "Fixed budget end date required: true(if budget type is fixed)",
 			},
 			"growth_per_period": schema.Float64Attribute{
 				Optional:    true,
@@ -117,8 +138,8 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Description: "Periodical growth percentage in recurring budget",
 			},
 			"id": schema.StringAttribute{
+				Description: "Budget ID",
 				Computed:    true,
-				Description: "Numeric identifier of the budget",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -130,58 +151,58 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Description: "Budget metric  - currently fixed to \"cost\"",
 			},
 			"name": schema.StringAttribute{
+				Description: "Budget Name",
 				Required:    true,
-				Description: "Name Budget Name",
 			},
 			"public": schema.StringAttribute{
 				Optional:    true,
 				Description: "Public",
 			},
 			"recipients": schema.ListAttribute{
-				Required:    true,
-				ElementType: types.StringType,
 				Description: "List of emails to notify when reaching alert threshold",
+				Optional:    true,
+				ElementType: types.StringType,
 			},
 			"recipients_slack_channels": schema.ListNestedAttribute{
-				Optional: true,
+				Description: "List of slack channels to notify when reaching alert threshold",
+				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"customer_id": schema.StringAttribute{
-							Optional: true,
-						},
 						"id": schema.StringAttribute{
-							Optional:    true,
 							Description: "Slack channel ID",
+							Required:    true,
 						},
 						"name": schema.StringAttribute{
-							Optional:    true,
 							Description: "Slack channel name",
+							Required:    true,
 						},
 						"shared": schema.BoolAttribute{
-							Optional:    true,
-							Description: "Slack channel shared",
+							Description: "Whether the channel is shared",
+							Required:    true,
 						},
 						"type": schema.StringAttribute{
-							Optional:    true,
-							Description: "Slack channel type",
+							Description: "Type of the channel",
+							Required:    true,
 						},
 						"workspace": schema.StringAttribute{
-							Optional:    true,
-							Description: "Slack channel workspace",
+							Description: "Slack workspace",
+							Required:    true,
+						},
+						"customer_id": schema.StringAttribute{
+							Description: "Customer ID",
+							Required:    true,
 						},
 					},
 				},
 			},
 			"scope": schema.ListAttribute{
+				Description: "List of attributions that defines that budget scope",
 				Required:    true,
 				ElementType: types.StringType,
-				Description: "List of budges that defines that budget scope",
 			},
 			"start_period": schema.Int64Attribute{
-				Optional:    true,
-				Computed:    true,
-				Default:     int64default.StaticInt64(0),
-				Description: "Budget start Date",
+				Description: "Budget start Date, in milliseconds since the epoch.",
+				Required:    true,
 				Validators:  []validator.Int64{budgetStartPeriodValidator{}},
 			},
 			"time_interval": schema.StringAttribute{
@@ -198,10 +219,8 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					"\"fixed\", \"recurring\"]",
 			},
 			"use_prev_spend": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Default:     booldefault.StaticBool(false),
 				Description: "Use the last period's spend as the target amount for recurring budgets",
+				Optional:    true,
 			},
 		},
 	}

@@ -117,20 +117,6 @@ Required:
 - `email` (String) Email of the collaborator
 - `role` (String) Role of the collaborator
 
-Read-Only:
-
-- `forecasted_date` (Number)
-- `triggered` (Boolean)
-
-
-<a id="nestedatt--collaborators"></a>
-### Nested Schema for `collaborators`
-
-Optional:
-
-- `email` (String)
-- `role` (String)
-
 
 <a id="nestedatt--recipients_slack_channels"></a>
 ### Nested Schema for `recipients_slack_channels`
