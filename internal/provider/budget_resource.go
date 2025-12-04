@@ -3,12 +3,21 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"terraform-provider-doit/internal/provider/resource_budget"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -32,6 +41,170 @@ var (
 
 func NewBudgetResource() resource.Resource {
 	return &budgetResource{}
+}
+
+// budgetResource is the resource implementation.
+type budgetResource struct {
+	client *Client
+}
+
+// Metadata returns the resource type name.
+func (r *budgetResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	log.Print("hello budget Metadata:)")
+	resp.TypeName = req.ProviderTypeName + "_budget"
+}
+
+// Schema defines the schema for the resource.
+func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	log.Print("hello budget Schema:)")
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"last_updated": schema.StringAttribute{
+				Description: "Timestamp of the last Terraform update of" +
+					"the budget group.",
+				Computed: true,
+			},
+			"alerts": schema.ListNestedAttribute{
+				Optional: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"percentage": schema.Float64Attribute{
+							Optional: true,
+							Computed: true,
+							Default:  float64default.StaticFloat64(0.0),
+						},
+					},
+				},
+			},
+			"amount": schema.Float64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     float64default.StaticFloat64(0.0),
+				Description: "Budget period required: true(if usePrevSpend is false)",
+			},
+			"collaborators": schema.ListNestedAttribute{
+				Required: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"email": schema.StringAttribute{
+							Required:    true,
+							Description: "Collaborator email",
+						},
+						"role": schema.StringAttribute{
+							Required:    true,
+							Description: "Collaborator role",
+						},
+					},
+				},
+			},
+			"currency": schema.StringAttribute{
+				Required:    true,
+				Description: "Budget currency can be one of: [\"USD\",\"ILS\",\"EUR\",\"GBP\",\"AUD\",\"CAD\",\"DKK\",\"NOK\",\"SEK\",\"BRL\",\"SGD\",\"MXN\",\"CHF\",\"MYR\",\"TWD\",\"EGP\",\"ZAR\"]",
+			},
+			"description": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(""),
+			},
+			"end_period": schema.Int64Attribute{
+				Optional:    true,
+				Description: "Fixed budget end date required: true(if budget type is fixed)",
+			},
+			"growth_per_period": schema.Float64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     float64default.StaticFloat64(0.0),
+				Description: "Periodical growth percentage in recurring budget",
+			},
+			"id": schema.StringAttribute{
+				Computed:    true,
+				Description: "Numeric identifier of the budget",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"metric": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString("cost"),
+				Description: "Budget metric  - currently fixed to \"cost\"",
+			},
+			"name": schema.StringAttribute{
+				Required:    true,
+				Description: "Name Budget Name",
+			},
+			"public": schema.StringAttribute{
+				Optional:    true,
+				Description: "Public",
+			},
+			"recipients": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "List of emails to notify when reaching alert threshold",
+			},
+			"recipients_slack_channels": schema.ListNestedAttribute{
+				Optional: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"customer_id": schema.StringAttribute{
+							Optional: true,
+						},
+						"id": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel ID",
+						},
+						"name": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel name",
+						},
+						"shared": schema.BoolAttribute{
+							Optional:    true,
+							Description: "Slack channel shared",
+						},
+						"type": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel type",
+						},
+						"workspace": schema.StringAttribute{
+							Optional:    true,
+							Description: "Slack channel workspace",
+						},
+					},
+				},
+			},
+			"scope": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "List of budges that defines that budget scope",
+			},
+			"start_period": schema.Int64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     int64default.StaticInt64(0),
+				Description: "Budget start Date",
+				Validators:  []validator.Int64{budgetStartPeriodValidator{}},
+			},
+			"time_interval": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(""),
+				Description: "Recurring budget interval can be on of:" +
+					"[\"day\", \"week\", \"month\", \"quarter\",\"year]\"",
+				Validators: []validator.String{budgetTimeIntervalValidator{}},
+			},
+			"type": schema.StringAttribute{
+				Required: true,
+				Description: "Budget type can be one of: [" +
+					"\"fixed\", \"recurring\"]",
+			},
+			"use_prev_spend": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
+				Description: "Use the last period's spend as the target amount for recurring budgets",
+			},
+		},
+	}
 }
 
 // Configure adds the provider configured client to the resource.
