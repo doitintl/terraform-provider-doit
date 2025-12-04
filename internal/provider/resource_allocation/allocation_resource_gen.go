@@ -5,6 +5,8 @@ package resource_allocation
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -13,18 +15,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func AllocationResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the created allocation",
-				MarkdownDescription: "Type of the created allocation",
+				Description:         "Type of the allocation (e.g., 'preset', 'custom').",
+				MarkdownDescription: "Type of the allocation (e.g., 'preset', 'custom').",
 			},
 			"anomaly_detection": schema.BoolAttribute{
 				Computed:            true,
@@ -33,24 +36,24 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the allocation was created (in UNIX timestamp).",
-				MarkdownDescription: "The time when the allocation was created (in UNIX timestamp).",
+				Description:         "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Allocation description",
-				MarkdownDescription: "Allocation description",
+				Description:         "A description of the allocation.",
+				MarkdownDescription: "A description of the allocation.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the created allocation",
-				MarkdownDescription: "ID of the created allocation",
+				Description:         "Allocation ID",
+				MarkdownDescription: "Allocation ID",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Allocation name",
-				MarkdownDescription: "Allocation name",
+				Description:         "The name of the allocation. Must be unique within the organization.",
+				MarkdownDescription: "The name of the allocation. Must be unique within the organization.",
 			},
 			"rule": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -73,8 +76,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Required:            true,
-									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
-									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
+									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
@@ -109,8 +112,10 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"values": schema.ListAttribute{
-									ElementType: types.StringType,
-									Required:    true,
+									ElementType:         types.StringType,
+									Required:            true,
+									Description:         "Values to filter on",
+									MarkdownDescription: "Values to filter on",
 								},
 							},
 							CustomType: ComponentsType{
@@ -119,14 +124,12 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 						},
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Description:         "List of allocation filter components",
 						MarkdownDescription: "List of allocation filter components",
 					},
 					"formula": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
+						Required:            true,
 						Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
 						MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
 					},
@@ -136,17 +139,19 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: RuleValue{}.AttributeTypes(ctx),
 					},
 				},
-				Required: true,
+				Required:            true,
+				Description:         "The configuration that defines the allocation rules and matching conditions.",
+				MarkdownDescription: "The configuration that defines the allocation rules and matching conditions.",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (preset or custom)",
-				MarkdownDescription: "Type of allocation (preset or custom)",
+				Description:         "The type of the allocation. Can be 'preset' or 'custom'.",
+				MarkdownDescription: "The type of the allocation. Can be 'preset' or 'custom'.",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Last time the allocation was modified (in UNIX timestamp).",
-				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
+				Description:         "The time when the allocation was last updated, in milliseconds since the epoch.",
+				MarkdownDescription: "The time when the allocation was last updated, in milliseconds since the epoch.",
 			},
 		},
 	}

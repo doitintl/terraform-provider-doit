@@ -3,12 +3,12 @@
 page_title: "doit_report Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  
+  Reports allow you to analyze and visualize your cloud costs, usage, and savings.
 ---
 
 # doit_report (Resource)
 
-
+Reports allow you to analyze and visualize your cloud costs, usage, and savings.
 
 ## Example Usage
 
@@ -87,40 +87,40 @@ resource "doit_report" "my-report" {
 
 ### Read-Only
 
-- `id` (String) Report id
-- `last_updated` (String)
+- `id` (String) Report id.
+- `last_updated` (String) Timestamp of the last Terraform update of the report.
 
 <a id="nestedatt--config"></a>
 ### Nested Schema for `config`
 
 Optional:
 
-- `advanced_analysis` (Attributes) (see [below for nested schema](#nestedatt--config--advanced_analysis))
-- `aggregation` (String)
-- `currency` (String)
-- `dimensions` (Attributes List) (see [below for nested schema](#nestedatt--config--dimensions))
-- `display_values` (String)
+- `advanced_analysis` (Attributes) Advanced analysis options. Each of these can be set independently (see [below for nested schema](#nestedatt--config--advanced_analysis))
+- `aggregation` (String) The aggregation to apply to the report. Possible values: 'total', 'percent_total', 'percent_col', 'percent_row'
+- `currency` (String) The currency to use for the report.
+- `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
+- `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as). Possible values: 'actuals_only', 'absolute_change', 'percentage_change', 'absolute_and_percentage'
 - `filters` (Attributes List) The filters to use in this report (see [below for nested schema](#nestedatt--config--filters))
-- `group` (Attributes List) The groups to use in the report. (see [below for nested schema](#nestedatt--config--group))
-- `include_promotional_credits` (Boolean) Whether to include credits or not. If set, the report must use time interval “month”/”quarter”/”year”
-- `layout` (String)
-- `metric` (Attributes) (see [below for nested schema](#nestedatt--config--metric))
-- `metric_filter` (Attributes) (see [below for nested schema](#nestedatt--config--metric_filter))
-- `sort_dimensions` (String) Sort dimensions. This configuration has no impact when reading a report's data via API. Default value is "desc".
-- `sort_groups` (String) Sort groups. This configuration has no impact when reading a report's data via API. Default value is "asc".
+- `group` (Attributes List) The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by). (see [below for nested schema](#nestedatt--config--group))
+- `include_promotional_credits` (Boolean) Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits). If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
+- `layout` (String) The visualization of the report. Possible values: 'column_chart', 'stacked_column_chart', 'bar_chart', 'stacked_bar_chart', 'line_chart', 'spline_chart'
+- `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric))
+- `metric_filter` (Attributes) The metric filter to limit the report results by value (see [below for nested schema](#nestedatt--config--metric_filter))
+- `sort_dimensions` (String) Sort dimensions. This option has no impact when reading reports via API. Possible values: 'asc', 'desc', 'a_to_z'
+- `sort_groups` (String) Sort groups. This option has no impact when reading reports via API. Possible values: 'asc', 'desc', 'a_to_z'
 - `splits` (Attributes List) The splits to use in the report. (see [below for nested schema](#nestedatt--config--splits))
-- `time_interval` (String)
-- `time_range` (Attributes) (see [below for nested schema](#nestedatt--config--time_range))
+- `time_interval` (String) Time interval. Possible values: 'hour', 'day', 'dayCumSum', 'week', 'isoweek', 'month', 'quarter', 'year', 'week_day'
+- `time_range` (Attributes) Time settings for the report (see [below for nested schema](#nestedatt--config--time_range))
 
 <a id="nestedatt--config--advanced_analysis"></a>
 ### Nested Schema for `config.advanced_analysis`
 
 Optional:
 
-- `forecast` (Boolean) Advanced analysis toggles. Each of these can be set independently
-- `not_trending` (Boolean)
-- `trending_down` (Boolean)
-- `trending_up` (Boolean)
+- `forecast` (Boolean) Whether to enable forecast
+- `not_trending` (Boolean) Whether to enable not trending analysis
+- `trending_down` (Boolean) Whether to enable trending down analysis
+- `trending_up` (Boolean) Whether to enable trending up analysis
 
 
 <a id="nestedatt--config--dimensions"></a>
@@ -128,8 +128,8 @@ Optional:
 
 Required:
 
-- `id` (String)
-- `type` (String)
+- `id` (String) The field to apply to the dimension.
+- `type` (String) Type of the dimension
 
 
 <a id="nestedatt--config--filters"></a>
@@ -137,13 +137,13 @@ Required:
 
 Required:
 
-- `id` (String) What field we are filtering on
-- `type` (String)
-- `values` (List of String) What values to filter on or exclude
+- `id` (String) The field to filter on
+- `type` (String) Type of the filter
+- `values` (List of String) Values to filter on
 
 Optional:
 
-- `inverse` (Boolean) If set, exclude the values
+- `inverse` (Boolean) Set to `true` to exclude the values.
 
 
 <a id="nestedatt--config--group"></a>
@@ -151,29 +151,29 @@ Optional:
 
 Required:
 
-- `id` (String)
-- `type` (String)
+- `id` (String) Dimension ID.
+- `type` (String) Type of the dimension
 
 Optional:
 
-- `limit` (Attributes) (see [below for nested schema](#nestedatt--config--group--limit))
+- `limit` (Attributes) Limit the number of rows (see [below for nested schema](#nestedatt--config--group--limit))
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
 
 Optional:
 
-- `metric` (Attributes) (see [below for nested schema](#nestedatt--config--group--limit--metric))
-- `sort` (String)
-- `value` (Number)
+- `metric` (Attributes) Metric to sort by (see [below for nested schema](#nestedatt--config--group--limit--metric))
+- `sort` (String) Sort order
+- `value` (Number) The number of items to show
 
 <a id="nestedatt--config--group--limit--metric"></a>
 ### Nested Schema for `config.group.limit.metric`
 
 Required:
 
-- `type` (String)
-- `value` (String)
+- `type` (String) Type of the metric
+- `value` (String) Value of the metric
 
 
 
@@ -183,7 +183,7 @@ Required:
 
 Required:
 
-- `type` (String)
+- `type` (String) Type of the metric
 - `value` (String) For basic metrics the value can be one of: ["cost", "usage", "savings" 
 If using custom metrics, the value must refer to an existing custom or calculated metric id
 
@@ -193,17 +193,17 @@ If using custom metrics, the value must refer to an existing custom or calculate
 
 Required:
 
-- `metric` (Attributes) (see [below for nested schema](#nestedatt--config--metric_filter--metric))
-- `operator` (String)
-- `values` (List of Number)
+- `metric` (Attributes) The metric to apply (see [below for nested schema](#nestedatt--config--metric_filter--metric))
+- `operator` (String) Operator to apply
+- `values` (List of Number) Values to filter on
 
 <a id="nestedatt--config--metric_filter--metric"></a>
 ### Nested Schema for `config.metric_filter.metric`
 
 Required:
 
-- `type` (String)
-- `value` (String)
+- `type` (String) Type of the metric
+- `value` (String) Value of the metric
 
 
 
@@ -212,23 +212,23 @@ Required:
 
 Required:
 
-- `id` (String)
-- `include_origin` (Boolean)
-- `mode` (String)
-- `targets` (Attributes List) (see [below for nested schema](#nestedatt--config--splits--targets))
+- `id` (String) ID of the field to split
+- `include_origin` (Boolean) If set, include the origin
+- `mode` (String) Mode of the split
+- `targets` (Attributes List) Targets for the split (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.The only supported value at the moment: "attribution_group"
 
 Optional:
 
-- `origin` (Attributes) (see [below for nested schema](#nestedatt--config--splits--origin))
+- `origin` (Attributes) Origin of the split (see [below for nested schema](#nestedatt--config--splits--origin))
 
 <a id="nestedatt--config--splits--targets"></a>
 ### Nested Schema for `config.splits.targets`
 
 Required:
 
-- `id` (String)
-- `type` (String)
+- `id` (String) Target ID
+- `type` (String) Target Type
 
 Optional:
 
@@ -240,8 +240,8 @@ Optional:
 
 Required:
 
-- `id` (String)
-- `type` (String)
+- `id` (String) Origin ID
+- `type` (String) Origin Type
 
 
 
@@ -250,10 +250,10 @@ Required:
 
 Required:
 
-- `mode` (String)
+- `mode` (String) Time range mode. Possible values: 'last', 'current', 'custom'
 
 Optional:
 
-- `amount` (Number)
-- `include_current` (Boolean)
-- `unit` (String)
+- `amount` (Number) Amount of time units
+- `include_current` (Boolean) Whether to include current time unit
+- `unit` (String) Time unit. Possible values: 'day', 'week'

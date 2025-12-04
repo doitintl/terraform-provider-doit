@@ -3,12 +3,12 @@
 page_title: "doit_attribution Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  
+  Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.
 ---
 
 # doit_attribution (Resource)
 
-
+Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.
 
 ## Example Usage
 
@@ -27,17 +27,17 @@ resource "doit_attribution" "attri" {
 
 ### Required
 
-- `components` (Attributes List) List of Attributions filters (see [below for nested schema](#nestedatt--components))
-- `name` (String) Name of the attribution
+- `components` (Attributes List) List of Attribution filters (see [below for nested schema](#nestedatt--components))
+- `name` (String) Attribution Name
 
 ### Optional
 
-- `description` (String) Description of the attribution
+- `description` (String) Attribution description
 - `formula` (String) Attribution formula (A is first component, B is second component, C is third component, etc.)
 
 ### Read-Only
 
-- `id` (String) Numeric identifier of the attribution
+- `id` (String) attribution ID, identifying the attribution
 - `last_updated` (String) Timestamp of the last Terraform update ofthe attribution group.
 
 <a id="nestedatt--components"></a>
@@ -45,6 +45,17 @@ resource "doit_attribution" "attri" {
 
 Required:
 
-- `key` (String) Key of the type to validate
-- `type` (String) Type of the component (Standard, Labels, Google Kubernetes Engin, Tags etc. )
-- `values` (List of String) Value of the key to validate
+- `key` (String) Key of a dimension. Examples: "service_id", "cloud_provider", "sku_description"
+- `type` (String) Type of the component. Possible values are:
+'datetime'
+'fixed' (Used for AWS account IDs and Google project IDs)
+'optional'
+'label'
+'tag'
+'project_label'
+'system_label'
+'attribution'
+'attribution_group'
+'gke'
+'gke_label'
+- `values` (List of String) Value of the dimension. Examples: "152E-C115-5142", "google-cloud", "team-a"

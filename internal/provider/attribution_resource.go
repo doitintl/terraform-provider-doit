@@ -58,12 +58,14 @@ func (r *attributionResource) Metadata(_ context.Context, req resource.MetadataR
 func (r *attributionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print(" attribution Schema")
 	resp.Schema = schema.Schema{
+		Description:         "Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.",
+		MarkdownDescription: "Attributions allow you to group and filter costs based on dimensions like projects, labels, and more.",
 		DeprecationMessage: `Attributions and the associated resources are deprecated and no longer supported.
 Please consider switching to allocations before upgrading to the next major version of the provider to prevent breaking changes.
 The attribution resource will be removed in the next major version of the provider.`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Numeric identifier of the attribution",
+				Description: "attribution ID, identifying the attribution",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -75,34 +77,43 @@ The attribution resource will be removed in the next major version of the provid
 				Computed: true,
 			},
 			"name": schema.StringAttribute{
-				Description: "Name of the attribution",
+				Description: "Attribution Name",
 				Required:    true,
 			},
 			"description": schema.StringAttribute{
-				Description: "Description of the attribution",
+				Description: "Attribution description",
 				Optional:    true,
 			},
 			"formula": schema.StringAttribute{
-				Description: "Attribution formula (A is first component, " +
-					"B is second component, C is third component, etc.)",
-				Optional: true,
+				Description: "Attribution formula (A is first component, B is second component, C is third component, etc.)",
+				Optional:    true,
 			},
 			"components": schema.ListNestedAttribute{
-				Description: "List of Attributions filters",
+				Description: "List of Attribution filters",
 				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Description: "Type of the component (Standard, " +
-								"Labels, Google Kubernetes Engin, Tags etc. )",
+							Description: `Type of the component. Possible values are:
+'datetime'
+'fixed' (Used for AWS account IDs and Google project IDs)
+'optional'
+'label'
+'tag'
+'project_label'
+'system_label'
+'attribution'
+'attribution_group'
+'gke'
+'gke_label'`,
 							Required: true,
 						},
 						"key": schema.StringAttribute{
-							Description: "Key of the type to validate",
+							Description: "Key of a dimension. Examples: \"service_id\", \"cloud_provider\", \"sku_description\"",
 							Required:    true,
 						},
 						"values": schema.ListAttribute{
-							Description: "Value of the key to validate",
+							Description: "Value of the dimension. Examples: \"152E-C115-5142\", \"google-cloud\", \"team-a\"",
 							Required:    true,
 							ElementType: types.StringType,
 						},
