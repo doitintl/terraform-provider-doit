@@ -1,33 +1,35 @@
+# Create an attribution for the budget
+resource "doit_attribution" "attribution" {
+  name        = "My Attribution"
+  description = "My Attribution Description"
+  formula     = "A"
+  components  = [{ type = "fixed", key = "project_id", values = ["847764956835"] }] # Note that 'project_id' is also used for AWS account IDs
+}
+
+# Create a timestamp for the start period
+resource "time_static" "now" {
+  rfc3339 = "2025-12-01T16:52:23.000Z"
+}
+
 resource "doit_budget" "my_budget" {
-  name        = "test budget terraform"
-  description = "description"
-  alerts = [
-    {
-      percentage = 50
-    },
-    {
-      percentage = 85,
-    },
-    {
-      percentage = 100,
-    }
-  ]
+  name          = "test budget terraform"
+  currency      = "AUD"
+  type          = "recurring"
+  amount        = 100
+  time_interval = "month"
+  start_period  = time_static.now.unix * 1000 # This is a UNIX timestamp in milliseconds
+  # Instead of using a separate resource to get the unix timestamp, you can also use:
+  # provider::time::rfc3339_parse("2025-12-01T16:52:23.000Z") * 1000
   recipients = [
-    "recipient@doit.com"
+    "me@company.com"
   ]
   collaborators = [
     {
-      "email" : "recipient@doit.com",
+      "email" : "me@company.com",
       "role" : "owner"
     },
   ]
   scope = [
-    "Evct3J0DYcyXIVuAXORd"
+    doit_attribution.attribution.id
   ]
-  amount            = 200
-  currency          = "AUD"
-  growth_per_period = 10
-  time_interval     = "month"
-  type              = "recurring"
-  use_prev_spend    = false
 }

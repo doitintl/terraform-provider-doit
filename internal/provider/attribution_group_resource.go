@@ -50,12 +50,14 @@ func (r *attributionGroupResource) Metadata(_ context.Context, req resource.Meta
 func (r *attributionGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	log.Print("attributionGroup Schema")
 	resp.Schema = schema.Schema{
+		Description:         "Attribution Groups allow you to group multiple attributions together.",
+		MarkdownDescription: "Attribution Groups allow you to group multiple attributions together.",
 		DeprecationMessage: `Attribution groups and the associated resources are deprecated and no longer supported.
 Please consider switching to allocation groups before upgrading to the next major version of the provider to prevent breaking changes.
 The attribution group resource will be removed in the next major version of the provider.`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Numeric identifier of the attribution group",
+				Description: "Attribution group ID",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -75,7 +77,7 @@ The attribution group resource will be removed in the next major version of the 
 				Optional:    true,
 			},
 			"attributions": schema.ListAttribute{
-				Description: "list of the attributions IDs",
+				Description: "List of the attributions that are part of the attribution group",
 				Required:    true,
 				ElementType: types.StringType,
 			},

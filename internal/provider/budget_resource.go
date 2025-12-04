@@ -196,7 +196,7 @@ func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	err := r.client.DeleteBudget(ctx, data.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Deleting Budget",
+			"Error Deleting DoiT Budget",
 			"Could not delete budget, unexpected error: "+err.Error(),
 		)
 		return
