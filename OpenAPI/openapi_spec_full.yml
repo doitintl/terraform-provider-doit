@@ -4551,6 +4551,7 @@ components:
     GroupAllocationRule:
       required:
         - action
+        - components
       type: object
       nullable: true
       description: Allocation rule for a group (required for group type allocation)

@@ -30,7 +30,7 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 	req.Type = plan.Type.ValueStringPointer()
 	if !plan.Rule.IsNull() {
 		req.Rule = &models.AllocationRule{
-			Formula: plan.Rule.Formula.ValueStringPointer(),
+			Formula: plan.Rule.Formula.ValueString(),
 		}
 		if !plan.Rule.Components.IsNull() {
 			planComponents := []resource_allocation.ComponentsValue{}
@@ -39,24 +39,21 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 			if diags.HasError() {
 				return req, diags
 			}
-			createComponents := make([]models.AllocationComponent, len(planComponents))
-			req.Rule.Components = &createComponents
+			req.Rule.Components = make([]models.AllocationComponent, len(planComponents))
 			for i := range planComponents {
-				createComponent := models.AllocationComponent{
+				req.Rule.Components[i] = models.AllocationComponent{
 					IncludeNull:      planComponents[i].IncludeNull.ValueBoolPointer(),
 					InverseSelection: planComponents[i].InverseSelection.ValueBoolPointer(),
 					Key:              planComponents[i].Key.ValueString(),
 					Mode:             models.AllocationComponentMode(planComponents[i].Mode.ValueString()),
 					Type:             models.DimensionsTypes(planComponents[i].ComponentsType.ValueString()),
 				}
-				diags = planComponents[i].Values.ElementsAs(ctx, &createComponent.Values, false)
+				diags = planComponents[i].Values.ElementsAs(ctx, &req.Rule.Components[i].Values, false)
 				diags.Append(diags...)
 				if diags.HasError() {
 					return req, diags
 				}
-				createComponents[i] = createComponent
 			}
-			req.Rule.Components = &createComponents
 		}
 	}
 	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
@@ -98,7 +95,7 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 						return req, diags
 					}
 				}
-				rules[i].Components = &createComponents
+				rules[i].Components = createComponents
 			}
 		}
 		req.Rules = &rules
@@ -140,7 +137,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 	if resp.Rule != nil {
 		m := map[string]attr.Value{
-			"formula": types.StringPointerValue(resp.Rule.Formula),
+			"formula": types.StringValue(resp.Rule.Formula),
 		}
 		if resp.Rule.Components != nil {
 			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
@@ -277,13 +274,10 @@ func (c *Client) GetAllocation(ctx context.Context, id string) (*models.Allocati
 	return &allocation, nil
 }
 
-func toAllocationRuleComponentsListValue(ctx context.Context, components *[]models.AllocationComponent) (res basetypes.ListValue, diags diag.Diagnostics) {
-	if components == nil || len(*components) == 0 {
-		return
-	}
+func toAllocationRuleComponentsListValue(ctx context.Context, components []models.AllocationComponent) (res basetypes.ListValue, diags diag.Diagnostics) {
 	var d diag.Diagnostics
-	stateComponents := make([]attr.Value, len(*components))
-	for i, component := range *components {
+	stateComponents := make([]attr.Value, len(components))
+	for i, component := range components {
 		m := map[string]attr.Value{
 			"include_null":      types.BoolPointerValue(component.IncludeNull),
 			"inverse_selection": types.BoolPointerValue(component.InverseSelection),

@@ -789,7 +789,7 @@ type AllocationComponent struct {
 	// InverseSelection If true, all selected values will be excluded.
 	InverseSelection *bool `json:"inverse_selection,omitempty"`
 
-	// Key Key of a dimension. Examples: "billing_account_id", "country", etc.
+	// Key Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
 	Key string `json:"key"`
 
 	// Mode Filter mode to apply
@@ -855,10 +855,10 @@ type AllocationListItemAllocationType string
 // AllocationRule Single allocation rule (required for single type allocation)
 type AllocationRule struct {
 	// Components List of allocation filter components
-	Components *[]AllocationComponent `json:"components,omitempty"`
+	Components []AllocationComponent `json:"components"`
 
 	// Formula Formula for combining components (A is the first component, B is the second one, etc.)
-	Formula *string `json:"formula,omitempty"`
+	Formula string `json:"formula"`
 }
 
 // AnnotationListItem defines model for AnnotationListItem.
@@ -994,7 +994,7 @@ type AttributionAPI struct {
 	// Description Attribution description
 	Description *string `json:"description,omitempty"`
 
-	// Formula Attribution formula (A is first component, B is second component, C is third component, etc.)
+	// Formula Attribution formula (A is the first component, B is the second component, C is the third component, etc.)
 	Formula *string `json:"formula,omitempty"`
 
 	// Id attribution ID, identifying the attribution
@@ -1021,7 +1021,7 @@ type AttributionComponent struct {
 	// Key Key of a dimension. Examples: "service_id", "cloud_provider", "sku_description"
 	Key string `json:"key"`
 
-	// Regexp Filter the dimension values using regular expression.
+	// Regexp Filter the dimension values using a regular expression.
 	Regexp *string         `json:"regexp,omitempty"`
 	Type   DimensionsTypes `json:"type"`
 	Values *[]string       `json:"values,omitempty"`
@@ -1162,7 +1162,7 @@ type BlockingResources struct {
 
 // Budget defines model for Budget.
 type Budget struct {
-	// Alerts List of up to three thresholds defined as percentage of amount
+	// Alerts List of up to three thresholds defined as a percentage of amount
 	Alerts *[]ExternalBudgetAlert `json:"alerts,omitempty"`
 
 	// Amount Budget period amount
@@ -1200,13 +1200,13 @@ type Budget struct {
 	// RecipientsSlackChannels List of slack channels to notify when reaching alert threshold
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scope List of attributions that defines that budget scope
+	// Scope List of attributions that defines the budget scope
 	Scope []string `json:"scope"`
 
 	// StartPeriod Budget start Date, in milliseconds since the epoch.
 	StartPeriod int64 `json:"startPeriod"`
 
-	// TimeInterval Recurring budget interval can be on of: ["day", "week", "month", "quarter","year"]
+	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
 	TimeInterval string `json:"timeInterval"`
 
 	// Type budget type can be one of: ["fixed", "recurring"]
@@ -1221,7 +1221,7 @@ type BudgetPublic string
 
 // BudgetAPI defines model for BudgetAPI.
 type BudgetAPI struct {
-	// Alerts List of up to three thresholds defined as percentage of amount
+	// Alerts List of up to three thresholds defined as a percentage of amount
 	Alerts *[]ExternalBudgetAlert `json:"alerts,omitempty"`
 
 	// Amount Budget period amount
@@ -1261,8 +1261,11 @@ type BudgetAPI struct {
 	// Recipients List of emails to notify when reaching alert threshold
 	Recipients *[]string `json:"recipients,omitempty"`
 
-	// RecipientsSlackChannels List of slack channels to notify when reaching alert threshold
+	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
+
+	// Scope List of attributions that defines the budget scope
+	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
 	Scopes []Scope `json:"scopes"`
@@ -1273,7 +1276,7 @@ type BudgetAPI struct {
 	// StartPeriod Budget start Date (in UNIX timestamp)
 	StartPeriod int64 `json:"startPeriod"`
 
-	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month","quarter","year"]
+	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter" ,"year"]
 	TimeInterval string `json:"timeInterval"`
 
 	// Type budget type can be one of: ["fixed", "recurring"]
@@ -1296,7 +1299,7 @@ type BudgetCreateUpdateAlert struct {
 
 // BudgetCreateUpdateRequest defines model for BudgetCreateUpdateRequest.
 type BudgetCreateUpdateRequest struct {
-	// Alerts List of up to three thresholds defined as percentage of amount
+	// Alerts List of up to three thresholds defined as a percentage of the amount
 	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
 
 	// Amount Budget period amount
@@ -1327,11 +1330,15 @@ type BudgetCreateUpdateRequest struct {
 	// Recipients List of emails to notify when reaching alert threshold
 	Recipients *[]string `json:"recipients,omitempty"`
 
-	// RecipientsSlackChannels List of slack channels to notify when reaching alert threshold
+	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scope List of attributions that defines that budget scope
+	// Scope List of attributions that define the budget scope.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Scope *[]string `json:"scope,omitempty"`
+
+	// Scopes The filters selected define the scope of the budget.
+	Scopes *[]Scope `json:"scopes,omitempty"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -1339,7 +1346,7 @@ type BudgetCreateUpdateRequest struct {
 	// StartPeriod Budget start Date
 	StartPeriod *int64 `json:"startPeriod,omitempty"`
 
-	// TimeInterval Recurring budget interval can be on of: ["day", "week", "month", "quarter","year"]
+	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
 	TimeInterval *string `json:"timeInterval,omitempty"`
 
 	// Type budget type can be one of: ["fixed", "recurring"]
@@ -1364,11 +1371,17 @@ type BudgetListItem struct {
 	ForecastedUtilizationDate *int64            `json:"forecastedUtilizationDate,omitempty"`
 	Id                        *string           `json:"id,omitempty"`
 	Owner                     *string           `json:"owner,omitempty"`
-	Scope                     *[]string         `json:"scope,omitempty"`
-	StartPeriod               *int64            `json:"startPeriod,omitempty"`
-	TimeInterval              *string           `json:"timeInterval,omitempty"`
-	UpdateTime                *int64            `json:"updateTime,omitempty"`
-	Url                       *string           `json:"url,omitempty"`
+
+	// Scope List of attributions that define the budget scope.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Scope *[]string `json:"scope,omitempty"`
+
+	// Scopes The filters selected define the scope of the budget.
+	Scopes       *[]Scope `json:"scopes,omitempty"`
+	StartPeriod  *int64   `json:"startPeriod,omitempty"`
+	TimeInterval *string  `json:"timeInterval,omitempty"`
+	UpdateTime   *int64   `json:"updateTime,omitempty"`
+	Url          *string  `json:"url,omitempty"`
 }
 
 // CloudIncidentListItem defines model for CloudIncidentListItem.
@@ -1379,7 +1392,7 @@ type CloudIncidentListItem struct {
 	// Id cloud incident id, uniquely identifying the cloud incident
 	Id *string `json:"id,omitempty"`
 
-	// Platform The cloud Platform
+	// Platform The Cloud Platform
 	Platform *CloudIncidentListItemPlatform `json:"platform,omitempty"`
 
 	// Product The name of the product affected by the cloud incident
@@ -1388,11 +1401,11 @@ type CloudIncidentListItem struct {
 	// Status The Status of the issue
 	Status *CloudIncidentListItemStatus `json:"status,omitempty"`
 
-	// Title Cloud incident name as provided by cloud platform vendor
+	// Title Cloud incident name as provided by the cloud platform vendor
 	Title *string `json:"title,omitempty"`
 }
 
-// CloudIncidentListItemPlatform The cloud Platform
+// CloudIncidentListItemPlatform The Cloud Platform
 type CloudIncidentListItemPlatform string
 
 // CloudIncidentListItemStatus The Status of the issue
@@ -1765,7 +1778,7 @@ type GroupAllocationRule struct {
 	Action GroupAllocationRuleAction `json:"action"`
 
 	// Components List of allocation filter components (required for 'create' or 'update' action)
-	Components *[]AllocationComponent `json:"components,omitempty"`
+	Components []AllocationComponent `json:"components"`
 
 	// Description Description for the allocation rule
 	Description *string `json:"description,omitempty"`
@@ -1947,7 +1960,7 @@ type Report struct {
 	// Id Report id.
 	Id *string `json:"id,omitempty"`
 
-	// Owner The report owner in a form of user@domain.com
+	// Owner The report owner in the form of user@domain.com
 	Owner *string `json:"owner,omitempty"`
 
 	// ReportName The name of the report.
@@ -2161,7 +2174,7 @@ type TicketListItem struct {
 	// CreateTime The time when this ticket was created, in milliseconds since the epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Id ticket id, identifying the report (e.g. "33234")
+	// Id ticket id, identifying the report (e.g., "33234")
 	Id *int64 `json:"id,omitempty"`
 
 	// IsPublic is ticket public
@@ -2173,7 +2186,7 @@ type TicketListItem struct {
 	// Product Ticket product
 	Product *string `json:"product,omitempty"`
 
-	// Requester The ticket requester in a form of user@domain.com
+	// Requester The ticket requester in the form of user@domain.com
 	Requester *string `json:"requester,omitempty"`
 
 	// Severity Ticket severity
@@ -2704,7 +2717,7 @@ type QueryJSONBody struct {
 
 // GetReportParams defines parameters for GetReport.
 type GetReportParams struct {
-	// TimeRange An optional parameter to override the report time settings. Value should represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
+	// TimeRange An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
 	TimeRange *string `form:"timeRange,omitempty" json:"timeRange,omitempty"`
 
 	// StartDate An optional parameter to override the report time settings. Must be provided together with `endDate`. Format: yyyy-mm-dd
