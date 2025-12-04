@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -268,6 +269,7 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"start_period": schema.Int64Attribute{
 				Description: "Budget start Date, in milliseconds since the epoch.",
 				Required:    true,
+				Validators:  []validator.Int64{budgetStartPeriodValidator{}},
 			},
 			"time_interval": schema.StringAttribute{
 				Optional: true,
@@ -275,6 +277,7 @@ func (r *budgetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Default:  stringdefault.StaticString(""),
 				Description: "Recurring budget interval can be on of:" +
 					"[\"day\", \"week\", \"month\", \"quarter\",\"year]\"",
+				Validators: []validator.String{budgetTimeIntervalValidator{}},
 			},
 			"type": schema.StringAttribute{
 				Required: true,
