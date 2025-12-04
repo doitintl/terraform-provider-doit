@@ -1764,7 +1764,7 @@ type GroupAllocationRule struct {
 	// Action Action to perform with this rule
 	Action GroupAllocationRuleAction `json:"action"`
 
-	// Components List of allocation filter components
+	// Components List of allocation filter components (required for 'create' or 'update' action)
 	Components *[]AllocationComponent `json:"components,omitempty"`
 
 	// Description Description for the allocation rule

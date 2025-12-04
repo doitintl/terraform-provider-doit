@@ -42,14 +42,14 @@ resource "doit_allocation_group" "this" {
   name = "My Allocation Group"
   rules = [
     {
-      action = "select"
-      id     = doit_allocation.name.id
+      action     = "select"
+      id         = doit_allocation.name.id
       components = doit_allocation.name.rule.components
       formula    = doit_allocation.name.rule.formula
     },
     {
-      action = "select"
-      id     = doit_allocation.name2.id
+      action     = "select"
+      id         = doit_allocation.name2.id
       components = doit_allocation.name2.rule.components
       formula    = doit_allocation.name2.rule.formula
     },
