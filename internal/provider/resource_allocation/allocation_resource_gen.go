@@ -21,13 +21,11 @@ import (
 
 func AllocationResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
-		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the allocation (e.g., 'preset', 'custom').",
-				MarkdownDescription: "Type of the allocation (e.g., 'preset', 'custom').",
+				Description:         "Type of allocation (single or group)",
+				MarkdownDescription: "Type of allocation (single or group)",
 			},
 			"anomaly_detection": schema.BoolAttribute{
 				Computed:            true,
@@ -36,24 +34,23 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
-				MarkdownDescription: "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				Description:         "The time when the allocation was created (in UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation was created (in UNIX timestamp).",
 			},
 			"description": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "A description of the allocation.",
-				MarkdownDescription: "A description of the allocation.",
+				Required:            true,
+				Description:         "Allocation description",
+				MarkdownDescription: "Allocation description",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Allocation ID",
-				MarkdownDescription: "Allocation ID",
+				Description:         "ID of the created allocation",
+				MarkdownDescription: "ID of the created allocation",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the allocation. Must be unique within the organization.",
-				MarkdownDescription: "The name of the allocation. Must be unique within the organization.",
+				Description:         "Allocation name",
+				MarkdownDescription: "Allocation name",
 			},
 			"rule": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -76,8 +73,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Required:            true,
-									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
-									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
+									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
@@ -112,10 +109,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"values": schema.ListAttribute{
-									ElementType:         types.StringType,
-									Required:            true,
-									Description:         "Values to filter on",
-									MarkdownDescription: "Values to filter on",
+									ElementType: types.StringType,
+									Required:    true,
 								},
 							},
 							CustomType: ComponentsType{
@@ -124,12 +119,14 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 						},
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Description:         "List of allocation filter components",
 						MarkdownDescription: "List of allocation filter components",
 					},
 					"formula": schema.StringAttribute{
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
 						MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
 					},
@@ -139,19 +136,145 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: RuleValue{}.AttributeTypes(ctx),
 					},
 				},
-				Required:            true,
-				Description:         "The configuration that defines the allocation rules and matching conditions.",
-				MarkdownDescription: "The configuration that defines the allocation rules and matching conditions.",
+				Optional:            true,
+				Computed:            true,
+				Description:         "Single allocation rule (required for single type allocation)",
+				MarkdownDescription: "Single allocation rule (required for single type allocation)",
+			},
+			"rules": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"action": schema.StringAttribute{
+							Required:            true,
+							Description:         "Action to perform with this rule",
+							MarkdownDescription: "Action to perform with this rule",
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									"create",
+									"update",
+									"select",
+								),
+							},
+						},
+						"components": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"include_null": schema.BoolAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "Include null values",
+										MarkdownDescription: "Include null values",
+										Default:             booldefault.StaticBool(false),
+									},
+									"inverse_selection": schema.BoolAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "If true, all selected values will be excluded.",
+										MarkdownDescription: "If true, all selected values will be excluded.",
+										Default:             booldefault.StaticBool(false),
+									},
+									"key": schema.StringAttribute{
+										Required:            true,
+										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.",
+									},
+									"mode": schema.StringAttribute{
+										Required:            true,
+										Description:         "Filter mode to apply",
+										MarkdownDescription: "Filter mode to apply",
+										Validators: []validator.String{
+											stringvalidator.OneOf(
+												"is",
+												"starts_with",
+												"ends_with",
+												"contains",
+												"regexp",
+											),
+										},
+									},
+									"type": schema.StringAttribute{
+										Required: true,
+										Validators: []validator.String{
+											stringvalidator.OneOf(
+												"datetime",
+												"fixed",
+												"optional",
+												"label",
+												"tag",
+												"project_label",
+												"system_label",
+												"attribution",
+												"attribution_group",
+												"gke",
+												"gke_label",
+											),
+										},
+									},
+									"values": schema.ListAttribute{
+										ElementType: types.StringType,
+										Required:    true,
+									},
+								},
+								CustomType: ComponentsType{
+									ObjectType: types.ObjectType{
+										AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
+									},
+								},
+							},
+							Optional:            true,
+							Computed:            true,
+							Description:         "List of allocation filter components (required for 'create' or 'update' action)",
+							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action)",
+						},
+						"description": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "Description for the allocation rule",
+							MarkdownDescription: "Description for the allocation rule",
+						},
+						"formula": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
+							MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
+						},
+						"id": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "ID of existing allocation (required for 'update' or 'select' action)",
+							MarkdownDescription: "ID of existing allocation (required for 'update' or 'select' action)",
+						},
+						"name": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "Name for the allocation rule",
+							MarkdownDescription: "Name for the allocation rule",
+						},
+					},
+					CustomType: RulesType{
+						ObjectType: types.ObjectType{
+							AttrTypes: RulesValue{}.AttributeTypes(ctx),
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The type of the allocation. Can be 'preset' or 'custom'.",
-				MarkdownDescription: "The type of the allocation. Can be 'preset' or 'custom'.",
+				Description:         "Type of the created allocation",
+				MarkdownDescription: "Type of the created allocation",
+			},
+			"unallocated_costs": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Custom label for any values that do not fit into allocation (required for group type allocation)",
+				MarkdownDescription: "Custom label for any values that do not fit into allocation (required for group type allocation)",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the allocation was last updated, in milliseconds since the epoch.",
-				MarkdownDescription: "The time when the allocation was last updated, in milliseconds since the epoch.",
+				Description:         "Last time the allocation was modified (in UNIX timestamp).",
+				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
 			},
 		},
 	}
@@ -165,7 +288,9 @@ type AllocationModel struct {
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Rule             RuleValue    `tfsdk:"rule"`
+	Rules            types.List   `tfsdk:"rules"`
 	Type             types.String `tfsdk:"type"`
+	UnallocatedCosts types.String `tfsdk:"unallocated_costs"`
 	UpdateTime       types.Int64  `tfsdk:"update_time"`
 }
 
@@ -1210,5 +1335,639 @@ func (v ComponentsValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+	}
+}
+
+var _ basetypes.ObjectTypable = RulesType{}
+
+type RulesType struct {
+	basetypes.ObjectType
+}
+
+func (t RulesType) Equal(o attr.Type) bool {
+	other, ok := o.(RulesType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RulesType) String() string {
+	return "RulesType"
+}
+
+func (t RulesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	actionAttribute, ok := attributes["action"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`action is missing from object`)
+
+		return nil, diags
+	}
+
+	actionVal, ok := actionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
+	}
+
+	componentsAttribute, ok := attributes["components"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`components is missing from object`)
+
+		return nil, diags
+	}
+
+	componentsVal, ok := componentsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`components expected to be basetypes.ListValue, was: %T`, componentsAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return nil, diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
+	}
+
+	formulaAttribute, ok := attributes["formula"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`formula is missing from object`)
+
+		return nil, diags
+	}
+
+	formulaVal, ok := formulaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`formula expected to be basetypes.StringValue, was: %T`, formulaAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RulesValue{
+		Action:      actionVal,
+		Components:  componentsVal,
+		Description: descriptionVal,
+		Formula:     formulaVal,
+		Id:          idVal,
+		Name:        nameVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRulesValueNull() RulesValue {
+	return RulesValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRulesValueUnknown() RulesValue {
+	return RulesValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRulesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RulesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RulesValue Attribute Value",
+				"While creating a RulesValue value, a missing attribute value was detected. "+
+					"A RulesValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RulesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RulesValue Attribute Type",
+				"While creating a RulesValue value, an invalid attribute value was detected. "+
+					"A RulesValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RulesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RulesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RulesValue Attribute Value",
+				"While creating a RulesValue value, an extra attribute value was detected. "+
+					"A RulesValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RulesValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRulesValueUnknown(), diags
+	}
+
+	actionAttribute, ok := attributes["action"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`action is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	actionVal, ok := actionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
+	}
+
+	componentsAttribute, ok := attributes["components"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`components is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	componentsVal, ok := componentsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`components expected to be basetypes.ListValue, was: %T`, componentsAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
+	}
+
+	formulaAttribute, ok := attributes["formula"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`formula is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	formulaVal, ok := formulaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`formula expected to be basetypes.StringValue, was: %T`, formulaAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRulesValueUnknown(), diags
+	}
+
+	return RulesValue{
+		Action:      actionVal,
+		Components:  componentsVal,
+		Description: descriptionVal,
+		Formula:     formulaVal,
+		Id:          idVal,
+		Name:        nameVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRulesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RulesValue {
+	object, diags := NewRulesValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRulesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RulesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRulesValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRulesValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRulesValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRulesValueMust(RulesValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RulesType) ValueType(ctx context.Context) attr.Value {
+	return RulesValue{}
+}
+
+var _ basetypes.ObjectValuable = RulesValue{}
+
+type RulesValue struct {
+	Action      basetypes.StringValue `tfsdk:"action"`
+	Components  basetypes.ListValue   `tfsdk:"components"`
+	Description basetypes.StringValue `tfsdk:"description"`
+	Formula     basetypes.StringValue `tfsdk:"formula"`
+	Id          basetypes.StringValue `tfsdk:"id"`
+	Name        basetypes.StringValue `tfsdk:"name"`
+	state       attr.ValueState
+}
+
+func (v RulesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 6)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["action"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["components"] = basetypes.ListType{
+		ElemType: ComponentsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["formula"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 6)
+
+		val, err = v.Action.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["action"] = val
+
+		val, err = v.Components.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["components"] = val
+
+		val, err = v.Description.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["description"] = val
+
+		val, err = v.Formula.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["formula"] = val
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RulesValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RulesValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RulesValue) String() string {
+	return "RulesValue"
+}
+
+func (v RulesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	components := types.ListValueMust(
+		ComponentsType{
+			basetypes.ObjectType{
+				AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
+			},
+		},
+		v.Components.Elements(),
+	)
+
+	if v.Components.IsNull() {
+		components = types.ListNull(
+			ComponentsType{
+				basetypes.ObjectType{
+					AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
+	if v.Components.IsUnknown() {
+		components = types.ListUnknown(
+			ComponentsType{
+				basetypes.ObjectType{
+					AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
+				},
+			},
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"action": basetypes.StringType{},
+		"components": basetypes.ListType{
+			ElemType: ComponentsValue{}.Type(ctx),
+		},
+		"description": basetypes.StringType{},
+		"formula":     basetypes.StringType{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"action":      v.Action,
+			"components":  components,
+			"description": v.Description,
+			"formula":     v.Formula,
+			"id":          v.Id,
+			"name":        v.Name,
+		})
+
+	return objVal, diags
+}
+
+func (v RulesValue) Equal(o attr.Value) bool {
+	other, ok := o.(RulesValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Action.Equal(other.Action) {
+		return false
+	}
+
+	if !v.Components.Equal(other.Components) {
+		return false
+	}
+
+	if !v.Description.Equal(other.Description) {
+		return false
+	}
+
+	if !v.Formula.Equal(other.Formula) {
+		return false
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	return true
+}
+
+func (v RulesValue) Type(ctx context.Context) attr.Type {
+	return RulesType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RulesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"action": basetypes.StringType{},
+		"components": basetypes.ListType{
+			ElemType: ComponentsValue{}.Type(ctx),
+		},
+		"description": basetypes.StringType{},
+		"formula":     basetypes.StringType{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
 	}
 }
