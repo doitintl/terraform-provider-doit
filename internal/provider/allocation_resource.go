@@ -6,6 +6,7 @@ import (
 
 	"terraform-provider-doit/internal/provider/resource_allocation"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -17,6 +18,13 @@ type (
 	allocationResourceModel struct {
 		resource_allocation.AllocationModel
 	}
+)
+
+// Ensure the implementation satisfies the expected interfaces.
+var (
+	_ resource.Resource                = &allocationResource{}
+	_ resource.ResourceWithConfigure   = &allocationResource{}
+	_ resource.ResourceWithImportState = &allocationResource{}
 )
 
 func NewAllocationResource() resource.Resource {
@@ -39,6 +47,10 @@ func (r *allocationResource) Configure(_ context.Context, req resource.Configure
 	}
 
 	r.client = client
+}
+
+func (r *allocationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func (r *allocationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {

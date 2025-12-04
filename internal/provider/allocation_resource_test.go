@@ -51,6 +51,11 @@ func TestAccAllocation(t *testing.T) {
 						knownvalue.StringExact("single")),
 				},
 			},
+			{
+				ResourceName:      "doit_allocation.this",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
