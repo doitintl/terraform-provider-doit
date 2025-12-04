@@ -29,7 +29,7 @@
 								{
 									"name": "components",
 									"list_nested": {
-										"computed_optional_required": "computed_optional",
+										"computed_optional_required": "required",
 										"nested_object": {
 											"attributes": [
 												{
@@ -56,7 +56,7 @@
 													"name": "key",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc."
+														"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
 													}
 												},
 												{
@@ -113,7 +113,7 @@
 								{
 									"name": "formula",
 									"string": {
-										"computed_optional_required": "computed_optional",
+										"computed_optional_required": "required",
 										"description": "Formula for combining components (A is the first component, B is the second one, etc.)"
 									}
 								}
@@ -176,7 +176,7 @@
 														"name": "key",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc."
+															"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
 														}
 													},
 													{
