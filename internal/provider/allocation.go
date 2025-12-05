@@ -207,7 +207,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 				components = *rule.Components
 			}
 
-			if (formula == "" || components == nil) && rule.Id != nil {
+			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
 				fullAlloc, err := r.client.GetAllocation(ctx, *rule.Id)
 				if err == nil {
