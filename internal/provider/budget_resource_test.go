@@ -64,7 +64,7 @@ func TestAccBudget(t *testing.T) {
 func budgetStartPeriod() string {
 	return `
 locals {
-  start_period = provider::time::rfc3339_parse(timeadd(timestamp(), "-144h")).unix * 1000
+  start_period = provider::time::rfc3339_parse("2025-11-01T00:00:00Z").unix * 1000
 }
 
 output "start_period" {

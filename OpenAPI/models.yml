@@ -1,4 +1,0 @@
-package: models
-output: internal/doit/models/models_gen.go
-generate:
-  models: true
