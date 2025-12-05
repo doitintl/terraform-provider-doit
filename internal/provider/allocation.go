@@ -30,7 +30,6 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 	req.Name = plan.Name.ValueStringPointer()
 	req.Type = plan.Type.ValueStringPointer()
 	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() {
-		log.Println("plan.Rule:", plan.Rule)
 		req.Rule = &models.AllocationRule{
 			Formula: plan.Rule.Formula.ValueString(),
 		}
@@ -260,7 +259,6 @@ func (c *Client) CreateAllocation(ctx context.Context, allocation models.Allocat
 	if err != nil {
 		return nil, err
 	}
-	log.Println("allocation body:", string(rb))
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations", c.HostURL)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
@@ -339,7 +337,6 @@ func (c *Client) GetAllocation(ctx context.Context, id string) (*models.Allocati
 	if err != nil {
 		return nil, err
 	}
-	log.Println("allocation response:", string(body))
 	return &allocation, nil
 }
 
