@@ -394,11 +394,6 @@ const (
 	None       RunReportResultResultMlFeatures = "none"
 )
 
-// Defines values for SingleAllocationAllocationType.
-const (
-	SingleAllocationAllocationTypeSingle SingleAllocationAllocationType = "single"
-)
-
 // Defines values for TicketExtAPIPlatform.
 const (
 	TicketExtAPIPlatformAmazonWebServices   TicketExtAPIPlatform = "amazon_web_services"
@@ -1785,58 +1780,7 @@ type Group struct {
 	Type  *DimensionsTypes `json:"type,omitempty"`
 }
 
-// GroupAllocation defines model for GroupAllocation.
-type GroupAllocation struct {
-	// AllocationType Type of allocation (group)
-	AllocationType *GroupAllocationAllocationType `json:"allocationType,omitempty"`
-
-	// Cloud Cloud doit
-	Cloud *string `json:"cloud"`
-
-	// Description Allocation group description
-	Description *string `json:"description,omitempty"`
-
-	// Id Allocation group ID
-	Id *string `json:"id,omitempty"`
-
-	// Name Allocation group name
-	Name *string `json:"name,omitempty"`
-
-	// Rules List of allocation rules in this group
-	Rules *[]AllocationListItem `json:"rules,omitempty"`
-
-	// TimeCreated The time when this allocation group was created (in UNIX timestamp).
-	TimeCreated *int64 `json:"timeCreated,omitempty"`
-
-	// TimeModified Last time the allocation group was modified (in UNIX timestamp).
-	TimeModified *int64 `json:"timeModified,omitempty"`
-
-	// Type Type of allocation (preset or custom)
-	Type *string `json:"type,omitempty"`
-
-	// UnallocatedCosts Custom label for any values that do not fit into attributions
-	UnallocatedCosts *string `json:"unallocatedCosts"`
-}
-
-// GroupAllocationAllocationType Type of allocation (group)
-type GroupAllocationAllocationType string
-
-// GroupAllocationRequest defines model for GroupAllocationRequest.
-type GroupAllocationRequest struct {
-	// Description Allocation group description
-	Description *string `json:"description,omitempty"`
-
-	// Name Allocation group name
-	Name string `json:"name"`
-
-	// Rules Array of allocation rules for this group
-	Rules []GroupAllocationRule `json:"rules"`
-
-	// UnallocatedCosts Custom label for any values that do not fit into attributions
-	UnallocatedCosts *string `json:"unallocatedCosts"`
-}
-
-// GroupAllocationRule defines model for GroupAllocationRule.
+// GroupAllocationRule Allocation rule for a group (required for group type allocation)
 type GroupAllocationRule struct {
 	// Action Action to perform with this rule
 	Action GroupAllocationRuleAction `json:"action"`
@@ -2587,6 +2531,31 @@ type ListAllocationsParamsSortBy string
 // ListAllocationsParamsSortOrder defines parameters for ListAllocations.
 type ListAllocationsParamsSortOrder string
 
+// ListAnnotationsParams defines parameters for ListAnnotations.
+type ListAnnotationsParams struct {
+	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page   of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// Filter An expression for filtering the results.
+	// Valid fields: **content**, **timestamp**, **labels**.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// SortBy A field by which the results will be sorted.
+	SortBy *ListAnnotationsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort order can be ascending or descending.
+	SortOrder *ListAnnotationsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+}
+
+// ListAnnotationsParamsSortBy defines parameters for ListAnnotations.
+type ListAnnotationsParamsSortBy string
+
+// ListAnnotationsParamsSortOrder defines parameters for ListAnnotations.
+type ListAnnotationsParamsSortOrder string
+
 // ListAttributionGroupsParams defines parameters for ListAttributionGroups.
 type ListAttributionGroupsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -2963,17 +2932,17 @@ type CreateAlertJSONRequestBody = AlertRequest
 // UpdateAlertJSONRequestBody defines body for UpdateAlert for application/json ContentType.
 type UpdateAlertJSONRequestBody = AlertUpdateRequest
 
-// CreateGroupAllocationJSONRequestBody defines body for CreateAllocation for application/json ContentType.
-type CreateGroupAllocationJSONRequestBody = GroupAllocationRequest
+// CreateAllocationJSONRequestBody defines body for CreateAllocation for application/json ContentType.
+type CreateAllocationJSONRequestBody = CreateAllocationRequest
 
-// UpdateGroupAllocationJSONRequestBody defines body for UpdateAllocation for application/json ContentType.
-type UpdateGroupAllocationJSONRequestBody = GroupAllocationRequest
+// UpdateAllocationJSONRequestBody defines body for UpdateAllocation for application/json ContentType.
+type UpdateAllocationJSONRequestBody = UpdateAllocationRequest
 
-// CreateSingleAllocationJSONRequestBody defines body for CreateAllocation for application/json ContentType.
-type CreateSingleAllocationJSONRequestBody = SingleAllocationRequest
+// CreateAnnotationJSONRequestBody defines body for CreateAnnotation for application/json ContentType.
+type CreateAnnotationJSONRequestBody = CreateAnnotationRequest
 
-// UpdateSingleAllocationJSONRequestBody defines body for UpdateAllocation for application/json ContentType.
-type UpdateSingleAllocationJSONRequestBody = SingleAllocationRequest
+// UpdateAnnotationJSONRequestBody defines body for UpdateAnnotation for application/json ContentType.
+type UpdateAnnotationJSONRequestBody = UpdateAnnotationRequest
 
 // CreateAttributionGroupJSONRequestBody defines body for CreateAttributionGroup for application/json ContentType.
 type CreateAttributionGroupJSONRequestBody = AttributionGroupRequest
