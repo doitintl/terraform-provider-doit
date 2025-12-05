@@ -2829,7 +2829,7 @@ type DatahubEventsCSVFileMultipartBody struct {
 	// File The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
 	File *openapi_types.File `json:"file,omitempty"`
 
-	// Provider The identifier of the data doit. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
+	// Provider The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
 	Provider *string `json:"provider,omitempty"`
 }
 
@@ -2855,7 +2855,7 @@ type DatahubEventsJSONBody struct {
 			Value *float64 `json:"value,omitempty"`
 		} `json:"metrics,omitempty"`
 
-		// Provider The identifier of the data doit. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
+		// Provider The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
 		Provider string `json:"provider"`
 
 		// Time The timestamp of the event in RFC3339 format.
@@ -3093,9 +3093,7 @@ type ClientInterface interface {
 	// CreateAllocationWithBody request with any body
 	CreateAllocationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateGroupAllocation(ctx context.Context, body CreateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateSingleAllocation(ctx context.Context, body CreateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateAllocation(ctx context.Context, body CreateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteAllocation request
 	DeleteAllocation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3106,9 +3104,26 @@ type ClientInterface interface {
 	// UpdateAllocationWithBody request with any body
 	UpdateAllocationWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateGroupAllocation(ctx context.Context, id string, body UpdateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateAllocation(ctx context.Context, id string, body UpdateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateSingeAllocation(ctx context.Context, id string, body UpdateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListAnnotations request
+	ListAnnotations(ctx context.Context, params *ListAnnotationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateAnnotationWithBody request with any body
+	CreateAnnotationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateAnnotation(ctx context.Context, body CreateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAnnotation request
+	DeleteAnnotation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAnnotation request
+	GetAnnotation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateAnnotationWithBody request with any body
+	UpdateAnnotationWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateAnnotation(ctx context.Context, id string, body UpdateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListAttributionGroups request
 	ListAttributionGroups(ctx context.Context, params *ListAttributionGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3404,20 +3419,8 @@ func (c *Client) CreateAllocationWithBody(ctx context.Context, contentType strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateGroupAllocation(ctx context.Context, body CreateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateGroupAllocationRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateSingleAllocation(ctx context.Context, body CreateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateSingleAllocationRequest(c.Server, body)
+func (c *Client) CreateAllocation(ctx context.Context, body CreateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAllocationRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3464,8 +3467,8 @@ func (c *Client) UpdateAllocationWithBody(ctx context.Context, id string, conten
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateGroupAllocation(ctx context.Context, id string, body UpdateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateGroupAllocationRequest(c.Server, id, body)
+func (c *Client) UpdateAllocation(ctx context.Context, id string, body UpdateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAllocationRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3476,8 +3479,80 @@ func (c *Client) UpdateGroupAllocation(ctx context.Context, id string, body Upda
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateSingeAllocation(ctx context.Context, id string, body UpdateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateSingleAllocationRequest(c.Server, id, body)
+func (c *Client) ListAnnotations(ctx context.Context, params *ListAnnotationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAnnotationsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAnnotationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAnnotationRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAnnotation(ctx context.Context, body CreateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAnnotationRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAnnotation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAnnotationRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAnnotation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAnnotationRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAnnotationWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAnnotationRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAnnotation(ctx context.Context, id string, body UpdateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAnnotationRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4673,19 +4748,8 @@ func NewListAllocationsRequest(server string, params *ListAllocationsParams) (*h
 	return req, nil
 }
 
-// NewCreateGroupAllocationRequest calls the generic CreateAllocation builder with application/json body
-func NewCreateGroupAllocationRequest(server string, body CreateGroupAllocationJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateAllocationRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewCreateSingleAllocationRequest calls the generic CreateAllocation builder with application/json body
-func NewCreateSingleAllocationRequest(server string, body CreateSingleAllocationJSONRequestBody) (*http.Request, error) {
+// NewCreateAllocationRequest calls the generic CreateAllocation builder with application/json body
+func NewCreateAllocationRequest(server string, body CreateAllocationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -4792,19 +4856,8 @@ func NewGetAllocationRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewUpdateGroupAllocationRequest calls the generic UpdateAllocation builder with application/json body
-func NewUpdateGroupAllocationRequest(server string, id string, body UpdateGroupAllocationJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewUpdateAllocationRequestWithBody(server, id, "application/json", bodyReader)
-}
-
-// NewUpdateSingleAllocationRequest calls the generic UpdateAllocation builder with application/json body
-func NewUpdateSingleAllocationRequest(server string, id string, body UpdateSingleAllocationJSONRequestBody) (*http.Request, error) {
+// NewUpdateAllocationRequest calls the generic UpdateAllocation builder with application/json body
+func NewUpdateAllocationRequest(server string, id string, body UpdateAllocationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -4831,6 +4884,274 @@ func NewUpdateAllocationRequestWithBody(server string, id string, contentType st
 	}
 
 	operationPath := fmt.Sprintf("/analytics/v1/allocations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListAnnotationsRequest generates requests for ListAnnotations
+func NewListAnnotationsRequest(server string, params *ListAnnotationsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/annotations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "maxResults", runtime.ParamLocationQuery, *params.MaxResults); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageToken", runtime.ParamLocationQuery, *params.PageToken); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortBy", runtime.ParamLocationQuery, *params.SortBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortOrder", runtime.ParamLocationQuery, *params.SortOrder); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateAnnotationRequest calls the generic CreateAnnotation builder with application/json body
+func NewCreateAnnotationRequest(server string, body CreateAnnotationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateAnnotationRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateAnnotationRequestWithBody generates requests for CreateAnnotation with any type of body
+func NewCreateAnnotationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/annotations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAnnotationRequest generates requests for DeleteAnnotation
+func NewDeleteAnnotationRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/annotations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAnnotationRequest generates requests for GetAnnotation
+func NewGetAnnotationRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/annotations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateAnnotationRequest calls the generic UpdateAnnotation builder with application/json body
+func NewUpdateAnnotationRequest(server string, id string, body UpdateAnnotationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateAnnotationRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateAnnotationRequestWithBody generates requests for UpdateAnnotation with any type of body
+func NewUpdateAnnotationRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/annotations/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -7654,31 +7975,37 @@ type ClientWithResponsesInterface interface {
 	// CreateAllocationWithBodyWithResponse request with any body
 	CreateAllocationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAllocationResp, error)
 
-	CreateGroupAllocationWithResponse(ctx context.Context, body CreateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAllocationResp, error)
+	CreateAllocationWithResponse(ctx context.Context, body CreateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAllocationResp, error)
 
-	CreateSingleAllocationWithResponse(ctx context.Context, body CreateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAllocationResp, error)
+	// DeleteAllocationWithResponse request
+	DeleteAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteAllocationResp, error)
 
-	// DeleteGroupAllocationWithResponse request
-	DeleteGroupAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteAllocationResp, error)
+	// GetAllocationWithResponse request
+	GetAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAllocationResp, error)
 
-	// DeleteSingleAllocationWithResponse request
-	DeleteSingleAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteAllocationResp, error)
+	// UpdateAllocationWithBodyWithResponse request with any body
+	UpdateAllocationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAllocationResp, error)
 
-	// GetGroupAllocationWithResponse request
-	GetGroupAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetGroupAllocationResp, error)
+	UpdateAllocationWithResponse(ctx context.Context, id string, body UpdateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAllocationResp, error)
 
-	// GetSingleAllocationWithResponse request
-	GetSingleAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetSingleAllocationResp, error)
+	// ListAnnotationsWithResponse request
+	ListAnnotationsWithResponse(ctx context.Context, params *ListAnnotationsParams, reqEditors ...RequestEditorFn) (*ListAnnotationsResp, error)
 
-	// UpdateGroupAllocationWithBodyWithResponse request with any body
-	UpdateGroupAllocationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGroupAllocationResp, error)
+	// CreateAnnotationWithBodyWithResponse request with any body
+	CreateAnnotationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAnnotationResp, error)
 
-	// UpdateSingleAllocationWithBodyWithResponse request with any body
-	UpdateSingleAllocationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateSingleAllocationResp, error)
+	CreateAnnotationWithResponse(ctx context.Context, body CreateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAnnotationResp, error)
 
-	UpdateGroupAllocationWithResponse(ctx context.Context, id string, body UpdateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGroupAllocationResp, error)
+	// DeleteAnnotationWithResponse request
+	DeleteAnnotationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteAnnotationResp, error)
 
-	UpdateSingleAllocationWithResponse(ctx context.Context, id string, body UpdateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateSingleAllocationResp, error)
+	// GetAnnotationWithResponse request
+	GetAnnotationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAnnotationResp, error)
+
+	// UpdateAnnotationWithBodyWithResponse request with any body
+	UpdateAnnotationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAnnotationResp, error)
+
+	UpdateAnnotationWithResponse(ctx context.Context, id string, body UpdateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAnnotationResp, error)
 
 	// ListAttributionGroupsWithResponse request
 	ListAttributionGroupsWithResponse(ctx context.Context, params *ListAttributionGroupsParams, reqEditors ...RequestEditorFn) (*ListAttributionGroupsResp, error)
@@ -8003,6 +8330,9 @@ type ListAllocationsResp struct {
 
 		// PageToken Page token, returned by a previous call, to request the next page of results
 		PageToken *string `json:"pageToken,omitempty"`
+
+		// RowCount Total number of allocations in the result set
+		RowCount *int `json:"rowCount,omitempty"`
 	}
 	JSON400 *N400
 	JSON401 *N401
@@ -8078,20 +8408,10 @@ func (r DeleteAllocationResp) StatusCode() int {
 	return 0
 }
 
-type GetGroupAllocationResp struct {
+type GetAllocationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GroupAllocation
-	JSON400      *N400
-	JSON401      *N401
-	JSON403      *N403
-	JSON404      *N404
-}
-
-type GetSingleAllocationResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *SingleAllocation
+	JSON200      *Allocation
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -8099,7 +8419,7 @@ type GetSingleAllocationResp struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetGroupAllocationResp) Status() string {
+func (r GetAllocationResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -8107,33 +8427,17 @@ func (r GetGroupAllocationResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetGroupAllocationResp) StatusCode() int {
+func (r GetAllocationResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// Status returns HTTPResponse.Status
-func (r GetSingleAllocationResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetSingleAllocationResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type UpdateGroupAllocationResp struct {
+type UpdateAllocationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GroupAllocation
+	JSON200      *NewAllocationResponse
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -8141,7 +8445,7 @@ type UpdateGroupAllocationResp struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r UpdateGroupAllocationResp) Status() string {
+func (r UpdateAllocationResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -8149,17 +8453,51 @@ func (r UpdateGroupAllocationResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r UpdateGroupAllocationResp) StatusCode() int {
+func (r UpdateAllocationResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type UpdateSingleAllocationResp struct {
+type ListAnnotationsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *SingleAllocation
+	JSON200      *struct {
+		Annotations *[]AnnotationListItem `json:"annotations,omitempty"`
+
+		// PageToken Page token, returned by a previous call, to request the next page of results
+		PageToken *string `json:"pageToken,omitempty"`
+
+		// RowCount Total number of annotations in the result set
+		RowCount *int `json:"rowCount,omitempty"`
+	}
+	JSON400 *N400
+	JSON401 *N401
+	JSON403 *N403
+	JSON404 *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAnnotationsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAnnotationsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateAnnotationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *AnnotationListItem
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -8167,7 +8505,7 @@ type UpdateSingleAllocationResp struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r UpdateSingleAllocationResp) Status() string {
+func (r CreateAnnotationResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -8175,7 +8513,84 @@ func (r UpdateSingleAllocationResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r UpdateSingleAllocationResp) StatusCode() int {
+func (r CreateAnnotationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAnnotationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAnnotationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAnnotationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAnnotationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AnnotationListItem
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAnnotationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAnnotationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateAnnotationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AnnotationListItem
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateAnnotationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateAnnotationResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -8535,13 +8950,11 @@ func (r DeleteBudgetResp) StatusCode() int {
 type GetBudgetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Budget *BudgetAPI `json:"Budget,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *BudgetAPI
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -8755,7 +9168,7 @@ type GetReportResp struct {
 		// Id Report id.
 		Id *string `json:"id,omitempty"`
 
-		// Owner The report owner in a form of user@domain.com
+		// Owner The report owner in the form of user@domain.com
 		Owner *string `json:"owner,omitempty"`
 
 		// ReportName The name of the report.
@@ -8904,6 +9317,9 @@ type GetAnomalyResp struct {
 
 		// Platform Cloud Provider name
 		Platform string `json:"platform"`
+
+		// ResourceData Resources contributing to the anomaly
+		ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
 
 		// Scope Scope: Project or Account
 		Scope string `json:"scope"`
@@ -9071,7 +9487,7 @@ type ListInvoicesResp struct {
 		// PageToken Page token. Can be used to request the next page of results.
 		PageToken *string `json:"pageToken,omitempty"`
 
-		// RowCount Invoices rows count
+		// RowCount Invoice rows count
 		RowCount *int64 `json:"rowCount,omitempty"`
 	}
 	JSON400 *N400
@@ -9781,16 +10197,8 @@ func (c *ClientWithResponses) CreateAllocationWithBodyWithResponse(ctx context.C
 	return ParseCreateAllocationResp(rsp)
 }
 
-func (c *ClientWithResponses) CreateGroupAllocationWithResponse(ctx context.Context, body CreateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAllocationResp, error) {
-	rsp, err := c.CreateGroupAllocation(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateAllocationResp(rsp)
-}
-
-func (c *ClientWithResponses) CreateSingleAllocationWithResponse(ctx context.Context, body CreateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAllocationResp, error) {
-	rsp, err := c.CreateSingleAllocation(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateAllocationWithResponse(ctx context.Context, body CreateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAllocationResp, error) {
+	rsp, err := c.CreateAllocation(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -9806,56 +10214,91 @@ func (c *ClientWithResponses) DeleteAllocationWithResponse(ctx context.Context, 
 	return ParseDeleteAllocationResp(rsp)
 }
 
-// GetGroupAllocationWithResponse request returning *GetAllocationResp
-func (c *ClientWithResponses) GetGroupAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetGroupAllocationResp, error) {
+// GetAllocationWithResponse request returning *GetAllocationResp
+func (c *ClientWithResponses) GetAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAllocationResp, error) {
 	rsp, err := c.GetAllocation(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetGroupAllocationResp(rsp)
+	return ParseGetAllocationResp(rsp)
 }
 
-// GetSingleAllocationWithResponse request returning *GetAllocationResp
-func (c *ClientWithResponses) GetSingleAllocationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetSingleAllocationResp, error) {
-	rsp, err := c.GetAllocation(ctx, id, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetSingleAllocationResp(rsp)
-}
-
-// UpdateGroupAllocationWithBodyWithResponse request with arbitrary body returning *UpdateAllocationResp
-func (c *ClientWithResponses) UpdateGroupAllocationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGroupAllocationResp, error) {
+// UpdateAllocationWithBodyWithResponse request with arbitrary body returning *UpdateAllocationResp
+func (c *ClientWithResponses) UpdateAllocationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAllocationResp, error) {
 	rsp, err := c.UpdateAllocationWithBody(ctx, id, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateGroupAllocationResp(rsp)
+	return ParseUpdateAllocationResp(rsp)
 }
 
-// UpdateSingleAllocationWithBodyWithResponse request with arbitrary body returning *UpdateAllocationResp
-func (c *ClientWithResponses) UpdateSingleAllocationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateSingleAllocationResp, error) {
-	rsp, err := c.UpdateAllocationWithBody(ctx, id, contentType, body, reqEditors...)
+func (c *ClientWithResponses) UpdateAllocationWithResponse(ctx context.Context, id string, body UpdateAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAllocationResp, error) {
+	rsp, err := c.UpdateAllocation(ctx, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateSingleAllocationResp(rsp)
+	return ParseUpdateAllocationResp(rsp)
 }
 
-func (c *ClientWithResponses) UpdateGroupAllocationWithResponse(ctx context.Context, id string, body UpdateGroupAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGroupAllocationResp, error) {
-	rsp, err := c.UpdateGroupAllocation(ctx, id, body, reqEditors...)
+// ListAnnotationsWithResponse request returning *ListAnnotationsResp
+func (c *ClientWithResponses) ListAnnotationsWithResponse(ctx context.Context, params *ListAnnotationsParams, reqEditors ...RequestEditorFn) (*ListAnnotationsResp, error) {
+	rsp, err := c.ListAnnotations(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateGroupAllocationResp(rsp)
+	return ParseListAnnotationsResp(rsp)
 }
 
-func (c *ClientWithResponses) UpdateSingleAllocationWithResponse(ctx context.Context, id string, body UpdateSingleAllocationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateSingleAllocationResp, error) {
-	rsp, err := c.UpdateSingeAllocation(ctx, id, body, reqEditors...)
+// CreateAnnotationWithBodyWithResponse request with arbitrary body returning *CreateAnnotationResp
+func (c *ClientWithResponses) CreateAnnotationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAnnotationResp, error) {
+	rsp, err := c.CreateAnnotationWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateSingleAllocationResp(rsp)
+	return ParseCreateAnnotationResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateAnnotationWithResponse(ctx context.Context, body CreateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAnnotationResp, error) {
+	rsp, err := c.CreateAnnotation(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAnnotationResp(rsp)
+}
+
+// DeleteAnnotationWithResponse request returning *DeleteAnnotationResp
+func (c *ClientWithResponses) DeleteAnnotationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteAnnotationResp, error) {
+	rsp, err := c.DeleteAnnotation(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAnnotationResp(rsp)
+}
+
+// GetAnnotationWithResponse request returning *GetAnnotationResp
+func (c *ClientWithResponses) GetAnnotationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAnnotationResp, error) {
+	rsp, err := c.GetAnnotation(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAnnotationResp(rsp)
+}
+
+// UpdateAnnotationWithBodyWithResponse request with arbitrary body returning *UpdateAnnotationResp
+func (c *ClientWithResponses) UpdateAnnotationWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAnnotationResp, error) {
+	rsp, err := c.UpdateAnnotationWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAnnotationResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateAnnotationWithResponse(ctx context.Context, id string, body UpdateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAnnotationResp, error) {
+	rsp, err := c.UpdateAnnotation(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAnnotationResp(rsp)
 }
 
 // ListAttributionGroupsWithResponse request returning *ListAttributionGroupsResp
@@ -10728,6 +11171,9 @@ func ParseListAllocationsResp(rsp *http.Response) (*ListAllocationsResp, error) 
 
 			// PageToken Page token, returned by a previous call, to request the next page of results
 			PageToken *string `json:"pageToken,omitempty"`
+
+			// RowCount Total number of allocations in the result set
+			RowCount *int `json:"rowCount,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -10875,22 +11321,22 @@ func ParseDeleteAllocationResp(rsp *http.Response) (*DeleteAllocationResp, error
 	return response, nil
 }
 
-// ParseGetGroupAllocationResp parses an HTTP response from a GetAllocationWithResponse call
-func ParseGetGroupAllocationResp(rsp *http.Response) (*GetGroupAllocationResp, error) {
+// ParseGetAllocationResp parses an HTTP response from a GetAllocationWithResponse call
+func ParseGetAllocationResp(rsp *http.Response) (*GetAllocationResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetGroupAllocationResp{
+	response := &GetAllocationResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GroupAllocation
+		var dest Allocation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -10929,22 +11375,22 @@ func ParseGetGroupAllocationResp(rsp *http.Response) (*GetGroupAllocationResp, e
 	return response, nil
 }
 
-// ParseUpdateGroupAllocationResp parses an HTTP response from a UpdateAllocationWithResponse call
-func ParseUpdateGroupAllocationResp(rsp *http.Response) (*UpdateGroupAllocationResp, error) {
+// ParseUpdateAllocationResp parses an HTTP response from a UpdateAllocationWithResponse call
+func ParseUpdateAllocationResp(rsp *http.Response) (*UpdateAllocationResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UpdateGroupAllocationResp{
+	response := &UpdateAllocationResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GroupAllocation
+		var dest NewAllocationResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -10983,22 +11429,30 @@ func ParseUpdateGroupAllocationResp(rsp *http.Response) (*UpdateGroupAllocationR
 	return response, nil
 }
 
-// ParseGetSingleAllocationResp parses an HTTP response from a GetAllocationWithResponse call
-func ParseGetSingleAllocationResp(rsp *http.Response) (*GetSingleAllocationResp, error) {
+// ParseListAnnotationsResp parses an HTTP response from a ListAnnotationsWithResponse call
+func ParseListAnnotationsResp(rsp *http.Response) (*ListAnnotationsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSingleAllocationResp{
+	response := &ListAnnotationsResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest SingleAllocation
+		var dest struct {
+			Annotations *[]AnnotationListItem `json:"annotations,omitempty"`
+
+			// PageToken Page token, returned by a previous call, to request the next page of results
+			PageToken *string `json:"pageToken,omitempty"`
+
+			// RowCount Total number of annotations in the result set
+			RowCount *int `json:"rowCount,omitempty"`
+		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -11037,22 +11491,177 @@ func ParseGetSingleAllocationResp(rsp *http.Response) (*GetSingleAllocationResp,
 	return response, nil
 }
 
-// ParseUpdateSingleAllocationResp parses an HTTP response from a UpdateAllocationWithResponse call
-func ParseUpdateSingleAllocationResp(rsp *http.Response) (*UpdateSingleAllocationResp, error) {
+// ParseCreateAnnotationResp parses an HTTP response from a CreateAnnotationWithResponse call
+func ParseCreateAnnotationResp(rsp *http.Response) (*CreateAnnotationResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UpdateSingleAllocationResp{
+	response := &CreateAnnotationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest AnnotationListItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAnnotationResp parses an HTTP response from a DeleteAnnotationWithResponse call
+func ParseDeleteAnnotationResp(rsp *http.Response) (*DeleteAnnotationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAnnotationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAnnotationResp parses an HTTP response from a GetAnnotationWithResponse call
+func ParseGetAnnotationResp(rsp *http.Response) (*GetAnnotationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAnnotationResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest SingleAllocation
+		var dest AnnotationListItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateAnnotationResp parses an HTTP response from a UpdateAnnotationWithResponse call
+func ParseUpdateAnnotationResp(rsp *http.Response) (*UpdateAnnotationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateAnnotationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AnnotationListItem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -11814,9 +12423,7 @@ func ParseGetBudgetResp(rsp *http.Response) (*GetBudgetResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Budget *BudgetAPI `json:"Budget,omitempty"`
-		}
+		var dest BudgetAPI
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -12258,7 +12865,7 @@ func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
 			// Id Report id.
 			Id *string `json:"id,omitempty"`
 
-			// Owner The report owner in a form of user@domain.com
+			// Owner The report owner in the form of user@domain.com
 			Owner *string `json:"owner,omitempty"`
 
 			// ReportName The name of the report.
@@ -12529,6 +13136,9 @@ func ParseGetAnomalyResp(rsp *http.Response) (*GetAnomalyResp, error) {
 
 			// Platform Cloud Provider name
 			Platform string `json:"platform"`
+
+			// ResourceData Resources contributing to the anomaly
+			ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
 
 			// Scope Scope: Project or Account
 			Scope string `json:"scope"`
@@ -12829,7 +13439,7 @@ func ParseListInvoicesResp(rsp *http.Response) (*ListInvoicesResp, error) {
 			// PageToken Page token. Can be used to request the next page of results.
 			PageToken *string `json:"pageToken,omitempty"`
 
-			// RowCount Invoices rows count
+			// RowCount Invoice rows count
 			RowCount *int64 `json:"rowCount,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
