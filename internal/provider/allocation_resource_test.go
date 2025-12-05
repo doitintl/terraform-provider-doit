@@ -116,6 +116,45 @@ func TestAccAllocation_Validation(t *testing.T) {
 	})
 }
 
+func TestAccAllocation_Group_Select(t *testing.T) {
+	n := rand.Int()
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationGroupSelect(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group_select",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group_select",
+						tfjsonpath.New("allocation_type"),
+						knownvalue.StringExact("group")),
+				},
+			},
+			{
+				ResourceName:      "doit_allocation.group_select",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"description",
+					"rules",
+				},
+			},
+		},
+	})
+}
+
 func testAccAllocationSingle(i int) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
@@ -247,4 +286,35 @@ resource "doit_allocation" "validation" {
     ]
 }
 `, i)
+}
+
+func testAccAllocationGroupSelect(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name = "test-source-%d"
+	description = "test allocation source"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+
+resource "doit_allocation" "group_select" {
+    name = "test-group-select-%d"
+	description = "test allocation group select"
+    rules = [
+        {
+            action = "select"
+            id     = doit_allocation.this.id
+        }
+    ]
+}
+`, i, i)
 }
