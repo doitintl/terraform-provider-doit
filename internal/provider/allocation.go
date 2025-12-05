@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -28,7 +29,8 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 	req.Description = plan.Description.ValueStringPointer()
 	req.Name = plan.Name.ValueStringPointer()
 	req.Type = plan.Type.ValueStringPointer()
-	if !plan.Rule.IsNull() {
+	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() {
+		log.Println("plan.Rule:", plan.Rule)
 		req.Rule = &models.AllocationRule{
 			Formula: plan.Rule.Formula.ValueString(),
 		}
@@ -95,7 +97,7 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 						return req, diags
 					}
 				}
-				rules[i].Components = createComponents
+				rules[i].Components = &createComponents
 			}
 		}
 		req.Rules = &rules
@@ -124,7 +126,9 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
-	state.Description = types.StringPointerValue(resp.Description)
+	if resp.Description != nil && *resp.Description != "" {
+		state.Description = types.StringPointerValue(resp.Description)
+	}
 	state.AnomalyDetection = types.BoolPointerValue(resp.AnomalyDetection)
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
@@ -151,24 +155,88 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		if diags.HasError() {
 			return
 		}
+	} else {
+		state.Rule = resource_allocation.NewRuleValueNull()
 	}
 
 	if resp.Rules != nil && len(*resp.Rules) > 0 {
+		// Map to store existing actions
+		existingActionsByID := make(map[string]string)
+		existingActionsByIndex := make([]string, 0)
+
+		if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
+			var stateRules []resource_allocation.RulesValue
+			// We try to extract existing rules to preserve the "action" field which is not returned by the API.
+			// If this fails, we proceed without existing actions.
+			if d := state.Rules.ElementsAs(ctx, &stateRules, false); !d.HasError() {
+				for _, rule := range stateRules {
+					action := rule.Action.ValueString()
+					existingActionsByIndex = append(existingActionsByIndex, action)
+					if !rule.Id.IsNull() && !rule.Id.IsUnknown() {
+						existingActionsByID[rule.Id.ValueString()] = action
+					}
+				}
+			}
+		}
+
 		rules := make([]attr.Value, len(*resp.Rules))
 		for i, rule := range *resp.Rules {
+			// Determine Action
+			var action string
+			if rule.Id != nil {
+				if a, ok := existingActionsByID[*rule.Id]; ok {
+					action = a
+				}
+			}
+			if action == "" && i < len(existingActionsByIndex) {
+				action = existingActionsByIndex[i]
+			}
+			if action == "" {
+				// Default to "select" if we can't determine the action (e.g. import)
+				action = "select"
+			}
+
+			// Fetch details if missing (API response for group allocation rules often lacks formula/components)
+			var formula string
+			var components []models.AllocationComponent
+
+			if rule.Formula != nil {
+				formula = *rule.Formula
+			}
+			if rule.Components != nil {
+				components = *rule.Components
+			}
+
+			if (formula == "" || components == nil) && rule.Id != nil {
+				// Fetch full allocation to get formula and components
+				fullAlloc, err := r.client.GetAllocation(ctx, *rule.Id)
+				if err == nil {
+					if fullAlloc.Rule != nil {
+						formula = fullAlloc.Rule.Formula
+						if fullAlloc.Rule.Components != nil {
+							components = fullAlloc.Rule.Components
+						}
+					}
+				} else {
+					log.Printf("[WARN] Failed to fetch allocation details for rule %s: %v", *rule.Id, err)
+				}
+			}
+
 			m := map[string]attr.Value{
-				"action":      types.StringValue(string(rule.Action)),
+				"action":      types.StringValue(action),
 				"description": types.StringPointerValue(rule.Description),
-				"formula":     types.StringPointerValue(rule.Formula),
+				"formula":     types.StringValue(formula),
 				"id":          types.StringPointerValue(rule.Id),
 				"name":        types.StringPointerValue(rule.Name),
 			}
-			if rule.Components != nil {
-				m["components"], d = toAllocationRuleComponentsListValue(ctx, rule.Components)
+			if components != nil {
+				m["components"], d = toAllocationRuleComponentsListValue(ctx, components)
 				diags.Append(d...)
 				if diags.HasError() {
 					return
 				}
+			} else {
+				m["components"] = types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx))
 			}
 			rules[i], d = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
@@ -192,6 +260,7 @@ func (c *Client) CreateAllocation(ctx context.Context, allocation models.Allocat
 	if err != nil {
 		return nil, err
 	}
+	log.Println("allocation body:", string(rb))
 	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations", c.HostURL)
 	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
 	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
@@ -270,7 +339,7 @@ func (c *Client) GetAllocation(ctx context.Context, id string) (*models.Allocati
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println("allocation response:", string(body))
 	return &allocation, nil
 }
 
