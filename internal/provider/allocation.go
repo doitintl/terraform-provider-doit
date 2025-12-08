@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"terraform-provider-doit/internal/provider/models"
@@ -14,130 +17,90 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req models.CreateAllocationRequest, diags diag.Diagnostics) {
-	// Create request uses value types for Description/Name, Update uses pointers.
-	// We use the common helper to generate the complex Rule/Rules structures (which are shared types)
-	// and then map the simple fields.
-
-	common := models.UpdateAllocationRequest{}
-	// Note: We deliberately use fillAllocationCommon to populate Rule and Rules,
-	// so that the logic is shared between Create and Update.
-	diags = plan.fillAllocationCommon(ctx, &common)
-	if diags.HasError() {
-		return req, diags
-	}
-
-	req.Description = ""
-	if common.Description != nil {
-		req.Description = *common.Description
-	}
-	req.Name = ""
-	if common.Name != nil {
-		req.Name = *common.Name
-	}
-	req.UnallocatedCosts = common.UnallocatedCosts
-	req.Rule = common.Rule
-	req.Rules = common.Rules
-
-	return req, diags
-}
-
-func (plan *allocationResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateAllocationRequest, diags diag.Diagnostics) {
-	// Update request is structurally identical to the common request helper
-	diags = plan.fillAllocationCommon(ctx, &req)
-	return req, diags
-}
-
-// Helper to convert a slice of ComponentsValue to a slice of AllocationComponent models
-func convertComponentsToModels(ctx context.Context, components []resource_allocation.ComponentsValue) (result []models.AllocationComponent, diags diag.Diagnostics) {
-	result = make([]models.AllocationComponent, len(components))
-	for i := range components {
-		result[i] = models.AllocationComponent{
-			IncludeNull:      components[i].IncludeNull.ValueBoolPointer(),
-			InverseSelection: components[i].InverseSelection.ValueBoolPointer(),
-			Key:              components[i].Key.ValueString(),
-			Mode:             models.AllocationComponentMode(components[i].Mode.ValueString()),
-			Type:             models.DimensionsTypes(components[i].ComponentsType.ValueString()),
-		}
-		d := components[i].Values.ElementsAs(ctx, &result[i].Values, true)
-		diags.Append(d...)
-		if diags.HasError() {
-			return
-		}
-	}
-	return
-}
-
-// Helper to fill common fields into UpdateAllocationRequest model (which uses pointers)
-func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
+func (plan *allocationResourceModel) toRequest(ctx context.Context) (req models.Allocation, diags diag.Diagnostics) {
+	allocationType := models.AllocationAllocationType(plan.AllocationType.ValueString())
+	req.AllocationType = &allocationType
+	req.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
 	req.Description = plan.Description.ValueStringPointer()
 	req.Name = plan.Name.ValueStringPointer()
-	// UnallocatedCosts is only sent if not empty because it is invalid for "single" allocations.
-	if v := plan.UnallocatedCosts.ValueString(); v != "" {
-		req.UnallocatedCosts = &v
-	}
-
-	// Populate single Rule if present
+	req.Type = plan.Type.ValueStringPointer()
 	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() {
 		req.Rule = &models.AllocationRule{
 			Formula: plan.Rule.Formula.ValueString(),
 		}
 		if !plan.Rule.Components.IsNull() {
 			planComponents := []resource_allocation.ComponentsValue{}
-			d := plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
-			diags.Append(d...)
+			diags = plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
+			diags.Append(diags...)
 			if diags.HasError() {
-				return diags
+				return req, diags
 			}
-			req.Rule.Components, diags = convertComponentsToModels(ctx, planComponents)
-			if diags.HasError() {
-				return diags
+			req.Rule.Components = make([]models.AllocationComponent, len(planComponents))
+			for i := range planComponents {
+				req.Rule.Components[i] = models.AllocationComponent{
+					IncludeNull:      planComponents[i].IncludeNull.ValueBoolPointer(),
+					InverseSelection: planComponents[i].InverseSelection.ValueBoolPointer(),
+					Key:              planComponents[i].Key.ValueString(),
+					Mode:             models.AllocationComponentMode(planComponents[i].Mode.ValueString()),
+					Type:             models.DimensionsTypes(planComponents[i].ComponentsType.ValueString()),
+				}
+				diags = planComponents[i].Values.ElementsAs(ctx, &req.Rule.Components[i].Values, false)
+				diags.Append(diags...)
+				if diags.HasError() {
+					return req, diags
+				}
 			}
 		}
 	}
-
-	// Populate Group Rules if present
 	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
 		var planRules []resource_allocation.RulesValue
-		d := plan.Rules.ElementsAs(ctx, &planRules, false)
-		diags.Append(d...)
+		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
+		diags.Append(diags...)
 		if diags.HasError() {
-			return diags
+			return req, diags
 		}
 		rules := make([]models.GroupAllocationRule, len(planRules))
 		for i := range planRules {
 			rules[i] = models.GroupAllocationRule{
 				Name:        planRules[i].Name.ValueStringPointer(),
-				Formula:     planRules[i].Formula.ValueStringPointer(),
-				Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
 				Id:          planRules[i].Id.ValueStringPointer(),
+				Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
 				Description: planRules[i].Description.ValueStringPointer(),
+				Formula:     planRules[i].Formula.ValueStringPointer(),
 			}
-
-			// Don't send components if selecting existing allocation (action "select")
-			// But for "create" or "update" action, components are required/allowed.
+			// Don't send components if selecting existing allocation
 			if !planRules[i].Components.IsNull() && planRules[i].Action.ValueString() != "select" {
 				var ruleComponents []resource_allocation.ComponentsValue
-				d := planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
-				diags.Append(d...)
+				diags = planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
+				diags.Append(diags...)
 				if diags.HasError() {
-					return diags
+					return req, diags
 				}
-				createComponents, d := convertComponentsToModels(ctx, ruleComponents)
-				diags.Append(d...)
-				if diags.HasError() {
-					return diags
+				createComponents := make([]models.AllocationComponent, len(ruleComponents))
+				for j := range ruleComponents {
+					createComponents[j] = models.AllocationComponent{
+						IncludeNull:      ruleComponents[j].IncludeNull.ValueBoolPointer(),
+						InverseSelection: ruleComponents[j].InverseSelection.ValueBoolPointer(),
+						Key:              ruleComponents[j].Key.ValueString(),
+						Mode:             models.AllocationComponentMode(ruleComponents[j].Mode.ValueString()),
+						Type:             models.DimensionsTypes(ruleComponents[j].ComponentsType.ValueString()),
+					}
+					diags = ruleComponents[j].Values.ElementsAs(ctx, &createComponents[j].Values, true)
+					diags.Append(diags...)
+					if diags.HasError() {
+						return req, diags
+					}
 				}
 				rules[i].Components = &createComponents
 			}
 		}
 		req.Rules = &rules
 	}
-	return diags
+	return req, diags
 }
 
 func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) (diags diag.Diagnostics) {
-	var resp *models.Allocation
+	var d diag.Diagnostics
 
 	// Get refreshed allocation value from DoiT using the ID from the state.
 	httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
@@ -155,19 +118,8 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	resp = httpResp.JSON200
-	if resp == nil {
-		diags.AddError(
-			"Error Reading DoiT Allocation",
-			"Received empty response body for allocation ID "+state.Id.ValueString(),
-		)
-		return
-	}
-
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
-	// This is due to a bug in the API where the description is not returned for group allocations
-	// Will be removed once the API is fixed
 	if resp.Description != nil && *resp.Description != "" {
 		state.Description = types.StringPointerValue(resp.Description)
 	}
@@ -188,14 +140,12 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			"formula": types.StringValue(resp.Rule.Formula),
 		}
 		if resp.Rule.Components != nil {
-			var d diag.Diagnostics
 			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
 			diags.Append(d...)
 			if diags.HasError() {
 				return
 			}
 		}
-		var d diag.Diagnostics
 		state.Rule, d = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
 		diags.Append(d...)
 		if diags.HasError() {
@@ -255,8 +205,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
-				respHttpFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
-				fullAlloc := respHttpFullAlloc.JSON200
+				fullAlloc, err := r.client.GetAllocation(ctx, *rule.Id)
 				if err == nil {
 					if fullAlloc.Rule != nil {
 						formula = fullAlloc.Rule.Formula
@@ -277,7 +226,6 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 				"name":        types.StringPointerValue(rule.Name),
 			}
 			if components != nil {
-				var d diag.Diagnostics
 				m["components"], d = toAllocationRuleComponentsListValue(ctx, components)
 				diags.Append(d...)
 				if diags.HasError() {
@@ -286,14 +234,12 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			} else {
 				m["components"] = types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx))
 			}
-			var d diag.Diagnostics
 			rules[i], d = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
 			if diags.HasError() {
 				return
 			}
 		}
-		var d diag.Diagnostics
 		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
 		diags.Append(d...)
 		if diags.HasError() {
@@ -305,7 +251,94 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 	return
 }
 
+func (c *Client) CreateAllocation(ctx context.Context, allocation models.Allocation) (*models.Allocation, error) {
+	rb, err := json.Marshal(allocation)
+	if err != nil {
+		return nil, err
+	}
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations", c.HostURL)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("POST", urlRequestContext, strings.NewReader(string(rb)))
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	allocationResponse := models.Allocation{}
+	err = json.Unmarshal(body, &allocationResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &allocationResponse, nil
+}
+
+func (c *Client) UpdateAllocation(ctx context.Context, allocationID string, allocation models.Allocation) (*models.Allocation, error) {
+	rb, err := json.Marshal(allocation)
+	if err != nil {
+		return nil, err
+	}
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, allocationID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("PATCH", urlRequestContext, strings.NewReader(string(rb)))
+	if err != nil {
+		return nil, err
+	}
+	body, err := c.doRequest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	allocationResponse := models.Allocation{}
+	err = json.Unmarshal(body, &allocationResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &allocationResponse, nil
+}
+
+func (c *Client) DeleteAllocation(ctx context.Context, allocationID string) error {
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, allocationID)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("DELETE", urlRequestContext, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.doRequest(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) GetAllocation(ctx context.Context, id string) (*models.Allocation, error) {
+	urlRequestBase := fmt.Sprintf("%s/analytics/v1/allocations/%s", c.HostURL, id)
+	urlRequestContext := addContextToURL(c.Auth.CustomerContext, urlRequestBase)
+	req, err := http.NewRequest("GET", urlRequestContext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	allocation := models.Allocation{}
+	err = json.Unmarshal(body, &allocation)
+	if err != nil {
+		return nil, err
+	}
+	return &allocation, nil
+}
+
 func toAllocationRuleComponentsListValue(ctx context.Context, components []models.AllocationComponent) (res basetypes.ListValue, diags diag.Diagnostics) {
+	var d diag.Diagnostics
 	stateComponents := make([]attr.Value, len(components))
 	for i, component := range components {
 		m := map[string]attr.Value{
@@ -319,7 +352,6 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		for j := range component.Values {
 			values[j] = types.StringValue(component.Values[j])
 		}
-		var d diag.Diagnostics
 		m["values"], d = types.ListValue(types.StringType, values)
 		diags.Append(d...)
 		if diags.HasError() {
@@ -331,8 +363,7 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 			return
 		}
 	}
-	var d diag.Diagnostics
-	res, d = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
-	diags.Append(d...)
+	res, diags = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
+	d.Append(diags...)
 	return
 }

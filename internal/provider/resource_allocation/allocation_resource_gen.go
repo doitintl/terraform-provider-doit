@@ -21,13 +21,11 @@ import (
 
 func AllocationResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
-		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the allocation (e.g., 'preset', 'custom').",
-				MarkdownDescription: "Type of the allocation (e.g., 'preset', 'custom').",
+				Description:         "Type of allocation (single or group)",
+				MarkdownDescription: "Type of allocation (single or group)",
 			},
 			"anomaly_detection": schema.BoolAttribute{
 				Computed:            true,
@@ -36,24 +34,23 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
-				MarkdownDescription: "The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).",
+				Description:         "The time when the allocation was created (in UNIX timestamp).",
+				MarkdownDescription: "The time when the allocation was created (in UNIX timestamp).",
 			},
 			"description": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "A description of the allocation.",
-				MarkdownDescription: "A description of the allocation.",
+				Required:            true,
+				Description:         "Allocation description",
+				MarkdownDescription: "Allocation description",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Allocation ID",
-				MarkdownDescription: "Allocation ID",
+				Description:         "ID of the created allocation",
+				MarkdownDescription: "ID of the created allocation",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the allocation. Must be unique within the organization.",
-				MarkdownDescription: "The name of the allocation. Must be unique within the organization.",
+				Description:         "Allocation name",
+				MarkdownDescription: "Allocation name",
 			},
 			"rule": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -76,8 +73,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Required:            true,
-									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
-									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc. Dimension must exist.",
+									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
@@ -112,10 +109,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"values": schema.ListAttribute{
-									ElementType:         types.StringType,
-									Required:            true,
-									Description:         "Values to filter on",
-									MarkdownDescription: "Values to filter on",
+									ElementType: types.StringType,
+									Required:    true,
 								},
 							},
 							CustomType: ComponentsType{
@@ -139,19 +134,145 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: RuleValue{}.AttributeTypes(ctx),
 					},
 				},
-				Required:            true,
-				Description:         "The configuration that defines the allocation rules and matching conditions.",
-				MarkdownDescription: "The configuration that defines the allocation rules and matching conditions.",
+				Optional:            true,
+				Computed:            true,
+				Description:         "Single allocation rule (required for single type allocation)",
+				MarkdownDescription: "Single allocation rule (required for single type allocation)",
+			},
+			"rules": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"action": schema.StringAttribute{
+							Required:            true,
+							Description:         "Action to perform with this rule",
+							MarkdownDescription: "Action to perform with this rule",
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									"create",
+									"update",
+									"select",
+								),
+							},
+						},
+						"components": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"include_null": schema.BoolAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "Include null values",
+										MarkdownDescription: "Include null values",
+										Default:             booldefault.StaticBool(false),
+									},
+									"inverse_selection": schema.BoolAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "If true, all selected values will be excluded.",
+										MarkdownDescription: "If true, all selected values will be excluded.",
+										Default:             booldefault.StaticBool(false),
+									},
+									"key": schema.StringAttribute{
+										Required:            true,
+										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+									},
+									"mode": schema.StringAttribute{
+										Required:            true,
+										Description:         "Filter mode to apply",
+										MarkdownDescription: "Filter mode to apply",
+										Validators: []validator.String{
+											stringvalidator.OneOf(
+												"is",
+												"starts_with",
+												"ends_with",
+												"contains",
+												"regexp",
+											),
+										},
+									},
+									"type": schema.StringAttribute{
+										Required: true,
+										Validators: []validator.String{
+											stringvalidator.OneOf(
+												"datetime",
+												"fixed",
+												"optional",
+												"label",
+												"tag",
+												"project_label",
+												"system_label",
+												"attribution",
+												"attribution_group",
+												"gke",
+												"gke_label",
+											),
+										},
+									},
+									"values": schema.ListAttribute{
+										ElementType: types.StringType,
+										Required:    true,
+									},
+								},
+								CustomType: ComponentsType{
+									ObjectType: types.ObjectType{
+										AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
+									},
+								},
+							},
+							Optional:            true,
+							Computed:            true,
+							Description:         "List of allocation filter components (required for 'create' or 'update' action)",
+							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action)",
+						},
+						"description": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "Description for the allocation rule",
+							MarkdownDescription: "Description for the allocation rule",
+						},
+						"formula": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
+							MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
+						},
+						"id": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "ID of existing allocation (required for 'update' or 'select' action)",
+							MarkdownDescription: "ID of existing allocation (required for 'update' or 'select' action)",
+						},
+						"name": schema.StringAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "Name for the allocation rule",
+							MarkdownDescription: "Name for the allocation rule",
+						},
+					},
+					CustomType: RulesType{
+						ObjectType: types.ObjectType{
+							AttrTypes: RulesValue{}.AttributeTypes(ctx),
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The type of the allocation. Can be 'preset' or 'custom'.",
-				MarkdownDescription: "The type of the allocation. Can be 'preset' or 'custom'.",
+				Description:         "Type of the created allocation",
+				MarkdownDescription: "Type of the created allocation",
+			},
+			"unallocated_costs": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Custom label for any values that do not fit into allocation (required for group type allocation)",
+				MarkdownDescription: "Custom label for any values that do not fit into allocation (required for group type allocation)",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the allocation was last updated, in milliseconds since the epoch.",
-				MarkdownDescription: "The time when the allocation was last updated, in milliseconds since the epoch.",
+				Description:         "Last time the allocation was modified (in UNIX timestamp).",
+				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
 			},
 		},
 	}
