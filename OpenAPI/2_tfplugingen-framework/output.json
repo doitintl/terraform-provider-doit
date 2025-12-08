@@ -1,0 +1,319 @@
+{
+	"provider": {
+		"name": "doit"
+	},
+	"resources": [
+		{
+			"name": "allocation",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Allocation description"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Allocation name"
+						}
+					},
+					{
+						"name": "rule",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "components",
+									"list_nested": {
+										"computed_optional_required": "required",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "include_null",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": false
+														},
+														"description": "Include null values"
+													}
+												},
+												{
+													"name": "inverse_selection",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": false
+														},
+														"description": "If true, all selected values will be excluded."
+													}
+												},
+												{
+													"name": "key",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
+													}
+												},
+												{
+													"name": "mode",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "Filter mode to apply",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"is\",\n\"starts_with\",\n\"ends_with\",\n\"contains\",\n\"regexp\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "required",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "values",
+													"list": {
+														"computed_optional_required": "required",
+														"element_type": {
+															"string": {}
+														}
+													}
+												}
+											]
+										},
+										"description": "List of allocation filter components"
+									}
+								},
+								{
+									"name": "formula",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Formula for combining components (A is the first component, B is the second one, etc.)"
+									}
+								}
+							],
+							"description": "Single allocation rule (required for single type allocation)"
+						}
+					},
+					{
+						"name": "rules",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "action",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "Action to perform with this rule",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"create\",\n\"update\",\n\"select\",\n)"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "components",
+										"list_nested": {
+											"computed_optional_required": "computed_optional",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "include_null",
+														"bool": {
+															"computed_optional_required": "computed_optional",
+															"default": {
+																"static": false
+															},
+															"description": "Include null values"
+														}
+													},
+													{
+														"name": "inverse_selection",
+														"bool": {
+															"computed_optional_required": "computed_optional",
+															"default": {
+																"static": false
+															},
+															"description": "If true, all selected values will be excluded."
+														}
+													},
+													{
+														"name": "key",
+														"string": {
+															"computed_optional_required": "required",
+															"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
+														}
+													},
+													{
+														"name": "mode",
+														"string": {
+															"computed_optional_required": "required",
+															"description": "Filter mode to apply",
+															"validators": [
+																{
+																	"custom": {
+																		"imports": [
+																			{
+																				"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																			}
+																		],
+																		"schema_definition": "stringvalidator.OneOf(\n\"is\",\n\"starts_with\",\n\"ends_with\",\n\"contains\",\n\"regexp\",\n)"
+																	}
+																}
+															]
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "required",
+															"validators": [
+																{
+																	"custom": {
+																		"imports": [
+																			{
+																				"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																			}
+																		],
+																		"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																	}
+																}
+															]
+														}
+													},
+													{
+														"name": "values",
+														"list": {
+															"computed_optional_required": "required",
+															"element_type": {
+																"string": {}
+															}
+														}
+													}
+												]
+											},
+											"description": "List of allocation filter components (required for 'create' or 'update' action)"
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "Description for the allocation rule"
+										}
+									},
+									{
+										"name": "formula",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "Formula for combining components (A is the first component, B is the second one, etc.)"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "ID of existing allocation (required for 'update' or 'select' action)"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "Name for the allocation rule"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "unallocated_costs",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Custom label for any values that do not fit into allocation (required for group type allocation)"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the created allocation"
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Type of the created allocation"
+						}
+					},
+					{
+						"name": "allocation_type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Type of allocation (single or group)"
+						}
+					},
+					{
+						"name": "anomaly_detection",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether anomaly detection is enabled for this allocation"
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when the allocation was created (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Last time the allocation was modified (in UNIX timestamp)."
+						}
+					}
+				]
+			}
+		}
+	],
+	"version": "0.1"
+}
