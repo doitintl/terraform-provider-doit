@@ -2,10 +2,7 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
-	"net/http"
 	"strings"
 
 	"terraform-provider-doit/internal/provider/models"
