@@ -73,6 +73,14 @@ func (r *allocationResource) ConfigValidators(ctx context.Context) []resource.Co
 			path.MatchRoot("rule"),
 			path.MatchRoot("rules"),
 		),
+		resourcevalidator.RequiredTogether(
+			path.MatchRoot("rules"),
+			path.MatchRoot("unallocated_costs"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("rule"),
+			path.MatchRoot("unallocated_costs"),
+		),
 	}
 }
 
