@@ -31,16 +31,69 @@ type Client struct {
 	Ratelimiter *rate.Limiter
 }
 
-func NewClientGen(ctx context.Context, host, apiToken, customerContext string, rl *rate.Limiter) (*models.ClientWithResponses, error) {
-	client, err := models.NewClientWithResponses(host, models.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("Authorization", "Bearer "+apiToken)
-		if customerContext != "" {
-			url := req.URL.Query()
-			url.Set("customerContext", customerContext)
-			req.URL.RawQuery = url.Encode()
+type RetryClient struct {
+	client *http.Client
+}
+
+func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+
+	operation := func() error {
+		resp, err = c.client.Do(req)
+		if err != nil {
+			return err
+		}
+
+		// Check for 429 (Too Many Requests) or 5xx (Server Error)
+		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
+			// Read body to include in error message if needed, but important to close it for retry
+			// For now, simpler to just retry.
+			// Ideally we should adhere to Retry-After header for 429.
+			// cenkalti/backoff handles exponential backoff.
+
+			// We need to close the body if we are going to retry, otherwise we leak descriptors
+			resp.Body.Close()
+			return fmt.Errorf("server error or rate limit: %d", resp.StatusCode)
 		}
 		return nil
-	}))
+	}
+
+	// Use exponential backoff
+	b := backoff.NewExponentialBackOff()
+	b.MaxElapsedTime = 2 * time.Minute // Reduced from 5m to be more reasonable for Terraform
+
+	// Use RetryNotify to log retries if desired, key logic is just Retry
+	err = backoff.Retry(operation, b)
+
+	if err != nil {
+		// If we exhausted retries, or if the error was permanent (which we didn't define above), return the last error.
+		// However, 'operation' cleans up body on retry. If we failed with an error, resp might be nil or closed.
+		// If the error passed through backoff, it's the last error.
+		return resp, err
+	}
+
+	return resp, nil
+}
+
+func NewClientGen(ctx context.Context, host, apiToken, customerContext string, rl *rate.Limiter) (*models.ClientWithResponses, error) {
+	retryClient := &RetryClient{
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
+
+	client, err := models.NewClientWithResponses(host,
+		models.WithHTTPClient(retryClient),
+		models.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+			req.Header.Set("Authorization", "Bearer "+apiToken)
+			if customerContext != "" {
+				url := req.URL.Query()
+				url.Set("customerContext", customerContext)
+				req.URL.RawQuery = url.Encode()
+			}
+			return nil
+		}))
 	if err != nil {
 		return nil, err
 	}
