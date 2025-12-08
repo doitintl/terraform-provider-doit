@@ -155,38 +155,6 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 	})
 }
 
-func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
-	n := rand.Int()
-
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccAllocationGroupMissingUnallocatedCosts(n),
-				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
-			},
-		},
-	})
-}
-
-func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
-	n := rand.Int()
-
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccAllocationSingleWithUnallocatedCosts(n),
-				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
-			},
-		},
-	})
-}
-
 func testAccAllocationSingle(i int) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
@@ -244,7 +212,6 @@ func testAccAllocationGroup(i int) string {
 resource "doit_allocation" "group" {
     name = "test-group-%d"
 	description = "test allocation group"
-    unallocated_costs = "Other"
     rules = [
         {
             action = "create"
@@ -342,7 +309,6 @@ resource "doit_allocation" "this" {
 resource "doit_allocation" "group_select" {
     name = "test-group-select-%d"
 	description = "test allocation group select"
-    unallocated_costs = "Other"
     rules = [
         {
             action = "select"
@@ -351,48 +317,4 @@ resource "doit_allocation" "group_select" {
     ]
 }
 `, i, i)
-}
-
-func testAccAllocationGroupMissingUnallocatedCosts(i int) string {
-	return fmt.Sprintf(`
-resource "doit_allocation" "group_missing_unallocated" {
-    name = "test-group-missing-%d"
-	description = "test allocation group missing unallocated_costs"
-    rules = [
-        {
-            action = "create"
-            formula = "A"
-            components = [
-                {
-                    key    = "country"
-                    mode   = "is"
-                    type   = "fixed"
-                    values = ["JP"]
-                }
-            ]
-        }
-    ]
-}
-`, i)
-}
-
-func testAccAllocationSingleWithUnallocatedCosts(i int) string {
-	return fmt.Sprintf(`
-resource "doit_allocation" "single_with_unallocated" {
-    name = "test-single-unallocated-%d"
-	description = "test allocation single with unallocated_costs"
-    unallocated_costs = "Other"
-    rule = {
-       formula = "A"
-       components = [
-        {
-           key    = "country"
-           mode   = "is"
-           type   = "fixed"
-           values = ["JP"]
-         }
-       ]
-    }
-}
-`, i)
 }
