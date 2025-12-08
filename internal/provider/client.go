@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"terraform-provider-doit/internal/provider/models"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -28,6 +29,26 @@ type Client struct {
 	HTTPClient  *http.Client
 	Auth        Auth
 	Ratelimiter *rate.Limiter
+}
+
+func NewClientGen(ctx context.Context, host, apiToken, customerContext string, rl *rate.Limiter) (*models.ClientWithResponses, error) {
+	client, err := models.NewClientWithResponses(host, models.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("Authorization", "Bearer "+apiToken)
+		if customerContext != "" {
+			url := req.URL.Query()
+			url.Set("customerContext", customerContext)
+			req.URL.RawQuery = url.Encode()
+		}
+		return nil
+	}))
+	if err != nil {
+		return nil, err
+	}
+	_, err = client.Validate(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func NewClient(ctx context.Context, host, doiTAPIClient, customerContext *string, rl *rate.Limiter) (*Client, error) {
