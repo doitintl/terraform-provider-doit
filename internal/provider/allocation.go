@@ -48,6 +48,26 @@ func (plan *allocationResourceModel) toUpdateRequest(ctx context.Context) (req m
 	return req, diags
 }
 
+// Helper to convert a slice of ComponentsValue to a slice of AllocationComponent models
+func convertComponentsToModels(ctx context.Context, components []resource_allocation.ComponentsValue) (result []models.AllocationComponent, diags diag.Diagnostics) {
+	result = make([]models.AllocationComponent, len(components))
+	for i := range components {
+		result[i] = models.AllocationComponent{
+			IncludeNull:      components[i].IncludeNull.ValueBoolPointer(),
+			InverseSelection: components[i].InverseSelection.ValueBoolPointer(),
+			Key:              components[i].Key.ValueString(),
+			Mode:             models.AllocationComponentMode(components[i].Mode.ValueString()),
+			Type:             models.DimensionsTypes(components[i].ComponentsType.ValueString()),
+		}
+		diags = components[i].Values.ElementsAs(ctx, &result[i].Values, true)
+		diags.Append(diags...)
+		if diags.HasError() {
+			return
+		}
+	}
+	return
+}
+
 // Helper to fill common fields into UpdateAllocationRequest model (which uses pointers)
 func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
 	req.Description = plan.Description.ValueStringPointer()
@@ -69,20 +89,9 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 			if diags.HasError() {
 				return diags
 			}
-			req.Rule.Components = make([]models.AllocationComponent, len(planComponents))
-			for i := range planComponents {
-				req.Rule.Components[i] = models.AllocationComponent{
-					IncludeNull:      planComponents[i].IncludeNull.ValueBoolPointer(),
-					InverseSelection: planComponents[i].InverseSelection.ValueBoolPointer(),
-					Key:              planComponents[i].Key.ValueString(),
-					Mode:             models.AllocationComponentMode(planComponents[i].Mode.ValueString()),
-					Type:             models.DimensionsTypes(planComponents[i].ComponentsType.ValueString()),
-				}
-				diags = planComponents[i].Values.ElementsAs(ctx, &req.Rule.Components[i].Values, false)
-				diags.Append(diags...)
-				if diags.HasError() {
-					return diags
-				}
+			req.Rule.Components, diags = convertComponentsToModels(ctx, planComponents)
+			if diags.HasError() {
+				return diags
 			}
 		}
 	}
@@ -114,20 +123,9 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 				if diags.HasError() {
 					return diags
 				}
-				createComponents := make([]models.AllocationComponent, len(ruleComponents))
-				for j := range ruleComponents {
-					createComponents[j] = models.AllocationComponent{
-						IncludeNull:      ruleComponents[j].IncludeNull.ValueBoolPointer(),
-						InverseSelection: ruleComponents[j].InverseSelection.ValueBoolPointer(),
-						Key:              ruleComponents[j].Key.ValueString(),
-						Mode:             models.AllocationComponentMode(ruleComponents[j].Mode.ValueString()),
-						Type:             models.DimensionsTypes(ruleComponents[j].ComponentsType.ValueString()),
-					}
-					diags = ruleComponents[j].Values.ElementsAs(ctx, &createComponents[j].Values, true)
-					diags.Append(diags...)
-					if diags.HasError() {
-						return diags
-					}
+				createComponents, diags := convertComponentsToModels(ctx, ruleComponents)
+				if diags.HasError() {
+					return diags
 				}
 				rules[i].Components = &createComponents
 			}
