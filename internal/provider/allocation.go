@@ -17,12 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allocation, diag.Diagnostics) {
-	var (
-		req   models.Allocation
-		diags diag.Diagnostics
-	)
-
+func (plan *allocationResourceModel) toRequest(ctx context.Context) (req models.Allocation, diags diag.Diagnostics) {
 	allocationType := models.AllocationAllocationType(plan.AllocationType.ValueString())
 	req.AllocationType = &allocationType
 	req.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
