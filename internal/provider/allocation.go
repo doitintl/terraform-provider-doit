@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func (plan *allocationResourceModel) toRequest(ctx context.Context) (req models.CreateAllocationJSONRequestBody, diags diag.Diagnostics) {
+func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req models.CreateAllocationRequest, diags diag.Diagnostics) {
 	// Create request uses value types for Description/Name, Update uses pointers.
 	// We use the common helper to generate the complex Rule/Rules structures (which are shared types)
 	// and then map the simple fields.
@@ -42,7 +42,7 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (req models.
 	return req, diags
 }
 
-func (plan *allocationResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateAllocationJSONRequestBody, diags diag.Diagnostics) {
+func (plan *allocationResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateAllocationRequest, diags diag.Diagnostics) {
 	// Update request is structurally identical to the common request helper
 	diags = plan.fillAllocationCommon(ctx, &req)
 	return req, diags

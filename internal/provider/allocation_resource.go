@@ -94,7 +94,7 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Generate API request body from state
-	allocationReq, diags := plan.toRequest(ctx)
+	allocationReq, diags := plan.toCreateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
