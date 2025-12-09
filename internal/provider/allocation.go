@@ -17,12 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allocation, diag.Diagnostics) {
-	var (
-		req   models.Allocation
-		diags diag.Diagnostics
-	)
-
+func (plan *allocationResourceModel) toRequest(ctx context.Context) (req models.Allocation, diags diag.Diagnostics) {
 	allocationType := models.AllocationAllocationType(plan.AllocationType.ValueString())
 	req.AllocationType = &allocationType
 	req.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
@@ -56,6 +51,50 @@ func (plan *allocationResourceModel) toRequest(ctx context.Context) (models.Allo
 				}
 			}
 		}
+	}
+	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
+		var planRules []resource_allocation.RulesValue
+		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
+		diags.Append(diags...)
+		if diags.HasError() {
+			return req, diags
+		}
+		rules := make([]models.GroupAllocationRule, len(planRules))
+		for i := range planRules {
+			rules[i] = models.GroupAllocationRule{
+				Name:        planRules[i].Name.ValueStringPointer(),
+				Id:          planRules[i].Id.ValueStringPointer(),
+				Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
+				Description: planRules[i].Description.ValueStringPointer(),
+				Formula:     planRules[i].Formula.ValueStringPointer(),
+			}
+			// Don't send components if selecting existing allocation
+			if !planRules[i].Components.IsNull() && planRules[i].Action.ValueString() != "select" {
+				var ruleComponents []resource_allocation.ComponentsValue
+				diags = planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
+				diags.Append(diags...)
+				if diags.HasError() {
+					return req, diags
+				}
+				createComponents := make([]models.AllocationComponent, len(ruleComponents))
+				for j := range ruleComponents {
+					createComponents[j] = models.AllocationComponent{
+						IncludeNull:      ruleComponents[j].IncludeNull.ValueBoolPointer(),
+						InverseSelection: ruleComponents[j].InverseSelection.ValueBoolPointer(),
+						Key:              ruleComponents[j].Key.ValueString(),
+						Mode:             models.AllocationComponentMode(ruleComponents[j].Mode.ValueString()),
+						Type:             models.DimensionsTypes(ruleComponents[j].ComponentsType.ValueString()),
+					}
+					diags = ruleComponents[j].Values.ElementsAs(ctx, &createComponents[j].Values, true)
+					diags.Append(diags...)
+					if diags.HasError() {
+						return req, diags
+					}
+				}
+				rules[i].Components = &createComponents
+			}
+		}
+		req.Rules = &rules
 	}
 	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
 		var planRules []resource_allocation.RulesValue
