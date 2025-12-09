@@ -158,6 +158,8 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
+	// This is due to a bug in the API where the description is not returned for group allocations
+	// Will be removed once the API is fixed
 	if resp.Description != nil && *resp.Description != "" {
 		state.Description = types.StringPointerValue(resp.Description)
 	}
