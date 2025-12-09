@@ -59,8 +59,8 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 			Mode:             models.AllocationComponentMode(components[i].Mode.ValueString()),
 			Type:             models.DimensionsTypes(components[i].ComponentsType.ValueString()),
 		}
-		diags = components[i].Values.ElementsAs(ctx, &result[i].Values, true)
-		diags.Append(diags...)
+		d := components[i].Values.ElementsAs(ctx, &result[i].Values, true)
+		diags.Append(d...)
 		if diags.HasError() {
 			return
 		}
@@ -84,8 +84,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 		}
 		if !plan.Rule.Components.IsNull() {
 			planComponents := []resource_allocation.ComponentsValue{}
-			diags = plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
-			diags.Append(diags...)
+			d := plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
+			diags.Append(d...)
 			if diags.HasError() {
 				return diags
 			}
@@ -99,8 +99,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 	// Populate Group Rules if present
 	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
 		var planRules []resource_allocation.RulesValue
-		diags = plan.Rules.ElementsAs(ctx, &planRules, false)
-		diags.Append(diags...)
+		d := plan.Rules.ElementsAs(ctx, &planRules, false)
+		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
@@ -118,12 +118,14 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 			// But for "create" or "update" action, components are required/allowed.
 			if !planRules[i].Components.IsNull() && planRules[i].Action.ValueString() != "select" {
 				var ruleComponents []resource_allocation.ComponentsValue
-				diags = planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
-				diags.Append(diags...)
+				d := planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
+				diags.Append(d...)
 				if diags.HasError() {
 					return diags
 				}
-				createComponents, diags := convertComponentsToModels(ctx, ruleComponents)
+				var d2 diag.Diagnostics
+				createComponents, d2 := convertComponentsToModels(ctx, ruleComponents)
+				diags.Append(d2...)
 				if diags.HasError() {
 					return diags
 				}
@@ -155,6 +157,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 	}
 
 	resp = httpResp.JSON200
+	if resp == nil {
+		diags.AddError(
+			"Error Reading DoiT Allocation",
+			"Received empty response body for allocation ID "+state.Id.ValueString(),
+		)
+		return
+	}
 
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
@@ -180,14 +189,16 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			"formula": types.StringValue(resp.Rule.Formula),
 		}
 		if resp.Rule.Components != nil {
-			m["components"], diags = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
-			diags.Append(diags...)
+			var d diag.Diagnostics
+			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
+			diags.Append(d...)
 			if diags.HasError() {
 				return
 			}
 		}
-		state.Rule, diags = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
-		diags.Append(diags...)
+		var d diag.Diagnostics
+		state.Rule, d = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
+		diags.Append(d...)
 		if diags.HasError() {
 			return
 		}
@@ -267,22 +278,25 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 				"name":        types.StringPointerValue(rule.Name),
 			}
 			if components != nil {
-				m["components"], diags = toAllocationRuleComponentsListValue(ctx, components)
-				diags.Append(diags...)
+				var d diag.Diagnostics
+				m["components"], d = toAllocationRuleComponentsListValue(ctx, components)
+				diags.Append(d...)
 				if diags.HasError() {
 					return
 				}
 			} else {
 				m["components"] = types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx))
 			}
-			rules[i], diags = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
-			diags.Append(diags...)
+			var d diag.Diagnostics
+			rules[i], d = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
+			diags.Append(d...)
 			if diags.HasError() {
 				return
 			}
 		}
-		state.Rules, diags = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
-		diags.Append(diags...)
+		var d diag.Diagnostics
+		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
+		diags.Append(d...)
 		if diags.HasError() {
 			return
 		}
@@ -306,18 +320,21 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		for j := range component.Values {
 			values[j] = types.StringValue(component.Values[j])
 		}
-		m["values"], diags = types.ListValue(types.StringType, values)
-		diags.Append(diags...)
+		var d diag.Diagnostics
+		m["values"], d = types.ListValue(types.StringType, values)
+		diags.Append(d...)
 		if diags.HasError() {
 			return
 		}
-		stateComponents[i], diags = resource_allocation.NewComponentsValue(resource_allocation.ComponentsValue{}.AttributeTypes(ctx), m)
-		diags.Append(diags...)
+		var d2 diag.Diagnostics
+		stateComponents[i], d2 = resource_allocation.NewComponentsValue(resource_allocation.ComponentsValue{}.AttributeTypes(ctx), m)
+		diags.Append(d2...)
 		if diags.HasError() {
 			return
 		}
 	}
-	res, diags = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
-	diags.Append(diags...)
+	var d diag.Diagnostics
+	res, d = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
+	diags.Append(d...)
 	return
 }

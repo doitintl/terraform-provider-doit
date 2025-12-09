@@ -107,7 +107,7 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	if allocationResp.StatusCode() != 200 && allocationResp.StatusCode() != 201 {
+	if allocationResp.StatusCode() != 200 {
 		resp.Diagnostics.AddError(
 			"Error creating allocation",
 			fmt.Sprintf("Could not create allocation, status: %d, body: %s", allocationResp.StatusCode(), string(allocationResp.Body)),
@@ -126,11 +126,11 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	plan.Id = types.StringPointerValue(allocationResp.JSON200.Id)
 
 	diags = r.populateState(ctx, plan)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
@@ -179,11 +179,27 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Update the allocation
-	_, err := r.client.UpdateAllocation(ctx, state.Id.ValueString(), allocation)
+	updateResp, err := r.client.UpdateAllocationWithResponse(ctx, state.Id.ValueString(), allocation)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating allocation",
 			"Could not update allocation, unexpected error: "+err.Error(),
+		)
+		return
+	}
+
+	if updateResp.StatusCode() != 200 {
+		resp.Diagnostics.AddError(
+			"Error updating allocation",
+			fmt.Sprintf("Could not update allocation, status: %d, body: %s", updateResp.StatusCode(), string(updateResp.Body)),
+		)
+		return
+	}
+
+	if updateResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error updating allocation",
+			"Could not update allocation, empty response",
 		)
 		return
 	}
@@ -205,11 +221,19 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	_, err := r.client.DeleteAllocation(ctx, state.Id.ValueString())
+	deleteResp, err := r.client.DeleteAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Allocation",
 			"Could not delete allocation, unexpected error: "+err.Error(),
+		)
+		return
+	}
+
+	if deleteResp.StatusCode() != 200 && deleteResp.StatusCode() != 204 {
+		resp.Diagnostics.AddError(
+			"Error Deleting DoiT Allocation",
+			fmt.Sprintf("Could not delete allocation, status: %d, body: %s", deleteResp.StatusCode(), string(deleteResp.Body)),
 		)
 		return
 	}
