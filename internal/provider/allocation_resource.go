@@ -3,13 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
 
 	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_allocation"
 
-	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -128,7 +125,7 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 
 	plan.Id = types.StringPointerValue(allocationResp.JSON200.Id)
 
-	diags = r.populateState(ctx, plan, nil)
+	diags = r.populateState(ctx, plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -145,7 +142,7 @@ func (r *allocationResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	diags = r.populateState(ctx, state, nil)
+	diags = r.populateState(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -182,7 +179,7 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Update the allocation
-	allocationResponse, err := r.client.UpdateAllocationWithResponse(ctx, state.Id.ValueString(), allocation)
+	_, err := r.client.UpdateAllocation(ctx, state.Id.ValueString(), allocation)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating allocation",
@@ -191,75 +188,13 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	if allocationResponse.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error updating allocation",
-			fmt.Sprintf("Could not update allocation, status: %d, body: %s", allocationResponse.StatusCode(), string(allocationResponse.Body)),
-		)
-		return
-	}
-
-	// Wait for consistency using backoff.
-	// The API is eventually consistent, so we poll until Name, Description, and Rule/Rules are present.
-	// This prevents Terraform from seeing null values immediately after an update.
-	var lastFetchedResp *models.Allocation
-	consistencyOp := func() error {
-		getResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
-		if err != nil {
-			// Allow retry on transient network errors
-			return err
-		}
-		if getResp.JSON200 == nil {
-			return fmt.Errorf("empty response from API")
-		}
-
-		lastFetchedResp = getResp.JSON200
-
-		// Check that essential fields are not nil (eventual consistency issue)
-		if getResp.JSON200.Name == nil {
-			return fmt.Errorf("name is nil, waiting for consistency")
-		}
-
-		// For single allocations, Rule must be present; for group allocations, Rules must be present
-		if !plan.Rule.IsNull() && getResp.JSON200.Rule == nil {
-			return fmt.Errorf("rule is nil, waiting for consistency")
-		}
-		if !plan.Rules.IsNull() && getResp.JSON200.Rules == nil {
-			return fmt.Errorf("rules is nil, waiting for consistency")
-		}
-
-		// Also verify Description matches what we sent
-		fetchedDesc := ""
-		if getResp.JSON200.Description != nil {
-			fetchedDesc = *getResp.JSON200.Description
-		}
-		expectedDesc := plan.Description.ValueString()
-		if fetchedDesc != expectedDesc {
-			return fmt.Errorf("description mismatch: expected %q, got %q", expectedDesc, fetchedDesc)
-		}
-
-		log.Printf("[DEBUG] Consistency check passed: Name=%s, Desc=%s", *getResp.JSON200.Name, fetchedDesc)
-		return nil
-	}
-
-	b := backoff.NewExponentialBackOff()
-	b.MaxElapsedTime = 2 * time.Minute
-	b.InitialInterval = 2 * time.Second
-
-	err = backoff.Retry(consistencyOp, b)
-	if err != nil {
-		log.Printf("[WARN] Allocation update consistency check failed or timed out: %v", err)
-	}
-
-	// Use the last fetched response from consistency check to populate state
-	// This avoids an extra API call and uses the verified consistent data
-	diags = r.populateState(ctx, plan, lastFetchedResp)
+	diags = r.populateState(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

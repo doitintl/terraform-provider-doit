@@ -135,30 +135,26 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 	return diags
 }
 
-func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel, allocation *models.Allocation) (diags diag.Diagnostics) {
+func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) (diags diag.Diagnostics) {
 	var resp *models.Allocation
 
-	if allocation != nil {
-		resp = allocation
-	} else {
-		// Get refreshed allocation value from DoiT using the ID from the state.
-		httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
-		if err != nil {
-			if strings.Contains(err.Error(), "404") {
-				// The resource was deleted. This is an edge case for create,
-				// but necessary for the read function.
-				state.Id = types.StringNull()
-				return
-			}
-			diags.AddError(
-				"Error Reading Doit Console Allocation",
-				"Could not read Doit Console Allocation ID "+state.Id.ValueString()+": "+err.Error(),
-			)
+	// Get refreshed allocation value from DoiT using the ID from the state.
+	httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			// The resource was deleted. This is an edge case for create,
+			// but necessary for the read function.
+			state.Id = types.StringNull()
 			return
 		}
-
-		resp = httpResp.JSON200
+		diags.AddError(
+			"Error Reading Doit Console Allocation",
+			"Could not read Doit Console Allocation ID "+state.Id.ValueString()+": "+err.Error(),
+		)
+		return
 	}
+
+	resp = httpResp.JSON200
 
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
