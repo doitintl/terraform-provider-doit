@@ -101,7 +101,7 @@ resource "doit_budget" "this" {
     },
   ]
   scope = [
-    "EE8CtpzYiKp0dVAESVrB"
+    "ydDBFKVuz9kGlFDex8cN"
   ]
   amount            = 200
   currency          = "EUR"
@@ -142,7 +142,7 @@ resource "doit_budget" "this" {
     },
   ]
   scope = [
-    "EE8CtpzYiKp0dVAESVrB"
+    "ydDBFKVuz9kGlFDex8cN"
   ]
   amount            = 500
   currency          = "EUR"
