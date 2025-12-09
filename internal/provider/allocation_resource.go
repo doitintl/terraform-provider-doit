@@ -126,11 +126,11 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	plan.Id = types.StringPointerValue(allocationResp.JSON200.Id)
 
 	diags = r.populateState(ctx, plan)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
