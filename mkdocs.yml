@@ -1,0 +1,14 @@
+site_name: Terraform Provider DoiT
+
+nav:
+  - Home: home.md
+  - Provider Resource: index.md
+  - Allocation Resource: resources/allocation.md
+  - Allocation Group Resource: resources/allocation_group.md
+  - Attribution Resource: resources/attribution.md
+  - Attribution Group Resource: resources/attribution_group.md
+  - Budget Resource: resources/budget.md
+  - Report Resource: resources/report.md
+
+plugins:
+  - techdocs-core
