@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_allocation"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
@@ -14,7 +15,7 @@ import (
 
 type (
 	allocationResource struct {
-		client *Client
+		client *models.ClientWithResponses
 	}
 	allocationResourceModel struct {
 		resource_allocation.AllocationModel
@@ -39,16 +40,16 @@ func (r *allocationResource) Configure(_ context.Context, req resource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	client, ok := req.ProviderData.(*Clients)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *Clients, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client
+	r.client = client.NewClient
 }
 
 func (r *allocationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -69,6 +70,14 @@ func (r *allocationResource) ConfigValidators(ctx context.Context) []resource.Co
 			path.MatchRoot("rule"),
 			path.MatchRoot("rules"),
 		),
+		resourcevalidator.RequiredTogether(
+			path.MatchRoot("rules"),
+			path.MatchRoot("unallocated_costs"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("rule"),
+			path.MatchRoot("unallocated_costs"),
+		),
 	}
 }
 
@@ -82,14 +91,14 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Generate API request body from state
-	allocationReq, diags := plan.toRequest(ctx)
+	allocationReq, diags := plan.toCreateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save state into Terraform state
-	allocationResp, err := r.client.CreateAllocation(ctx, allocationReq)
+	allocationResp, err := r.client.CreateAllocationWithResponse(ctx, allocationReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating allocation",
@@ -98,14 +107,30 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	plan.Id = types.StringPointerValue(allocationResp.Id)
+	if allocationResp.StatusCode() != 200 {
+		resp.Diagnostics.AddError(
+			"Error creating allocation",
+			fmt.Sprintf("Could not create allocation, status: %d, body: %s", allocationResp.StatusCode(), string(allocationResp.Body)),
+		)
+		return
+	}
+
+	if allocationResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error creating allocation",
+			"Could not create allocation, empty response",
+		)
+		return
+	}
+
+	plan.Id = types.StringPointerValue(allocationResp.JSON200.Id)
 
 	diags = r.populateState(ctx, plan)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
@@ -140,7 +165,7 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Generate API request body from plan
-	allocation, diags := plan.toRequest(ctx)
+	allocation, diags := plan.toUpdateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -153,11 +178,28 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	_, err := r.client.UpdateAllocation(ctx, state.Id.ValueString(), allocation)
+	// Update the allocation
+	updateResp, err := r.client.UpdateAllocationWithResponse(ctx, state.Id.ValueString(), allocation)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Updating DoiT Allocation",
+			"Error updating allocation",
 			"Could not update allocation, unexpected error: "+err.Error(),
+		)
+		return
+	}
+
+	if updateResp.StatusCode() != 200 {
+		resp.Diagnostics.AddError(
+			"Error updating allocation",
+			fmt.Sprintf("Could not update allocation, status: %d, body: %s", updateResp.StatusCode(), string(updateResp.Body)),
+		)
+		return
+	}
+
+	if updateResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error updating allocation",
+			"Could not update allocation, empty response",
 		)
 		return
 	}
@@ -179,11 +221,19 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	err := r.client.DeleteAllocation(ctx, state.Id.ValueString())
+	deleteResp, err := r.client.DeleteAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Allocation",
 			"Could not delete allocation, unexpected error: "+err.Error(),
+		)
+		return
+	}
+
+	if deleteResp.StatusCode() != 200 {
+		resp.Diagnostics.AddError(
+			"Error Deleting DoiT Allocation",
+			fmt.Sprintf("Could not delete allocation, status: %d, body: %s", deleteResp.StatusCode(), string(deleteResp.Body)),
 		)
 		return
 	}
