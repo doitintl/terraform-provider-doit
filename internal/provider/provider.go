@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -39,6 +40,12 @@ func New(version string) func() provider.Provider {
 			version: version,
 		}
 	}
+}
+
+// This is temporary until we have migrated all resources to the new client.
+type Clients struct {
+	OldClient *Client
+	NewClient *models.ClientWithResponses
 }
 
 // doitProvider is the provider implementation.
@@ -201,10 +208,25 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		return
 	}
 
+	clientNew, err := NewClientGen(ctx, host, doiTAPIToken, customerContext, rl)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Create DoiT API Client",
+			"An unexpected error occurred when creating the DoiT API client. "+
+				"If the error is not clear, please contact the provider developers.\n\n"+
+				"DoiT Client Error: "+err.Error(),
+		)
+		return
+	}
+
+	clients := Clients{
+		OldClient: client,
+		NewClient: clientNew,
+	}
 	// Make the DoiT client available during DataSource and Resource
 	// type Configure methods.
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	resp.DataSourceData = &clients
+	resp.ResourceData = &clients
 
 	tflog.Info(ctx, "Configured DoiT client", map[string]any{"success": true})
 }
