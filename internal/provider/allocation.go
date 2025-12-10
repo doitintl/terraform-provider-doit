@@ -123,9 +123,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 				if diags.HasError() {
 					return diags
 				}
-				var d2 diag.Diagnostics
-				createComponents, d2 := convertComponentsToModels(ctx, ruleComponents)
-				diags.Append(d2...)
+				createComponents, d := convertComponentsToModels(ctx, ruleComponents)
+				diags.Append(d...)
 				if diags.HasError() {
 					return diags
 				}
@@ -256,8 +255,8 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
-				httpFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
-				fullAlloc := httpFullAlloc.JSON200
+				respHttpFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
+				fullAlloc := respHttpFullAlloc.JSON200
 				if err == nil {
 					if fullAlloc.Rule != nil {
 						formula = fullAlloc.Rule.Formula
@@ -326,9 +325,8 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		if diags.HasError() {
 			return
 		}
-		var d2 diag.Diagnostics
-		stateComponents[i], d2 = resource_allocation.NewComponentsValue(resource_allocation.ComponentsValue{}.AttributeTypes(ctx), m)
-		diags.Append(d2...)
+		stateComponents[i], d = resource_allocation.NewComponentsValue(resource_allocation.ComponentsValue{}.AttributeTypes(ctx), m)
+		diags.Append(d...)
 		if diags.HasError() {
 			return
 		}

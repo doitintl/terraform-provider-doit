@@ -230,7 +230,7 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	if deleteResp.StatusCode() != 200 && deleteResp.StatusCode() != 204 {
+	if deleteResp.StatusCode() != 200 {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Allocation",
 			fmt.Sprintf("Could not delete allocation, status: %d, body: %s", deleteResp.StatusCode(), string(deleteResp.Body)),
