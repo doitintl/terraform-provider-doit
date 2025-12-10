@@ -56,10 +56,6 @@ func (r *allocationResource) ImportState(ctx context.Context, req resource.Impor
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func (r *allocationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
 func (r *allocationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_allocation"
 }
@@ -73,6 +69,14 @@ func (r *allocationResource) ConfigValidators(ctx context.Context) []resource.Co
 		resourcevalidator.ExactlyOneOf(
 			path.MatchRoot("rule"),
 			path.MatchRoot("rules"),
+		),
+		resourcevalidator.RequiredTogether(
+			path.MatchRoot("rules"),
+			path.MatchRoot("unallocated_costs"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("rule"),
+			path.MatchRoot("unallocated_costs"),
 		),
 	}
 }
