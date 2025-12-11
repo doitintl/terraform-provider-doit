@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -140,5 +142,62 @@ func validateBudgetTimeInterval(timeInterval string) error {
 		return nil
 	default:
 		return fmt.Errorf("time_interval must be one of: day, week, month, quarter, year. Provided: %s", timeInterval)
+	}
+}
+
+// budgetTypeEndPeriodValidator validates that:
+// - end_period is not set when type is "recurring"
+// - end_period is required when type is "fixed"
+type budgetTypeEndPeriodValidator struct{}
+
+func (v budgetTypeEndPeriodValidator) Description(ctx context.Context) string {
+	return "Validates that end_period is not set for recurring budgets and is required for fixed budgets"
+}
+
+func (v budgetTypeEndPeriodValidator) MarkdownDescription(ctx context.Context) string {
+	return "Validates that `end_period` is not set for recurring budgets and is required for fixed budgets"
+}
+
+func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var budgetType types.String
+	var endPeriod types.Int64
+
+	// Get the type attribute
+	diags := req.Config.GetAttribute(ctx, path.Root("type"), &budgetType)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get the end_period attribute
+	diags = req.Config.GetAttribute(ctx, path.Root("end_period"), &endPeriod)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// If type is "recurring" and end_period is set, that's an error
+	if !budgetType.IsNull() && !budgetType.IsUnknown() && budgetType.ValueString() == "recurring" {
+		if !endPeriod.IsNull() && !endPeriod.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("end_period"),
+				"Invalid Attribute Combination",
+				"Attribute end_period cannot be set when type is \"recurring\". "+
+					"For recurring budgets, the budget continues indefinitely without an end date. "+
+					"Only fixed budgets require an end_period.",
+			)
+		}
+	}
+
+	// If type is "fixed" and end_period is not set, that's an error
+	if !budgetType.IsNull() && !budgetType.IsUnknown() && budgetType.ValueString() == "fixed" {
+		if endPeriod.IsNull() || endPeriod.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("end_period"),
+				"Missing Required Attribute",
+				"Attribute end_period is required when type is \"fixed\". "+
+					"Fixed budgets must have a defined end date.",
+			)
+		}
 	}
 }

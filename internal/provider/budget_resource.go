@@ -24,9 +24,10 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                 = &budgetResource{}
-	_ resource.ResourceWithConfigure    = &budgetResource{}
-	_ resource.ResourceWithUpgradeState = &budgetResource{}
+	_ resource.Resource                     = &budgetResource{}
+	_ resource.ResourceWithConfigure        = &budgetResource{}
+	_ resource.ResourceWithUpgradeState     = &budgetResource{}
+	_ resource.ResourceWithConfigValidators = &budgetResource{}
 )
 
 func NewBudgetResource() resource.Resource {
@@ -60,6 +61,12 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	s := resource_budget.BudgetResourceSchema(ctx)
 	s.Version = budgetSchemaVersion
 	resp.Schema = s
+}
+
+func (r *budgetResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		budgetTypeEndPeriodValidator{},
+	}
 }
 
 func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
