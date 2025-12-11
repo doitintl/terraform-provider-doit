@@ -1,5 +1,5 @@
 {
-  description = "zen-doit-console local dev environment";
+  description = "terraform-provider-doit local dev environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/544961dfcce86422ba200ed9a0b00dd4b1486ec5"; #v25.05
