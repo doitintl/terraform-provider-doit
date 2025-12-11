@@ -56,7 +56,12 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 	}
 
 	req.Description = plan.Description.ValueStringPointer()
-	req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
+
+	// Only set EndPeriod if it's actually provided (not null/unknown)
+	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
+		req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
+	}
+
 	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
 	req.Metric = plan.Metric.ValueStringPointer()
 	req.Name = plan.Name.ValueStringPointer()
@@ -108,7 +113,11 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		req.SeasonalAmounts = &seasonalAmounts
 	}
 
-	req.StartPeriod = plan.StartPeriod.ValueInt64Pointer()
+	// Only set StartPeriod if it's actually provided
+	if !plan.StartPeriod.IsNull() && !plan.StartPeriod.IsUnknown() {
+		req.StartPeriod = plan.StartPeriod.ValueInt64Pointer()
+	}
+
 	req.TimeInterval = plan.TimeInterval.ValueStringPointer()
 	req.Type = plan.Type.ValueStringPointer()
 	req.UsePrevSpend = plan.UsePrevSpend.ValueBoolPointer()

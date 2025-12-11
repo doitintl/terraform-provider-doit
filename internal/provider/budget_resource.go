@@ -81,9 +81,14 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Create new budget via API
 	budgetResp, err := r.client.CreateBudgetWithResponse(ctx, budget)
 	if err != nil {
+		errorMsg := "Could not create budget, unexpected error: " + err.Error()
+		// Even if there's an error, check if we have a response with a body to read
+		if budgetResp != nil && len(budgetResp.Body) > 0 {
+			errorMsg += fmt.Sprintf(", response body: %s", string(budgetResp.Body))
+		}
 		resp.Diagnostics.AddError(
 			"Error creating budget",
-			"Could not create budget, unexpected error: "+err.Error(),
+			errorMsg,
 		)
 		return
 	}
@@ -108,10 +113,12 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Update model with response data
+	// Set ID from create response
 	data.Id = types.StringPointerValue(budgetResp.JSON201.Id)
 
 	// Save data into Terraform state
+	// Note: We don't call populateState here because the budget API may not return
+	// all fields immediately after creation. The plan values will be used for the state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
