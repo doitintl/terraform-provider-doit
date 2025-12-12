@@ -54,7 +54,7 @@ func TestAccBudget(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_budget.this",
 						tfjsonpath.New("description"),
-						knownvalue.StringExact("test budget updated")),
+						knownvalue.StringExact("test budget update")),
 				},
 			},
 		},

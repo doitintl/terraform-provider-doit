@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_budget"
@@ -209,7 +210,7 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update existing budget via API
-	_, err := r.client.UpdateBudget(ctx, state.Id.ValueString(), budget)
+	updateResp, err := r.client.UpdateBudget(ctx, state.Id.ValueString(), budget)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Budget",
@@ -218,7 +219,24 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
+	if updateResp.StatusCode != 200 {
+		errorMsg := fmt.Sprintf("Could not update budget, status: %d", updateResp.StatusCode)
+		// Try to read body for error details
+		if updateResp.Body != nil {
+			bodyBytes, _ := io.ReadAll(updateResp.Body)
+			if len(bodyBytes) > 0 {
+				errorMsg += fmt.Sprintf(", body: %s", string(bodyBytes))
+			}
+		}
+		resp.Diagnostics.AddError(
+			"Error Updating Budget",
+			errorMsg,
+		)
+		return
+	}
+
 	// Fetch updated budget from API and populate state
+	data.Id = state.Id
 	diags = r.populateState(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

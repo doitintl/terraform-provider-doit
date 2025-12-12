@@ -7,6 +7,7 @@ import (
 	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_budget"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -17,49 +18,53 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 	// Convert alerts
 	if !plan.Alerts.IsNull() && !plan.Alerts.IsUnknown() {
 		var alerts []resource_budget.AlertsValue
-		d := plan.Alerts.ElementsAs(ctx, &alerts, false)
-		diags.Append(d...)
-		if !diags.HasError() {
-			apiAlerts := make([]models.BudgetCreateUpdateAlert, len(alerts))
-			for i, alert := range alerts {
-				apiAlerts[i] = models.BudgetCreateUpdateAlert{
-					Percentage: alert.Percentage.ValueFloat64Pointer(),
-				}
-			}
-			req.Alerts = &apiAlerts
+		diags.Append(plan.Alerts.ElementsAs(ctx, &alerts, false)...)
+		if diags.HasError() {
+			return req, diags
 		}
-	}
 
-	// Simple field conversions
-	req.Amount = plan.Amount.ValueFloat64Pointer()
+		reqAlerts := make([]models.BudgetCreateUpdateAlert, len(alerts))
+		for i, alert := range alerts {
+			reqAlerts[i] = models.BudgetCreateUpdateAlert{
+				Percentage: alert.Percentage.ValueFloat64Pointer(),
+			}
+		}
+		req.Alerts = &reqAlerts
+	}
 
 	// Convert collaborators
 	if !plan.Collaborators.IsNull() && !plan.Collaborators.IsUnknown() {
 		var collaborators []resource_budget.CollaboratorsValue
-		d := plan.Collaborators.ElementsAs(ctx, &collaborators, false)
-		diags.Append(d...)
-		if !diags.HasError() {
-			apiCollaborators := make([]models.Collaborator, len(collaborators))
-			for i, collab := range collaborators {
-				apiCollaborators[i] = models.Collaborator{
-					Email: collab.Email.ValueStringPointer(),
-					Role:  (*models.CollaboratorRole)(collab.Role.ValueStringPointer()),
-				}
-			}
-			req.Collaborators = &apiCollaborators
+		diags.Append(plan.Collaborators.ElementsAs(ctx, &collaborators, false)...)
+		if diags.HasError() {
+			return req, diags
 		}
+
+		reqCollaborators := make([]models.Collaborator, len(collaborators))
+		for i, collaborator := range collaborators {
+			role := models.CollaboratorRole(collaborator.Role.ValueString())
+			reqCollaborators[i] = models.Collaborator{
+				Email: collaborator.Email.ValueStringPointer(),
+				Role:  &role,
+			}
+		}
+		req.Collaborators = &reqCollaborators
 	}
 
+	// Simple fields
+	req.Amount = plan.Amount.ValueFloat64Pointer()
 	if !plan.Currency.IsNull() && !plan.Currency.IsUnknown() {
 		currency := models.Currency(plan.Currency.ValueString())
 		req.Currency = &currency
 	}
-
 	req.Description = plan.Description.ValueStringPointer()
 
-	// Only set EndPeriod if it's actually provided (not null/unknown)
+	// Only set EndPeriod if it's not null/unknown
 	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
 		req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
+	} else if plan.Type.ValueString() == "fixed" {
+		// This should be caught by validator but just in case
+		// Don't send 0
 	}
 
 	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
@@ -71,49 +76,56 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		req.Public = &public
 	}
 
-	// Convert recipients list
 	if !plan.Recipients.IsNull() && !plan.Recipients.IsUnknown() {
 		var recipients []string
 		diags.Append(plan.Recipients.ElementsAs(ctx, &recipients, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
 		req.Recipients = &recipients
 	}
 
-	// Convert recipients_slack_channels
+	// RecipientsSlackChannels
 	if !plan.RecipientsSlackChannels.IsNull() && !plan.RecipientsSlackChannels.IsUnknown() {
 		var slackChannels []resource_budget.RecipientsSlackChannelsValue
-		d := plan.RecipientsSlackChannels.ElementsAs(ctx, &slackChannels, false)
-		diags.Append(d...)
-		if !diags.HasError() {
-			apiSlackChannels := make([]models.SlackChannel, len(slackChannels))
-			for i, slack := range slackChannels {
-				apiSlackChannels[i] = models.SlackChannel{
-					CustomerId: slack.CustomerId.ValueStringPointer(),
-					Id:         slack.Id.ValueStringPointer(),
-					Name:       slack.Name.ValueStringPointer(),
-					Shared:     slack.Shared.ValueBoolPointer(),
-					Type:       slack.RecipientsSlackChannelsType.ValueStringPointer(),
-					Workspace:  slack.Workspace.ValueStringPointer(),
-				}
-			}
-			req.RecipientsSlackChannels = &apiSlackChannels
+		diags.Append(plan.RecipientsSlackChannels.ElementsAs(ctx, &slackChannels, false)...)
+		if diags.HasError() {
+			return req, diags
 		}
+
+		reqSlackChannels := make([]models.SlackChannel, len(slackChannels))
+		for i, channel := range slackChannels {
+			reqSlackChannels[i] = models.SlackChannel{
+				CustomerId: channel.CustomerId.ValueStringPointer(),
+				Id:         channel.Id.ValueStringPointer(),
+				Name:       channel.Name.ValueStringPointer(),
+				Shared:     channel.Shared.ValueBoolPointer(),
+				Workspace:  channel.Workspace.ValueStringPointer(),
+				Type:       channel.RecipientsSlackChannelsType.ValueStringPointer(),
+			}
+		}
+		req.RecipientsSlackChannels = &reqSlackChannels
 	}
 
-	// Convert scope list
 	if !plan.Scope.IsNull() && !plan.Scope.IsUnknown() {
 		var scope []string
 		diags.Append(plan.Scope.ElementsAs(ctx, &scope, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
 		req.Scope = &scope
 	}
 
-	// Convert seasonal_amounts list
 	if !plan.SeasonalAmounts.IsNull() && !plan.SeasonalAmounts.IsUnknown() {
 		var seasonalAmounts []float64
 		diags.Append(plan.SeasonalAmounts.ElementsAs(ctx, &seasonalAmounts, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
 		req.SeasonalAmounts = &seasonalAmounts
 	}
 
-	// Only set StartPeriod if it's actually provided
+	// Only set StartPeriod if it's not null/unknown
 	if !plan.StartPeriod.IsNull() && !plan.StartPeriod.IsUnknown() {
 		req.StartPeriod = plan.StartPeriod.ValueInt64Pointer()
 	}
@@ -157,11 +169,14 @@ func (r *budgetResource) populateState(ctx context.Context, state *budgetResourc
 	if resp.Alerts != nil && len(*resp.Alerts) > 0 {
 		alertsList := make([]resource_budget.AlertsValue, len(*resp.Alerts))
 		for i, alert := range *resp.Alerts {
-			alertsList[i] = resource_budget.AlertsValue{
-				ForecastedDate: types.Int64PointerValue(alert.ForecastedDate),
-				Percentage:     types.Float64PointerValue(alert.Percentage),
-				Triggered:      types.BoolPointerValue(alert.Triggered),
+			alertAttrs := map[string]attr.Value{
+				"forecasted_date": types.Int64PointerValue(alert.ForecastedDate),
+				"percentage":      types.Float64PointerValue(alert.Percentage),
+				"triggered":       types.BoolPointerValue(alert.Triggered),
 			}
+			var d diag.Diagnostics
+			alertsList[i], d = resource_budget.NewAlertsValue(resource_budget.AlertsValue{}.AttributeTypes(ctx), alertAttrs)
+			diags.Append(d...)
 		}
 		alertsListValue, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), alertsList)
 		diags.Append(d...)
@@ -176,10 +191,13 @@ func (r *budgetResource) populateState(ctx context.Context, state *budgetResourc
 	if resp.Collaborators != nil && len(*resp.Collaborators) > 0 {
 		collaboratorsList := make([]resource_budget.CollaboratorsValue, len(*resp.Collaborators))
 		for i, collab := range *resp.Collaborators {
-			collaboratorsList[i] = resource_budget.CollaboratorsValue{
-				Email: types.StringPointerValue(collab.Email),
-				Role:  types.StringPointerValue((*string)(collab.Role)),
+			collabAttrs := map[string]attr.Value{
+				"email": types.StringPointerValue(collab.Email),
+				"role":  types.StringPointerValue((*string)(collab.Role)),
 			}
+			var d diag.Diagnostics
+			collaboratorsList[i], d = resource_budget.NewCollaboratorsValue(resource_budget.CollaboratorsValue{}.AttributeTypes(ctx), collabAttrs)
+			diags.Append(d...)
 		}
 		collaboratorsListValue, d := types.ListValueFrom(ctx, resource_budget.CollaboratorsValue{}.Type(ctx), collaboratorsList)
 		diags.Append(d...)
