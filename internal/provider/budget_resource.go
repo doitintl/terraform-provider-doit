@@ -66,6 +66,7 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 func (r *budgetResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		budgetTypeEndPeriodValidator{},
+		budgetAlertsLengthValidator{},
 	}
 }
 
@@ -123,9 +124,38 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Set ID from create response
 	data.Id = types.StringPointerValue(budgetResp.JSON201.Id)
 
+	// Set computed-only fields in alerts if alerts were provided in the plan
+	if !data.Alerts.IsNull() && !data.Alerts.IsUnknown() {
+		var alerts []resource_budget.AlertsValue
+		d := data.Alerts.ElementsAs(ctx, &alerts, false)
+		diags.Append(d...)
+		if !diags.HasError() {
+			// Set computed fields (forecasted_date, triggered)
+			for i := range alerts {
+				alerts[i].ForecastedDate = types.Int64Null()
+				alerts[i].Triggered = types.BoolValue(false)
+			}
+			alertsListValue, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), alerts)
+			diags.Append(d...)
+			data.Alerts = alertsListValue
+		}
+	}
+
+	// Set other computed-only fields that might be unknown
+	if data.EndPeriod.IsUnknown() {
+		data.EndPeriod = types.Int64Null()
+	}
+	if data.Public.IsUnknown() {
+		data.Public = types.StringNull()
+	}
+	if data.RecipientsSlackChannels.IsUnknown() {
+		data.RecipientsSlackChannels = types.ListNull(resource_budget.RecipientsSlackChannelsValue{}.Type(ctx))
+	}
+	if data.SeasonalAmounts.IsUnknown() {
+		data.SeasonalAmounts = types.ListNull(types.Float64Type)
+	}
+
 	// Save data into Terraform state
-	// Note: We don't call populateState here because the budget API may not return
-	// all fields immediately after creation. The plan values will be used for the state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

@@ -201,3 +201,37 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 		}
 	}
 }
+
+// budgetAlertsLengthValidator validates that alerts list has exactly 3 items
+type budgetAlertsLengthValidator struct{}
+
+func (v budgetAlertsLengthValidator) Description(ctx context.Context) string {
+	return "Validates that alerts list has exactly 3 items"
+}
+
+func (v budgetAlertsLengthValidator) MarkdownDescription(ctx context.Context) string {
+	return "Validates that `alerts` list has exactly 3 items"
+}
+
+func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var alerts types.List
+
+	// Get the alerts attribute
+	diags := req.Config.GetAttribute(ctx, path.Root("alerts"), &alerts)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if alerts.IsNull() || alerts.IsUnknown() {
+		return
+	}
+
+	if len(alerts.Elements()) != 3 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("alerts"),
+			"Invalid Alerts Configuration",
+			fmt.Sprintf("Budget must have exactly 3 alerts. Found %d alerts.", len(alerts.Elements())),
+		)
+	}
+}
