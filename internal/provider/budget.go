@@ -163,6 +163,10 @@ func (r *budgetResource) populateState(ctx context.Context, state *budgetResourc
 		return
 	}
 
+	return mapBudgetToModel(ctx, resp, state)
+}
+
+func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budgetResourceModel) (diags diag.Diagnostics) {
 	state.Id = types.StringPointerValue(resp.Id)
 
 	// Convert alerts with computed fields (forecasted_date, triggered)

@@ -27,8 +27,9 @@ func TestAccBudget(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
+			// Test Min Budget (Recurring)
 			{
-				Config: testAccBudget(n),
+				Config: testAccBudgetMin(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -38,9 +39,20 @@ func TestAccBudget(t *testing.T) {
 						),
 					},
 				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-min-%d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("type"),
+						knownvalue.StringExact("recurring")),
+				},
 			},
+			// Test Min Budget Update (In-place)
 			{
-				Config: testAccBudgetUpdate(n),
+				Config: testAccBudgetMinUpdate(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -53,8 +65,40 @@ func TestAccBudget(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_budget.this",
-						tfjsonpath.New("description"),
-						knownvalue.StringExact("test budget update")),
+						tfjsonpath.New("amount"),
+						knownvalue.Float64Exact(150)),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-min-updated-%d", n))),
+				},
+			},
+			// Test Fixed Budget
+			{
+				Config: testAccBudgetFixed(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("type"),
+						knownvalue.StringExact("fixed")),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("end_period"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Test Full Budget (Recurring)
+			{
+				Config: testAccBudgetFull(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
 				},
 			},
 		},
@@ -64,7 +108,7 @@ func TestAccBudget(t *testing.T) {
 func budgetStartPeriod() string {
 	return `
 locals {
-  start_period = provider::time::rfc3339_parse("2025-11-01T00:00:00Z").unix * 1000
+  start_period = provider::time::rfc3339_parse("2025-10-01T00:00:00Z").unix * 1000
 }
 
 output "start_period" {
@@ -73,13 +117,81 @@ output "start_period" {
 `
 }
 
-func testAccBudget(i int) string {
+func testAccBudgetMin(i int) string {
 	return fmt.Sprintf(`
 %s
 
 resource "doit_budget" "this" {
-  name = "test-%d"
-  description = "test budget"
+  name          = "test-min-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scope         = ["ydDBFKVuz9kGlFDex8cN"]
+  alerts = [
+    { percentage = 50 },
+    { percentage = 80 },
+    { percentage = 100 }
+  ]
+  collaborators = [
+    {
+      "email" : "hannes.h@doit.com",
+      "role" : "owner"
+    },
+  ]
+  type          = "recurring"
+  start_period  = local.start_period
+}
+`, budgetStartPeriod(), i)
+}
+
+func testAccBudgetMinUpdate(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-min-updated-%d"
+  amount        = 150
+  currency      = "EUR"
+  time_interval = "month"
+  scope         = ["ydDBFKVuz9kGlFDex8cN"]
+  alerts = [
+    { percentage = 50 },
+    { percentage = 80 },
+    { percentage = 100 }
+  ]
+  collaborators = [
+    {
+      "email" : "hannes.h@doit.com",
+      "role" : "owner"
+    },
+  ]
+  type          = "recurring"
+  start_period  = local.start_period
+}
+`, budgetStartPeriod(), i)
+}
+
+func testAccBudgetFixed(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-fixed-%d"
+  amount        = 500
+  type          = "fixed"
+  start_period  = local.start_period
+  end_period    = local.start_period + (30 * 24 * 60 * 60 * 1000) # 30 days later
+}
+`, budgetStartPeriod(), i)
+}
+
+func testAccBudgetFull(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name = "test-full-%d"
+  description = "test full budget"
   alerts = [
     {
       percentage = 50
@@ -103,54 +215,14 @@ resource "doit_budget" "this" {
   scope = [
     "ydDBFKVuz9kGlFDex8cN"
   ]
-  amount            = 200
+  amount            = 1000
   currency          = "EUR"
-  growth_per_period = 10
-  time_interval     = "month"
+  growth_per_period = 5
+  time_interval     = "quarter"
   type              = "recurring"
   use_prev_spend    = false
-  start_period = local.start_period
-}
-`, budgetStartPeriod(), i)
-}
-
-func testAccBudgetUpdate(i int) string {
-	return fmt.Sprintf(`
-%s
-
-resource "doit_budget" "this" {
-  name = "test-%d"
-  description = "test budget update"
-  alerts = [
-    {
-      percentage = 60
-    },
-    {
-      percentage = 90,
-    },
-    {
-      percentage = 100,
-    }
-  ]
-  recipients = [
-    "hannes.h@doit.com"
-  ]
-  collaborators = [
-    {
-      "email" : "hannes.h@doit.com",
-      "role" : "owner"
-    },
-  ]
-  scope = [
-    "ydDBFKVuz9kGlFDex8cN"
-  ]
-  amount            = 500
-  currency          = "EUR"
-  growth_per_period = 10
-  time_interval     = "month"
-  type              = "recurring"
-  use_prev_spend    = true
-  start_period = local.start_period
+  start_period      = local.start_period
+  public            = "viewer"
 }
 `, budgetStartPeriod(), i)
 }

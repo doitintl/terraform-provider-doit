@@ -3,13 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_budget"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const budgetSchemaVersion = 1
@@ -90,14 +88,9 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Create new budget via API
 	budgetResp, err := r.client.CreateBudgetWithResponse(ctx, budget)
 	if err != nil {
-		errorMsg := "Could not create budget, unexpected error: " + err.Error()
-		// Even if there's an error, check if we have a response with a body to read
-		if budgetResp != nil && len(budgetResp.Body) > 0 {
-			errorMsg += fmt.Sprintf(", response body: %s", string(budgetResp.Body))
-		}
 		resp.Diagnostics.AddError(
-			"Error creating budget",
-			errorMsg,
+			"Error Creating Budget",
+			"Could not create budget, unexpected error: "+err.Error(),
 		)
 		return
 	}
@@ -107,9 +100,10 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 		if len(budgetResp.Body) > 0 {
 			errorMsg += fmt.Sprintf(", body: %s", string(budgetResp.Body))
 		}
+		// Also non-retryable error
 		resp.Diagnostics.AddError(
-			"Error creating budget",
-			errorMsg,
+			"Error Creating Budget",
+			"non-retryable error: "+errorMsg,
 		)
 		return
 	}
@@ -122,39 +116,41 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Set ID from create response
-	data.Id = types.StringPointerValue(budgetResp.JSON201.Id)
-
-	// Set computed-only fields in alerts if alerts were provided in the plan
-	if !data.Alerts.IsNull() && !data.Alerts.IsUnknown() {
-		var alerts []resource_budget.AlertsValue
-		d := data.Alerts.ElementsAs(ctx, &alerts, false)
-		diags.Append(d...)
-		if !diags.HasError() {
-			// Set computed fields (forecasted_date, triggered)
-			for i := range alerts {
-				alerts[i].ForecastedDate = types.Int64Null()
-				alerts[i].Triggered = types.BoolValue(false)
-			}
-			alertsListValue, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), alerts)
-			diags.Append(d...)
-			data.Alerts = alertsListValue
-		}
+	// Map response to model
+	// Convert models.Budget to models.BudgetAPI to allow re-using the logic
+	// Note: SeasonalAmounts might be missing in Budget but is present in BudgetAPI
+	budgetAPI := &models.BudgetAPI{
+		Alerts:                  budgetResp.JSON201.Alerts,
+		Amount:                  budgetResp.JSON201.Amount,
+		Collaborators:           budgetResp.JSON201.Collaborators,
+		Currency:                budgetResp.JSON201.Currency,
+		Description:             budgetResp.JSON201.Description,
+		EndPeriod:               budgetResp.JSON201.EndPeriod,
+		GrowthPerPeriod:         budgetResp.JSON201.GrowthPerPeriod,
+		Id:                      budgetResp.JSON201.Id,
+		Metric:                  budgetResp.JSON201.Metric,
+		Name:                    budgetResp.JSON201.Name,
+		Recipients:              budgetResp.JSON201.Recipients,
+		RecipientsSlackChannels: budgetResp.JSON201.RecipientsSlackChannels,
+		StartPeriod:             budgetResp.JSON201.StartPeriod,
+		TimeInterval:            budgetResp.JSON201.TimeInterval,
+		Type:                    budgetResp.JSON201.Type,
+		UsePrevSpend:            budgetResp.JSON201.UsePrevSpend,
 	}
 
-	// Set other computed-only fields that might be unknown
-	if data.EndPeriod.IsUnknown() {
-		data.EndPeriod = types.Int64Null()
+	// Handle pointer mismatch for Public
+	if budgetResp.JSON201.Public != nil {
+		p := models.BudgetAPIPublic(*budgetResp.JSON201.Public)
+		budgetAPI.Public = &p
 	}
-	if data.Public.IsUnknown() {
-		data.Public = types.StringNull()
+
+	// Handle pointer mismatch for Scope
+	if budgetResp.JSON201.Scope != nil {
+		budgetAPI.Scope = &budgetResp.JSON201.Scope
 	}
-	if data.RecipientsSlackChannels.IsUnknown() {
-		data.RecipientsSlackChannels = types.ListNull(resource_budget.RecipientsSlackChannelsValue{}.Type(ctx))
-	}
-	if data.SeasonalAmounts.IsUnknown() {
-		data.SeasonalAmounts = types.ListNull(types.Float64Type)
-	}
+
+	diags = mapBudgetToModel(ctx, budgetAPI, &data)
+	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -163,22 +159,15 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data budgetResourceModel
 
-	// Read Terraform prior state data into the model
+	// Read Terraform prior state
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Populate state from API
-	diags := r.populateState(ctx, &data)
-	resp.Diagnostics.Append(diags...)
+	// Populate state
+	resp.Diagnostics.Append(r.populateState(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// If the resource was deleted (404), remove from state
-	if data.Id.IsNull() {
-		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -188,16 +177,9 @@ func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data budgetResourceModel
-	var state budgetResourceModel
 
-	// Read Terraform plan data into the model
+	// Read Terraform plan data
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Read current state to get the budget ID
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -209,8 +191,18 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Update existing budget via API
-	updateResp, err := r.client.UpdateBudget(ctx, state.Id.ValueString(), budget)
+	// Set required ID for update (not present in plan data for Create, but is for Update? No, ID is in state)
+	// We need to get the ID from the state, as it might not be in the plan if it's computed?
+	// Actually, for Update, the ID is established.
+	var state budgetResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	budgetID := state.Id.ValueString()
+
+	// Update budget via API
+	updateResp, err := r.client.UpdateBudgetWithResponse(ctx, budgetID, budget)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Budget",
@@ -219,14 +211,11 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	if updateResp.StatusCode != 200 {
-		errorMsg := fmt.Sprintf("Could not update budget, status: %d", updateResp.StatusCode)
+	if updateResp.StatusCode() != 200 {
+		errorMsg := fmt.Sprintf("Could not update budget, status: %d", updateResp.StatusCode())
 		// Try to read body for error details
-		if updateResp.Body != nil {
-			bodyBytes, _ := io.ReadAll(updateResp.Body)
-			if len(bodyBytes) > 0 {
-				errorMsg += fmt.Sprintf(", body: %s", string(bodyBytes))
-			}
+		if len(updateResp.Body) > 0 {
+			errorMsg += fmt.Sprintf(", body: %s", string(updateResp.Body))
 		}
 		resp.Diagnostics.AddError(
 			"Error Updating Budget",
