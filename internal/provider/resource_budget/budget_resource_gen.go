@@ -46,8 +46,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of up to three thresholds defined as percentage of amount",
-				MarkdownDescription: "List of up to three thresholds defined as percentage of amount",
+				Description:         "List of up to three thresholds defined as a percentage of the amount",
+				MarkdownDescription: "List of up to three thresholds defined as a percentage of the amount",
 			},
 			"amount": schema.Float64Attribute{
 				Optional:            true,
@@ -85,6 +85,11 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "List of permitted users to view/edit the report",
 				MarkdownDescription: "List of permitted users to view/edit the report",
 			},
+			"create_time": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "Creation time (in UNIX timestamp)",
+				MarkdownDescription: "Creation time (in UNIX timestamp)",
+			},
 			"currency": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
@@ -115,6 +120,9 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 					),
 				},
 			},
+			"current_utilization": schema.Float64Attribute{
+				Computed: true,
+			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -127,6 +135,9 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Fixed budget end date\nrequired: true(if budget type is fixed)",
 				MarkdownDescription: "Fixed budget end date\nrequired: true(if budget type is fixed)",
+			},
+			"forecasted_utilization": schema.Float64Attribute{
+				Computed: true,
 			},
 			"growth_per_period": schema.Float64Attribute{
 				Optional:            true,
@@ -207,15 +218,73 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of slack channels to notify when reaching alert threshold",
-				MarkdownDescription: "List of slack channels to notify when reaching alert threshold",
+				Description:         "List of Slack channels to notify when reaching alert threshold",
+				MarkdownDescription: "List of Slack channels to notify when reaching alert threshold",
 			},
 			"scope": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of attributions that defines that budget scope",
-				MarkdownDescription: "List of attributions that defines that budget scope",
+				Description:         "List of attributions that define the budget scope.",
+				MarkdownDescription: "List of attributions that define the budget scope.",
+				DeprecationMessage:  "This attribute is deprecated.",
+			},
+			"scopes": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"include_null": schema.BoolAttribute{
+							Optional: true,
+							Computed: true,
+						},
+						"inverse_selection": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Description:         "If set to true, all the selected values will be excluded.",
+							MarkdownDescription: "If set to true, all the selected values will be excluded.",
+						},
+						"key": schema.StringAttribute{
+							Optional: true,
+							Computed: true,
+							Default:  stringdefault.StaticString("service_id"),
+						},
+						"regexp": schema.StringAttribute{
+							Optional: true,
+							Computed: true,
+						},
+						"type": schema.StringAttribute{
+							Required: true,
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									"datetime",
+									"fixed",
+									"optional",
+									"label",
+									"tag",
+									"project_label",
+									"system_label",
+									"attribution",
+									"attribution_group",
+									"gke",
+									"gke_label",
+								),
+							},
+						},
+						"values": schema.ListAttribute{
+							ElementType: types.StringType,
+							Optional:    true,
+							Computed:    true,
+						},
+					},
+					CustomType: ScopesType{
+						ObjectType: types.ObjectType{
+							AttrTypes: ScopesValue{}.AttributeTypes(ctx),
+						},
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "The filters selected define the scope of the budget.",
+				MarkdownDescription: "The filters selected define the scope of the budget.",
 			},
 			"seasonal_amounts": schema.ListAttribute{
 				ElementType:         types.Float64Type,
@@ -233,14 +302,19 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"time_interval": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Recurring budget interval can be on of: [\"day\", \"week\", \"month\", \"quarter\",\"year\"]",
-				MarkdownDescription: "Recurring budget interval can be on of: [\"day\", \"week\", \"month\", \"quarter\",\"year\"]",
+				Description:         "Recurring budget interval can be one of: [\"day\", \"week\", \"month\", \"quarter\", \"year\"]",
+				MarkdownDescription: "Recurring budget interval can be one of: [\"day\", \"week\", \"month\", \"quarter\", \"year\"]",
 			},
 			"type": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "budget type can be one of: [\"fixed\", \"recurring\"]",
 				MarkdownDescription: "budget type can be one of: [\"fixed\", \"recurring\"]",
+			},
+			"update_time": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "Update time (in UNIX timestamp)",
+				MarkdownDescription: "Update time (in UNIX timestamp)",
 			},
 			"use_prev_spend": schema.BoolAttribute{
 				Optional:            true,
@@ -257,9 +331,12 @@ type BudgetModel struct {
 	Alerts                  types.List    `tfsdk:"alerts"`
 	Amount                  types.Float64 `tfsdk:"amount"`
 	Collaborators           types.List    `tfsdk:"collaborators"`
+	CreateTime              types.Int64   `tfsdk:"create_time"`
 	Currency                types.String  `tfsdk:"currency"`
+	CurrentUtilization      types.Float64 `tfsdk:"current_utilization"`
 	Description             types.String  `tfsdk:"description"`
 	EndPeriod               types.Int64   `tfsdk:"end_period"`
+	ForecastedUtilization   types.Float64 `tfsdk:"forecasted_utilization"`
 	GrowthPerPeriod         types.Float64 `tfsdk:"growth_per_period"`
 	Id                      types.String  `tfsdk:"id"`
 	Metric                  types.String  `tfsdk:"metric"`
@@ -268,10 +345,12 @@ type BudgetModel struct {
 	Recipients              types.List    `tfsdk:"recipients"`
 	RecipientsSlackChannels types.List    `tfsdk:"recipients_slack_channels"`
 	Scope                   types.List    `tfsdk:"scope"`
+	Scopes                  types.List    `tfsdk:"scopes"`
 	SeasonalAmounts         types.List    `tfsdk:"seasonal_amounts"`
 	StartPeriod             types.Int64   `tfsdk:"start_period"`
 	TimeInterval            types.String  `tfsdk:"time_interval"`
 	Type                    types.String  `tfsdk:"type"`
+	UpdateTime              types.Int64   `tfsdk:"update_time"`
 	UsePrevSpend            types.Bool    `tfsdk:"use_prev_spend"`
 }
 
@@ -1684,5 +1763,635 @@ func (v RecipientsSlackChannelsValue) AttributeTypes(ctx context.Context) map[st
 		"shared":      basetypes.BoolType{},
 		"type":        basetypes.StringType{},
 		"workspace":   basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ScopesType{}
+
+type ScopesType struct {
+	basetypes.ObjectType
+}
+
+func (t ScopesType) Equal(o attr.Type) bool {
+	other, ok := o.(ScopesType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ScopesType) String() string {
+	return "ScopesType"
+}
+
+func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	includeNullAttribute, ok := attributes["include_null"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_null is missing from object`)
+
+		return nil, diags
+	}
+
+	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+	}
+
+	inverseSelectionAttribute, ok := attributes["inverse_selection"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`inverse_selection is missing from object`)
+
+		return nil, diags
+	}
+
+	inverseSelectionVal, ok := inverseSelectionAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`inverse_selection expected to be basetypes.BoolValue, was: %T`, inverseSelectionAttribute))
+	}
+
+	keyAttribute, ok := attributes["key"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`key is missing from object`)
+
+		return nil, diags
+	}
+
+	keyVal, ok := keyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
+	}
+
+	regexpAttribute, ok := attributes["regexp"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`regexp is missing from object`)
+
+		return nil, diags
+	}
+
+	regexpVal, ok := regexpAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`regexp expected to be basetypes.StringValue, was: %T`, regexpAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return nil, diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	valuesAttribute, ok := attributes["values"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`values is missing from object`)
+
+		return nil, diags
+	}
+
+	valuesVal, ok := valuesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`values expected to be basetypes.ListValue, was: %T`, valuesAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ScopesValue{
+		IncludeNull:      includeNullVal,
+		InverseSelection: inverseSelectionVal,
+		Key:              keyVal,
+		Regexp:           regexpVal,
+		ScopesType:       typeVal,
+		Values:           valuesVal,
+		state:            attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopesValueNull() ScopesValue {
+	return ScopesValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewScopesValueUnknown() ScopesValue {
+	return ScopesValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewScopesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ScopesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ScopesValue Attribute Value",
+				"While creating a ScopesValue value, a missing attribute value was detected. "+
+					"A ScopesValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ScopesValue Attribute Type",
+				"While creating a ScopesValue value, an invalid attribute value was detected. "+
+					"A ScopesValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ScopesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ScopesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ScopesValue Attribute Value",
+				"While creating a ScopesValue value, an extra attribute value was detected. "+
+					"A ScopesValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ScopesValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewScopesValueUnknown(), diags
+	}
+
+	includeNullAttribute, ok := attributes["include_null"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_null is missing from object`)
+
+		return NewScopesValueUnknown(), diags
+	}
+
+	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+	}
+
+	inverseSelectionAttribute, ok := attributes["inverse_selection"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`inverse_selection is missing from object`)
+
+		return NewScopesValueUnknown(), diags
+	}
+
+	inverseSelectionVal, ok := inverseSelectionAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`inverse_selection expected to be basetypes.BoolValue, was: %T`, inverseSelectionAttribute))
+	}
+
+	keyAttribute, ok := attributes["key"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`key is missing from object`)
+
+		return NewScopesValueUnknown(), diags
+	}
+
+	keyVal, ok := keyAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
+	}
+
+	regexpAttribute, ok := attributes["regexp"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`regexp is missing from object`)
+
+		return NewScopesValueUnknown(), diags
+	}
+
+	regexpVal, ok := regexpAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`regexp expected to be basetypes.StringValue, was: %T`, regexpAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return NewScopesValueUnknown(), diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	valuesAttribute, ok := attributes["values"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`values is missing from object`)
+
+		return NewScopesValueUnknown(), diags
+	}
+
+	valuesVal, ok := valuesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`values expected to be basetypes.ListValue, was: %T`, valuesAttribute))
+	}
+
+	if diags.HasError() {
+		return NewScopesValueUnknown(), diags
+	}
+
+	return ScopesValue{
+		IncludeNull:      includeNullVal,
+		InverseSelection: inverseSelectionVal,
+		Key:              keyVal,
+		Regexp:           regexpVal,
+		ScopesType:       typeVal,
+		Values:           valuesVal,
+		state:            attr.ValueStateKnown,
+	}, diags
+}
+
+func NewScopesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ScopesValue {
+	object, diags := NewScopesValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewScopesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ScopesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewScopesValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewScopesValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewScopesValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewScopesValueMust(ScopesValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ScopesType) ValueType(ctx context.Context) attr.Value {
+	return ScopesValue{}
+}
+
+var _ basetypes.ObjectValuable = ScopesValue{}
+
+type ScopesValue struct {
+	IncludeNull      basetypes.BoolValue   `tfsdk:"include_null"`
+	InverseSelection basetypes.BoolValue   `tfsdk:"inverse_selection"`
+	Key              basetypes.StringValue `tfsdk:"key"`
+	Regexp           basetypes.StringValue `tfsdk:"regexp"`
+	ScopesType       basetypes.StringValue `tfsdk:"type"`
+	Values           basetypes.ListValue   `tfsdk:"values"`
+	state            attr.ValueState
+}
+
+func (v ScopesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 6)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["inverse_selection"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["regexp"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["values"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 6)
+
+		val, err = v.IncludeNull.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["include_null"] = val
+
+		val, err = v.InverseSelection.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["inverse_selection"] = val
+
+		val, err = v.Key.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["key"] = val
+
+		val, err = v.Regexp.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["regexp"] = val
+
+		val, err = v.ScopesType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
+
+		val, err = v.Values.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["values"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ScopesValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ScopesValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ScopesValue) String() string {
+	return "ScopesValue"
+}
+
+func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var valuesVal basetypes.ListValue
+	switch {
+	case v.Values.IsUnknown():
+		valuesVal = types.ListUnknown(types.StringType)
+	case v.Values.IsNull():
+		valuesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		valuesVal, d = types.ListValue(types.StringType, v.Values.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"include_null":      basetypes.BoolType{},
+			"inverse_selection": basetypes.BoolType{},
+			"key":               basetypes.StringType{},
+			"regexp":            basetypes.StringType{},
+			"type":              basetypes.StringType{},
+			"values": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"include_null":      basetypes.BoolType{},
+		"inverse_selection": basetypes.BoolType{},
+		"key":               basetypes.StringType{},
+		"regexp":            basetypes.StringType{},
+		"type":              basetypes.StringType{},
+		"values": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"include_null":      v.IncludeNull,
+			"inverse_selection": v.InverseSelection,
+			"key":               v.Key,
+			"regexp":            v.Regexp,
+			"type":              v.ScopesType,
+			"values":            valuesVal,
+		})
+
+	return objVal, diags
+}
+
+func (v ScopesValue) Equal(o attr.Value) bool {
+	other, ok := o.(ScopesValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.IncludeNull.Equal(other.IncludeNull) {
+		return false
+	}
+
+	if !v.InverseSelection.Equal(other.InverseSelection) {
+		return false
+	}
+
+	if !v.Key.Equal(other.Key) {
+		return false
+	}
+
+	if !v.Regexp.Equal(other.Regexp) {
+		return false
+	}
+
+	if !v.ScopesType.Equal(other.ScopesType) {
+		return false
+	}
+
+	if !v.Values.Equal(other.Values) {
+		return false
+	}
+
+	return true
+}
+
+func (v ScopesValue) Type(ctx context.Context) attr.Type {
+	return ScopesType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ScopesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"include_null":      basetypes.BoolType{},
+		"inverse_selection": basetypes.BoolType{},
+		"key":               basetypes.StringType{},
+		"regexp":            basetypes.StringType{},
+		"type":              basetypes.StringType{},
+		"values": basetypes.ListType{
+			ElemType: types.StringType,
+		},
 	}
 }

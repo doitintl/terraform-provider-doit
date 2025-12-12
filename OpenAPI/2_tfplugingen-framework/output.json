@@ -313,6 +313,372 @@
 					}
 				]
 			}
+		},
+		{
+			"name": "budget",
+			"schema": {
+				"attributes": [
+					{
+						"name": "alerts",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "percentage",
+										"float64": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "forecasted_date",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "triggered",
+										"bool": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							},
+							"description": "List of up to three thresholds defined as a percentage of the amount"
+						}
+					},
+					{
+						"name": "amount",
+						"float64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Budget period amount\nrequired: true(if usePrevSpend is false)"
+						}
+					},
+					{
+						"name": "collaborators",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "email",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "role",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"owner\",\n\"editor\",\n\"viewer\",\n)"
+													}
+												}
+											]
+										}
+									}
+								]
+							},
+							"description": "List of permitted users to view/edit the report"
+						}
+					},
+					{
+						"name": "currency",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"USD\",\n\"ILS\",\n\"EUR\",\n\"AUD\",\n\"CAD\",\n\"GBP\",\n\"DKK\",\n\"NOK\",\n\"SEK\",\n\"BRL\",\n\"SGD\",\n\"MXN\",\n\"CHF\",\n\"MYR\",\n\"TWD\",\n\"EGP\",\n\"ZAR\",\n\"JPY\",\n\"IDR\",\n\"AED\",\n\"THB\",\n\"COP\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": ""
+							},
+							"description": "Budget description"
+						}
+					},
+					{
+						"name": "end_period",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Fixed budget end date\nrequired: true(if budget type is fixed)"
+						}
+					},
+					{
+						"name": "growth_per_period",
+						"float64": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": 0
+							},
+							"description": "Periodical growth percentage in recurring budget"
+						}
+					},
+					{
+						"name": "metric",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "cost"
+							},
+							"description": "Budget metric - currently fixed to \"cost\""
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Budget Name"
+						}
+					},
+					{
+						"name": "public",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"owner\",\n\"editor\",\n\"viewer\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "recipients",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of emails to notify when reaching alert threshold"
+						}
+					},
+					{
+						"name": "recipients_slack_channels",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "customer_id",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "shared",
+										"bool": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "workspace",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									}
+								]
+							},
+							"description": "List of Slack channels to notify when reaching alert threshold"
+						}
+					},
+					{
+						"name": "scope",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"deprecation_message": "This attribute is deprecated.",
+							"description": "List of attributions that define the budget scope."
+						}
+					},
+					{
+						"name": "scopes",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "include_null",
+										"bool": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "inverse_selection",
+										"bool": {
+											"computed_optional_required": "computed_optional",
+											"description": "If set to true, all the selected values will be excluded."
+										}
+									},
+									{
+										"name": "key",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"default": {
+												"static": "service_id"
+											}
+										}
+									},
+									{
+										"name": "regexp",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "required",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "values",
+										"list": {
+											"computed_optional_required": "computed_optional",
+											"element_type": {
+												"string": {}
+											}
+										}
+									}
+								]
+							},
+							"description": "The filters selected define the scope of the budget."
+						}
+					},
+					{
+						"name": "seasonal_amounts",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"float64": {}
+							},
+							"description": "List of seasonal amounts for recurring budgets with different amounts per period"
+						}
+					},
+					{
+						"name": "start_period",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Budget start Date"
+						}
+					},
+					{
+						"name": "time_interval",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Recurring budget interval can be one of: [\"day\", \"week\", \"month\", \"quarter\", \"year\"]"
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "budget type can be one of: [\"fixed\", \"recurring\"]"
+						}
+					},
+					{
+						"name": "use_prev_spend",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": false
+							},
+							"description": "Use the last period's spend as the target amount for recurring budgets"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "budget ID, identifying the report\nin:path"
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Creation time (in UNIX timestamp)"
+						}
+					},
+					{
+						"name": "current_utilization",
+						"float64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "forecasted_utilization",
+						"float64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Update time (in UNIX timestamp)"
+						}
+					}
+				]
+			}
 		}
 	],
 	"version": "0.1"

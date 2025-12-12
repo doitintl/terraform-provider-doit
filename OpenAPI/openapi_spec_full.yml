@@ -9,6 +9,54 @@ security:
   - api_key: []
   - customerContext: []
     api_key: []
+tags:
+  - name: Alerts
+    description: Alert endpoints
+  - name: Annotations
+    description: Annotations endpoints
+  - name: Allocations
+    description: Allocations endpoints
+  - name: Attribution Groups
+    description: Attribution group endpoints
+  - name: Attributions
+    description: Attribution endpoints
+  - name: Budgets
+    description: Budgets endpoints
+  - name: Dimensions
+    description: Dimensions endpoints
+  - name: Reports
+    description: Reports endpoints
+  - name: Sharing
+    description: Sharing endpoints
+  - name: Anomalies
+    description: Anomalies endpoints
+  - name: Auth
+    description: Auth endpoints
+  - name: Assets
+    description: Assets endpoints
+  - name: DataHub
+    description: DataHub endpoints
+  - name: Invoices
+    description: Invoices endpoints
+  - name: Cloud Incidents
+    description: Cloud incidents endpoints
+  - name: Cloud Diagrams
+    description: Cloud diagrams endpoints
+  - name: AccountTeam
+    description: Account team endpoints
+  - name: Users
+    description: Users endpoints
+  - name: Roles
+    description: Roles endpoints
+  - name: Organizations
+    description: Organizations endpoints
+  - name: Platforms
+    description: Platforms metadata endpoints
+  - name: Products
+    description: Products metadata endpoints
+  - name: Support Requests
+    description: Support requests endpoints
+
 paths:
   /analytics/v1/alerts:
     get:
@@ -2684,6 +2732,34 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /clouddiagrams/v1/scheme/find:
+    post:
+      tags:
+        - Cloud Diagrams
+      summary: Find diagrams
+      description: Returns diagram URLs matching the provided resource IDs.
+      operationId: findCloudDiagrams
+      servers:
+        - url: https://api.doit.com
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindCloudDiagramsRequest"
+      responses:
+        "200":
+          description: OK - Diagram URLs matching the criteria returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FindCloudDiagramsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
 components:
   schemas:
     AccountManagerListItem:
@@ -5331,6 +5407,22 @@ components:
           description: List of permission IDs assigned to the role
           items:
             type: string
+    FindCloudDiagramsRequest:
+      type: object
+      required:
+        - resources
+      properties:
+        resources:
+          type: array
+          description: Resource IDs to find diagrams for.
+          items:
+            type: string
+    FindCloudDiagramsResponse:
+      type: array
+      description: List of diagram URLs matching the find criteria.
+      items:
+        type: string
+        format: uri
     Organization:
       type: object
       properties:
@@ -5919,8 +6011,20 @@ components:
       type: apiKey
       name: customerContext
       in: query
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
 x-samples-languages:
   - curl
   - go
   - node
   - python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli
