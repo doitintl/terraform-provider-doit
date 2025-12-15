@@ -335,16 +335,6 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 	newModel.UpdateTime = types.Int64Null()
 	newModel.CurrentUtilization = types.Float64Null()
 	newModel.ForecastedUtilization = types.Float64Null()
-	newModel.RecipientsSlackChannels = types.ListNull(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"customer_id": types.StringType,
-			"id":          types.StringType,
-			"name":        types.StringType,
-			"shared":      types.BoolType,
-			"type":        types.StringType,
-			"workspace":   types.StringType,
-		},
-	})
 
 	// Set the entire upgraded state at once
 	diags = resp.State.Set(ctx, newModel)

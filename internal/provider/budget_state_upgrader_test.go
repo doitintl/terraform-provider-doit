@@ -91,7 +91,25 @@ func TestBudgetStateUpgradeV0ToV1(t *testing.T) {
 							"workspace":   tftypes.String,
 						},
 					}},
-					[]tftypes.Value{},
+					[]tftypes.Value{
+						tftypes.NewValue(tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"customer_id": tftypes.String,
+								"id":          tftypes.String,
+								"name":        tftypes.String,
+								"shared":      tftypes.Bool,
+								"type":        tftypes.String,
+								"workspace":   tftypes.String,
+							},
+						}, map[string]tftypes.Value{
+							"customer_id": tftypes.NewValue(tftypes.String, "cust-123"),
+							"id":          tftypes.NewValue(tftypes.String, "chan-123"),
+							"name":        tftypes.NewValue(tftypes.String, "channel-name"),
+							"shared":      tftypes.NewValue(tftypes.Bool, true),
+							"type":        tftypes.NewValue(tftypes.String, "public"),
+							"workspace":   tftypes.NewValue(tftypes.String, "workspace-1"),
+						}),
+					},
 				),
 				"end_period":   tftypes.NewValue(tftypes.Number, nil),
 				"public":       tftypes.NewValue(tftypes.String, nil),
@@ -240,6 +258,22 @@ func TestBudgetStateUpgradeV0ToV1(t *testing.T) {
 					actualID := upgradedModel.Id.ValueString()
 					if actualID != expectedID {
 						t.Errorf("Expected ID '%s', got '%s'", expectedID, actualID)
+					}
+				}
+			}
+
+			// Verify RecipientsSlackChannels were preserved if present in old state
+			expectedSlackVal := tt.oldState["recipients_slack_channels"]
+			if expectedSlackVal.Type().Is(tftypes.List{ElementType: expectedSlackVal.Type().(tftypes.List).ElementType}) {
+				var expectedSlackList []tftypes.Value
+				if err := expectedSlackVal.As(&expectedSlackList); err == nil && len(expectedSlackList) > 0 {
+					if upgradedModel.RecipientsSlackChannels.IsNull() || upgradedModel.RecipientsSlackChannels.IsUnknown() {
+						t.Errorf("Expected RecipientsSlackChannels to be preserved, but got Null/Unknown")
+					} else {
+						actualSlackList := upgradedModel.RecipientsSlackChannels.Elements()
+						if len(actualSlackList) != len(expectedSlackList) {
+							t.Errorf("Expected %d slack channels, got %d", len(expectedSlackList), len(actualSlackList))
+						}
 					}
 				}
 			}
