@@ -232,24 +232,30 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"include_null": schema.BoolAttribute{
-							Optional: true,
-							Computed: true,
+						"id": schema.StringAttribute{
+							Required:            true,
+							Description:         "The field to filter on",
+							MarkdownDescription: "The field to filter on",
 						},
-						"inverse_selection": schema.BoolAttribute{
+						"inverse": schema.BoolAttribute{
 							Optional:            true,
 							Computed:            true,
-							Description:         "If set to true, all the selected values will be excluded.",
-							MarkdownDescription: "If set to true, all the selected values will be excluded.",
+							Description:         "Set to `true` to exclude the values.",
+							MarkdownDescription: "Set to `true` to exclude the values.",
 						},
-						"key": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
-							Default:  stringdefault.StaticString("service_id"),
-						},
-						"regexp": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+						"mode": schema.StringAttribute{
+							Required:            true,
+							Description:         "Filter mode to apply",
+							MarkdownDescription: "Filter mode to apply",
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									"is",
+									"starts_with",
+									"ends_with",
+									"contains",
+									"regexp",
+								),
+							},
 						},
 						"type": schema.StringAttribute{
 							Required: true,
@@ -270,9 +276,11 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"values": schema.ListAttribute{
-							ElementType: types.StringType,
-							Optional:    true,
-							Computed:    true,
+							ElementType:         types.StringType,
+							Optional:            true,
+							Computed:            true,
+							Description:         "Values to filter on",
+							MarkdownDescription: "Values to filter on",
 						},
 					},
 					CustomType: ScopesType{
@@ -1791,76 +1799,58 @@ func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 
 	attributes := in.Attributes()
 
-	includeNullAttribute, ok := attributes["include_null"]
+	idAttribute, ok := attributes["id"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`include_null is missing from object`)
+			`id is missing from object`)
 
 		return nil, diags
 	}
 
-	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+	idVal, ok := idAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
-	inverseSelectionAttribute, ok := attributes["inverse_selection"]
+	inverseAttribute, ok := attributes["inverse"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`inverse_selection is missing from object`)
+			`inverse is missing from object`)
 
 		return nil, diags
 	}
 
-	inverseSelectionVal, ok := inverseSelectionAttribute.(basetypes.BoolValue)
+	inverseVal, ok := inverseAttribute.(basetypes.BoolValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`inverse_selection expected to be basetypes.BoolValue, was: %T`, inverseSelectionAttribute))
+			fmt.Sprintf(`inverse expected to be basetypes.BoolValue, was: %T`, inverseAttribute))
 	}
 
-	keyAttribute, ok := attributes["key"]
+	modeAttribute, ok := attributes["mode"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`key is missing from object`)
+			`mode is missing from object`)
 
 		return nil, diags
 	}
 
-	keyVal, ok := keyAttribute.(basetypes.StringValue)
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
-	}
-
-	regexpAttribute, ok := attributes["regexp"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`regexp is missing from object`)
-
-		return nil, diags
-	}
-
-	regexpVal, ok := regexpAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`regexp expected to be basetypes.StringValue, was: %T`, regexpAttribute))
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
 	}
 
 	typeAttribute, ok := attributes["type"]
@@ -1904,13 +1894,12 @@ func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	}
 
 	return ScopesValue{
-		IncludeNull:      includeNullVal,
-		InverseSelection: inverseSelectionVal,
-		Key:              keyVal,
-		Regexp:           regexpVal,
-		ScopesType:       typeVal,
-		Values:           valuesVal,
-		state:            attr.ValueStateKnown,
+		Id:         idVal,
+		Inverse:    inverseVal,
+		Mode:       modeVal,
+		ScopesType: typeVal,
+		Values:     valuesVal,
+		state:      attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1977,76 +1966,58 @@ func NewScopesValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewScopesValueUnknown(), diags
 	}
 
-	includeNullAttribute, ok := attributes["include_null"]
+	idAttribute, ok := attributes["id"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`include_null is missing from object`)
+			`id is missing from object`)
 
 		return NewScopesValueUnknown(), diags
 	}
 
-	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+	idVal, ok := idAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
-	inverseSelectionAttribute, ok := attributes["inverse_selection"]
+	inverseAttribute, ok := attributes["inverse"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`inverse_selection is missing from object`)
+			`inverse is missing from object`)
 
 		return NewScopesValueUnknown(), diags
 	}
 
-	inverseSelectionVal, ok := inverseSelectionAttribute.(basetypes.BoolValue)
+	inverseVal, ok := inverseAttribute.(basetypes.BoolValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`inverse_selection expected to be basetypes.BoolValue, was: %T`, inverseSelectionAttribute))
+			fmt.Sprintf(`inverse expected to be basetypes.BoolValue, was: %T`, inverseAttribute))
 	}
 
-	keyAttribute, ok := attributes["key"]
+	modeAttribute, ok := attributes["mode"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`key is missing from object`)
+			`mode is missing from object`)
 
 		return NewScopesValueUnknown(), diags
 	}
 
-	keyVal, ok := keyAttribute.(basetypes.StringValue)
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`key expected to be basetypes.StringValue, was: %T`, keyAttribute))
-	}
-
-	regexpAttribute, ok := attributes["regexp"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`regexp is missing from object`)
-
-		return NewScopesValueUnknown(), diags
-	}
-
-	regexpVal, ok := regexpAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`regexp expected to be basetypes.StringValue, was: %T`, regexpAttribute))
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
 	}
 
 	typeAttribute, ok := attributes["type"]
@@ -2090,13 +2061,12 @@ func NewScopesValue(attributeTypes map[string]attr.Type, attributes map[string]a
 	}
 
 	return ScopesValue{
-		IncludeNull:      includeNullVal,
-		InverseSelection: inverseSelectionVal,
-		Key:              keyVal,
-		Regexp:           regexpVal,
-		ScopesType:       typeVal,
-		Values:           valuesVal,
-		state:            attr.ValueStateKnown,
+		Id:         idVal,
+		Inverse:    inverseVal,
+		Mode:       modeVal,
+		ScopesType: typeVal,
+		Values:     valuesVal,
+		state:      attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2168,25 +2138,23 @@ func (t ScopesType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ScopesValue{}
 
 type ScopesValue struct {
-	IncludeNull      basetypes.BoolValue   `tfsdk:"include_null"`
-	InverseSelection basetypes.BoolValue   `tfsdk:"inverse_selection"`
-	Key              basetypes.StringValue `tfsdk:"key"`
-	Regexp           basetypes.StringValue `tfsdk:"regexp"`
-	ScopesType       basetypes.StringValue `tfsdk:"type"`
-	Values           basetypes.ListValue   `tfsdk:"values"`
-	state            attr.ValueState
+	Id         basetypes.StringValue `tfsdk:"id"`
+	Inverse    basetypes.BoolValue   `tfsdk:"inverse"`
+	Mode       basetypes.StringValue `tfsdk:"mode"`
+	ScopesType basetypes.StringValue `tfsdk:"type"`
+	Values     basetypes.ListValue   `tfsdk:"values"`
+	state      attr.ValueState
 }
 
 func (v ScopesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 6)
+	attrTypes := make(map[string]tftypes.Type, 5)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["inverse_selection"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["regexp"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["inverse"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["values"] = basetypes.ListType{
 		ElemType: types.StringType,
@@ -2196,39 +2164,31 @@ func (v ScopesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 6)
+		vals := make(map[string]tftypes.Value, 5)
 
-		val, err = v.IncludeNull.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["include_null"] = val
-
-		val, err = v.InverseSelection.ToTerraformValue(ctx)
+		val, err = v.Id.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["inverse_selection"] = val
+		vals["id"] = val
 
-		val, err = v.Key.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["key"] = val
-
-		val, err = v.Regexp.ToTerraformValue(ctx)
+		val, err = v.Inverse.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["regexp"] = val
+		vals["inverse"] = val
+
+		val, err = v.Mode.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["mode"] = val
 
 		val, err = v.ScopesType.ToTerraformValue(ctx)
 
@@ -2289,11 +2249,10 @@ func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"include_null":      basetypes.BoolType{},
-			"inverse_selection": basetypes.BoolType{},
-			"key":               basetypes.StringType{},
-			"regexp":            basetypes.StringType{},
-			"type":              basetypes.StringType{},
+			"id":      basetypes.StringType{},
+			"inverse": basetypes.BoolType{},
+			"mode":    basetypes.StringType{},
+			"type":    basetypes.StringType{},
 			"values": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -2301,11 +2260,10 @@ func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"include_null":      basetypes.BoolType{},
-		"inverse_selection": basetypes.BoolType{},
-		"key":               basetypes.StringType{},
-		"regexp":            basetypes.StringType{},
-		"type":              basetypes.StringType{},
+		"id":      basetypes.StringType{},
+		"inverse": basetypes.BoolType{},
+		"mode":    basetypes.StringType{},
+		"type":    basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -2322,12 +2280,11 @@ func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"include_null":      v.IncludeNull,
-			"inverse_selection": v.InverseSelection,
-			"key":               v.Key,
-			"regexp":            v.Regexp,
-			"type":              v.ScopesType,
-			"values":            valuesVal,
+			"id":      v.Id,
+			"inverse": v.Inverse,
+			"mode":    v.Mode,
+			"type":    v.ScopesType,
+			"values":  valuesVal,
 		})
 
 	return objVal, diags
@@ -2348,19 +2305,15 @@ func (v ScopesValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.IncludeNull.Equal(other.IncludeNull) {
+	if !v.Id.Equal(other.Id) {
 		return false
 	}
 
-	if !v.InverseSelection.Equal(other.InverseSelection) {
+	if !v.Inverse.Equal(other.Inverse) {
 		return false
 	}
 
-	if !v.Key.Equal(other.Key) {
-		return false
-	}
-
-	if !v.Regexp.Equal(other.Regexp) {
+	if !v.Mode.Equal(other.Mode) {
 		return false
 	}
 
@@ -2385,11 +2338,10 @@ func (v ScopesValue) Type(ctx context.Context) attr.Type {
 
 func (v ScopesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"include_null":      basetypes.BoolType{},
-		"inverse_selection": basetypes.BoolType{},
-		"key":               basetypes.StringType{},
-		"regexp":            basetypes.StringType{},
-		"type":              basetypes.StringType{},
+		"id":      basetypes.StringType{},
+		"inverse": basetypes.BoolType{},
+		"mode":    basetypes.StringType{},
+		"type":    basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},

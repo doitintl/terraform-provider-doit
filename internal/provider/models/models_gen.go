@@ -208,21 +208,6 @@ const (
 	ExternalConfigFilterModeStartsWith ExternalConfigFilterMode = "starts_with"
 )
 
-// Defines values for ExternalConfigFilterType.
-const (
-	ExternalConfigFilterTypeAttribution      ExternalConfigFilterType = "attribution"
-	ExternalConfigFilterTypeAttributionGroup ExternalConfigFilterType = "attribution_group"
-	ExternalConfigFilterTypeDatetime         ExternalConfigFilterType = "datetime"
-	ExternalConfigFilterTypeFixed            ExternalConfigFilterType = "fixed"
-	ExternalConfigFilterTypeGke              ExternalConfigFilterType = "gke"
-	ExternalConfigFilterTypeGkeLabel         ExternalConfigFilterType = "gke_label"
-	ExternalConfigFilterTypeLabel            ExternalConfigFilterType = "label"
-	ExternalConfigFilterTypeOptional         ExternalConfigFilterType = "optional"
-	ExternalConfigFilterTypeProjectLabel     ExternalConfigFilterType = "project_label"
-	ExternalConfigFilterTypeSystemLabel      ExternalConfigFilterType = "system_label"
-	ExternalConfigFilterTypeTag              ExternalConfigFilterType = "tag"
-)
-
 // Defines values for ExternalConfigMetricFilterOperator.
 const (
 	B   ExternalConfigMetricFilterOperator = "b"
@@ -567,11 +552,11 @@ const (
 
 // Defines values for ListAnnotationsParamsSortBy.
 const (
-	Content      ListAnnotationsParamsSortBy = "content"
-	Id           ListAnnotationsParamsSortBy = "id"
-	TimeCreated  ListAnnotationsParamsSortBy = "timeCreated"
-	TimeModified ListAnnotationsParamsSortBy = "timeModified"
-	Timestamp    ListAnnotationsParamsSortBy = "timestamp"
+	ListAnnotationsParamsSortByContent      ListAnnotationsParamsSortBy = "content"
+	ListAnnotationsParamsSortById           ListAnnotationsParamsSortBy = "id"
+	ListAnnotationsParamsSortByTimeCreated  ListAnnotationsParamsSortBy = "timeCreated"
+	ListAnnotationsParamsSortByTimeModified ListAnnotationsParamsSortBy = "timeModified"
+	ListAnnotationsParamsSortByTimestamp    ListAnnotationsParamsSortBy = "timestamp"
 )
 
 // Defines values for ListAnnotationsParamsSortOrder.
@@ -714,7 +699,7 @@ type AlertConfig struct {
 	Operator        *MetricFilterText `json:"operator,omitempty"`
 
 	// Scopes The filters selected define the scope of the alert.
-	Scopes *[]Scope `json:"scopes,omitempty"`
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// TimeInterval The time interval to evaluate the condition.
 	TimeInterval AlertConfigTimeInterval `json:"timeInterval"`
@@ -1276,7 +1261,7 @@ type BudgetAPI struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes []Scope `json:"scopes"`
+	Scopes []ExternalConfigFilter `json:"scopes"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -1346,7 +1331,7 @@ type BudgetCreateUpdateRequest struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes *[]Scope `json:"scopes,omitempty"`
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -1385,11 +1370,11 @@ type BudgetListItem struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes       *[]Scope `json:"scopes,omitempty"`
-	StartPeriod  *int64   `json:"startPeriod,omitempty"`
-	TimeInterval *string  `json:"timeInterval,omitempty"`
-	UpdateTime   *int64   `json:"updateTime,omitempty"`
-	Url          *string  `json:"url,omitempty"`
+	Scopes       *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	StartPeriod  *int64                  `json:"startPeriod,omitempty"`
+	TimeInterval *string                 `json:"timeInterval,omitempty"`
+	UpdateTime   *int64                  `json:"updateTime,omitempty"`
+	Url          *string                 `json:"url,omitempty"`
 }
 
 // CloudIncidentListItem defines model for CloudIncidentListItem.
@@ -1633,14 +1618,14 @@ type ExternalConfigTimeInterval string
 // When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
 type ExternalConfigFilter struct {
 	// Id The field to filter on
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id"`
 
 	// Inverse Set to `true` to exclude the values.
 	Inverse *bool `json:"inverse,omitempty"`
 
 	// Mode Filter mode to apply
-	Mode *ExternalConfigFilterMode `json:"mode,omitempty"`
-	Type *ExternalConfigFilterType `json:"type,omitempty"`
+	Mode ExternalConfigFilterMode `json:"mode"`
+	Type DimensionsTypes          `json:"type"`
 
 	// Values Values to filter on
 	Values *[]string `json:"values,omitempty"`
@@ -1648,9 +1633,6 @@ type ExternalConfigFilter struct {
 
 // ExternalConfigFilterMode Filter mode to apply
 type ExternalConfigFilterMode string
-
-// ExternalConfigFilterType defines model for ExternalConfigFilter.Type.
-type ExternalConfigFilterType string
 
 // ExternalConfigMetricFilter The metric filter to limit the report results by value
 type ExternalConfigMetricFilter struct {
@@ -2090,18 +2072,6 @@ type RunReportResultResultMlFeatures string
 type SchemaField struct {
 	Name *string `json:"name,omitempty"`
 	Type *string `json:"type,omitempty"`
-}
-
-// Scope defines model for Scope.
-type Scope struct {
-	IncludeNull *bool `json:"include_null,omitempty"`
-
-	// InverseSelection If set to true, all the selected values will be excluded.
-	InverseSelection *bool           `json:"inverse_selection,omitempty"`
-	Key              string          `json:"key"`
-	Regexp           *string         `json:"regexp,omitempty"`
-	Type             DimensionsTypes `json:"type"`
-	Values           *[]string       `json:"values,omitempty"`
 }
 
 // Seats defines model for Seats.

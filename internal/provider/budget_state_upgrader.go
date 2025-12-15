@@ -327,7 +327,24 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 	// Initialize new fields
 	newModel.SeasonalAmounts = types.ListNull(types.Float64Type) // New field in v1
 
-	// last_updated is intentionally NOT included (doesn't exist in new schema)
+	// Initialize other new v1 fields to Null/Unknown
+	newModel.Scopes = types.ListNull(types.ObjectType{
+		AttrTypes: resource_budget.ScopesValue{}.AttributeTypes(ctx),
+	})
+	newModel.CreateTime = types.Int64Null()
+	newModel.UpdateTime = types.Int64Null()
+	newModel.CurrentUtilization = types.Float64Null()
+	newModel.ForecastedUtilization = types.Float64Null()
+	newModel.RecipientsSlackChannels = types.ListNull(types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"customer_id": types.StringType,
+			"id":          types.StringType,
+			"name":        types.StringType,
+			"shared":      types.BoolType,
+			"type":        types.StringType,
+			"workspace":   types.StringType,
+		},
+	})
 
 	// Set the entire upgraded state at once
 	diags = resp.State.Set(ctx, newModel)

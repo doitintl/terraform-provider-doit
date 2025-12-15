@@ -8,6 +8,7 @@ import (
 	"terraform-provider-doit/internal/provider/resource_budget"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const budgetSchemaVersion = 1
@@ -66,6 +67,7 @@ func (r *budgetResource) ConfigValidators(ctx context.Context) []resource.Config
 	return []resource.ConfigValidator{
 		budgetTypeEndPeriodValidator{},
 		budgetAlertsLengthValidator{},
+		budgetScopeMutuallyExclusiveValidator{},
 	}
 }
 
@@ -117,39 +119,10 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	// Map response to model
-	// Convert models.Budget to models.BudgetAPI to allow re-using the logic
-	// Note: SeasonalAmounts might be missing in Budget but is present in BudgetAPI
-	budgetAPI := &models.BudgetAPI{
-		Alerts:                  budgetResp.JSON201.Alerts,
-		Amount:                  budgetResp.JSON201.Amount,
-		Collaborators:           budgetResp.JSON201.Collaborators,
-		Currency:                budgetResp.JSON201.Currency,
-		Description:             budgetResp.JSON201.Description,
-		EndPeriod:               budgetResp.JSON201.EndPeriod,
-		GrowthPerPeriod:         budgetResp.JSON201.GrowthPerPeriod,
-		Id:                      budgetResp.JSON201.Id,
-		Metric:                  budgetResp.JSON201.Metric,
-		Name:                    budgetResp.JSON201.Name,
-		Recipients:              budgetResp.JSON201.Recipients,
-		RecipientsSlackChannels: budgetResp.JSON201.RecipientsSlackChannels,
-		StartPeriod:             budgetResp.JSON201.StartPeriod,
-		TimeInterval:            budgetResp.JSON201.TimeInterval,
-		Type:                    budgetResp.JSON201.Type,
-		UsePrevSpend:            budgetResp.JSON201.UsePrevSpend,
-	}
+	data.Id = types.StringPointerValue(budgetResp.JSON201.Id)
 
-	// Handle pointer mismatch for Public
-	if budgetResp.JSON201.Public != nil {
-		p := models.BudgetAPIPublic(*budgetResp.JSON201.Public)
-		budgetAPI.Public = &p
-	}
-
-	// Handle pointer mismatch for Scope
-	if budgetResp.JSON201.Scope != nil {
-		budgetAPI.Scope = &budgetResp.JSON201.Scope
-	}
-
-	diags = mapBudgetToModel(ctx, budgetAPI, &data)
+	// Read full budget details (including scopes which are missing in Create response)
+	resp.Diagnostics.Append(r.populateState(ctx, &data)...)
 	resp.Diagnostics.Append(diags...)
 
 	// Save data into Terraform state

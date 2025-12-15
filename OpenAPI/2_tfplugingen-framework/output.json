@@ -544,31 +544,36 @@
 							"nested_object": {
 								"attributes": [
 									{
-										"name": "include_null",
-										"bool": {
-											"computed_optional_required": "computed_optional"
+										"name": "id",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The field to filter on"
 										}
 									},
 									{
-										"name": "inverse_selection",
+										"name": "inverse",
 										"bool": {
 											"computed_optional_required": "computed_optional",
-											"description": "If set to true, all the selected values will be excluded."
+											"description": "Set to `true` to exclude the values."
 										}
 									},
 									{
-										"name": "key",
+										"name": "mode",
 										"string": {
-											"computed_optional_required": "computed_optional",
-											"default": {
-												"static": "service_id"
-											}
-										}
-									},
-									{
-										"name": "regexp",
-										"string": {
-											"computed_optional_required": "computed_optional"
+											"computed_optional_required": "required",
+											"description": "Filter mode to apply",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"is\",\n\"starts_with\",\n\"ends_with\",\n\"contains\",\n\"regexp\",\n)"
+													}
+												}
+											]
 										}
 									},
 									{
@@ -595,7 +600,8 @@
 											"computed_optional_required": "computed_optional",
 											"element_type": {
 												"string": {}
-											}
+											},
+											"description": "Values to filter on"
 										}
 									}
 								]

@@ -235,3 +235,48 @@ func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req r
 		)
 	}
 }
+
+// budgetScopeMutuallyExclusiveValidator validates that exactly one of 'scope' or 'scopes' is set
+type budgetScopeMutuallyExclusiveValidator struct{}
+
+func (v budgetScopeMutuallyExclusiveValidator) Description(ctx context.Context) string {
+	return "Validates that exactly one of 'scope' or 'scopes' is set"
+}
+
+func (v budgetScopeMutuallyExclusiveValidator) MarkdownDescription(ctx context.Context) string {
+	return "Validates that exactly one of `scope` or `scopes` is set"
+}
+
+func (v budgetScopeMutuallyExclusiveValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var scope types.List
+	var scopes types.List
+
+	// Get the attributes
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("scope"), &scope)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("scopes"), &scopes)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if scope.IsUnknown() || scopes.IsUnknown() {
+		return
+	}
+
+	hasScope := !scope.IsNull()
+	hasScopes := !scopes.IsNull()
+
+	if hasScope && hasScopes {
+		resp.Diagnostics.AddError(
+			"Invalid Attribute Combination",
+			"Attributes 'scope' and 'scopes' are mutually exclusive. Please specify only one.",
+		)
+	}
+
+	if !hasScope && !hasScopes {
+		resp.Diagnostics.AddError(
+			"Missing Required Attribute",
+			"One of 'scope' or 'scopes' must be specified.",
+		)
+	}
+}

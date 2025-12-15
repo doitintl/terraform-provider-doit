@@ -116,6 +116,36 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		req.Scope = &scope
 	}
 
+	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
+		var scopes []resource_budget.ScopesValue
+		diags.Append(plan.Scopes.ElementsAs(ctx, &scopes, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
+
+		reqScopes := make([]models.ExternalConfigFilter, len(scopes))
+		for i, scope := range scopes {
+			filterType := models.DimensionsTypes(scope.ScopesType.ValueString())
+			filterMode := models.ExternalConfigFilterMode(scope.Mode.ValueString())
+
+			reqScopes[i] = models.ExternalConfigFilter{
+				Id:      scope.Id.ValueString(),
+				Inverse: scope.Inverse.ValueBoolPointer(),
+				Mode:    filterMode,
+				Type:    filterType,
+			}
+			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
+				var values []string
+				diags.Append(scope.Values.ElementsAs(ctx, &values, false)...)
+				if diags.HasError() {
+					return req, diags
+				}
+				reqScopes[i].Values = &values
+			}
+		}
+		req.Scopes = &reqScopes // Note: models.Scopes is now []ExternalConfigFilter, not a pointer to slice
+	}
+
 	if !plan.SeasonalAmounts.IsNull() && !plan.SeasonalAmounts.IsUnknown() {
 		var seasonalAmounts []float64
 		diags.Append(plan.SeasonalAmounts.ElementsAs(ctx, &seasonalAmounts, false)...)
@@ -267,6 +297,37 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		state.Scope = types.ListNull(types.StringType)
 	}
 
+	// Convert scopes list
+	if len(resp.Scopes) > 0 {
+		scopesList := make([]resource_budget.ScopesValue, len(resp.Scopes))
+		for i, scope := range resp.Scopes {
+			var valuesVal types.List
+			if scope.Values != nil {
+				var listDiags diag.Diagnostics
+				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, *scope.Values)
+				diags.Append(listDiags...)
+			} else {
+				valuesVal = types.ListNull(types.StringType)
+			}
+
+			scopeAttrs := map[string]attr.Value{
+				"id":      types.StringValue(scope.Id),
+				"inverse": types.BoolPointerValue(scope.Inverse),
+				"mode":    types.StringValue(string(scope.Mode)),
+				"type":    types.StringValue(string(scope.Type)),
+				"values":  valuesVal,
+			}
+			var d diag.Diagnostics
+			scopesList[i], d = resource_budget.NewScopesValue(resource_budget.ScopesValue{}.AttributeTypes(ctx), scopeAttrs)
+			diags.Append(d...)
+		}
+		scopesListValue, d := types.ListValueFrom(ctx, resource_budget.ScopesValue{}.Type(ctx), scopesList)
+		diags.Append(d...)
+		state.Scopes = scopesListValue
+	} else {
+		state.Scopes = types.ListNull(resource_budget.ScopesValue{}.Type(ctx))
+	}
+
 	// Convert seasonal_amounts list
 	if resp.SeasonalAmounts != nil {
 		seasonalAmountsList, listDiags := types.ListValueFrom(ctx, types.Float64Type, *resp.SeasonalAmounts)
@@ -280,6 +341,12 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	state.TimeInterval = types.StringValue(resp.TimeInterval)
 	state.Type = types.StringValue(resp.Type)
 	state.UsePrevSpend = types.BoolPointerValue(resp.UsePrevSpend)
+
+	// Populate read-only fields
+	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
+	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
+	state.CurrentUtilization = types.Float64PointerValue(resp.CurrentUtilization)
+	state.ForecastedUtilization = types.Float64PointerValue(resp.ForecastedUtilization)
 
 	return diags
 }

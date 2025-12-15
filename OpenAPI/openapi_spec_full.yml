@@ -3040,7 +3040,7 @@ components:
           type: array
           description: The filters selected define the scope of the alert.
           items:
-            $ref: "#/components/schemas/Scope"
+            $ref: "#/components/schemas/ExternalConfigFilter"
         timeInterval:
           type: string
           description: The time interval to evaluate the condition.
@@ -3829,7 +3829,7 @@ components:
           type: array
           description: The filters selected define the scope of the budget.
           items:
-            $ref: "#/components/schemas/Scope"
+            $ref: "#/components/schemas/ExternalConfigFilter"
         startPeriod:
           type: integer
           description: Budget start Date (in UNIX timestamp)
@@ -3889,7 +3889,7 @@ components:
           type: array
           description: The filters selected define the scope of the budget.
           items:
-            $ref: "#/components/schemas/Scope"
+            $ref: "#/components/schemas/ExternalConfigFilter"
         startPeriod:
           type: integer
           format: int64
@@ -3981,7 +3981,7 @@ components:
           type: array
           description: The filters selected define the scope of the budget.
           items:
-            $ref: "#/components/schemas/Scope"
+            $ref: "#/components/schemas/ExternalConfigFilter"
         startPeriod:
           type: integer
           description: Budget start Date
@@ -4332,24 +4332,16 @@ components:
         To filter or exclude certain values by type.
         When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
       type: object
+      required:
+        - id
+        - type
+        - mode
       properties:
         id:
           type: string
           description: The field to filter on
         type:
-          type: string
-          enum:
-            - datetime
-            - fixed
-            - optional
-            - label
-            - tag
-            - project_label
-            - system_label
-            - attribution
-            - attribution_group
-            - gke
-            - gke_label
+          $ref: "#/components/schemas/DimensionsTypes"
         mode:
           type: string
           description: Filter mode to apply
@@ -4962,31 +4954,6 @@ components:
           type: string
         type:
           type: string
-    Scope:
-      required:
-        - key
-        - type
-      type: object
-      properties:
-        key:
-          type: string
-          example: service_id
-          default: service_id
-        type:
-          $ref: "#/components/schemas/DimensionsTypes"
-        values:
-          type: array
-          example:
-            - google_cloud
-          items:
-            type: string
-        inverse_selection:
-          type: boolean
-          description: If set to true, all the selected values will be excluded.
-        regexp:
-          type: string
-        include_null:
-          type: boolean
     SlackChannel:
       type: object
       properties:
