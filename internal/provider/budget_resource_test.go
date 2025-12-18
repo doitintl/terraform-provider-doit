@@ -129,9 +129,7 @@ resource "doit_budget" "this" {
   time_interval = "month"
   scope         = ["ydDBFKVuz9kGlFDex8cN"]
   alerts = [
-    { percentage = 50 },
-    { percentage = 80 },
-    { percentage = 100 }
+    { percentage = 50 }
   ]
   collaborators = [
     {
@@ -157,8 +155,7 @@ resource "doit_budget" "this" {
   scope         = ["ydDBFKVuz9kGlFDex8cN"]
   alerts = [
     { percentage = 50 },
-    { percentage = 80 },
-    { percentage = 100 }
+    { percentage = 80 }
   ]
   collaborators = [
     {
