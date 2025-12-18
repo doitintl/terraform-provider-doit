@@ -23,6 +23,8 @@ import (
 
 func BudgetResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description:         "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
+		MarkdownDescription: "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
 		Attributes: map[string]schema.Attribute{
 			"alerts": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -227,7 +229,7 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "List of attributions that define the budget scope.",
 				MarkdownDescription: "List of attributions that define the budget scope.",
-				DeprecationMessage:  "This attribute is deprecated.",
+				DeprecationMessage:  "This attribute is deprecated. Please use `scopes` instead.",
 			},
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
