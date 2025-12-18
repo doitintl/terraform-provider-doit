@@ -7,6 +7,7 @@ import (
 	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_budget"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -27,6 +28,7 @@ var (
 	_ resource.Resource                     = &budgetResource{}
 	_ resource.ResourceWithConfigure        = &budgetResource{}
 	_ resource.ResourceWithUpgradeState     = &budgetResource{}
+	_ resource.ResourceWithImportState      = &budgetResource{}
 	_ resource.ResourceWithConfigValidators = &budgetResource{}
 )
 
@@ -55,6 +57,10 @@ func (r *budgetResource) Configure(_ context.Context, req resource.ConfigureRequ
 
 func (r *budgetResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_budget"
+}
+
+func (r *budgetResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
