@@ -28,9 +28,9 @@ func TestAccBudget(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Test Min Budget (Recurring)
+			// Test Budget (Recurring)
 			{
-				Config: testAccBudgetMin(n),
+				Config: testAccBudget(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -51,9 +51,9 @@ func TestAccBudget(t *testing.T) {
 						knownvalue.StringExact("recurring")),
 				},
 			},
-			// Test Min Budget Update (In-place)
+			// Test Budget Update (In-place)
 			{
-				Config: testAccBudgetMinUpdate(n),
+				Config: testAccBudgetUpdate(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -118,7 +118,7 @@ output "start_period" {
 `
 }
 
-func testAccBudgetMin(i int) string {
+func testAccBudget(i int) string {
 	return fmt.Sprintf(`
 %s
 
@@ -143,7 +143,7 @@ resource "doit_budget" "this" {
 `, budgetStartPeriod(), i)
 }
 
-func testAccBudgetMinUpdate(i int) string {
+func testAccBudgetUpdate(i int) string {
 	return fmt.Sprintf(`
 %s
 
@@ -241,7 +241,7 @@ func TestAccBudget_Import(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetMin(n),
+				Config: testAccBudget(n),
 			},
 			{
 				ResourceName:      "doit_budget.this",
