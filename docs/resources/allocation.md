@@ -132,3 +132,13 @@ Optional:
 
 - `include_null` (Boolean) Include null values
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import doit_allocation.allocation [id]
+```

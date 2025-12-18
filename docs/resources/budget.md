@@ -133,3 +133,13 @@ Optional:
 
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `values` (List of String) Values to filter on
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import doit_budget.budget [id]
+```
