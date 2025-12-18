@@ -222,7 +222,7 @@ type Budget struct {
 	// RecipientsSlackChannels List of slack channels to notify when reaching alert threshold
 	RecipientsSlackChannels []SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scope List of allocations that defines that budget scope
+	// Scope List of attributions that defines that budget scope
 	Scope []string `json:"scope"`
 
 	// StartPeriod Budget start Date

@@ -80,8 +80,8 @@ resource "doit_report" "my-report_january" {
     include_promotional_credits = false
     filters = [
       {
-        id   = "allocation"
-        type = "allocation"
+        id   = "attribution"
+        type = "attribution"
         values = [
           "1CE699ZdwN5CRBw0tInY"
         ]
@@ -90,7 +90,7 @@ resource "doit_report" "my-report_january" {
     group = [
       {
         id   = "BSQZmvX6hvuKGPDHX7R3"
-        type = "allocation_group"
+        type = "attribution_group"
         limit = {
           value = 3
           sort  = "a_to_z"
