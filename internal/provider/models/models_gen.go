@@ -208,21 +208,6 @@ const (
 	ExternalConfigFilterModeStartsWith ExternalConfigFilterMode = "starts_with"
 )
 
-// Defines values for ExternalConfigFilterType.
-const (
-	ExternalConfigFilterTypeAttribution      ExternalConfigFilterType = "attribution"
-	ExternalConfigFilterTypeAttributionGroup ExternalConfigFilterType = "attribution_group"
-	ExternalConfigFilterTypeDatetime         ExternalConfigFilterType = "datetime"
-	ExternalConfigFilterTypeFixed            ExternalConfigFilterType = "fixed"
-	ExternalConfigFilterTypeGke              ExternalConfigFilterType = "gke"
-	ExternalConfigFilterTypeGkeLabel         ExternalConfigFilterType = "gke_label"
-	ExternalConfigFilterTypeLabel            ExternalConfigFilterType = "label"
-	ExternalConfigFilterTypeOptional         ExternalConfigFilterType = "optional"
-	ExternalConfigFilterTypeProjectLabel     ExternalConfigFilterType = "project_label"
-	ExternalConfigFilterTypeSystemLabel      ExternalConfigFilterType = "system_label"
-	ExternalConfigFilterTypeTag              ExternalConfigFilterType = "tag"
-)
-
 // Defines values for ExternalConfigMetricFilterOperator.
 const (
 	B   ExternalConfigMetricFilterOperator = "b"
@@ -567,11 +552,11 @@ const (
 
 // Defines values for ListAnnotationsParamsSortBy.
 const (
-	Content      ListAnnotationsParamsSortBy = "content"
-	Id           ListAnnotationsParamsSortBy = "id"
-	TimeCreated  ListAnnotationsParamsSortBy = "timeCreated"
-	TimeModified ListAnnotationsParamsSortBy = "timeModified"
-	Timestamp    ListAnnotationsParamsSortBy = "timestamp"
+	ListAnnotationsParamsSortByContent      ListAnnotationsParamsSortBy = "content"
+	ListAnnotationsParamsSortById           ListAnnotationsParamsSortBy = "id"
+	ListAnnotationsParamsSortByTimeCreated  ListAnnotationsParamsSortBy = "timeCreated"
+	ListAnnotationsParamsSortByTimeModified ListAnnotationsParamsSortBy = "timeModified"
+	ListAnnotationsParamsSortByTimestamp    ListAnnotationsParamsSortBy = "timestamp"
 )
 
 // Defines values for ListAnnotationsParamsSortOrder.
@@ -714,7 +699,7 @@ type AlertConfig struct {
 	Operator        *MetricFilterText `json:"operator,omitempty"`
 
 	// Scopes The filters selected define the scope of the alert.
-	Scopes *[]Scope `json:"scopes,omitempty"`
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// TimeInterval The time interval to evaluate the condition.
 	TimeInterval AlertConfigTimeInterval `json:"timeInterval"`
@@ -1276,7 +1261,7 @@ type BudgetAPI struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes []Scope `json:"scopes"`
+	Scopes []ExternalConfigFilter `json:"scopes"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -1346,7 +1331,7 @@ type BudgetCreateUpdateRequest struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes *[]Scope `json:"scopes,omitempty"`
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -1385,11 +1370,11 @@ type BudgetListItem struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes       *[]Scope `json:"scopes,omitempty"`
-	StartPeriod  *int64   `json:"startPeriod,omitempty"`
-	TimeInterval *string  `json:"timeInterval,omitempty"`
-	UpdateTime   *int64   `json:"updateTime,omitempty"`
-	Url          *string  `json:"url,omitempty"`
+	Scopes       *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	StartPeriod  *int64                  `json:"startPeriod,omitempty"`
+	TimeInterval *string                 `json:"timeInterval,omitempty"`
+	UpdateTime   *int64                  `json:"updateTime,omitempty"`
+	Url          *string                 `json:"url,omitempty"`
 }
 
 // CloudIncidentListItem defines model for CloudIncidentListItem.
@@ -1633,14 +1618,14 @@ type ExternalConfigTimeInterval string
 // When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
 type ExternalConfigFilter struct {
 	// Id The field to filter on
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id"`
 
 	// Inverse Set to `true` to exclude the values.
 	Inverse *bool `json:"inverse,omitempty"`
 
 	// Mode Filter mode to apply
-	Mode *ExternalConfigFilterMode `json:"mode,omitempty"`
-	Type *ExternalConfigFilterType `json:"type,omitempty"`
+	Mode ExternalConfigFilterMode `json:"mode"`
+	Type DimensionsTypes          `json:"type"`
 
 	// Values Values to filter on
 	Values *[]string `json:"values,omitempty"`
@@ -1648,9 +1633,6 @@ type ExternalConfigFilter struct {
 
 // ExternalConfigFilterMode Filter mode to apply
 type ExternalConfigFilterMode string
-
-// ExternalConfigFilterType defines model for ExternalConfigFilter.Type.
-type ExternalConfigFilterType string
 
 // ExternalConfigMetricFilter The metric filter to limit the report results by value
 type ExternalConfigMetricFilter struct {
@@ -1769,6 +1751,15 @@ type ExternalUpdateReport struct {
 
 // Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 type Filter = string
+
+// FindCloudDiagramsRequest defines model for FindCloudDiagramsRequest.
+type FindCloudDiagramsRequest struct {
+	// Resources Resource IDs to find diagrams for.
+	Resources []string `json:"resources"`
+}
+
+// FindCloudDiagramsResponse List of diagram URLs matching the find criteria.
+type FindCloudDiagramsResponse = []string
 
 // Group The dimension that defines a row in the report.
 type Group struct {
@@ -2081,18 +2072,6 @@ type RunReportResultResultMlFeatures string
 type SchemaField struct {
 	Name *string `json:"name,omitempty"`
 	Type *string `json:"type,omitempty"`
-}
-
-// Scope defines model for Scope.
-type Scope struct {
-	IncludeNull *bool `json:"include_null,omitempty"`
-
-	// InverseSelection If set to true, all the selected values will be excluded.
-	InverseSelection *bool           `json:"inverse_selection,omitempty"`
-	Key              string          `json:"key"`
-	Regexp           *string         `json:"regexp,omitempty"`
-	Type             DimensionsTypes `json:"type"`
-	Values           *[]string       `json:"values,omitempty"`
 }
 
 // Seats defines model for Seats.
@@ -2974,6 +2953,9 @@ type UpdateReportJSONRequestBody = ExternalUpdateReport
 // IdOfAssetJSONRequestBody defines body for IdOfAsset for application/json ContentType.
 type IdOfAssetJSONRequestBody IdOfAssetJSONBody
 
+// FindCloudDiagramsJSONRequestBody defines body for FindCloudDiagrams for application/json ContentType.
+type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
+
 // DatahubEventsCSVFileMultipartRequestBody defines body for DatahubEventsCSVFile for multipart/form-data ContentType.
 type DatahubEventsCSVFileMultipartRequestBody DatahubEventsCSVFileMultipartBody
 
@@ -3240,6 +3222,11 @@ type ClientInterface interface {
 
 	// GetInvoice request
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// FindCloudDiagramsWithBody request with any body
+	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4057,6 +4044,30 @@ func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, r
 
 func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInvoiceRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewFindCloudDiagramsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewFindCloudDiagramsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7071,6 +7082,46 @@ func NewGetInvoiceRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewFindCloudDiagramsRequest calls the generic FindCloudDiagrams builder with application/json body
+func NewFindCloudDiagramsRequest(server string, body FindCloudDiagramsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewFindCloudDiagramsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewFindCloudDiagramsRequestWithBody generates requests for FindCloudDiagrams with any type of body
+func NewFindCloudDiagramsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/find")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListKnownIssuesRequest generates requests for ListKnownIssues
 func NewListKnownIssuesRequest(server string, params *ListKnownIssuesParams) (*http.Request, error) {
 	var err error
@@ -8122,6 +8173,11 @@ type ClientWithResponsesInterface interface {
 
 	// GetInvoiceWithResponse request
 	GetInvoiceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoiceResp, error)
+
+	// FindCloudDiagramsWithBodyWithResponse request with any body
+	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
+
+	FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -9565,6 +9621,31 @@ func (r GetInvoiceResp) StatusCode() int {
 	return 0
 }
 
+type FindCloudDiagramsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *FindCloudDiagramsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r FindCloudDiagramsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r FindCloudDiagramsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListKnownIssuesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -10667,6 +10748,23 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseGetInvoiceResp(rsp)
+}
+
+// FindCloudDiagramsWithBodyWithResponse request with arbitrary body returning *FindCloudDiagramsResp
+func (c *ClientWithResponses) FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error) {
+	rsp, err := c.FindCloudDiagramsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFindCloudDiagramsResp(rsp)
+}
+
+func (c *ClientWithResponses) FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error) {
+	rsp, err := c.FindCloudDiagrams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFindCloudDiagramsResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -13554,6 +13652,53 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseFindCloudDiagramsResp parses an HTTP response from a FindCloudDiagramsWithResponse call
+func ParseFindCloudDiagramsResp(rsp *http.Response) (*FindCloudDiagramsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &FindCloudDiagramsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FindCloudDiagramsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	}
 
