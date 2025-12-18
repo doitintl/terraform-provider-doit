@@ -1,10 +1,3 @@
-# Create an attribution for the budget
-resource "doit_attribution" "attribution" {
-  name        = "My Attribution"
-  description = "My Attribution Description"
-  formula     = "A"
-  components  = [{ type = "fixed", key = "project_id", values = ["847764956835"] }] # Note that 'project_id' is also used for AWS account IDs
-}
 
 # Create a timestamp for the start period
 resource "time_static" "now" {
@@ -30,6 +23,6 @@ resource "doit_budget" "my_budget" {
     },
   ]
   scope = [
-    doit_attribution.attribution.id
+    "allocation-id"
   ]
 }

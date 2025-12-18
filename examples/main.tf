@@ -41,20 +41,9 @@ resource "doit_budget" "my_budget" {
   time_interval     = "month"
   type              = "recurring"
   use_prev_spend    = false
+  start_period      = 1733071943000
 }
 
-resource "doit_attribution" "attri" {
-  name        = "attritestnewname"
-  description = "attritestdesc"
-  formula     = "A"
-  components  = [{ type = "system_label", key = "aws/region_code", values = ["us-east-1"] }]
-}
-
-resource "doit_attribution_group" "attributeGroup" {
-  name         = "attritestnewgroup"
-  description  = "attritestgroup-new-new"
-  attributions = [doit_attribution.attri.id]
-}
 
 resource "doit_report" "my-report_january" {
   name        = "my-report"
@@ -91,8 +80,8 @@ resource "doit_report" "my-report_january" {
     include_promotional_credits = false
     filters = [
       {
-        id   = "attribution"
-        type = "attribution"
+        id   = "allocation"
+        type = "allocation"
         values = [
           "1CE699ZdwN5CRBw0tInY"
         ]
@@ -101,7 +90,7 @@ resource "doit_report" "my-report_january" {
     group = [
       {
         id   = "BSQZmvX6hvuKGPDHX7R3"
-        type = "attribution_group"
+        type = "allocation_group"
         limit = {
           value = 3
           sort  = "a_to_z"
