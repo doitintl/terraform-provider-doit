@@ -240,8 +240,6 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource {
 	tflog.Debug(ctx, "provider Resources")
 	return []func() resource.Resource{
-		NewAttributionResource,
-		NewAttributionGroupResource,
 		NewReportResource,
 		NewBudgetResource,
 		NewAllocationResource,
