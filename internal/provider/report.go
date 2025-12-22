@@ -187,25 +187,31 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					Id:   g.Id.ValueStringPointer(),
 					Type: &groupType,
 				}
-				if !g.Limit.IsNull() {
-					sort := models.LimitSort(g.Limit.Sort.ValueString())
-					metric, d := baseTypeObjectValueToExternalMetric(g.Limit.Metric)
-					diags.Append(d...)
-					if diags.HasError() {
-						return nil, diags
+				if !g.Limit.IsNull() && !g.Limit.IsUnknown() {
+					limit := models.Limit{}
+					if !g.Limit.Sort.IsNull() && !g.Limit.Sort.IsUnknown() {
+						sort := models.LimitSort(g.Limit.Sort.ValueString())
+						limit.Sort = &sort
 					}
-					externalGroups[i].Limit = &models.Limit{
-						Value:  g.Limit.Value.ValueInt64Pointer(),
-						Sort:   &sort,
-						Metric: metric,
+					if !g.Limit.Value.IsNull() && !g.Limit.Value.IsUnknown() {
+						limit.Value = g.Limit.Value.ValueInt64Pointer()
 					}
+					if !g.Limit.Metric.IsNull() && !g.Limit.Metric.IsUnknown() {
+						metric, d := baseTypeObjectValueToExternalMetric(g.Limit.Metric)
+						diags.Append(d...)
+						if diags.HasError() {
+							return nil, diags
+						}
+						limit.Metric = metric
+					}
+					externalGroups[i].Limit = &limit
 				}
 			}
 			externalConfig.Group = &externalGroups
 		}
 	}
 
-	if !config.Metric.IsNull() {
+	if !config.Metric.IsNull() && !config.Metric.IsUnknown() {
 		metric, d := baseTypeObjectValueToExternalMetric(config.Metric)
 		diags.Append(d...)
 		if diags.HasError() {
@@ -214,9 +220,9 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		externalConfig.Metric = metric
 	}
 
-	if !config.MetricFilter.IsNull() {
+	if !config.MetricFilter.IsNull() && !config.MetricFilter.IsUnknown() {
 		externalConfig.MetricFilter = &models.ExternalConfigMetricFilter{}
-		if !config.MetricFilter.Metric.IsNull() {
+		if !config.MetricFilter.Metric.IsNull() && !config.MetricFilter.Metric.IsUnknown() {
 			metric, d := baseTypeObjectValueToExternalMetric(config.MetricFilter.Metric)
 			diags.Append(d...)
 			if diags.HasError() {
@@ -228,6 +234,10 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			var values []float64
 			diags.Append(config.MetricFilter.Values.ElementsAs(ctx, &values, false)...)
 			externalConfig.MetricFilter.Values = &values
+		}
+		if !config.MetricFilter.Operator.IsNull() && !config.MetricFilter.Operator.IsUnknown() {
+			operator := models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString())
+			externalConfig.MetricFilter.Operator = &operator
 		}
 	}
 
@@ -274,7 +284,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		}
 	}
 
-	if !config.TimeRange.IsNull() {
+	if !config.TimeRange.IsNull() && !config.TimeRange.IsUnknown() {
 		timeSettingsMode := models.TimeSettingsMode(config.TimeRange.Mode.ValueString())
 		timeSettingsUnit := models.TimeSettingsUnit(config.TimeRange.Unit.ValueString())
 		externalConfig.TimeRange = &models.TimeSettings{

@@ -147,13 +147,17 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
+	var state reportResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+
 	reportReq, diags := plan.toUpdateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	reportResp, err := r.client.UpdateReportWithResponse(ctx, plan.Id.ValueString(), reportReq)
+	reportResp, err := r.client.UpdateReportWithResponse(ctx, state.Id.ValueString(), reportReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating report",
@@ -170,7 +174,7 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	diags = r.populateStateFromAPI(ctx, plan.Id.ValueString(), &plan)
+	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

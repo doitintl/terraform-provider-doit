@@ -55,6 +55,126 @@ func TestAccReport(t *testing.T) {
 	})
 }
 
+func TestAccReport_Minimal(t *testing.T) {
+	n := rand.Int()
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportMinimal(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-minimal-%d", n))),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportMinimal(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-minimal-%d"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation    = "total"
+		time_interval  = "month"
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+func TestAccReport_Full(t *testing.T) {
+	n := rand.Int()
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportFull(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-full-%d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("from"),
+						knownvalue.StringExact("2024-01-01T00:00:00Z")),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportFull(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-full-%d"
+	description = "Full report with splits and custom time"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		custom_time_range = {
+		  from = "2024-01-01T00:00:00Z"
+		  to   = "2024-02-01T00:00:00Z"
+		}
+		time_range = {
+			mode = "custom"
+			unit = "day"
+		}
+		advanced_analysis = {
+		  trending_up   = true
+		  trending_down = true
+		  not_trending  = true
+		  forecast      = true
+		}
+
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
 func testAccReport(i int) string {
 	return fmt.Sprintf(`
 resource "doit_report" "this" {
@@ -229,7 +349,7 @@ resource "doit_report" "this" {
 		]
 		layout         = "stacked_column_chart"
 		display_values = "actuals_only"
-		currency       = ""
+		currency       = "USD"
 		sort_groups    = "asc"
 		sort_dimensions = "a_to_z"
 		data_source    = "billing"
