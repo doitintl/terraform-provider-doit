@@ -81,8 +81,10 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			// - 4xx client errors (400, 401, 403, 404, etc.)
 			// - 5xx server errors that shouldn't be retried (500, 501, etc.)
 			if resp.StatusCode >= 400 {
+				// Read body for better error message
+				bodyBytes, _ := io.ReadAll(resp.Body)
 				resp.Body.Close()
-				return backoff.Permanent(fmt.Errorf("non-retryable error: %d", resp.StatusCode))
+				return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(bodyBytes)))
 			}
 			// 2xx and 3xx codes that aren't explicitly handled above
 			return nil
