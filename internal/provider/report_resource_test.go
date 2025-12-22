@@ -65,7 +65,16 @@ resource "doit_report" "this" {
 		  type  = "basic"
 		  value = "cost"
 		}
+		metric_filter = {
+			metric = {
+				type = "basic"
+				value = "cost"
+			}
+			operator = "nb"
+			values = [-0.01, 0.01]
+		}
 		include_promotional_credits = false
+		include_subtotals = false
 		advanced_analysis = {
 		  trending_up   = false
 		  trending_down = false
@@ -86,33 +95,52 @@ resource "doit_report" "this" {
 		]
 		time_range = {
 		  mode            = "last"
-		  amount          = 12
+		  amount          = 6
 		  include_current = true
 		  unit            = "month"
 		}
 		filters = [
 		  {
+			id      = "cloud_provider"
+			type    = "fixed"
 			inverse = false
-			id      = "attribution"
-			type    = "attribution"
 			values = [
-			  "1CE699ZdwN5CRBw0tInY"
+			  "google-cloud"
 			]
+			mode = "is"
+		  },
+		  {
+			id = "service_description"
+			type = "fixed"
+			inverse = false
+			values = ["Kubernetes Engine"]
+			mode = "is"
 		  }
 		]
 		group = [
 		  {
-			id   = "BSQZmvX6hvuKGPDHX7R3"
-			type = "attribution_group"
+			id   = "sku_description"
+			type = "fixed"
+			limit = {
+				value = 15
+				sort = "desc"
+				metric = {
+					type = "basic"
+					value = "cost"
+				}
+			}
 		  },
 		  {
-			id   = "cloud_provider"
+			id   = "region"
 			type = "fixed"
 		  }
 		]
-		layout         = "table"
+		layout         = "stacked_column_chart"
 		display_values = "actuals_only"
 		currency       = "USD"
+		sort_groups    = "asc"
+		sort_dimensions = "a_to_z"
+		data_source    = "billing"
 	  }
 }
 
@@ -129,7 +157,16 @@ resource "doit_report" "this" {
 		  type  = "basic"
 		  value = "cost"
 		}
+		metric_filter = {
+			metric = {
+				type = "basic"
+				value = "cost"
+			}
+			operator = "nb"
+			values = [-0.01, 0.01]
+		}
 		include_promotional_credits = false
+		include_subtotals = false
 		advanced_analysis = {
 		  trending_up   = false
 		  trending_down = false
@@ -156,27 +193,46 @@ resource "doit_report" "this" {
 		}
 		filters = [
 		  {
+			id      = "cloud_provider"
+			type    = "fixed"
 			inverse = false
-			id      = "attribution"
-			type    = "attribution"
 			values = [
-			  "1CE699ZdwN5CRBw0tInY"
+			  "google-cloud"
 			]
+			mode = "is"
+		  },
+		  {
+			id = "service_description"
+			type = "fixed"
+			inverse = false
+			values = ["Kubernetes Engine"]
+			mode = "is"
 		  }
 		]
 		group = [
 		  {
-			id   = "BSQZmvX6hvuKGPDHX7R3"
-			type = "attribution_group"
+			id   = "sku_description"
+			type = "fixed"
+			limit = {
+				value = 15
+				sort = "desc"
+				metric = {
+					type = "basic"
+					value = "cost"
+				}
+			}
 		  },
 		  {
-			id   = "cloud_provider"
+			id   = "region"
 			type = "fixed"
 		  }
 		]
-		layout         = "table"
+		layout         = "stacked_column_chart"
 		display_values = "actuals_only"
-		currency       = "USD"
+		currency       = ""
+		sort_groups    = "asc"
+		sort_dimensions = "a_to_z"
+		data_source    = "billing"
 	  }
 }
 `, i)

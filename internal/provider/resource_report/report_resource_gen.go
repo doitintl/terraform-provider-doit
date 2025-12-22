@@ -810,12 +810,12 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	advancedAnalysisVal, ok := advancedAnalysisAttribute.(basetypes.ObjectValue)
+	advancedAnalysisVal, ok := advancedAnalysisAttribute.(AdvancedAnalysisValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`advanced_analysis expected to be basetypes.ObjectValue, was: %T`, advancedAnalysisAttribute))
+			fmt.Sprintf(`advanced_analysis expected to be AdvancedAnalysisValue, was: %T`, advancedAnalysisAttribute))
 	}
 
 	aggregationAttribute, ok := attributes["aggregation"]
@@ -864,12 +864,12 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	customTimeRangeVal, ok := customTimeRangeAttribute.(basetypes.ObjectValue)
+	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`custom_time_range expected to be basetypes.ObjectValue, was: %T`, customTimeRangeAttribute))
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
 	}
 
 	dataSourceAttribute, ok := attributes["data_source"]
@@ -1026,12 +1026,12 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(basetypes.ObjectValue)
+	metricVal, ok := metricAttribute.(MetricValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.ObjectValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
 	}
 
 	metricFilterAttribute, ok := attributes["metric_filter"]
@@ -1044,12 +1044,12 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricFilterVal, ok := metricFilterAttribute.(basetypes.ObjectValue)
+	metricFilterVal, ok := metricFilterAttribute.(MetricFilterValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric_filter expected to be basetypes.ObjectValue, was: %T`, metricFilterAttribute))
+			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterAttribute))
 	}
 
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
@@ -1134,12 +1134,12 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	timeRangeVal, ok := timeRangeAttribute.(basetypes.ObjectValue)
+	timeRangeVal, ok := timeRangeAttribute.(TimeRangeValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`time_range expected to be basetypes.ObjectValue, was: %T`, timeRangeAttribute))
+			fmt.Sprintf(`time_range expected to be TimeRangeValue, was: %T`, timeRangeAttribute))
 	}
 
 	if diags.HasError() {
@@ -1243,12 +1243,12 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewConfigValueUnknown(), diags
 	}
 
-	advancedAnalysisVal, ok := advancedAnalysisAttribute.(basetypes.ObjectValue)
+	advancedAnalysisVal, ok := advancedAnalysisAttribute.(AdvancedAnalysisValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`advanced_analysis expected to be basetypes.ObjectValue, was: %T`, advancedAnalysisAttribute))
+			fmt.Sprintf(`advanced_analysis expected to be AdvancedAnalysisValue, was: %T`, advancedAnalysisAttribute))
 	}
 
 	aggregationAttribute, ok := attributes["aggregation"]
@@ -1297,12 +1297,12 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewConfigValueUnknown(), diags
 	}
 
-	customTimeRangeVal, ok := customTimeRangeAttribute.(basetypes.ObjectValue)
+	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`custom_time_range expected to be basetypes.ObjectValue, was: %T`, customTimeRangeAttribute))
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
 	}
 
 	dataSourceAttribute, ok := attributes["data_source"]
@@ -1459,12 +1459,12 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewConfigValueUnknown(), diags
 	}
 
-	metricVal, ok := metricAttribute.(basetypes.ObjectValue)
+	metricVal, ok := metricAttribute.(MetricValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.ObjectValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
 	}
 
 	metricFilterAttribute, ok := attributes["metric_filter"]
@@ -1477,12 +1477,12 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewConfigValueUnknown(), diags
 	}
 
-	metricFilterVal, ok := metricFilterAttribute.(basetypes.ObjectValue)
+	metricFilterVal, ok := metricFilterAttribute.(MetricFilterValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric_filter expected to be basetypes.ObjectValue, was: %T`, metricFilterAttribute))
+			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterAttribute))
 	}
 
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
@@ -1567,12 +1567,12 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewConfigValueUnknown(), diags
 	}
 
-	timeRangeVal, ok := timeRangeAttribute.(basetypes.ObjectValue)
+	timeRangeVal, ok := timeRangeAttribute.(TimeRangeValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`time_range expected to be basetypes.ObjectValue, was: %T`, timeRangeAttribute))
+			fmt.Sprintf(`time_range expected to be TimeRangeValue, was: %T`, timeRangeAttribute))
 	}
 
 	if diags.HasError() {
@@ -1671,10 +1671,10 @@ func (t ConfigType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ConfigValue{}
 
 type ConfigValue struct {
-	AdvancedAnalysis          basetypes.ObjectValue `tfsdk:"advanced_analysis"`
+	AdvancedAnalysis          AdvancedAnalysisValue `tfsdk:"advanced_analysis"`
 	Aggregation               basetypes.StringValue `tfsdk:"aggregation"`
 	Currency                  basetypes.StringValue `tfsdk:"currency"`
-	CustomTimeRange           basetypes.ObjectValue `tfsdk:"custom_time_range"`
+	CustomTimeRange           CustomTimeRangeValue  `tfsdk:"custom_time_range"`
 	DataSource                basetypes.StringValue `tfsdk:"data_source"`
 	Dimensions                basetypes.ListValue   `tfsdk:"dimensions"`
 	DisplayValues             basetypes.StringValue `tfsdk:"display_values"`
@@ -1683,13 +1683,13 @@ type ConfigValue struct {
 	IncludePromotionalCredits basetypes.BoolValue   `tfsdk:"include_promotional_credits"`
 	IncludeSubtotals          basetypes.BoolValue   `tfsdk:"include_subtotals"`
 	Layout                    basetypes.StringValue `tfsdk:"layout"`
-	Metric                    basetypes.ObjectValue `tfsdk:"metric"`
-	MetricFilter              basetypes.ObjectValue `tfsdk:"metric_filter"`
+	Metric                    MetricValue           `tfsdk:"metric"`
+	MetricFilter              MetricFilterValue     `tfsdk:"metric_filter"`
 	SortDimensions            basetypes.StringValue `tfsdk:"sort_dimensions"`
 	SortGroups                basetypes.StringValue `tfsdk:"sort_groups"`
 	Splits                    basetypes.ListValue   `tfsdk:"splits"`
 	TimeInterval              basetypes.StringValue `tfsdk:"time_interval"`
-	TimeRange                 basetypes.ObjectValue `tfsdk:"time_range"`
+	TimeRange                 TimeRangeValue        `tfsdk:"time_range"`
 	state                     attr.ValueState
 }
 
@@ -1699,13 +1699,17 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	var val tftypes.Value
 	var err error
 
-	attrTypes["advanced_analysis"] = basetypes.ObjectType{
-		AttrTypes: AdvancedAnalysisValue{}.AttributeTypes(ctx),
+	attrTypes["advanced_analysis"] = AdvancedAnalysisType{
+		basetypes.ObjectType{
+			AttrTypes: AdvancedAnalysisValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["aggregation"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["custom_time_range"] = basetypes.ObjectType{
-		AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+	attrTypes["custom_time_range"] = CustomTimeRangeType{
+		basetypes.ObjectType{
+			AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["data_source"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["dimensions"] = basetypes.ListType{
@@ -1721,11 +1725,15 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["include_promotional_credits"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["include_subtotals"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["layout"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["metric"] = basetypes.ObjectType{
-		AttrTypes: MetricValue{}.AttributeTypes(ctx),
+	attrTypes["metric"] = MetricType{
+		basetypes.ObjectType{
+			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
-	attrTypes["metric_filter"] = basetypes.ObjectType{
-		AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
+	attrTypes["metric_filter"] = MetricFilterType{
+		basetypes.ObjectType{
+			AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["sort_dimensions"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["sort_groups"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1733,8 +1741,10 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		ElemType: SplitsValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["time_interval"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["time_range"] = basetypes.ObjectType{
-		AttrTypes: TimeRangeValue{}.AttributeTypes(ctx),
+	attrTypes["time_range"] = TimeRangeType{
+		basetypes.ObjectType{
+			AttrTypes: TimeRangeValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
@@ -1924,46 +1934,16 @@ func (v ConfigValue) String() string {
 func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var advancedAnalysis basetypes.ObjectValue
+	var advancedAnalysis attr.Value
 
-	if v.AdvancedAnalysis.IsNull() {
-		advancedAnalysis = types.ObjectNull(
-			AdvancedAnalysisValue{}.AttributeTypes(ctx),
-		)
+	{
+		advancedAnalysis = v.AdvancedAnalysis
 	}
 
-	if v.AdvancedAnalysis.IsUnknown() {
-		advancedAnalysis = types.ObjectUnknown(
-			AdvancedAnalysisValue{}.AttributeTypes(ctx),
-		)
-	}
+	var customTimeRange attr.Value
 
-	if !v.AdvancedAnalysis.IsNull() && !v.AdvancedAnalysis.IsUnknown() {
-		advancedAnalysis = types.ObjectValueMust(
-			AdvancedAnalysisValue{}.AttributeTypes(ctx),
-			v.AdvancedAnalysis.Attributes(),
-		)
-	}
-
-	var customTimeRange basetypes.ObjectValue
-
-	if v.CustomTimeRange.IsNull() {
-		customTimeRange = types.ObjectNull(
-			CustomTimeRangeValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.CustomTimeRange.IsUnknown() {
-		customTimeRange = types.ObjectUnknown(
-			CustomTimeRangeValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.CustomTimeRange.IsNull() && !v.CustomTimeRange.IsUnknown() {
-		customTimeRange = types.ObjectValueMust(
-			CustomTimeRangeValue{}.AttributeTypes(ctx),
-			v.CustomTimeRange.Attributes(),
-		)
+	{
+		customTimeRange = v.CustomTimeRange
 	}
 
 	dimensions := types.ListValueMust(
@@ -2053,46 +2033,16 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		)
 	}
 
-	var metric basetypes.ObjectValue
+	var metric attr.Value
 
-	if v.Metric.IsNull() {
-		metric = types.ObjectNull(
-			MetricValue{}.AttributeTypes(ctx),
-		)
+	{
+		metric = v.Metric
 	}
 
-	if v.Metric.IsUnknown() {
-		metric = types.ObjectUnknown(
-			MetricValue{}.AttributeTypes(ctx),
-		)
-	}
+	var metricFilter attr.Value
 
-	if !v.Metric.IsNull() && !v.Metric.IsUnknown() {
-		metric = types.ObjectValueMust(
-			MetricValue{}.AttributeTypes(ctx),
-			v.Metric.Attributes(),
-		)
-	}
-
-	var metricFilter basetypes.ObjectValue
-
-	if v.MetricFilter.IsNull() {
-		metricFilter = types.ObjectNull(
-			MetricFilterValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.MetricFilter.IsUnknown() {
-		metricFilter = types.ObjectUnknown(
-			MetricFilterValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.MetricFilter.IsNull() && !v.MetricFilter.IsUnknown() {
-		metricFilter = types.ObjectValueMust(
-			MetricFilterValue{}.AttributeTypes(ctx),
-			v.MetricFilter.Attributes(),
-		)
+	{
+		metricFilter = v.MetricFilter
 	}
 
 	splits := types.ListValueMust(
@@ -2124,35 +2074,24 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		)
 	}
 
-	var timeRange basetypes.ObjectValue
+	var timeRange attr.Value
 
-	if v.TimeRange.IsNull() {
-		timeRange = types.ObjectNull(
-			TimeRangeValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.TimeRange.IsUnknown() {
-		timeRange = types.ObjectUnknown(
-			TimeRangeValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.TimeRange.IsNull() && !v.TimeRange.IsUnknown() {
-		timeRange = types.ObjectValueMust(
-			TimeRangeValue{}.AttributeTypes(ctx),
-			v.TimeRange.Attributes(),
-		)
+	{
+		timeRange = v.TimeRange
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"advanced_analysis": basetypes.ObjectType{
-			AttrTypes: AdvancedAnalysisValue{}.AttributeTypes(ctx),
+		"advanced_analysis": AdvancedAnalysisType{
+			basetypes.ObjectType{
+				AttrTypes: AdvancedAnalysisValue{}.AttributeTypes(ctx),
+			},
 		},
 		"aggregation": basetypes.StringType{},
 		"currency":    basetypes.StringType{},
-		"custom_time_range": basetypes.ObjectType{
-			AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+		"custom_time_range": CustomTimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+			},
 		},
 		"data_source": basetypes.StringType{},
 		"dimensions": basetypes.ListType{
@@ -2168,11 +2107,15 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"include_promotional_credits": basetypes.BoolType{},
 		"include_subtotals":           basetypes.BoolType{},
 		"layout":                      basetypes.StringType{},
-		"metric": basetypes.ObjectType{
-			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
 		},
-		"metric_filter": basetypes.ObjectType{
-			AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
+		"metric_filter": MetricFilterType{
+			basetypes.ObjectType{
+				AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
+			},
 		},
 		"sort_dimensions": basetypes.StringType{},
 		"sort_groups":     basetypes.StringType{},
@@ -2180,8 +2123,10 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			ElemType: SplitsValue{}.Type(ctx),
 		},
 		"time_interval": basetypes.StringType{},
-		"time_range": basetypes.ObjectType{
-			AttrTypes: TimeRangeValue{}.AttributeTypes(ctx),
+		"time_range": TimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: TimeRangeValue{}.AttributeTypes(ctx),
+			},
 		},
 	}
 
@@ -2324,13 +2269,17 @@ func (v ConfigValue) Type(ctx context.Context) attr.Type {
 
 func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"advanced_analysis": basetypes.ObjectType{
-			AttrTypes: AdvancedAnalysisValue{}.AttributeTypes(ctx),
+		"advanced_analysis": AdvancedAnalysisType{
+			basetypes.ObjectType{
+				AttrTypes: AdvancedAnalysisValue{}.AttributeTypes(ctx),
+			},
 		},
 		"aggregation": basetypes.StringType{},
 		"currency":    basetypes.StringType{},
-		"custom_time_range": basetypes.ObjectType{
-			AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+		"custom_time_range": CustomTimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+			},
 		},
 		"data_source": basetypes.StringType{},
 		"dimensions": basetypes.ListType{
@@ -2346,11 +2295,15 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"include_promotional_credits": basetypes.BoolType{},
 		"include_subtotals":           basetypes.BoolType{},
 		"layout":                      basetypes.StringType{},
-		"metric": basetypes.ObjectType{
-			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
 		},
-		"metric_filter": basetypes.ObjectType{
-			AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
+		"metric_filter": MetricFilterType{
+			basetypes.ObjectType{
+				AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
+			},
 		},
 		"sort_dimensions": basetypes.StringType{},
 		"sort_groups":     basetypes.StringType{},
@@ -2358,8 +2311,10 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 			ElemType: SplitsValue{}.Type(ctx),
 		},
 		"time_interval": basetypes.StringType{},
-		"time_range": basetypes.ObjectType{
-			AttrTypes: TimeRangeValue{}.AttributeTypes(ctx),
+		"time_range": TimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: TimeRangeValue{}.AttributeTypes(ctx),
+			},
 		},
 	}
 }
@@ -4238,12 +4193,12 @@ func (t GroupType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	limitVal, ok := limitAttribute.(basetypes.ObjectValue)
+	limitVal, ok := limitAttribute.(LimitValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`limit expected to be basetypes.ObjectValue, was: %T`, limitAttribute))
+			fmt.Sprintf(`limit expected to be LimitValue, was: %T`, limitAttribute))
 	}
 
 	typeAttribute, ok := attributes["type"]
@@ -4367,12 +4322,12 @@ func NewGroupValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewGroupValueUnknown(), diags
 	}
 
-	limitVal, ok := limitAttribute.(basetypes.ObjectValue)
+	limitVal, ok := limitAttribute.(LimitValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`limit expected to be basetypes.ObjectValue, was: %T`, limitAttribute))
+			fmt.Sprintf(`limit expected to be LimitValue, was: %T`, limitAttribute))
 	}
 
 	typeAttribute, ok := attributes["type"]
@@ -4474,7 +4429,7 @@ var _ basetypes.ObjectValuable = GroupValue{}
 
 type GroupValue struct {
 	Id        basetypes.StringValue `tfsdk:"id"`
-	Limit     basetypes.ObjectValue `tfsdk:"limit"`
+	Limit     LimitValue            `tfsdk:"limit"`
 	GroupType basetypes.StringValue `tfsdk:"type"`
 	state     attr.ValueState
 }
@@ -4486,8 +4441,10 @@ func (v GroupValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	var err error
 
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["limit"] = basetypes.ObjectType{
-		AttrTypes: LimitValue{}.AttributeTypes(ctx),
+	attrTypes["limit"] = LimitType{
+		basetypes.ObjectType{
+			AttrTypes: LimitValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
@@ -4550,31 +4507,18 @@ func (v GroupValue) String() string {
 func (v GroupValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var limit basetypes.ObjectValue
+	var limit attr.Value
 
-	if v.Limit.IsNull() {
-		limit = types.ObjectNull(
-			LimitValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.Limit.IsUnknown() {
-		limit = types.ObjectUnknown(
-			LimitValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.Limit.IsNull() && !v.Limit.IsUnknown() {
-		limit = types.ObjectValueMust(
-			LimitValue{}.AttributeTypes(ctx),
-			v.Limit.Attributes(),
-		)
+	{
+		limit = v.Limit
 	}
 
 	attributeTypes := map[string]attr.Type{
 		"id": basetypes.StringType{},
-		"limit": basetypes.ObjectType{
-			AttrTypes: LimitValue{}.AttributeTypes(ctx),
+		"limit": LimitType{
+			basetypes.ObjectType{
+				AttrTypes: LimitValue{}.AttributeTypes(ctx),
+			},
 		},
 		"type": basetypes.StringType{},
 	}
@@ -4639,8 +4583,10 @@ func (v GroupValue) Type(ctx context.Context) attr.Type {
 func (v GroupValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"id": basetypes.StringType{},
-		"limit": basetypes.ObjectType{
-			AttrTypes: LimitValue{}.AttributeTypes(ctx),
+		"limit": LimitType{
+			basetypes.ObjectType{
+				AttrTypes: LimitValue{}.AttributeTypes(ctx),
+			},
 		},
 		"type": basetypes.StringType{},
 	}
@@ -4681,12 +4627,12 @@ func (t LimitType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(basetypes.ObjectValue)
+	metricVal, ok := metricAttribute.(MetricValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.ObjectValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
 	}
 
 	sortAttribute, ok := attributes["sort"]
@@ -4810,12 +4756,12 @@ func NewLimitValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewLimitValueUnknown(), diags
 	}
 
-	metricVal, ok := metricAttribute.(basetypes.ObjectValue)
+	metricVal, ok := metricAttribute.(MetricValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.ObjectValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
 	}
 
 	sortAttribute, ok := attributes["sort"]
@@ -4934,7 +4880,7 @@ func (t LimitType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = LimitValue{}
 
 type LimitValue struct {
-	Metric basetypes.ObjectValue `tfsdk:"metric"`
+	Metric MetricValue           `tfsdk:"metric"`
 	Sort   basetypes.StringValue `tfsdk:"sort"`
 	Value  basetypes.Int64Value  `tfsdk:"value"`
 	state  attr.ValueState
@@ -4946,8 +4892,10 @@ func (v LimitValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	var val tftypes.Value
 	var err error
 
-	attrTypes["metric"] = basetypes.ObjectType{
-		AttrTypes: MetricValue{}.AttributeTypes(ctx),
+	attrTypes["metric"] = MetricType{
+		basetypes.ObjectType{
+			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["sort"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["value"] = basetypes.Int64Type{}.TerraformType(ctx)
@@ -5011,30 +4959,17 @@ func (v LimitValue) String() string {
 func (v LimitValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var metric basetypes.ObjectValue
+	var metric attr.Value
 
-	if v.Metric.IsNull() {
-		metric = types.ObjectNull(
-			MetricValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.Metric.IsUnknown() {
-		metric = types.ObjectUnknown(
-			MetricValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.Metric.IsNull() && !v.Metric.IsUnknown() {
-		metric = types.ObjectValueMust(
-			MetricValue{}.AttributeTypes(ctx),
-			v.Metric.Attributes(),
-		)
+	{
+		metric = v.Metric
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"metric": basetypes.ObjectType{
-			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
 		},
 		"sort":  basetypes.StringType{},
 		"value": basetypes.Int64Type{},
@@ -5099,8 +5034,10 @@ func (v LimitValue) Type(ctx context.Context) attr.Type {
 
 func (v LimitValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"metric": basetypes.ObjectType{
-			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
 		},
 		"sort":  basetypes.StringType{},
 		"value": basetypes.Int64Type{},
@@ -5521,12 +5458,12 @@ func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(basetypes.ObjectValue)
+	metricVal, ok := metricAttribute.(MetricValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.ObjectValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
 	}
 
 	operatorAttribute, ok := attributes["operator"]
@@ -5650,12 +5587,12 @@ func NewMetricFilterValue(attributeTypes map[string]attr.Type, attributes map[st
 		return NewMetricFilterValueUnknown(), diags
 	}
 
-	metricVal, ok := metricAttribute.(basetypes.ObjectValue)
+	metricVal, ok := metricAttribute.(MetricValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.ObjectValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
 	}
 
 	operatorAttribute, ok := attributes["operator"]
@@ -5774,7 +5711,7 @@ func (t MetricFilterType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = MetricFilterValue{}
 
 type MetricFilterValue struct {
-	Metric   basetypes.ObjectValue `tfsdk:"metric"`
+	Metric   MetricValue           `tfsdk:"metric"`
 	Operator basetypes.StringValue `tfsdk:"operator"`
 	Values   basetypes.ListValue   `tfsdk:"values"`
 	state    attr.ValueState
@@ -5786,8 +5723,10 @@ func (v MetricFilterValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 	var val tftypes.Value
 	var err error
 
-	attrTypes["metric"] = basetypes.ObjectType{
-		AttrTypes: MetricValue{}.AttributeTypes(ctx),
+	attrTypes["metric"] = MetricType{
+		basetypes.ObjectType{
+			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["operator"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["values"] = basetypes.ListType{
@@ -5853,25 +5792,10 @@ func (v MetricFilterValue) String() string {
 func (v MetricFilterValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var metric basetypes.ObjectValue
+	var metric attr.Value
 
-	if v.Metric.IsNull() {
-		metric = types.ObjectNull(
-			MetricValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.Metric.IsUnknown() {
-		metric = types.ObjectUnknown(
-			MetricValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.Metric.IsNull() && !v.Metric.IsUnknown() {
-		metric = types.ObjectValueMust(
-			MetricValue{}.AttributeTypes(ctx),
-			v.Metric.Attributes(),
-		)
+	{
+		metric = v.Metric
 	}
 
 	var valuesVal basetypes.ListValue
@@ -5888,8 +5812,10 @@ func (v MetricFilterValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"metric": basetypes.ObjectType{
-				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			"metric": MetricType{
+				basetypes.ObjectType{
+					AttrTypes: MetricValue{}.AttributeTypes(ctx),
+				},
 			},
 			"operator": basetypes.StringType{},
 			"values": basetypes.ListType{
@@ -5899,8 +5825,10 @@ func (v MetricFilterValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"metric": basetypes.ObjectType{
-			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
 		},
 		"operator": basetypes.StringType{},
 		"values": basetypes.ListType{
@@ -5967,8 +5895,10 @@ func (v MetricFilterValue) Type(ctx context.Context) attr.Type {
 
 func (v MetricFilterValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"metric": basetypes.ObjectType{
-			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
 		},
 		"operator": basetypes.StringType{},
 		"values": basetypes.ListType{
@@ -6066,12 +5996,12 @@ func (t SplitsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	originVal, ok := originAttribute.(basetypes.ObjectValue)
+	originVal, ok := originAttribute.(OriginValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`origin expected to be basetypes.ObjectValue, was: %T`, originAttribute))
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
 	}
 
 	targetsAttribute, ok := attributes["targets"]
@@ -6252,12 +6182,12 @@ func NewSplitsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewSplitsValueUnknown(), diags
 	}
 
-	originVal, ok := originAttribute.(basetypes.ObjectValue)
+	originVal, ok := originAttribute.(OriginValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`origin expected to be basetypes.ObjectValue, was: %T`, originAttribute))
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
 	}
 
 	targetsAttribute, ok := attributes["targets"]
@@ -6382,7 +6312,7 @@ type SplitsValue struct {
 	Id            basetypes.StringValue `tfsdk:"id"`
 	IncludeOrigin basetypes.BoolValue   `tfsdk:"include_origin"`
 	Mode          basetypes.StringValue `tfsdk:"mode"`
-	Origin        basetypes.ObjectValue `tfsdk:"origin"`
+	Origin        OriginValue           `tfsdk:"origin"`
 	Targets       basetypes.ListValue   `tfsdk:"targets"`
 	SplitsType    basetypes.StringValue `tfsdk:"type"`
 	state         attr.ValueState
@@ -6397,8 +6327,10 @@ func (v SplitsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["include_origin"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["origin"] = basetypes.ObjectType{
-		AttrTypes: OriginValue{}.AttributeTypes(ctx),
+	attrTypes["origin"] = OriginType{
+		basetypes.ObjectType{
+			AttrTypes: OriginValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["targets"] = basetypes.ListType{
 		ElemType: TargetsValue{}.Type(ctx),
@@ -6488,25 +6420,10 @@ func (v SplitsValue) String() string {
 func (v SplitsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var origin basetypes.ObjectValue
+	var origin attr.Value
 
-	if v.Origin.IsNull() {
-		origin = types.ObjectNull(
-			OriginValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.Origin.IsUnknown() {
-		origin = types.ObjectUnknown(
-			OriginValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.Origin.IsNull() && !v.Origin.IsUnknown() {
-		origin = types.ObjectValueMust(
-			OriginValue{}.AttributeTypes(ctx),
-			v.Origin.Attributes(),
-		)
+	{
+		origin = v.Origin
 	}
 
 	targets := types.ListValueMust(
@@ -6542,8 +6459,10 @@ func (v SplitsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"id":             basetypes.StringType{},
 		"include_origin": basetypes.BoolType{},
 		"mode":           basetypes.StringType{},
-		"origin": basetypes.ObjectType{
-			AttrTypes: OriginValue{}.AttributeTypes(ctx),
+		"origin": OriginType{
+			basetypes.ObjectType{
+				AttrTypes: OriginValue{}.AttributeTypes(ctx),
+			},
 		},
 		"targets": basetypes.ListType{
 			ElemType: TargetsValue{}.Type(ctx),
@@ -6628,8 +6547,10 @@ func (v SplitsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"id":             basetypes.StringType{},
 		"include_origin": basetypes.BoolType{},
 		"mode":           basetypes.StringType{},
-		"origin": basetypes.ObjectType{
-			AttrTypes: OriginValue{}.AttributeTypes(ctx),
+		"origin": OriginType{
+			basetypes.ObjectType{
+				AttrTypes: OriginValue{}.AttributeTypes(ctx),
+			},
 		},
 		"targets": basetypes.ListType{
 			ElemType: TargetsValue{}.Type(ctx),
