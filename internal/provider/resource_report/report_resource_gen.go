@@ -23,6 +23,8 @@ import (
 
 func ReportResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description:         "Reports allow you to analyze and visualize your cloud costs, usage, and savings.",
+		MarkdownDescription: "Reports allow you to analyze and visualize your cloud costs, usage, and savings.",
 		Attributes: map[string]schema.Attribute{
 			"config": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
