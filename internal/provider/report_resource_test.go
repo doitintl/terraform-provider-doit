@@ -1,8 +1,13 @@
 package provider_test
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"terraform-provider-doit/internal/provider"
 	"testing"
+	"time"
 
 	"math/rand/v2"
 
@@ -11,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"golang.org/x/time/rate"
 )
 
 func TestAccReport(t *testing.T) {
@@ -83,6 +89,151 @@ func TestAccReport_Minimal(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccReport_Attributions(t *testing.T) {
+	t.Parallel()
+
+	// Dynamically fetch valid IDs
+	attrId, groupId := getValidAttributionAndGroup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckFunc(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportAttributions(attrId, groupId),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.this", "config.filters.#", "1"),
+					resource.TestCheckResourceAttr("doit_report.this", "config.filters.0.id", "attribution"),
+					// Check logic ensures values contains the ID
+					resource.TestCheckResourceAttr("doit_report.this", "config.filters.0.values.0", attrId),
+					resource.TestCheckResourceAttr("doit_report.this", "config.group.#", "2"),
+					resource.TestCheckResourceAttr("doit_report.this", "config.group.0.type", "attribution_group"),
+					resource.TestCheckResourceAttr("doit_report.this", "config.group.0.id", groupId),
+				),
+			},
+		},
+	})
+}
+
+func getValidAttributionAndGroup(t *testing.T) (string, string) {
+	token := os.Getenv("DOIT_API_TOKEN")
+	host := os.Getenv("DOIT_HOST")
+	customerContext := os.Getenv("DOIT_CUSTOMER_CONTEXT")
+
+	if token == "" || host == "" {
+		t.Skip("DOIT_API_TOKEN and DOIT_HOST must be set for dynamic ID fetching")
+	}
+
+	ctx := context.Background()
+	// Simple rate limiter
+	rl := rate.NewLimiter(rate.Every(time.Second), 10)
+
+	client, err := provider.NewClientGen(ctx, host, token, customerContext, rl)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// List Attributions
+	attrRawResp, err := client.ListAttributions(ctx, nil)
+	if err != nil {
+		t.Fatalf("Failed to list attributions: %v", err)
+	}
+	defer attrRawResp.Body.Close()
+
+	var attrResult map[string]interface{}
+	if err := json.NewDecoder(attrRawResp.Body).Decode(&attrResult); err != nil {
+		t.Fatalf("Failed to decode attributions response: %v", err)
+	}
+
+	var attrId string
+	if attrs, ok := attrResult["attributions"].([]interface{}); ok && len(attrs) > 0 {
+		if aMap, ok := attrs[0].(map[string]interface{}); ok {
+			if id, ok := aMap["id"].(string); ok {
+				attrId = id
+			}
+		}
+	}
+
+	if attrId == "" {
+		t.Skip("No valid attributions found to test with")
+	}
+
+	// List Attribution Groups
+	groupRawResp, err := client.ListAttributionGroups(ctx, nil)
+	if err != nil {
+		t.Fatalf("Failed to list attribution groups: %v", err)
+	}
+	defer groupRawResp.Body.Close()
+
+	var groupResult map[string]interface{}
+	if err := json.NewDecoder(groupRawResp.Body).Decode(&groupResult); err != nil {
+		t.Fatalf("Failed to decode attribution groups response: %v", err)
+	}
+
+	var groupId string
+	foundGroupList := false
+	for _, v := range groupResult {
+		if list, ok := v.([]interface{}); ok {
+			foundGroupList = true
+			if len(list) > 0 {
+				if gMap, ok := list[0].(map[string]interface{}); ok {
+					if id, ok := gMap["id"].(string); ok {
+						groupId = id
+					}
+				}
+			}
+			break
+		}
+	}
+
+	if !foundGroupList || groupId == "" {
+		t.Skip("No valid attribution groups found to test with")
+	}
+
+	return attrId, groupId
+}
+
+func testAccReportAttributions(attrId, groupId string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+  name        = "test_report_attributions"
+  description = "test_report_attributions"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation   = "total"
+    time_interval = "month"
+    filters = [
+      {
+        inverse = false
+        id      = "attribution"
+        type    = "attribution"
+        values = [
+          "%s"
+        ]
+      }
+    ]
+    group = [
+      {
+        id   = "%s"
+        type = "attribution_group"
+      },
+      {
+        id   = "cloud_provider"
+        type = "fixed"
+      }
+    ]
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, attrId, groupId)
 }
 
 func testAccReportMinimal(i int) string {

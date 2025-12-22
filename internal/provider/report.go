@@ -167,7 +167,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					}
 					externalFilters[i].Values = &values
 				}
-				if !f.Mode.IsNull() {
+				if !f.Mode.IsNull() && !f.Mode.IsUnknown() {
 					filterMode := models.ExternalConfigFilterMode(f.Mode.ValueString())
 					externalFilters[i].Mode = &filterMode
 				}
@@ -421,13 +421,17 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		filters := make([]attr.Value, len(*config.Filters))
 		for i, f := range *config.Filters {
 			fType := string(*f.Type)
-			fMode := string(*f.Mode)
+			var fMode *string
+			if f.Mode != nil {
+				s := string(*f.Mode)
+				fMode = &s
+			}
 			m := map[string]attr.Value{
 				"id":      types.StringPointerValue(f.Id),
 				"inverse": types.BoolPointerValue(f.Inverse),
 				// filters type enum cast
 				"type": types.StringPointerValue(&fType),
-				"mode": types.StringPointerValue(&fMode),
+				"mode": types.StringPointerValue(fMode),
 			}
 			if f.Type != nil {
 				m["type"] = types.StringValue(string(*f.Type))
