@@ -40,3 +40,4 @@ website/vendor
 *.winfile eol=crlf
 tftest.sh
 GEMINI.md
+.direnv/
