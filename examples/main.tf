@@ -41,7 +41,6 @@ resource "doit_budget" "my_budget" {
   time_interval     = "month"
   type              = "recurring"
   use_prev_spend    = false
-  start_period      = 1733071943000
 }
 
 
