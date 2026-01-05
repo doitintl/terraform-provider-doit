@@ -7,6 +7,30 @@ This is an initial Proof of Concept to create a Terraform provider for DoiT Clou
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
 - [Go](https://golang.org/doc/install) >= 1.19
 
+### Optional: Using Nix Flake
+
+If you have [Nix](https://nixos.org/download.html) installed with flakes enabled:
+
+```shell
+nix develop
+```
+
+Or with [direnv](https://direnv.net/) for automatic environment loading:
+
+```shell
+direnv allow
+```
+
+This will automatically set up:
+- Go 1.25
+- Terraform v1.13.3
+- golangci-lint v2.5.0
+
+To enable flakes if not already enabled, add to your `~/.config/nix/nix.conf`:
+```
+experimental-features = nix-command flakes
+```
+
 ## Building The Provider
 
 1. Clone the repository
