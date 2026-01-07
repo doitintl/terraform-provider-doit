@@ -648,6 +648,783 @@
 								"static": false
 							},
 							"description": "Use the last period's spend as the target amount for recurring budgets"
+			"name": "report",
+			"schema": {
+				"attributes": [
+					{
+						"name": "config",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "advanced_analysis",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "forecast",
+												"bool": {
+													"computed_optional_required": "computed_optional"
+												}
+											},
+											{
+												"name": "not_trending",
+												"bool": {
+													"computed_optional_required": "computed_optional"
+												}
+											},
+											{
+												"name": "trending_down",
+												"bool": {
+													"computed_optional_required": "computed_optional"
+												}
+											},
+											{
+												"name": "trending_up",
+												"bool": {
+													"computed_optional_required": "computed_optional"
+												}
+											}
+										],
+										"description": "Advanced analysis options. Each of these can be set independently"
+									}
+								},
+								{
+									"name": "aggregation",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"total\",\n\"percent_total\",\n\"percent_col\",\n\"percent_row\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"USD\",\n\"ILS\",\n\"EUR\",\n\"AUD\",\n\"CAD\",\n\"GBP\",\n\"DKK\",\n\"NOK\",\n\"SEK\",\n\"BRL\",\n\"SGD\",\n\"MXN\",\n\"CHF\",\n\"MYR\",\n\"TWD\",\n\"EGP\",\n\"ZAR\",\n\"JPY\",\n\"IDR\",\n\"AED\",\n\"THB\",\n\"COP\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "custom_time_range",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "from",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "The start timestamp of the time range in RFC3339 format."
+												}
+											},
+											{
+												"name": "to",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "The end timestamp of the time range in RFC3339 format."
+												}
+											}
+										],
+										"description": "Required when the time range is set to \"custom\"."
+									}
+								},
+								{
+									"name": "data_source",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Data source of the report.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"bqlens\",\n\"billing_datahub\",\n\"kubernetes_utilization\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "dimensions",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "The field to apply to the dimension."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																}
+															}
+														]
+													}
+												}
+											]
+										},
+										"description": "See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions)."
+									}
+								},
+								{
+									"name": "display_values",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"actuals_only\",\n\"absolute_change\",\n\"percentage_change\",\n\"absolute_and_percentage\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "filters",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "The field to filter on"
+													}
+												},
+												{
+													"name": "inverse",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"description": "Set to `true` to exclude the values."
+													}
+												},
+												{
+													"name": "mode",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Filter mode to apply",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"is\",\n\"starts_with\",\n\"ends_with\",\n\"contains\",\n\"regexp\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "values",
+													"list": {
+														"computed_optional_required": "computed_optional",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Values to filter on"
+													}
+												}
+											]
+										},
+										"description": "The filters to apply to the report."
+									}
+								},
+								{
+									"name": "group",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Dimension ID."
+													}
+												},
+												{
+													"name": "limit",
+													"single_nested": {
+														"computed_optional_required": "computed_optional",
+														"attributes": [
+															{
+																"name": "metric",
+																"single_nested": {
+																	"computed_optional_required": "computed_optional",
+																	"attributes": [
+																		{
+																			"name": "type",
+																			"string": {
+																				"computed_optional_required": "computed_optional",
+																				"validators": [
+																					{
+																						"custom": {
+																							"imports": [
+																								{
+																									"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																								}
+																							],
+																							"schema_definition": "stringvalidator.OneOf(\n\"basic\",\n\"custom\",\n\"extended\",\n)"
+																						}
+																					}
+																				]
+																			}
+																		},
+																		{
+																			"name": "value",
+																			"string": {
+																				"computed_optional_required": "computed_optional",
+																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
+																			}
+																		}
+																	],
+																	"description": "The metric to apply."
+																}
+															},
+															{
+																"name": "sort",
+																"string": {
+																	"computed_optional_required": "computed_optional",
+																	"validators": [
+																		{
+																			"custom": {
+																				"imports": [
+																					{
+																						"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																					}
+																				],
+																				"schema_definition": "stringvalidator.OneOf(\n\"a_to_z\",\n\"asc\",\n\"desc\",\n)"
+																			}
+																		}
+																	]
+																}
+															},
+															{
+																"name": "value",
+																"int64": {
+																	"computed_optional_required": "computed_optional",
+																	"description": "The number of items to show"
+																}
+															}
+														],
+														"description": "To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom)."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																}
+															}
+														]
+													}
+												}
+											]
+										},
+										"description": "The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by)."
+									}
+								},
+								{
+									"name": "include_promotional_credits",
+									"bool": {
+										"computed_optional_required": "computed_optional",
+										"description": "Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).\nIf set to **true**, the report must use time interval `month`, `quarter`, or `year`."
+									}
+								},
+								{
+									"name": "include_subtotals",
+									"bool": {
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": false
+										},
+										"description": "Whether to include subgroup totals in the report. This option has no impact when reading a report via API."
+									}
+								},
+								{
+									"name": "layout",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "The visualization of the report.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"column_chart\",\n\"stacked_column_chart\",\n\"bar_chart\",\n\"stacked_bar_chart\",\n\"line_chart\",\n\"spline_chart\",\n\"area_chart\",\n\"area_spline_chart\",\n\"stacked_area_chart\",\n\"treemap_chart\",\n\"table\",\n\"table_heatmap\",\n\"table_row_heatmap\",\n\"table_col_heatmap\",\n\"csv_export\",\n\"sheets_export\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "metric",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "type",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"basic\",\n\"custom\",\n\"extended\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "value",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
+												}
+											}
+										],
+										"description": "The metric to apply."
+									}
+								},
+								{
+									"name": "metric_filter",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "metric",
+												"single_nested": {
+													"computed_optional_required": "computed_optional",
+													"attributes": [
+														{
+															"name": "type",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.OneOf(\n\"basic\",\n\"custom\",\n\"extended\",\n)"
+																		}
+																	}
+																]
+															}
+														},
+														{
+															"name": "value",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
+															}
+														}
+													],
+													"description": "The metric to apply."
+												}
+											},
+											{
+												"name": "operator",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"gt\",\n\"lt\",\n\"lte\",\n\"gte\",\n\"b\",\n\"nb\",\n\"e\",\n\"ne\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "values",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"float64": {}
+													}
+												}
+											}
+										],
+										"description": "The metric filter to limit the report results by value"
+									}
+								},
+								{
+									"name": "sort_dimensions",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": "desc"
+										},
+										"description": "This option has no impact when reading reports via API.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n\"a_to_z\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "sort_groups",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": "asc"
+										},
+										"description": "This option has no impact when reading reports via API.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n\"a_to_z\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "splits",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "ID of the field to split"
+													}
+												},
+												{
+													"name": "include_origin",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"description": "if set, include the origin"
+													}
+												},
+												{
+													"name": "mode",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"even\",\n\"custom\",\n\"proportional\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "origin",
+													"single_nested": {
+														"computed_optional_required": "computed_optional",
+														"attributes": [
+															{
+																"name": "id",
+																"string": {
+																	"computed_optional_required": "computed_optional",
+																	"description": "ID of the origin"
+																}
+															},
+															{
+																"name": "type",
+																"string": {
+																	"computed_optional_required": "computed_optional",
+																	"description": "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"",
+																	"validators": [
+																		{
+																			"custom": {
+																				"imports": [
+																					{
+																						"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																					}
+																				],
+																				"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n\"unallocated\",\n)"
+																			}
+																		}
+																	]
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "targets",
+													"list_nested": {
+														"computed_optional_required": "computed_optional",
+														"nested_object": {
+															"attributes": [
+																{
+																	"name": "id",
+																	"string": {
+																		"computed_optional_required": "computed_optional",
+																		"description": "ID of the target"
+																	}
+																},
+																{
+																	"name": "type",
+																	"string": {
+																		"computed_optional_required": "computed_optional",
+																		"description": "Type of the target.\nThe only supported value at the moment: \"attribution\"",
+																		"validators": [
+																			{
+																				"custom": {
+																					"imports": [
+																						{
+																							"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																						}
+																					],
+																					"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																				}
+																			}
+																		]
+																	}
+																},
+																{
+																	"name": "value",
+																	"float64": {
+																		"computed_optional_required": "computed_optional",
+																		"description": "Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom."
+																	}
+																}
+															]
+														},
+														"description": "Targets for the split"
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Type of the split.\nThe only supported value at the moment: \"attribution_group\"",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																}
+															}
+														]
+													}
+												}
+											]
+										},
+										"description": "The splits to use in the report."
+									}
+								},
+								{
+									"name": "time_interval",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"hour\",\n\"day\",\n\"dayCumSum\",\n\"week\",\n\"isoweek\",\n\"month\",\n\"quarter\",\n\"year\",\n\"week_day\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "time_range",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "amount",
+												"int64": {
+													"computed_optional_required": "computed_optional",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																	}
+																],
+																"schema_definition": "int64validator.Between(0, 5000)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "include_current",
+												"bool": {
+													"computed_optional_required": "computed_optional"
+												}
+											},
+											{
+												"name": "mode",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"last\",\n\"current\",\n\"custom\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "unit",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"day\",\n\"week\",\n\"month\",\n\"quarter\",\n\"year\",\n)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "Specify a predefined or custom time range for the report.\nFor example, to specify a custom time range of \"last 2 days\", set the mode to `last`, the amount to `2`, and the unit to `day`. If `includeCurrent` is `true`, the range will be yesterday and today; otherwise, the range will be yesterday and the day before yesterday.\nIf \"custom\" type is specified, you need to provide a custom time range in the `customTimeRange` field."
+									}
+								}
+							],
+							"description": "Report configuration"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Report description."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Report name."
 						}
 					},
 					{
@@ -681,6 +1458,14 @@
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "Update time (in UNIX timestamp)"
+							"description": "ID of the new report."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Report type."
 						}
 					}
 				]

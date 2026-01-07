@@ -43,18 +43,6 @@ resource "doit_budget" "my_budget" {
   use_prev_spend    = false
 }
 
-resource "doit_attribution" "attri" {
-  name        = "attritestnewname"
-  description = "attritestdesc"
-  formula     = "A"
-  components  = [{ type = "system_label", key = "aws/region_code", values = ["us-east-1"] }]
-}
-
-resource "doit_attribution_group" "attributeGroup" {
-  name         = "attritestnewgroup"
-  description  = "attritestgroup-new-new"
-  attributions = [doit_attribution.attri.id]
-}
 
 resource "doit_report" "my-report_january" {
   name        = "my-report"

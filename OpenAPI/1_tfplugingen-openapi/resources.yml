@@ -26,4 +26,16 @@ resources:
       method: PATCH
     delete:
       path: /analytics/v1/budgets/{id}
+  report:
+    create:
+      path: /analytics/v1/reports
+      method: POST
+    read:
+      path: /analytics/v1/reports/{id}/config
+      method: GET
+    update:
+      path: /analytics/v1/reports/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/reports/{id}
       method: DELETE
