@@ -167,10 +167,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					}
 					externalFilters[i].Values = &values
 				}
-				if !f.Mode.IsNull() && !f.Mode.IsUnknown() {
-					filterMode := models.ExternalConfigFilterMode(f.Mode.ValueString())
-					externalFilters[i].Mode = filterMode
-				}
+				externalFilters[i].Mode = models.ExternalConfigFilterMode(f.Mode.ValueString())
 			}
 			externalConfig.Filters = &externalFilters
 		}
@@ -414,11 +411,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				"inverse": types.BoolPointerValue(f.Inverse),
 				// filters type enum cast
 				"type": types.StringValue(fType),
-				"mode": types.StringNull(),
-			}
-
-			if f.Mode != "" {
-				m["mode"] = types.StringValue(string(f.Mode))
+				"mode": types.StringValue(string(f.Mode)),
 			}
 
 			if f.Values != nil {
