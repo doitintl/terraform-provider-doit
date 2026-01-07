@@ -58,14 +58,14 @@ resource "doit_budget" "this" {
 - `amount` (Number) Budget period amount
 required: true(if usePrevSpend is false)
 - `collaborators` (Attributes List) List of permitted users to view/edit the report (see [below for nested schema](#nestedatt--collaborators))
-- `currency` (String)
+- `currency` (String) Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `description` (String) Budget description
 - `end_period` (Number) Fixed budget end date
 required: true(if budget type is fixed)
 - `growth_per_period` (Number) Periodical growth percentage in recurring budget
 - `metric` (String) Budget metric - currently fixed to "cost"
 - `name` (String) Budget Name
-- `public` (String)
+- `public` (String) Possible values: `owner`, `editor`, `viewer`
 - `recipients` (List of String) List of emails to notify when reaching alert threshold
 - `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold (see [below for nested schema](#nestedatt--recipients_slack_channels))
 - `scope` (List of String, Deprecated) List of attributions that define the budget scope.
@@ -104,7 +104,7 @@ Read-Only:
 Optional:
 
 - `email` (String)
-- `role` (String)
+- `role` (String) Possible values: `owner`, `editor`, `viewer`
 
 
 <a id="nestedatt--recipients_slack_channels"></a>
@@ -127,7 +127,8 @@ Required:
 
 - `id` (String) The field to filter on
 - `mode` (String) Filter mode to apply
-- `type` (String)
+Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
+- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 Optional:
 

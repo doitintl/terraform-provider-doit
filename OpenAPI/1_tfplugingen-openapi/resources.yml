@@ -26,6 +26,7 @@ resources:
       method: PATCH
     delete:
       path: /analytics/v1/budgets/{id}
+      method: DELETE
   report:
     create:
       path: /analytics/v1/reports

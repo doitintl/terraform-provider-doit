@@ -61,12 +61,16 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Optional:            true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"role": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Optional:            true,
+							Computed:            true,
+							Description:         "Possible values: `owner`, `editor`, `viewer`",
+							MarkdownDescription: "Possible values: `owner`, `editor`, `viewer`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"owner",
@@ -93,8 +97,10 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Creation time (in UNIX timestamp)",
 			},
 			"currency": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+				MarkdownDescription: "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"USD",
@@ -167,8 +173,10 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Budget Name",
 			},
 			"public": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Possible values: `owner`, `editor`, `viewer`",
+				MarkdownDescription: "Possible values: `owner`, `editor`, `viewer`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"owner",
@@ -188,28 +196,38 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"customer_id": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Optional:            true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"id": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Optional:            true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"name": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Optional:            true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"shared": schema.BoolAttribute{
 							Optional: true,
 							Computed: true,
 						},
 						"type": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Optional:            true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"workspace": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Optional:            true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 					},
 					CustomType: RecipientsSlackChannelsType{
@@ -229,7 +247,7 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "List of attributions that define the budget scope.",
 				MarkdownDescription: "List of attributions that define the budget scope.",
-				DeprecationMessage:  "This attribute is deprecated. Please use `scopes` instead.",
+				DeprecationMessage:  "This attribute is deprecated.",
 			},
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -247,8 +265,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 						},
 						"mode": schema.StringAttribute{
 							Required:            true,
-							Description:         "Filter mode to apply",
-							MarkdownDescription: "Filter mode to apply",
+							Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+							MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"is",
@@ -260,7 +278,9 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"type": schema.StringAttribute{
-							Required: true,
+							Required:            true,
+							Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+							MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"datetime",

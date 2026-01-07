@@ -648,6 +648,45 @@
 								"static": false
 							},
 							"description": "Use the last period's spend as the target amount for recurring budgets"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "budget ID, identifying the report\nin:path"
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Creation time (in UNIX timestamp)"
+						}
+					},
+					{
+						"name": "current_utilization",
+						"float64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "forecasted_utilization",
+						"float64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Update time (in UNIX timestamp)"
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "report",
 			"schema": {
 				"attributes": [
@@ -1431,33 +1470,6 @@
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "budget ID, identifying the report\nin:path"
-						}
-					},
-					{
-						"name": "create_time",
-						"int64": {
-							"computed_optional_required": "computed",
-							"description": "Creation time (in UNIX timestamp)"
-						}
-					},
-					{
-						"name": "current_utilization",
-						"float64": {
-							"computed_optional_required": "computed"
-						}
-					},
-					{
-						"name": "forecasted_utilization",
-						"float64": {
-							"computed_optional_required": "computed"
-						}
-					},
-					{
-						"name": "update_time",
-						"int64": {
-							"computed_optional_required": "computed",
-							"description": "Update time (in UNIX timestamp)"
 							"description": "ID of the new report."
 						}
 					},
