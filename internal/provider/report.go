@@ -153,11 +153,11 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			externalFilters := make([]models.ExternalConfigFilter, len(filters))
 			for i, f := range filters {
 				inverse := f.Inverse.ValueBool()
-				filterType := models.ExternalConfigFilterType(f.FiltersType.ValueString())
+				filterType := models.DimensionsTypes(f.FiltersType.ValueString())
 				externalFilters[i] = models.ExternalConfigFilter{
-					Id:      f.Id.ValueStringPointer(),
+					Id:      f.Id.ValueString(),
 					Inverse: &inverse,
-					Type:    &filterType,
+					Type:    filterType,
 				}
 				if !f.Values.IsNull() && !f.Values.IsUnknown() {
 					var values []string
@@ -167,10 +167,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					}
 					externalFilters[i].Values = &values
 				}
-				if !f.Mode.IsNull() && !f.Mode.IsUnknown() {
-					filterMode := models.ExternalConfigFilterMode(f.Mode.ValueString())
-					externalFilters[i].Mode = &filterMode
-				}
+				externalFilters[i].Mode = models.ExternalConfigFilterMode(f.Mode.ValueString())
 			}
 			externalConfig.Filters = &externalFilters
 		}
@@ -408,24 +405,13 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	if config.Filters != nil {
 		filters := make([]attr.Value, len(*config.Filters))
 		for i, f := range *config.Filters {
-			fType := string(*f.Type)
-			var fMode *string
-			if f.Mode != nil {
-				s := string(*f.Mode)
-				fMode = &s
-			}
+			fType := string(f.Type)
 			m := map[string]attr.Value{
-				"id":      types.StringPointerValue(f.Id),
+				"id":      types.StringValue(f.Id),
 				"inverse": types.BoolPointerValue(f.Inverse),
 				// filters type enum cast
-				"type": types.StringPointerValue(&fType),
-				"mode": types.StringPointerValue(fMode),
-			}
-			if f.Type != nil {
-				m["type"] = types.StringValue(string(*f.Type))
-			}
-			if f.Mode != nil {
-				m["mode"] = types.StringValue(string(*f.Mode))
+				"type": types.StringValue(fType),
+				"mode": types.StringValue(string(f.Mode)),
 			}
 
 			if f.Values != nil {
