@@ -394,8 +394,6 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		ctrVal, d := resource_report.NewCustomTimeRangeValue(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
 		diags.Append(d...)
 		configMap["custom_time_range"] = ctrVal
-		log.Printf("DEBUG: ctrVal type: %T", ctrVal)
-		log.Printf("DEBUG: ctrVal.Type() string: %s", ctrVal.Type(ctx).String())
 	}
 
 	// Nested List: Dimensions
