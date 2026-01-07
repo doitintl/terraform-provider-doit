@@ -93,24 +93,29 @@ resource "doit_report" "my-report" {
 Optional:
 
 - `advanced_analysis` (Attributes) Advanced analysis options. Each of these can be set independently (see [below for nested schema](#nestedatt--config--advanced_analysis))
-- `aggregation` (String)
-- `currency` (String)
+- `aggregation` (String) Possible values: `total`, `percent_total`, `percent_col`, `percent_row`
+- `currency` (String) Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
+Possible values: `billing`, `bqlens`, `billing_datahub`, `kubernetes_utilization`
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
 - `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
+Possible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolute_and_percentage`
 - `filters` (Attributes List) The filters to apply to the report. (see [below for nested schema](#nestedatt--config--filters))
 - `group` (Attributes List) The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by). (see [below for nested schema](#nestedatt--config--group))
 - `include_promotional_credits` (Boolean) Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).
 If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
 - `include_subtotals` (Boolean) Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
 - `layout` (String) The visualization of the report.
+Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`
 - `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric))
 - `metric_filter` (Attributes) The metric filter to limit the report results by value (see [below for nested schema](#nestedatt--config--metric_filter))
 - `sort_dimensions` (String) This option has no impact when reading reports via API.
+Possible values: `asc`, `desc`, `a_to_z`
 - `sort_groups` (String) This option has no impact when reading reports via API.
+Possible values: `asc`, `desc`, `a_to_z`
 - `splits` (Attributes List) The splits to use in the report. (see [below for nested schema](#nestedatt--config--splits))
-- `time_interval` (String)
+- `time_interval` (String) Possible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`
 - `time_range` (Attributes) Specify a predefined or custom time range for the report.
 For example, to specify a custom time range of "last 2 days", set the mode to `last`, the amount to `2`, and the unit to `day`. If `includeCurrent` is `true`, the range will be yesterday and today; otherwise, the range will be yesterday and the day before yesterday.
 If "custom" type is specified, you need to provide a custom time range in the `customTimeRange` field. (see [below for nested schema](#nestedatt--config--time_range))
@@ -141,7 +146,7 @@ Optional:
 Optional:
 
 - `id` (String) The field to apply to the dimension.
-- `type` (String)
+- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 
 <a id="nestedatt--config--filters"></a>
@@ -152,7 +157,8 @@ Optional:
 - `id` (String) The field to filter on
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
-- `type` (String)
+Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
+- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 - `values` (List of String) Values to filter on
 
 
@@ -163,7 +169,7 @@ Optional:
 
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
-- `type` (String)
+- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
@@ -171,7 +177,7 @@ Optional:
 Optional:
 
 - `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--group--limit--metric))
-- `sort` (String)
+- `sort` (String) Possible values: `a_to_z`, `asc`, `desc`
 - `value` (Number) The number of items to show
 
 <a id="nestedatt--config--group--limit--metric"></a>
@@ -179,7 +185,7 @@ Optional:
 
 Optional:
 
-- `type` (String)
+- `type` (String) Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom id.
 
@@ -191,7 +197,7 @@ If using custom metrics, the value must refer to an existing custom id.
 
 Optional:
 
-- `type` (String)
+- `type` (String) Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom id.
 
@@ -202,7 +208,7 @@ If using custom metrics, the value must refer to an existing custom id.
 Optional:
 
 - `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
-- `operator` (String)
+- `operator` (String) Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)
 
 <a id="nestedatt--config--metric_filter--metric"></a>
@@ -210,7 +216,7 @@ Optional:
 
 Optional:
 
-- `type` (String)
+- `type` (String) Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom id.
 
@@ -223,11 +229,12 @@ Optional:
 
 - `id` (String) ID of the field to split
 - `include_origin` (Boolean) if set, include the origin
-- `mode` (String)
+- `mode` (String) Possible values: `even`, `custom`, `proportional`
 - `origin` (Attributes) (see [below for nested schema](#nestedatt--config--splits--origin))
 - `targets` (Attributes List) Targets for the split (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.
 The only supported value at the moment: "attribution_group"
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 <a id="nestedatt--config--splits--origin"></a>
 ### Nested Schema for `config.splits.origin`
@@ -237,6 +244,7 @@ Optional:
 - `id` (String) ID of the origin
 - `type` (String) Type of the origin.
 The only supported values at the moment: "attribution", "unallocated"
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`
 
 
 <a id="nestedatt--config--splits--targets"></a>
@@ -247,6 +255,7 @@ Optional:
 - `id` (String) ID of the target
 - `type` (String) Type of the target.
 The only supported value at the moment: "attribution"
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 - `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom.
 
 
@@ -258,5 +267,5 @@ Optional:
 
 - `amount` (Number)
 - `include_current` (Boolean)
-- `mode` (String)
-- `unit` (String)
+- `mode` (String) Possible values: `last`, `current`, `custom`
+- `unit` (String) Possible values: `day`, `week`, `month`, `quarter`, `year`

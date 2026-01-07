@@ -58,8 +58,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						MarkdownDescription: "Advanced analysis options. Each of these can be set independently",
 					},
 					"aggregation": schema.StringAttribute{
-						Optional: true,
-						Computed: true,
+						Optional:            true,
+						Computed:            true,
+						Description:         "Possible values: `total`, `percent_total`, `percent_col`, `percent_row`",
+						MarkdownDescription: "Possible values: `total`, `percent_total`, `percent_col`, `percent_row`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"total",
@@ -70,8 +72,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 					"currency": schema.StringAttribute{
-						Optional: true,
-						Computed: true,
+						Optional:            true,
+						Computed:            true,
+						Description:         "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+						MarkdownDescription: "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"USD",
@@ -127,8 +131,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"data_source": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Data source of the report.",
-						MarkdownDescription: "Data source of the report.",
+						Description:         "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing_datahub`, `kubernetes_utilization`",
+						MarkdownDescription: "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing_datahub`, `kubernetes_utilization`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"billing",
@@ -148,8 +152,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "The field to apply to the dimension.",
 								},
 								"type": schema.StringAttribute{
-									Optional: true,
-									Computed: true,
+									Optional:            true,
+									Computed:            true,
+									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -181,8 +187,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"display_values": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).",
-						MarkdownDescription: "See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).",
+						Description:         "See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).\nPossible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolute_and_percentage`",
+						MarkdownDescription: "See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).\nPossible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolute_and_percentage`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"actuals_only",
@@ -210,8 +216,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"mode": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Filter mode to apply",
-									MarkdownDescription: "Filter mode to apply",
+									Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"is",
@@ -223,8 +229,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"type": schema.StringAttribute{
-									Optional: true,
-									Computed: true,
+									Optional:            true,
+									Computed:            true,
+									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -274,8 +282,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										"metric": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
 												"type": schema.StringAttribute{
-													Optional: true,
-													Computed: true,
+													Optional:            true,
+													Computed:            true,
+													Description:         "Possible values: `basic`, `custom`, `extended`",
+													MarkdownDescription: "Possible values: `basic`, `custom`, `extended`",
 													Validators: []validator.String{
 														stringvalidator.OneOf(
 															"basic",
@@ -302,8 +312,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											MarkdownDescription: "The metric to apply.",
 										},
 										"sort": schema.StringAttribute{
-											Optional: true,
-											Computed: true,
+											Optional:            true,
+											Computed:            true,
+											Description:         "Possible values: `a_to_z`, `asc`, `desc`",
+											MarkdownDescription: "Possible values: `a_to_z`, `asc`, `desc`",
 											Validators: []validator.String{
 												stringvalidator.OneOf(
 													"a_to_z",
@@ -330,8 +342,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).",
 								},
 								"type": schema.StringAttribute{
-									Optional: true,
-									Computed: true,
+									Optional:            true,
+									Computed:            true,
+									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -376,8 +390,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"layout": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "The visualization of the report.",
-						MarkdownDescription: "The visualization of the report.",
+						Description:         "The visualization of the report.\nPossible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`",
+						MarkdownDescription: "The visualization of the report.\nPossible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"column_chart",
@@ -402,8 +416,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"metric": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
-								Optional: true,
-								Computed: true,
+								Optional:            true,
+								Computed:            true,
+								Description:         "Possible values: `basic`, `custom`, `extended`",
+								MarkdownDescription: "Possible values: `basic`, `custom`, `extended`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"basic",
@@ -434,8 +450,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							"metric": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"type": schema.StringAttribute{
-										Optional: true,
-										Computed: true,
+										Optional:            true,
+										Computed:            true,
+										Description:         "Possible values: `basic`, `custom`, `extended`",
+										MarkdownDescription: "Possible values: `basic`, `custom`, `extended`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"basic",
@@ -462,8 +480,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								MarkdownDescription: "The metric to apply.",
 							},
 							"operator": schema.StringAttribute{
-								Optional: true,
-								Computed: true,
+								Optional:            true,
+								Computed:            true,
+								Description:         "Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
+								MarkdownDescription: "Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"gt",
@@ -496,8 +516,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"sort_dimensions": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.",
-						MarkdownDescription: "This option has no impact when reading reports via API.",
+						Description:         "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
+						MarkdownDescription: "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"asc",
@@ -510,8 +530,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"sort_groups": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.",
-						MarkdownDescription: "This option has no impact when reading reports via API.",
+						Description:         "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
+						MarkdownDescription: "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"asc",
@@ -537,8 +557,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "if set, include the origin",
 								},
 								"mode": schema.StringAttribute{
-									Optional: true,
-									Computed: true,
+									Optional:            true,
+									Computed:            true,
+									Description:         "Possible values: `even`, `custom`, `proportional`",
+									MarkdownDescription: "Possible values: `even`, `custom`, `proportional`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"even",
@@ -558,8 +580,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										"type": schema.StringAttribute{
 											Optional:            true,
 											Computed:            true,
-											Description:         "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"",
-											MarkdownDescription: "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"",
+											Description:         "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`",
+											MarkdownDescription: "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`",
 											Validators: []validator.String{
 												stringvalidator.OneOf(
 													"datetime",
@@ -598,8 +620,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"type": schema.StringAttribute{
 												Optional:            true,
 												Computed:            true,
-												Description:         "Type of the target.\nThe only supported value at the moment: \"attribution\"",
-												MarkdownDescription: "Type of the target.\nThe only supported value at the moment: \"attribution\"",
+												Description:         "Type of the target.\nThe only supported value at the moment: \"attribution\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+												MarkdownDescription: "Type of the target.\nThe only supported value at the moment: \"attribution\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 												Validators: []validator.String{
 													stringvalidator.OneOf(
 														"datetime",
@@ -637,8 +659,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Type of the split.\nThe only supported value at the moment: \"attribution_group\"",
-									MarkdownDescription: "Type of the split.\nThe only supported value at the moment: \"attribution_group\"",
+									Description:         "Type of the split.\nThe only supported value at the moment: \"attribution_group\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Type of the split.\nThe only supported value at the moment: \"attribution_group\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -668,8 +690,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						MarkdownDescription: "The splits to use in the report.",
 					},
 					"time_interval": schema.StringAttribute{
-						Optional: true,
-						Computed: true,
+						Optional:            true,
+						Computed:            true,
+						Description:         "Possible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`",
+						MarkdownDescription: "Possible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"hour",
@@ -698,8 +722,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								Computed: true,
 							},
 							"mode": schema.StringAttribute{
-								Optional: true,
-								Computed: true,
+								Optional:            true,
+								Computed:            true,
+								Description:         "Possible values: `last`, `current`, `custom`",
+								MarkdownDescription: "Possible values: `last`, `current`, `custom`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"last",
@@ -709,8 +735,10 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							"unit": schema.StringAttribute{
-								Optional: true,
-								Computed: true,
+								Optional:            true,
+								Computed:            true,
+								Description:         "Possible values: `day`, `week`, `month`, `quarter`, `year`",
+								MarkdownDescription: "Possible values: `day`, `week`, `month`, `quarter`, `year`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"day",
@@ -1948,91 +1976,22 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		customTimeRange = v.CustomTimeRange
 	}
 
-	dimensions := types.ListValueMust(
-		DimensionsType{
-			basetypes.ObjectType{
-				AttrTypes: DimensionsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Dimensions.Elements(),
-	)
+	var dimensions attr.Value
 
-	if v.Dimensions.IsNull() {
-		dimensions = types.ListNull(
-			DimensionsType{
-				basetypes.ObjectType{
-					AttrTypes: DimensionsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
+	{
+		dimensions = v.Dimensions
 	}
 
-	if v.Dimensions.IsUnknown() {
-		dimensions = types.ListUnknown(
-			DimensionsType{
-				basetypes.ObjectType{
-					AttrTypes: DimensionsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
+	var filters attr.Value
+
+	{
+		filters = v.Filters
 	}
 
-	filters := types.ListValueMust(
-		FiltersType{
-			basetypes.ObjectType{
-				AttrTypes: FiltersValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Filters.Elements(),
-	)
+	var group attr.Value
 
-	if v.Filters.IsNull() {
-		filters = types.ListNull(
-			FiltersType{
-				basetypes.ObjectType{
-					AttrTypes: FiltersValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Filters.IsUnknown() {
-		filters = types.ListUnknown(
-			FiltersType{
-				basetypes.ObjectType{
-					AttrTypes: FiltersValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	group := types.ListValueMust(
-		GroupType{
-			basetypes.ObjectType{
-				AttrTypes: GroupValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Group.Elements(),
-	)
-
-	if v.Group.IsNull() {
-		group = types.ListNull(
-			GroupType{
-				basetypes.ObjectType{
-					AttrTypes: GroupValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Group.IsUnknown() {
-		group = types.ListUnknown(
-			GroupType{
-				basetypes.ObjectType{
-					AttrTypes: GroupValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
+	{
+		group = v.Group
 	}
 
 	var metric attr.Value
@@ -2047,33 +2006,10 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		metricFilter = v.MetricFilter
 	}
 
-	splits := types.ListValueMust(
-		SplitsType{
-			basetypes.ObjectType{
-				AttrTypes: SplitsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Splits.Elements(),
-	)
+	var splits attr.Value
 
-	if v.Splits.IsNull() {
-		splits = types.ListNull(
-			SplitsType{
-				basetypes.ObjectType{
-					AttrTypes: SplitsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Splits.IsUnknown() {
-		splits = types.ListUnknown(
-			SplitsType{
-				basetypes.ObjectType{
-					AttrTypes: SplitsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
+	{
+		splits = v.Splits
 	}
 
 	var timeRange attr.Value
@@ -6428,33 +6364,10 @@ func (v SplitsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		origin = v.Origin
 	}
 
-	targets := types.ListValueMust(
-		TargetsType{
-			basetypes.ObjectType{
-				AttrTypes: TargetsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Targets.Elements(),
-	)
+	var targets attr.Value
 
-	if v.Targets.IsNull() {
-		targets = types.ListNull(
-			TargetsType{
-				basetypes.ObjectType{
-					AttrTypes: TargetsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Targets.IsUnknown() {
-		targets = types.ListUnknown(
-			TargetsType{
-				basetypes.ObjectType{
-					AttrTypes: TargetsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
+	{
+		targets = v.Targets
 	}
 
 	attributeTypes := map[string]attr.Type{
