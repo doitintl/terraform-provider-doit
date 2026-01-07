@@ -197,11 +197,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 						limit.Value = g.Limit.Value.ValueInt64Pointer()
 					}
 					if !g.Limit.Metric.IsNull() && !g.Limit.Metric.IsUnknown() {
-						metric, d := baseTypeObjectValueToExternalMetric(g.Limit.Metric)
-						diags.Append(d...)
-						if diags.HasError() {
-							return nil, diags
-						}
+						metric := baseTypeObjectValueToExternalMetric(g.Limit.Metric)
 						limit.Metric = metric
 					}
 					externalGroups[i].Limit = &limit
@@ -212,22 +208,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.Metric.IsNull() && !config.Metric.IsUnknown() {
-		metric, d := baseTypeObjectValueToExternalMetric(config.Metric)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
+		metric := baseTypeObjectValueToExternalMetric(config.Metric)
 		externalConfig.Metric = metric
 	}
 
 	if !config.MetricFilter.IsNull() && !config.MetricFilter.IsUnknown() {
 		externalConfig.MetricFilter = &models.ExternalConfigMetricFilter{}
 		if !config.MetricFilter.Metric.IsNull() && !config.MetricFilter.Metric.IsUnknown() {
-			metric, d := baseTypeObjectValueToExternalMetric(config.MetricFilter.Metric)
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, diags
-			}
+			metric := baseTypeObjectValueToExternalMetric(config.MetricFilter.Metric)
 			externalConfig.MetricFilter.Metric = metric
 		}
 		if !config.MetricFilter.Values.IsNull() && !config.MetricFilter.Values.IsUnknown() {
@@ -616,7 +604,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	return diags
 }
 
-func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric, diags diag.Diagnostics) {
+func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric) {
 	metric = &models.ExternalMetric{}
 	if !metricValue.MetricType.IsNull() {
 		tString := models.ExternalMetricType(metricValue.MetricType.ValueString())
@@ -626,7 +614,7 @@ func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue
 		vString := metricValue.Value.ValueString()
 		metric.Value = &vString
 	}
-	return metric, nil
+	return metric
 }
 
 func externalMetricToBaseTypeObjectValue(ctx context.Context, metric *models.ExternalMetric) (metricValue resource_report.MetricValue, diags diag.Diagnostics) {
