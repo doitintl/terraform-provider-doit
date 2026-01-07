@@ -411,7 +411,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			diags.Append(d...)
 			dims[i] = dimVal
 		}
-		configMap["dimensions"], _ = types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), dims)
+		dimList, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), dims)
+		diags.Append(d...)
+		configMap["dimensions"] = dimList
 	} else {
 		configMap["dimensions"] = types.ListNull(resource_report.DimensionsValue{}.Type(ctx))
 	}
@@ -441,7 +443,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			}
 
 			if f.Values != nil {
-				m["values"], _ = types.ListValueFrom(ctx, types.StringType, *f.Values)
+				values, d := types.ListValueFrom(ctx, types.StringType, *f.Values)
+				diags.Append(d...)
+				m["values"] = values
 			} else {
 				m["values"] = types.ListNull(types.StringType)
 			}
@@ -449,7 +453,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			diags.Append(d...)
 			filters[i] = filterVal
 		}
-		configMap["filters"], _ = types.ListValueFrom(ctx, resource_report.FiltersValue{}.Type(ctx), filters)
+		filterList, d := types.ListValueFrom(ctx, resource_report.FiltersValue{}.Type(ctx), filters)
+		diags.Append(d...)
+		configMap["filters"] = filterList
 	} else {
 		configMap["filters"] = types.ListNull(resource_report.FiltersValue{}.Type(ctx))
 	}
@@ -489,7 +495,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			diags.Append(d...)
 			groups[i] = groupVal
 		}
-		configMap["group"], _ = types.ListValueFrom(ctx, resource_report.GroupValue{}.Type(ctx), groups)
+		groupList, d := types.ListValueFrom(ctx, resource_report.GroupValue{}.Type(ctx), groups)
+		diags.Append(d...)
+		configMap["group"] = groupList
 	} else {
 		configMap["group"] = types.ListNull(resource_report.GroupValue{}.Type(ctx))
 	}
@@ -572,7 +580,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 					diags.Append(d...)
 					targets[j] = targetVal
 				}
-				m["targets"], _ = types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), targets)
+				targetList, d := types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), targets)
+				diags.Append(d...)
+				m["targets"] = targetList
 			} else {
 				m["targets"] = types.ListNull(resource_report.TargetsValue{}.Type(ctx))
 			}
@@ -580,7 +590,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			diags.Append(d...)
 			splits[i] = splitVal
 		}
-		configMap["splits"], _ = types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), splits)
+		splitList, d := types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), splits)
+		diags.Append(d...)
+		configMap["splits"] = splitList
 	} else {
 		configMap["splits"] = types.ListNull(resource_report.SplitsValue{}.Type(ctx))
 	}
