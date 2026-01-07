@@ -202,8 +202,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Optional:            true,
-									Computed:            true,
+									Required:            true,
 									Description:         "The field to filter on",
 									MarkdownDescription: "The field to filter on",
 								},
@@ -214,8 +213,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "Set to `true` to exclude the values.",
 								},
 								"mode": schema.StringAttribute{
-									Optional:            true,
-									Computed:            true,
+									Required:            true,
 									Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									Validators: []validator.String{
@@ -229,8 +227,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"type": schema.StringAttribute{
-									Optional:            true,
-									Computed:            true,
+									Required:            true,
 									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
