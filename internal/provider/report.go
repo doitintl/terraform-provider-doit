@@ -610,7 +610,8 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		configMap["time_range"] = resource_report.NewTimeRangeValueNull()
 	}
 
-	state.Config, diags = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
+	state.Config, d = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
+	diags.Append(d...)
 
 	return diags
 }
