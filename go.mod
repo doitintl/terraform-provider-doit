@@ -29,6 +29,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.9.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
+	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260107120459-de2ee7d487d1 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/getkin/kin-openapi v0.133.0 // indirect
@@ -53,7 +54,6 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.24.0 // indirect
 	github.com/hashicorp/terraform-json v0.27.2 // indirect
-	github.com/hashicorp/terraform-plugin-codegen-framework v0.4.1 // indirect
 	github.com/hashicorp/terraform-plugin-codegen-openapi v0.3.0 // indirect
 	github.com/hashicorp/terraform-plugin-codegen-spec v0.2.0 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.24.0 // indirect
@@ -115,7 +115,7 @@ require (
 )
 
 tool (
-	github.com/hashicorp/terraform-plugin-codegen-framework/cmd/tfplugingen-framework
+	github.com/doitintl/terraform-plugin-codegen-framework/cmd/tfplugingen-framework
 	github.com/hashicorp/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi
 	github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 	github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
