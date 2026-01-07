@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"terraform-provider-doit/internal/provider/models"
 	"time"
 
@@ -238,12 +237,4 @@ func (c *Client) doRequest(ctx context.Context, req *http.Request) ([]byte, erro
 	}
 
 	return body, err
-}
-
-func addContextToURL(context, url string) (urlContext string) {
-	urlContext = url
-	if len(strings.TrimSpace(context)) != 0 {
-		urlContext = fmt.Sprintf(url+"?customerContext=%s", context)
-	}
-	return urlContext
 }
