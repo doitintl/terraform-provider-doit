@@ -215,6 +215,7 @@ resource "doit_report" "this" {
         values = [
           "%s"
         ]
+        mode = "is"
       }
     ]
     group = [

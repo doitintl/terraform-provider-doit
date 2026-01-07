@@ -107,6 +107,21 @@ const (
 	CollaboratorRoleViewer CollaboratorRole = "viewer"
 )
 
+// Defines values for CreateLabelRequestColor.
+const (
+	CreateLabelRequestColorApricot    CreateLabelRequestColor = "apricot"
+	CreateLabelRequestColorBlue       CreateLabelRequestColor = "blue"
+	CreateLabelRequestColorLavendar   CreateLabelRequestColor = "lavendar"
+	CreateLabelRequestColorLime       CreateLabelRequestColor = "lime"
+	CreateLabelRequestColorMint       CreateLabelRequestColor = "mint"
+	CreateLabelRequestColorPurple     CreateLabelRequestColor = "purple"
+	CreateLabelRequestColorRosePink   CreateLabelRequestColor = "rosePink"
+	CreateLabelRequestColorSkyBlue    CreateLabelRequestColor = "skyBlue"
+	CreateLabelRequestColorSlateGrey  CreateLabelRequestColor = "slateGrey"
+	CreateLabelRequestColorSoftYellow CreateLabelRequestColor = "softYellow"
+	CreateLabelRequestColorTeal       CreateLabelRequestColor = "teal"
+)
+
 // Defines values for Currency.
 const (
 	AED Currency = "AED"
@@ -206,21 +221,6 @@ const (
 	ExternalConfigFilterModeIs         ExternalConfigFilterMode = "is"
 	ExternalConfigFilterModeRegexp     ExternalConfigFilterMode = "regexp"
 	ExternalConfigFilterModeStartsWith ExternalConfigFilterMode = "starts_with"
-)
-
-// Defines values for ExternalConfigFilterType.
-const (
-	ExternalConfigFilterTypeAttribution      ExternalConfigFilterType = "attribution"
-	ExternalConfigFilterTypeAttributionGroup ExternalConfigFilterType = "attribution_group"
-	ExternalConfigFilterTypeDatetime         ExternalConfigFilterType = "datetime"
-	ExternalConfigFilterTypeFixed            ExternalConfigFilterType = "fixed"
-	ExternalConfigFilterTypeGke              ExternalConfigFilterType = "gke"
-	ExternalConfigFilterTypeGkeLabel         ExternalConfigFilterType = "gke_label"
-	ExternalConfigFilterTypeLabel            ExternalConfigFilterType = "label"
-	ExternalConfigFilterTypeOptional         ExternalConfigFilterType = "optional"
-	ExternalConfigFilterTypeProjectLabel     ExternalConfigFilterType = "project_label"
-	ExternalConfigFilterTypeSystemLabel      ExternalConfigFilterType = "system_label"
-	ExternalConfigFilterTypeTag              ExternalConfigFilterType = "tag"
 )
 
 // Defines values for ExternalConfigMetricFilterOperator.
@@ -354,6 +354,37 @@ const (
 	InvoicePlatformSuperquery        InvoicePlatform = "superquery"
 )
 
+// Defines values for LabelAssignmentObjectObjectType.
+const (
+	LabelAssignmentObjectObjectTypeAlert      LabelAssignmentObjectObjectType = "alert"
+	LabelAssignmentObjectObjectTypeAllocation LabelAssignmentObjectObjectType = "allocation"
+	LabelAssignmentObjectObjectTypeAnnotation LabelAssignmentObjectObjectType = "annotation"
+	LabelAssignmentObjectObjectTypeBudget     LabelAssignmentObjectObjectType = "budget"
+	LabelAssignmentObjectObjectTypeMetric     LabelAssignmentObjectObjectType = "metric"
+	LabelAssignmentObjectObjectTypeReport     LabelAssignmentObjectObjectType = "report"
+)
+
+// Defines values for LabelListItemColor.
+const (
+	LabelListItemColorApricot    LabelListItemColor = "apricot"
+	LabelListItemColorBlue       LabelListItemColor = "blue"
+	LabelListItemColorLavendar   LabelListItemColor = "lavendar"
+	LabelListItemColorLime       LabelListItemColor = "lime"
+	LabelListItemColorMint       LabelListItemColor = "mint"
+	LabelListItemColorPurple     LabelListItemColor = "purple"
+	LabelListItemColorRosePink   LabelListItemColor = "rosePink"
+	LabelListItemColorSkyBlue    LabelListItemColor = "skyBlue"
+	LabelListItemColorSlateGrey  LabelListItemColor = "slateGrey"
+	LabelListItemColorSoftYellow LabelListItemColor = "softYellow"
+	LabelListItemColorTeal       LabelListItemColor = "teal"
+)
+
+// Defines values for LabelListItemType.
+const (
+	LabelListItemTypeCustom LabelListItemType = "custom"
+	LabelListItemTypePreset LabelListItemType = "preset"
+)
+
 // Defines values for LimitSort.
 const (
 	LimitSortAToZ LimitSort = "a_to_z"
@@ -444,9 +475,9 @@ const (
 
 // Defines values for TimeSettingsMode.
 const (
-	Current TimeSettingsMode = "current"
-	Custom  TimeSettingsMode = "custom"
-	Last    TimeSettingsMode = "last"
+	TimeSettingsModeCurrent TimeSettingsMode = "current"
+	TimeSettingsModeCustom  TimeSettingsMode = "custom"
+	TimeSettingsModeLast    TimeSettingsMode = "last"
 )
 
 // Defines values for TimeSettingsUnit.
@@ -456,6 +487,21 @@ const (
 	Quarter TimeSettingsUnit = "quarter"
 	Week    TimeSettingsUnit = "week"
 	Year    TimeSettingsUnit = "year"
+)
+
+// Defines values for UpdateLabelRequestColor.
+const (
+	Apricot    UpdateLabelRequestColor = "apricot"
+	Blue       UpdateLabelRequestColor = "blue"
+	Lavendar   UpdateLabelRequestColor = "lavendar"
+	Lime       UpdateLabelRequestColor = "lime"
+	Mint       UpdateLabelRequestColor = "mint"
+	Purple     UpdateLabelRequestColor = "purple"
+	RosePink   UpdateLabelRequestColor = "rosePink"
+	SkyBlue    UpdateLabelRequestColor = "skyBlue"
+	SlateGrey  UpdateLabelRequestColor = "slateGrey"
+	SoftYellow UpdateLabelRequestColor = "softYellow"
+	Teal       UpdateLabelRequestColor = "teal"
 )
 
 // Defines values for UpdateUserRequestJobFunction.
@@ -567,11 +613,11 @@ const (
 
 // Defines values for ListAnnotationsParamsSortBy.
 const (
-	Content      ListAnnotationsParamsSortBy = "content"
-	Id           ListAnnotationsParamsSortBy = "id"
-	TimeCreated  ListAnnotationsParamsSortBy = "timeCreated"
-	TimeModified ListAnnotationsParamsSortBy = "timeModified"
-	Timestamp    ListAnnotationsParamsSortBy = "timestamp"
+	ListAnnotationsParamsSortByContent      ListAnnotationsParamsSortBy = "content"
+	ListAnnotationsParamsSortById           ListAnnotationsParamsSortBy = "id"
+	ListAnnotationsParamsSortByTimeCreated  ListAnnotationsParamsSortBy = "timeCreated"
+	ListAnnotationsParamsSortByTimeModified ListAnnotationsParamsSortBy = "timeModified"
+	ListAnnotationsParamsSortByTimestamp    ListAnnotationsParamsSortBy = "timestamp"
 )
 
 // Defines values for ListAnnotationsParamsSortOrder.
@@ -624,6 +670,21 @@ const (
 const (
 	ListDimensionsParamsSortOrderAsc  ListDimensionsParamsSortOrder = "asc"
 	ListDimensionsParamsSortOrderDesc ListDimensionsParamsSortOrder = "desc"
+)
+
+// Defines values for ListLabelsParamsSortBy.
+const (
+	CreateTime ListLabelsParamsSortBy = "createTime"
+	Id         ListLabelsParamsSortBy = "id"
+	Name       ListLabelsParamsSortBy = "name"
+	Type       ListLabelsParamsSortBy = "type"
+	UpdateTime ListLabelsParamsSortBy = "updateTime"
+)
+
+// Defines values for ListLabelsParamsSortOrder.
+const (
+	Asc  ListLabelsParamsSortOrder = "asc"
+	Desc ListLabelsParamsSortOrder = "desc"
 )
 
 // Defines values for DatahubEventsJSONBodyEventsDimensionsType.
@@ -714,7 +775,7 @@ type AlertConfig struct {
 	Operator        *MetricFilterText `json:"operator,omitempty"`
 
 	// Scopes The filters selected define the scope of the alert.
-	Scopes *[]Scope `json:"scopes,omitempty"`
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// TimeInterval The time interval to evaluate the condition.
 	TimeInterval AlertConfigTimeInterval `json:"timeInterval"`
@@ -880,6 +941,9 @@ type AnnotationListItem struct {
 	// Id The unique identifier of the annotation
 	Id string `json:"id"`
 
+	// Labels List of labels associated with the annotation
+	Labels *[]LabelInfo `json:"labels,omitempty"`
+
 	// Reports List of report IDs associated with the annotation
 	Reports *[]string `json:"reports,omitempty"`
 
@@ -986,6 +1050,15 @@ type AssetProperties struct {
 // AssetResponse defines model for AssetResponse.
 type AssetResponse struct {
 	AccountID *string `json:"accountID,omitempty"`
+}
+
+// AssignObjectsToLabelRequest defines model for AssignObjectsToLabelRequest.
+type AssignObjectsToLabelRequest struct {
+	// Add Array of objects to assign to the label
+	Add *[]LabelAssignmentObject `json:"add,omitempty"`
+
+	// Remove Array of objects to unassign from the label
+	Remove *[]LabelAssignmentObject `json:"remove,omitempty"`
 }
 
 // AttributionAPI defines model for AttributionAPI.
@@ -1276,7 +1349,7 @@ type BudgetAPI struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes []Scope `json:"scopes"`
+	Scopes []ExternalConfigFilter `json:"scopes"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -1346,7 +1419,7 @@ type BudgetCreateUpdateRequest struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes *[]Scope `json:"scopes,omitempty"`
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -1385,11 +1458,11 @@ type BudgetListItem struct {
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
-	Scopes       *[]Scope `json:"scopes,omitempty"`
-	StartPeriod  *int64   `json:"startPeriod,omitempty"`
-	TimeInterval *string  `json:"timeInterval,omitempty"`
-	UpdateTime   *int64   `json:"updateTime,omitempty"`
-	Url          *string  `json:"url,omitempty"`
+	Scopes       *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	StartPeriod  *int64                  `json:"startPeriod,omitempty"`
+	TimeInterval *string                 `json:"timeInterval,omitempty"`
+	UpdateTime   *int64                  `json:"updateTime,omitempty"`
+	Url          *string                 `json:"url,omitempty"`
 }
 
 // CloudIncidentListItem defines model for CloudIncidentListItem.
@@ -1464,12 +1537,27 @@ type CreateAnnotationRequest struct {
 	// Content The content of the annotation
 	Content string `json:"content"`
 
+	// Labels List of label IDs to associate with the annotation. Labels must already exist.
+	Labels *[]string `json:"labels,omitempty"`
+
 	// Reports List of report IDs associated with the annotation
 	Reports *[]string `json:"reports,omitempty"`
 
 	// Timestamp The date associated with the annotation
 	Timestamp time.Time `json:"timestamp"`
 }
+
+// CreateLabelRequest defines model for CreateLabelRequest.
+type CreateLabelRequest struct {
+	// Color The color of the label
+	Color CreateLabelRequestColor `json:"color"`
+
+	// Name The name of the label
+	Name string `json:"name"`
+}
+
+// CreateLabelRequestColor The color of the label
+type CreateLabelRequestColor string
 
 // Currency defines model for Currency.
 type Currency string
@@ -1633,14 +1721,14 @@ type ExternalConfigTimeInterval string
 // When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
 type ExternalConfigFilter struct {
 	// Id The field to filter on
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id"`
 
 	// Inverse Set to `true` to exclude the values.
 	Inverse *bool `json:"inverse,omitempty"`
 
 	// Mode Filter mode to apply
-	Mode *ExternalConfigFilterMode `json:"mode,omitempty"`
-	Type *ExternalConfigFilterType `json:"type,omitempty"`
+	Mode ExternalConfigFilterMode `json:"mode"`
+	Type DimensionsTypes          `json:"type"`
 
 	// Values Values to filter on
 	Values *[]string `json:"values,omitempty"`
@@ -1648,9 +1736,6 @@ type ExternalConfigFilter struct {
 
 // ExternalConfigFilterMode Filter mode to apply
 type ExternalConfigFilterMode string
-
-// ExternalConfigFilterType defines model for ExternalConfigFilter.Type.
-type ExternalConfigFilterType string
 
 // ExternalConfigMetricFilter The metric filter to limit the report results by value
 type ExternalConfigMetricFilter struct {
@@ -1770,6 +1855,21 @@ type ExternalUpdateReport struct {
 // Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 type Filter = string
 
+// FindCloudDiagramsRequest defines model for FindCloudDiagramsRequest.
+type FindCloudDiagramsRequest struct {
+	// Resources Resource IDs to find diagrams for.
+	Resources []string `json:"resources"`
+}
+
+// FindCloudDiagramsResponse List of diagram URLs matching the find criteria.
+type FindCloudDiagramsResponse = []struct {
+	// DiagramUrl URL to the diagram viewer.
+	DiagramUrl string `json:"diagramUrl"`
+
+	// ImageUrl URL to the diagram image.
+	ImageUrl string `json:"imageUrl"`
+}
+
 // Group The dimension that defines a row in the report.
 type Group struct {
 	// Id Dimension ID.
@@ -1875,6 +1975,65 @@ type InvoiceListItemStatus string
 
 // InvoicePlatform defines model for InvoicePlatform.
 type InvoicePlatform string
+
+// LabelAssignmentObject defines model for LabelAssignmentObject.
+type LabelAssignmentObject struct {
+	// ObjectId The ID of the object to assign/unassign
+	ObjectId string `json:"objectId"`
+
+	// ObjectType The type of the object
+	ObjectType LabelAssignmentObjectObjectType `json:"objectType"`
+}
+
+// LabelAssignmentObjectObjectType The type of the object
+type LabelAssignmentObjectObjectType string
+
+// LabelInfo defines model for LabelInfo.
+type LabelInfo struct {
+	// Id The unique identifier of the label
+	Id string `json:"id"`
+
+	// Name The name of the label
+	Name string `json:"name"`
+}
+
+// LabelList defines model for LabelList.
+type LabelList struct {
+	Labels *[]LabelListItem `json:"labels,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of labels in the result set
+	RowCount *int `json:"rowCount,omitempty"`
+}
+
+// LabelListItem defines model for LabelListItem.
+type LabelListItem struct {
+	// Color The color of the label
+	Color LabelListItemColor `json:"color"`
+
+	// CreateTime The time when the label was created
+	CreateTime *time.Time `json:"createTime,omitempty"`
+
+	// Id The unique identifier of the label
+	Id string `json:"id"`
+
+	// Name The name of the label
+	Name string `json:"name"`
+
+	// Type The type of the label (custom or preset)
+	Type *LabelListItemType `json:"type,omitempty"`
+
+	// UpdateTime The time when the label was last updated
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
+
+// LabelListItemColor The color of the label
+type LabelListItemColor string
+
+// LabelListItemType The type of the label (custom or preset)
+type LabelListItemType string
 
 // Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 type Limit struct {
@@ -2081,18 +2240,6 @@ type RunReportResultResultMlFeatures string
 type SchemaField struct {
 	Name *string `json:"name,omitempty"`
 	Type *string `json:"type,omitempty"`
-}
-
-// Scope defines model for Scope.
-type Scope struct {
-	IncludeNull *bool `json:"include_null,omitempty"`
-
-	// InverseSelection If set to true, all the selected values will be excluded.
-	InverseSelection *bool           `json:"inverse_selection,omitempty"`
-	Key              string          `json:"key"`
-	Regexp           *string         `json:"regexp,omitempty"`
-	Type             DimensionsTypes `json:"type"`
-	Values           *[]string       `json:"values,omitempty"`
 }
 
 // Seats defines model for Seats.
@@ -2302,12 +2449,27 @@ type UpdateAnnotationRequest struct {
 	// Content The content of the annotation
 	Content *string `json:"content"`
 
+	// Labels List of label IDs to associate with the annotation. Labels must already exist.
+	Labels *[]string `json:"labels"`
+
 	// Reports List of report IDs associated with the annotation
 	Reports *[]string `json:"reports"`
 
 	// Timestamp The date associated with the annotation
 	Timestamp *time.Time `json:"timestamp"`
 }
+
+// UpdateLabelRequest defines model for UpdateLabelRequest.
+type UpdateLabelRequest struct {
+	// Color The color of the label
+	Color *UpdateLabelRequestColor `json:"color"`
+
+	// Name The name of the label
+	Name *string `json:"name"`
+}
+
+// UpdateLabelRequestColor The color of the label
+type UpdateLabelRequestColor string
 
 // UpdateUserRequest defines model for UpdateUserRequest.
 type UpdateUserRequest struct {
@@ -2685,6 +2847,31 @@ type ListDimensionsParamsSortBy string
 // ListDimensionsParamsSortOrder defines parameters for ListDimensions.
 type ListDimensionsParamsSortOrder string
 
+// ListLabelsParams defines parameters for ListLabels.
+type ListLabelsParams struct {
+	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page   of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// Filter An expression for filtering the results.
+	// Valid fields: **name**, **type**.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// SortBy A field by which the results will be sorted.
+	SortBy *ListLabelsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort order can be ascending or descending.
+	SortOrder *ListLabelsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+}
+
+// ListLabelsParamsSortBy defines parameters for ListLabels.
+type ListLabelsParamsSortBy string
+
+// ListLabelsParamsSortOrder defines parameters for ListLabels.
+type ListLabelsParamsSortOrder string
+
 // ListReportsParams defines parameters for ListReports.
 type ListReportsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -2962,6 +3149,15 @@ type CreateBudgetJSONRequestBody = BudgetCreateUpdateRequest
 // UpdateBudgetJSONRequestBody defines body for UpdateBudget for application/json ContentType.
 type UpdateBudgetJSONRequestBody = BudgetCreateUpdateRequest
 
+// CreateLabelJSONRequestBody defines body for CreateLabel for application/json ContentType.
+type CreateLabelJSONRequestBody = CreateLabelRequest
+
+// UpdateLabelJSONRequestBody defines body for UpdateLabel for application/json ContentType.
+type UpdateLabelJSONRequestBody = UpdateLabelRequest
+
+// AssignObjectsToLabelJSONRequestBody defines body for AssignObjectsToLabel for application/json ContentType.
+type AssignObjectsToLabelJSONRequestBody = AssignObjectsToLabelRequest
+
 // CreateReportJSONRequestBody defines body for CreateReport for application/json ContentType.
 type CreateReportJSONRequestBody CreateReportJSONBody
 
@@ -2973,6 +3169,9 @@ type UpdateReportJSONRequestBody = ExternalUpdateReport
 
 // IdOfAssetJSONRequestBody defines body for IdOfAsset for application/json ContentType.
 type IdOfAssetJSONRequestBody IdOfAssetJSONBody
+
+// FindCloudDiagramsJSONRequestBody defines body for FindCloudDiagrams for application/json ContentType.
+type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
 
 // DatahubEventsCSVFileMultipartRequestBody defines body for DatahubEventsCSVFile for multipart/form-data ContentType.
 type DatahubEventsCSVFileMultipartRequestBody DatahubEventsCSVFileMultipartBody
@@ -3188,6 +3387,30 @@ type ClientInterface interface {
 	// ListDimensions request
 	ListDimensions(ctx context.Context, params *ListDimensionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListLabels request
+	ListLabels(ctx context.Context, params *ListLabelsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateLabelWithBody request with any body
+	CreateLabelWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateLabel(ctx context.Context, body CreateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteLabel request
+	DeleteLabel(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetLabel request
+	GetLabel(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateLabelWithBody request with any body
+	UpdateLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateLabel(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AssignObjectsToLabelWithBody request with any body
+	AssignObjectsToLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AssignObjectsToLabel(ctx context.Context, id string, body AssignObjectsToLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListReports request
 	ListReports(ctx context.Context, params *ListReportsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3240,6 +3463,11 @@ type ClientInterface interface {
 
 	// GetInvoice request
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// FindCloudDiagramsWithBody request with any body
+	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3839,6 +4067,114 @@ func (c *Client) ListDimensions(ctx context.Context, params *ListDimensionsParam
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListLabels(ctx context.Context, params *ListLabelsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListLabelsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateLabelWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateLabelRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateLabel(ctx context.Context, body CreateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateLabelRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteLabel(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteLabelRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLabel(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLabelRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateLabelRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateLabel(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateLabelRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AssignObjectsToLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAssignObjectsToLabelRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AssignObjectsToLabel(ctx context.Context, id string, body AssignObjectsToLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAssignObjectsToLabelRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListReports(ctx context.Context, params *ListReportsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListReportsRequest(c.Server, params)
 	if err != nil {
@@ -4057,6 +4393,30 @@ func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, r
 
 func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInvoiceRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewFindCloudDiagramsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewFindCloudDiagramsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6129,6 +6489,321 @@ func NewListDimensionsRequest(server string, params *ListDimensionsParams) (*htt
 	return req, nil
 }
 
+// NewListLabelsRequest generates requests for ListLabels
+func NewListLabelsRequest(server string, params *ListLabelsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "maxResults", runtime.ParamLocationQuery, *params.MaxResults); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageToken", runtime.ParamLocationQuery, *params.PageToken); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortBy", runtime.ParamLocationQuery, *params.SortBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortOrder", runtime.ParamLocationQuery, *params.SortOrder); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateLabelRequest calls the generic CreateLabel builder with application/json body
+func NewCreateLabelRequest(server string, body CreateLabelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateLabelRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateLabelRequestWithBody generates requests for CreateLabel with any type of body
+func NewCreateLabelRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteLabelRequest generates requests for DeleteLabel
+func NewDeleteLabelRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetLabelRequest generates requests for GetLabel
+func NewGetLabelRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateLabelRequest calls the generic UpdateLabel builder with application/json body
+func NewUpdateLabelRequest(server string, id string, body UpdateLabelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateLabelRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateLabelRequestWithBody generates requests for UpdateLabel with any type of body
+func NewUpdateLabelRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAssignObjectsToLabelRequest calls the generic AssignObjectsToLabel builder with application/json body
+func NewAssignObjectsToLabelRequest(server string, id string, body AssignObjectsToLabelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAssignObjectsToLabelRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewAssignObjectsToLabelRequestWithBody generates requests for AssignObjectsToLabel with any type of body
+func NewAssignObjectsToLabelRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels/%s/assignments", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListReportsRequest generates requests for ListReports
 func NewListReportsRequest(server string, params *ListReportsParams) (*http.Request, error) {
 	var err error
@@ -7067,6 +7742,46 @@ func NewGetInvoiceRequest(server string, id string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewFindCloudDiagramsRequest calls the generic FindCloudDiagrams builder with application/json body
+func NewFindCloudDiagramsRequest(server string, body FindCloudDiagramsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewFindCloudDiagramsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewFindCloudDiagramsRequestWithBody generates requests for FindCloudDiagrams with any type of body
+func NewFindCloudDiagramsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/find")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -8070,6 +8785,30 @@ type ClientWithResponsesInterface interface {
 	// ListDimensionsWithResponse request
 	ListDimensionsWithResponse(ctx context.Context, params *ListDimensionsParams, reqEditors ...RequestEditorFn) (*ListDimensionsResp, error)
 
+	// ListLabelsWithResponse request
+	ListLabelsWithResponse(ctx context.Context, params *ListLabelsParams, reqEditors ...RequestEditorFn) (*ListLabelsResp, error)
+
+	// CreateLabelWithBodyWithResponse request with any body
+	CreateLabelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateLabelResp, error)
+
+	CreateLabelWithResponse(ctx context.Context, body CreateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateLabelResp, error)
+
+	// DeleteLabelWithResponse request
+	DeleteLabelWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteLabelResp, error)
+
+	// GetLabelWithResponse request
+	GetLabelWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelResp, error)
+
+	// UpdateLabelWithBodyWithResponse request with any body
+	UpdateLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateLabelResp, error)
+
+	UpdateLabelWithResponse(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLabelResp, error)
+
+	// AssignObjectsToLabelWithBodyWithResponse request with any body
+	AssignObjectsToLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error)
+
+	AssignObjectsToLabelWithResponse(ctx context.Context, id string, body AssignObjectsToLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error)
+
 	// ListReportsWithResponse request
 	ListReportsWithResponse(ctx context.Context, params *ListReportsParams, reqEditors ...RequestEditorFn) (*ListReportsResp, error)
 
@@ -8122,6 +8861,11 @@ type ClientWithResponsesInterface interface {
 
 	// GetInvoiceWithResponse request
 	GetInvoiceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoiceResp, error)
+
+	// FindCloudDiagramsWithBodyWithResponse request with any body
+	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
+
+	FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -9052,6 +9796,160 @@ func (r ListDimensionsResp) StatusCode() int {
 	return 0
 }
 
+type ListLabelsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *LabelList
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r ListLabelsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListLabelsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateLabelResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *LabelListItem
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateLabelResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateLabelResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteLabelResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteLabelResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteLabelResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetLabelResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *LabelListItem
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLabelResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLabelResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateLabelResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *LabelListItem
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateLabelResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateLabelResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AssignObjectsToLabelResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r AssignObjectsToLabelResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AssignObjectsToLabelResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListReportsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -9559,6 +10457,31 @@ func (r GetInvoiceResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetInvoiceResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type FindCloudDiagramsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *FindCloudDiagramsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r FindCloudDiagramsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r FindCloudDiagramsResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -10502,6 +11425,84 @@ func (c *ClientWithResponses) ListDimensionsWithResponse(ctx context.Context, pa
 	return ParseListDimensionsResp(rsp)
 }
 
+// ListLabelsWithResponse request returning *ListLabelsResp
+func (c *ClientWithResponses) ListLabelsWithResponse(ctx context.Context, params *ListLabelsParams, reqEditors ...RequestEditorFn) (*ListLabelsResp, error) {
+	rsp, err := c.ListLabels(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListLabelsResp(rsp)
+}
+
+// CreateLabelWithBodyWithResponse request with arbitrary body returning *CreateLabelResp
+func (c *ClientWithResponses) CreateLabelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateLabelResp, error) {
+	rsp, err := c.CreateLabelWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateLabelResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateLabelWithResponse(ctx context.Context, body CreateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateLabelResp, error) {
+	rsp, err := c.CreateLabel(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateLabelResp(rsp)
+}
+
+// DeleteLabelWithResponse request returning *DeleteLabelResp
+func (c *ClientWithResponses) DeleteLabelWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteLabelResp, error) {
+	rsp, err := c.DeleteLabel(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteLabelResp(rsp)
+}
+
+// GetLabelWithResponse request returning *GetLabelResp
+func (c *ClientWithResponses) GetLabelWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelResp, error) {
+	rsp, err := c.GetLabel(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelResp(rsp)
+}
+
+// UpdateLabelWithBodyWithResponse request with arbitrary body returning *UpdateLabelResp
+func (c *ClientWithResponses) UpdateLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateLabelResp, error) {
+	rsp, err := c.UpdateLabelWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateLabelResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateLabelWithResponse(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLabelResp, error) {
+	rsp, err := c.UpdateLabel(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateLabelResp(rsp)
+}
+
+// AssignObjectsToLabelWithBodyWithResponse request with arbitrary body returning *AssignObjectsToLabelResp
+func (c *ClientWithResponses) AssignObjectsToLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error) {
+	rsp, err := c.AssignObjectsToLabelWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAssignObjectsToLabelResp(rsp)
+}
+
+func (c *ClientWithResponses) AssignObjectsToLabelWithResponse(ctx context.Context, id string, body AssignObjectsToLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error) {
+	rsp, err := c.AssignObjectsToLabel(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAssignObjectsToLabelResp(rsp)
+}
+
 // ListReportsWithResponse request returning *ListReportsResp
 func (c *ClientWithResponses) ListReportsWithResponse(ctx context.Context, params *ListReportsParams, reqEditors ...RequestEditorFn) (*ListReportsResp, error) {
 	rsp, err := c.ListReports(ctx, params, reqEditors...)
@@ -10667,6 +11668,23 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseGetInvoiceResp(rsp)
+}
+
+// FindCloudDiagramsWithBodyWithResponse request with arbitrary body returning *FindCloudDiagramsResp
+func (c *ClientWithResponses) FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error) {
+	rsp, err := c.FindCloudDiagramsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFindCloudDiagramsResp(rsp)
+}
+
+func (c *ClientWithResponses) FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error) {
+	rsp, err := c.FindCloudDiagrams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFindCloudDiagramsResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -12631,6 +13649,316 @@ func ParseListDimensionsResp(rsp *http.Response) (*ListDimensionsResp, error) {
 	return response, nil
 }
 
+// ParseListLabelsResp parses an HTTP response from a ListLabelsWithResponse call
+func ParseListLabelsResp(rsp *http.Response) (*ListLabelsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListLabelsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LabelList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateLabelResp parses an HTTP response from a CreateLabelWithResponse call
+func ParseCreateLabelResp(rsp *http.Response) (*CreateLabelResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateLabelResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest LabelListItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteLabelResp parses an HTTP response from a DeleteLabelWithResponse call
+func ParseDeleteLabelResp(rsp *http.Response) (*DeleteLabelResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteLabelResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetLabelResp parses an HTTP response from a GetLabelWithResponse call
+func ParseGetLabelResp(rsp *http.Response) (*GetLabelResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LabelListItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateLabelResp parses an HTTP response from a UpdateLabelWithResponse call
+func ParseUpdateLabelResp(rsp *http.Response) (*UpdateLabelResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateLabelResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LabelListItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAssignObjectsToLabelResp parses an HTTP response from a AssignObjectsToLabelWithResponse call
+func ParseAssignObjectsToLabelResp(rsp *http.Response) (*AssignObjectsToLabelResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AssignObjectsToLabelResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListReportsResp parses an HTTP response from a ListReportsWithResponse call
 func ParseListReportsResp(rsp *http.Response) (*ListReportsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -13554,6 +14882,53 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseFindCloudDiagramsResp parses an HTTP response from a FindCloudDiagramsWithResponse call
+func ParseFindCloudDiagramsResp(rsp *http.Response) (*FindCloudDiagramsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &FindCloudDiagramsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FindCloudDiagramsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	}
 
