@@ -1,4 +1,4 @@
-module terraform-provider-doit
+module github.com/doitintl/terraform-provider-doit
 
 go 1.25
 

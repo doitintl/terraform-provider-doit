@@ -5,7 +5,8 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"terraform-provider-doit/internal/provider/models"
+
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"

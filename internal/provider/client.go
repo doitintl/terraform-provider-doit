@@ -7,8 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"terraform-provider-doit/internal/provider/models"
 	"time"
+
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/cenkalti/backoff/v4"
 	"golang.org/x/time/rate"
