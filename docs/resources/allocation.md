@@ -60,21 +60,23 @@ resource "doit_allocation" "allocation_dev_clusters_us" {
 
 ### Required
 
-- `name` (String) The name of the allocation. Must be unique within the organization.
-- `rule` (Attributes) The configuration that defines the allocation rules and matching conditions. (see [below for nested schema](#nestedatt--rule))
+- `description` (String) Allocation description
+- `name` (String) Allocation name
 
 ### Optional
 
-- `description` (String) A description of the allocation.
+- `rule` (Attributes) Single allocation rule (required for single type allocation) (see [below for nested schema](#nestedatt--rule))
+- `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
+- `unallocated_costs` (String) Custom label for any values that do not fit into allocation (required for group type allocation)
 
 ### Read-Only
 
-- `allocation_type` (String) Type of the allocation (e.g., 'preset', 'custom').
+- `allocation_type` (String) Type of allocation (single or group)
 - `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation
-- `create_time` (Number) The time when the allocation was created, in milliseconds since the epoch (i.e. UNIX timestamp).
-- `id` (String) Allocation ID
-- `type` (String) The type of the allocation. Can be 'preset' or 'custom'.
-- `update_time` (Number) The time when the allocation was last updated, in milliseconds since the epoch.
+- `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
+- `id` (String) ID of the created allocation
+- `type` (String) Type of the created allocation
+- `update_time` (Number) Last time the allocation was modified (in UNIX timestamp).
 
 <a id="nestedatt--rule"></a>
 ### Nested Schema for `rule`
@@ -89,12 +91,57 @@ Required:
 
 Required:
 
-- `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc. Dimension must exist.
+- `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
 - `mode` (String) Filter mode to apply
-- `type` (String)
-- `values` (List of String) Values to filter on
+Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
+- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+- `values` (List of String)
 
 Optional:
 
 - `include_null` (Boolean) Include null values
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
+
+
+
+<a id="nestedatt--rules"></a>
+### Nested Schema for `rules`
+
+Required:
+
+- `action` (String) Action to perform with this rule
+Possible values: `create`, `update`, `select`
+
+Optional:
+
+- `components` (Attributes List) List of allocation filter components (required for 'create' or 'update' action) (see [below for nested schema](#nestedatt--rules--components))
+- `description` (String) Description for the allocation rule
+- `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.)
+- `id` (String) ID of existing allocation (required for 'update' or 'select' action)
+- `name` (String) Name for the allocation rule
+
+<a id="nestedatt--rules--components"></a>
+### Nested Schema for `rules.components`
+
+Required:
+
+- `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
+- `mode` (String) Filter mode to apply
+Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
+- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+- `values` (List of String)
+
+Optional:
+
+- `include_null` (Boolean) Include null values
+- `inverse_selection` (Boolean) If true, all selected values will be excluded.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import doit_allocation.allocation [id]
+```
