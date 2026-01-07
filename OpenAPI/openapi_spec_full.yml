@@ -4,7 +4,7 @@ info:
   description: Programmatic access to DoiT Platform
   version: v1
 servers:
-  - url: https://api.doit.com
+  - url: ${API_BASE_URL}
 security:
   - api_key: []
   - customerContext: []
@@ -14,6 +14,8 @@ tags:
     description: Alert endpoints
   - name: Annotations
     description: Annotations endpoints
+  - name: Labels
+    description: Labels endpoints
   - name: Allocations
     description: Allocations endpoints
   - name: Attribution Groups
@@ -584,8 +586,206 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
+  /analytics/v1/labels:
+    get:
+      tags:
+        - Labels
+      summary: List labels
+      description: |-
+        Returns a list of labels that your account has access to.
+        Labels are listed in reverse chronological order by default.
+      operationId: listLabels
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+        - name: filter
+          in: query
+          description: |-
+            An expression for filtering the results.
+            Valid fields: **name**, **type**.
+          example: name:budget
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: A field by which the results will be sorted.
+          schema:
+            type: string
+            enum:
+              - id
+              - name
+              - type
+              - createTime
+              - updateTime
+        - $ref: "#/components/parameters/sortOrder"
+      responses:
+        "200":
+          description: >-
+            OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Labels
+      summary: Create a label
+      description: Creates a new label.
+      operationId: createLabel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLabelRequest"
+        required: true
+      responses:
+        "201":
+          description: >-
+            Created - Label created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelListItem"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/labels/{id}":
+    get:
+      tags:
+        - Labels
+      summary: Retrieve a label
+      description: Returns a label by the specified Id.
+      operationId: getLabel
+      parameters:
+        - name: id
+          in: path
+          description: Label ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: >-
+            OK - Label returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelListItem"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      tags:
+        - Labels
+      summary: Delete a label
+      description: Deletes the label specified by the Id.
+      operationId: deleteLabel
+      parameters:
+        - name: id
+          in: path
+          description: Label ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Label deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      tags:
+        - Labels
+      summary: Update a label
+      description: Updates the label specified by the Id.
+      operationId: updateLabel
+      parameters:
+        - name: id
+          in: path
+          description: Label ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLabelRequest"
+      responses:
+        "200":
+          description: OK - Label updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelListItem"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/labels/{id}/assignments":
+    post:
+      tags:
+        - Labels
+      summary: Assign or unassign objects to a label
+      description: Assigns or unassigns objects to the label specified by the Id.
+      operationId: assignObjectsToLabel
+      parameters:
+        - name: id
+          in: path
+          description: Label ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignObjectsToLabelRequest"
+        required: true
+      responses:
+        "200":
+          description: OK - Objects assigned/unassigned successfully.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
   /analytics/v1/attributiongroups:
     get:
+      deprecated: true
       tags:
         - Attribution Groups
       summary: List attribution groups
@@ -627,6 +827,7 @@ paths:
         "404":
           $ref: "#/components/responses/404"
     post:
+      deprecated: true
       tags:
         - Attribution Groups
       summary: Create an attribution group
@@ -653,6 +854,7 @@ paths:
       x-codegen-request-body-name: Body
   "/analytics/v1/attributiongroups/{id}":
     get:
+      deprecated: true
       tags:
         - Attribution Groups
       summary: Retrieve an attribution group
@@ -684,6 +886,7 @@ paths:
         "500":
           $ref: "#/components/responses/500"
     delete:
+      deprecated: true
       tags:
         - Attribution Groups
       summary: Delete an attribution group
@@ -718,6 +921,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/AttributionGroupDeleteValidation"
     patch:
+      deprecated: true
       tags:
         - Attribution Groups
       summary: Update an attribution group
@@ -750,6 +954,7 @@ paths:
       x-codegen-request-body-name: Body
   /analytics/v1/attributions:
     get:
+      deprecated: true
       tags:
         - Attributions
       summary: List attributions
@@ -802,6 +1007,7 @@ paths:
         "404":
           $ref: "#/components/responses/404"
     post:
+      deprecated: true
       tags:
         - Attributions
       summary: Create an attribution
@@ -868,6 +1074,7 @@ paths:
       x-codegen-request-body-name: Body
   "/analytics/v1/attributions/{id}":
     get:
+      deprecated: true
       tags:
         - Attributions
       summary: Retrieve an attribution
@@ -901,6 +1108,7 @@ paths:
         "500":
           $ref: "#/components/responses/500"
     delete:
+      deprecated: true
       tags:
         - Attributions
       summary: Delete an attribution
@@ -934,6 +1142,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/AttributionDeleteValidation"
     patch:
+      deprecated: true
       tags:
         - Attributions
       summary: Update an attribution
@@ -2740,7 +2949,7 @@ paths:
       description: Returns diagram URLs matching the provided resource IDs.
       operationId: findCloudDiagrams
       servers:
-        - url: https://api.doit.com
+        - url: ${API_BASE_URL}
       requestBody:
         required: true
         content:
@@ -3544,6 +3753,18 @@ components:
           type: integer
           description: AttributionGroup rows count
           format: int64
+    LabelInfo:
+      required:
+        - id
+        - name
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label
+        name:
+          type: string
+          description: The name of the label
     AnnotationListItem:
       required:
         - id
@@ -3566,6 +3787,11 @@ components:
           items:
             type: string
           description: List of report IDs associated with the annotation
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelInfo"
+          description: List of labels associated with the annotation
         createTime:
           type: string
           format: date-time
@@ -3592,6 +3818,11 @@ components:
           items:
             type: string
           description: List of report IDs associated with the annotation
+        labels:
+          type: array
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
     UpdateAnnotationRequest:
       type: object
       properties:
@@ -3610,6 +3841,146 @@ components:
             type: string
           description: List of report IDs associated with the annotation
           nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
+          nullable: true
+    LabelListItem:
+      required:
+        - id
+        - name
+        - color
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label
+        name:
+          type: string
+          description: The name of the label
+        color:
+          type: string
+          enum:
+            - blue
+            - skyBlue
+            - teal
+            - mint
+            - lime
+            - softYellow
+            - apricot
+            - lavendar
+            - purple
+            - rosePink
+            - slateGrey
+          description: The color of the label
+        type:
+          type: string
+          enum:
+            - custom
+            - preset
+          description: The type of the label (custom or preset)
+        createTime:
+          type: string
+          format: date-time
+          description: The time when the label was created
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the label was last updated
+    LabelList:
+      type: object
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results
+        rowCount:
+          type: integer
+          description: Total number of labels in the result set
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelListItem"
+    CreateLabelRequest:
+      required:
+        - name
+        - color
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the label
+        color:
+          type: string
+          enum:
+            - blue
+            - skyBlue
+            - teal
+            - mint
+            - lime
+            - softYellow
+            - apricot
+            - lavendar
+            - purple
+            - rosePink
+            - slateGrey
+          description: The color of the label
+    UpdateLabelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the label
+          nullable: true
+        color:
+          type: string
+          enum:
+            - blue
+            - skyBlue
+            - teal
+            - mint
+            - lime
+            - softYellow
+            - apricot
+            - lavendar
+            - purple
+            - rosePink
+            - slateGrey
+          description: The color of the label
+          nullable: true
+    AssignObjectsToLabelRequest:
+      type: object
+      properties:
+        add:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelAssignmentObject"
+          description: Array of objects to assign to the label
+        remove:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelAssignmentObject"
+          description: Array of objects to unassign from the label
+    LabelAssignmentObject:
+      required:
+        - objectId
+        - objectType
+      type: object
+      properties:
+        objectId:
+          type: string
+          description: The ID of the object to assign/unassign
+        objectType:
+          type: string
+          enum:
+            - alert
+            - allocation
+            - budget
+            - metric
+            - report
+            - annotation
+          description: The type of the object
     AttributionListItem:
       required:
         - name
@@ -5388,8 +5759,19 @@ components:
       type: array
       description: List of diagram URLs matching the find criteria.
       items:
-        type: string
-        format: uri
+        type: object
+        required:
+          - diagramUrl
+          - imageUrl
+        properties:
+          diagramUrl:
+            type: string
+            format: uri
+            description: URL to the diagram viewer.
+          imageUrl:
+            type: string
+            format: uri
+            description: URL to the diagram image.
     Organization:
       type: object
       properties:
@@ -5982,8 +6364,8 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://console.doit.com/sign-in/oauth
-          tokenUrl: https://console.doit.com/api/auth/token
+          authorizationUrl: ${CONSOLE_BASE_URL}/sign-in/oauth
+          tokenUrl: ${CONSOLE_BASE_URL}/api/auth/token
           scopes:
             dci: Access All Data
 x-samples-languages:

@@ -831,7 +831,7 @@
 												{
 													"name": "id",
 													"string": {
-														"computed_optional_required": "computed_optional",
+														"computed_optional_required": "required",
 														"description": "The field to filter on"
 													}
 												},
@@ -845,7 +845,7 @@
 												{
 													"name": "mode",
 													"string": {
-														"computed_optional_required": "computed_optional",
+														"computed_optional_required": "required",
 														"description": "Filter mode to apply",
 														"validators": [
 															{
@@ -864,7 +864,7 @@
 												{
 													"name": "type",
 													"string": {
-														"computed_optional_required": "computed_optional",
+														"computed_optional_required": "required",
 														"validators": [
 															{
 																"custom": {

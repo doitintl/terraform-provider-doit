@@ -80,8 +80,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
-									Description:         "Filter mode to apply",
-									MarkdownDescription: "Filter mode to apply",
+									Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"is",
@@ -93,7 +93,9 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"type": schema.StringAttribute{
-									Required: true,
+									Required:            true,
+									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -146,8 +148,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"action": schema.StringAttribute{
 							Required:            true,
-							Description:         "Action to perform with this rule",
-							MarkdownDescription: "Action to perform with this rule",
+							Description:         "Action to perform with this rule\nPossible values: `create`, `update`, `select`",
+							MarkdownDescription: "Action to perform with this rule\nPossible values: `create`, `update`, `select`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"create",
@@ -180,8 +182,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"mode": schema.StringAttribute{
 										Required:            true,
-										Description:         "Filter mode to apply",
-										MarkdownDescription: "Filter mode to apply",
+										Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+										MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"is",
@@ -193,7 +195,9 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									"type": schema.StringAttribute{
-										Required: true,
+										Required:            true,
+										Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+										MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"datetime",
@@ -611,33 +615,10 @@ func (v RuleValue) String() string {
 func (v RuleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	components := types.ListValueMust(
-		ComponentsType{
-			basetypes.ObjectType{
-				AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Components.Elements(),
-	)
+	var components attr.Value
 
-	if v.Components.IsNull() {
-		components = types.ListNull(
-			ComponentsType{
-				basetypes.ObjectType{
-					AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Components.IsUnknown() {
-		components = types.ListUnknown(
-			ComponentsType{
-				basetypes.ObjectType{
-					AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
+	{
+		components = v.Components
 	}
 
 	attributeTypes := map[string]attr.Type{
@@ -1847,33 +1828,10 @@ func (v RulesValue) String() string {
 func (v RulesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	components := types.ListValueMust(
-		ComponentsType{
-			basetypes.ObjectType{
-				AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
-			},
-		},
-		v.Components.Elements(),
-	)
+	var components attr.Value
 
-	if v.Components.IsNull() {
-		components = types.ListNull(
-			ComponentsType{
-				basetypes.ObjectType{
-					AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
-	}
-
-	if v.Components.IsUnknown() {
-		components = types.ListUnknown(
-			ComponentsType{
-				basetypes.ObjectType{
-					AttrTypes: ComponentsValue{}.AttributeTypes(ctx),
-				},
-			},
-		)
+	{
+		components = v.Components
 	}
 
 	attributeTypes := map[string]attr.Type{
