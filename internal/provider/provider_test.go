@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"terraform-provider-doit/internal/provider"
+	"github.com/doitintl/terraform-provider-doit/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"

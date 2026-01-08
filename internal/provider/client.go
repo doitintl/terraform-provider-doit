@@ -7,10 +7,12 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"terraform-provider-doit/internal/provider/models"
 	"time"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+
 	"github.com/cenkalti/backoff/v4"
+	"golang.org/x/oauth2"
 	"golang.org/x/time/rate"
 )
 
@@ -114,10 +116,19 @@ func NewClientGen(ctx context.Context, host, apiToken, customerContext string, r
 		},
 	}
 
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: apiToken},
+	)
+
 	client, err := models.NewClientWithResponses(host,
 		models.WithHTTPClient(retryClient),
 		models.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
-			req.Header.Set("Authorization", "Bearer "+apiToken)
+			token, err := ts.Token()
+			if err != nil {
+				return err
+			}
+			token.SetAuthHeader(req)
+
 			if customerContext != "" {
 				url := req.URL.Query()
 				url.Set("customerContext", customerContext)
