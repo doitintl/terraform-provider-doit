@@ -92,16 +92,16 @@ resource "doit_budget" "this" {
     }
   ]
   recipients = [
-    "olivier@doit.com"
+    "hannes.h+tf-cicd-tests@doit.com"
   ]
   collaborators = [
     {
-      "email" : "olivier@doit.com",
+      "email" : "hannes.h+tf-cicd-tests@doit.com",
       "role" : "owner"
     },
   ]
   scope = [
-    "EE8CtpzYiKp0dVAESVrB"
+    "ydDBFKVuz9kGlFDex8cN"
   ]
   amount            = 200
   currency          = "EUR"
@@ -133,16 +133,16 @@ resource "doit_budget" "this" {
     }
   ]
   recipients = [
-    "olivier@doit.com"
+    "hannes.h+tf-cicd-tests@doit.com"
   ]
   collaborators = [
     {
-      "email" : "olivier@doit.com",
+      "email" : "hannes.h+tf-cicd-tests@doit.com",
       "role" : "owner"
     },
   ]
   scope = [
-    "EE8CtpzYiKp0dVAESVrB"
+    "ydDBFKVuz9kGlFDex8cN"
   ]
   amount            = 500
   currency          = "EUR"
