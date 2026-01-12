@@ -276,14 +276,17 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	if resp.RecipientsSlackChannels != nil && len(*resp.RecipientsSlackChannels) > 0 {
 		slackChannelsList := make([]resource_budget.RecipientsSlackChannelsValue, len(*resp.RecipientsSlackChannels))
 		for i, slack := range *resp.RecipientsSlackChannels {
-			slackChannelsList[i] = resource_budget.RecipientsSlackChannelsValue{
-				CustomerId:                  types.StringPointerValue(slack.CustomerId),
-				Id:                          types.StringPointerValue(slack.Id),
-				Name:                        types.StringPointerValue(slack.Name),
-				Shared:                      types.BoolPointerValue(slack.Shared),
-				RecipientsSlackChannelsType: types.StringPointerValue(slack.Type),
-				Workspace:                   types.StringPointerValue(slack.Workspace),
+			slackAttrs := map[string]attr.Value{
+				"customer_id": types.StringPointerValue(slack.CustomerId),
+				"id":          types.StringPointerValue(slack.Id),
+				"name":        types.StringPointerValue(slack.Name),
+				"shared":      types.BoolPointerValue(slack.Shared),
+				"type":        types.StringPointerValue(slack.Type),
+				"workspace":   types.StringPointerValue(slack.Workspace),
 			}
+			var d diag.Diagnostics
+			slackChannelsList[i], d = resource_budget.NewRecipientsSlackChannelsValue(resource_budget.RecipientsSlackChannelsValue{}.AttributeTypes(ctx), slackAttrs)
+			diags.Append(d...)
 		}
 		slackChannelsListValue, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), slackChannelsList)
 		diags.Append(d...)

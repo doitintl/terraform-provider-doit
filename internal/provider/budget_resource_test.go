@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -469,4 +470,73 @@ resource "doit_budget" "this" {
   ]
 }
 `, budgetStartPeriod(), i)
+}
+
+func TestAccBudget_SlackChannel(t *testing.T) {
+	n := rand.Int()
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetSlackChannel(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"id": knownvalue.StringExact("C015LQXLY1X"),
+							}),
+						})),
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetSlackChannel(i int) string {
+	customerContext := os.Getenv("DOIT_CUSTOMER_CONTEXT")
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name             = "test-slack-%d"
+  currency         = "EUR"
+  time_interval    = "quarter"
+  type             = "recurring"
+  start_period     = local.start_period
+
+  amount           = 100
+
+  recipients_slack_channels = [
+    {
+      id          = "C015LQXLY1X"
+      customer_id = "%s"
+    }
+  ]
+
+  scope = ["ydDBFKVuz9kGlFDex8cN"]
+
+  collaborators = [
+    {
+      "email" : "hannes.h@doit.com",
+      "role" : "owner"
+    },
+  ]
+}
+`, budgetStartPeriod(), i, customerContext)
 }

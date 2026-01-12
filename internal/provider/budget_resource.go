@@ -141,7 +141,9 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Read full budget details (including scopes which are missing in Create response)
 	resp.Diagnostics.Append(r.populateState(ctx, &data)...)
-	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -204,10 +206,6 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	if updateResp.StatusCode() != 200 {
 		errorMsg := fmt.Sprintf("Could not update budget, status: %d", updateResp.StatusCode())
-		// Try to read body for error details
-		if len(updateResp.Body) > 0 {
-			errorMsg += fmt.Sprintf(", body: %s", string(updateResp.Body))
-		}
 		resp.Diagnostics.AddError(
 			"Error Updating Budget",
 			errorMsg,
