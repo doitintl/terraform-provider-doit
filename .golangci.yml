@@ -1,12 +1,18 @@
 version: "2"
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
 linters:
   default: none
   enable:
+    # Core linters (from HashiCorp template)
+    - copyloopvar
+    - depguard
     - durationcheck
     - errcheck
     - forcetypeassert
     - godot
-    - govet
     - ineffassign
     - makezero
     - misspell
@@ -16,6 +22,11 @@ linters:
     - unconvert
     - unparam
     - unused
+    - usetesting
+    # Additional linters
+    - govet
+    - revive
+    - gosec
   exclusions:
     generated: lax
     presets:
@@ -27,14 +38,77 @@ linters:
       - third_party$
       - builtin$
       - examples$
+    rules:
+      # Test file exclusions
+      - path: _test\.go
+        linters:
+          - forcetypeassert
+          - unparam
+          - gosec
+      # Generated model files
+      - path: internal/provider/models/
+        linters:
+          - godot
+          - revive
+      # OpenAPI generated files
+      - path: OpenAPI/
+        linters:
+          - godot
+          - revive
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: lax
+          deny:
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+              desc: "Use github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+              desc: "Use github.com/hashicorp/terraform-plugin-testing/helper/resource"
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+              desc: "Use github.com/hashicorp/terraform-plugin-testing/terraform"
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2"
+              desc: "Use Terraform Plugin Framework"
+    govet:
+      enable:
+        - shadow
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: if-return
+        - name: increment-decrement
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: indent-error-flow
+        - name: errorf
+    gosec:
+      excludes:
+        - G101 # Look for hardcoded credentials
+        - G404 # Insecure random number source
+
 issues:
+  max-issues-per-linter: 0
   max-same-issues: 0
+
 formatters:
   enable:
     - gofmt
+    - goimports
   exclusions:
     generated: lax
     paths:
       - third_party$
       - builtin$
       - examples$
+  settings:
+    goimports:
+      local-prefixes: terraform-provider-doit
+    gofmt:
+      simplify: true
