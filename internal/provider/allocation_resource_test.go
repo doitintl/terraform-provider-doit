@@ -15,7 +15,7 @@ import (
 )
 
 func TestAccAllocation(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -62,7 +62,7 @@ func TestAccAllocation(t *testing.T) {
 }
 
 func TestAccAllocation_Group(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -101,7 +101,7 @@ func TestAccAllocation_Group(t *testing.T) {
 }
 
 func TestAccAllocation_Validation(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -117,7 +117,7 @@ func TestAccAllocation_Validation(t *testing.T) {
 }
 
 func TestAccAllocation_Group_Select(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -156,7 +156,7 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -172,7 +172,7 @@ func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,

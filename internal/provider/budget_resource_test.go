@@ -16,7 +16,7 @@ import (
 )
 
 func TestAccBudget(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -228,7 +228,7 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_Import(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -254,7 +254,7 @@ func TestAccBudget_Import(t *testing.T) {
 }
 
 func TestAccBudget_Scopes(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -295,7 +295,7 @@ func TestAccBudget_Scopes(t *testing.T) {
 }
 
 func TestAccBudget_Conflict(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -384,7 +384,7 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_Attributes_Coverage(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -473,7 +473,7 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_SlackChannel(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
