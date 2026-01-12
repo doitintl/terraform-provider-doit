@@ -131,6 +131,10 @@ func testSlackChannel() string {
 	return os.Getenv("TEST_SLACK_CHAN")
 }
 
+func testCustomerID() string {
+	return os.Getenv("TEST_CUSTOMER_ID")
+}
+
 func testAccBudget(i int) string {
 	return fmt.Sprintf(`
 %s
@@ -521,7 +525,6 @@ func TestAccBudget_SlackChannel(t *testing.T) {
 }
 
 func testAccBudgetSlackChannel(i int) string {
-	customerContext := os.Getenv("DOIT_CUSTOMER_CONTEXT")
 	return fmt.Sprintf(`
 %s
 
@@ -550,5 +553,5 @@ resource "doit_budget" "this" {
     },
   ]
 }
-`, budgetStartPeriod(), i, testSlackChannel(), customerContext, testAttribution(), testUser())
+`, budgetStartPeriod(), i, testSlackChannel(), testCustomerID(), testAttribution(), testUser())
 }

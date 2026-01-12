@@ -28,4 +28,5 @@ jobs:
           TEST_ATTRIBUTION: ${{ vars.TEST_ATTRIBUTION }}
           TEST_SLACK_CHAN: ${{ vars.TEST_SLACK_CHAN }}
           TEST_PROJECT: ${{ vars.TEST_PROJECT }}
+          TEST_CUSTOMER_ID: ${{ vars.TEST_CUSTOMER_ID }}
         run: go test -v ./...
