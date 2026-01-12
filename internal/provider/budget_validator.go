@@ -147,7 +147,7 @@ func validateBudgetTimeInterval(timeInterval string) error {
 
 // budgetTypeEndPeriodValidator validates that:
 // - end_period is not set when type is "recurring"
-// - end_period is required when type is "fixed"
+// - end_period is required when type is "fixed".
 type budgetTypeEndPeriodValidator struct{}
 
 func (v budgetTypeEndPeriodValidator) Description(ctx context.Context) string {
@@ -202,7 +202,7 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 	}
 }
 
-// budgetAlertsLengthValidator validates that alerts list has exactly 3 items
+// budgetAlertsLengthValidator validates that alerts list has exactly 3 items.
 type budgetAlertsLengthValidator struct{}
 
 func (v budgetAlertsLengthValidator) Description(ctx context.Context) string {
@@ -236,7 +236,7 @@ func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req r
 	}
 }
 
-// budgetScopeMutuallyExclusiveValidator validates that exactly one of 'scope' or 'scopes' is set
+// budgetScopeMutuallyExclusiveValidator validates that exactly one of 'scope' or 'scopes' is set.
 type budgetScopeMutuallyExclusiveValidator struct{}
 
 func (v budgetScopeMutuallyExclusiveValidator) Description(ctx context.Context) string {
