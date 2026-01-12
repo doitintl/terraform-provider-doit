@@ -381,3 +381,92 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i)
 }
+
+func TestAccBudget_Attributes_Coverage(t *testing.T) {
+	n := rand.Int()
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetAttributesCoverage(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("seasonal_amounts"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.Float64Exact(100),
+							knownvalue.Float64Exact(200),
+							knownvalue.Float64Exact(300),
+							knownvalue.Float64Exact(400),
+						})),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("metric"),
+						knownvalue.StringExact("cost")),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"inverse": knownvalue.Bool(true),
+							}),
+						})),
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetAttributesCoverage(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name             = "test-attributes-%d"
+  currency         = "EUR"
+  time_interval    = "quarter"
+  type             = "recurring"
+  start_period     = local.start_period
+
+  amount           = 100
+
+  # Covered: seasonal_amounts instead of amount
+  seasonal_amounts = [100, 200, 300, 400]
+
+  # Covered: metric explicitly
+  metric           = "cost"
+
+  # Covered: scopes with inverse
+  scopes = [
+    {
+      type    = "fixed"
+      id      = "cloud_provider"
+      mode    = "is"
+      values  = ["google-cloud-platform"]
+      inverse = true
+    }
+  ]
+
+  collaborators = [
+    {
+      "email" : "hannes.h@doit.com",
+      "role" : "owner"
+    },
+  ]
+}
+`, budgetStartPeriod(), i)
+}
