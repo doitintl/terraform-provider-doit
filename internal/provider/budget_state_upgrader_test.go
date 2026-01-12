@@ -264,7 +264,7 @@ func TestBudgetStateUpgradeV0ToV1(t *testing.T) {
 
 			// Verify RecipientsSlackChannels were preserved if present in old state
 			expectedSlackVal := tt.oldState["recipients_slack_channels"]
-			if expectedSlackVal.Type().Is(tftypes.List{ElementType: expectedSlackVal.Type().(tftypes.List).ElementType}) {
+			if slackListType, ok := expectedSlackVal.Type().(tftypes.List); ok && expectedSlackVal.Type().Is(tftypes.List{ElementType: slackListType.ElementType}) {
 				var expectedSlackList []tftypes.Value
 				if err := expectedSlackVal.As(&expectedSlackList); err == nil && len(expectedSlackList) > 0 {
 					if upgradedModel.RecipientsSlackChannels.IsNull() || upgradedModel.RecipientsSlackChannels.IsUnknown() {
