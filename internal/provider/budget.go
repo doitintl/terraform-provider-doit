@@ -247,7 +247,7 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	state.Currency = types.StringValue(string(resp.Currency))
 	state.Description = types.StringPointerValue(resp.Description)
 
-	if resp.EndPeriod != nil && *resp.EndPeriod > 0 && *resp.EndPeriod != 2678400000 {
+	if resp.EndPeriod != nil && *resp.EndPeriod > 0 {
 		state.EndPeriod = types.Int64PointerValue(resp.EndPeriod)
 	} else {
 		state.EndPeriod = types.Int64Null()

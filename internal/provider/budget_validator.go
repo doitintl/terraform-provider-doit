@@ -280,3 +280,28 @@ func (v budgetScopeMutuallyExclusiveValidator) ValidateResource(ctx context.Cont
 		)
 	}
 }
+
+// budgetEndPeriodValidator validates that end_period is not set to the magic number 2678400000
+type budgetEndPeriodValidator struct{}
+
+func (v budgetEndPeriodValidator) Description(ctx context.Context) string {
+	return "Ensures that end_period is not set to the internal magic value 2678400000."
+}
+
+func (v budgetEndPeriodValidator) MarkdownDescription(ctx context.Context) string {
+	return "Ensures that `end_period` is not set to the internal magic value 2678400000."
+}
+
+func (v budgetEndPeriodValidator) ValidateInt64(ctx context.Context, req validator.Int64Request, resp *validator.Int64Response) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	if req.ConfigValue.ValueInt64() == 2678400000 {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid Budget End Period",
+			"The value 2678400000 is reserved and cannot be used as an end_period.",
+		)
+	}
+}

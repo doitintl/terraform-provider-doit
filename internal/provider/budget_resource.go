@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -66,6 +67,17 @@ func (r *budgetResource) ImportState(ctx context.Context, req resource.ImportSta
 func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_budget.BudgetResourceSchema(ctx)
 	s.Version = budgetSchemaVersion
+
+	// Add manual validator for end_period
+	if endPeriod, ok := s.Attributes["end_period"]; ok {
+		// We need to type assert to the specific attribute type to access Validators field
+		// end_period is an Int64Attribute
+		if int64Attr, ok := endPeriod.(schema.Int64Attribute); ok {
+			int64Attr.Validators = append(int64Attr.Validators, budgetEndPeriodValidator{})
+			s.Attributes["end_period"] = int64Attr
+		}
+	}
+
 	resp.Schema = s
 }
 
