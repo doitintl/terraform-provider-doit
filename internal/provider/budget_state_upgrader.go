@@ -14,7 +14,7 @@ import (
 // UpgradeState implements the ResourceWithUpgradeState interface.
 // This method handles migrating state from schema v0 (old budget_resource.go)
 // to schema v1 (new budget_resource_new.go with auto-generated schema).
-func (r *budgetResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+func (r *budgetResource) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {
 	return map[int64]resource.StateUpgrader{
 		// State upgrade from v0 (old schema) to v1 (new schema)
 		0: {
@@ -146,8 +146,8 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 	}
 
 	type oldSlackChannelModel struct {
-		CustomerId types.String `tfsdk:"customer_id"`
-		Id         types.String `tfsdk:"id"`
+		CustomerId types.String `tfsdk:"customer_id"` //nolint:revive // Field name must match old state schema
+		Id         types.String `tfsdk:"id"`          //nolint:revive // Field name must match old state schema
 		Name       types.String `tfsdk:"name"`
 		Shared     types.Bool   `tfsdk:"shared"`
 		Type       types.String `tfsdk:"type"`
@@ -162,7 +162,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 		Description             types.String           `tfsdk:"description"`
 		EndPeriod               types.Int64            `tfsdk:"end_period"`
 		GrowthPerPeriod         types.Float64          `tfsdk:"growth_per_period"`
-		Id                      types.String           `tfsdk:"id"`
+		Id                      types.String           `tfsdk:"id"` //nolint:revive // Field name must match old state schema
 		Metric                  types.String           `tfsdk:"metric"`
 		Name                    types.String           `tfsdk:"name"`
 		Public                  types.String           `tfsdk:"public"`
