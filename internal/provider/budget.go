@@ -197,6 +197,13 @@ func (r *budgetResource) populateState(ctx context.Context, state *budgetResourc
 }
 
 func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budgetResourceModel) (diags diag.Diagnostics) {
+	if resp == nil {
+		diags.AddError(
+			"Error converting budget API response to Terraform model",
+			"Received nil response body for budget",
+		)
+		return diags
+	}
 	state.Id = types.StringPointerValue(resp.Id)
 
 	// Convert alerts with computed fields (forecasted_date, triggered)
