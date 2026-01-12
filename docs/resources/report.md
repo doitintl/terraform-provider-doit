@@ -152,13 +152,16 @@ Optional:
 <a id="nestedatt--config--filters"></a>
 ### Nested Schema for `config.filters`
 
-Optional:
+Required:
 
 - `id` (String) The field to filter on
-- `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
 - `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+
+Optional:
+
+- `inverse` (Boolean) Set to `true` to exclude the values.
 - `values` (List of String) Values to filter on
 
 

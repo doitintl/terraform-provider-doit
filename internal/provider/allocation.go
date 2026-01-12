@@ -48,7 +48,7 @@ func (plan *allocationResourceModel) toUpdateRequest(ctx context.Context) (req m
 	return req, diags
 }
 
-// Helper to convert a slice of ComponentsValue to a slice of AllocationComponent models
+// Helper to convert a slice of ComponentsValue to a slice of AllocationComponent models.
 func convertComponentsToModels(ctx context.Context, components []resource_allocation.ComponentsValue) (result []models.AllocationComponent, diags diag.Diagnostics) {
 	result = make([]models.AllocationComponent, len(components))
 	for i := range components {
@@ -68,7 +68,7 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 	return
 }
 
-// Helper to fill common fields into UpdateAllocationRequest model (which uses pointers)
+// Helper to fill common fields into UpdateAllocationRequest model (which uses pointers).
 func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
 	req.Description = plan.Description.ValueStringPointer()
 	req.Name = plan.Name.ValueStringPointer()

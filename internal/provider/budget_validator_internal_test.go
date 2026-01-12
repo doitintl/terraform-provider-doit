@@ -1,8 +1,12 @@
 package provider
 
 import (
+	"context"
 	"testing"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func TestValidateBudgetStartPeriod(t *testing.T) {
@@ -150,6 +154,43 @@ func TestValidateBudgetTimeInterval(t *testing.T) {
 			err := validateBudgetTimeInterval(tt.timeInterval)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("validateBudgetTimeInterval() error = %v, expectedError %v", err, tt.expectedError)
+			}
+		})
+	}
+}
+
+func TestValidateBudgetEndPeriod(t *testing.T) {
+	tests := []struct {
+		name          string
+		endPeriod     int64
+		expectedError bool
+	}{
+		{
+			name:          "Valid End Period",
+			endPeriod:     1600000000000,
+			expectedError: false,
+		},
+		{
+			name:          "Invalid Magic Value",
+			endPeriod:     2678400000,
+			expectedError: true,
+		},
+	}
+
+	v := budgetEndPeriodValidator{}
+	ctx := context.Background()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := validator.Int64Request{
+				ConfigValue: types.Int64Value(tt.endPeriod),
+			}
+			resp := &validator.Int64Response{}
+
+			v.ValidateInt64(ctx, req, resp)
+
+			if resp.Diagnostics.HasError() != tt.expectedError {
+				t.Errorf("ValidateInt64() error = %v, expectedError %v", resp.Diagnostics.HasError(), tt.expectedError)
 			}
 		})
 	}
