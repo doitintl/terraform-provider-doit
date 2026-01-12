@@ -257,8 +257,8 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
 				respHTTPFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
-				fullAlloc := respHTTPFullAlloc.JSON200
-				if err == nil {
+				if err == nil && respHTTPFullAlloc.JSON200 != nil {
+					fullAlloc := respHTTPFullAlloc.JSON200
 					if fullAlloc.Rule != nil {
 						formula = fullAlloc.Rule.Formula
 						if fullAlloc.Rule.Components != nil {
