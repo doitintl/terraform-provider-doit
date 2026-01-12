@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"terraform-provider-doit/internal/provider/models"
 	"time"
 
@@ -60,6 +59,7 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 				// Parse Retry-After as duration in seconds
 				if duration, parseErr := time.ParseDuration(retryAfter + "s"); parseErr == nil {
 					// Sleep for the requested duration, respecting context cancellation
+					// TODO: replace with backoff.RetryAfter after upgrade to backoff v5
 					time.Sleep(duration)
 				}
 				// If parsing fails, fall back to exponential backoff
@@ -81,9 +81,14 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			// - 4xx client errors (400, 401, 403, 404, etc.)
 			// - 5xx server errors that shouldn't be retried (500, 501, etc.)
 			if resp.StatusCode >= 400 {
-				// Read body for better error message
-				bodyBytes, _ := io.ReadAll(resp.Body)
-				resp.Body.Close()
+				bodyBytes, readErr := io.ReadAll(resp.Body)
+				closeErr := resp.Body.Close()
+				if readErr != nil {
+					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, failed to read body: %w", resp.StatusCode, readErr))
+				}
+				if closeErr != nil {
+					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(bodyBytes), closeErr))
+				}
 				return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(bodyBytes)))
 			}
 			// 2xx and 3xx codes that aren't explicitly handled above
@@ -235,12 +240,4 @@ func (c *Client) doRequest(ctx context.Context, req *http.Request) ([]byte, erro
 	}
 
 	return body, err
-}
-
-func addContextToURL(context, url string) (urlContext string) {
-	urlContext = url
-	if len(strings.TrimSpace(context)) != 0 {
-		urlContext = fmt.Sprintf(url+"?customerContext=%s", context)
-	}
-	return urlContext
 }

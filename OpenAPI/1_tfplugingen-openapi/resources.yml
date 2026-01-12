@@ -14,6 +14,19 @@ resources:
     delete:
       path: /analytics/v1/allocations/{id}
       method: DELETE
+  budget:
+    create:
+      path: /analytics/v1/budgets
+      method: POST
+    read:
+      path: /analytics/v1/budgets/{id}
+      method: GET
+    update:
+      path: /analytics/v1/budgets/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/budgets/{id}
+      method: DELETE
   report:
     create:
       path: /analytics/v1/reports
