@@ -1,0 +1,27 @@
+name: Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run Tests
+        env:
+          TF_ACC: "1"
+          DOIT_API_TOKEN: ${{ secrets.DOIT_API_TOKEN }}
+          DOIT_HOST: ${{ vars.DOIT_HOST }}
+        run: go test -v ./...
