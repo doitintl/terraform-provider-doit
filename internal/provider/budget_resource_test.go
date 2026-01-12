@@ -123,6 +123,14 @@ func testUser() string {
 	return os.Getenv("TEST_USER")
 }
 
+func testAttribution() string {
+	return os.Getenv("TEST_ATTRIBUTION")
+}
+
+func testSlackChannel() string {
+	return os.Getenv("TEST_SLACK_CHAN")
+}
+
 func testAccBudget(i int) string {
 	return fmt.Sprintf(`
 %s
@@ -132,7 +140,7 @@ resource "doit_budget" "this" {
   amount        = 100
   currency      = "EUR"
   time_interval = "month"
-  scope         = ["ydDBFKVuz9kGlFDex8cN"]
+  scope         = ["%s"]
   alerts = [
     { percentage = 50 }
   ]
@@ -145,7 +153,7 @@ resource "doit_budget" "this" {
   type          = "recurring"
   start_period  = local.start_period
 }
-`, budgetStartPeriod(), i, testUser())
+`, budgetStartPeriod(), i, testAttribution(), testUser())
 }
 
 func testAccBudgetUpdate(i int) string {
@@ -157,7 +165,7 @@ resource "doit_budget" "this" {
   amount        = 150
   currency      = "EUR"
   time_interval = "month"
-  scope         = ["ydDBFKVuz9kGlFDex8cN"]
+  scope         = ["%s"]
   alerts = [
     { percentage = 50 },
     { percentage = 80 }
@@ -171,7 +179,7 @@ resource "doit_budget" "this" {
   type          = "recurring"
   start_period  = local.start_period
 }
-`, budgetStartPeriod(), i, testUser())
+`, budgetStartPeriod(), i, testAttribution(), testUser())
 }
 
 func testAccBudgetFixed(i int) string {
@@ -184,9 +192,9 @@ resource "doit_budget" "this" {
   type          = "fixed"
   start_period  = local.start_period
   end_period    = local.start_period + (30 * 24 * 60 * 60 * 1000) # 30 days later
-  scope         = ["ydDBFKVuz9kGlFDex8cN"] # Required by validator
+  scope         = ["%s"] # Required by validator
 }
-`, budgetStartPeriod(), i)
+`, budgetStartPeriod(), i, testAttribution())
 }
 
 func testAccBudgetFull(i int) string {
@@ -217,7 +225,7 @@ resource "doit_budget" "this" {
     },
   ]
   scope = [
-    "ydDBFKVuz9kGlFDex8cN"
+    "%s"
   ]
   amount            = 1000
   currency          = "EUR"
@@ -228,7 +236,7 @@ resource "doit_budget" "this" {
   start_period      = local.start_period
   public            = "viewer"
 }
-`, budgetStartPeriod(), i, testUser(), testUser())
+`, budgetStartPeriod(), i, testUser(), testUser(), testAttribution())
 }
 
 func TestAccBudget_Import(t *testing.T) {
@@ -361,13 +369,13 @@ func testAccBudgetConflict(i int) string {
 resource "doit_budget" "this" {
   name          = "test-conflict-%d"
   amount        = 100
-  scope         = ["ydDBFKVuz9kGlFDex8cN"]
+  scope         = ["%s"]
   scopes = [
     {
       type   = "attribution"
       id     = "attribution"
       mode   = "is"
-      values = ["ydDBFKVuz9kGlFDex8cN"]
+      values = ["%s"]
     }
   ]
   alerts = [
@@ -384,7 +392,7 @@ resource "doit_budget" "this" {
   type          = "recurring"
   start_period  = local.start_period
 }
-`, budgetStartPeriod(), i, testUser())
+`, budgetStartPeriod(), i, testAttribution(), testAttribution(), testUser())
 }
 
 func TestAccBudget_Attributes_Coverage(t *testing.T) {
@@ -503,7 +511,7 @@ func TestAccBudget_SlackChannel(t *testing.T) {
 						tfjsonpath.New("recipients_slack_channels"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"id": knownvalue.StringExact("C015LQXLY1X"),
+								"id": knownvalue.StringExact(testSlackChannel()),
 							}),
 						})),
 				},
@@ -528,12 +536,12 @@ resource "doit_budget" "this" {
 
   recipients_slack_channels = [
     {
-      id          = "C015LQXLY1X"
+      id          = "%s"
       customer_id = "%s"
     }
   ]
 
-  scope = ["ydDBFKVuz9kGlFDex8cN"]
+  scope = ["%s"]
 
   collaborators = [
     {
@@ -542,5 +550,5 @@ resource "doit_budget" "this" {
     },
   ]
 }
-`, budgetStartPeriod(), i, customerContext, testUser())
+`, budgetStartPeriod(), i, testSlackChannel(), customerContext, testAttribution(), testUser())
 }

@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -13,6 +14,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
+
+func testProject() string {
+	return os.Getenv("TEST_PROJECT")
+}
 
 func TestAccAllocation(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
@@ -205,12 +210,12 @@ resource "doit_allocation" "this" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     }
 }
-`, i)
+`, i, testProject())
 }
 
 func testAccAllocationSingleUpdate(i int) string {
@@ -231,12 +236,12 @@ resource "doit_allocation" "this" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     }
 }
-`, i)
+`, i, testProject())
 }
 
 func testAccAllocationGroup(i int) string {
@@ -260,7 +265,7 @@ resource "doit_allocation" "group" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     },
@@ -278,13 +283,13 @@ resource "doit_allocation" "group" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     }
     ]
 }
-`, i)
+`, i, testProject(), testProject())
 }
 
 func testAccAllocationValidation(i int) string {
