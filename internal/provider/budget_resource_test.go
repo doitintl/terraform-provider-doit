@@ -119,6 +119,10 @@ output "start_period" {
 `
 }
 
+func testUser() string {
+	return os.Getenv("TEST_USER")
+}
+
 func testAccBudget(i int) string {
 	return fmt.Sprintf(`
 %s
@@ -134,14 +138,14 @@ resource "doit_budget" "this" {
   ]
   collaborators = [
     {
-      "email" : "hannes.h@doit.com",
+      "email" : "%s",
       "role" : "owner"
     },
   ]
   type          = "recurring"
   start_period  = local.start_period
 }
-`, budgetStartPeriod(), i)
+`, budgetStartPeriod(), i, testUser())
 }
 
 func testAccBudgetUpdate(i int) string {
@@ -160,14 +164,14 @@ resource "doit_budget" "this" {
   ]
   collaborators = [
     {
-      "email" : "hannes.h@doit.com",
+      "email" : "%s",
       "role" : "owner"
     },
   ]
   type          = "recurring"
   start_period  = local.start_period
 }
-`, budgetStartPeriod(), i)
+`, budgetStartPeriod(), i, testUser())
 }
 
 func testAccBudgetFixed(i int) string {
@@ -204,11 +208,11 @@ resource "doit_budget" "this" {
     }
   ]
   recipients = [
-    "hannes.h@doit.com"
+    "%s"
   ]
   collaborators = [
     {
-      "email" : "hannes.h@doit.com",
+      "email" : "%s",
       "role" : "owner"
     },
   ]
@@ -224,7 +228,7 @@ resource "doit_budget" "this" {
   start_period      = local.start_period
   public            = "viewer"
 }
-`, budgetStartPeriod(), i)
+`, budgetStartPeriod(), i, testUser(), testUser())
 }
 
 func TestAccBudget_Import(t *testing.T) {
@@ -340,14 +344,14 @@ resource "doit_budget" "this" {
   ]
   collaborators = [
     {
-      "email" : "hannes.h@doit.com",
+      "email" : "%s",
       "role" : "owner"
     },
   ]
   type          = "recurring"
   start_period  = local.start_period
 }
-`, budgetStartPeriod(), i)
+`, budgetStartPeriod(), i, testUser())
 }
 
 func testAccBudgetConflict(i int) string {
@@ -373,14 +377,14 @@ resource "doit_budget" "this" {
   ]
   collaborators = [
     {
-      "email" : "hannes.h@doit.com",
+      "email" : "%s",
       "role" : "owner"
     },
   ]
   type          = "recurring"
   start_period  = local.start_period
 }
-`, budgetStartPeriod(), i)
+`, budgetStartPeriod(), i, testUser())
 }
 
 func TestAccBudget_Attributes_Coverage(t *testing.T) {
@@ -464,12 +468,12 @@ resource "doit_budget" "this" {
 
   collaborators = [
     {
-      "email" : "hannes.h@doit.com",
+      "email" : "%s",
       "role" : "owner"
     },
   ]
 }
-`, budgetStartPeriod(), i)
+`, budgetStartPeriod(), i, testUser())
 }
 
 func TestAccBudget_SlackChannel(t *testing.T) {
@@ -533,10 +537,10 @@ resource "doit_budget" "this" {
 
   collaborators = [
     {
-      "email" : "hannes.h@doit.com",
+      "email" : "%s",
       "role" : "owner"
     },
   ]
 }
-`, budgetStartPeriod(), i, customerContext)
+`, budgetStartPeriod(), i, customerContext, testUser())
 }

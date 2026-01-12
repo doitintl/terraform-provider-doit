@@ -24,4 +24,5 @@ jobs:
           TF_ACC: "1"
           DOIT_API_TOKEN: ${{ secrets.DOIT_API_TOKEN }}
           DOIT_HOST: ${{ vars.DOIT_HOST }}
+          TEST_USER: ${{ vars.TEST_USER }}
         run: go test -v ./...
