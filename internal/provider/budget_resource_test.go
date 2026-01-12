@@ -204,18 +204,15 @@ resource "doit_budget" "this" {
     }
   ]
   recipients = [
-    "hannes.h+tf-cicd-tests@doit.com"
     "hannes.h@doit.com"
   ]
   collaborators = [
     {
-      "email" : "hannes.h+tf-cicd-tests@doit.com",
       "email" : "hannes.h@doit.com",
       "role" : "owner"
     },
   ]
   scope = [
-    "ydDBFKVuz9kGlFDex8cN"
     "ydDBFKVuz9kGlFDex8cN"
   ]
   amount            = 1000
@@ -337,18 +334,6 @@ resource "doit_budget" "this" {
     }
   ]
   alerts = [
-    {
-      percentage = 60
-    },
-    {
-      percentage = 90,
-    },
-    {
-      percentage = 100,
-    }
-  ]
-  recipients = [
-    "hannes.h+tf-cicd-tests@doit.com"
     { percentage = 50 },
     { percentage = 80 },
     { percentage = 100 }
@@ -388,21 +373,10 @@ resource "doit_budget" "this" {
   ]
   collaborators = [
     {
-      "email" : "hannes.h+tf-cicd-tests@doit.com",
       "email" : "hannes.h@doit.com",
       "role" : "owner"
     },
   ]
-  scope = [
-    "ydDBFKVuz9kGlFDex8cN"
-  ]
-  amount            = 500
-  currency          = "EUR"
-  growth_per_period = 10
-  time_interval     = "month"
-  type              = "recurring"
-  use_prev_spend    = true
-  start_period = local.start_period
   type          = "recurring"
   start_period  = local.start_period
 }
