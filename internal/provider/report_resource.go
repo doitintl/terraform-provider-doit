@@ -19,6 +19,7 @@ var (
 	_ resource.ResourceWithConfigValidators = &reportResource{}
 )
 
+// NewReportResource creates a new report resource instance.
 func NewReportResource() resource.Resource {
 	return &reportResource{}
 }
@@ -56,7 +57,7 @@ func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequ
 	r.client = client.NewClient
 }
 
-func (r *reportResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{}
 }
 

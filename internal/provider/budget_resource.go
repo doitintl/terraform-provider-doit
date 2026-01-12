@@ -33,6 +33,7 @@ var (
 	_ resource.ResourceWithConfigValidators = &budgetResource{}
 )
 
+// NewBudgetResource creates a new budget resource instance.
 func NewBudgetResource() resource.Resource {
 	return &budgetResource{}
 }
@@ -81,7 +82,7 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	resp.Schema = s
 }
 
-func (r *budgetResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		budgetTypeEndPeriodValidator{},
 		budgetAlertsLengthValidator{},
