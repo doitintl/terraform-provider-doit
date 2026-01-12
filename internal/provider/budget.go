@@ -62,9 +62,6 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 	// Only set EndPeriod if it's not null/unknown
 	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
 		req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
-	} else if plan.Type.ValueString() == "fixed" {
-		// This should be caught by validator but just in case
-		// Don't send 0
 	}
 
 	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
