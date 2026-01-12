@@ -109,6 +109,7 @@ formatters:
       - examples$
   settings:
     goimports:
-      local-prefixes: terraform-provider-doit
+      local-prefixes:
+        - terraform-provider-doit
     gofmt:
       simplify: true
