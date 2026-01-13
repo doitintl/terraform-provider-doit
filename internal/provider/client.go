@@ -101,8 +101,8 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-// NewClientGen creates a new generated API client with retry logic.
-func NewClientGen(ctx context.Context, host, apiToken, customerContext string) (*models.ClientWithResponses, error) {
+// NewClient creates a new API client with retry logic.
+func NewClient(ctx context.Context, host, apiToken, customerContext string) (*models.ClientWithResponses, error) {
 	retryClient := &RetryClient{
 		client: &http.Client{
 			Timeout: 30 * time.Second,

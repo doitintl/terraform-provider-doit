@@ -126,7 +126,7 @@ func getValidAttributionAndGroup(t *testing.T) (string, string) {
 
 	ctx := context.Background()
 
-	client, err := provider.NewClientGen(ctx, host, token, customerContext)
+	client, err := provider.NewClient(ctx, host, token, customerContext)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
