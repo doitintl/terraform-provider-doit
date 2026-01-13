@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -21,7 +22,27 @@ type RetryClient struct {
 
 // Do executes an HTTP request with retry logic for transient errors.
 func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
+	// Preserve the original body for retries.
+	// If the request has a body, we need to be able to re-read it on retries.
+	var bodyBytes []byte
+	if req.Body != nil && req.Body != http.NoBody {
+		var err error
+		bodyBytes, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read request body: %w", err)
+		}
+		if closeErr := req.Body.Close(); closeErr != nil {
+			log.Printf("[WARN] Error closing original request body: %v", closeErr)
+		}
+	}
+
 	operation := func() (*http.Response, error) {
+		// Reset the body for each retry attempt
+		if bodyBytes != nil {
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			req.ContentLength = int64(len(bodyBytes))
+		}
+
 		resp, err := c.client.Do(req)
 		if err != nil {
 			return nil, err
@@ -41,10 +62,17 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			}
 
 			if retryAfter != "" {
-				// Parse Retry-After as duration in seconds
+				// Try parsing as seconds (most common)
 				if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
 					// Use backoff v5's integrated RetryAfter to respect the header
 					return nil, backoff.RetryAfter(seconds)
+				}
+				// Try parsing as HTTP-date (RFC 7231)
+				if t, parseErr := time.Parse(time.RFC1123, retryAfter); parseErr == nil {
+					waitDuration := time.Until(t)
+					if waitDuration > 0 {
+						return nil, backoff.RetryAfter(int(waitDuration.Seconds()))
+					}
 				}
 				// If parsing fails, fall back to exponential backoff
 			}
@@ -67,15 +95,15 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			// - 4xx client errors (400, 401, 403, 404, etc.)
 			// - 5xx server errors that shouldn't be retried (500, 501, etc.)
 			if resp.StatusCode >= 400 {
-				bodyBytes, readErr := io.ReadAll(resp.Body)
+				respBodyBytes, readErr := io.ReadAll(resp.Body)
 				closeErr := resp.Body.Close()
 				if readErr != nil {
 					return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, failed to read body: %w", resp.StatusCode, readErr))
 				}
 				if closeErr != nil {
-					return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(bodyBytes), closeErr))
+					return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(respBodyBytes), closeErr))
 				}
-				return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(bodyBytes)))
+				return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(respBodyBytes)))
 			}
 			// 2xx and 3xx codes that aren't explicitly handled above
 			return resp, nil
