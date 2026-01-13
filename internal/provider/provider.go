@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -36,11 +35,6 @@ func New(version string) func() provider.Provider {
 			version: version,
 		}
 	}
-}
-
-// Clients holds the API client for all resources.
-type Clients struct {
-	NewClient *models.ClientWithResponses
 }
 
 // doitProvider is the provider implementation.
@@ -192,13 +186,10 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		return
 	}
 
-	clients := Clients{
-		NewClient: client,
-	}
 	// Make the DoiT client available during DataSource and Resource
 	// type Configure methods.
-	resp.DataSourceData = &clients
-	resp.ResourceData = &clients
+	resp.DataSourceData = client
+	resp.ResourceData = client
 
 	tflog.Info(ctx, "Configured DoiT client", map[string]any{"success": true})
 }
