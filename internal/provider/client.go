@@ -6,9 +6,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"golang.org/x/oauth2"
 )
@@ -20,13 +21,10 @@ type RetryClient struct {
 
 // Do executes an HTTP request with retry logic for transient errors.
 func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
-	var resp *http.Response
-	var err error
-
-	operation := func() error {
-		resp, err = c.client.Do(req)
+	operation := func() (*http.Response, error) {
+		resp, err := c.client.Do(req)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Retryable status codes:
@@ -44,25 +42,24 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 
 			if retryAfter != "" {
 				// Parse Retry-After as duration in seconds
-				if duration, parseErr := time.ParseDuration(retryAfter + "s"); parseErr == nil {
-					// Sleep for the requested duration, respecting context cancellation
-					// TODO: replace with backoff.RetryAfter after upgrade to backoff v5
-					time.Sleep(duration)
+				if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
+					// Use backoff v5's integrated RetryAfter to respect the header
+					return nil, backoff.RetryAfter(seconds)
 				}
 				// If parsing fails, fall back to exponential backoff
 			}
-			return fmt.Errorf("rate limit exceeded: %d", resp.StatusCode)
+			return nil, fmt.Errorf("rate limit exceeded: %d", resp.StatusCode)
 
 		case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 			// Temporary server errors - retry with backoff
 			if closeErr := resp.Body.Close(); closeErr != nil {
 				log.Printf("[WARN] Error closing response body: %v", closeErr)
 			}
-			return fmt.Errorf("temporary server error: %d", resp.StatusCode)
+			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
 		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent:
 			// Success codes - no retry needed
-			return nil
+			return resp, nil
 
 		default:
 			// All other status codes are considered permanent errors
@@ -73,32 +70,23 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 				bodyBytes, readErr := io.ReadAll(resp.Body)
 				closeErr := resp.Body.Close()
 				if readErr != nil {
-					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, failed to read body: %w", resp.StatusCode, readErr))
+					return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, failed to read body: %w", resp.StatusCode, readErr))
 				}
 				if closeErr != nil {
-					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(bodyBytes), closeErr))
+					return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(bodyBytes), closeErr))
 				}
-				return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(bodyBytes)))
+				return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(bodyBytes)))
 			}
 			// 2xx and 3xx codes that aren't explicitly handled above
-			return nil
+			return resp, nil
 		}
 	}
 
-	// Use exponential backoff
-	b := backoff.NewExponentialBackOff()
-	b.MaxElapsedTime = 2 * time.Minute // Reasonable timeout for Terraform operations
-
-	// Retry with exponential backoff
-	err = backoff.Retry(operation, b)
-
-	if err != nil {
-		// If we exhausted retries or encountered a permanent error, return it
-		// Note: resp.Body will be closed if we retried, so the caller shouldn't try to read it
-		return resp, err
-	}
-
-	return resp, nil
+	// Retry with exponential backoff and a 2-minute timeout
+	return backoff.Retry(req.Context(), operation,
+		backoff.WithBackOff(backoff.NewExponentialBackOff()),
+		backoff.WithMaxElapsedTime(2*time.Minute), // Reasonable timeout for Terraform operations
+	)
 }
 
 // NewClient creates a new API client with retry logic.
