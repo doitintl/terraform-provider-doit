@@ -28,5 +28,20 @@ func testAccPreCheckFunc(t *testing.T) func() {
 		if v := os.Getenv("DOIT_HOST"); v == "" {
 			t.Fatal("DOIT_HOST must be explicitly set for acceptance tests")
 		}
+		if v := os.Getenv("TEST_USER"); v == "" {
+			t.Fatal("TEST_USER must be set for acceptance tests")
+		}
+		if v := os.Getenv("TEST_ATTRIBUTION"); v == "" {
+			t.Fatal("TEST_ATTRIBUTION must be set for acceptance tests")
+		}
+		if v := os.Getenv("TEST_SLACK_CHAN"); v == "" {
+			t.Fatal("TEST_SLACK_CHAN must be set for acceptance tests")
+		}
+		if v := os.Getenv("TEST_PROJECT"); v == "" {
+			t.Fatal("TEST_PROJECT must be set for acceptance tests")
+		}
+		if v := os.Getenv("TEST_CUSTOMER_ID"); v == "" {
+			t.Fatal("TEST_CUSTOMER_ID must be set for acceptance tests")
+		}
 	}
 }
