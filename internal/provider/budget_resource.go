@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
@@ -237,11 +236,6 @@ func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	// Delete budget via API
 	deleteResp, err := r.client.DeleteBudgetWithResponse(ctx, data.Id.ValueString())
 	if err != nil {
-		// The RetryClient converts 404 to an error, but we should treat it as success
-		// since the resource is already gone (deleted outside Terraform)
-		if strings.Contains(err.Error(), "404") {
-			return
-		}
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Budget",
 			"Could not delete budget, unexpected error: "+err.Error(),

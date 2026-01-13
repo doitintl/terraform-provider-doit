@@ -71,7 +71,9 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 				if t, parseErr := time.Parse(time.RFC1123, retryAfter); parseErr == nil {
 					waitDuration := time.Until(t)
 					if waitDuration > 0 {
-						return nil, backoff.RetryAfter(int(waitDuration.Seconds()))
+						// Round up to ensure we wait at least the requested time
+						seconds := int(waitDuration.Seconds()) + 1
+						return nil, backoff.RetryAfter(seconds)
 					}
 				}
 				// If parsing fails, fall back to exponential backoff
@@ -85,8 +87,9 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			}
 			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
-		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent:
-			// Success codes - no retry needed
+		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent,
+			http.StatusNotFound: // 404 - let oapi-codegen parse it for proper structured error handling
+			// These codes don't need retry - return response for downstream handling
 			return resp, nil
 
 		default:

@@ -409,8 +409,8 @@ func TestIs404Error(t *testing.T) {
 	}
 }
 
-// Test with RetryClient to ensure 404 errors are properly converted to errors
-// and then properly handled by the Delete function
+// Test with RetryClient to verify 404 responses pass through for proper handling
+// (not converted to errors like other 4xx codes)
 func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	// Create a mock server that returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -430,18 +430,18 @@ func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	// Try to delete - this should return an error due to RetryClient behavior
+	// Try to delete - 404 should pass through as a response (not error)
 	ctx := context.Background()
-	_, err = client.DeleteBudgetWithResponse(ctx, "test-id")
+	resp, err := client.DeleteBudgetWithResponse(ctx, "test-id")
 
-	// The RetryClient converts 404 to a "non-retryable error: 404" error
-	if err == nil {
-		t.Error("Expected error from RetryClient for 404, got nil")
+	// With the new RetryClient behavior, 404 passes through as a response
+	if err != nil {
+		t.Errorf("Expected no error for 404 (should pass through), got: %v", err)
 	}
 
-	// Verify the error contains 404 (which our Delete function checks for)
-	if err != nil && !findSubstring(err.Error(), "404") {
-		t.Errorf("Expected error to contain '404', got: %v", err)
+	// Verify we got a 404 response that can be inspected
+	if resp != nil && resp.StatusCode() != http.StatusNotFound {
+		t.Errorf("Expected status 404, got: %d", resp.StatusCode())
 	}
 }
 

@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
@@ -194,11 +193,6 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	deleteResp, err := r.client.DeleteReportWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
-		// The RetryClient converts 404 to an error, but we should treat it as success
-		// since the resource is already gone (deleted outside Terraform)
-		if strings.Contains(err.Error(), "404") {
-			return
-		}
 		resp.Diagnostics.AddError(
 			"Error deleting report",
 			"Could not delete report, unexpected error: "+err.Error(),
@@ -214,5 +208,4 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		)
 		return
 	}
-	// Framework automatically removes the resource from state when Delete returns without errors
 }
