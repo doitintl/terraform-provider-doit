@@ -125,14 +125,13 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &state)
 	if diags.HasError() {
-		// Check if it's a 404 error based on the logic in populateStateFromAPI
-		for _, d := range diags {
-			if d.Summary() == "Report not found" {
-				resp.State.RemoveResource(ctx)
-				return
-			}
-		}
 		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	// Handle externally deleted resource
+	if state.Id.IsNull() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

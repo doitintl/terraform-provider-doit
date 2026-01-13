@@ -21,10 +21,10 @@ func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, st
 		}
 	}
 
+	// Handle externally deleted resource - mark state for removal
 	if reportResp.StatusCode() == 404 {
-		return diag.Diagnostics{
-			diag.NewErrorDiagnostic("Report not found", fmt.Sprintf("Report with id %s not found", id)),
-		}
+		state.Id = types.StringNull()
+		return nil
 	}
 
 	if reportResp.StatusCode() != 200 {

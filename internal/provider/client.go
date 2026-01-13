@@ -95,7 +95,7 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 		default:
 			// All other status codes are considered permanent errors
 			// This includes:
-			// - 4xx client errors (400, 401, 403, 404, etc.)
+			// - 4xx client errors (400, 401, 403, etc.)
 			// - 5xx server errors that shouldn't be retried (500, 501, etc.)
 			if resp.StatusCode >= 400 {
 				respBodyBytes, readErr := io.ReadAll(resp.Body)
