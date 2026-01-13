@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.0.0 (Unreleased)
+
+This is a major release with breaking changes. Please see the [v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md) for migration instructions.
+
+### BREAKING CHANGES
+
+* **resource/doit_allocation_group**: Resource has been removed. Use `doit_allocation` with the `rules` attribute instead.
+* **resource/doit_attribution**: Resource has been removed. Use Allocations instead (via DoiT Console or `doit_allocation` resource).
+* **resource/doit_attribution_group**: Resource has been removed. Use Allocations instead.
+* **resource/doit_budget**: The `scope` attribute is deprecated and will be removed in v2.0.0. Use `scopes` instead.
+* **resource/doit_budget**: The `last_updated` attribute has been removed. Use `update_time` instead.
+* **resource/doit_allocation**: The `description` attribute is now required.
+* **resource/doit_report**: The `mode` attribute is now required in filter configurations.
+
+### FEATURES
+
+* **resource/doit_allocation**: New `rules` attribute for creating allocation groups within a single resource
+* **resource/doit_allocation**: New `unallocated_costs` attribute for group-type allocations
+* **resource/doit_budget**: New `scopes` attribute with flexible filtering options (type, mode, values)
+* **resource/doit_budget**: New `seasonal_amounts` attribute for varying budget amounts per period
+* **resource/doit_report**: New `config.custom_time_range` attribute for custom time range queries
+
+### ENHANCEMENTS
+
+* **resource/doit_allocation**: New computed attributes: `allocation_type`, `create_time`, `update_time`
+* **resource/doit_budget**: New computed attributes: `create_time`, `update_time`, `current_utilization`, `forecasted_utilization`
+* **resource/doit_budget**: Alert thresholds now include computed `forecasted_date` and `triggered` fields
+* Provider now uses generated OpenAPI client for improved API compatibility
+* Improved error handling with automatic retry on rate limits and transient errors
+* OAuth2 token validation for API authentication
+
+### BUG FIXES
+
+* Various schema validation improvements
+* Fixed state inconsistencies after apply operations
+
+### NOTES
+
+* The provider includes automatic state migration for `doit_budget` resources from v0 to v1 schema
+* Many previously required attributes are now optional for improved flexibility
+
 ## v0.26.0 (2025-12-04)
 
 ## What's Changed
