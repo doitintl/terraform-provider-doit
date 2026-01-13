@@ -8,10 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"terraform-provider-doit/internal/provider"
-
 	"math/rand/v2"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
