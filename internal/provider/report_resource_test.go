@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"math/rand/v2"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-	"golang.org/x/time/rate"
 )
 
 func TestAccReport(t *testing.T) {
@@ -127,10 +125,8 @@ func getValidAttributionAndGroup(t *testing.T) (string, string) {
 	}
 
 	ctx := context.Background()
-	// Simple rate limiter
-	rl := rate.NewLimiter(rate.Every(time.Second), 10)
 
-	client, err := provider.NewClientGen(ctx, host, token, customerContext, rl)
+	client, err := provider.NewClientGen(ctx, host, token, customerContext)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
