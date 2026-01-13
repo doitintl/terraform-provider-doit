@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -104,7 +105,7 @@ func TestBudgetResourceDelete_NotFound(t *testing.T) {
 
 			stateValue := tftypes.NewValue(
 				tftypes.Object{
-					AttributeTypes: getAttributeTypes(schemaResp.Schema.Attributes, ctx),
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
 				},
 				stateValues,
 			)
@@ -131,7 +132,7 @@ func TestBudgetResourceDelete_NotFound(t *testing.T) {
 			if tt.expectError && tt.errorContains != "" {
 				found := false
 				for _, d := range deleteResp.Diagnostics {
-					if contains(d.Detail(), tt.errorContains) || contains(d.Summary(), tt.errorContains) {
+					if strings.Contains(d.Detail(), tt.errorContains) || strings.Contains(d.Summary(), tt.errorContains) {
 						found = true
 						break
 					}
@@ -215,7 +216,7 @@ func TestAllocationResourceDelete_NotFound(t *testing.T) {
 
 			stateValue := tftypes.NewValue(
 				tftypes.Object{
-					AttributeTypes: getAttributeTypes(schemaResp.Schema.Attributes, ctx),
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
 				},
 				stateValues,
 			)
@@ -313,7 +314,7 @@ func TestReportResourceDelete_NotFound(t *testing.T) {
 
 			stateValue := tftypes.NewValue(
 				tftypes.Object{
-					AttributeTypes: getAttributeTypes(schemaResp.Schema.Attributes, ctx),
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
 				},
 				stateValues,
 			)
@@ -340,23 +341,8 @@ func TestReportResourceDelete_NotFound(t *testing.T) {
 	}
 }
 
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
-
-// Helper function to get attribute types from schema attributes
-func getAttributeTypes(attrs map[string]schema.Attribute, ctx context.Context) map[string]tftypes.Type {
+// getAttributeTypes returns attribute types from schema attributes.
+func getAttributeTypes(ctx context.Context, attrs map[string]schema.Attribute) map[string]tftypes.Type {
 	result := make(map[string]tftypes.Type)
 	for name, attr := range attrs {
 		result[name] = attr.GetType().TerraformType(ctx)
@@ -364,7 +350,7 @@ func getAttributeTypes(attrs map[string]schema.Attribute, ctx context.Context) m
 	return result
 }
 
-// Test that the 404 detection logic works correctly for error messages
+// TestIs404Error tests that the 404 detection logic works correctly for error messages.
 func TestIs404Error(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -401,7 +387,7 @@ func TestIs404Error(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Simulate the check used in Delete functions
-			result := findSubstring(tt.errMsg, "404")
+			result := strings.Contains(tt.errMsg, "404")
 			if result != tt.expected {
 				t.Errorf("is404Error(%q) = %v, expected %v", tt.errMsg, result, tt.expected)
 			}
@@ -409,8 +395,8 @@ func TestIs404Error(t *testing.T) {
 	}
 }
 
-// Test with RetryClient to verify 404 responses pass through for proper handling
-// (not converted to errors like other 4xx codes)
+// TestBudgetDelete_WithRetryClient_404 tests that 404 responses pass through for proper handling
+// (not converted to errors like other 4xx codes).
 func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	// Create a mock server that returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -445,7 +431,7 @@ func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	}
 }
 
-// Verify that the Delete function behavior is correct when using RetryClient
+// TestBudgetResourceDelete_WithRetryClient_Integration verifies that the Delete function behavior is correct when using RetryClient.
 func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -518,7 +504,7 @@ func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
 
 			stateValue := tftypes.NewValue(
 				tftypes.Object{
-					AttributeTypes: getAttributeTypes(schemaResp.Schema.Attributes, ctx),
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
 				},
 				stateValues,
 			)
