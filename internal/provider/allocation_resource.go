@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
@@ -224,6 +225,11 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	deleteResp, err := r.client.DeleteAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
+		// The RetryClient converts 404 to an error, but we should treat it as success
+		// since the resource is already gone (deleted outside Terraform)
+		if strings.Contains(err.Error(), "404") {
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Allocation",
 			"Could not delete allocation, unexpected error: "+err.Error(),
@@ -231,13 +237,13 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	if deleteResp.StatusCode() != 200 {
+	// Treat 404 as success - resource is already gone (deleted outside Terraform)
+	if deleteResp.StatusCode() != 200 && deleteResp.StatusCode() != 204 && deleteResp.StatusCode() != 404 {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Allocation",
 			fmt.Sprintf("Could not delete allocation, status: %d, body: %s", deleteResp.StatusCode(), string(deleteResp.Body)),
 		)
 		return
 	}
-
-	resp.State.RemoveResource(ctx)
+	// Framework automatically removes the resource from state when Delete returns without errors
 }
