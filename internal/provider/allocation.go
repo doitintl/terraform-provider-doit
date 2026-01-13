@@ -1,3 +1,4 @@
+// Package provider implements the DoiT Terraform provider.
 package provider
 
 import (
@@ -48,7 +49,7 @@ func (plan *allocationResourceModel) toUpdateRequest(ctx context.Context) (req m
 	return req, diags
 }
 
-// Helper to convert a slice of ComponentsValue to a slice of AllocationComponent models
+// Helper to convert a slice of ComponentsValue to a slice of AllocationComponent models.
 func convertComponentsToModels(ctx context.Context, components []resource_allocation.ComponentsValue) (result []models.AllocationComponent, diags diag.Diagnostics) {
 	result = make([]models.AllocationComponent, len(components))
 	for i := range components {
@@ -68,7 +69,7 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 	return
 }
 
-// Helper to fill common fields into UpdateAllocationRequest model (which uses pointers)
+// Helper to fill common fields into UpdateAllocationRequest model (which uses pointers).
 func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
 	req.Description = plan.Description.ValueStringPointer()
 	req.Name = plan.Name.ValueStringPointer()
@@ -255,9 +256,9 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
-				respHttpFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
-				fullAlloc := respHttpFullAlloc.JSON200
-				if err == nil {
+				respHTTPFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
+				if err == nil && respHTTPFullAlloc.JSON200 != nil {
+					fullAlloc := respHTTPFullAlloc.JSON200
 					if fullAlloc.Rule != nil {
 						formula = fullAlloc.Rule.Formula
 						if fullAlloc.Rule.Components != nil {

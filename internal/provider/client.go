@@ -6,26 +6,28 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"terraform-provider-doit/internal/provider/models"
 
 	"github.com/cenkalti/backoff/v4"
 	"golang.org/x/oauth2"
 	"golang.org/x/time/rate"
 )
 
+// AuthResponse represents the authentication response from the DoiT API.
 type AuthResponse struct {
 	DoiTAPITOken    string `json:"doiTAPITOken"`
 	CustomerContext string `json:"customerContext"`
 }
 
+// Auth holds authentication credentials for the DoiT API.
 type Auth struct {
 	DoiTAPITOken    string `json:"doiTAPITOken"`
 	CustomerContext string `json:"customerContext"`
 }
 
+// Client is the legacy DoiT API client.
 type Client struct {
 	HostURL     string
 	HTTPClient  *http.Client
@@ -33,10 +35,12 @@ type Client struct {
 	Ratelimiter *rate.Limiter
 }
 
+// RetryClient wraps an HTTP client with retry logic.
 type RetryClient struct {
 	client *http.Client
 }
 
+// Do executes an HTTP request with retry logic for transient errors.
 func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 	var resp *http.Response
 	var err error
@@ -56,12 +60,15 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 		case http.StatusTooManyRequests:
 			// Respect Retry-After header if present
 			retryAfter := resp.Header.Get("Retry-After")
-			resp.Body.Close()
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				log.Printf("[WARN] Error closing response body: %v", closeErr)
+			}
 
 			if retryAfter != "" {
 				// Parse Retry-After as duration in seconds
 				if duration, parseErr := time.ParseDuration(retryAfter + "s"); parseErr == nil {
 					// Sleep for the requested duration, respecting context cancellation
+					// TODO: replace with backoff.RetryAfter after upgrade to backoff v5
 					time.Sleep(duration)
 				}
 				// If parsing fails, fall back to exponential backoff
@@ -70,7 +77,9 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 
 		case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 			// Temporary server errors - retry with backoff
-			resp.Body.Close()
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				log.Printf("[WARN] Error closing response body: %v", closeErr)
+			}
 			return fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
 		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent:
@@ -83,9 +92,14 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			// - 4xx client errors (400, 401, 403, 404, etc.)
 			// - 5xx server errors that shouldn't be retried (500, 501, etc.)
 			if resp.StatusCode >= 400 {
-				// Read body for better error message
-				bodyBytes, _ := io.ReadAll(resp.Body)
-				resp.Body.Close()
+				bodyBytes, readErr := io.ReadAll(resp.Body)
+				closeErr := resp.Body.Close()
+				if readErr != nil {
+					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, failed to read body: %w", resp.StatusCode, readErr))
+				}
+				if closeErr != nil {
+					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(bodyBytes), closeErr))
+				}
 				return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(bodyBytes)))
 			}
 			// 2xx and 3xx codes that aren't explicitly handled above
@@ -109,7 +123,8 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func NewClientGen(ctx context.Context, host, apiToken, customerContext string, rl *rate.Limiter) (*models.ClientWithResponses, error) {
+// NewClientGen creates a new generated API client with retry logic.
+func NewClientGen(ctx context.Context, host, apiToken, customerContext string, _ *rate.Limiter) (*models.ClientWithResponses, error) {
 	retryClient := &RetryClient{
 		client: &http.Client{
 			Timeout: 30 * time.Second,
@@ -122,13 +137,8 @@ func NewClientGen(ctx context.Context, host, apiToken, customerContext string, r
 
 	client, err := models.NewClientWithResponses(host,
 		models.WithHTTPClient(retryClient),
-		models.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
-			token, err := ts.Token()
-			if err != nil {
-				return err
-			}
-			token.SetAuthHeader(req)
-
+		models.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
+			req.Header.Set("Authorization", "Bearer "+apiToken)
 			if customerContext != "" {
 				url := req.URL.Query()
 				url.Set("customerContext", customerContext)
@@ -146,6 +156,7 @@ func NewClientGen(ctx context.Context, host, apiToken, customerContext string, r
 	return client, nil
 }
 
+// NewClient creates a new legacy DoiT API client.
 func NewClient(ctx context.Context, host, doiTAPIClient, customerContext *string, rl *rate.Limiter) (*Client, error) {
 
 	c := Client{
@@ -170,6 +181,7 @@ func NewClient(ctx context.Context, host, doiTAPIClient, customerContext *string
 	return &c, nil
 }
 
+// SignIn validates the API token and initializes the client session.
 func (c *Client) SignIn(ctx context.Context) (*AuthResponse, error) {
 	if c.Auth.DoiTAPITOken == "" {
 		return nil, fmt.Errorf("define Doit API Token")
@@ -203,8 +215,7 @@ func (c *Client) doRequest(ctx context.Context, req *http.Request) ([]byte, erro
 
 	res := &http.Response{}
 	operation := func() (*http.Response, error) {
-		res, err := c.HTTPClient.Do(req)
-		return res, err
+		return c.HTTPClient.Do(req)
 	}
 
 	retryable := func() error {
@@ -234,7 +245,11 @@ func (c *Client) doRequest(ctx context.Context, req *http.Request) ([]byte, erro
 		return nil, err
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		if closeErr := res.Body.Close(); closeErr != nil {
+			log.Printf("[WARN] Error closing response body: %v", closeErr)
+		}
+	}()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -246,12 +261,4 @@ func (c *Client) doRequest(ctx context.Context, req *http.Request) ([]byte, erro
 	}
 
 	return body, err
-}
-
-func addContextToURL(context, url string) (urlContext string) {
-	urlContext = url
-	if len(strings.TrimSpace(context)) != 0 {
-		urlContext = fmt.Sprintf(url+"?customerContext=%s", context)
-	}
-	return urlContext
 }

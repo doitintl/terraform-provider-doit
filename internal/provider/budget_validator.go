@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -13,11 +15,11 @@ var _ validator.Int64 = budgetStartPeriodValidator{}
 
 type budgetStartPeriodValidator struct{}
 
-func (v budgetStartPeriodValidator) Description(ctx context.Context) string {
+func (v budgetStartPeriodValidator) Description(_ context.Context) string {
 	return "Ensures that the start_period is at the beginning of the period for recurring budgets."
 }
 
-func (v budgetStartPeriodValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetStartPeriodValidator) MarkdownDescription(_ context.Context) string {
 	return "Ensures that the start_period is at the beginning of the period for recurring budgets."
 }
 
@@ -111,15 +113,15 @@ var _ validator.String = budgetTimeIntervalValidator{}
 
 type budgetTimeIntervalValidator struct{}
 
-func (v budgetTimeIntervalValidator) Description(ctx context.Context) string {
+func (v budgetTimeIntervalValidator) Description(_ context.Context) string {
 	return "Ensures that the time_interval is one of: day, week, month, quarter, year."
 }
 
-func (v budgetTimeIntervalValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetTimeIntervalValidator) MarkdownDescription(_ context.Context) string {
 	return "Ensures that the time_interval is one of: day, week, month, quarter, year."
 }
 
-func (v budgetTimeIntervalValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+func (v budgetTimeIntervalValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
@@ -140,5 +142,166 @@ func validateBudgetTimeInterval(timeInterval string) error {
 		return nil
 	default:
 		return fmt.Errorf("time_interval must be one of: day, week, month, quarter, year. Provided: %s", timeInterval)
+	}
+}
+
+// budgetTypeEndPeriodValidator validates that:
+// - end_period is not set when type is "recurring"
+// - end_period is required when type is "fixed".
+type budgetTypeEndPeriodValidator struct{}
+
+func (v budgetTypeEndPeriodValidator) Description(_ context.Context) string {
+	return "Validates that end_period is not set for recurring budgets and is required for fixed budgets"
+}
+
+func (v budgetTypeEndPeriodValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `end_period` is not set for recurring budgets and is required for fixed budgets"
+}
+
+func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var budgetType types.String
+	var endPeriod types.Int64
+
+	// Get the type attribute
+	diags := req.Config.GetAttribute(ctx, path.Root("type"), &budgetType)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get the end_period attribute
+	diags = req.Config.GetAttribute(ctx, path.Root("end_period"), &endPeriod)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// If type is "recurring" and end_period is set, that's an error
+	if !budgetType.IsNull() && !budgetType.IsUnknown() && budgetType.ValueString() == "recurring" {
+		if !endPeriod.IsNull() && !endPeriod.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("end_period"),
+				"Invalid Attribute Combination",
+				"Attribute end_period cannot be set when type is \"recurring\". "+
+					"For recurring budgets, the budget continues indefinitely without an end date. "+
+					"Only fixed budgets require an end_period.",
+			)
+		}
+	}
+
+	// If type is "fixed" and end_period is not set, that's an error
+	if !budgetType.IsNull() && !budgetType.IsUnknown() && budgetType.ValueString() == "fixed" {
+		if endPeriod.IsNull() || endPeriod.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("end_period"),
+				"Missing Required Attribute",
+				"Attribute end_period is required when type is \"fixed\". "+
+					"Fixed budgets must have a defined end date.",
+			)
+		}
+	}
+}
+
+// budgetAlertsLengthValidator validates that alerts list has exactly 3 items.
+type budgetAlertsLengthValidator struct{}
+
+func (v budgetAlertsLengthValidator) Description(_ context.Context) string {
+	return "Validates that alerts list has up to 3 items"
+}
+
+func (v budgetAlertsLengthValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `alerts` list has up to 3 items"
+}
+
+func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var alerts types.List
+
+	// Get the alerts attribute
+	diags := req.Config.GetAttribute(ctx, path.Root("alerts"), &alerts)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if alerts.IsNull() || alerts.IsUnknown() {
+		return
+	}
+
+	if len(alerts.Elements()) > 3 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("alerts"),
+			"Invalid Alerts Configuration",
+			fmt.Sprintf("Budget can have up to 3 alerts. Found %d alerts.", len(alerts.Elements())),
+		)
+	}
+}
+
+// budgetScopeMutuallyExclusiveValidator validates that exactly one of 'scope' or 'scopes' is set.
+type budgetScopeMutuallyExclusiveValidator struct{}
+
+func (v budgetScopeMutuallyExclusiveValidator) Description(_ context.Context) string {
+	return "Validates that exactly one of 'scope' or 'scopes' is set"
+}
+
+func (v budgetScopeMutuallyExclusiveValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that exactly one of `scope` or `scopes` is set"
+}
+
+func (v budgetScopeMutuallyExclusiveValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var scope types.List
+	var scopes types.List
+
+	// Get the attributes
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("scope"), &scope)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("scopes"), &scopes)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if scope.IsUnknown() || scopes.IsUnknown() {
+		return
+	}
+
+	hasScope := !scope.IsNull()
+	hasScopes := !scopes.IsNull()
+
+	if hasScope && hasScopes {
+		resp.Diagnostics.AddError(
+			"Invalid Attribute Combination",
+			"Attributes 'scope' and 'scopes' are mutually exclusive. Please specify only one.",
+		)
+	}
+
+	if !hasScope && !hasScopes {
+		resp.Diagnostics.AddError(
+			"Missing Required Attribute",
+			"One of 'scope' or 'scopes' must be specified.",
+		)
+	}
+}
+
+// budgetEndPeriodValidator validates that end_period is not set to the magic number 2678400000.
+type budgetEndPeriodValidator struct{}
+
+func (v budgetEndPeriodValidator) Description(_ context.Context) string {
+	return "Ensures that end_period is not set to the internal magic value 2678400000."
+}
+
+func (v budgetEndPeriodValidator) MarkdownDescription(_ context.Context) string {
+	return "Ensures that `end_period` is not set to the internal magic value 2678400000."
+}
+
+func (v budgetEndPeriodValidator) ValidateInt64(_ context.Context, req validator.Int64Request, resp *validator.Int64Response) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	if req.ConfigValue.ValueInt64() == 2678400000 {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid Budget End Period",
+			"The value 2678400000 is reserved and cannot be used as an end_period.",
+		)
 	}
 }

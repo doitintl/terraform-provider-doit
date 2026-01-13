@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -23,8 +23,10 @@ var (
 	_ provider.Provider = &doitProvider{}
 )
 
-// HostURL - Default DoiT URL.
+// HostURL is the default DoiT API URL.
 const HostURL string = "https://api.doit.com"
+
+// RequestsMinute is the default rate limit for API requests per minute.
 const RequestsMinute int = 250
 
 // doitProviderModel maps provider schema data to a Go type.
@@ -43,6 +45,7 @@ func New(version string) func() provider.Provider {
 	}
 }
 
+// Clients holds both old and new API clients.
 // This is temporary until we have migrated all resources to the new client.
 type Clients struct {
 	OldClient *Client

@@ -1,12 +1,15 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+// Package main provides the entry point for the DoiT Terraform provider.
 package main
 
 import (
 	"context"
 	"flag"
 	"log"
+
+	"terraform-provider-doit/internal/provider"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -25,7 +28,7 @@ import (
 var (
 	// these will be set by the goreleaser configuration
 	// to appropriate values for the compiled binary.
-	version string = "dev"
+	version = "dev"
 
 	// goreleaser can pass other information to the main package, such as the specific commit
 	// https://goreleaser.com/cookbooks/using-main.version/

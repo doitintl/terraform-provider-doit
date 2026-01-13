@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
+
 	"terraform-provider-doit/internal/provider/models"
 	"terraform-provider-doit/internal/provider/resource_report"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -489,16 +490,17 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			"operator": types.StringValue(string(*config.MetricFilter.Operator)),
 		}
 
-		metricVal, d := externalMetricToBaseTypeObjectValue(ctx, config.MetricFilter.Metric)
-		diags.Append(d...)
+		metricFilterMetricVal, mfMetricDiags := externalMetricToBaseTypeObjectValue(ctx, config.MetricFilter.Metric)
+		diags.Append(mfMetricDiags...)
 		if diags.HasError() {
 			log.Println("Error creating metric value mfMap")
 			return diags
 		}
-		mfMap["metric"] = metricVal
+		mfMap["metric"] = metricFilterMetricVal
 		if config.MetricFilter.Values != nil {
-			mfMap["values"], d = types.ListValueFrom(ctx, types.Float64Type, *config.MetricFilter.Values)
-			diags.Append(d...)
+			var mfValueDiags diag.Diagnostics
+			mfMap["values"], mfValueDiags = types.ListValueFrom(ctx, types.Float64Type, *config.MetricFilter.Values)
+			diags.Append(mfValueDiags...)
 			if diags.HasError() {
 				log.Println("Error creating metric filter values mfMap")
 				return diags
@@ -506,8 +508,8 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		} else {
 			mfMap["values"] = types.ListNull(types.Float64Type)
 		}
-		mfv, d := resource_report.NewMetricFilterValue(resource_report.MetricFilterValue{}.AttributeTypes(ctx), mfMap)
-		diags.Append(d...)
+		mfv, mfvDiags := resource_report.NewMetricFilterValue(resource_report.MetricFilterValue{}.AttributeTypes(ctx), mfMap)
+		diags.Append(mfvDiags...)
 		if diags.HasError() {
 			log.Println("Error creating metric filter value")
 			return diags
@@ -535,8 +537,8 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 					"id":   types.StringPointerValue(s.Origin.Id),
 					"type": types.StringValue(string(*s.Origin.Type)),
 				}
-				originVal, d := resource_report.NewOriginValue(resource_report.OriginValue{}.AttributeTypes(ctx), oMap)
-				diags.Append(d...)
+				originVal, originDiags := resource_report.NewOriginValue(resource_report.OriginValue{}.AttributeTypes(ctx), oMap)
+				diags.Append(originDiags...)
 				m["origin"] = originVal
 			}
 
@@ -548,22 +550,22 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 						"type":  types.StringValue(string(*t.Type)),
 						"value": types.Float64PointerValue(t.Value),
 					}
-					targetVal, d := resource_report.NewTargetsValue(resource_report.TargetsValue{}.AttributeTypes(ctx), tMap)
-					diags.Append(d...)
+					targetVal, targetDiags := resource_report.NewTargetsValue(resource_report.TargetsValue{}.AttributeTypes(ctx), tMap)
+					diags.Append(targetDiags...)
 					targets[j] = targetVal
 				}
-				targetList, d := types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), targets)
-				diags.Append(d...)
+				targetList, targetListDiags := types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), targets)
+				diags.Append(targetListDiags...)
 				m["targets"] = targetList
 			} else {
 				m["targets"] = types.ListNull(resource_report.TargetsValue{}.Type(ctx))
 			}
-			splitVal, d := resource_report.NewSplitsValue(resource_report.SplitsValue{}.AttributeTypes(ctx), m)
-			diags.Append(d...)
+			splitVal, splitDiags := resource_report.NewSplitsValue(resource_report.SplitsValue{}.AttributeTypes(ctx), m)
+			diags.Append(splitDiags...)
 			splits[i] = splitVal
 		}
-		splitList, d := types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), splits)
-		diags.Append(d...)
+		splitList, splitListDiags := types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), splits)
+		diags.Append(splitListDiags...)
 		configMap["splits"] = splitList
 	} else {
 		configMap["splits"] = types.ListNull(resource_report.SplitsValue{}.Type(ctx))
@@ -577,8 +579,8 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			"mode":            types.StringValue(string(*config.TimeRange.Mode)),
 			"unit":            types.StringValue(string(*config.TimeRange.Unit)),
 		}
-		trv, d := resource_report.NewTimeRangeValue(resource_report.TimeRangeValue{}.AttributeTypes(ctx), trMap)
-		diags.Append(d...)
+		trv, trvDiags := resource_report.NewTimeRangeValue(resource_report.TimeRangeValue{}.AttributeTypes(ctx), trMap)
+		diags.Append(trvDiags...)
 		configMap["time_range"] = trv
 	} else {
 		configMap["time_range"] = resource_report.NewTimeRangeValueNull()

@@ -30,6 +30,7 @@ var (
 	_ resource.ResourceWithConfigValidators = &allocationResource{}
 )
 
+// NewAllocationResource creates a new allocation resource instance.
 func NewAllocationResource() resource.Resource {
 	return new(allocationResource)
 }
@@ -64,7 +65,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	resp.Schema = resource_allocation.AllocationResourceSchema(ctx)
 }
 
-func (r *allocationResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+func (r *allocationResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		resourcevalidator.ExactlyOneOf(
 			path.MatchRoot("rule"),

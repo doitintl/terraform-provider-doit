@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"terraform-provider-doit/internal/provider"
 	"testing"
 	"time"
+
+	"terraform-provider-doit/internal/provider"
 
 	"math/rand/v2"
 
@@ -20,7 +21,7 @@ import (
 )
 
 func TestAccReport(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -62,7 +63,7 @@ func TestAccReport(t *testing.T) {
 }
 
 func TestAccReport_Minimal(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -95,22 +96,22 @@ func TestAccReport_Attributions(t *testing.T) {
 	t.Parallel()
 
 	// Dynamically fetch valid IDs
-	attrId, groupId := getValidAttributionAndGroup(t)
+	attrID, groupID := getValidAttributionAndGroup(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheckFunc(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccReportAttributions(attrId, groupId),
+				Config: testAccReportAttributions(attrID, groupID),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_report.this", "config.filters.#", "1"),
 					resource.TestCheckResourceAttr("doit_report.this", "config.filters.0.id", "attribution"),
 					// Check logic ensures values contains the ID
-					resource.TestCheckResourceAttr("doit_report.this", "config.filters.0.values.0", attrId),
+					resource.TestCheckResourceAttr("doit_report.this", "config.filters.0.values.0", attrID),
 					resource.TestCheckResourceAttr("doit_report.this", "config.group.#", "2"),
 					resource.TestCheckResourceAttr("doit_report.this", "config.group.0.type", "attribution_group"),
-					resource.TestCheckResourceAttr("doit_report.this", "config.group.0.id", groupId),
+					resource.TestCheckResourceAttr("doit_report.this", "config.group.0.id", groupID),
 				),
 			},
 		},
@@ -140,23 +141,27 @@ func getValidAttributionAndGroup(t *testing.T) (string, string) {
 	if err != nil {
 		t.Fatalf("Failed to list attributions: %v", err)
 	}
-	defer attrRawResp.Body.Close()
+	defer func() {
+		if closeErr := attrRawResp.Body.Close(); closeErr != nil {
+			t.Logf("[WARN] Error closing response body: %v", closeErr)
+		}
+	}()
 
 	var attrResult map[string]interface{}
-	if err := json.NewDecoder(attrRawResp.Body).Decode(&attrResult); err != nil {
-		t.Fatalf("Failed to decode attributions response: %v", err)
+	if decodeErr := json.NewDecoder(attrRawResp.Body).Decode(&attrResult); decodeErr != nil {
+		t.Fatalf("Failed to decode attributions response: %v", decodeErr)
 	}
 
-	var attrId string
+	var attrID string
 	if attrs, ok := attrResult["attributions"].([]interface{}); ok && len(attrs) > 0 {
 		if aMap, ok := attrs[0].(map[string]interface{}); ok {
 			if id, ok := aMap["id"].(string); ok {
-				attrId = id
+				attrID = id
 			}
 		}
 	}
 
-	if attrId == "" {
+	if attrID == "" {
 		t.Skip("No valid attributions found to test with")
 	}
 
@@ -165,14 +170,18 @@ func getValidAttributionAndGroup(t *testing.T) (string, string) {
 	if err != nil {
 		t.Fatalf("Failed to list attribution groups: %v", err)
 	}
-	defer groupRawResp.Body.Close()
+	defer func() {
+		if err := groupRawResp.Body.Close(); err != nil {
+			t.Logf("[WARN] Error closing response body: %v", err)
+		}
+	}()
 
 	var groupResult map[string]interface{}
 	if err := json.NewDecoder(groupRawResp.Body).Decode(&groupResult); err != nil {
 		t.Fatalf("Failed to decode attribution groups response: %v", err)
 	}
 
-	var groupId string
+	var groupID string
 	foundGroupList := false
 	for _, v := range groupResult {
 		if list, ok := v.([]interface{}); ok {
@@ -180,7 +189,7 @@ func getValidAttributionAndGroup(t *testing.T) (string, string) {
 			if len(list) > 0 {
 				if gMap, ok := list[0].(map[string]interface{}); ok {
 					if id, ok := gMap["id"].(string); ok {
-						groupId = id
+						groupID = id
 					}
 				}
 			}
@@ -188,14 +197,14 @@ func getValidAttributionAndGroup(t *testing.T) (string, string) {
 		}
 	}
 
-	if !foundGroupList || groupId == "" {
+	if !foundGroupList || groupID == "" {
 		t.Skip("No valid attribution groups found to test with")
 	}
 
-	return attrId, groupId
+	return attrID, groupID
 }
 
-func testAccReportAttributions(attrId, groupId string) string {
+func testAccReportAttributions(attrID, groupID string) string {
 	return fmt.Sprintf(`
 resource "doit_report" "this" {
   name        = "test_report_attributions"
@@ -234,7 +243,7 @@ resource "doit_report" "this" {
     layout         = "table"
   }
 }
-`, attrId, groupId)
+`, attrID, groupID)
 }
 
 func testAccReportMinimal(i int) string {
@@ -258,7 +267,7 @@ resource "doit_report" "this" {
 }
 
 func TestAccReport_Full(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
