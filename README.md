@@ -90,7 +90,7 @@ Set the required environment variables and run:
 ```shell
 export TF_ACC=1
 export DOIT_API_TOKEN="your-api-token"
-export DOIT_HOST="api.doit.com"
+export DOIT_HOST="https://api.doit.com"
 export TEST_USER="your-email@example.com"
 export TEST_ATTRIBUTION="your-attribution-id"
 export TEST_SLACK_CHAN="your-slack-channel-id"
