@@ -1,4 +1,4 @@
-# DoiT Cloud Intelligence Provider 
+# DoiT Cloud Intelligence Provider
 
 This is an initial Proof of Concept to create a Terraform provider for DoiT Cloud Intelligence(tm)
 
@@ -67,10 +67,59 @@ To compile the provider, run `go install`. This will build the provider and put 
 
 To generate or update documentation, run `go generate`.
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
+## Running Acceptance Tests
 
-*Note:* Acceptance tests create real resources, and often cost money to run.
+Acceptance tests create real resources in a DoiT account and require proper configuration.
+
+### Required Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DOIT_API_TOKEN` | Your DoiT API token |
+| `DOIT_HOST` | The DoiT API host (e.g., `https://api.doit.com`) |
+| `TEST_USER` | Email address for test budget collaborators/recipients |
+| `TEST_ATTRIBUTION` | Attribution ID for test budget scope |
+| `TEST_SLACK_CHAN` | Slack channel ID for notification tests |
+| `TEST_PROJECT` | Project ID for allocation rule tests |
+| `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient |
+
+### Running Tests
+
+#### Using direnv (Recommended)
+
+If you use [direnv](https://direnv.net/), copy the example file and fill in your values:
 
 ```shell
-make testacc
+cp .envrc.example .envrc.local
+# Edit .envrc.local with your values
+direnv allow
 ```
+
+Then run tests:
+
+```shell
+go test -v -timeout 120m ./...
+```
+
+#### Manual Setup
+
+Set the required environment variables and run:
+
+```shell
+export TF_ACC=1
+export DOIT_API_TOKEN="your-api-token"
+export DOIT_HOST="https://api.doit.com"
+export TEST_USER="your-email@example.com"
+export TEST_ATTRIBUTION="your-attribution-id"
+export TEST_SLACK_CHAN="your-slack-channel-id"
+export TEST_PROJECT="your-project-id"
+export TEST_CUSTOMER_ID="your-customer-id"
+
+go test -v -timeout 120m ./...
+```
+
+> [!IMPORTANT]
+> **DoiT employees only:** You must also set the `DOIT_CUSTOMER_CONTEXT` environment variable
+> to the same value as `TEST_CUSTOMER_ID` for certain tests to work correctly.
+
+*Note:* Acceptance tests create real resources and may incur costs.

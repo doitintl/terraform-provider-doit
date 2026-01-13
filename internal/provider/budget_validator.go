@@ -15,11 +15,11 @@ var _ validator.Int64 = budgetStartPeriodValidator{}
 
 type budgetStartPeriodValidator struct{}
 
-func (v budgetStartPeriodValidator) Description(ctx context.Context) string {
+func (v budgetStartPeriodValidator) Description(_ context.Context) string {
 	return "Ensures that the start_period is at the beginning of the period for recurring budgets."
 }
 
-func (v budgetStartPeriodValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetStartPeriodValidator) MarkdownDescription(_ context.Context) string {
 	return "Ensures that the start_period is at the beginning of the period for recurring budgets."
 }
 
@@ -113,15 +113,15 @@ var _ validator.String = budgetTimeIntervalValidator{}
 
 type budgetTimeIntervalValidator struct{}
 
-func (v budgetTimeIntervalValidator) Description(ctx context.Context) string {
+func (v budgetTimeIntervalValidator) Description(_ context.Context) string {
 	return "Ensures that the time_interval is one of: day, week, month, quarter, year."
 }
 
-func (v budgetTimeIntervalValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetTimeIntervalValidator) MarkdownDescription(_ context.Context) string {
 	return "Ensures that the time_interval is one of: day, week, month, quarter, year."
 }
 
-func (v budgetTimeIntervalValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+func (v budgetTimeIntervalValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
@@ -150,11 +150,11 @@ func validateBudgetTimeInterval(timeInterval string) error {
 // - end_period is required when type is "fixed".
 type budgetTypeEndPeriodValidator struct{}
 
-func (v budgetTypeEndPeriodValidator) Description(ctx context.Context) string {
+func (v budgetTypeEndPeriodValidator) Description(_ context.Context) string {
 	return "Validates that end_period is not set for recurring budgets and is required for fixed budgets"
 }
 
-func (v budgetTypeEndPeriodValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetTypeEndPeriodValidator) MarkdownDescription(_ context.Context) string {
 	return "Validates that `end_period` is not set for recurring budgets and is required for fixed budgets"
 }
 
@@ -205,11 +205,11 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 // budgetAlertsLengthValidator validates that alerts list has exactly 3 items.
 type budgetAlertsLengthValidator struct{}
 
-func (v budgetAlertsLengthValidator) Description(ctx context.Context) string {
+func (v budgetAlertsLengthValidator) Description(_ context.Context) string {
 	return "Validates that alerts list has up to 3 items"
 }
 
-func (v budgetAlertsLengthValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetAlertsLengthValidator) MarkdownDescription(_ context.Context) string {
 	return "Validates that `alerts` list has up to 3 items"
 }
 
@@ -239,11 +239,11 @@ func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req r
 // budgetScopeMutuallyExclusiveValidator validates that exactly one of 'scope' or 'scopes' is set.
 type budgetScopeMutuallyExclusiveValidator struct{}
 
-func (v budgetScopeMutuallyExclusiveValidator) Description(ctx context.Context) string {
+func (v budgetScopeMutuallyExclusiveValidator) Description(_ context.Context) string {
 	return "Validates that exactly one of 'scope' or 'scopes' is set"
 }
 
-func (v budgetScopeMutuallyExclusiveValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetScopeMutuallyExclusiveValidator) MarkdownDescription(_ context.Context) string {
 	return "Validates that exactly one of `scope` or `scopes` is set"
 }
 
@@ -281,18 +281,18 @@ func (v budgetScopeMutuallyExclusiveValidator) ValidateResource(ctx context.Cont
 	}
 }
 
-// budgetEndPeriodValidator validates that end_period is not set to the magic number 2678400000
+// budgetEndPeriodValidator validates that end_period is not set to the magic number 2678400000.
 type budgetEndPeriodValidator struct{}
 
-func (v budgetEndPeriodValidator) Description(ctx context.Context) string {
+func (v budgetEndPeriodValidator) Description(_ context.Context) string {
 	return "Ensures that end_period is not set to the internal magic value 2678400000."
 }
 
-func (v budgetEndPeriodValidator) MarkdownDescription(ctx context.Context) string {
+func (v budgetEndPeriodValidator) MarkdownDescription(_ context.Context) string {
 	return "Ensures that `end_period` is not set to the internal magic value 2678400000."
 }
 
-func (v budgetEndPeriodValidator) ValidateInt64(ctx context.Context, req validator.Int64Request, resp *validator.Int64Response) {
+func (v budgetEndPeriodValidator) ValidateInt64(_ context.Context, req validator.Int64Request, resp *validator.Int64Response) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}

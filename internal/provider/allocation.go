@@ -1,3 +1,4 @@
+// Package provider implements the DoiT Terraform provider.
 package provider
 
 import (
@@ -255,9 +256,9 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
-				respHttpFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
-				fullAlloc := respHttpFullAlloc.JSON200
-				if err == nil {
+				respHTTPFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
+				if err == nil && respHTTPFullAlloc.JSON200 != nil {
+					fullAlloc := respHTTPFullAlloc.JSON200
 					if fullAlloc.Rule != nil {
 						formula = fullAlloc.Rule.Formula
 						if fullAlloc.Rule.Components != nil {

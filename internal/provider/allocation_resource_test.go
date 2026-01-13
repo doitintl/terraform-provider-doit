@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -14,8 +15,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
+func testProject() string {
+	return os.Getenv("TEST_PROJECT")
+}
+
 func TestAccAllocation(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -62,7 +67,7 @@ func TestAccAllocation(t *testing.T) {
 }
 
 func TestAccAllocation_Group(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -101,7 +106,7 @@ func TestAccAllocation_Group(t *testing.T) {
 }
 
 func TestAccAllocation_Validation(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -117,7 +122,7 @@ func TestAccAllocation_Validation(t *testing.T) {
 }
 
 func TestAccAllocation_Group_Select(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -156,7 +161,7 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -172,7 +177,7 @@ func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
-	n := rand.Int()
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -205,12 +210,12 @@ resource "doit_allocation" "this" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     }
 }
-`, i)
+`, i, testProject())
 }
 
 func testAccAllocationSingleUpdate(i int) string {
@@ -231,12 +236,12 @@ resource "doit_allocation" "this" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     }
 }
-`, i)
+`, i, testProject())
 }
 
 func testAccAllocationGroup(i int) string {
@@ -260,7 +265,7 @@ resource "doit_allocation" "group" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     },
@@ -278,13 +283,13 @@ resource "doit_allocation" "group" {
            key    = "project_id"
            mode   = "is"
            type   = "fixed"
-           values = ["test-k8s-project-468707"]
+           values = ["%s"]
           }
        ]
     }
     ]
 }
-`, i)
+`, i, testProject(), testProject())
 }
 
 func testAccAllocationValidation(i int) string {
