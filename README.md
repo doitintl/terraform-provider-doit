@@ -76,7 +76,7 @@ Acceptance tests create real resources in a DoiT account and require proper conf
 | Variable | Description |
 |----------|-------------|
 | `DOIT_API_TOKEN` | Your DoiT API token |
-| `DOIT_HOST` | The DoiT API host (e.g., `api.doit.com`) |
+| `DOIT_HOST` | The DoiT API host (e.g., `https://api.doit.com`) |
 | `TEST_USER` | Email address for test budget collaborators/recipients |
 | `TEST_ATTRIBUTION` | Attribution ID for test budget scope |
 | `TEST_SLACK_CHAN` | Slack channel ID for notification tests |
@@ -84,6 +84,24 @@ Acceptance tests create real resources in a DoiT account and require proper conf
 | `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient |
 
 ### Running Tests
+
+#### Using direnv (Recommended)
+
+If you use [direnv](https://direnv.net/), copy the example file and fill in your values:
+
+```shell
+cp .envrc.example .envrc.local
+# Edit .envrc.local with your values
+direnv allow
+```
+
+Then run tests:
+
+```shell
+go test -v -timeout 120m ./...
+```
+
+#### Manual Setup
 
 Set the required environment variables and run:
 
@@ -97,10 +115,8 @@ export TEST_SLACK_CHAN="your-slack-channel-id"
 export TEST_PROJECT="your-project-id"
 export TEST_CUSTOMER_ID="your-customer-id"
 
-go test -v ./...
+go test -v -timeout 120m ./...
 ```
-
-Or use `make testacc` if available.
 
 > [!IMPORTANT]
 > **DoiT employees only:** You must also set the `DOIT_CUSTOMER_CONTEXT` environment variable

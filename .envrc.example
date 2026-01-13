@@ -1,0 +1,14 @@
+# Copy this file to .envrc.local and fill in your values
+# Then add 'source_env_if_exists .envrc.local' to your .envrc
+
+export TF_ACC=1
+export DOIT_API_TOKEN="your-api-token"
+export DOIT_HOST="https://api.doit.com"
+export TEST_USER="your-email@example.com"
+export TEST_ATTRIBUTION="your-attribution-id"
+export TEST_SLACK_CHAN="your-slack-channel-id"
+export TEST_PROJECT="your-project-id"
+export TEST_CUSTOMER_ID="your-customer-id"
+
+# DoiT employees only - uncomment the following line:
+# export DOIT_CUSTOMER_CONTEXT="$TEST_CUSTOMER_ID"
