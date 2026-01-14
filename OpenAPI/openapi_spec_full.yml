@@ -17,17 +17,17 @@ tags:
   - name: Labels
     description: Labels endpoints
   - name: Allocations
-    description: Allocations endpoints
+    description: Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
   - name: Attribution Groups
     description: Attribution group endpoints
   - name: Attributions
     description: Attribution endpoints
   - name: Budgets
-    description: Budgets endpoints
+    description: Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
   - name: Dimensions
     description: Dimensions endpoints
   - name: Reports
-    description: Reports endpoints
+    description: Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
   - name: Sharing
     description: Sharing endpoints
   - name: Anomalies

@@ -311,7 +311,9 @@
 							"description": "Last time the allocation was modified (in UNIX timestamp)."
 						}
 					}
-				]
+				],
+				"description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+				"markdown_description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more."
 			}
 		},
 		{
@@ -683,7 +685,9 @@
 							"description": "Update time (in UNIX timestamp)"
 						}
 					}
-				]
+				],
+				"description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+				"markdown_description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached."
 			}
 		},
 		{
@@ -1480,7 +1484,9 @@
 							"description": "Report type."
 						}
 					}
-				]
+				],
+				"description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+				"markdown_description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters."
 			}
 		}
 	],

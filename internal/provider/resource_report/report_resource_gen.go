@@ -5,8 +5,6 @@ package resource_report
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -17,14 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func ReportResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		Description:         "Reports allow you to analyze and visualize your cloud costs, usage, and savings.",
-		MarkdownDescription: "Reports allow you to analyze and visualize your cloud costs, usage, and savings.",
 		Attributes: map[string]schema.Attribute{
 			"config": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -791,6 +788,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Report type.",
 			},
 		},
+		Description:         "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+		MarkdownDescription: "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
 	}
 }
 

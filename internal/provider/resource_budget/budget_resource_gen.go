@@ -5,8 +5,6 @@ package resource_budget
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -17,14 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func BudgetResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		Description:         "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
-		MarkdownDescription: "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
 		Attributes: map[string]schema.Attribute{
 			"alerts": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -354,6 +351,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Default:             booldefault.StaticBool(false),
 			},
 		},
+		Description:         "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+		MarkdownDescription: "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
 	}
 }
 
