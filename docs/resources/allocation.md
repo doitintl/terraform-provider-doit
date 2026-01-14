@@ -94,7 +94,8 @@ Required:
 - `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+- `type` (String) Type of dimension or filter field.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 - `values` (List of String)
 
 Optional:
@@ -128,7 +129,8 @@ Required:
 - `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+- `type` (String) Type of dimension or filter field.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 - `values` (List of String)
 
 Optional:

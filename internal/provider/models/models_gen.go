@@ -766,8 +766,10 @@ type AlertConfig struct {
 	// Attributions The attributions selected define the scope to monitor.
 	Attributions *[]string  `json:"attributions,omitempty"`
 	Condition    *Condition `json:"condition,omitempty"`
-	Currency     *Currency  `json:"currency,omitempty"`
-	DataSource   *string    `json:"dataSource,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency   *Currency `json:"currency,omitempty"`
+	DataSource *string   `json:"dataSource,omitempty"`
 
 	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
 	EvaluateForEach *string           `json:"evaluateForEach,omitempty"`
@@ -862,9 +864,11 @@ type AllocationComponent struct {
 	Key string `json:"key"`
 
 	// Mode Filter mode to apply
-	Mode   AllocationComponentMode `json:"mode"`
-	Type   DimensionsTypes         `json:"type"`
-	Values []string                `json:"values"`
+	Mode AllocationComponentMode `json:"mode"`
+
+	// Type Type of dimension or filter field.
+	Type   DimensionsTypes `json:"type"`
+	Values []string        `json:"values"`
 }
 
 // AllocationComponentMode Filter mode to apply
@@ -1103,7 +1107,9 @@ type AttributionComponent struct {
 	Key string `json:"key"`
 
 	// Regexp Filter the dimension values using a regular expression.
-	Regexp *string         `json:"regexp,omitempty"`
+	Regexp *string `json:"regexp,omitempty"`
+
+	// Type Type of dimension or filter field.
 	Type   DimensionsTypes `json:"type"`
 	Values *[]string       `json:"values,omitempty"`
 }
@@ -1252,7 +1258,9 @@ type Budget struct {
 
 	// Collaborators List of permitted users to view/edit the report
 	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
-	Currency      Currency        `json:"currency"`
+
+	// Currency Currency code for monetary values.
+	Currency Currency `json:"currency"`
 
 	// Description Budget description
 	Description *string `json:"description,omitempty"`
@@ -1272,7 +1280,9 @@ type Budget struct {
 	Metric *string `json:"metric,omitempty"`
 
 	// Name Budget Name
-	Name   string        `json:"name"`
+	Name string `json:"name"`
+
+	// Public Public sharing access level for the budget.
 	Public *BudgetPublic `json:"public,omitempty"`
 
 	// Recipients List of emails to notify when reaching alert threshold
@@ -1297,7 +1307,7 @@ type Budget struct {
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
-// BudgetPublic defines model for Budget.Public.
+// BudgetPublic Public sharing access level for the budget.
 type BudgetPublic string
 
 // BudgetAPI defines model for BudgetAPI.
@@ -1313,7 +1323,9 @@ type BudgetAPI struct {
 	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
 
 	// CreateTime Creation time (in UNIX timestamp)
-	CreateTime         *int64   `json:"createTime,omitempty"`
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Currency Currency code for monetary values.
 	Currency           Currency `json:"currency"`
 	CurrentUtilization *float64 `json:"currentUtilization,omitempty"`
 
@@ -1389,7 +1401,9 @@ type BudgetCreateUpdateRequest struct {
 
 	// Collaborators List of permitted users to view/edit the report
 	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
-	Currency      *Currency       `json:"currency,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
 
 	// Description Budget description
 	Description *string `json:"description,omitempty"`
@@ -1559,7 +1573,7 @@ type CreateLabelRequest struct {
 // CreateLabelRequestColor The color of the label
 type CreateLabelRequestColor string
 
-// Currency defines model for Currency.
+// Currency Currency code for monetary values.
 type Currency string
 
 // DeleteUserResponse defines model for DeleteUserResponse.
@@ -1571,14 +1585,18 @@ type DeleteUserResponse struct {
 // Dimension A dimension to apply to the report.
 type Dimension struct {
 	// Id The field to apply to the dimension.
-	Id   *string          `json:"id,omitempty"`
+	Id *string `json:"id,omitempty"`
+
+	// Type Type of dimension or filter field.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
 // DimensionsExternalAPIGetResponse defines model for DimensionsExternalAPIGetResponse.
 type DimensionsExternalAPIGetResponse struct {
-	Id     *string                `json:"id,omitempty"`
-	Label  *string                `json:"label,omitempty"`
+	Id    *string `json:"id,omitempty"`
+	Label *string `json:"label,omitempty"`
+
+	// Type Type of dimension or filter field.
 	Type   *DimensionsTypes       `json:"type,omitempty"`
 	Values *[]ExternalAPIGetValue `json:"values,omitempty"`
 }
@@ -1590,7 +1608,7 @@ type DimensionsExternalAPIList struct {
 	RowCount   *int64          `json:"rowCount,omitempty"`
 }
 
-// DimensionsTypes defines model for DimensionsTypes.
+// DimensionsTypes Type of dimension or filter field.
 type DimensionsTypes string
 
 // DocumentRef A DocumentRef is a reference to a Firestore document.
@@ -1639,9 +1657,13 @@ type ExternalBudgetAlert struct {
 // ExternalConfig Report configuration
 type ExternalConfig struct {
 	// AdvancedAnalysis Advanced analysis options. Each of these can be set independently
-	AdvancedAnalysis *AdvancedAnalysis          `json:"advancedAnalysis,omitempty"`
-	Aggregation      *ExternalConfigAggregation `json:"aggregation,omitempty"`
-	Currency         *Currency                  `json:"currency,omitempty"`
+	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
+
+	// Aggregation How to aggregate data values in the report.
+	Aggregation *ExternalConfigAggregation `json:"aggregation,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
 
 	// CustomTimeRange Required when the time range is set to "custom".
 	CustomTimeRange *struct {
@@ -1690,7 +1712,9 @@ type ExternalConfig struct {
 	SortGroups *ExternalConfigSortGroups `json:"sortGroups,omitempty"`
 
 	// Splits The splits to use in the report.
-	Splits       *[]ExternalSplit            `json:"splits,omitempty"`
+	Splits *[]ExternalSplit `json:"splits,omitempty"`
+
+	// TimeInterval Time interval for grouping data in the report.
 	TimeInterval *ExternalConfigTimeInterval `json:"timeInterval,omitempty"`
 
 	// TimeRange Specify a predefined or custom time range for the report.
@@ -1699,7 +1723,7 @@ type ExternalConfig struct {
 	TimeRange *TimeSettings `json:"timeRange,omitempty"`
 }
 
-// ExternalConfigAggregation defines model for ExternalConfig.Aggregation.
+// ExternalConfigAggregation How to aggregate data values in the report.
 type ExternalConfigAggregation string
 
 // ExternalConfigDataSource Data source of the report.
@@ -1714,7 +1738,7 @@ type ExternalConfigSortDimensions string
 // ExternalConfigSortGroups This option has no impact when reading reports via API.
 type ExternalConfigSortGroups string
 
-// ExternalConfigTimeInterval defines model for ExternalConfig.TimeInterval.
+// ExternalConfigTimeInterval Time interval for grouping data in the report.
 type ExternalConfigTimeInterval string
 
 // ExternalConfigFilter To filter or exclude certain values by type.
@@ -1728,7 +1752,9 @@ type ExternalConfigFilter struct {
 
 	// Mode Filter mode to apply
 	Mode ExternalConfigFilterMode `json:"mode"`
-	Type DimensionsTypes          `json:"type"`
+
+	// Type Type of dimension or filter field.
+	Type DimensionsTypes `json:"type"`
 
 	// Values Values to filter on
 	Values *[]string `json:"values,omitempty"`
@@ -1740,16 +1766,19 @@ type ExternalConfigFilterMode string
 // ExternalConfigMetricFilter The metric filter to limit the report results by value
 type ExternalConfigMetricFilter struct {
 	// Metric The metric to apply.
-	Metric   *ExternalMetric                     `json:"metric,omitempty"`
+	Metric *ExternalMetric `json:"metric,omitempty"`
+
+	// Operator Comparison operator for filtering metric values.
 	Operator *ExternalConfigMetricFilterOperator `json:"operator,omitempty"`
 	Values   *[]float64                          `json:"values,omitempty"`
 }
 
-// ExternalConfigMetricFilterOperator defines model for ExternalConfigMetricFilter.Operator.
+// ExternalConfigMetricFilterOperator Comparison operator for filtering metric values.
 type ExternalConfigMetricFilterOperator string
 
 // ExternalMetric The metric to apply.
 type ExternalMetric struct {
+	// Type Type of metric to use.
 	Type *ExternalMetricType `json:"type,omitempty"`
 
 	// Value For basic metrics, the value can be one of: ["cost", "usage", "savings"]
@@ -1757,7 +1786,7 @@ type ExternalMetric struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// ExternalMetricType defines model for ExternalMetric.Type.
+// ExternalMetricType Type of metric to use.
 type ExternalMetricType string
 
 // ExternalOrigin defines model for ExternalOrigin.
@@ -1876,8 +1905,10 @@ type Group struct {
 	Id *string `json:"id,omitempty"`
 
 	// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
-	Limit *Limit           `json:"limit,omitempty"`
-	Type  *DimensionsTypes `json:"type,omitempty"`
+	Limit *Limit `json:"limit,omitempty"`
+
+	// Type Type of dimension or filter field.
+	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
 // GroupAllocationRule Allocation rule for a group (required for group type allocation)
@@ -1947,8 +1978,10 @@ type InvitedUserBodyStatus string
 // InvoiceListItem defines model for InvoiceListItem.
 type InvoiceListItem struct {
 	// BalanceAmount Invoice balance to be paid
-	BalanceAmount *float64  `json:"balanceAmount,omitempty"`
-	Currency      *Currency `json:"currency,omitempty"`
+	BalanceAmount *float64 `json:"balanceAmount,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
 
 	// DueDate The last day to pay the invoice, in milliseconds since the epoch
 	DueDate *int64 `json:"dueDate,omitempty"`
@@ -2039,13 +2072,15 @@ type LabelListItemType string
 type Limit struct {
 	// Metric The metric to apply.
 	Metric *ExternalMetric `json:"metric,omitempty"`
-	Sort   *LimitSort      `json:"sort,omitempty"`
+
+	// Sort Sort order for ranking results.
+	Sort *LimitSort `json:"sort,omitempty"`
 
 	// Value The number of items to show
 	Value *int64 `json:"value,omitempty"`
 }
 
-// LimitSort defines model for Limit.Sort.
+// LimitSort Sort order for ranking results.
 type LimitSort string
 
 // ListItem defines model for ListItem.
@@ -2416,16 +2451,23 @@ type TicketsList struct {
 // For example, to specify a custom time range of "last 2 days", set the mode to `last`, the amount to `2`, and the unit to `day`. If `includeCurrent` is `true`, the range will be yesterday and today; otherwise, the range will be yesterday and the day before yesterday.
 // If "custom" type is specified, you need to provide a custom time range in the `customTimeRange` field.
 type TimeSettings struct {
-	Amount         *int64            `json:"amount,omitempty"`
-	IncludeCurrent *bool             `json:"includeCurrent,omitempty"`
-	Mode           *TimeSettingsMode `json:"mode,omitempty"`
-	Unit           *TimeSettingsUnit `json:"unit,omitempty"`
+	// Amount Number of time units to include in the time range.
+	Amount *int64 `json:"amount,omitempty"`
+
+	// IncludeCurrent Whether to include the current time period.
+	IncludeCurrent *bool `json:"includeCurrent,omitempty"`
+
+	// Mode Time range mode (last N periods, current period, or custom).
+	Mode *TimeSettingsMode `json:"mode,omitempty"`
+
+	// Unit Time unit for the time range.
+	Unit *TimeSettingsUnit `json:"unit,omitempty"`
 }
 
-// TimeSettingsMode defines model for TimeSettings.Mode.
+// TimeSettingsMode Time range mode (last N periods, current period, or custom).
 type TimeSettingsMode string
 
-// TimeSettingsUnit defines model for TimeSettings.Unit.
+// TimeSettingsUnit Time unit for the time range.
 type TimeSettingsUnit string
 
 // UpdateAllocationRequest defines model for UpdateAllocationRequest.
@@ -10415,8 +10457,10 @@ type GetInvoiceResp struct {
 	HTTPResponse *http.Response
 	JSON200      *struct {
 		// BalanceAmount Invoice balance to be paid
-		BalanceAmount *float64  `json:"balanceAmount,omitempty"`
-		Currency      *Currency `json:"currency,omitempty"`
+		BalanceAmount *float64 `json:"balanceAmount,omitempty"`
+
+		// Currency Currency code for monetary values.
+		Currency *Currency `json:"currency,omitempty"`
 
 		// DueDate The last day to pay the invoice, in milliseconds since the epoch
 		DueDate *int64 `json:"dueDate,omitempty"`
@@ -14825,8 +14869,10 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
 			// BalanceAmount Invoice balance to be paid
-			BalanceAmount *float64  `json:"balanceAmount,omitempty"`
-			Currency      *Currency `json:"currency,omitempty"`
+			BalanceAmount *float64 `json:"balanceAmount,omitempty"`
+
+			// Currency Currency code for monetary values.
+			Currency *Currency `json:"currency,omitempty"`
 
 			// DueDate The last day to pay the invoice, in milliseconds since the epoch
 			DueDate *int64 `json:"dueDate,omitempty"`

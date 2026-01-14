@@ -57,8 +57,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"aggregation": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Possible values: `total`, `percent_total`, `percent_col`, `percent_row`",
-						MarkdownDescription: "Possible values: `total`, `percent_total`, `percent_col`, `percent_row`",
+						Description:         "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`",
+						MarkdownDescription: "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"total",
@@ -71,8 +71,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"currency": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
-						MarkdownDescription: "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+						Description:         "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+						MarkdownDescription: "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"USD",
@@ -151,8 +151,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -225,8 +225,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -278,8 +278,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 												"type": schema.StringAttribute{
 													Optional:            true,
 													Computed:            true,
-													Description:         "Possible values: `basic`, `custom`, `extended`",
-													MarkdownDescription: "Possible values: `basic`, `custom`, `extended`",
+													Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
+													MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 													Validators: []validator.String{
 														stringvalidator.OneOf(
 															"basic",
@@ -308,8 +308,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										"sort": schema.StringAttribute{
 											Optional:            true,
 											Computed:            true,
-											Description:         "Possible values: `a_to_z`, `asc`, `desc`",
-											MarkdownDescription: "Possible values: `a_to_z`, `asc`, `desc`",
+											Description:         "Sort order for ranking results.\nPossible values: `a_to_z`, `asc`, `desc`",
+											MarkdownDescription: "Sort order for ranking results.\nPossible values: `a_to_z`, `asc`, `desc`",
 											Validators: []validator.String{
 												stringvalidator.OneOf(
 													"a_to_z",
@@ -338,8 +338,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -412,8 +412,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							"type": schema.StringAttribute{
 								Optional:            true,
 								Computed:            true,
-								Description:         "Possible values: `basic`, `custom`, `extended`",
-								MarkdownDescription: "Possible values: `basic`, `custom`, `extended`",
+								Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
+								MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"basic",
@@ -446,8 +446,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									"type": schema.StringAttribute{
 										Optional:            true,
 										Computed:            true,
-										Description:         "Possible values: `basic`, `custom`, `extended`",
-										MarkdownDescription: "Possible values: `basic`, `custom`, `extended`",
+										Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
+										MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"basic",
@@ -476,8 +476,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							"operator": schema.StringAttribute{
 								Optional:            true,
 								Computed:            true,
-								Description:         "Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
-								MarkdownDescription: "Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
+								Description:         "Comparison operator for filtering metric values.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
+								MarkdownDescription: "Comparison operator for filtering metric values.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"gt",
@@ -686,8 +686,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"time_interval": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Possible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`",
-						MarkdownDescription: "Possible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`",
+						Description:         "Time interval for grouping data in the report.\nPossible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`",
+						MarkdownDescription: "Time interval for grouping data in the report.\nPossible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"hour",
@@ -705,21 +705,25 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"time_range": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"amount": schema.Int64Attribute{
-								Optional: true,
-								Computed: true,
+								Optional:            true,
+								Computed:            true,
+								Description:         "Number of time units to include in the time range.",
+								MarkdownDescription: "Number of time units to include in the time range.",
 								Validators: []validator.Int64{
 									int64validator.Between(0, 5000),
 								},
 							},
 							"include_current": schema.BoolAttribute{
-								Optional: true,
-								Computed: true,
+								Optional:            true,
+								Computed:            true,
+								Description:         "Whether to include the current time period.",
+								MarkdownDescription: "Whether to include the current time period.",
 							},
 							"mode": schema.StringAttribute{
 								Optional:            true,
 								Computed:            true,
-								Description:         "Possible values: `last`, `current`, `custom`",
-								MarkdownDescription: "Possible values: `last`, `current`, `custom`",
+								Description:         "Time range mode (last N periods, current period, or custom).\nPossible values: `last`, `current`, `custom`",
+								MarkdownDescription: "Time range mode (last N periods, current period, or custom).\nPossible values: `last`, `current`, `custom`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"last",
@@ -731,8 +735,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							"unit": schema.StringAttribute{
 								Optional:            true,
 								Computed:            true,
-								Description:         "Possible values: `day`, `week`, `month`, `quarter`, `year`",
-								MarkdownDescription: "Possible values: `day`, `week`, `month`, `quarter`, `year`",
+								Description:         "Time unit for the time range.\nPossible values: `day`, `week`, `month`, `quarter`, `year`",
+								MarkdownDescription: "Time unit for the time range.\nPossible values: `day`, `week`, `month`, `quarter`, `year`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"day",

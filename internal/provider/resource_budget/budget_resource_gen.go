@@ -96,8 +96,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"currency": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
-				MarkdownDescription: "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+				Description:         "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+				MarkdownDescription: "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"USD",
@@ -172,8 +172,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"public": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Possible values: `owner`, `editor`, `viewer`",
-				MarkdownDescription: "Possible values: `owner`, `editor`, `viewer`",
+				Description:         "Public sharing access level for the budget.\nPossible values: `owner`, `editor`, `viewer`",
+				MarkdownDescription: "Public sharing access level for the budget.\nPossible values: `owner`, `editor`, `viewer`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"owner",
@@ -276,8 +276,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 						},
 						"type": schema.StringAttribute{
 							Required:            true,
-							Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-							MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+							Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+							MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"datetime",
