@@ -137,7 +137,7 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Map response directly to state
 	data.Id = types.StringPointerValue(budgetResp.JSON201.Id)
-	diags = mapBudgetToModel(ctx, budgetResp.JSON201, &data)
+	resp.Diagnostics.Append(mapBudgetToModel(ctx, budgetResp.JSON201, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
