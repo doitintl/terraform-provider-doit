@@ -16,6 +16,10 @@ generate:
 	cd OpenAPI/2_tfplugingen-framework && go generate ./...
 	cd internal/provider/models && go generate ./...
 
+# Generate provider documentation from templates
+docs:
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate
+
 fmt:
 	gofmt -s -w -e .
 
@@ -31,4 +35,4 @@ testacc:
 testacc-run:
 	@test -f .envrc.local && . ./.envrc.local; TF_ACC=1 go test -v -timeout 120m ./internal/provider/... -run $(TEST)
 
-.PHONY: fmt lint test testacc testacc-run build install generate
+.PHONY: fmt lint test testacc testacc-run build install generate docs
