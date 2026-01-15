@@ -460,7 +460,6 @@
 						"name": "public",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Public sharing access level for the budget.",
 							"validators": [
 								{
 									"custom": {
@@ -658,13 +657,6 @@
 						}
 					},
 					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "budget ID, identifying the report\nin:path"
-						}
-					},
-					{
 						"name": "create_time",
 						"int64": {
 							"computed_optional_required": "computed",
@@ -681,6 +673,13 @@
 						"name": "forecasted_utilization",
 						"float64": {
 							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "budget ID, identifying the report\nin:path"
 						}
 					},
 					{

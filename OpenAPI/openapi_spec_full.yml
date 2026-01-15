@@ -1273,7 +1273,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Budget"
+                $ref: "#/components/schemas/BudgetAPI"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1361,7 +1361,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Budget"
+                $ref: "#/components/schemas/BudgetAPI"
         "400":
           $ref: "#/components/responses/400"
         "401":

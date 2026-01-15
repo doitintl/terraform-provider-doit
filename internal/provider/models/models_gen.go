@@ -66,13 +66,6 @@ const (
 	AnomalyItemStatusInactive AnomalyItemStatus = "inactive"
 )
 
-// Defines values for BudgetPublic.
-const (
-	BudgetPublicEditor BudgetPublic = "editor"
-	BudgetPublicOwner  BudgetPublic = "owner"
-	BudgetPublicViewer BudgetPublic = "viewer"
-)
-
 // Defines values for BudgetAPIPublic.
 const (
 	BudgetAPIPublicEditor BudgetAPIPublic = "editor"
@@ -717,8 +710,8 @@ const (
 
 // Defines values for UpdateResourcePermissionJSONBodyPublic.
 const (
-	Editor UpdateResourcePermissionJSONBodyPublic = "editor"
-	Viewer UpdateResourcePermissionJSONBodyPublic = "viewer"
+	UpdateResourcePermissionJSONBodyPublicEditor UpdateResourcePermissionJSONBodyPublic = "editor"
+	UpdateResourcePermissionJSONBodyPublicViewer UpdateResourcePermissionJSONBodyPublic = "viewer"
 )
 
 // AccountManagerListItem defines model for AccountManagerListItem.
@@ -1246,69 +1239,6 @@ type BlockingResources struct {
 	// Reports List of reports using this resource
 	Reports *[]ResourceReference `json:"reports,omitempty"`
 }
-
-// Budget defines model for Budget.
-type Budget struct {
-	// Alerts List of up to three thresholds defined as a percentage of amount
-	Alerts *[]ExternalBudgetAlert `json:"alerts,omitempty"`
-
-	// Amount Budget period amount
-	// required: true(if usePrevSpend is false)
-	Amount *float64 `json:"amount,omitempty"`
-
-	// Collaborators List of permitted users to view/edit the report
-	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
-
-	// Currency Currency code for monetary values.
-	Currency Currency `json:"currency"`
-
-	// Description Budget description
-	Description *string `json:"description,omitempty"`
-
-	// EndPeriod Fixed budget end date
-	// required: true(if budget type is fixed), in milliseconds since the epoch.
-	EndPeriod *int64 `json:"endPeriod,omitempty"`
-
-	// GrowthPerPeriod Periodical growth percentage in recurring budget
-	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
-
-	// Id budget ID, identifying the report
-	// in:path
-	Id *string `json:"id,omitempty"`
-
-	// Metric Budget metric - currently fixed to "cost"
-	Metric *string `json:"metric,omitempty"`
-
-	// Name Budget Name
-	Name string `json:"name"`
-
-	// Public Public sharing access level for the budget.
-	Public *BudgetPublic `json:"public,omitempty"`
-
-	// Recipients List of emails to notify when reaching alert threshold
-	Recipients *[]string `json:"recipients,omitempty"`
-
-	// RecipientsSlackChannels List of slack channels to notify when reaching alert threshold
-	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
-
-	// Scope List of attributions that defines the budget scope
-	Scope []string `json:"scope"`
-
-	// StartPeriod Budget start Date, in milliseconds since the epoch.
-	StartPeriod int64 `json:"startPeriod"`
-
-	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
-	TimeInterval string `json:"timeInterval"`
-
-	// Type budget type can be one of: ["fixed", "recurring"]
-	Type string `json:"type"`
-
-	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
-	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
-}
-
-// BudgetPublic Public sharing access level for the budget.
-type BudgetPublic string
 
 // BudgetAPI defines model for BudgetAPI.
 type BudgetAPI struct {
@@ -9685,7 +9615,7 @@ func (r ListBudgetsResp) StatusCode() int {
 type CreateBudgetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *Budget
+	JSON201      *BudgetAPI
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -9762,7 +9692,7 @@ func (r GetBudgetResp) StatusCode() int {
 type UpdateBudgetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Budget
+	JSON200      *BudgetAPI
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -13384,7 +13314,7 @@ func ParseCreateBudgetResp(rsp *http.Response) (*CreateBudgetResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Budget
+		var dest BudgetAPI
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13539,7 +13469,7 @@ func ParseUpdateBudgetResp(rsp *http.Response) (*UpdateBudgetResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Budget
+		var dest BudgetAPI
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

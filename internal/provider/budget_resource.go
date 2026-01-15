@@ -135,11 +135,9 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Map response to model
+	// Map response directly to state
 	data.Id = types.StringPointerValue(budgetResp.JSON201.Id)
-
-	// Read full budget details (including scopes which are missing in Create response)
-	resp.Diagnostics.Append(r.populateState(ctx, &data)...)
+	diags = mapBudgetToModel(ctx, budgetResp.JSON201, &data)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -212,9 +210,17 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Fetch updated budget from API and populate state
+	// Map response directly to state
+	if updateResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Budget",
+			"Received empty response body",
+		)
+		return
+	}
+
 	data.Id = state.Id
-	diags = r.populateState(ctx, &data)
+	diags = mapBudgetToModel(ctx, updateResp.JSON200, &data)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
