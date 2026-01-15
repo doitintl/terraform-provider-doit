@@ -460,6 +460,7 @@
 						"name": "public",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"description": "Public sharing access level for the budget.",
 							"validators": [
 								{
 									"custom": {

@@ -4177,6 +4177,7 @@ components:
           type: string
           description: Budget Name
         public:
+          description: Public sharing access level for the budget.
           type: string
           enum:
             - owner

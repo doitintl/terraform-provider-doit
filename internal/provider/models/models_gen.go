@@ -1278,7 +1278,9 @@ type BudgetAPI struct {
 	Metric *string `json:"metric,omitempty"`
 
 	// Name Budget Name
-	Name   string           `json:"name"`
+	Name string `json:"name"`
+
+	// Public Public sharing access level for the budget.
 	Public *BudgetAPIPublic `json:"public,omitempty"`
 
 	// Recipients List of emails to notify when reaching alert threshold
@@ -1312,7 +1314,7 @@ type BudgetAPI struct {
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
-// BudgetAPIPublic defines model for BudgetAPI.Public.
+// BudgetAPIPublic Public sharing access level for the budget.
 type BudgetAPIPublic string
 
 // BudgetCreateUpdateAlert defines model for BudgetCreateUpdateAlert.

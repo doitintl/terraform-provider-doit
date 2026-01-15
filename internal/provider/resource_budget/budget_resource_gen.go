@@ -172,8 +172,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"public": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Possible values: `owner`, `editor`, `viewer`",
-				MarkdownDescription: "Possible values: `owner`, `editor`, `viewer`",
+				Description:         "Public sharing access level for the budget.\nPossible values: `owner`, `editor`, `viewer`",
+				MarkdownDescription: "Public sharing access level for the budget.\nPossible values: `owner`, `editor`, `viewer`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"owner",
