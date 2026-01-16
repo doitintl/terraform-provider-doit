@@ -37,3 +37,15 @@ data_sources:
     read:
       path: /core/v1/cloudincidents/{id}
       method: GET
+  dimensions:
+    read:
+      path: /analytics/v1/dimensions
+      method: GET
+  roles:
+    read:
+      path: /iam/v1/roles
+      method: GET
+  current_user:
+    read:
+      path: /auth/v1/validate
+      method: GET

@@ -1049,6 +1049,117 @@
 			}
 		},
 		{
+			"name": "current_user",
+			"schema": {
+				"attributes": [
+					{
+						"name": "domain",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Auth endpoints",
+				"markdown_description": "Auth endpoints"
+			}
+		},
+		{
+			"name": "dimensions",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results.\nThe fields eligible for filtering are: type, label, key."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"type\",\n\"label\",\n\"key\",\n\"timestamp\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "dimensions",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "get_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Dimensions define how you can slice and group your cloud cost data for analysis.",
+				"markdown_description": "Dimensions define how you can slice and group your cloud cost data for analysis."
+			}
+		},
+		{
 			"name": "invoice",
 			"schema": {
 				"attributes": [
@@ -1732,6 +1843,63 @@
 				],
 				"description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
 				"markdown_description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters."
+			}
+		},
+		{
+			"name": "roles",
+			"schema": {
+				"attributes": [
+					{
+						"name": "roles",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "customer",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The customer ID if this is a custom role"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique ID of the role"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the role"
+										}
+									},
+									{
+										"name": "permissions",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "List of permission IDs assigned to the role"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The type of the role (preset or custom)"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Roles define permissions and access levels for users in your organization.",
+				"markdown_description": "Roles define permissions and access levels for users in your organization."
 			}
 		}
 	],
