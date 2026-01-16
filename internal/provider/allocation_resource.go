@@ -32,7 +32,7 @@ var (
 
 // NewAllocationResource creates a new allocation resource instance.
 func NewAllocationResource() resource.Resource {
-	return new(allocationResource)
+	return &allocationResource{}
 }
 
 // Configure adds the provider configured client to the resource.

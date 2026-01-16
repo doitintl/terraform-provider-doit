@@ -89,16 +89,16 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 }
 
 func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data budgetResourceModel
+	var plan budgetResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Convert model to API budget type
-	budget, diags := data.toUpdateRequest(ctx)
+	budget, diags := plan.toUpdateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -115,14 +115,9 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	if budgetResp.StatusCode() != 201 {
-		errorMsg := fmt.Sprintf("Could not create budget, status: %d", budgetResp.StatusCode())
-		if len(budgetResp.Body) > 0 {
-			errorMsg += fmt.Sprintf(", body: %s", string(budgetResp.Body))
-		}
-		// Also non-retryable error
 		resp.Diagnostics.AddError(
 			"Error Creating Budget",
-			"non-retryable error: "+errorMsg,
+			fmt.Sprintf("Could not create budget, status: %d, body: %s", budgetResp.StatusCode(), string(budgetResp.Body)),
 		)
 		return
 	}
@@ -136,54 +131,52 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	// Map response directly to state
-	data.Id = types.StringPointerValue(budgetResp.JSON201.Id)
-	resp.Diagnostics.Append(mapBudgetToModel(ctx, budgetResp.JSON201, &data)...)
+	plan.Id = types.StringPointerValue(budgetResp.JSON201.Id)
+	resp.Diagnostics.Append(mapBudgetToModel(ctx, budgetResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data budgetResourceModel
+	var state budgetResourceModel
 
 	// Read Terraform prior state
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Populate state
-	resp.Diagnostics.Append(r.populateState(ctx, &data)...)
+	resp.Diagnostics.Append(r.populateState(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data budgetResourceModel
+	var plan budgetResourceModel
 
 	// Read Terraform plan data
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Convert model to API budget type
-	budget, diags := data.toUpdateRequest(ctx)
+	budget, diags := plan.toUpdateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Set required ID for update (not present in plan data for Create, but is for Update? No, ID is in state)
-	// We need to get the ID from the state, as it might not be in the plan if it's computed?
-	// Actually, for Update, the ID is established.
+	// Get the ID from the state
 	var state budgetResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -202,10 +195,9 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	if updateResp.StatusCode() != 200 {
-		errorMsg := fmt.Sprintf("Could not update budget, status: %d", updateResp.StatusCode())
 		resp.Diagnostics.AddError(
 			"Error Updating Budget",
-			errorMsg,
+			fmt.Sprintf("Could not update budget, status: %d, body: %s", updateResp.StatusCode(), string(updateResp.Body)),
 		)
 		return
 	}
@@ -219,28 +211,28 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	data.Id = state.Id
-	diags = mapBudgetToModel(ctx, updateResp.JSON200, &data)
+	plan.Id = state.Id
+	diags = mapBudgetToModel(ctx, updateResp.JSON200, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data budgetResourceModel
+	var state budgetResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Delete budget via API
-	deleteResp, err := r.client.DeleteBudgetWithResponse(ctx, data.Id.ValueString())
+	deleteResp, err := r.client.DeleteBudgetWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Budget",
