@@ -319,6 +319,70 @@
 			}
 		},
 		{
+			"name": "annotation",
+			"schema": {
+				"attributes": [
+					{
+						"name": "content",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The content of the annotation"
+						}
+					},
+					{
+						"name": "labels",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of label IDs to associate with the annotation. Labels must already exist."
+						}
+					},
+					{
+						"name": "reports",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of report IDs associated with the annotation"
+						}
+					},
+					{
+						"name": "timestamp",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The date associated with the annotation"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the annotation was created"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the annotation"
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the annotation was last updated"
+						}
+					}
+				],
+				"description": "Annotations allow you to add notes and context to your cloud cost data.",
+				"markdown_description": "Annotations allow you to add notes and context to your cloud cost data."
+			}
+		},
+		{
 			"name": "budget",
 			"schema": {
 				"attributes": [
