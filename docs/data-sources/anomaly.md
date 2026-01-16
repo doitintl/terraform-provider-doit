@@ -15,7 +15,7 @@ Anomalies detect unexpected changes in your cloud spending patterns.
 ```terraform
 # Retrieve a cost anomaly by its ID
 data "doit_anomaly" "example" {
-  id = "5c981868-e44a-4e57-93ad-8d5c1cff91fe"
+  id = "your-anomaly-id"
 }
 
 # Output anomaly details

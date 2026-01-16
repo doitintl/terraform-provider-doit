@@ -1,6 +1,6 @@
-# Retrieve an invoice by its ID (invoice number)
+# Retrieve an invoice by its invoice number
 data "doit_invoice" "example" {
-  id = "SI176000172"
+  id = "your-invoice-number"
 }
 
 # Output invoice details

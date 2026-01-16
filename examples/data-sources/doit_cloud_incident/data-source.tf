@@ -1,6 +1,6 @@
 # Retrieve a cloud incident by its ID
 data "doit_cloud_incident" "example" {
-  id = "iWC3OgbshntQJZFHbpRT"
+  id = "your-incident-id"
 }
 
 # Output cloud incident details
