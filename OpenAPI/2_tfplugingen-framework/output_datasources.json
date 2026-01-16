@@ -1,6 +1,192 @@
 {
 	"datasources": [
 		{
+			"name": "alert",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Alert ID"
+						}
+					},
+					{
+						"name": "config",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "attributions",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "The attributions selected define the scope to monitor."
+									}
+								},
+								{
+									"name": "condition",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Currency code for monetary values."
+									}
+								},
+								{
+									"name": "data_source",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "evaluate_for_each",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+									}
+								},
+								{
+									"name": "metric",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "type",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "value",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "operator",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "scopes",
+									"list_nested": {
+										"computed_optional_required": "computed",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The field to filter on"
+													}
+												},
+												{
+													"name": "inverse",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Set to `true` to exclude the values."
+													}
+												},
+												{
+													"name": "mode",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Filter mode to apply"
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Type of dimension or filter field."
+													}
+												},
+												{
+													"name": "values",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Values to filter on"
+													}
+												}
+											]
+										},
+										"description": "The filters selected define the scope of the alert."
+									}
+								},
+								{
+									"name": "time_interval",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The time interval to evaluate the condition."
+									}
+								},
+								{
+									"name": "value",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when the alter was created (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "last_alerted",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Last time the alert was triggered (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Alert Name."
+						}
+					},
+					{
+						"name": "recipients",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of emails that will be notified when the alert is triggered."
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Last time the alert was modified (in UNIX timestamp)."
+						}
+					}
+				],
+				"description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
+				"markdown_description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions."
+			}
+		},
+		{
 			"name": "allocation",
 			"schema": {
 				"attributes": [
@@ -323,6 +509,163 @@
 			}
 		},
 		{
+			"name": "anomaly",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "anomaly id, uniquely identifying the anomaly"
+						}
+					},
+					{
+						"name": "acknowledged",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Has the anomaly been acknowledged"
+						}
+					},
+					{
+						"name": "attribution",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Attribution ID"
+						}
+					},
+					{
+						"name": "billing_account",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Billing account ID"
+						}
+					},
+					{
+						"name": "cost_of_anomaly",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "The difference between the actual cost and the maximum cost in the normal range."
+						}
+					},
+					{
+						"name": "end_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "End of the anomaly"
+						}
+					},
+					{
+						"name": "platform",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Cloud Provider name"
+						}
+					},
+					{
+						"name": "resource_data",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "cost",
+										"float64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "operation",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "For anomalies related to AWS S3"
+										}
+									},
+									{
+										"name": "resource_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "sku_description",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							},
+							"description": "Resources contributing to the anomaly"
+						}
+					},
+					{
+						"name": "scope",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Scope: Project or Account"
+						}
+					},
+					{
+						"name": "service_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Service name"
+						}
+					},
+					{
+						"name": "severity_level",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Severity level: Information, Warning or Critical"
+						}
+					},
+					{
+						"name": "start_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Usage start time of the anomaly"
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "time_frame",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Timeframe: Daily or Hourly"
+						}
+					},
+					{
+						"name": "top3skus",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "cost",
+										"float64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Anomalies detect unexpected changes in your cloud spending patterns.",
+				"markdown_description": "Anomalies detect unexpected changes in your cloud spending patterns."
+			}
+		},
+		{
 			"name": "budget",
 			"schema": {
 				"attributes": [
@@ -624,6 +967,203 @@
 				],
 				"description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
 				"markdown_description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached."
+			}
+		},
+		{
+			"name": "cloud_incident",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The unique id of a cloud incident."
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this cloud incident was created, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Detailed explanation on the cloud incident."
+						}
+					},
+					{
+						"name": "platform",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The cloud platform."
+						}
+					},
+					{
+						"name": "product",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the product affected by the cloud incident"
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The Status of the issue"
+						}
+					},
+					{
+						"name": "summary",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "A summary of the cloud incident."
+						}
+					},
+					{
+						"name": "symptoms",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Cloud incident symptoms, if available."
+						}
+					},
+					{
+						"name": "title",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Cloud incident name provided by the cloud vendor."
+						}
+					},
+					{
+						"name": "workaround",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Mitigation workaround for the cloud incident, if available."
+						}
+					}
+				],
+				"description": "Cloud Incidents track service disruptions and outages from cloud providers.",
+				"markdown_description": "Cloud Incidents track service disruptions and outages from cloud providers."
+			}
+		},
+		{
+			"name": "invoice",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Invoice number."
+						}
+					},
+					{
+						"name": "balance_amount",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Invoice balance to be paid"
+						}
+					},
+					{
+						"name": "currency",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Currency code for monetary values."
+						}
+					},
+					{
+						"name": "due_date",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The last day to pay the invoice, in milliseconds since the epoch"
+						}
+					},
+					{
+						"name": "invoice_date",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this invoice was issued, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "line_items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "currency",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "details",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "price",
+										"float64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "qty",
+										"float64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							},
+							"description": "Invoice line items."
+						}
+					},
+					{
+						"name": "platform",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Status of the invoice"
+						}
+					},
+					{
+						"name": "total_amount",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Total invoiced amount"
+						}
+					},
+					{
+						"name": "url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page."
+						}
+					}
+				],
+				"description": "Invoices provide access to your current and historical billing documents.",
+				"markdown_description": "Invoices provide access to your current and historical billing documents."
 			}
 		},
 		{

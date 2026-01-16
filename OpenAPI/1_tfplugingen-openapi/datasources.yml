@@ -21,3 +21,19 @@ data_sources:
     read:
       path: /analytics/v1/labels/{id}
       method: GET
+  alert:
+    read:
+      path: /analytics/v1/alerts/{id}
+      method: GET
+  anomaly:
+    read:
+      path: /anomalies/v1/{id}
+      method: GET
+  invoice:
+    read:
+      path: /billing/v1/invoices/{id}
+      method: GET
+  cloud_incident:
+    read:
+      path: /core/v1/cloudincidents/{id}
+      method: GET
