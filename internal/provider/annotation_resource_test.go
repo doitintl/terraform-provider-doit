@@ -1,0 +1,167 @@
+package provider_test
+
+import (
+	"fmt"
+	"testing"
+	"time"
+
+	"math/rand/v2"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+)
+
+func TestAccAnnotation(t *testing.T) {
+	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Test Annotation Create
+			{
+				Config: testAccAnnotation(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_annotation.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.this",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(fmt.Sprintf("Test annotation content %d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_annotation.this",
+						tfjsonpath.New("timestamp"),
+						knownvalue.StringExact(timestamp)),
+				},
+			},
+			// Test Annotation Update (change content)
+			{
+				Config: testAccAnnotationUpdate(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_annotation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.this",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(fmt.Sprintf("Updated annotation content %d", n))),
+				},
+			},
+		},
+	})
+}
+
+func TestAccAnnotation_Import(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnnotation(n, timestamp),
+			},
+			{
+				ResourceName:      "doit_annotation.this",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccAnnotation(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_annotation" "this" {
+  content   = "Test annotation content %d"
+  timestamp = "%s"
+}
+`, i, timestamp)
+}
+
+func testAccAnnotationUpdate(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_annotation" "this" {
+  content   = "Updated annotation content %d"
+  timestamp = "%s"
+}
+`, i, timestamp)
+}
+
+func TestAccAnnotation_WithReport(t *testing.T) {
+	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Create annotation with associated report
+			{
+				Config: testAccAnnotationWithReport(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.with_report",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(fmt.Sprintf("Annotation with report %d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_annotation.with_report",
+						tfjsonpath.New("reports"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+		},
+	})
+}
+
+func testAccAnnotationWithReport(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-report-for-annotation-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+
+resource "doit_annotation" "with_report" {
+  content   = "Annotation with report %d"
+  timestamp = "%s"
+  reports   = [doit_report.test.id]
+}
+`, i, i, timestamp)
+}
