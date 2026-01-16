@@ -1,6 +1,55 @@
 {
 	"datasources": [
 		{
+			"name": "account_team",
+			"schema": {
+				"attributes": [
+					{
+						"name": "account_managers",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "calendly_link",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "email",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "role",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Account Team provides access to your DoIT account representatives.",
+				"markdown_description": "Account Team provides access to your DoIT account representatives."
+			}
+		},
+		{
 			"name": "alert",
 			"schema": {
 				"attributes": [
@@ -1900,6 +1949,116 @@
 				],
 				"description": "Roles define permissions and access levels for users in your organization.",
 				"markdown_description": "Roles define permissions and access levels for users in your organization."
+			}
+		},
+		{
+			"name": "users",
+			"schema": {
+				"attributes": [
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The number of returned records."
+						}
+					},
+					{
+						"name": "users",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "display_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The user's display name"
+										}
+									},
+									{
+										"name": "email",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The email address of the user"
+										}
+									},
+									{
+										"name": "first_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The user's first name"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique id of the user"
+										}
+									},
+									{
+										"name": "job_function",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The user's job function"
+										}
+									},
+									{
+										"name": "language",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The user's preferred language"
+										}
+									},
+									{
+										"name": "last_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The user's last name"
+										}
+									},
+									{
+										"name": "organization_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The id of the user's organization"
+										}
+									},
+									{
+										"name": "phone",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The user's country code (e.g., +44)"
+										}
+									},
+									{
+										"name": "phone_extension",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The user's phone extension"
+										}
+									},
+									{
+										"name": "role_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The id of the user's role"
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The status of the user (active or invited)"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Users manage the people who have access to your DoIT organization.",
+				"markdown_description": "Users manage the people who have access to your DoIT organization."
 			}
 		}
 	],

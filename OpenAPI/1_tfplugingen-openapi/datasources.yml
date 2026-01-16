@@ -49,3 +49,11 @@ data_sources:
     read:
       path: /auth/v1/validate
       method: GET
+  account_team:
+    read:
+      path: /customers/v1/accountTeam
+      method: GET
+  users:
+    read:
+      path: /iam/v1/users
+      method: GET

@@ -209,6 +209,8 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewDimensionsDataSource,
 		NewRolesDataSource,
 		NewCurrentUserDataSource,
+		NewAccountTeamDataSource,
+		NewUsersDataSource,
 	}
 }
 
