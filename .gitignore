@@ -42,3 +42,4 @@ tftest.sh
 GEMINI.md
 .direnv/
 .envrc.local
+.agent/
