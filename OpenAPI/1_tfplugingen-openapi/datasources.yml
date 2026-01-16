@@ -57,3 +57,20 @@ data_sources:
     read:
       path: /iam/v1/users
       method: GET
+  # List data sources
+  budgets:
+    read:
+      path: /analytics/v1/budgets
+      method: GET
+  allocations:
+    read:
+      path: /analytics/v1/allocations
+      method: GET
+  annotations:
+    read:
+      path: /analytics/v1/annotations
+      method: GET
+  labels:
+    read:
+      path: /analytics/v1/labels
+      method: GET

@@ -479,6 +479,154 @@
 			}
 		},
 		{
+			"name": "allocations",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"id\",\n\"name\",\n\"owner\",\n\"description\",\n\"type\",\n\"createTime\",\n\"updateTime\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "allocations",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "allocation_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Type of allocation (single or group)"
+										}
+									},
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when the allocation was created (in UNIX timestamp)."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Allocation description"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Allocation ID"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Allocation name"
+										}
+									},
+									{
+										"name": "owner",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Allocation owner"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Type of allocation (preset or custom)"
+										}
+									},
+									{
+										"name": "update_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Last time the allocation was modified (in UNIX timestamp)."
+										}
+									},
+									{
+										"name": "url_ui",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to view the allocation in DoiT Cloud Navigator."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of allocations in the result set"
+						}
+					}
+				],
+				"description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+				"markdown_description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more."
+			}
+		},
+		{
 			"name": "annotation",
 			"schema": {
 				"attributes": [
@@ -550,6 +698,161 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "The time when the annotation was last updated"
+						}
+					}
+				],
+				"description": "Annotations allow you to add notes and context to your cloud cost data.",
+				"markdown_description": "Annotations allow you to add notes and context to your cloud cost data."
+			}
+		},
+		{
+			"name": "annotations",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results.\nValid fields: **content**, **timestamp**, **labels**."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"id\",\n\"content\",\n\"timestamp\",\n\"timeCreated\",\n\"timeModified\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "annotations",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "content",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The content of the annotation"
+										}
+									},
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the annotation was created"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique identifier of the annotation"
+										}
+									},
+									{
+										"name": "labels",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The unique identifier of the label"
+														}
+													},
+													{
+														"name": "name",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The name of the label"
+														}
+													}
+												]
+											},
+											"description": "List of labels associated with the annotation"
+										}
+									},
+									{
+										"name": "reports",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "List of report IDs associated with the annotation"
+										}
+									},
+									{
+										"name": "timestamp",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The date associated with the annotation"
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the annotation was last updated"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of annotations in the result set"
 						}
 					}
 				],
@@ -1019,6 +1322,228 @@
 			}
 		},
 		{
+			"name": "budgets",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results of the request. The syntax is \"key:[\u003cvalue\u003e]\".\nAvailable keys: owner, lastModified in ms (\u003elasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\"."
+						}
+					},
+					{
+						"name": "min_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "max_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "budgets",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "alert_thresholds",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "amount",
+														"float64": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "percentage",
+														"float64": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "amount",
+										"float64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "budget_name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "currency",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "current_utilization",
+										"float64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "end_period",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "forecasted_utilization_date",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "owner",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "scope",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"deprecation_message": "This attribute is deprecated.",
+											"description": "List of attributions that define the budget scope."
+										}
+									},
+									{
+										"name": "scopes",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The field to filter on"
+														}
+													},
+													{
+														"name": "inverse",
+														"bool": {
+															"computed_optional_required": "computed",
+															"description": "Set to `true` to exclude the values."
+														}
+													},
+													{
+														"name": "mode",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Filter mode to apply"
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Type of dimension or filter field."
+														}
+													},
+													{
+														"name": "values",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															},
+															"description": "Values to filter on"
+														}
+													}
+												]
+											},
+											"description": "The filters selected define the scope of the budget."
+										}
+									},
+									{
+										"name": "start_period",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "time_interval",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "update_time",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "url",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							},
+							"description": "Array of Budgets"
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Budgets rows count"
+						}
+					}
+				],
+				"description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+				"markdown_description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached."
+			}
+		},
+		{
 			"name": "cloud_incident",
 			"schema": {
 				"attributes": [
@@ -1370,6 +1895,133 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "The time when the label was last updated"
+						}
+					}
+				],
+				"description": "Labels help you organize and categorize your cloud resources.",
+				"markdown_description": "Labels help you organize and categorize your cloud resources."
+			}
+		},
+		{
+			"name": "labels",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results.\nValid fields: **name**, **type**."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"id\",\n\"name\",\n\"type\",\n\"createTime\",\n\"updateTime\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "labels",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The color of the label"
+										}
+									},
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the label was created"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique identifier of the label"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the label"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The type of the label (custom or preset)"
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the label was last updated"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of labels in the result set"
 						}
 					}
 				],
