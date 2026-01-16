@@ -196,7 +196,13 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 // DataSources defines the data sources implemented in the provider.
 func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		NewAllocationDataSource,
+		NewBudgetDataSource,
+		NewReportDataSource,
+		NewAnnotationDataSource,
+		NewLabelDataSource,
+	}
 }
 
 // Resources defines the resources implemented in the provider.

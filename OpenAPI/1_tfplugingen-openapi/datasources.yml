@@ -1,0 +1,23 @@
+provider:
+  name: doit
+data_sources:
+  allocation:
+    read:
+      path: /analytics/v1/allocations/{id}
+      method: GET
+  budget:
+    read:
+      path: /analytics/v1/budgets/{id}
+      method: GET
+  report:
+    read:
+      path: /analytics/v1/reports/{id}/config
+      method: GET
+  annotation:
+    read:
+      path: /analytics/v1/annotations/{id}
+      method: GET
+  label:
+    read:
+      path: /analytics/v1/labels/{id}
+      method: GET
