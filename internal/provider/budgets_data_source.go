@@ -66,14 +66,6 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown() {
-		maxResults := data.MaxResults.ValueString()
-		params.MaxResults = &maxResults
-	}
-	if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
-		pageToken := data.PageToken.ValueString()
-		params.PageToken = &pageToken
-	}
 	if !data.MinCreationTime.IsNull() && !data.MinCreationTime.IsUnknown() {
 		minTime := data.MinCreationTime.ValueString()
 		params.MinCreationTime = &minTime
@@ -83,43 +75,60 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		params.MaxCreationTime = &maxTime
 	}
 
-	apiResp, err := d.client.ListBudgetsWithResponse(ctx, params)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Budgets",
-			fmt.Sprintf("Unable to read budgets: %v", err),
-		)
-		return
+	// Auto-paginate: fetch all pages
+	var allBudgets []models.BudgetListItem
+	var totalRowCount int64
+
+	for {
+		apiResp, err := d.client.ListBudgetsWithResponse(ctx, params)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Budgets",
+				fmt.Sprintf("Unable to read budgets: %v", err),
+			)
+			return
+		}
+
+		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Budgets",
+				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			)
+			return
+		}
+
+		result := apiResp.JSON200
+
+		// Accumulate budgets
+		if result.Budgets != nil {
+			allBudgets = append(allBudgets, *result.Budgets...)
+		}
+
+		// Track total from first page (API returns total count)
+		if result.RowCount != nil {
+			totalRowCount = *result.RowCount
+		}
+
+		// Check for next page
+		if result.PageToken == nil || *result.PageToken == "" {
+			break
+		}
+		params.PageToken = result.PageToken
 	}
 
-	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Budgets",
-			fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-		)
-		return
-	}
+	// Set row count to total accumulated
+	data.RowCount = types.Int64Value(int64(len(allBudgets)))
 
-	result := apiResp.JSON200
+	// Page token is always null after auto-pagination (we fetched everything)
+	data.PageToken = types.StringNull()
 
-	// Map row count
-	if result.RowCount != nil {
-		data.RowCount = types.Int64Value(*result.RowCount)
-	} else {
-		data.RowCount = types.Int64Null()
-	}
-
-	// Map page token
-	if result.PageToken != nil {
-		data.PageToken = types.StringValue(*result.PageToken)
-	} else if data.PageToken.IsUnknown() {
-		data.PageToken = types.StringNull()
-	}
+	// Ignore max_results input - we fetch all
+	data.MaxResults = types.StringNull()
 
 	// Map budgets list
-	if result.Budgets != nil && len(*result.Budgets) > 0 {
-		budgetVals := make([]datasource_budgets.BudgetsValue, 0, len(*result.Budgets))
-		for _, budget := range *result.Budgets {
+	if len(allBudgets) > 0 {
+		budgetVals := make([]datasource_budgets.BudgetsValue, 0, len(allBudgets))
+		for _, budget := range allBudgets {
 			// Handle nested alert_thresholds
 			alertThresholdsList, diags := mapAlertThresholds(ctx, budget.AlertThresholds)
 			resp.Diagnostics.Append(diags...)
@@ -177,15 +186,15 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if data.Filter.IsUnknown() {
 		data.Filter = types.StringNull()
 	}
-	if data.MaxResults.IsUnknown() {
-		data.MaxResults = types.StringNull()
-	}
 	if data.MinCreationTime.IsUnknown() {
 		data.MinCreationTime = types.StringNull()
 	}
 	if data.MaxCreationTime.IsUnknown() {
 		data.MaxCreationTime = types.StringNull()
 	}
+
+	// Suppress unused variable warning
+	_ = totalRowCount
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -65,14 +65,6 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown() {
-		maxResults := data.MaxResults.ValueString()
-		params.MaxResults = &maxResults
-	}
-	if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
-		pageToken := data.PageToken.ValueString()
-		params.PageToken = &pageToken
-	}
 	if !data.SortBy.IsNull() && !data.SortBy.IsUnknown() {
 		sortBy := models.ListLabelsParamsSortBy(data.SortBy.ValueString())
 		params.SortBy = &sortBy
@@ -82,62 +74,73 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		params.SortOrder = &sortOrder
 	}
 
-	apiResp, err := d.client.ListLabelsWithResponse(ctx, params)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Labels",
-			fmt.Sprintf("Unable to read labels: %v", err),
-		)
-		return
+	// Auto-paginate: fetch all pages
+	var allLabels []models.LabelListItem
+
+	for {
+		apiResp, err := d.client.ListLabelsWithResponse(ctx, params)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Labels",
+				fmt.Sprintf("Unable to read labels: %v", err),
+			)
+			return
+		}
+
+		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Labels",
+				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			)
+			return
+		}
+
+		result := apiResp.JSON200
+
+		// Accumulate labels
+		if result.Labels != nil {
+			allLabels = append(allLabels, *result.Labels...)
+		}
+
+		// Check for next page
+		if result.PageToken == nil || *result.PageToken == "" {
+			break
+		}
+		params.PageToken = result.PageToken
 	}
 
-	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Labels",
-			fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-		)
-		return
-	}
+	// Set row count to total accumulated
+	data.RowCount = types.Int64Value(int64(len(allLabels)))
 
-	result := apiResp.JSON200
+	// Page token is always null after auto-pagination
+	data.PageToken = types.StringNull()
 
-	// Map row count
-	if result.RowCount != nil {
-		data.RowCount = types.Int64Value(int64(*result.RowCount))
-	} else {
-		data.RowCount = types.Int64Null()
-	}
-
-	// Map page token
-	if result.PageToken != nil {
-		data.PageToken = types.StringValue(*result.PageToken)
-	} else if data.PageToken.IsUnknown() {
-		data.PageToken = types.StringNull()
-	}
+	// Ignore max_results input
+	data.MaxResults = types.StringNull()
 
 	// Map labels list
-	if result.Labels != nil && len(*result.Labels) > 0 {
-		labelVals := make([]datasource_labels.LabelsValue, 0, len(*result.Labels))
-		for _, label := range *result.Labels {
-			// Handle time.Time to string conversion
-			var createTimeVal, updateTimeVal types.String
-			if label.CreateTime != nil {
-				createTimeVal = types.StringValue(label.CreateTime.Format("2006-01-02T15:04:05Z"))
-			} else {
-				createTimeVal = types.StringNull()
-			}
-			if label.UpdateTime != nil {
-				updateTimeVal = types.StringValue(label.UpdateTime.Format("2006-01-02T15:04:05Z"))
-			} else {
-				updateTimeVal = types.StringNull()
-			}
-
+	if len(allLabels) > 0 {
+		labelVals := make([]datasource_labels.LabelsValue, 0, len(allLabels))
+		for _, label := range allLabels {
 			// Handle optional Type enum
 			var typeVal types.String
 			if label.Type != nil {
 				typeVal = types.StringValue(string(*label.Type))
 			} else {
 				typeVal = types.StringNull()
+			}
+
+			// Handle time.Time to string conversion
+			var createTimeVal, updateTimeVal types.String
+			if label.CreateTime != nil {
+				createTimeVal = types.StringValue(label.CreateTime.Format("2006-01-02T15:04:05Z07:00"))
+			} else {
+				createTimeVal = types.StringNull()
+			}
+			if label.UpdateTime != nil {
+				updateTimeVal = types.StringValue(label.UpdateTime.Format("2006-01-02T15:04:05Z07:00"))
+			} else {
+				updateTimeVal = types.StringNull()
 			}
 
 			labelVal, diags := datasource_labels.NewLabelsValue(
@@ -165,9 +168,6 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	// Set optional filter params to null if they were unknown
 	if data.Filter.IsUnknown() {
 		data.Filter = types.StringNull()
-	}
-	if data.MaxResults.IsUnknown() {
-		data.MaxResults = types.StringNull()
 	}
 	if data.SortBy.IsUnknown() {
 		data.SortBy = types.StringNull()

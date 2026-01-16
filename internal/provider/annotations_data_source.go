@@ -66,14 +66,6 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown() {
-		maxResults := data.MaxResults.ValueString()
-		params.MaxResults = &maxResults
-	}
-	if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
-		pageToken := data.PageToken.ValueString()
-		params.PageToken = &pageToken
-	}
 	if !data.SortBy.IsNull() && !data.SortBy.IsUnknown() {
 		sortBy := models.ListAnnotationsParamsSortBy(data.SortBy.ValueString())
 		params.SortBy = &sortBy
@@ -83,87 +75,98 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		params.SortOrder = &sortOrder
 	}
 
-	apiResp, err := d.client.ListAnnotationsWithResponse(ctx, params)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Annotations",
-			fmt.Sprintf("Unable to read annotations: %v", err),
-		)
-		return
+	// Auto-paginate: fetch all pages
+	var allAnnotations []models.AnnotationListItem
+
+	for {
+		apiResp, err := d.client.ListAnnotationsWithResponse(ctx, params)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Annotations",
+				fmt.Sprintf("Unable to read annotations: %v", err),
+			)
+			return
+		}
+
+		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Annotations",
+				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			)
+			return
+		}
+
+		result := apiResp.JSON200
+
+		// Accumulate annotations
+		if result.Annotations != nil {
+			allAnnotations = append(allAnnotations, *result.Annotations...)
+		}
+
+		// Check for next page
+		if result.PageToken == nil || *result.PageToken == "" {
+			break
+		}
+		params.PageToken = result.PageToken
 	}
 
-	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Annotations",
-			fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-		)
-		return
-	}
+	// Set row count to total accumulated
+	data.RowCount = types.Int64Value(int64(len(allAnnotations)))
 
-	result := apiResp.JSON200
+	// Page token is always null after auto-pagination
+	data.PageToken = types.StringNull()
 
-	// Map row count
-	if result.RowCount != nil {
-		data.RowCount = types.Int64Value(int64(*result.RowCount))
-	} else {
-		data.RowCount = types.Int64Null()
-	}
-
-	// Map page token
-	if result.PageToken != nil {
-		data.PageToken = types.StringValue(*result.PageToken)
-	} else if data.PageToken.IsUnknown() {
-		data.PageToken = types.StringNull()
-	}
+	// Ignore max_results input
+	data.MaxResults = types.StringNull()
 
 	// Map annotations list
-	if result.Annotations != nil && len(*result.Annotations) > 0 {
-		annotationVals := make([]datasource_annotations.AnnotationsValue, 0, len(*result.Annotations))
-		for _, ann := range *result.Annotations {
-			// Handle time.Time to string conversion
-			var createTimeVal, updateTimeVal types.String
-			if ann.CreateTime != nil {
-				createTimeVal = types.StringValue(ann.CreateTime.Format("2006-01-02T15:04:05Z"))
-			} else {
-				createTimeVal = types.StringNull()
-			}
-			if ann.UpdateTime != nil {
-				updateTimeVal = types.StringValue(ann.UpdateTime.Format("2006-01-02T15:04:05Z"))
-			} else {
-				updateTimeVal = types.StringNull()
-			}
+	if len(allAnnotations) > 0 {
+		annotationVals := make([]datasource_annotations.AnnotationsValue, 0, len(allAnnotations))
+		for _, annotation := range allAnnotations {
+			// Map nested labels
+			labelsList := mapAnnotationLabels(ctx, annotation.Labels, &resp.Diagnostics)
 
-			// Handle labels list
-			labelsList, diags := mapAnnotationLabels(ctx, ann.Labels)
-			resp.Diagnostics.Append(diags...)
-
-			// Handle reports list ([]string)
+			// Handle reports list
 			var reportsList types.List
-			if ann.Reports != nil {
-				reportVals := make([]attr.Value, 0, len(*ann.Reports))
-				for _, r := range *ann.Reports {
+			if annotation.Reports != nil {
+				reportVals := make([]attr.Value, 0, len(*annotation.Reports))
+				for _, r := range *annotation.Reports {
 					reportVals = append(reportVals, types.StringValue(r))
 				}
+				var diags diag.Diagnostics
 				reportsList, diags = types.ListValue(types.StringType, reportVals)
 				resp.Diagnostics.Append(diags...)
 			} else {
 				reportsList = types.ListNull(types.StringType)
 			}
 
-			annVal, diags := datasource_annotations.NewAnnotationsValue(
+			// Handle time.Time to string conversion
+			var createTimeVal, updateTimeVal types.String
+			if annotation.CreateTime != nil {
+				createTimeVal = types.StringValue(annotation.CreateTime.Format("2006-01-02T15:04:05Z07:00"))
+			} else {
+				createTimeVal = types.StringNull()
+			}
+			if annotation.UpdateTime != nil {
+				updateTimeVal = types.StringValue(annotation.UpdateTime.Format("2006-01-02T15:04:05Z07:00"))
+			} else {
+				updateTimeVal = types.StringNull()
+			}
+
+			annotationVal, diags := datasource_annotations.NewAnnotationsValue(
 				datasource_annotations.AnnotationsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"id":          types.StringValue(ann.Id),
-					"content":     types.StringValue(ann.Content),
-					"timestamp":   types.StringValue(ann.Timestamp.Format("2006-01-02T15:04:05Z")),
-					"create_time": createTimeVal,
-					"update_time": updateTimeVal,
+					"id":          types.StringValue(annotation.Id),
+					"content":     types.StringValue(annotation.Content),
+					"timestamp":   types.StringValue(annotation.Timestamp.Format("2006-01-02T15:04:05Z07:00")),
 					"labels":      labelsList,
 					"reports":     reportsList,
+					"create_time": createTimeVal,
+					"update_time": updateTimeVal,
 				},
 			)
 			resp.Diagnostics.Append(diags...)
-			annotationVals = append(annotationVals, annVal)
+			annotationVals = append(annotationVals, annotationVal)
 		}
 
 		annotationList, diags := types.ListValueFrom(ctx, datasource_annotations.AnnotationsValue{}.Type(ctx), annotationVals)
@@ -177,9 +180,6 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if data.Filter.IsUnknown() {
 		data.Filter = types.StringNull()
 	}
-	if data.MaxResults.IsUnknown() {
-		data.MaxResults = types.StringNull()
-	}
 	if data.SortBy.IsUnknown() {
 		data.SortBy = types.StringNull()
 	}
@@ -190,25 +190,26 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapAnnotationLabels(ctx context.Context, labels *[]models.LabelInfo) (types.List, diag.Diagnostics) {
+// mapAnnotationLabels maps API LabelInfo slice to Terraform list.
+func mapAnnotationLabels(ctx context.Context, labels *[]models.LabelInfo, diagnostics *diag.Diagnostics) types.List {
 	if labels == nil || len(*labels) == 0 {
-		return types.ListNull(datasource_annotations.LabelsValue{}.Type(ctx)), nil
+		return types.ListNull(datasource_annotations.LabelsValue{}.Type(ctx))
 	}
 
 	vals := make([]datasource_annotations.LabelsValue, 0, len(*labels))
-	for _, l := range *labels {
-		val, diags := datasource_annotations.NewLabelsValue(
+	for _, label := range *labels {
+		labelVal, diags := datasource_annotations.NewLabelsValue(
 			datasource_annotations.LabelsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
-				"id":   types.StringValue(l.Id),
-				"name": types.StringValue(l.Name),
+				"id":   types.StringValue(label.Id),
+				"name": types.StringValue(label.Name),
 			},
 		)
-		if diags.HasError() {
-			return types.ListNull(datasource_annotations.LabelsValue{}.Type(ctx)), diags
-		}
-		vals = append(vals, val)
+		diagnostics.Append(diags...)
+		vals = append(vals, labelVal)
 	}
 
-	return types.ListValueFrom(ctx, datasource_annotations.LabelsValue{}.Type(ctx), vals)
+	list, diags := types.ListValueFrom(ctx, datasource_annotations.LabelsValue{}.Type(ctx), vals)
+	diagnostics.Append(diags...)
+	return list
 }

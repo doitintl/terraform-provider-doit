@@ -74,3 +74,15 @@ data_sources:
     read:
       path: /analytics/v1/labels
       method: GET
+  reports:
+    read:
+      path: /analytics/v1/reports
+      method: GET
+  invoices:
+    read:
+      path: /billing/v1/invoices
+      method: GET
+  anomalies:
+    read:
+      path: /anomalies/v1
+      method: GET

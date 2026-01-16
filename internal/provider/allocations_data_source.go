@@ -65,53 +65,56 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown() {
-		maxResults := data.MaxResults.ValueString()
-		params.MaxResults = &maxResults
-	}
-	if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
-		pageToken := data.PageToken.ValueString()
-		params.PageToken = &pageToken
+
+	// Auto-paginate: fetch all pages
+	var allAllocations []models.AllocationListItem
+
+	for {
+		apiResp, err := d.client.ListAllocationsWithResponse(ctx, params)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Allocations",
+				fmt.Sprintf("Unable to read allocations: %v", err),
+			)
+			return
+		}
+
+		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Allocations",
+				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			)
+			return
+		}
+
+		result := apiResp.JSON200
+
+		// Accumulate allocations
+		if result.Allocations != nil {
+			allAllocations = append(allAllocations, *result.Allocations...)
+		}
+
+		// Check for next page
+		if result.PageToken == nil || *result.PageToken == "" {
+			break
+		}
+		params.PageToken = result.PageToken
 	}
 
-	apiResp, err := d.client.ListAllocationsWithResponse(ctx, params)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Allocations",
-			fmt.Sprintf("Unable to read allocations: %v", err),
-		)
-		return
-	}
+	// Set row count to total accumulated
+	data.RowCount = types.Int64Value(int64(len(allAllocations)))
 
-	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Allocations",
-			fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-		)
-		return
-	}
+	// Page token is always null after auto-pagination
+	data.PageToken = types.StringNull()
 
-	result := apiResp.JSON200
-
-	// Map row count
-	if result.RowCount != nil {
-		data.RowCount = types.Int64Value(int64(*result.RowCount))
-	} else {
-		data.RowCount = types.Int64Null()
-	}
-
-	// Map page token
-	if result.PageToken != nil {
-		data.PageToken = types.StringValue(*result.PageToken)
-	} else if data.PageToken.IsUnknown() {
-		data.PageToken = types.StringNull()
-	}
+	// Ignore max_results input
+	data.MaxResults = types.StringNull()
 
 	// Map allocations list
-	if result.Allocations != nil && len(*result.Allocations) > 0 {
-		allocationVals := make([]datasource_allocations.AllocationsValue, 0, len(*result.Allocations))
-		for _, alloc := range *result.Allocations {
-			// Handle enum type
+	if len(allAllocations) > 0 {
+		allocationVals := make([]datasource_allocations.AllocationsValue, 0, len(allAllocations))
+		for _, alloc := range allAllocations {
+			// Handle optional AllocationType enum
 			var allocTypeVal types.String
 			if alloc.AllocationType != nil {
 				allocTypeVal = types.StringValue(string(*alloc.AllocationType))
@@ -147,9 +150,6 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	// Set optional filter params to null if they were unknown
 	if data.Filter.IsUnknown() {
 		data.Filter = types.StringNull()
-	}
-	if data.MaxResults.IsUnknown() {
-		data.MaxResults = types.StringNull()
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
