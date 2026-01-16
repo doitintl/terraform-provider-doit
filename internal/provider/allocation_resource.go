@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"terraform-provider-doit/internal/provider/models"
-	"terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -32,7 +32,7 @@ var (
 
 // NewAllocationResource creates a new allocation resource instance.
 func NewAllocationResource() resource.Resource {
-	return new(allocationResource)
+	return &allocationResource{}
 }
 
 // Configure adds the provider configured client to the resource.
@@ -41,16 +41,16 @@ func (r *allocationResource) Configure(_ context.Context, req resource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*Clients)
+	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *Clients, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client.NewClient
+	r.client = client
 }
 
 func (r *allocationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -231,13 +231,12 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	if deleteResp.StatusCode() != 200 {
+	// Treat 404 as success - resource is already gone (deleted outside Terraform)
+	if deleteResp.StatusCode() != 200 && deleteResp.StatusCode() != 204 && deleteResp.StatusCode() != 404 {
 		resp.Diagnostics.AddError(
 			"Error Deleting DoiT Allocation",
 			fmt.Sprintf("Could not delete allocation, status: %d, body: %s", deleteResp.StatusCode(), string(deleteResp.Body)),
 		)
 		return
 	}
-
-	resp.State.RemoveResource(ctx)
 }

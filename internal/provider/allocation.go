@@ -4,10 +4,9 @@ package provider
 import (
 	"context"
 	"log"
-	"strings"
 
-	"terraform-provider-doit/internal/provider/models"
-	"terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -143,16 +142,16 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 	// Get refreshed allocation value from DoiT using the ID from the state.
 	httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			// The resource was deleted. This is an edge case for create,
-			// but necessary for the read function.
-			state.Id = types.StringNull()
-			return
-		}
 		diags.AddError(
 			"Error Reading Doit Console Allocation",
 			"Could not read Doit Console Allocation ID "+state.Id.ValueString()+": "+err.Error(),
 		)
+		return
+	}
+
+	// Handle externally deleted resource - remove from state
+	if httpResp.StatusCode() == 404 {
+		state.Id = types.StringNull()
 		return
 	}
 

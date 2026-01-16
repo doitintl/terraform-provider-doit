@@ -6,9 +6,8 @@ import (
 	"log"
 	"time"
 
-	"terraform-provider-doit/internal/provider/models"
-	"terraform-provider-doit/internal/provider/resource_report"
-
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -22,10 +21,10 @@ func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, st
 		}
 	}
 
+	// Handle externally deleted resource - mark state for removal
 	if reportResp.StatusCode() == 404 {
-		return diag.Diagnostics{
-			diag.NewErrorDiagnostic("Report not found", fmt.Sprintf("Report with id %s not found", id)),
-		}
+		state.Id = types.StringNull()
+		return nil
 	}
 
 	if reportResp.StatusCode() != 200 {

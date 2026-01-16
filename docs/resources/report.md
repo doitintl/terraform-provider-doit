@@ -3,12 +3,12 @@
 page_title: "doit_report Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Reports allow you to analyze and visualize your cloud costs, usage, and savings.
+  Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
 ---
 
 # doit_report (Resource)
 
-Reports allow you to analyze and visualize your cloud costs, usage, and savings.
+Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
 
 ## Example Usage
 
@@ -93,8 +93,10 @@ resource "doit_report" "my-report" {
 Optional:
 
 - `advanced_analysis` (Attributes) Advanced analysis options. Each of these can be set independently (see [below for nested schema](#nestedatt--config--advanced_analysis))
-- `aggregation` (String) Possible values: `total`, `percent_total`, `percent_col`, `percent_row`
-- `currency` (String) Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
+- `aggregation` (String) How to aggregate data values in the report.
+Possible values: `total`, `percent_total`, `percent_col`, `percent_row`
+- `currency` (String) Currency code for monetary values.
+Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
 Possible values: `billing`, `bqlens`, `billing_datahub`, `kubernetes_utilization`
@@ -115,7 +117,8 @@ Possible values: `asc`, `desc`, `a_to_z`
 - `sort_groups` (String) This option has no impact when reading reports via API.
 Possible values: `asc`, `desc`, `a_to_z`
 - `splits` (Attributes List) The splits to use in the report. (see [below for nested schema](#nestedatt--config--splits))
-- `time_interval` (String) Possible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`
+- `time_interval` (String) Time interval for grouping data in the report.
+Possible values: `hour`, `day`, `dayCumSum`, `week`, `isoweek`, `month`, `quarter`, `year`, `week_day`
 - `time_range` (Attributes) Specify a predefined or custom time range for the report.
 For example, to specify a custom time range of "last 2 days", set the mode to `last`, the amount to `2`, and the unit to `day`. If `includeCurrent` is `true`, the range will be yesterday and today; otherwise, the range will be yesterday and the day before yesterday.
 If "custom" type is specified, you need to provide a custom time range in the `customTimeRange` field. (see [below for nested schema](#nestedatt--config--time_range))
@@ -146,7 +149,8 @@ Optional:
 Optional:
 
 - `id` (String) The field to apply to the dimension.
-- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+- `type` (String) Type of dimension or filter field.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 
 <a id="nestedatt--config--filters"></a>
@@ -157,7 +161,8 @@ Required:
 - `id` (String) The field to filter on
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+- `type` (String) Type of dimension or filter field.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 Optional:
 
@@ -172,7 +177,8 @@ Optional:
 
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
-- `type` (String) Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+- `type` (String) Type of dimension or filter field.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
@@ -180,7 +186,8 @@ Optional:
 Optional:
 
 - `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--group--limit--metric))
-- `sort` (String) Possible values: `a_to_z`, `asc`, `desc`
+- `sort` (String) Sort order for ranking results.
+Possible values: `a_to_z`, `asc`, `desc`
 - `value` (Number) The number of items to show
 
 <a id="nestedatt--config--group--limit--metric"></a>
@@ -188,7 +195,8 @@ Optional:
 
 Optional:
 
-- `type` (String) Possible values: `basic`, `custom`, `extended`
+- `type` (String) Type of metric to use.
+Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom id.
 
@@ -200,7 +208,8 @@ If using custom metrics, the value must refer to an existing custom id.
 
 Optional:
 
-- `type` (String) Possible values: `basic`, `custom`, `extended`
+- `type` (String) Type of metric to use.
+Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom id.
 
@@ -211,7 +220,8 @@ If using custom metrics, the value must refer to an existing custom id.
 Optional:
 
 - `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
-- `operator` (String) Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
+- `operator` (String) Comparison operator for filtering metric values.
+Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)
 
 <a id="nestedatt--config--metric_filter--metric"></a>
@@ -219,7 +229,8 @@ Optional:
 
 Optional:
 
-- `type` (String) Possible values: `basic`, `custom`, `extended`
+- `type` (String) Type of metric to use.
+Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom id.
 
@@ -268,7 +279,9 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `amount` (Number)
-- `include_current` (Boolean)
-- `mode` (String) Possible values: `last`, `current`, `custom`
-- `unit` (String) Possible values: `day`, `week`, `month`, `quarter`, `year`
+- `amount` (Number) Number of time units to include in the time range.
+- `include_current` (Boolean) Whether to include the current time period.
+- `mode` (String) Time range mode (last N periods, current period, or custom).
+Possible values: `last`, `current`, `custom`
+- `unit` (String) Time unit for the time range.
+Possible values: `day`, `week`, `month`, `quarter`, `year`

@@ -5,8 +5,6 @@ package resource_allocation
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -15,14 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func AllocationResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
-		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
@@ -94,8 +91,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -196,8 +193,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"type": schema.StringAttribute{
 										Required:            true,
-										Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-										MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+										Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+										MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"datetime",
@@ -281,6 +278,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
 			},
 		},
+		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
 	}
 }
 

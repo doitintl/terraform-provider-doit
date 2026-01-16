@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"terraform-provider-doit/internal/provider/models"
-	"terraform-provider-doit/internal/provider/resource_report"
-
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -45,16 +44,16 @@ func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, ok := req.ProviderData.(*Clients)
+	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *Clients, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client.NewClient
+	r.client = client
 }
 
 func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
@@ -126,14 +125,13 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &state)
 	if diags.HasError() {
-		// Check if it's a 404 error based on the logic in populateStateFromAPI
-		for _, d := range diags {
-			if d.Summary() == "Report not found" {
-				resp.State.RemoveResource(ctx)
-				return
-			}
-		}
 		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	// Handle externally deleted resource
+	if state.Id.IsNull() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -201,13 +199,12 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	if deleteResp.StatusCode() != 200 && deleteResp.StatusCode() != 404 {
+	// Treat 404 as success - resource is already gone (deleted outside Terraform)
+	if deleteResp.StatusCode() != 200 && deleteResp.StatusCode() != 204 && deleteResp.StatusCode() != 404 {
 		resp.Diagnostics.AddError(
 			"Error deleting report",
 			fmt.Sprintf("Could not delete report, status: %d, body: %s", deleteResp.StatusCode(), string(deleteResp.Body)),
 		)
 		return
 	}
-
-	resp.State.RemoveResource(ctx)
 }

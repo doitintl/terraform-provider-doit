@@ -6,18 +6,15 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
-
-	"terraform-provider-doit/internal/provider"
 
 	"math/rand/v2"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-	"golang.org/x/time/rate"
 )
 
 func TestAccReport(t *testing.T) {
@@ -128,10 +125,8 @@ func getValidAttributionAndGroup(t *testing.T) (string, string) {
 	}
 
 	ctx := context.Background()
-	// Simple rate limiter
-	rl := rate.NewLimiter(rate.Every(time.Second), 10)
 
-	client, err := provider.NewClientGen(ctx, host, token, customerContext, rl)
+	client, err := provider.NewClient(ctx, host, token, customerContext)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
