@@ -86,3 +86,7 @@ data_sources:
     read:
       path: /anomalies/v1
       method: GET
+  alerts:
+    read:
+      path: /analytics/v1/alerts
+      method: GET
