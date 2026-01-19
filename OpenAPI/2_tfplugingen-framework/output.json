@@ -4,6 +4,243 @@
 	},
 	"resources": [
 		{
+			"name": "alert",
+			"schema": {
+				"attributes": [
+					{
+						"name": "config",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "attributions",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										},
+										"description": "The attributions selected define the scope to monitor."
+									}
+								},
+								{
+									"name": "condition",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Currency code for monetary values.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"USD\",\n\"ILS\",\n\"EUR\",\n\"AUD\",\n\"CAD\",\n\"GBP\",\n\"DKK\",\n\"NOK\",\n\"SEK\",\n\"BRL\",\n\"SGD\",\n\"MXN\",\n\"CHF\",\n\"MYR\",\n\"TWD\",\n\"EGP\",\n\"ZAR\",\n\"JPY\",\n\"IDR\",\n\"AED\",\n\"THB\",\n\"COP\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "data_source",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "evaluate_for_each",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+									}
+								},
+								{
+									"name": "metric",
+									"single_nested": {
+										"computed_optional_required": "required",
+										"attributes": [
+											{
+												"name": "type",
+												"string": {
+													"computed_optional_required": "required"
+												}
+											},
+											{
+												"name": "value",
+												"string": {
+													"computed_optional_required": "required"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "operator",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "scopes",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "The field to filter on"
+													}
+												},
+												{
+													"name": "inverse",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"description": "Set to `true` to exclude the values."
+													}
+												},
+												{
+													"name": "mode",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "Filter mode to apply",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"is\",\n\"starts_with\",\n\"ends_with\",\n\"contains\",\n\"regexp\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "Type of dimension or filter field.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "values",
+													"list": {
+														"computed_optional_required": "computed_optional",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Values to filter on"
+													}
+												}
+											]
+										},
+										"description": "The filters selected define the scope of the alert."
+									}
+								},
+								{
+									"name": "time_interval",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": "year"
+										},
+										"description": "The time interval to evaluate the condition.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"hour\",\n\"day\",\n\"week\",\n\"month\",\n\"quarter\",\n\"year\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "value",
+									"float64": {
+										"computed_optional_required": "required"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Name of the alert."
+						}
+					},
+					{
+						"name": "recipients",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of emails that will be notified when the alert is triggered"
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when the alter was created (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Alert ID."
+						}
+					},
+					{
+						"name": "last_alerted",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Last time the alert was triggered (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Last time the alert was modified (in UNIX timestamp)."
+						}
+					}
+				],
+				"description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
+				"markdown_description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions."
+			}
+		},
+		{
 			"name": "allocation",
 			"schema": {
 				"attributes": [
