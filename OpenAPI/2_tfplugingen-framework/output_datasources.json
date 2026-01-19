@@ -236,6 +236,269 @@
 			}
 		},
 		{
+			"name": "alerts",
+			"schema": {
+				"attributes": [
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"name\",\n\"createTime\",\n\"updateTime\",\n\"lastAlerted\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results. The syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nAvailable filter keys: **owner**, **name**"
+						}
+					},
+					{
+						"name": "alerts",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "config",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "attributions",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "The attributions selected define the scope to monitor."
+													}
+												},
+												{
+													"name": "condition",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "currency",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Currency code for monetary values."
+													}
+												},
+												{
+													"name": "data_source",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "evaluate_for_each",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+													}
+												},
+												{
+													"name": "metric",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "type",
+																"string": {
+																	"computed_optional_required": "computed"
+																}
+															},
+															{
+																"name": "value",
+																"string": {
+																	"computed_optional_required": "computed"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "operator",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "scopes",
+													"list_nested": {
+														"computed_optional_required": "computed",
+														"nested_object": {
+															"attributes": [
+																{
+																	"name": "id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "The field to filter on"
+																	}
+																},
+																{
+																	"name": "inverse",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Set to `true` to exclude the values."
+																	}
+																},
+																{
+																	"name": "mode",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Filter mode to apply"
+																	}
+																},
+																{
+																	"name": "type",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Type of dimension or filter field."
+																	}
+																},
+																{
+																	"name": "values",
+																	"list": {
+																		"computed_optional_required": "computed",
+																		"element_type": {
+																			"string": {}
+																		},
+																		"description": "Values to filter on"
+																	}
+																}
+															]
+														},
+														"description": "The filters selected define the scope of the alert."
+													}
+												},
+												{
+													"name": "time_interval",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The time interval to evaluate the condition."
+													}
+												},
+												{
+													"name": "value",
+													"float64": {
+														"computed_optional_required": "computed"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when the alter was created (in UNIX timestamp)."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Alert ID."
+										}
+									},
+									{
+										"name": "last_alerted",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Last time the alert was triggered (in UNIX timestamp)."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Alert Name."
+										}
+									},
+									{
+										"name": "recipients",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "List of emails that will be notified when the alert is triggered."
+										}
+									},
+									{
+										"name": "update_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Last time the alert was modified (in UNIX timestamp)."
+										}
+									}
+								]
+							},
+							"description": "Array of alerts"
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The number of returned records."
+						}
+					}
+				],
+				"description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
+				"markdown_description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions."
+			}
+		},
+		{
 			"name": "allocation",
 			"schema": {
 				"attributes": [
@@ -861,6 +1124,213 @@
 			}
 		},
 		{
+			"name": "anomalies",
+			"schema": {
+				"attributes": [
+					{
+						"name": "min_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Min value for the anomaly detection time"
+						}
+					},
+					{
+						"name": "max_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Max value for the anomaly detection time"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results of the request"
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page"
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "anomalies",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "acknowledged",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Has the anomaly been acknowledged"
+										}
+									},
+									{
+										"name": "attribution",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Attribution ID"
+										}
+									},
+									{
+										"name": "billing_account",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Billing account ID"
+										}
+									},
+									{
+										"name": "cost_of_anomaly",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Cost of the anomaly over and above the expected normal cost"
+										}
+									},
+									{
+										"name": "end_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "End of the anomaly"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "platform",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud Provider name"
+										}
+									},
+									{
+										"name": "resource_data",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "cost",
+														"float64": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "operation",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "For anomalies related to AWS S3"
+														}
+													},
+													{
+														"name": "resource_id",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "sku_description",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											},
+											"description": "Resources contributing to the anomaly"
+										}
+									},
+									{
+										"name": "scope",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Scope: Project or Account"
+										}
+									},
+									{
+										"name": "service_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Service name"
+										}
+									},
+									{
+										"name": "severity_level",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Severity level: Information, Warning or Critical"
+										}
+									},
+									{
+										"name": "start_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Usage start time of the anomaly"
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "time_frame",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Timeframe: Daily or Hourly"
+										}
+									},
+									{
+										"name": "top3skus",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "cost",
+														"float64": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "name",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											}
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Anomalies detect unexpected changes in your cloud spending patterns.",
+				"markdown_description": "Anomalies detect unexpected changes in your cloud spending patterns."
+			}
+		},
+		{
 			"name": "anomaly",
 			"schema": {
 				"attributes": [
@@ -1015,6 +1485,97 @@
 				],
 				"description": "Anomalies detect unexpected changes in your cloud spending patterns.",
 				"markdown_description": "Anomalies detect unexpected changes in your cloud spending patterns."
+			}
+		},
+		{
+			"name": "assets",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results of the request. The syntax\nis `key:[\u003cvalue\u003e]`. e.g: \"type:g-suite\". Multiple filters can be\nconnected using a pipe |. Note that using different keys in the same\nfilter results in “AND,” while using the same key multiple times in\nthe same filter results in “OR”.\n"
+						}
+					},
+					{
+						"name": "assets",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when the asset was created, in milliseconds since the epoch"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "quantity",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "url",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "used_licenses",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							},
+							"description": "Array of Assets"
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Assets rows count"
+						}
+					}
+				],
+				"description": "Assets represent your cloud resources such as compute instances, storage, and databases.",
+				"markdown_description": "Assets represent your cloud resources such as compute instances, storage, and databases."
 			}
 		},
 		{
@@ -1623,6 +2184,110 @@
 			}
 		},
 		{
+			"name": "cloud_incidents",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results. The syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters)."
+						}
+					},
+					{
+						"name": "min_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Min value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created after or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "max_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Max value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created before or at this\ntimestamp are returned.\n"
+						}
+					},
+					{
+						"name": "incidents",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when this cloud incident was created, in milliseconds since the epoch."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "cloud incident id, uniquely identifying the cloud incident"
+										}
+									},
+									{
+										"name": "platform",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The Cloud Platform"
+										}
+									},
+									{
+										"name": "product",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the product affected by the cloud incident"
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The Status of the issue"
+										}
+									},
+									{
+										"name": "title",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud incident name as provided by the cloud platform vendor"
+										}
+									}
+								]
+							},
+							"description": "Array of cloud incidents"
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Cloud incidents rows count"
+						}
+					}
+				],
+				"description": "Cloud Incidents track service disruptions and outages from cloud providers.",
+				"markdown_description": "Cloud Incidents track service disruptions and outages from cloud providers."
+			}
+		},
+		{
 			"name": "current_user",
 			"schema": {
 				"attributes": [
@@ -1844,6 +2509,130 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page."
+						}
+					}
+				],
+				"description": "Invoices provide access to your current and historical billing documents.",
+				"markdown_description": "Invoices provide access to your current and historical billing documents."
+			}
+		},
+		{
+			"name": "invoices",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results. The syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters)."
+						}
+					},
+					{
+						"name": "min_creation_time",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Min value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created after or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "max_creation_time",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Max value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created before or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "invoices",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "balance_amount",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Invoice balance to be paid"
+										}
+									},
+									{
+										"name": "currency",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Currency code for monetary values."
+										}
+									},
+									{
+										"name": "due_date",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The last day to pay the invoice, in milliseconds since the epoch"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Invoice number, identifying the invoice."
+										}
+									},
+									{
+										"name": "invoice_date",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when this invoice was issued, in milliseconds since the epoch."
+										}
+									},
+									{
+										"name": "platform",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Status of the invoice"
+										}
+									},
+									{
+										"name": "total_amount",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Total invoiced amount"
+										}
+									},
+									{
+										"name": "url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page."
+										}
+									}
+								]
+							},
+							"description": "Array of Invoices"
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Invoice rows count"
 						}
 					}
 				],
@@ -2547,6 +3336,115 @@
 			}
 		},
 		{
+			"name": "reports",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results.\nThe syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**"
+						}
+					},
+					{
+						"name": "min_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "max_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "reports",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when the report was created, in milliseconds since the epoch."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Report id."
+										}
+									},
+									{
+										"name": "owner",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The report owner in the form of user@domain.com"
+										}
+									},
+									{
+										"name": "report_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the report."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "update_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when this report was last updated, in milliseconds since the epoch."
+										}
+									},
+									{
+										"name": "url_ui",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The URL of the report in DoiT Cloud Navigator."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The number of returned records."
+						}
+					}
+				],
+				"description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+				"markdown_description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters."
+			}
+		},
+		{
 			"name": "roles",
 			"schema": {
 				"attributes": [
@@ -2601,6 +3499,156 @@
 				],
 				"description": "Roles define permissions and access levels for users in your organization.",
 				"markdown_description": "Roles define permissions and access levels for users in your organization."
+			}
+		},
+		{
+			"name": "support_requests",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page   of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results of the request. The syntax is `key:[\u003cvalue\u003e]`. e.g: \"severity:normal\". Multiple filters can be\nconnected using a pipe |. Note that using different keys in the same\nfilter results in “AND,” while using the same key multiple times in\nthe same filter results in “OR”.\n"
+						}
+					},
+					{
+						"name": "min_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Min value for tickets creation time, in milliseconds since the POSIX epoch. If set, only tickets created after or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "max_creation_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Max value for tickets creation time, in milliseconds since the POSIX epoch. If set, only tickets created before or at this timestamp are returned."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Tickets rows count"
+						}
+					},
+					{
+						"name": "tickets",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when this ticket was created, in milliseconds since the epoch."
+										}
+									},
+									{
+										"name": "id",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "ticket id, identifying the report (e.g., \"33234\")"
+										}
+									},
+									{
+										"name": "is_public",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "is ticket public"
+										}
+									},
+									{
+										"name": "platform",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "platform of the ticket"
+										}
+									},
+									{
+										"name": "product",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Ticket product"
+										}
+									},
+									{
+										"name": "requester",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The ticket requester in the form of user@domain.com"
+										}
+									},
+									{
+										"name": "severity",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Ticket severity"
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Ticket status"
+										}
+									},
+									{
+										"name": "subject",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The subject of the ticket."
+										}
+									},
+									{
+										"name": "update_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when this ticket was last updated, in milliseconds since the epoch."
+										}
+									},
+									{
+										"name": "url_ui",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Link to the report document in Cloud Management Platform"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Support Requests allow you to create and manage support tickets with DoIT.",
+				"markdown_description": "Support Requests allow you to create and manage support tickets with DoIT."
 			}
 		},
 		{

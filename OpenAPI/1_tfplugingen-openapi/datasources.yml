@@ -90,3 +90,16 @@ data_sources:
     read:
       path: /analytics/v1/alerts
       method: GET
+  # Additional list data sources
+  cloud_incidents:
+    read:
+      path: /core/v1/cloudincidents
+      method: GET
+  assets:
+    read:
+      path: /billing/v1/assets
+      method: GET
+  support_requests:
+    read:
+      path: /support/v1/tickets
+      method: GET

@@ -5421,6 +5421,9 @@ components:
           type: string
         url:
           type: string
+        usedLicenses:
+          type: integer
+          format: int64
     AssetProperties:
       type: object
       properties:
