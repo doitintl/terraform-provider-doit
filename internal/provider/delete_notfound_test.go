@@ -883,11 +883,11 @@ func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 // TestReportResourceCreate_404OnGet tests that when Create succeeds but the
 // subsequent GET returns 404, an error is returned (not silent success).
 func TestReportResourceCreate_404OnGet(t *testing.T) {
-	callCount := 0
+	callCountPerMethod := make(map[string]int)
 
 	// Mock server: POST returns 201 (created), GET returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
+		callCountPerMethod[r.Method]++
 		w.Header().Set("Content-Type", "application/json")
 
 		if r.Method == "POST" {
@@ -969,20 +969,23 @@ func TestReportResourceCreate_404OnGet(t *testing.T) {
 		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", createResp.Diagnostics)
 	}
 
-	// Verify both POST and GET were called
-	if callCount < 2 {
-		t.Errorf("Expected at least 2 API calls (POST + GET), got %d", callCount)
+	// Verify both POST and GET were called exactly once
+	if callCountPerMethod["POST"] != 1 {
+		t.Errorf("Expected exactly 1 POST call, got %d", callCountPerMethod["POST"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
 	}
 }
 
 // TestReportResourceUpdate_404OnGet tests that when Update succeeds but the
 // subsequent GET returns 404, an error is returned (not silent success).
 func TestReportResourceUpdate_404OnGet(t *testing.T) {
-	callCount := 0
+	callCountPerMethod := make(map[string]int)
 
 	// Mock server: PATCH returns 200 (updated), GET returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
+		callCountPerMethod[r.Method]++
 		w.Header().Set("Content-Type", "application/json")
 
 		if r.Method == "PATCH" {
@@ -1073,20 +1076,23 @@ func TestReportResourceUpdate_404OnGet(t *testing.T) {
 		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", updateResp.Diagnostics)
 	}
 
-	// Verify both PATCH and GET were called
-	if callCount < 2 {
-		t.Errorf("Expected at least 2 API calls (PATCH + GET), got %d", callCount)
+	// Verify both PATCH and GET were called exactly once
+	if callCountPerMethod["PATCH"] != 1 {
+		t.Errorf("Expected exactly 1 PATCH call, got %d", callCountPerMethod["PATCH"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
 	}
 }
 
 // TestAllocationResourceCreate_404OnGet tests that when Create succeeds but the
 // subsequent GET returns 404, an error is returned (not silent success).
 func TestAllocationResourceCreate_404OnGet(t *testing.T) {
-	callCount := 0
+	callCountPerMethod := make(map[string]int)
 
 	// Mock server: POST returns 200 (created), GET returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
+		callCountPerMethod[r.Method]++
 		w.Header().Set("Content-Type", "application/json")
 
 		if r.Method == "POST" {
@@ -1168,20 +1174,23 @@ func TestAllocationResourceCreate_404OnGet(t *testing.T) {
 		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", createResp.Diagnostics)
 	}
 
-	// Verify both POST and GET were called
-	if callCount < 2 {
-		t.Errorf("Expected at least 2 API calls (POST + GET), got %d", callCount)
+	// Verify both POST and GET were called exactly once
+	if callCountPerMethod["POST"] != 1 {
+		t.Errorf("Expected exactly 1 POST call, got %d", callCountPerMethod["POST"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
 	}
 }
 
 // TestAllocationResourceUpdate_404OnGet tests that when Update succeeds but the
 // subsequent GET returns 404, an error is returned (not silent success).
 func TestAllocationResourceUpdate_404OnGet(t *testing.T) {
-	callCount := 0
+	callCountPerMethod := make(map[string]int)
 
 	// Mock server: PATCH returns 200 (updated), GET returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
+		callCountPerMethod[r.Method]++
 		w.Header().Set("Content-Type", "application/json")
 
 		if r.Method == "PATCH" {
@@ -1271,8 +1280,11 @@ func TestAllocationResourceUpdate_404OnGet(t *testing.T) {
 		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", updateResp.Diagnostics)
 	}
 
-	// Verify both PATCH and GET were called
-	if callCount < 2 {
-		t.Errorf("Expected at least 2 API calls (PATCH + GET), got %d", callCount)
+	// Verify both PATCH and GET were called exactly once
+	if callCountPerMethod["PATCH"] != 1 {
+		t.Errorf("Expected exactly 1 PATCH call, got %d", callCountPerMethod["PATCH"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
 	}
 }
