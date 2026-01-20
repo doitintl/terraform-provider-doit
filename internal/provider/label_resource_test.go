@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"math/rand/v2"
@@ -111,4 +112,53 @@ resource "doit_label" "this" {
   color = "mint"
 }
 `, i)
+}
+
+// TestAccLabel_LavendaR tests if the API accepts "lavendar" (potential typo for "lavender").
+func TestAccLabel_Lavendar(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_label" "lavendar_test" {
+  name  = "test-lavendar-%d"
+  color = "lavendar"
+}
+`, n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_label.lavendar_test",
+						tfjsonpath.New("color"),
+						knownvalue.StringExact("lavendar")),
+				},
+			},
+		},
+	})
+}
+
+// TestAccLabel_InvalidColor tests that invalid colors are rejected.
+func TestAccLabel_InvalidColor(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_label" "invalid_test" {
+  name  = "test-invalid-color-%d"
+  color = "invalid_color"
+}
+`, n),
+				ExpectError: regexp.MustCompile(`(?i)invalid|color|value must be`),
+			},
+		},
+	})
 }
