@@ -1,53 +1,105 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
-	"terraform-provider-doit/internal/provider/models"
-
-	"github.com/cenkalti/backoff/v4"
-	"golang.org/x/time/rate"
+	"github.com/cenkalti/backoff/v5"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"golang.org/x/oauth2"
 )
 
-// AuthResponse represents the authentication response from the DoiT API.
-type AuthResponse struct {
-	DoiTAPITOken    string `json:"doiTAPITOken"`
-	CustomerContext string `json:"customerContext"`
-}
-
-// Auth holds authentication credentials for the DoiT API.
-type Auth struct {
-	DoiTAPITOken    string `json:"doiTAPITOken"`
-	CustomerContext string `json:"customerContext"`
-}
-
-// Client is the legacy DoiT API client.
-type Client struct {
-	HostURL     string
-	HTTPClient  *http.Client
-	Auth        Auth
-	Ratelimiter *rate.Limiter
-}
-
-// RetryClient wraps an HTTP client with retry logic.
-type RetryClient struct {
+// DCIRetryClient wraps an HTTP client with retry logic tailored for the DoiT Console API (DCI).
+//
+// # Why a Custom Client?
+//
+// This client is specifically designed for the DoiT Console API and has opinionated
+// behavior that may not be appropriate for general-purpose HTTP clients. Key differences
+// from standard retry libraries (like go-retryablehttp):
+//
+// # 404 Passthrough (Critical for Terraform)
+//
+// This client explicitly passes 404 responses through WITHOUT treating them as errors.
+// This is essential for Terraform resource lifecycle:
+//   - Read: 404 means "externally deleted" → remove from state
+//   - Delete: 404 means "already gone" → success (idempotent)
+//   - Create/Update: 404 after operation → handled by resource logic
+//
+// Standard retry libraries would block or error on 404, breaking Terraform semantics.
+//
+// # Retry Strategy
+//
+// Only specific transient errors trigger retries:
+//   - 429 (Too Many Requests): Respects Retry-After header (seconds or HTTP-date format)
+//   - 502 (Bad Gateway): Temporary upstream issue
+//   - 503 (Service Unavailable): Temporary server overload
+//   - 504 (Gateway Timeout): Temporary timeout
+//
+// All other 4xx/5xx errors are treated as permanent failures (no retry).
+//
+// # NOT Suitable For
+//
+// Do NOT use this client for:
+//   - Non-DCI APIs that expect standard 404 handling
+//   - APIs where 500 should be retried (we don't retry 500)
+//   - APIs with different retry semantics
+//
+// If you need a general-purpose retry client, use go-retryablehttp instead.
+type DCIRetryClient struct {
 	client *http.Client
 }
 
 // Do executes an HTTP request with retry logic for transient errors.
-func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
-	var resp *http.Response
-	var err error
-
-	operation := func() error {
-		resp, err = c.client.Do(req)
+//
+// # Request Body Handling
+//
+// The request body is buffered on first read to allow re-sending on retries.
+// This is necessary because http.Request.Body is a one-time stream.
+//
+// # Status Code Behavior
+//
+// | Status Code | Behavior |
+// |-------------|----------|
+// | 200, 201, 202, 204 | Success - return response |
+// | 404 | Pass through - NOT an error (for Terraform resource semantics) |
+// | 429 | Retry with Retry-After or exponential backoff |
+// | 502, 503, 504 | Retry with exponential backoff |
+// | Other 4xx/5xx | Permanent error - no retry |
+//
+// # Timeout
+//
+// Operations have a maximum elapsed time of 2 minutes, after which they fail.
+func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
+	// Preserve the original body for retries.
+	// If the request has a body, we need to be able to re-read it on retries.
+	var bodyBytes []byte
+	if req.Body != nil && req.Body != http.NoBody {
+		var err error
+		bodyBytes, err = io.ReadAll(req.Body)
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("failed to read request body: %w", err)
+		}
+		if closeErr := req.Body.Close(); closeErr != nil {
+			log.Printf("[WARN] Error closing original request body: %v", closeErr)
+		}
+	}
+
+	operation := func() (*http.Response, error) {
+		// Reset the body for each retry attempt
+		if bodyBytes != nil {
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			req.ContentLength = int64(len(bodyBytes))
+		}
+
+		resp, err := c.client.Do(req)
+		if err != nil {
+			return nil, err
 		}
 
 		// Retryable status codes:
@@ -64,76 +116,87 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			}
 
 			if retryAfter != "" {
-				// Parse Retry-After as duration in seconds
-				if duration, parseErr := time.ParseDuration(retryAfter + "s"); parseErr == nil {
-					// Sleep for the requested duration, respecting context cancellation
-					// TODO: replace with backoff.RetryAfter after upgrade to backoff v5
-					time.Sleep(duration)
+				// Try parsing as seconds (most common)
+				if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
+					// Use backoff v5's integrated RetryAfter to respect the header
+					return nil, backoff.RetryAfter(seconds)
+				}
+				// Try parsing as HTTP-date (RFC 7231)
+				if t, parseErr := time.Parse(time.RFC1123, retryAfter); parseErr == nil {
+					waitDuration := time.Until(t)
+					if waitDuration > 0 {
+						// Round up to ensure we wait at least the requested time
+						seconds := int(waitDuration.Seconds()) + 1
+						return nil, backoff.RetryAfter(seconds)
+					}
 				}
 				// If parsing fails, fall back to exponential backoff
 			}
-			return fmt.Errorf("rate limit exceeded: %d", resp.StatusCode)
+			return nil, fmt.Errorf("rate limit exceeded: %d", resp.StatusCode)
 
 		case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 			// Temporary server errors - retry with backoff
 			if closeErr := resp.Body.Close(); closeErr != nil {
 				log.Printf("[WARN] Error closing response body: %v", closeErr)
 			}
-			return fmt.Errorf("temporary server error: %d", resp.StatusCode)
+			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
-		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent:
-			// Success codes - no retry needed
-			return nil
+		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent,
+			http.StatusNotFound: // 404 - INTENTIONALLY passed through for Terraform resource semantics
+			// These codes don't need retry - return response for downstream handling
+			// Note: 404 is NOT an error here. Resource handlers interpret it contextually:
+			// - Read: externally deleted → remove from state
+			// - Delete: already gone → success
+			return resp, nil
 
 		default:
 			// All other status codes are considered permanent errors
 			// This includes:
-			// - 4xx client errors (400, 401, 403, 404, etc.)
+			// - 4xx client errors (400, 401, 403, etc.)
 			// - 5xx server errors that shouldn't be retried (500, 501, etc.)
 			if resp.StatusCode >= 400 {
-				bodyBytes, readErr := io.ReadAll(resp.Body)
+				respBodyBytes, readErr := io.ReadAll(resp.Body)
 				closeErr := resp.Body.Close()
 				if readErr != nil {
-					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, failed to read body: %w", resp.StatusCode, readErr))
+					return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, failed to read body: %w", resp.StatusCode, readErr))
 				}
 				if closeErr != nil {
-					return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(bodyBytes), closeErr))
+					return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s, failed to close body: %w", resp.StatusCode, string(respBodyBytes), closeErr))
 				}
-				return backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(bodyBytes)))
+				return nil, backoff.Permanent(fmt.Errorf("non-retryable error: %d, body: %s", resp.StatusCode, string(respBodyBytes)))
 			}
 			// 2xx and 3xx codes that aren't explicitly handled above
-			return nil
+			return resp, nil
 		}
 	}
 
-	// Use exponential backoff
-	b := backoff.NewExponentialBackOff()
-	b.MaxElapsedTime = 2 * time.Minute // Reasonable timeout for Terraform operations
-
-	// Retry with exponential backoff
-	err = backoff.Retry(operation, b)
-
-	if err != nil {
-		// If we exhausted retries or encountered a permanent error, return it
-		// Note: resp.Body will be closed if we retried, so the caller shouldn't try to read it
-		return resp, err
-	}
-
-	return resp, nil
+	// Retry with exponential backoff and a 2-minute timeout
+	return backoff.Retry(req.Context(), operation,
+		backoff.WithBackOff(backoff.NewExponentialBackOff()),
+		backoff.WithMaxElapsedTime(2*time.Minute), // Reasonable timeout for Terraform operations
+	)
 }
 
-// NewClientGen creates a new generated API client with retry logic.
-func NewClientGen(ctx context.Context, host, apiToken, customerContext string, _ *rate.Limiter) (*models.ClientWithResponses, error) {
-	retryClient := &RetryClient{
+// NewClient creates a new API client with retry logic.
+func NewClient(ctx context.Context, host, apiToken, customerContext string) (*models.ClientWithResponses, error) {
+	retryClient := &DCIRetryClient{
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
 	}
 
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: apiToken},
+	)
+
 	client, err := models.NewClientWithResponses(host,
 		models.WithHTTPClient(retryClient),
 		models.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
-			req.Header.Set("Authorization", "Bearer "+apiToken)
+			token, err := ts.Token()
+			if err != nil {
+				return err
+			}
+			token.SetAuthHeader(req)
 			if customerContext != "" {
 				url := req.URL.Query()
 				url.Set("customerContext", customerContext)
@@ -149,111 +212,4 @@ func NewClientGen(ctx context.Context, host, apiToken, customerContext string, _
 		return nil, err
 	}
 	return client, nil
-}
-
-// NewClient creates a new legacy DoiT API client.
-func NewClient(ctx context.Context, host, doiTAPIClient, customerContext *string, rl *rate.Limiter) (*Client, error) {
-
-	c := Client{
-		HTTPClient: &http.Client{Timeout: 30 * time.Second},
-		// Default DoiT URL
-		HostURL: HostURL,
-		Auth: Auth{
-			DoiTAPITOken:    *doiTAPIClient,
-			CustomerContext: *customerContext,
-		},
-		Ratelimiter: rl,
-	}
-
-	if host != nil {
-		c.HostURL = *host
-	}
-	_, err := c.SignIn(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &c, nil
-}
-
-// SignIn validates the API token and initializes the client session.
-func (c *Client) SignIn(ctx context.Context) (*AuthResponse, error) {
-	if c.Auth.DoiTAPITOken == "" {
-		return nil, fmt.Errorf("define Doit API Token")
-	}
-
-	urlCcontext := "/auth/v1/validate?customerContext=" + c.Auth.CustomerContext
-	req, err := http.NewRequest("GET", c.HostURL+urlCcontext, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = c.doRequest(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	ar := AuthResponse{
-		DoiTAPITOken:    c.Auth.DoiTAPITOken,
-		CustomerContext: c.Auth.CustomerContext,
-	}
-
-	return &ar, nil
-}
-
-func (c *Client) doRequest(ctx context.Context, req *http.Request) ([]byte, error) {
-	err := c.Ratelimiter.Wait(ctx) // This is a blocking call. Honors the rate limit
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+c.Auth.DoiTAPITOken)
-
-	res := &http.Response{}
-	operation := func() (*http.Response, error) {
-		return c.HTTPClient.Do(req)
-	}
-
-	retryable := func() error {
-		var errRetry error
-		res, errRetry = operation()
-		if res == nil {
-			log.Println("no response")
-			log.Println(errRetry)
-			return fmt.Errorf("no response")
-		}
-		if res.StatusCode == http.StatusTooManyRequests {
-			return fmt.Errorf("rate limit exceeded")
-		}
-		err = errRetry
-		return nil
-	}
-
-	b := backoff.NewExponentialBackOff()
-	b.MaxElapsedTime = 5 * time.Minute
-	errRetryOutside := backoff.Retry(retryable, b)
-	if errRetryOutside != nil {
-		return nil, errRetryOutside
-	}
-
-	// in case the error is different to rate limit
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if closeErr := res.Body.Close(); closeErr != nil {
-			log.Printf("[WARN] Error closing response body: %v", closeErr)
-		}
-	}()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
-	}
-
-	return body, err
 }

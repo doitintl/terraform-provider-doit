@@ -1,6 +1,47 @@
 # DoiT Cloud Intelligence Provider
 
-This is an initial Proof of Concept to create a Terraform provider for DoiT Cloud Intelligence(tm)
+This Terraform provider allows you to manage DoiT Cloud Intelligence resources using the [DoiT API](https://developer.doit.com/reference/welcome).
+
+While the provider does not yet support all available API endpoints, version 1.0.0 marks the first stable release.
+
+Future releases will add support for additional resources and data sources.
+
+## Upgrading to v1.0.0
+
+> [!IMPORTANT]
+> Version 1.0.0 is a major release with breaking changes. If you are upgrading from v0.x, please see the [v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md) for detailed migration instructions.
+
+## Getting Started
+
+To get started with the provider, you first need to create an [API key](https://developer.doit.com/docs/start#api-keys) for the DoiT Console.
+
+You then configure the provider like so:
+
+```terraform
+terraform {
+  required_providers {
+    doit = {
+      source  = "doitintl/doit"
+      version = "1.0.0"
+    }
+  }
+}
+
+provider "doit" {
+  api_token = "your-api-key"
+}
+```
+
+If you are a Do'er, you also need to define the customer context:
+
+```terraform
+provider "doit" {
+  api_token = "your-api-key"
+  customer_context = "your-customer-context"
+}
+```
+
+Alternatively, you can also use the `DOIT_API_TOKEN` and `DOIT_CUSTOMER_CONTEXT` environment variables.
 
 ## Requirements
 

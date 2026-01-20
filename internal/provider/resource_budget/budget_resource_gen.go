@@ -5,8 +5,6 @@ package resource_budget
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -17,14 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func BudgetResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
-		Description:         "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
-		MarkdownDescription: "Budgets allow you to monitor and control your cloud spending by setting limits and alerts.",
 		Attributes: map[string]schema.Attribute{
 			"alerts": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -99,8 +96,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"currency": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
-				MarkdownDescription: "Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+				Description:         "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
+				MarkdownDescription: "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"USD",
@@ -175,8 +172,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"public": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Possible values: `owner`, `editor`, `viewer`",
-				MarkdownDescription: "Possible values: `owner`, `editor`, `viewer`",
+				Description:         "Public sharing access level for the budget.\nPossible values: `owner`, `editor`, `viewer`",
+				MarkdownDescription: "Public sharing access level for the budget.\nPossible values: `owner`, `editor`, `viewer`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"owner",
@@ -279,8 +276,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 						},
 						"type": schema.StringAttribute{
 							Required:            true,
-							Description:         "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-							MarkdownDescription: "Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+							Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+							MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"datetime",
@@ -354,6 +351,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Default:             booldefault.StaticBool(false),
 			},
 		},
+		Description:         "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+		MarkdownDescription: "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
 	}
 }
 

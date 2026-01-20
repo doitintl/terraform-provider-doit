@@ -82,6 +82,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
+														"description": "Type of dimension or filter field.",
 														"validators": [
 															{
 																"custom": {
@@ -202,6 +203,7 @@
 														"name": "type",
 														"string": {
 															"computed_optional_required": "required",
+															"description": "Type of dimension or filter field.",
 															"validators": [
 																{
 																	"custom": {
@@ -311,7 +313,9 @@
 							"description": "Last time the allocation was modified (in UNIX timestamp)."
 						}
 					}
-				]
+				],
+				"description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+				"markdown_description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more."
 			}
 		},
 		{
@@ -393,6 +397,7 @@
 						"name": "currency",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"description": "Currency code for monetary values.",
 							"validators": [
 								{
 									"custom": {
@@ -455,6 +460,7 @@
 						"name": "public",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"description": "Public sharing access level for the budget.",
 							"validators": [
 								{
 									"custom": {
@@ -580,6 +586,7 @@
 										"name": "type",
 										"string": {
 											"computed_optional_required": "required",
+											"description": "Type of dimension or filter field.",
 											"validators": [
 												{
 													"custom": {
@@ -651,13 +658,6 @@
 						}
 					},
 					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "budget ID, identifying the report\nin:path"
-						}
-					},
-					{
 						"name": "create_time",
 						"int64": {
 							"computed_optional_required": "computed",
@@ -677,13 +677,22 @@
 						}
 					},
 					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "budget ID, identifying the report\nin:path"
+						}
+					},
+					{
 						"name": "update_time",
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "Update time (in UNIX timestamp)"
 						}
 					}
-				]
+				],
+				"description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+				"markdown_description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached."
 			}
 		},
 		{
@@ -732,6 +741,7 @@
 									"name": "aggregation",
 									"string": {
 										"computed_optional_required": "computed_optional",
+										"description": "How to aggregate data values in the report.",
 										"validators": [
 											{
 												"custom": {
@@ -750,6 +760,7 @@
 									"name": "currency",
 									"string": {
 										"computed_optional_required": "computed_optional",
+										"description": "Currency code for monetary values.",
 										"validators": [
 											{
 												"custom": {
@@ -823,6 +834,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
+														"description": "Type of dimension or filter field.",
 														"validators": [
 															{
 																"custom": {
@@ -904,6 +916,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
+														"description": "Type of dimension or filter field.",
 														"validators": [
 															{
 																"custom": {
@@ -960,6 +973,7 @@
 																			"name": "type",
 																			"string": {
 																				"computed_optional_required": "computed_optional",
+																				"description": "Type of metric to use.",
 																				"validators": [
 																					{
 																						"custom": {
@@ -989,6 +1003,7 @@
 																"name": "sort",
 																"string": {
 																	"computed_optional_required": "computed_optional",
+																	"description": "Sort order for ranking results.",
 																	"validators": [
 																		{
 																			"custom": {
@@ -1018,6 +1033,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
+														"description": "Type of dimension or filter field.",
 														"validators": [
 															{
 																"custom": {
@@ -1082,6 +1098,7 @@
 												"name": "type",
 												"string": {
 													"computed_optional_required": "computed_optional",
+													"description": "Type of metric to use.",
 													"validators": [
 														{
 															"custom": {
@@ -1121,6 +1138,7 @@
 															"name": "type",
 															"string": {
 																"computed_optional_required": "computed_optional",
+																"description": "Type of metric to use.",
 																"validators": [
 																	{
 																		"custom": {
@@ -1150,6 +1168,7 @@
 												"name": "operator",
 												"string": {
 													"computed_optional_required": "computed_optional",
+													"description": "Comparison operator for filtering metric values.",
 													"validators": [
 														{
 															"custom": {
@@ -1365,6 +1384,7 @@
 									"name": "time_interval",
 									"string": {
 										"computed_optional_required": "computed_optional",
+										"description": "Time interval for grouping data in the report.",
 										"validators": [
 											{
 												"custom": {
@@ -1388,6 +1408,7 @@
 												"name": "amount",
 												"int64": {
 													"computed_optional_required": "computed_optional",
+													"description": "Number of time units to include in the time range.",
 													"validators": [
 														{
 															"custom": {
@@ -1405,13 +1426,15 @@
 											{
 												"name": "include_current",
 												"bool": {
-													"computed_optional_required": "computed_optional"
+													"computed_optional_required": "computed_optional",
+													"description": "Whether to include the current time period."
 												}
 											},
 											{
 												"name": "mode",
 												"string": {
 													"computed_optional_required": "computed_optional",
+													"description": "Time range mode (last N periods, current period, or custom).",
 													"validators": [
 														{
 															"custom": {
@@ -1430,6 +1453,7 @@
 												"name": "unit",
 												"string": {
 													"computed_optional_required": "computed_optional",
+													"description": "Time unit for the time range.",
 													"validators": [
 														{
 															"custom": {
@@ -1480,7 +1504,9 @@
 							"description": "Report type."
 						}
 					}
-				]
+				],
+				"description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+				"markdown_description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters."
 			}
 		}
 	],

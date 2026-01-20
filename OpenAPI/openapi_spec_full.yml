@@ -11,53 +11,53 @@ security:
     api_key: []
 tags:
   - name: Alerts
-    description: Alert endpoints
+    description: Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.
   - name: Annotations
-    description: Annotations endpoints
+    description: Annotations allow you to add notes and context to your cloud cost data.
   - name: Labels
-    description: Labels endpoints
+    description: Labels help you organize and categorize your cloud resources.
   - name: Allocations
-    description: Allocations endpoints
+    description: Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
   - name: Attribution Groups
-    description: Attribution group endpoints
+    description: Attribution Groups are deprecated. Use Allocations instead.
   - name: Attributions
-    description: Attribution endpoints
+    description: Attributions are deprecated. Use Allocations instead.
   - name: Budgets
-    description: Budgets endpoints
+    description: Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
   - name: Dimensions
-    description: Dimensions endpoints
+    description: Dimensions define how you can slice and group your cloud cost data for analysis.
   - name: Reports
-    description: Reports endpoints
+    description: Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
   - name: Sharing
-    description: Sharing endpoints
+    description: Sharing allows you to share reports and dashboards with other users.
   - name: Anomalies
-    description: Anomalies endpoints
+    description: Anomalies detect unexpected changes in your cloud spending patterns.
   - name: Auth
     description: Auth endpoints
   - name: Assets
-    description: Assets endpoints
+    description: Assets represent your cloud resources such as compute instances, storage, and databases.
   - name: DataHub
-    description: DataHub endpoints
+    description: DataHub enables you to import and manage custom data sources for cost analysis.
   - name: Invoices
-    description: Invoices endpoints
+    description: Invoices provide access to your current and historical billing documents.
   - name: Cloud Incidents
-    description: Cloud incidents endpoints
+    description: Cloud Incidents track service disruptions and outages from cloud providers.
   - name: Cloud Diagrams
-    description: Cloud diagrams endpoints
+    description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
   - name: AccountTeam
-    description: Account team endpoints
+    description: Account Team provides access to your DoIT account representatives.
   - name: Users
-    description: Users endpoints
+    description: Users manage the people who have access to your DoIT organization.
   - name: Roles
-    description: Roles endpoints
+    description: Roles define permissions and access levels for users in your organization.
   - name: Organizations
-    description: Organizations endpoints
+    description: Organizations represent your company or team structure in DoIT.
   - name: Platforms
-    description: Platforms metadata endpoints
+    description: Platforms provide metadata about supported cloud providers.
   - name: Products
-    description: Products metadata endpoints
+    description: Products provide metadata about cloud services and offerings.
   - name: Support Requests
-    description: Support requests endpoints
+    description: Support Requests allow you to create and manage support tickets with DoIT.
 
 paths:
   /analytics/v1/alerts:
@@ -1273,7 +1273,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Budget"
+                $ref: "#/components/schemas/BudgetAPI"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1361,7 +1361,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Budget"
+                $ref: "#/components/schemas/BudgetAPI"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4069,6 +4069,7 @@ components:
           type: string
           description: Budget Name
         public:
+          description: Public sharing access level for the budget.
           type: string
           enum:
             - owner
@@ -4176,6 +4177,7 @@ components:
           type: string
           description: Budget Name
         public:
+          description: Public sharing access level for the budget.
           type: string
           enum:
             - owner
@@ -4397,6 +4399,7 @@ components:
     Condition:
       type: string
     Currency:
+      description: Currency code for monetary values.
       type: string
       enum:
         - USD
@@ -4459,6 +4462,7 @@ components:
           type: integer
           format: int64
     DimensionsTypes:
+      description: Type of dimension or filter field.
       type: string
       enum:
         - datetime
@@ -4535,6 +4539,7 @@ components:
         metricFilter:
           $ref: "#/components/schemas/ExternalConfigMetricFilter"
         aggregation:
+          description: How to aggregate data values in the report.
           type: string
           enum:
             - total
@@ -4544,6 +4549,7 @@ components:
         advancedAnalysis:
           $ref: "#/components/schemas/AdvancedAnalysis"
         timeInterval:
+          description: Time interval for grouping data in the report.
           type: string
           enum:
             - hour
@@ -4743,6 +4749,7 @@ components:
         metric:
           $ref: "#/components/schemas/ExternalMetric"
         operator:
+          description: Comparison operator for filtering metric values.
           type: string
           enum:
             - gt
@@ -4770,6 +4777,7 @@ components:
       type: object
       properties:
         type:
+          description: Type of metric to use.
           type: string
           enum:
             - basic
@@ -5175,6 +5183,7 @@ components:
         metric:
           $ref: "#/components/schemas/ExternalMetric"
         sort:
+          description: Sort order for ranking results.
           type: string
           enum:
             - a_to_z
@@ -5349,19 +5358,23 @@ components:
       type: object
       properties:
         amount:
+          description: Number of time units to include in the time range.
           maximum: 5000
           minimum: 0
           type: integer
           format: int64
         includeCurrent:
+          description: Whether to include the current time period.
           type: boolean
         mode:
+          description: Time range mode (last N periods, current period, or custom).
           type: string
           enum:
             - last
             - current
             - custom
         unit:
+          description: Time unit for the time range.
           type: string
           enum:
             - day

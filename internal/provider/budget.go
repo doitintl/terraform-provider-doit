@@ -2,11 +2,9 @@ package provider
 
 import (
 	"context"
-	"strings"
 
-	"terraform-provider-doit/internal/provider/models"
-	"terraform-provider-doit/internal/provider/resource_budget"
-
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -169,15 +167,16 @@ func (r *budgetResource) populateState(ctx context.Context, state *budgetResourc
 	// Get refreshed budget value from API
 	budgetResp, err := r.client.GetBudgetWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			// The resource was deleted
-			state.Id = types.StringNull()
-			return
-		}
 		diags.AddError(
 			"Error Reading Budget",
 			"Could not read budget ID "+state.Id.ValueString()+": "+err.Error(),
 		)
+		return
+	}
+
+	// Handle externally deleted resource - remove from state
+	if budgetResp.StatusCode() == 404 {
+		state.Id = types.StringNull()
 		return
 	}
 
