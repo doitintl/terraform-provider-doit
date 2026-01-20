@@ -167,7 +167,10 @@ func (r *labelResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 	labelID := state.Id.ValueString()
 
-	// Convert model to API request type
+	// Convert model to API request type.
+	// Both color and name are required fields in the schema, so they will always
+	// be present. We use pointers here because UpdateLabelRequest uses pointer
+	// types for PATCH semantics, but we always send both fields.
 	color := models.UpdateLabelRequestColor(plan.Color.ValueString())
 	name := plan.Name.ValueString()
 	apiReq := models.UpdateLabelRequest{
