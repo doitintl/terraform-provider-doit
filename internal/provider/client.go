@@ -15,13 +15,67 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// RetryClient wraps an HTTP client with retry logic.
-type RetryClient struct {
+// DCIRetryClient wraps an HTTP client with retry logic tailored for the DoiT Console API (DCI).
+//
+// # Why a Custom Client?
+//
+// This client is specifically designed for the DoiT Console API and has opinionated
+// behavior that may not be appropriate for general-purpose HTTP clients. Key differences
+// from standard retry libraries (like go-retryablehttp):
+//
+// # 404 Passthrough (Critical for Terraform)
+//
+// This client explicitly passes 404 responses through WITHOUT treating them as errors.
+// This is essential for Terraform resource lifecycle:
+//   - Read: 404 means "externally deleted" → remove from state
+//   - Delete: 404 means "already gone" → success (idempotent)
+//   - Create/Update: 404 after operation → handled by resource logic
+//
+// Standard retry libraries would block or error on 404, breaking Terraform semantics.
+//
+// # Retry Strategy
+//
+// Only specific transient errors trigger retries:
+//   - 429 (Too Many Requests): Respects Retry-After header (seconds or HTTP-date format)
+//   - 502 (Bad Gateway): Temporary upstream issue
+//   - 503 (Service Unavailable): Temporary server overload
+//   - 504 (Gateway Timeout): Temporary timeout
+//
+// All other 4xx/5xx errors are treated as permanent failures (no retry).
+//
+// # NOT Suitable For
+//
+// Do NOT use this client for:
+//   - Non-DCI APIs that expect standard 404 handling
+//   - APIs where 500 should be retried (we don't retry 500)
+//   - APIs with different retry semantics
+//
+// If you need a general-purpose retry client, use go-retryablehttp instead.
+type DCIRetryClient struct {
 	client *http.Client
 }
 
 // Do executes an HTTP request with retry logic for transient errors.
-func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
+//
+// # Request Body Handling
+//
+// The request body is buffered on first read to allow re-sending on retries.
+// This is necessary because http.Request.Body is a one-time stream.
+//
+// # Status Code Behavior
+//
+// | Status Code | Behavior |
+// |-------------|----------|
+// | 200, 201, 202, 204 | Success - return response |
+// | 404 | Pass through - NOT an error (for Terraform resource semantics) |
+// | 429 | Retry with Retry-After or exponential backoff |
+// | 502, 503, 504 | Retry with exponential backoff |
+// | Other 4xx/5xx | Permanent error - no retry |
+//
+// # Timeout
+//
+// Operations have a maximum elapsed time of 2 minutes, after which they fail.
+func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 	// Preserve the original body for retries.
 	// If the request has a body, we need to be able to re-read it on retries.
 	var bodyBytes []byte
@@ -88,8 +142,11 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
 		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent,
-			http.StatusNotFound: // 404 - let oapi-codegen parse it for proper structured error handling
+			http.StatusNotFound: // 404 - INTENTIONALLY passed through for Terraform resource semantics
 			// These codes don't need retry - return response for downstream handling
+			// Note: 404 is NOT an error here. Resource handlers interpret it contextually:
+			// - Read: externally deleted → remove from state
+			// - Delete: already gone → success
 			return resp, nil
 
 		default:
@@ -122,7 +179,7 @@ func (c *RetryClient) Do(req *http.Request) (*http.Response, error) {
 
 // NewClient creates a new API client with retry logic.
 func NewClient(ctx context.Context, host, apiToken, customerContext string) (*models.ClientWithResponses, error) {
-	retryClient := &RetryClient{
+	retryClient := &DCIRetryClient{
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
