@@ -114,7 +114,7 @@ resource "doit_label" "this" {
 `, i)
 }
 
-// TestAccLabel_LavendaR tests if the API accepts "lavendar" (potential typo for "lavender").
+// TestAccLabel_Lavendar tests if the API accepts "lavendar" (potential typo for "lavender").
 func TestAccLabel_Lavendar(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
@@ -157,7 +157,7 @@ resource "doit_label" "invalid_test" {
   color = "invalid_color"
 }
 `, n),
-				ExpectError: regexp.MustCompile(`(?i)invalid|color|value must be`),
+				ExpectError: regexp.MustCompile(`(?i)value must be one of:`),
 			},
 		},
 	})
