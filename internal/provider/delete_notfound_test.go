@@ -397,7 +397,7 @@ func TestIs404Error(t *testing.T) {
 
 // TestBudgetDelete_WithRetryClient_404 tests that 404 responses pass through for proper handling
 // (not converted to errors like other 4xx codes).
-func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
+func TestBudgetDelete_WithDCIRetryClient_404(t *testing.T) {
 	// Create a mock server that returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -406,8 +406,8 @@ func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create client with RetryClient (like the real provider does)
-	retryClient := &RetryClient{
+	// Create client with DCIRetryClient (like the real provider does)
+	retryClient := &DCIRetryClient{
 		client: &http.Client{},
 	}
 
@@ -420,7 +420,7 @@ func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	ctx := context.Background()
 	resp, err := client.DeleteBudgetWithResponse(ctx, "test-id")
 
-	// With the new RetryClient behavior, 404 passes through as a response
+	// With the new DCIRetryClient behavior, 404 passes through as a response
 	if err != nil {
 		t.Errorf("Expected no error for 404 (should pass through), got: %v", err)
 	}
@@ -763,8 +763,8 @@ func TestReportResourceRead_NotFound(t *testing.T) {
 	}
 }
 
-// TestBudgetResourceDelete_WithRetryClient_Integration verifies that the Delete function behavior is correct when using RetryClient.
-func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
+// TestBudgetResourceDelete_WithDCIRetryClient_Integration verifies that the Delete function behavior is correct when using DCIRetryClient.
+func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 	tests := []struct {
 		name         string
 		statusCode   int
@@ -772,13 +772,13 @@ func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
 		expectError  bool
 	}{
 		{
-			name:         "404 via RetryClient - should be treated as success",
+			name:         "404 via DCIRetryClient - should be treated as success",
 			statusCode:   http.StatusNotFound,
 			responseBody: `{"message": "not found"}`,
 			expectError:  false,
 		},
 		{
-			name:         "500 via RetryClient - should fail",
+			name:         "500 via DCIRetryClient - should fail",
 			statusCode:   http.StatusInternalServerError,
 			responseBody: `{"message": "internal error"}`,
 			expectError:  true,
@@ -805,8 +805,8 @@ func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			// Create client WITH RetryClient (as in production)
-			retryClient := &RetryClient{
+			// Create client WITH DCIRetryClient (as in production)
+			retryClient := &DCIRetryClient{
 				client: &http.Client{},
 			}
 
