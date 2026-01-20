@@ -397,7 +397,7 @@ func TestIs404Error(t *testing.T) {
 
 // TestBudgetDelete_WithRetryClient_404 tests that 404 responses pass through for proper handling
 // (not converted to errors like other 4xx codes).
-func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
+func TestBudgetDelete_WithDCIRetryClient_404(t *testing.T) {
 	// Create a mock server that returns 404
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -406,8 +406,8 @@ func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create client with RetryClient (like the real provider does)
-	retryClient := &RetryClient{
+	// Create client with DCIRetryClient (like the real provider does)
+	retryClient := &DCIRetryClient{
 		client: &http.Client{},
 	}
 
@@ -420,7 +420,7 @@ func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	ctx := context.Background()
 	resp, err := client.DeleteBudgetWithResponse(ctx, "test-id")
 
-	// With the new RetryClient behavior, 404 passes through as a response
+	// With the new DCIRetryClient behavior, 404 passes through as a response
 	if err != nil {
 		t.Errorf("Expected no error for 404 (should pass through), got: %v", err)
 	}
@@ -431,8 +431,340 @@ func TestBudgetDelete_WithRetryClient_404(t *testing.T) {
 	}
 }
 
-// TestBudgetResourceDelete_WithRetryClient_Integration verifies that the Delete function behavior is correct when using RetryClient.
-func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
+// TestBudgetResourceRead_NotFound tests that reading a budget that returns 404
+// properly removes the resource from state (externally deleted resource).
+func TestBudgetResourceRead_NotFound(t *testing.T) {
+	tests := []struct {
+		name          string
+		statusCode    int
+		responseBody  string
+		expectRemoved bool // true if resource should be removed from state
+		expectError   bool
+	}{
+		{
+			name:          "200 OK - resource exists",
+			statusCode:    http.StatusOK,
+			responseBody:  `{"id": "test-budget-id", "name": "Test Budget", "amount": 1000, "type": "fixed", "currency": "USD", "startPeriod": 1704067200000, "timeInterval": "month", "scopes": []}`,
+			expectRemoved: false,
+			expectError:   false,
+		},
+		{
+			name:          "404 Not Found - resource externally deleted",
+			statusCode:    http.StatusNotFound,
+			responseBody:  `{"message": "Budget not found"}`,
+			expectRemoved: true, // 404 should remove resource from state
+			expectError:   false,
+		},
+		{
+			name:          "500 Internal Server Error - should fail",
+			statusCode:    http.StatusInternalServerError,
+			responseBody:  `{"message": "Internal server error"}`,
+			expectRemoved: false,
+			expectError:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock server
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				if tt.responseBody != "" {
+					_, _ = w.Write([]byte(tt.responseBody))
+				}
+			}))
+			defer server.Close()
+
+			// Create client pointing to mock server
+			client, err := models.NewClientWithResponses(server.URL)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			// Create the resource
+			r := &budgetResource{client: client}
+
+			// Build the state schema
+			ctx := context.Background()
+			schemaResp := &resource.SchemaResponse{}
+			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+			if schemaResp.Diagnostics.HasError() {
+				t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+			}
+
+			// Create state with minimal required attributes
+			stateValues := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-budget-id"),
+			}
+			for attrName, attr := range schemaResp.Schema.Attributes {
+				if attrName == "id" {
+					continue
+				}
+				stateValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+			}
+
+			stateValue := tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+				},
+				stateValues,
+			)
+
+			state := tfsdk.State{
+				Schema: schemaResp.Schema,
+				Raw:    stateValue,
+			}
+
+			// Call Read
+			readReq := resource.ReadRequest{
+				State: state,
+			}
+			readResp := &resource.ReadResponse{
+				State: state,
+			}
+			r.Read(ctx, readReq, readResp)
+
+			// Check results
+			hasError := readResp.Diagnostics.HasError()
+			if hasError != tt.expectError {
+				t.Errorf("Read() hasError = %v, expectError %v; diagnostics: %v",
+					hasError, tt.expectError, readResp.Diagnostics)
+			}
+
+			// For 404, check that state.Raw is null (resource removed)
+			if tt.expectRemoved && !hasError {
+				if !readResp.State.Raw.IsNull() {
+					// Get the ID from state to check if it's null
+					var resultState budgetResourceModel
+					diags := readResp.State.Get(ctx, &resultState)
+					if diags.HasError() {
+						// State might be completely null which is expected
+						return
+					}
+					if !resultState.Id.IsNull() {
+						t.Errorf("Expected resource to be removed from state (ID should be null), got ID: %s", resultState.Id.ValueString())
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestAllocationResourceRead_NotFound tests that reading an allocation that returns 404
+// properly removes the resource from state.
+func TestAllocationResourceRead_NotFound(t *testing.T) {
+	tests := []struct {
+		name          string
+		statusCode    int
+		responseBody  string
+		expectRemoved bool
+		expectError   bool
+	}{
+		{
+			name:          "200 OK - resource exists",
+			statusCode:    http.StatusOK,
+			responseBody:  `{"id": "test-allocation-id", "name": "Test Allocation", "rules": []}`,
+			expectRemoved: false,
+			expectError:   false,
+		},
+		{
+			name:          "404 Not Found - resource externally deleted",
+			statusCode:    http.StatusNotFound,
+			responseBody:  `{"message": "Allocation not found"}`,
+			expectRemoved: true,
+			expectError:   false,
+		},
+		{
+			name:          "500 Internal Server Error - should fail",
+			statusCode:    http.StatusInternalServerError,
+			responseBody:  `{"message": "Internal server error"}`,
+			expectRemoved: false,
+			expectError:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				if tt.responseBody != "" {
+					_, _ = w.Write([]byte(tt.responseBody))
+				}
+			}))
+			defer server.Close()
+
+			client, err := models.NewClientWithResponses(server.URL)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			r := &allocationResource{client: client}
+
+			ctx := context.Background()
+			schemaResp := &resource.SchemaResponse{}
+			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+			if schemaResp.Diagnostics.HasError() {
+				t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+			}
+
+			stateValues := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-allocation-id"),
+			}
+			for attrName, attr := range schemaResp.Schema.Attributes {
+				if attrName == "id" {
+					continue
+				}
+				stateValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+			}
+
+			stateValue := tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+				},
+				stateValues,
+			)
+
+			state := tfsdk.State{
+				Schema: schemaResp.Schema,
+				Raw:    stateValue,
+			}
+
+			readReq := resource.ReadRequest{State: state}
+			readResp := &resource.ReadResponse{State: state}
+			r.Read(ctx, readReq, readResp)
+
+			hasError := readResp.Diagnostics.HasError()
+			if hasError != tt.expectError {
+				t.Errorf("Read() hasError = %v, expectError %v; diagnostics: %v",
+					hasError, tt.expectError, readResp.Diagnostics)
+			}
+
+			if tt.expectRemoved && !hasError {
+				if !readResp.State.Raw.IsNull() {
+					var resultState allocationResourceModel
+					diags := readResp.State.Get(ctx, &resultState)
+					if diags.HasError() {
+						return
+					}
+					if !resultState.Id.IsNull() {
+						t.Errorf("Expected resource to be removed from state (ID should be null), got ID: %s", resultState.Id.ValueString())
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestReportResourceRead_NotFound tests that reading a report that returns 404
+// properly removes the resource from state.
+func TestReportResourceRead_NotFound(t *testing.T) {
+	tests := []struct {
+		name          string
+		statusCode    int
+		responseBody  string
+		expectRemoved bool
+		expectError   bool
+	}{
+		{
+			name:          "200 OK - resource exists",
+			statusCode:    http.StatusOK,
+			responseBody:  `{"id": "test-report-id", "name": "Test Report", "config": {"advancedAnalysis": {"enabled": false}}}`,
+			expectRemoved: false,
+			expectError:   false,
+		},
+		{
+			name:          "404 Not Found - resource externally deleted",
+			statusCode:    http.StatusNotFound,
+			responseBody:  `{"message": "Report not found"}`,
+			expectRemoved: true,
+			expectError:   false,
+		},
+		{
+			name:          "500 Internal Server Error - should fail",
+			statusCode:    http.StatusInternalServerError,
+			responseBody:  `{"message": "Internal server error"}`,
+			expectRemoved: false,
+			expectError:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				if tt.responseBody != "" {
+					_, _ = w.Write([]byte(tt.responseBody))
+				}
+			}))
+			defer server.Close()
+
+			client, err := models.NewClientWithResponses(server.URL)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			r := &reportResource{client: client}
+
+			ctx := context.Background()
+			schemaResp := &resource.SchemaResponse{}
+			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+			if schemaResp.Diagnostics.HasError() {
+				t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+			}
+
+			stateValues := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-report-id"),
+			}
+			for attrName, attr := range schemaResp.Schema.Attributes {
+				if attrName == "id" {
+					continue
+				}
+				stateValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+			}
+
+			stateValue := tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+				},
+				stateValues,
+			)
+
+			state := tfsdk.State{
+				Schema: schemaResp.Schema,
+				Raw:    stateValue,
+			}
+
+			readReq := resource.ReadRequest{State: state}
+			readResp := &resource.ReadResponse{State: state}
+			r.Read(ctx, readReq, readResp)
+
+			hasError := readResp.Diagnostics.HasError()
+			if hasError != tt.expectError {
+				t.Errorf("Read() hasError = %v, expectError %v; diagnostics: %v",
+					hasError, tt.expectError, readResp.Diagnostics)
+			}
+
+			if tt.expectRemoved && !hasError {
+				if !readResp.State.Raw.IsNull() {
+					var resultState reportResourceModel
+					diags := readResp.State.Get(ctx, &resultState)
+					if diags.HasError() {
+						return
+					}
+					if !resultState.Id.IsNull() {
+						t.Errorf("Expected resource to be removed from state (ID should be null), got ID: %s", resultState.Id.ValueString())
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestBudgetResourceDelete_WithDCIRetryClient_Integration verifies that the Delete function behavior is correct when using DCIRetryClient.
+func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 	tests := []struct {
 		name         string
 		statusCode   int
@@ -440,13 +772,13 @@ func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
 		expectError  bool
 	}{
 		{
-			name:         "404 via RetryClient - should be treated as success",
+			name:         "404 via DCIRetryClient - should be treated as success",
 			statusCode:   http.StatusNotFound,
 			responseBody: `{"message": "not found"}`,
 			expectError:  false,
 		},
 		{
-			name:         "500 via RetryClient - should fail",
+			name:         "500 via DCIRetryClient - should fail",
 			statusCode:   http.StatusInternalServerError,
 			responseBody: `{"message": "internal error"}`,
 			expectError:  true,
@@ -473,8 +805,8 @@ func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			// Create client WITH RetryClient (as in production)
-			retryClient := &RetryClient{
+			// Create client WITH DCIRetryClient (as in production)
+			retryClient := &DCIRetryClient{
 				client: &http.Client{},
 			}
 
@@ -530,5 +862,429 @@ func TestBudgetResourceDelete_WithRetryClient_Integration(t *testing.T) {
 					hasError, tt.expectError, diagDetails)
 			}
 		})
+	}
+}
+
+// =============================================================================
+// 404 Handling in Create/Update Contexts
+// =============================================================================
+//
+// These tests verify that 404 responses are handled correctly in Create and Update
+// operations. Unlike Read (where 404 means "externally deleted"), a 404 after a
+// successful Create or Update is an error because the resource SHOULD exist.
+//
+// This prevents the "silent orphan" problem:
+//  1. Create/Update succeeds (API returns 201/200)
+//  2. Subsequent GET returns 404 (transient issue)
+//  3. Without proper handling: Terraform "succeeds" but loses track of the resource
+//  4. With proper handling: Terraform returns an error, user can retry
+// =============================================================================
+
+// TestReportResourceCreate_404OnGet tests that when Create succeeds but the
+// subsequent GET returns 404, an error is returned (not silent success).
+func TestReportResourceCreate_404OnGet(t *testing.T) {
+	callCountPerMethod := make(map[string]int)
+
+	// Mock server: POST returns 201 (created), GET returns 404
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCountPerMethod[r.Method]++
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method == "POST" {
+			// Create succeeds
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"id": "new-report-id", "name": "Test Report"}`))
+			return
+		}
+
+		if r.Method == "GET" {
+			// Simulate transient 404 on GET
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"message": "Report not found"}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+	defer server.Close()
+
+	client, err := models.NewClientWithResponses(server.URL)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	r := &reportResource{client: client}
+
+	ctx := context.Background()
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+	}
+
+	// Build plan with minimal required attributes
+	planValues := map[string]tftypes.Value{
+		"id": tftypes.NewValue(tftypes.String, nil), // ID is unknown for create
+	}
+	for attrName, attr := range schemaResp.Schema.Attributes {
+		if attrName == "id" {
+			continue
+		}
+		planValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+	}
+
+	planValue := tftypes.NewValue(
+		tftypes.Object{
+			AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+		},
+		planValues,
+	)
+
+	plan := tfsdk.Plan{
+		Schema: schemaResp.Schema,
+		Raw:    planValue,
+	}
+
+	// Call Create
+	createReq := resource.CreateRequest{Plan: plan}
+	createResp := &resource.CreateResponse{
+		State: tfsdk.State{Schema: schemaResp.Schema},
+	}
+	r.Create(ctx, createReq, createResp)
+
+	// Verify: Create should have returned an error due to 404 on GET
+	if !createResp.Diagnostics.HasError() {
+		t.Error("Expected Create to return an error when GET returns 404, but it succeeded")
+	}
+
+	// Verify error message mentions 404/not found
+	found := false
+	for _, d := range createResp.Diagnostics {
+		if strings.Contains(d.Detail(), "404") || strings.Contains(d.Summary(), "not found") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", createResp.Diagnostics)
+	}
+
+	// Verify both POST and GET were called exactly once
+	if callCountPerMethod["POST"] != 1 {
+		t.Errorf("Expected exactly 1 POST call, got %d", callCountPerMethod["POST"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
+	}
+}
+
+// TestReportResourceUpdate_404OnGet tests that when Update succeeds but the
+// subsequent GET returns 404, an error is returned (not silent success).
+func TestReportResourceUpdate_404OnGet(t *testing.T) {
+	callCountPerMethod := make(map[string]int)
+
+	// Mock server: PATCH returns 200 (updated), GET returns 404
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCountPerMethod[r.Method]++
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method == "PATCH" {
+			// Update succeeds
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"id": "existing-report-id", "name": "Updated Report"}`))
+			return
+		}
+
+		if r.Method == "GET" {
+			// Simulate transient 404 on GET
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"message": "Report not found"}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+	defer server.Close()
+
+	client, err := models.NewClientWithResponses(server.URL)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	r := &reportResource{client: client}
+
+	ctx := context.Background()
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+	}
+
+	// Build state with existing resource
+	stateValues := map[string]tftypes.Value{
+		"id": tftypes.NewValue(tftypes.String, "existing-report-id"),
+	}
+	for attrName, attr := range schemaResp.Schema.Attributes {
+		if attrName == "id" {
+			continue
+		}
+		stateValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+	}
+
+	stateValue := tftypes.NewValue(
+		tftypes.Object{
+			AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+		},
+		stateValues,
+	)
+
+	state := tfsdk.State{
+		Schema: schemaResp.Schema,
+		Raw:    stateValue,
+	}
+
+	// Use same values for plan (just testing the 404 handling)
+	plan := tfsdk.Plan{
+		Schema: schemaResp.Schema,
+		Raw:    stateValue,
+	}
+
+	// Call Update
+	updateReq := resource.UpdateRequest{
+		State: state,
+		Plan:  plan,
+	}
+	updateResp := &resource.UpdateResponse{
+		State: tfsdk.State{Schema: schemaResp.Schema},
+	}
+	r.Update(ctx, updateReq, updateResp)
+
+	// Verify: Update should have returned an error due to 404 on GET
+	if !updateResp.Diagnostics.HasError() {
+		t.Error("Expected Update to return an error when GET returns 404, but it succeeded")
+	}
+
+	// Verify error message mentions 404/not found
+	found := false
+	for _, d := range updateResp.Diagnostics {
+		if strings.Contains(d.Detail(), "404") || strings.Contains(d.Summary(), "not found") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", updateResp.Diagnostics)
+	}
+
+	// Verify both PATCH and GET were called exactly once
+	if callCountPerMethod["PATCH"] != 1 {
+		t.Errorf("Expected exactly 1 PATCH call, got %d", callCountPerMethod["PATCH"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
+	}
+}
+
+// TestAllocationResourceCreate_404OnGet tests that when Create succeeds but the
+// subsequent GET returns 404, an error is returned (not silent success).
+func TestAllocationResourceCreate_404OnGet(t *testing.T) {
+	callCountPerMethod := make(map[string]int)
+
+	// Mock server: POST returns 200 (created), GET returns 404
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCountPerMethod[r.Method]++
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method == "POST" {
+			// Create succeeds
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"id": "new-allocation-id", "name": "Test Allocation"}`))
+			return
+		}
+
+		if r.Method == "GET" {
+			// Simulate transient 404 on GET
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"message": "Allocation not found"}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+	defer server.Close()
+
+	client, err := models.NewClientWithResponses(server.URL)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	r := &allocationResource{client: client}
+
+	ctx := context.Background()
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+	}
+
+	// Build plan with minimal required attributes
+	planValues := map[string]tftypes.Value{
+		"id": tftypes.NewValue(tftypes.String, nil),
+	}
+	for attrName, attr := range schemaResp.Schema.Attributes {
+		if attrName == "id" {
+			continue
+		}
+		planValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+	}
+
+	planValue := tftypes.NewValue(
+		tftypes.Object{
+			AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+		},
+		planValues,
+	)
+
+	plan := tfsdk.Plan{
+		Schema: schemaResp.Schema,
+		Raw:    planValue,
+	}
+
+	// Call Create
+	createReq := resource.CreateRequest{Plan: plan}
+	createResp := &resource.CreateResponse{
+		State: tfsdk.State{Schema: schemaResp.Schema},
+	}
+	r.Create(ctx, createReq, createResp)
+
+	// Verify: Create should have returned an error due to 404 on GET
+	if !createResp.Diagnostics.HasError() {
+		t.Error("Expected Create to return an error when GET returns 404, but it succeeded")
+	}
+
+	// Verify error message mentions 404/not found
+	found := false
+	for _, d := range createResp.Diagnostics {
+		if strings.Contains(d.Detail(), "404") || strings.Contains(d.Summary(), "not found") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", createResp.Diagnostics)
+	}
+
+	// Verify both POST and GET were called exactly once
+	if callCountPerMethod["POST"] != 1 {
+		t.Errorf("Expected exactly 1 POST call, got %d", callCountPerMethod["POST"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
+	}
+}
+
+// TestAllocationResourceUpdate_404OnGet tests that when Update succeeds but the
+// subsequent GET returns 404, an error is returned (not silent success).
+func TestAllocationResourceUpdate_404OnGet(t *testing.T) {
+	callCountPerMethod := make(map[string]int)
+
+	// Mock server: PATCH returns 200 (updated), GET returns 404
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCountPerMethod[r.Method]++
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method == "PATCH" {
+			// Update succeeds
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"id": "existing-allocation-id", "name": "Updated Allocation"}`))
+			return
+		}
+
+		if r.Method == "GET" {
+			// Simulate transient 404 on GET
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"message": "Allocation not found"}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+	defer server.Close()
+
+	client, err := models.NewClientWithResponses(server.URL)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	r := &allocationResource{client: client}
+
+	ctx := context.Background()
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+	}
+
+	// Build state with existing resource
+	stateValues := map[string]tftypes.Value{
+		"id": tftypes.NewValue(tftypes.String, "existing-allocation-id"),
+	}
+	for attrName, attr := range schemaResp.Schema.Attributes {
+		if attrName == "id" {
+			continue
+		}
+		stateValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+	}
+
+	stateValue := tftypes.NewValue(
+		tftypes.Object{
+			AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+		},
+		stateValues,
+	)
+
+	state := tfsdk.State{
+		Schema: schemaResp.Schema,
+		Raw:    stateValue,
+	}
+
+	plan := tfsdk.Plan{
+		Schema: schemaResp.Schema,
+		Raw:    stateValue,
+	}
+
+	// Call Update
+	updateReq := resource.UpdateRequest{
+		State: state,
+		Plan:  plan,
+	}
+	updateResp := &resource.UpdateResponse{
+		State: tfsdk.State{Schema: schemaResp.Schema},
+	}
+	r.Update(ctx, updateReq, updateResp)
+
+	// Verify: Update should have returned an error due to 404 on GET
+	if !updateResp.Diagnostics.HasError() {
+		t.Error("Expected Update to return an error when GET returns 404, but it succeeded")
+	}
+
+	// Verify error message mentions 404/not found
+	found := false
+	for _, d := range updateResp.Diagnostics {
+		if strings.Contains(d.Detail(), "404") || strings.Contains(d.Summary(), "not found") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected error message to mention 404 or 'not found', got: %v", updateResp.Diagnostics)
+	}
+
+	// Verify both PATCH and GET were called exactly once
+	if callCountPerMethod["PATCH"] != 1 {
+		t.Errorf("Expected exactly 1 PATCH call, got %d", callCountPerMethod["PATCH"])
+	}
+	if callCountPerMethod["GET"] != 1 {
+		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
 	}
 }
