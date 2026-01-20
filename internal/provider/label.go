@@ -2,6 +2,8 @@
 package provider
 
 import (
+	"time"
+
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -19,13 +21,13 @@ func mapLabelToModel(resp *models.LabelListItem, state *labelResourceModel) {
 	}
 
 	if resp.CreateTime != nil {
-		state.CreateTime = types.StringValue(resp.CreateTime.Format("2006-01-02T15:04:05Z07:00"))
+		state.CreateTime = types.StringValue(resp.CreateTime.Format(time.RFC3339))
 	} else {
 		state.CreateTime = types.StringNull()
 	}
 
 	if resp.UpdateTime != nil {
-		state.UpdateTime = types.StringValue(resp.UpdateTime.Format("2006-01-02T15:04:05Z07:00"))
+		state.UpdateTime = types.StringValue(resp.UpdateTime.Format(time.RFC3339))
 	} else {
 		state.UpdateTime = types.StringNull()
 	}
