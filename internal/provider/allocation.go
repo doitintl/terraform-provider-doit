@@ -202,12 +202,6 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	// Handle externally deleted resource - remove from state
-	if httpResp.StatusCode() == 404 {
-		state.Id = types.StringNull()
-		return
-	}
-
 	resp = httpResp.JSON200
 	if resp == nil {
 		diags.AddError(
