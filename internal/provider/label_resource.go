@@ -97,7 +97,7 @@ func (r *labelResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	if labelResp.JSON201 == nil {
 		resp.Diagnostics.AddError(
-			"Error creating label",
+			"Error Creating Label",
 			"Could not create label, empty response",
 		)
 		return
@@ -132,6 +132,15 @@ func (r *labelResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	// Handle externally deleted resource - remove from state
 	if labelResp.StatusCode() == 404 {
 		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	// Check for successful response
+	if labelResp.StatusCode() != 200 {
+		resp.Diagnostics.AddError(
+			"Error Reading Label",
+			fmt.Sprintf("Unexpected status code %d for label ID %s: %s", labelResp.StatusCode(), state.Id.ValueString(), string(labelResp.Body)),
+		)
 		return
 	}
 

@@ -13,5 +13,5 @@ resource "doit_label" "cost_center_engineering" {
 # Create a label for environment categorization
 resource "doit_label" "production" {
   name  = "Production"
-  color = "red"
+  color = "rosePink"
 }
