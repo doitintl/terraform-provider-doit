@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -198,6 +199,16 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 				"This may indicate a transient API issue. Please retry the operation. "+
 				"If the problem persists, the resource may need to be imported manually. "+
 				"Allocation ID: "+state.Id.ValueString(),
+		)
+		return
+	}
+
+	// Check for successful response
+	if httpResp.StatusCode() != 200 {
+		diags.AddError(
+			"Error Reading Allocation",
+			fmt.Sprintf("Unexpected status code %d for allocation ID %s: %s",
+				httpResp.StatusCode(), state.Id.ValueString(), string(httpResp.Body)),
 		)
 		return
 	}

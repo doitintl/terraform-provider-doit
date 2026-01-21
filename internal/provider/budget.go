@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
@@ -177,6 +178,16 @@ func (r *budgetResource) populateState(ctx context.Context, state *budgetResourc
 	// Handle externally deleted resource - remove from state
 	if budgetResp.StatusCode() == 404 {
 		state.Id = types.StringNull()
+		return
+	}
+
+	// Check for successful response
+	if budgetResp.StatusCode() != 200 {
+		diags.AddError(
+			"Error Reading Budget",
+			fmt.Sprintf("Unexpected status code %d for budget ID %s: %s",
+				budgetResp.StatusCode(), state.Id.ValueString(), string(budgetResp.Body)),
+		)
 		return
 	}
 
