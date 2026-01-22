@@ -90,6 +90,11 @@ func TestAccReport_Minimal(t *testing.T) {
 }
 
 func TestAccReport_Attributions(t *testing.T) {
+	// Skip if not running acceptance tests - this check must come before
+	// getValidAttributionAndGroup() which makes API calls
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("TF_ACC must be set for acceptance tests")
+	}
 	t.Parallel()
 
 	// Dynamically fetch valid IDs
