@@ -203,8 +203,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The time when the alter was created (in UNIX timestamp).",
-				MarkdownDescription: "The time when the alter was created (in UNIX timestamp).",
+				Description:         "The time when the alert was created (in UNIX timestamp).",
+				MarkdownDescription: "The time when the alert was created (in UNIX timestamp).",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,

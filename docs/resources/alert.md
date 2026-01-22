@@ -69,7 +69,7 @@ resource "doit_alert" "aws_cost_alert" {
 
 ### Read-Only
 
-- `create_time` (Number) The time when the alter was created (in UNIX timestamp).
+- `create_time` (Number) The time when the alert was created (in UNIX timestamp).
 - `id` (String) Alert ID.
 - `last_alerted` (Number) Last time the alert was triggered (in UNIX timestamp).
 - `update_time` (Number) Last time the alert was modified (in UNIX timestamp).

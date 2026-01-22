@@ -3181,7 +3181,7 @@ components:
           default: ""
         createTime:
           type: integer
-          description: The time when the alter was created (in UNIX timestamp).
+          description: The time when the alert was created (in UNIX timestamp).
           format: int64
         updateTime:
           type: integer

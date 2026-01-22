@@ -735,7 +735,7 @@ type AdvancedAnalysis struct {
 type Alert struct {
 	Config *AlertConfig `json:"config,omitempty"`
 
-	// CreateTime The time when the alter was created (in UNIX timestamp).
+	// CreateTime The time when the alert was created (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
 	// Id Alert ID.
