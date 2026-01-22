@@ -114,8 +114,8 @@ resource "doit_label" "this" {
 `, i)
 }
 
-// TestAccLabel_Lavendar tests if the API accepts "lavendar" (potential typo for "lavender").
-func TestAccLabel_Lavendar(t *testing.T) {
+// TestAccLabel_Lavender tests that the API accepts the "lavender" color.
+func TestAccLabel_Lavender(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
@@ -125,16 +125,16 @@ func TestAccLabel_Lavendar(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-resource "doit_label" "lavendar_test" {
-  name  = "test-lavendar-%d"
-  color = "lavendar"
+resource "doit_label" "lavender_test" {
+  name  = "test-lavender-%d"
+  color = "lavender"
 }
 `, n),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_label.lavendar_test",
+						"doit_label.lavender_test",
 						tfjsonpath.New("color"),
-						knownvalue.StringExact("lavendar")),
+						knownvalue.StringExact("lavender")),
 				},
 			},
 		},

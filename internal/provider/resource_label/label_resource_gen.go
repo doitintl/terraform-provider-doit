@@ -16,8 +16,8 @@ func LabelResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"color": schema.StringAttribute{
 				Required:            true,
-				Description:         "The color of the label\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavendar`, `purple`, `rosePink`, `slateGrey`",
-				MarkdownDescription: "The color of the label\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavendar`, `purple`, `rosePink`, `slateGrey`",
+				Description:         "The color of the label\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`",
+				MarkdownDescription: "The color of the label\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"blue",
@@ -27,7 +27,7 @@ func LabelResourceSchema(ctx context.Context) schema.Schema {
 						"lime",
 						"softYellow",
 						"apricot",
-						"lavendar",
+						"lavender",
 						"purple",
 						"rosePink",
 						"slateGrey",

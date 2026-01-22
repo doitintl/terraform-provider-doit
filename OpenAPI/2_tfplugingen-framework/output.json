@@ -712,7 +712,7 @@
 												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 											}
 										],
-										"schema_definition": "stringvalidator.OneOf(\n\"blue\",\n\"skyBlue\",\n\"teal\",\n\"mint\",\n\"lime\",\n\"softYellow\",\n\"apricot\",\n\"lavendar\",\n\"purple\",\n\"rosePink\",\n\"slateGrey\",\n)"
+										"schema_definition": "stringvalidator.OneOf(\n\"blue\",\n\"skyBlue\",\n\"teal\",\n\"mint\",\n\"lime\",\n\"softYellow\",\n\"apricot\",\n\"lavender\",\n\"purple\",\n\"rosePink\",\n\"slateGrey\",\n)"
 									}
 								}
 							]

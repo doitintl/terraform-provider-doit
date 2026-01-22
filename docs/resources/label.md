@@ -38,7 +38,7 @@ resource "doit_label" "production" {
 ### Required
 
 - `color` (String) The color of the label
-Possible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavendar`, `purple`, `rosePink`, `slateGrey`
+Possible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`
 - `name` (String) The name of the label
 
 ### Read-Only

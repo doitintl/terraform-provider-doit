@@ -104,7 +104,7 @@ const (
 const (
 	CreateLabelRequestColorApricot    CreateLabelRequestColor = "apricot"
 	CreateLabelRequestColorBlue       CreateLabelRequestColor = "blue"
-	CreateLabelRequestColorLavendar   CreateLabelRequestColor = "lavendar"
+	CreateLabelRequestColorLavender   CreateLabelRequestColor = "lavender"
 	CreateLabelRequestColorLime       CreateLabelRequestColor = "lime"
 	CreateLabelRequestColorMint       CreateLabelRequestColor = "mint"
 	CreateLabelRequestColorPurple     CreateLabelRequestColor = "purple"
@@ -361,7 +361,7 @@ const (
 const (
 	LabelListItemColorApricot    LabelListItemColor = "apricot"
 	LabelListItemColorBlue       LabelListItemColor = "blue"
-	LabelListItemColorLavendar   LabelListItemColor = "lavendar"
+	LabelListItemColorLavender   LabelListItemColor = "lavender"
 	LabelListItemColorLime       LabelListItemColor = "lime"
 	LabelListItemColorMint       LabelListItemColor = "mint"
 	LabelListItemColorPurple     LabelListItemColor = "purple"
@@ -486,7 +486,7 @@ const (
 const (
 	Apricot    UpdateLabelRequestColor = "apricot"
 	Blue       UpdateLabelRequestColor = "blue"
-	Lavendar   UpdateLabelRequestColor = "lavendar"
+	Lavender   UpdateLabelRequestColor = "lavender"
 	Lime       UpdateLabelRequestColor = "lime"
 	Mint       UpdateLabelRequestColor = "mint"
 	Purple     UpdateLabelRequestColor = "purple"
