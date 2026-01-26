@@ -1288,3 +1288,107 @@ func TestAllocationResourceUpdate_404OnGet(t *testing.T) {
 		t.Errorf("Expected exactly 1 GET call, got %d", callCountPerMethod["GET"])
 	}
 }
+
+// TestLabelResourceDelete_NotFound tests that deleting a label that returns 404
+// is treated as a successful delete (resource already gone).
+func TestLabelResourceDelete_NotFound(t *testing.T) {
+	tests := []struct {
+		name         string
+		statusCode   int
+		responseBody string
+		expectError  bool
+	}{
+		{
+			name:         "200 OK - successful delete",
+			statusCode:   http.StatusOK,
+			responseBody: "",
+			expectError:  false,
+		},
+		{
+			name:         "204 No Content - successful delete",
+			statusCode:   http.StatusNoContent,
+			responseBody: "",
+			expectError:  false,
+		},
+		{
+			name:         "404 Not Found - resource already deleted",
+			statusCode:   http.StatusNotFound,
+			responseBody: `{"message": "Label not found"}`,
+			expectError:  false, // 404 should be treated as success
+		},
+		{
+			name:         "500 Internal Server Error - should fail",
+			statusCode:   http.StatusInternalServerError,
+			responseBody: `{"message": "Internal server error"}`,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock server that returns the specified status code
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.statusCode)
+				if tt.responseBody != "" {
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = w.Write([]byte(tt.responseBody))
+				}
+			}))
+			defer server.Close()
+
+			// Create client pointing to mock server
+			client, err := models.NewClientWithResponses(server.URL)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			// Create the resource
+			r := &labelResource{client: client}
+
+			// Build the state schema
+			ctx := context.Background()
+			schemaResp := &resource.SchemaResponse{}
+			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+			if schemaResp.Diagnostics.HasError() {
+				t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+			}
+
+			// Create state with minimal required attributes
+			stateValues := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-label-id"),
+			}
+			for attrName, attr := range schemaResp.Schema.Attributes {
+				if attrName == "id" {
+					continue
+				}
+				stateValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+			}
+
+			stateValue := tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+				},
+				stateValues,
+			)
+
+			state := tfsdk.State{
+				Schema: schemaResp.Schema,
+				Raw:    stateValue,
+			}
+
+			// Call Delete
+			deleteReq := resource.DeleteRequest{
+				State: state,
+			}
+			deleteResp := &resource.DeleteResponse{}
+			r.Delete(ctx, deleteReq, deleteResp)
+
+			// Check results
+			hasError := deleteResp.Diagnostics.HasError()
+			if hasError != tt.expectError {
+				t.Errorf("Delete() hasError = %v, expectError %v; diagnostics: %v",
+					hasError, tt.expectError, deleteResp.Diagnostics)
+			}
+		})
+	}
+}
