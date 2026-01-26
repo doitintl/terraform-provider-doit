@@ -418,3 +418,47 @@ resource "doit_annotation" "omitted_lists" {
 }
 `, i, timestamp)
 }
+
+// TestAccAnnotation_TimezonePreservation tests that timestamps with non-UTC timezone
+// offsets are preserved correctly, avoiding "Provider produced inconsistent result" errors.
+func TestAccAnnotation_TimezonePreservation(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	// Use EST timezone offset (-05:00) instead of UTC
+	timestamp := "2024-06-15T12:00:00-05:00"
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnnotationWithTimezone(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.timezone_test",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(fmt.Sprintf("Annotation with timezone %d", n))),
+					// Verify the timestamp is preserved with the original timezone offset
+					statecheck.ExpectKnownValue(
+						"doit_annotation.timezone_test",
+						tfjsonpath.New("timestamp"),
+						knownvalue.StringExact(timestamp)),
+				},
+			},
+		},
+	})
+}
+
+func testAccAnnotationWithTimezone(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_annotation" "timezone_test" {
+  content   = "Annotation with timezone %d"
+  timestamp = "%s"
+}
+`, i, timestamp)
+}
