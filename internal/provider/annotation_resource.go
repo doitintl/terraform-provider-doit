@@ -173,6 +173,15 @@ func (r *annotationResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
+	// Check for successful response
+	if annotationResp.StatusCode() != 200 {
+		resp.Diagnostics.AddError(
+			"Error Reading Annotation",
+			fmt.Sprintf("Unexpected status code %d for annotation ID %s: %s", annotationResp.StatusCode(), state.Id.ValueString(), string(annotationResp.Body)),
+		)
+		return
+	}
+
 	if annotationResp.JSON200 == nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Annotation",
