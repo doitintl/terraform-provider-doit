@@ -53,3 +53,16 @@ resources:
     delete:
       path: /analytics/v1/reports/{id}
       method: DELETE
+  label:
+    create:
+      path: /analytics/v1/labels
+      method: POST
+    read:
+      path: /analytics/v1/labels/{id}
+      method: GET
+    update:
+      path: /analytics/v1/labels/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/labels/{id}
+      method: DELETE
