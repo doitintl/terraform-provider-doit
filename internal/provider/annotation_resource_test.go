@@ -322,3 +322,99 @@ resource "doit_annotation" "with_multiple" {
 }
 `, i, i, i, i, i, timestamp)
 }
+
+// TestAccAnnotation_WithEmptyLists tests that explicit empty lists [] are handled correctly
+// and don't cause "inconsistent result" errors.
+func TestAccAnnotation_WithEmptyLists(t *testing.T) {
+	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnnotationWithEmptyLists(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.empty_lists",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(fmt.Sprintf("Annotation with empty lists %d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_annotation.empty_lists",
+						tfjsonpath.New("labels"),
+						knownvalue.ListSizeExact(0)),
+					statecheck.ExpectKnownValue(
+						"doit_annotation.empty_lists",
+						tfjsonpath.New("reports"),
+						knownvalue.ListSizeExact(0)),
+				},
+			},
+		},
+	})
+}
+
+func testAccAnnotationWithEmptyLists(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_annotation" "empty_lists" {
+  content   = "Annotation with empty lists %d"
+  timestamp = "%s"
+  labels    = []
+  reports   = []
+}
+`, i, timestamp)
+}
+
+// TestAccAnnotation_WithOmittedLists tests that omitted lists are handled correctly.
+// Note: The API returns empty arrays even when labels/reports are not sent, so the
+// state will contain empty lists rather than null.
+func TestAccAnnotation_WithOmittedLists(t *testing.T) {
+	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnnotationWithOmittedLists(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.omitted_lists",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(fmt.Sprintf("Annotation with omitted lists %d", n))),
+					// API returns empty arrays even when lists are not sent
+					statecheck.ExpectKnownValue(
+						"doit_annotation.omitted_lists",
+						tfjsonpath.New("labels"),
+						knownvalue.ListSizeExact(0)),
+					statecheck.ExpectKnownValue(
+						"doit_annotation.omitted_lists",
+						tfjsonpath.New("reports"),
+						knownvalue.ListSizeExact(0)),
+				},
+			},
+		},
+	})
+}
+
+func testAccAnnotationWithOmittedLists(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_annotation" "omitted_lists" {
+  content   = "Annotation with omitted lists %d"
+  timestamp = "%s"
+}
+`, i, timestamp)
+}

@@ -327,8 +327,14 @@ func (r *annotationResource) Delete(ctx context.Context, req resource.DeleteRequ
 func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, state *annotationResourceModel) (diags diag.Diagnostics) {
 	state.Id = types.StringValue(resp.Id)
 	state.Content = types.StringValue(resp.Content)
-	// Normalize timestamp to UTC for consistent state
-	state.Timestamp = types.StringValue(resp.Timestamp.UTC().Format(time.RFC3339))
+
+	// Check if the timestamp has changed semantically before overwriting to preserve user formatting
+	existingTime, err := time.Parse(time.RFC3339, state.Timestamp.ValueString())
+	if err == nil && existingTime.Equal(resp.Timestamp) {
+		// Keep the existing string to avoid diffs if the time is the same
+	} else {
+		state.Timestamp = types.StringValue(resp.Timestamp.UTC().Format(time.RFC3339))
+	}
 
 	if resp.CreateTime != nil {
 		state.CreateTime = types.StringValue(resp.CreateTime.Format(time.RFC3339))
@@ -343,7 +349,8 @@ func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, 
 	}
 
 	// Map labels - API returns []LabelInfo, but we store just the IDs
-	if resp.Labels != nil && len(*resp.Labels) > 0 {
+	// Use resp.Labels != nil (not len check) to handle explicit empty lists correctly
+	if resp.Labels != nil {
 		labelIDs := make([]string, len(*resp.Labels))
 		for i, label := range *resp.Labels {
 			labelIDs[i] = label.Id
@@ -359,7 +366,8 @@ func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, 
 	}
 
 	// Map reports
-	if resp.Reports != nil && len(*resp.Reports) > 0 {
+	// Use resp.Reports != nil (not len check) to handle explicit empty lists correctly
+	if resp.Reports != nil {
 		reportsList, d := types.ListValueFrom(ctx, types.StringType, *resp.Reports)
 		diags.Append(d...)
 		if diags.HasError() {
