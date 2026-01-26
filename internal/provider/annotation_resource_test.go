@@ -233,3 +233,92 @@ resource "doit_annotation" "with_both" {
 }
 `, i, i, i, timestamp)
 }
+
+// TestAccAnnotation_WithMultipleLabelsAndReports tests setting multiple labels and reports.
+func TestAccAnnotation_WithMultipleLabelsAndReports(t *testing.T) {
+	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnnotationWithMultipleLabelsAndReports(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.with_multiple",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(fmt.Sprintf("Annotation with multiple labels and reports %d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_annotation.with_multiple",
+						tfjsonpath.New("labels"),
+						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"doit_annotation.with_multiple",
+						tfjsonpath.New("reports"),
+						knownvalue.ListSizeExact(2)),
+				},
+			},
+		},
+	})
+}
+
+func testAccAnnotationWithMultipleLabelsAndReports(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_label" "first" {
+  name  = "test-label-first-%d"
+  color = "blue"
+}
+
+resource "doit_label" "second" {
+  name  = "test-label-second-%d"
+  color = "mint"
+}
+
+resource "doit_report" "first" {
+  name = "test-report-first-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+
+resource "doit_report" "second" {
+  name = "test-report-second-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "usage"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+
+resource "doit_annotation" "with_multiple" {
+  content   = "Annotation with multiple labels and reports %d"
+  timestamp = "%s"
+  labels    = [doit_label.first.id, doit_label.second.id]
+  reports   = [doit_report.first.id, doit_report.second.id]
+}
+`, i, i, i, i, i, timestamp)
+}
