@@ -147,6 +147,7 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 }
 
 // populateState fetches the alert from the API and populates the state.
+// If the resource is not found (404), state.Id is set to null to trigger removal.
 func (r *alertResource) populateState(ctx context.Context, state *alertResourceModel) (diags diag.Diagnostics) {
 	// Get refreshed alert value from API
 	alertResp, err := r.client.GetAlertWithResponse(ctx, state.Id.ValueString())
@@ -198,7 +199,10 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 		diags.Append(listDiags...)
 		state.Recipients = recipientsList
 	} else {
-		state.Recipients = types.ListNull(types.StringType)
+		// Use empty list instead of null to match user config if they set recipients = []
+		var listDiags diag.Diagnostics
+		state.Recipients, listDiags = types.ListValue(types.StringType, []attr.Value{})
+		diags.Append(listDiags...)
 	}
 
 	// Convert config

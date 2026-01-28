@@ -104,7 +104,7 @@ func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	// Map response directly to state
+	// Map response directly to state (API returns complete object)
 	plan.Id = types.StringPointerValue(alertResp.JSON201.Id)
 	resp.Diagnostics.Append(mapAlertToModel(ctx, alertResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -124,7 +124,7 @@ func (r *alertResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	// Populate state
+	// Populate state from API
 	resp.Diagnostics.Append(r.populateState(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -182,7 +182,7 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// Map response directly to state
+	// Map response directly to state (API returns complete object)
 	if updateResp.JSON200 == nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Alert",
@@ -192,8 +192,7 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	plan.Id = state.Id
-	diags = mapAlertToModel(ctx, updateResp.JSON200, &plan)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(mapAlertToModel(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
