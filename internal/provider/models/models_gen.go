@@ -104,7 +104,7 @@ const (
 const (
 	CreateLabelRequestColorApricot    CreateLabelRequestColor = "apricot"
 	CreateLabelRequestColorBlue       CreateLabelRequestColor = "blue"
-	CreateLabelRequestColorLavendar   CreateLabelRequestColor = "lavendar"
+	CreateLabelRequestColorLavender   CreateLabelRequestColor = "lavender"
 	CreateLabelRequestColorLime       CreateLabelRequestColor = "lime"
 	CreateLabelRequestColorMint       CreateLabelRequestColor = "mint"
 	CreateLabelRequestColorPurple     CreateLabelRequestColor = "purple"
@@ -361,7 +361,7 @@ const (
 const (
 	LabelListItemColorApricot    LabelListItemColor = "apricot"
 	LabelListItemColorBlue       LabelListItemColor = "blue"
-	LabelListItemColorLavendar   LabelListItemColor = "lavendar"
+	LabelListItemColorLavender   LabelListItemColor = "lavender"
 	LabelListItemColorLime       LabelListItemColor = "lime"
 	LabelListItemColorMint       LabelListItemColor = "mint"
 	LabelListItemColorPurple     LabelListItemColor = "purple"
@@ -444,18 +444,10 @@ const (
 
 // Defines values for TicketResponseExtAPIPlatform.
 const (
-	TicketResponseExtAPIPlatformAmazonWebServices   TicketResponseExtAPIPlatform = "amazon_web_services"
-	TicketResponseExtAPIPlatformDoit                TicketResponseExtAPIPlatform = "doit"
-	TicketResponseExtAPIPlatformGoogleCloudPlatform TicketResponseExtAPIPlatform = "google_cloud_platform"
-	TicketResponseExtAPIPlatformMicrosoftAzure      TicketResponseExtAPIPlatform = "microsoft_azure"
-)
-
-// Defines values for TicketResponseExtAPIRequester.
-const (
-	TicketResponseExtAPIRequesterAmazonWebServices   TicketResponseExtAPIRequester = "amazon_web_services"
-	TicketResponseExtAPIRequesterDoit                TicketResponseExtAPIRequester = "doit"
-	TicketResponseExtAPIRequesterGoogleCloudPlatform TicketResponseExtAPIRequester = "google_cloud_platform"
-	TicketResponseExtAPIRequesterMicrosoftAzure      TicketResponseExtAPIRequester = "microsoft_azure"
+	AmazonWebServices   TicketResponseExtAPIPlatform = "amazon_web_services"
+	Doit                TicketResponseExtAPIPlatform = "doit"
+	GoogleCloudPlatform TicketResponseExtAPIPlatform = "google_cloud_platform"
+	MicrosoftAzure      TicketResponseExtAPIPlatform = "microsoft_azure"
 )
 
 // Defines values for TicketResponseExtAPISeverity.
@@ -486,7 +478,7 @@ const (
 const (
 	Apricot    UpdateLabelRequestColor = "apricot"
 	Blue       UpdateLabelRequestColor = "blue"
-	Lavendar   UpdateLabelRequestColor = "lavendar"
+	Lavender   UpdateLabelRequestColor = "lavender"
 	Lime       UpdateLabelRequestColor = "lime"
 	Mint       UpdateLabelRequestColor = "mint"
 	Purple     UpdateLabelRequestColor = "purple"
@@ -714,7 +706,7 @@ const (
 	UpdateResourcePermissionJSONBodyPublicViewer UpdateResourcePermissionJSONBodyPublic = "viewer"
 )
 
-// AccountManagerListItem defines model for AccountManagerListItem.
+// AccountManagerListItem Information of a DoiT account manager assigned to your organization.
 type AccountManagerListItem struct {
 	CalendlyLink *string `json:"calendlyLink,omitempty"`
 	Email        *string `json:"email,omitempty"`
@@ -723,7 +715,7 @@ type AccountManagerListItem struct {
 	Role         *string `json:"role,omitempty"`
 }
 
-// AdvancedAnalysis Advanced analysis options. Each of these can be set independently
+// AdvancedAnalysis Advanced analysis options. Each can be set independently.
 type AdvancedAnalysis struct {
 	Forecast     *bool `json:"forecast,omitempty"`
 	NotTrending  *bool `json:"notTrending,omitempty"`
@@ -731,8 +723,9 @@ type AdvancedAnalysis struct {
 	TrendingUp   *bool `json:"trendingUp,omitempty"`
 }
 
-// Alert defines model for Alert.
+// Alert Configuration and runtime metadata of an alert.
 type Alert struct {
+	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
 
 	// CreateTime The time when the alert was created (in UNIX timestamp).
@@ -754,20 +747,27 @@ type Alert struct {
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
-// AlertConfig defines model for AlertConfig.
+// AlertConfig Parameters that define when and how an alert is evaluated.
 type AlertConfig struct {
-	// Attributions The attributions selected define the scope to monitor.
-	Attributions *[]string  `json:"attributions,omitempty"`
-	Condition    *Condition `json:"condition,omitempty"`
+	// Attributions Use 'scopes' instead. The attributions selected define the scope to monitor.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Attributions *[]string `json:"attributions,omitempty"`
+
+	// Condition Condition key or expression used in alert configurations.
+	Condition *Condition `json:"condition,omitempty"`
 
 	// Currency Currency code for monetary values.
 	Currency   *Currency `json:"currency,omitempty"`
 	DataSource *string   `json:"dataSource,omitempty"`
 
 	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
-	EvaluateForEach *string           `json:"evaluateForEach,omitempty"`
-	Metric          MetricConfig      `json:"metric"`
-	Operator        *MetricFilterText `json:"operator,omitempty"`
+	EvaluateForEach *string `json:"evaluateForEach,omitempty"`
+
+	// Metric Define how metrics are selected and filtered in reports.
+	Metric MetricConfig `json:"metric"`
+
+	// Operator Text/operator used to filter metric values in metric filters.
+	Operator *MetricFilterText `json:"operator,omitempty"`
 
 	// Scopes The filters selected define the scope of the alert.
 	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
@@ -780,230 +780,234 @@ type AlertConfig struct {
 // AlertConfigTimeInterval The time interval to evaluate the condition.
 type AlertConfigTimeInterval string
 
-// AlertRequest defines model for AlertRequest.
+// AlertRequest Request body for creating a new alert.
 type AlertRequest struct {
+	// Config Parameters that define when and how an alert is evaluated.
 	Config AlertConfig `json:"config"`
 
 	// Name Name of the alert.
 	Name string `json:"name"`
 
-	// Recipients List of emails that will be notified when the alert is triggered
+	// Recipients List of emails to notify when the alert is triggered.
 	Recipients *[]string `json:"recipients,omitempty"`
 }
 
-// AlertThreshold defines model for AlertThreshold.
+// AlertThreshold A numeric or percentage threshold.
 type AlertThreshold struct {
 	Amount     *float64 `json:"amount,omitempty"`
 	Percentage *float64 `json:"percentage,omitempty"`
 }
 
-// AlertUpdateRequest defines model for AlertUpdateRequest.
+// AlertUpdateRequest Request body for modifying an existing alert.
 type AlertUpdateRequest struct {
+	// Config Parameters that define when and how an alert is evaluated.
 	Config AlertConfig `json:"config"`
 
 	// Name Alert name
 	Name *string `json:"name,omitempty"`
 
-	// Recipients List of emails that will be notified when the alert is triggered
+	// Recipients List of emails to notify when the alert is triggered.
 	Recipients *[]string `json:"recipients,omitempty"`
 }
 
-// Allocation defines model for Allocation.
+// Allocation Allocation object, including rules and metadata.
 type Allocation struct {
-	// AllocationType Type of allocation (single or group)
+	// AllocationType Composition type of allocation.
 	AllocationType *AllocationAllocationType `json:"allocationType,omitempty"`
 
-	// AnomalyDetection Whether anomaly detection is enabled for this allocation
+	// AnomalyDetection Whether anomaly detection is enabled for this allocation.
 	AnomalyDetection *bool `json:"anomalyDetection"`
 
 	// CreateTime The time when the allocation was created (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Description Allocation description
+	// Description Allocation description.
 	Description *string `json:"description,omitempty"`
 
-	// Id Allocation ID
+	// Id Allocation ID.
 	Id *string `json:"id,omitempty"`
 
-	// Name Allocation name
+	// Name Allocation name.
 	Name *string `json:"name,omitempty"`
 
-	// Rule Single allocation rule (required for single type allocation)
+	// Rule Single allocation rule.
 	Rule  *AllocationRule        `json:"rule"`
 	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
 
-	// Type Type of allocation (preset or custom)
+	// Type Type of allocation (preset or custom).
 	Type *string `json:"type,omitempty"`
 
-	// UnallocatedCosts Custom label for any values that do not fit into allocation (required for group type allocation)
+	// UnallocatedCosts Custom label for values that do not fit into allocation (required for group type allocation).
 	UnallocatedCosts *string `json:"unallocatedCosts"`
 
 	// UpdateTime Last time the allocation was modified (in UNIX timestamp).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
-// AllocationAllocationType Type of allocation (single or group)
+// AllocationAllocationType Composition type of allocation.
 type AllocationAllocationType string
 
-// AllocationComponent defines model for AllocationComponent.
+// AllocationComponent A filter component used inside allocation rules.
 type AllocationComponent struct {
-	// IncludeNull Include null values
+	// IncludeNull Include null values.
 	IncludeNull *bool `json:"include_null,omitempty"`
 
 	// InverseSelection If true, all selected values will be excluded.
 	InverseSelection *bool `json:"inverse_selection,omitempty"`
 
-	// Key Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
+	// Key Key of an existing dimension. Examples: "billing_account_id", "country".
 	Key string `json:"key"`
 
-	// Mode Filter mode to apply
+	// Mode Filter mode to apply.
 	Mode AllocationComponentMode `json:"mode"`
 
-	// Type Type of dimension or filter field.
+	// Type Enumeration of supported dimension/filter types.
 	Type   DimensionsTypes `json:"type"`
 	Values []string        `json:"values"`
 }
 
-// AllocationComponentMode Filter mode to apply
+// AllocationComponentMode Filter mode to apply.
 type AllocationComponentMode string
 
-// AllocationDeleteValidation defines model for AllocationDeleteValidation.
+// AllocationDeleteValidation Details about why an allocation cannot be deleted.
 type AllocationDeleteValidation struct {
-	// Error Error message explaining why deletion failed
+	// Error Error message explaining why deletion failed.
 	Error *string `json:"error,omitempty"`
 
-	// Id Allocation ID
+	// Id Allocation ID.
 	Id *string `json:"id,omitempty"`
 
-	// Resources Map of resources using this allocation, keyed by resource type
+	// Resources Map of resources using this allocation, keyed by resource type.
 	Resources *map[string][]ResourceReference `json:"resources,omitempty"`
 
-	// Type Type of allocation (single or group)
+	// Type Type of allocation.
 	Type *AllocationDeleteValidationType `json:"type,omitempty"`
 }
 
-// AllocationDeleteValidationType Type of allocation (single or group)
+// AllocationDeleteValidationType Type of allocation.
 type AllocationDeleteValidationType string
 
-// AllocationListItem defines model for AllocationListItem.
+// AllocationListItem Summary information for an allocation.
 type AllocationListItem struct {
-	// AllocationType Type of allocation (single or group)
+	// AllocationType Composition type of allocation (single or group).
 	AllocationType *AllocationListItemAllocationType `json:"allocationType,omitempty"`
 
 	// CreateTime The time when the allocation was created (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Description Allocation description
+	// Description Allocation description.
 	Description *string `json:"description,omitempty"`
 
-	// Id Allocation ID
+	// Id Allocation ID.
 	Id *string `json:"id,omitempty"`
 
-	// Name Allocation name
+	// Name Allocation name.
 	Name *string `json:"name,omitempty"`
 
-	// Owner Allocation owner
+	// Owner Allocation owner.
 	Owner *string `json:"owner,omitempty"`
 
-	// Type Type of allocation (preset or custom)
+	// Type Type of allocation (preset or custom).
 	Type *string `json:"type,omitempty"`
 
 	// UpdateTime Last time the allocation was modified (in UNIX timestamp).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 
-	// UrlUI URL to view the allocation in DoiT Cloud Navigator.
+	// UrlUI URL to view the allocation in the DoiT console.
 	UrlUI *string `json:"urlUI,omitempty"`
 }
 
-// AllocationListItemAllocationType Type of allocation (single or group)
+// AllocationListItemAllocationType Composition type of allocation (single or group).
 type AllocationListItemAllocationType string
 
-// AllocationRule Single allocation rule (required for single type allocation)
+// AllocationRule Single allocation rule.
 type AllocationRule struct {
-	// Components List of allocation filter components
+	// Components List of allocation filter components.
 	Components []AllocationComponent `json:"components"`
 
-	// Formula Formula for combining components (A is the first component, B is the second one, etc.)
+	// Formula Formula for combining components (A is the first component, B is the second one, etc.).
 	Formula string `json:"formula"`
 }
 
-// AnnotationListItem defines model for AnnotationListItem.
+// AnnotationListItem Summary information about an annotation.
 type AnnotationListItem struct {
-	// Content The content of the annotation
+	// Content The content of the annotation.
 	Content string `json:"content"`
 
-	// CreateTime The time when the annotation was created
+	// CreateTime The creation time of the annotation.
 	CreateTime *time.Time `json:"createTime,omitempty"`
 
-	// Id The unique identifier of the annotation
+	// Id The unique identifier of the annotation.
 	Id string `json:"id"`
 
-	// Labels List of labels associated with the annotation
+	// Labels List of labels associated with the annotation.
 	Labels *[]LabelInfo `json:"labels,omitempty"`
 
-	// Reports List of report IDs associated with the annotation
+	// Reports List of report IDs associated with the annotation.
 	Reports *[]string `json:"reports,omitempty"`
 
-	// Timestamp The date associated with the annotation
+	// Timestamp The date associated with the annotation.
 	Timestamp time.Time `json:"timestamp"`
 
-	// UpdateTime The time when the annotation was last updated
+	// UpdateTime The time when the annotation was last updated.
 	UpdateTime *time.Time `json:"updateTime,omitempty"`
 }
 
-// AnomaliesResponse defines model for AnomaliesResponse.
+// AnomaliesResponse List of detected cloud cost anomalies.
 type AnomaliesResponse struct {
 	Anomalies *[]AnomalyItem `json:"anomalies,omitempty"`
 	PageToken *string        `json:"pageToken,omitempty"`
 	RowCount  *int64         `json:"rowCount,omitempty"`
 }
 
-// AnomalyItem defines model for AnomalyItem.
+// AnomalyItem Detailed information about a detected anomaly.
 type AnomalyItem struct {
 	// Acknowledged Has the anomaly been acknowledged
 	Acknowledged *bool `json:"acknowledged,omitempty"`
 
-	// Attribution Attribution ID
+	// Attribution Attribution ID.
 	Attribution string `json:"attribution"`
 
-	// BillingAccount Billing account ID
+	// BillingAccount Billing account ID.
 	BillingAccount string `json:"billingAccount"`
 
-	// CostOfAnomaly Cost of the anomaly over and above the expected normal cost
+	// CostOfAnomaly Cost of the anomaly over and above the expected normal cost.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
-	// EndTime End of the anomaly
+	// EndTime End of the anomaly.
 	EndTime *int    `json:"endTime"`
 	Id      *string `json:"id,omitempty"`
 
-	// Platform Cloud Provider name
+	// Platform Cloud Provider name.
 	Platform string `json:"platform"`
 
-	// ResourceData Resources contributing to the anomaly
+	// ResourceData Array of resources contributing to an anomaly.
 	ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
 
 	// Scope Scope: Project or Account
 	Scope string `json:"scope"`
 
-	// ServiceName Service name
+	// ServiceName Service name.
 	ServiceName string `json:"serviceName"`
 
 	// SeverityLevel Severity level: Information, Warning or Critical
 	SeverityLevel string `json:"severityLevel"`
 
-	// StartTime Usage start time of the anomaly
+	// StartTime Usage start time of the anomaly.
 	StartTime int64              `json:"startTime"`
 	Status    *AnomalyItemStatus `json:"status"`
 
 	// TimeFrame Timeframe: Daily or Hourly
-	TimeFrame string          `json:"timeFrame"`
-	Top3SKUs  AnomalySKUArray `json:"top3SKUs"`
+	TimeFrame string `json:"timeFrame"`
+
+	// Top3SKUs Array of SKU entries contributing to an anomaly.
+	Top3SKUs AnomalySKUArray `json:"top3SKUs"`
 }
 
 // AnomalyItemStatus defines model for AnomalyItem.Status.
 type AnomalyItemStatus string
 
-// AnomalyResource defines model for AnomalyResource.
+// AnomalyResource Resource-specific contribution to an anomaly.
 type AnomalyResource struct {
 	Cost *float64 `json:"cost,omitempty"`
 
@@ -1013,21 +1017,21 @@ type AnomalyResource struct {
 	SkuDescription *string `json:"skuDescription,omitempty"`
 }
 
-// AnomalyResourceArray Resources contributing to the anomaly
+// AnomalyResourceArray Array of resources contributing to an anomaly.
 type AnomalyResourceArray = []AnomalyResource
 
-// AnomalySKU defines model for AnomalySKU.
+// AnomalySKU SKU-level information contributing to an anomaly.
 type AnomalySKU struct {
 	Cost *float64 `json:"cost,omitempty"`
 	Name *string  `json:"name,omitempty"`
 }
 
-// AnomalySKUArray defines model for AnomalySKUArray.
+// AnomalySKUArray Array of SKU entries contributing to an anomaly.
 type AnomalySKUArray = []AnomalySKU
 
-// AssetItem defines model for AssetItem.
+// AssetItem Detailed information about a single asset.
 type AssetItem struct {
-	// CreateTime The time when the asset was created, in milliseconds since the epoch
+	// CreateTime The time when the asset was created, in milliseconds since the epoch.
 	CreateTime *int64  `json:"createTime,omitempty"`
 	Id         *string `json:"id,omitempty"`
 	Name       *string `json:"name,omitempty"`
@@ -1036,29 +1040,31 @@ type AssetItem struct {
 	Url        *string `json:"url,omitempty"`
 }
 
-// AssetProperties defines model for AssetProperties.
+// AssetProperties Additional properties associated with an asset.
 type AssetProperties struct {
-	CustomerDomain *string       `json:"customerDomain,omitempty"`
-	CustomerID     *string       `json:"customerID,omitempty"`
-	Reseller       *string       `json:"reseller,omitempty"`
-	Subscription   *Subscription `json:"subscription,omitempty"`
+	CustomerDomain *string `json:"customerDomain,omitempty"`
+	CustomerID     *string `json:"customerID,omitempty"`
+	Reseller       *string `json:"reseller,omitempty"`
+
+	// Subscription Subscription-related metadata for an asset.
+	Subscription *Subscription `json:"subscription,omitempty"`
 }
 
-// AssetResponse defines model for AssetResponse.
+// AssetResponse Response returned after creating or updating an asset.
 type AssetResponse struct {
 	AccountID *string `json:"accountID,omitempty"`
 }
 
-// AssignObjectsToLabelRequest defines model for AssignObjectsToLabelRequest.
+// AssignObjectsToLabelRequest Request to assign or remove objects from a label.
 type AssignObjectsToLabelRequest struct {
-	// Add Array of objects to assign to the label
+	// Add Array of objects to assign to the label.
 	Add *[]LabelAssignmentObject `json:"add,omitempty"`
 
-	// Remove Array of objects to unassign from the label
+	// Remove Array of objects to unassign from the label.
 	Remove *[]LabelAssignmentObject `json:"remove,omitempty"`
 }
 
-// AttributionAPI defines model for AttributionAPI.
+// AttributionAPI Definition and metadata of an attribution.
 type AttributionAPI struct {
 	// AnomalyDetection Indicates if the attribution has an active anomaly detection.
 	AnomalyDetection *bool `json:"anomalyDetection,omitempty"`
@@ -1089,7 +1095,7 @@ type AttributionAPI struct {
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
-// AttributionComponent defines model for AttributionComponent.
+// AttributionComponent A filter component of an attribution.
 type AttributionComponent struct {
 	IncludeNull *bool `json:"include_null,omitempty"`
 
@@ -1102,164 +1108,160 @@ type AttributionComponent struct {
 	// Regexp Filter the dimension values using a regular expression.
 	Regexp *string `json:"regexp,omitempty"`
 
-	// Type Type of dimension or filter field.
+	// Type Enumeration of supported dimension/filter types.
 	Type   DimensionsTypes `json:"type"`
 	Values *[]string       `json:"values,omitempty"`
 }
 
-// AttributionDeleteValidation defines model for AttributionDeleteValidation.
+// AttributionDeleteValidation Validation result when deleting an attribution.
 type AttributionDeleteValidation struct {
-	// Error Error message explaining why the deletion failed
+	// Error Error message explaining why the deletion failed.
 	Error *string `json:"error"`
 
-	// Id ID of the attribution that could not be deleted
+	// Id ID of the attribution that could not be deleted.
 	Id *string `json:"id,omitempty"`
 
-	// Resources Map of resources blocking the deletion. Only resource types that are blocking will be present in the response.
-	// For attribution group deletion, possible blocking resources are: budgets, alerts, reports.
-	// For attribution deletion, possible blocking resources are: budgets, alerts, reports, attributions, attributionGroups.
+	// Resources Map of resources that block deletion operations.
 	Resources *BlockingResources `json:"resources,omitempty"`
 }
 
-// AttributionGroupDeleteValidation defines model for AttributionGroupDeleteValidation.
+// AttributionGroupDeleteValidation Validation result when deleting an attribution group.
 type AttributionGroupDeleteValidation struct {
-	// Error Error message explaining why the deletion failed
+	// Error Error message explaining why the deletion failed.
 	Error *string `json:"error"`
 
-	// Id ID of the attribution group that could not be deleted
+	// Id ID of the attribution group that could not be deleted.
 	Id *string `json:"id,omitempty"`
 
-	// Resources Map of resources blocking the deletion. Only resource types that are blocking will be present in the response.
-	// For attribution group deletion, possible blocking resources are: budgets, alerts, reports.
-	// For attribution deletion, possible blocking resources are: budgets, alerts, reports, attributions, attributionGroups.
+	// Resources Map of resources that block deletion operations.
 	Resources *BlockingResources `json:"resources,omitempty"`
 }
 
-// AttributionGroupGetExternal defines model for AttributionGroupGetExternal.
+// AttributionGroupGetExternal Attribution group returned by the API.
 type AttributionGroupGetExternal struct {
 	Attributions *[]SortableItem `json:"attributions,omitempty"`
 	Cloud        *[]string       `json:"cloud,omitempty"`
 
-	// Customer A DocumentRef is a reference to a Firestore document.
+	// Customer Reference to a Firestore document.
 	Customer    *DocumentRef `json:"customer,omitempty"`
 	Description *string      `json:"description,omitempty"`
 	Id          *string      `json:"id,omitempty"`
 	Name        *string      `json:"name,omitempty"`
 
-	// Organization A DocumentRef is a reference to a Firestore document.
+	// Organization Reference to a Firestore document.
 	Organization *DocumentRef `json:"organization,omitempty"`
 	TimeCreated  *time.Time   `json:"timeCreated,omitempty"`
 	TimeModified *time.Time   `json:"timeModified,omitempty"`
-	Type         *ObjectType  `json:"type,omitempty"`
+
+	// Type Generic object type identifier.
+	Type *ObjectType `json:"type,omitempty"`
 }
 
-// AttributionGroupRequest defines model for AttributionGroupRequest.
+// AttributionGroupRequest Request body for creating an attribution group.
 type AttributionGroupRequest struct {
-	// Attributions List of the attributions that are part of the attribution group
+	// Attributions List of the attributions that are part of the attribution group.
 	Attributions []string `json:"attributions"`
 
-	// Description Description of the attribution group
+	// Description Description of the attribution group.
 	Description *string `json:"description,omitempty"`
 
-	// Name Name of the attribution group
+	// Name Name of the attribution group.
 	Name string `json:"name"`
 
-	// NullFallback Custom label for any values that do not fit into attributions
+	// NullFallback Custom label for values that do not fit into attributions.
 	NullFallback *string `json:"nullFallback,omitempty"`
 }
 
-// AttributionGroupUpdateRequest defines model for AttributionGroupUpdateRequest.
+// AttributionGroupUpdateRequest Request body for updating an attribution group.
 type AttributionGroupUpdateRequest struct {
-	// Attributions List of the attributions that are part of the attribution group
+	// Attributions List of the attributions that are part of the attribution group.
 	Attributions []string `json:"attributions"`
 
-	// Description Description of the attribution group
+	// Description Description of the attribution group.
 	Description *string `json:"description,omitempty"`
 
-	// Name Name of the attribution group
+	// Name Name of the attribution group.
 	Name string `json:"name"`
 
-	// NullFallback Custom label for any values that do not fit into attributions
+	// NullFallback Custom label for values that do not fit into attributions.
 	NullFallback *string `json:"nullFallback,omitempty"`
 }
 
-// AttributionGroupsListExternal defines model for AttributionGroupsListExternal.
+// AttributionGroupsListExternal List of attribution groups.
 type AttributionGroupsListExternal struct {
-	// AttributionGroups Array of AttributionGroup
+	// AttributionGroups Array of AttributionGroup.
 	AttributionGroups *[]SortableItem `json:"attributionGroups,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page of results
+	// PageToken Page token, returned by a previous call, to request the next page of results.
 	PageToken *string `json:"pageToken,omitempty"`
 
-	// RowCount AttributionGroup rows count
+	// RowCount AttributionGroup rows count.
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
-// AttributionListItem defines model for AttributionListItem.
+// AttributionListItem Summary information for an attribution.
 type AttributionListItem struct {
-	// CreateTime Creation time of this Attribution (in unix milliseconds)
+	// CreateTime Creation time of the attribution (in unix milliseconds).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Description Attribution description
+	// Description Attribution description.
 	Description *string `json:"description,omitempty"`
 
 	// Id attribution ID, identifying the attribution
 	// in:path
 	Id *string `json:"id,omitempty"`
 
-	// Name Attribution Name
+	// Name Attribution Name.
 	Name string `json:"name"`
 
-	// Owner Attribution owner
+	// Owner Attribution owner.
 	Owner *string `json:"owner,omitempty"`
 
-	// Type Type of Attribution can be either preset or custom
+	// Type Type of attribution can be either preset or custom.
 	Type *string `json:"type,omitempty"`
 
-	// UpdateTime Last time somebody modified this Attribution (in unix milliseconds)
+	// UpdateTime Last time the attribution was modified (in unix milliseconds).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
-// BlockingResources Map of resources blocking the deletion. Only resource types that are blocking will be present in the response.
-// For attribution group deletion, possible blocking resources are: budgets, alerts, reports.
-// For attribution deletion, possible blocking resources are: budgets, alerts, reports, attributions, attributionGroups.
+// BlockingResources Map of resources that block deletion operations.
 type BlockingResources struct {
-	// Alerts List of alerts using this resource
+	// Alerts List of alerts using this resource.
 	Alerts *[]ResourceReference `json:"alerts,omitempty"`
 
-	// AttributionGroups List of attribution groups using this resource (only applicable for attribution deletion)
+	// AttributionGroups List of attribution groups using this resource (only applicable for attribution deletion).
 	AttributionGroups *[]ResourceReference `json:"attributionGroups,omitempty"`
 
-	// Attributions List of attributions using this resource (only applicable for attribution deletion)
+	// Attributions List of attributions using this resource (only applicable for attribution deletion).
 	Attributions *[]ResourceReference `json:"attributions,omitempty"`
 
-	// Budgets List of budgets using this resource
+	// Budgets List of budgets using this resource.
 	Budgets *[]ResourceReference `json:"budgets,omitempty"`
 
-	// Reports List of reports using this resource
+	// Reports List of reports using this resource.
 	Reports *[]ResourceReference `json:"reports,omitempty"`
 }
 
-// BudgetAPI defines model for BudgetAPI.
+// BudgetAPI Budget details and runtime metrics.
 type BudgetAPI struct {
-	// Alerts List of up to three thresholds defined as a percentage of amount
+	// Alerts List of up to three thresholds defined as a percentage of amount.
 	Alerts *[]ExternalBudgetAlert `json:"alerts,omitempty"`
 
 	// Amount Budget period amount
 	// required: true(if usePrevSpend is false)
 	Amount *float64 `json:"amount,omitempty"`
 
-	// Collaborators List of permitted users to view/edit the report
+	// Collaborators List of permitted users to view/edit the report.
 	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
 
-	// CreateTime Creation time (in UNIX timestamp)
+	// CreateTime Creation time (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
 	// Currency Currency code for monetary values.
 	Currency           Currency `json:"currency"`
 	CurrentUtilization *float64 `json:"currentUtilization,omitempty"`
 
-	// Description Budget description
+	// Description Budget description.
 	Description *string `json:"description,omitempty"`
 
 	// EndPeriod Fixed budget end date (in UNIX timestamp)
@@ -1267,7 +1269,7 @@ type BudgetAPI struct {
 	EndPeriod             *int64   `json:"endPeriod,omitempty"`
 	ForecastedUtilization *float64 `json:"forecastedUtilization,omitempty"`
 
-	// GrowthPerPeriod Periodical growth percentage in recurring budget
+	// GrowthPerPeriod Periodical growth percentage in recurring budgets.
 	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
 
 	// Id budget ID, identifying the report
@@ -1283,22 +1285,22 @@ type BudgetAPI struct {
 	// Public Public sharing access level for the budget.
 	Public *BudgetAPIPublic `json:"public,omitempty"`
 
-	// Recipients List of emails to notify when reaching alert threshold
+	// Recipients List of emails to notify when reaching alert threshold.
 	Recipients *[]string `json:"recipients,omitempty"`
 
-	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold
+	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scope List of attributions that defines the budget scope
+	// Scope List of allocations that defines the budget scope.
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
 	Scopes []ExternalConfigFilter `json:"scopes"`
 
-	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
+	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
 
-	// StartPeriod Budget start Date (in UNIX timestamp)
+	// StartPeriod Budget start date (in UNIX timestamp).
 	StartPeriod int64 `json:"startPeriod"`
 
 	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter" ,"year"]
@@ -1307,31 +1309,31 @@ type BudgetAPI struct {
 	// Type budget type can be one of: ["fixed", "recurring"]
 	Type string `json:"type"`
 
-	// UpdateTime Update time (in UNIX timestamp)
+	// UpdateTime Update time (in UNIX timestamp).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 
-	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
+	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets.
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
 // BudgetAPIPublic Public sharing access level for the budget.
 type BudgetAPIPublic string
 
-// BudgetCreateUpdateAlert defines model for BudgetCreateUpdateAlert.
+// BudgetCreateUpdateAlert Threshold settings for budget alerts.
 type BudgetCreateUpdateAlert struct {
 	Percentage *float64 `json:"percentage,omitempty"`
 }
 
-// BudgetCreateUpdateRequest defines model for BudgetCreateUpdateRequest.
+// BudgetCreateUpdateRequest Request body for creating or updating a budget.
 type BudgetCreateUpdateRequest struct {
-	// Alerts List of up to three thresholds defined as a percentage of the amount
+	// Alerts List of up to three thresholds defined as a percentage of the amount.
 	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
 
 	// Amount Budget period amount
 	// required: true(if usePrevSpend is false)
 	Amount *float64 `json:"amount,omitempty"`
 
-	// Collaborators List of permitted users to view/edit the report
+	// Collaborators List of permitted users to view/edit the report.
 	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
 
 	// Currency Currency code for monetary values.
@@ -1350,24 +1352,24 @@ type BudgetCreateUpdateRequest struct {
 	// Metric Budget metric - currently fixed to "cost"
 	Metric *string `json:"metric,omitempty"`
 
-	// Name Budget Name
+	// Name Budget Name.
 	Name   *string                          `json:"name,omitempty"`
 	Public *BudgetCreateUpdateRequestPublic `json:"public,omitempty"`
 
-	// Recipients List of emails to notify when reaching alert threshold
+	// Recipients List of emails to notify when reaching alert threshold.
 	Recipients *[]string `json:"recipients,omitempty"`
 
-	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold
+	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scope List of attributions that define the budget scope.
+	// Scope List of allocations that define the budget scope.
 	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
 	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
-	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period
+	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
 
 	// StartPeriod Budget start Date
@@ -1386,7 +1388,7 @@ type BudgetCreateUpdateRequest struct {
 // BudgetCreateUpdateRequestPublic defines model for BudgetCreateUpdateRequest.Public.
 type BudgetCreateUpdateRequestPublic string
 
-// BudgetListItem defines model for BudgetListItem.
+// BudgetListItem Summary information for a budget.
 type BudgetListItem struct {
 	AlertThresholds           *[]AlertThreshold `json:"alertThresholds,omitempty"`
 	Amount                    *float64          `json:"amount,omitempty"`
@@ -1399,7 +1401,7 @@ type BudgetListItem struct {
 	Id                        *string           `json:"id,omitempty"`
 	Owner                     *string           `json:"owner,omitempty"`
 
-	// Scope List of attributions that define the budget scope.
+	// Scope List of allocations that define the budget scope.
 	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Scope *[]string `json:"scope,omitempty"`
 
@@ -1411,15 +1413,15 @@ type BudgetListItem struct {
 	Url          *string                 `json:"url,omitempty"`
 }
 
-// CloudIncidentListItem defines model for CloudIncidentListItem.
+// CloudIncidentListItem Summary information for a cloud incident.
 type CloudIncidentListItem struct {
-	// CreateTime The time when this cloud incident was created, in milliseconds since the epoch.
+	// CreateTime The creation time of this cloud incident, in milliseconds since the epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Id cloud incident id, uniquely identifying the cloud incident
+	// Id The unique cloud incident identifier.
 	Id *string `json:"id,omitempty"`
 
-	// Platform The Cloud Platform
+	// Platform The Cloud Platform.
 	Platform *CloudIncidentListItemPlatform `json:"platform,omitempty"`
 
 	// Product The name of the product affected by the cloud incident
@@ -1432,13 +1434,13 @@ type CloudIncidentListItem struct {
 	Title *string `json:"title,omitempty"`
 }
 
-// CloudIncidentListItemPlatform The Cloud Platform
+// CloudIncidentListItemPlatform The Cloud Platform.
 type CloudIncidentListItemPlatform string
 
 // CloudIncidentListItemStatus The Status of the issue
 type CloudIncidentListItemStatus string
 
-// Collaborator defines model for Collaborator.
+// Collaborator A user or identity that has access to a resource.
 type Collaborator struct {
 	Email *string           `json:"email,omitempty"`
 	Role  *CollaboratorRole `json:"role,omitempty"`
@@ -1447,9 +1449,9 @@ type Collaborator struct {
 // CollaboratorRole defines model for Collaborator.Role.
 type CollaboratorRole string
 
-// CollectionRef A CollectionRef is a reference to Firestore collection.
+// CollectionRef Reference to a Firestore collection.
 type CollectionRef struct {
-	// ID ID is the collection identifier.
+	// ID The collection identifier.
 	ID *string `json:"ID,omitempty"`
 
 	// Parent The root collection.
@@ -1459,117 +1461,117 @@ type CollectionRef struct {
 	Path *string `json:"Path,omitempty"`
 }
 
-// Condition defines model for Condition.
+// Condition Condition key or expression used in alert configurations.
 type Condition = string
 
-// CreateAllocationRequest defines model for CreateAllocationRequest.
+// CreateAllocationRequest Request body for creating an allocation.
 type CreateAllocationRequest struct {
-	// Description Allocation description
+	// Description Allocation description.
 	Description string `json:"description"`
 
-	// Name Allocation name
+	// Name Allocation name.
 	Name string `json:"name"`
 
-	// Rule Single allocation rule (required for single type allocation)
+	// Rule Single allocation rule.
 	Rule  *AllocationRule        `json:"rule"`
 	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
 
-	// UnallocatedCosts Custom label for any values that do not fit into allocation (required for group type allocation)
+	// UnallocatedCosts Custom label for values that do not fit into allocation (required for group type allocation).
 	UnallocatedCosts *string `json:"unallocatedCosts"`
 }
 
-// CreateAnnotationRequest defines model for CreateAnnotationRequest.
+// CreateAnnotationRequest Request body to create an annotation.
 type CreateAnnotationRequest struct {
-	// Content The content of the annotation
+	// Content The content of the annotation.
 	Content string `json:"content"`
 
 	// Labels List of label IDs to associate with the annotation. Labels must already exist.
 	Labels *[]string `json:"labels,omitempty"`
 
-	// Reports List of report IDs associated with the annotation
+	// Reports List of report IDs associated with the annotation.
 	Reports *[]string `json:"reports,omitempty"`
 
-	// Timestamp The date associated with the annotation
+	// Timestamp The date associated with the annotation.
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// CreateLabelRequest defines model for CreateLabelRequest.
+// CreateLabelRequest Request body for creating a label.
 type CreateLabelRequest struct {
-	// Color The color of the label
+	// Color The color of the label.
 	Color CreateLabelRequestColor `json:"color"`
 
-	// Name The name of the label
+	// Name The name of the label.
 	Name string `json:"name"`
 }
 
-// CreateLabelRequestColor The color of the label
+// CreateLabelRequestColor The color of the label.
 type CreateLabelRequestColor string
 
 // Currency Currency code for monetary values.
 type Currency string
 
-// DeleteUserResponse defines model for DeleteUserResponse.
+// DeleteUserResponse Response confirming user deletion.
 type DeleteUserResponse struct {
 	// Message Success message
 	Message *string `json:"message,omitempty"`
 }
 
-// Dimension A dimension to apply to the report.
+// Dimension Definition of a report dimension.
 type Dimension struct {
-	// Id The field to apply to the dimension.
+	// Id The identifier of the dimension.
 	Id *string `json:"id,omitempty"`
 
-	// Type Type of dimension or filter field.
+	// Type Enumeration of supported dimension/filter types.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
-// DimensionsExternalAPIGetResponse defines model for DimensionsExternalAPIGetResponse.
+// DimensionsExternalAPIGetResponse Dimension metadata returned by the API.
 type DimensionsExternalAPIGetResponse struct {
 	Id    *string `json:"id,omitempty"`
 	Label *string `json:"label,omitempty"`
 
-	// Type Type of dimension or filter field.
+	// Type Enumeration of supported dimension/filter types.
 	Type   *DimensionsTypes       `json:"type,omitempty"`
 	Values *[]ExternalAPIGetValue `json:"values,omitempty"`
 }
 
-// DimensionsExternalAPIList defines model for DimensionsExternalAPIList.
+// DimensionsExternalAPIList Paged list of available dimensions.
 type DimensionsExternalAPIList struct {
 	Dimensions *[]SortableItem `json:"dimensions,omitempty"`
 	PageToken  *string         `json:"pageToken,omitempty"`
 	RowCount   *int64          `json:"rowCount,omitempty"`
 }
 
-// DimensionsTypes Type of dimension or filter field.
+// DimensionsTypes Enumeration of supported dimension/filter types.
 type DimensionsTypes string
 
-// DocumentRef A DocumentRef is a reference to a Firestore document.
+// DocumentRef Reference to a Firestore document.
 type DocumentRef struct {
-	// ID The ID of the document: the last component of the resource path.
+	// ID ID of the document. The last component of the resource path.
 	ID *string `json:"ID,omitempty"`
 
-	// Parent A CollectionRef is a reference to Firestore collection.
+	// Parent Reference to a Firestore collection.
 	Parent *CollectionRef `json:"Parent,omitempty"`
 
 	// Path The full resource path of the document. A document "doc-1" in collection "coll-1" would be: "projects/P/databases/D/documents/coll-1/doc-1".
 	Path *string `json:"Path,omitempty"`
 }
 
-// Error defines model for Error.
+// Error Standard error response structure.
 type Error struct {
 	// Error Detailed error message.
 	Error *string `json:"error,omitempty"`
 }
 
-// ExternalAPIGetValue defines model for ExternalAPIGetValue.
+// ExternalAPIGetValue Single value entry used by some dimension endpoints.
 type ExternalAPIGetValue struct {
 	Cloud *string `json:"cloud,omitempty"`
 	Value *string `json:"value,omitempty"`
 }
 
-// ExternalAlertList defines model for ExternalAlertList.
+// ExternalAlertList List of alerts.
 type ExternalAlertList struct {
-	// Alerts Array of alerts
+	// Alerts Array of alerts.
 	Alerts *[]Alert `json:"alerts,omitempty"`
 
 	// PageToken Page token. It is used to request a specific page of the list results.
@@ -1579,16 +1581,16 @@ type ExternalAlertList struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
-// ExternalBudgetAlert defines model for ExternalBudgetAlert.
+// ExternalBudgetAlert Budget alert status details.
 type ExternalBudgetAlert struct {
 	ForecastedDate *int64   `json:"forecastedDate,omitempty"`
 	Percentage     *float64 `json:"percentage,omitempty"`
 	Triggered      *bool    `json:"triggered,omitempty"`
 }
 
-// ExternalConfig Report configuration
+// ExternalConfig Report configuration.
 type ExternalConfig struct {
-	// AdvancedAnalysis Advanced analysis options. Each of these can be set independently
+	// AdvancedAnalysis Advanced analysis options. Each can be set independently.
 	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
 
 	// Aggregation How to aggregate data values in the report.
@@ -1628,13 +1630,13 @@ type ExternalConfig struct {
 	// IncludeSubtotals Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
 	IncludeSubtotals *bool `json:"includeSubtotals,omitempty"`
 
-	// Layout The visualization of the report.
+	// Layout Type of visualization or output format.
 	Layout *ExternalRenderer `json:"layout,omitempty"`
 
-	// Metric The metric to apply.
+	// Metric Metric selector used in reports and filters.
 	Metric *ExternalMetric `json:"metric,omitempty"`
 
-	// MetricFilter The metric filter to limit the report results by value
+	// MetricFilter Metric filter to limit report rows by metric value.
 	MetricFilter *ExternalConfigMetricFilter `json:"metricFilter,omitempty"`
 
 	// SortDimensions This option has no impact when reading reports via API.
@@ -1673,7 +1675,7 @@ type ExternalConfigSortGroups string
 // ExternalConfigTimeInterval Time interval for grouping data in the report.
 type ExternalConfigTimeInterval string
 
-// ExternalConfigFilter To filter or exclude certain values by type.
+// ExternalConfigFilter To include or exclude certain values.
 // When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
 type ExternalConfigFilter struct {
 	// Id The field to filter on
@@ -1685,19 +1687,19 @@ type ExternalConfigFilter struct {
 	// Mode Filter mode to apply
 	Mode ExternalConfigFilterMode `json:"mode"`
 
-	// Type Type of dimension or filter field.
+	// Type Enumeration of supported dimension/filter types.
 	Type DimensionsTypes `json:"type"`
 
-	// Values Values to filter on
+	// Values Values to filter on.
 	Values *[]string `json:"values,omitempty"`
 }
 
 // ExternalConfigFilterMode Filter mode to apply
 type ExternalConfigFilterMode string
 
-// ExternalConfigMetricFilter The metric filter to limit the report results by value
+// ExternalConfigMetricFilter Metric filter to limit report rows by metric value.
 type ExternalConfigMetricFilter struct {
-	// Metric The metric to apply.
+	// Metric Metric selector used in reports and filters.
 	Metric *ExternalMetric `json:"metric,omitempty"`
 
 	// Operator Comparison operator for filtering metric values.
@@ -1708,22 +1710,22 @@ type ExternalConfigMetricFilter struct {
 // ExternalConfigMetricFilterOperator Comparison operator for filtering metric values.
 type ExternalConfigMetricFilterOperator string
 
-// ExternalMetric The metric to apply.
+// ExternalMetric Metric selector used in reports and filters.
 type ExternalMetric struct {
 	// Type Type of metric to use.
 	Type *ExternalMetricType `json:"type,omitempty"`
 
 	// Value For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-	// If using custom metrics, the value must refer to an existing custom id.
+	// If using custom metrics, the value must refer to an existing custom ID.
 	Value *string `json:"value,omitempty"`
 }
 
 // ExternalMetricType Type of metric to use.
 type ExternalMetricType string
 
-// ExternalOrigin defines model for ExternalOrigin.
+// ExternalOrigin Origin info for cost splitting.
 type ExternalOrigin struct {
-	// Id ID of the origin
+	// Id ID of the origin.
 	Id *string `json:"id,omitempty"`
 
 	// Type Type of the origin.
@@ -1735,18 +1737,18 @@ type ExternalOrigin struct {
 // The only supported values at the moment: "attribution", "unallocated"
 type ExternalOriginType string
 
-// ExternalRenderer The visualization of the report.
+// ExternalRenderer Type of visualization or output format.
 type ExternalRenderer string
 
-// ExternalReport defines model for ExternalReport.
+// ExternalReport Configuration and metadata of a stored report.
 type ExternalReport struct {
-	// Config Report configuration
+	// Config Report configuration.
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
 	Description *string `json:"description,omitempty"`
 
-	// Id Report id.
+	// Id Report ID.
 	Id *string `json:"id,omitempty"`
 
 	// Name Report name.
@@ -1759,17 +1761,19 @@ type ExternalReport struct {
 // ExternalReportType Report type.
 type ExternalReportType string
 
-// ExternalSplit A cost split to apply to the report
+// ExternalSplit Specification of how to split costs.
 type ExternalSplit struct {
-	// Id ID of the field to split
+	// Id ID of the field to split.
 	Id *string `json:"id,omitempty"`
 
-	// IncludeOrigin if set, include the origin
+	// IncludeOrigin Indicate whether to include the origin.
 	IncludeOrigin *bool              `json:"includeOrigin,omitempty"`
 	Mode          *ExternalSplitMode `json:"mode,omitempty"`
-	Origin        *ExternalOrigin    `json:"origin,omitempty"`
 
-	// Targets Targets for the split
+	// Origin Origin info for cost splitting.
+	Origin *ExternalOrigin `json:"origin,omitempty"`
+
+	// Targets Targets for the split.
 	Targets *[]ExternalSplitTarget `json:"targets,omitempty"`
 
 	// Type Type of the split.
@@ -1784,16 +1788,16 @@ type ExternalSplitMode string
 // The only supported value at the moment: "attribution_group"
 type ExternalSplitType string
 
-// ExternalSplitTarget defines model for ExternalSplitTarget.
+// ExternalSplitTarget Target and value of a split definition.
 type ExternalSplitTarget struct {
-	// Id ID of the target
+	// Id ID of the target.
 	Id *string `json:"id,omitempty"`
 
 	// Type Type of the target.
 	// The only supported value at the moment: "attribution"
 	Type *ExternalSplitTargetType `json:"type,omitempty"`
 
-	// Value Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom.
+	// Value Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
 	Value *float64 `json:"value,omitempty"`
 }
 
@@ -1801,9 +1805,9 @@ type ExternalSplitTarget struct {
 // The only supported value at the moment: "attribution"
 type ExternalSplitTargetType string
 
-// ExternalUpdateReport defines model for ExternalUpdateReport.
+// ExternalUpdateReport Partial report object used for updates.
 type ExternalUpdateReport struct {
-	// Config Report configuration
+	// Config Report configuration.
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description
@@ -1816,13 +1820,13 @@ type ExternalUpdateReport struct {
 // Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 type Filter = string
 
-// FindCloudDiagramsRequest defines model for FindCloudDiagramsRequest.
+// FindCloudDiagramsRequest Request body for locating cloud diagrams for given resource IDs.
 type FindCloudDiagramsRequest struct {
 	// Resources Resource IDs to find diagrams for.
 	Resources []string `json:"resources"`
 }
 
-// FindCloudDiagramsResponse List of diagram URLs matching the find criteria.
+// FindCloudDiagramsResponse List of diagram URLs matching the criteria.
 type FindCloudDiagramsResponse = []struct {
 	// DiagramUrl URL to the diagram viewer.
 	DiagramUrl string `json:"diagramUrl"`
@@ -1839,65 +1843,65 @@ type Group struct {
 	// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 	Limit *Limit `json:"limit,omitempty"`
 
-	// Type Type of dimension or filter field.
+	// Type Enumeration of supported dimension/filter types.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
-// GroupAllocationRule Allocation rule for a group (required for group type allocation)
+// GroupAllocationRule Allocation rule for a group type allocation.
 type GroupAllocationRule struct {
-	// Action Action to perform with this rule
+	// Action Action to perform with this rule.
 	Action GroupAllocationRuleAction `json:"action"`
 
-	// Components List of allocation filter components (required for 'create' or 'update' action)
+	// Components List of allocation filter components (required for 'create' or 'update' action).
 	Components *[]AllocationComponent `json:"components,omitempty"`
 
-	// Description Description for the allocation rule
+	// Description Description of the allocation rule.
 	Description *string `json:"description,omitempty"`
 
 	// Formula Formula for combining components (A is the first component, B is the second one, etc.)
 	Formula *string `json:"formula,omitempty"`
 
-	// Id ID of existing allocation (required for 'update' or 'select' action)
+	// Id ID of existing allocation (required for 'update' or 'select' action).
 	Id *string `json:"id,omitempty"`
 
-	// Name Name for the allocation rule
+	// Name Name of the allocation rule.
 	Name *string `json:"name,omitempty"`
 }
 
-// GroupAllocationRuleAction Action to perform with this rule
+// GroupAllocationRuleAction Action to perform with this rule.
 type GroupAllocationRuleAction string
 
-// InviteResponse defines model for InviteResponse.
+// InviteResponse Response returned after creating a user invitation.
 type InviteResponse struct {
 	// Message Success message
 	Message *string          `json:"message,omitempty"`
 	User    *InvitedUserBody `json:"user,omitempty"`
 }
 
-// InviteUserRequest defines model for InviteUserRequest.
+// InviteUserRequest Request body to invite a new user to the organization.
 type InviteUserRequest struct {
-	// Email The email address of the user to invite
+	// Email The email address of the user.
 	Email openapi_types.Email `json:"email"`
 
-	// OrganizationId The id of the organization to assign the user to
+	// OrganizationId The ID of the organization to assign the user to.
 	OrganizationId *string `json:"organizationId,omitempty"`
 
-	// RoleId The id of the role to assign to the user
+	// RoleId The ID of the role to assign to the user.
 	RoleId *string `json:"roleId,omitempty"`
 }
 
 // InvitedUserBody defines model for InvitedUserBody.
 type InvitedUserBody struct {
-	// Email The email address of the invited user
+	// Email The email address of the invited user.
 	Email *string `json:"email,omitempty"`
 
-	// Id The unique id of the invited user
+	// Id The unique ID of the invited user.
 	Id *string `json:"id,omitempty"`
 
-	// OrganizationId The id of the organization assigned to the user
+	// OrganizationId The ID of the organization assigned to the user.
 	OrganizationId *string `json:"organizationId,omitempty"`
 
-	// RoleId The id of the role assigned to the user
+	// RoleId The ID of the role assigned to the user.
 	RoleId *string `json:"roleId,omitempty"`
 
 	// Status The status of the user (invited)
@@ -1907,7 +1911,7 @@ type InvitedUserBody struct {
 // InvitedUserBodyStatus The status of the user (invited)
 type InvitedUserBodyStatus string
 
-// InvoiceListItem defines model for InvoiceListItem.
+// InvoiceListItem Summary information about an invoice.
 type InvoiceListItem struct {
 	// BalanceAmount Invoice balance to be paid
 	BalanceAmount *float64 `json:"balanceAmount,omitempty"`
@@ -1922,8 +1926,10 @@ type InvoiceListItem struct {
 	Id *string `json:"id,omitempty"`
 
 	// InvoiceDate The time when this invoice was issued, in milliseconds since the epoch.
-	InvoiceDate *int64           `json:"invoiceDate,omitempty"`
-	Platform    *InvoicePlatform `json:"platform,omitempty"`
+	InvoiceDate *int64 `json:"invoiceDate,omitempty"`
+
+	// Platform Platform identifier for invoice source.
+	Platform *InvoicePlatform `json:"platform,omitempty"`
 
 	// Status Status of the invoice
 	Status *InvoiceListItemStatus `json:"status,omitempty"`
@@ -1938,71 +1944,71 @@ type InvoiceListItem struct {
 // InvoiceListItemStatus Status of the invoice
 type InvoiceListItemStatus string
 
-// InvoicePlatform defines model for InvoicePlatform.
+// InvoicePlatform Platform identifier for invoice source.
 type InvoicePlatform string
 
-// LabelAssignmentObject defines model for LabelAssignmentObject.
+// LabelAssignmentObject Object identifier and type used for label assignments.
 type LabelAssignmentObject struct {
-	// ObjectId The ID of the object to assign/unassign
+	// ObjectId The ID of the object to assign/unassign.
 	ObjectId string `json:"objectId"`
 
-	// ObjectType The type of the object
+	// ObjectType The type of the object.
 	ObjectType LabelAssignmentObjectObjectType `json:"objectType"`
 }
 
-// LabelAssignmentObjectObjectType The type of the object
+// LabelAssignmentObjectObjectType The type of the object.
 type LabelAssignmentObjectObjectType string
 
-// LabelInfo defines model for LabelInfo.
+// LabelInfo Metadata for a label.
 type LabelInfo struct {
-	// Id The unique identifier of the label
+	// Id The unique identifier of the label.
 	Id string `json:"id"`
 
-	// Name The name of the label
+	// Name The name of the label.
 	Name string `json:"name"`
 }
 
-// LabelList defines model for LabelList.
+// LabelList Paged list of labels.
 type LabelList struct {
 	Labels *[]LabelListItem `json:"labels,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page of results
+	// PageToken Page token, returned by a previous call, to request the next page of results.
 	PageToken *string `json:"pageToken,omitempty"`
 
-	// RowCount Total number of labels in the result set
+	// RowCount Total number of labels in the result set.
 	RowCount *int `json:"rowCount,omitempty"`
 }
 
-// LabelListItem defines model for LabelListItem.
+// LabelListItem Label metadata.
 type LabelListItem struct {
-	// Color The color of the label
+	// Color The color of the label.
 	Color LabelListItemColor `json:"color"`
 
-	// CreateTime The time when the label was created
+	// CreateTime The time when the label was created.
 	CreateTime *time.Time `json:"createTime,omitempty"`
 
-	// Id The unique identifier of the label
+	// Id The unique identifier of the label.
 	Id string `json:"id"`
 
-	// Name The name of the label
+	// Name The name of the label.
 	Name string `json:"name"`
 
-	// Type The type of the label (custom or preset)
+	// Type The type of the label (custom or preset).
 	Type *LabelListItemType `json:"type,omitempty"`
 
-	// UpdateTime The time when the label was last updated
+	// UpdateTime The time when the label was last updated.
 	UpdateTime *time.Time `json:"updateTime,omitempty"`
 }
 
-// LabelListItemColor The color of the label
+// LabelListItemColor The color of the label.
 type LabelListItemColor string
 
-// LabelListItemType The type of the label (custom or preset)
+// LabelListItemType The type of the label (custom or preset).
 type LabelListItemType string
 
 // Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 type Limit struct {
-	// Metric The metric to apply.
+	// Metric Metric selector used in reports and filters.
 	Metric *ExternalMetric `json:"metric,omitempty"`
 
 	// Sort Sort order for ranking results.
@@ -2015,7 +2021,7 @@ type Limit struct {
 // LimitSort Sort order for ranking results.
 type LimitSort string
 
-// ListItem defines model for ListItem.
+// ListItem Invoice line item.
 type ListItem struct {
 	Currency    *string  `json:"currency,omitempty"`
 	Description *string  `json:"description,omitempty"`
@@ -2025,41 +2031,42 @@ type ListItem struct {
 	Type        *string  `json:"type,omitempty"`
 }
 
-// ListUsersResponseBody defines model for ListUsersResponseBody.
+// ListUsersResponseBody Response body for the list users endpoint.
 type ListUsersResponseBody struct {
 	// RowCount The number of returned records.
 	RowCount *int64          `json:"rowCount,omitempty"`
 	Users    *[]UserListItem `json:"users,omitempty"`
 }
 
-// MetricConfig defines model for MetricConfig.
+// MetricConfig Define how metrics are selected and filtered in reports.
 type MetricConfig struct {
+	// Type Identifier for metric type (e.g., basic, custom, extended).
 	Type  MetricType `json:"type"`
 	Value string     `json:"value"`
 }
 
-// MetricFilterText defines model for MetricFilterText.
+// MetricFilterText Text/operator used to filter metric values in metric filters.
 type MetricFilterText = string
 
-// MetricType defines model for MetricType.
+// MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string
 
-// NewAllocationResponse defines model for NewAllocationResponse.
+// NewAllocationResponse Response returned after creating a new allocation.
 type NewAllocationResponse struct {
-	// Id ID of the created allocation
+	// Id ID of the new allocation.
 	Id *string `json:"id,omitempty"`
 
-	// Type Type of the created allocation
+	// Type Type of the new allocation.
 	Type *NewAllocationResponseType `json:"type,omitempty"`
 }
 
-// NewAllocationResponseType Type of the created allocation
+// NewAllocationResponseType Type of the new allocation.
 type NewAllocationResponseType string
 
-// ObjectType defines model for ObjectType.
+// ObjectType Generic object type identifier.
 type ObjectType = string
 
-// Organization defines model for Organization.
+// Organization Organization metadata returned by the API.
 type Organization struct {
 	// Id The unique ID of the organization
 	Id *string `json:"id,omitempty"`
@@ -2068,33 +2075,33 @@ type Organization struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// PlatformAPI defines model for PlatformAPI.
+// PlatformAPI Platform metadata used by product listing endpoints.
 type PlatformAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
 }
 
-// ProductAPI defines model for ProductAPI.
+// ProductAPI Platform/product metadata used by product listing endpoints.
 type ProductAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
 	Platform    *string `json:"platform,omitempty"`
 }
 
-// RenewalSettings defines model for RenewalSettings.
+// RenewalSettings Settings that control subscription renewal behavior.
 type RenewalSettings struct {
 	RenewalType *string `json:"renewalType,omitempty"`
 }
 
-// Report defines model for Report.
+// Report Report metadata and the console URL.
 type Report struct {
-	// CreateTime The time when the report was created, in milliseconds since the epoch.
+	// CreateTime The creation time of the report, in milliseconds since the epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Id Report id.
+	// Id Report ID.
 	Id *string `json:"id,omitempty"`
 
-	// Owner The report owner in the form of user@domain.com
+	// Owner Email address of the report owner.
 	Owner *string `json:"owner,omitempty"`
 
 	// ReportName The name of the report.
@@ -2104,14 +2111,14 @@ type Report struct {
 	// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 
-	// UrlUI The URL of the report in DoiT Cloud Navigator.
+	// UrlUI The URL of the report in DoiT console.
 	UrlUI *string `json:"urlUI,omitempty"`
 }
 
 // ReportType defines model for Report.Type.
 type ReportType string
 
-// ReportList defines model for ReportList.
+// ReportList List of reports.
 type ReportList struct {
 	// PageToken Page token. It is used to request a specific page of the list results.
 	PageToken *string   `json:"pageToken,omitempty"`
@@ -2121,7 +2128,7 @@ type ReportList struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
-// ResourcePermission defines model for ResourcePermission.
+// ResourcePermission A single user's permission entry for a resource.
 type ResourcePermission struct {
 	// Role The role assigned to the user, defining their level of access to the resource.
 	Role *ResourcePermissionRole `json:"role,omitempty"`
@@ -2133,7 +2140,7 @@ type ResourcePermission struct {
 // ResourcePermissionRole The role assigned to the user, defining their level of access to the resource.
 type ResourcePermissionRole string
 
-// ResourcePermissionsResponse defines model for ResourcePermissionsResponse.
+// ResourcePermissionsResponse Permissions and metadata for a resource returned by the sharing API.
 type ResourcePermissionsResponse struct {
 	// CreateTime The time when this resource was created, in milliseconds since the epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
@@ -2141,7 +2148,7 @@ type ResourcePermissionsResponse struct {
 	// Description Resource description.
 	Description *string `json:"description,omitempty"`
 
-	// Id Resource id.
+	// Id Resource ID.
 	Id *string `json:"id,omitempty"`
 
 	// Name Resource name.
@@ -2158,7 +2165,7 @@ type ResourcePermissionsResponse struct {
 // ResourcePermissionsResponsePublic Type of permissions users in the entire organization have for this resource
 type ResourcePermissionsResponsePublic string
 
-// ResourceReference defines model for ResourceReference.
+// ResourceReference Reference to another resource, used when listing blockers or usages.
 type ResourceReference struct {
 	// Id Resource identifier
 	Id *string `json:"id,omitempty"`
@@ -2170,28 +2177,28 @@ type ResourceReference struct {
 	Owner *string `json:"owner,omitempty"`
 }
 
-// Role defines model for Role.
+// Role Definition and permissions assigned to a role.
 type Role struct {
-	// Customer The customer ID if this is a custom role
+	// Customer The customer ID if this is a custom role.
 	Customer *string `json:"customer,omitempty"`
 
-	// Id The unique ID of the role
+	// Id The unique ID of the role.
 	Id *string `json:"id,omitempty"`
 
-	// Name The name of the role
+	// Name The name of the role.
 	Name *string `json:"name,omitempty"`
 
-	// Permissions List of permission IDs assigned to the role
+	// Permissions List of permission IDs assigned to the role.
 	Permissions *[]string `json:"permissions,omitempty"`
 
-	// Type The type of the role (preset or custom)
+	// Type The type of the role (preset or custom).
 	Type *string `json:"type,omitempty"`
 }
 
-// RunReportResult defines model for RunReportResult.
+// RunReportResult Results returned when running a report; includes schema and rows.
 type RunReportResult struct {
 	Result *struct {
-		// CacheHit If set to true, results were fetched from the cache.
+		// CacheHit If true, results were fetched from the cache.
 		CacheHit     *bool                              `json:"cacheHit,omitempty"`
 		ForecastRows *[][]Value                         `json:"forecastRows,omitempty"`
 		MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
@@ -2203,20 +2210,20 @@ type RunReportResult struct {
 // RunReportResultResultMlFeatures defines model for RunReportResult.Result.MlFeatures.
 type RunReportResultResultMlFeatures string
 
-// SchemaField defines model for SchemaField.
+// SchemaField Schema of a report result column.
 type SchemaField struct {
 	Name *string `json:"name,omitempty"`
 	Type *string `json:"type,omitempty"`
 }
 
-// Seats defines model for Seats.
+// Seats Licensing seat counts for a subscription or asset.
 type Seats struct {
 	LicensedNumberOfSeats *int64 `json:"licensedNumberOfSeats,omitempty"`
 	MaximumNumberOfSeats  *int64 `json:"maximumNumberOfSeats,omitempty"`
 	NumberOfSeats         *int64 `json:"numberOfSeats,omitempty"`
 }
 
-// SlackChannel defines model for SlackChannel.
+// SlackChannel Information of a Slack channel for notifications.
 type SlackChannel struct {
 	CustomerId *string `json:"customerId,omitempty"`
 	Id         *string `json:"id,omitempty"`
@@ -2226,95 +2233,103 @@ type SlackChannel struct {
 	Workspace  *string `json:"workspace,omitempty"`
 }
 
-// SortableItem defines model for SortableItem.
+// SortableItem An object used in lists where items can be sorted.
 type SortableItem struct {
 	GetID *string `json:"GetID,omitempty"`
 }
 
-// Subscription defines model for Subscription.
+// Subscription Subscription-related metadata for an asset.
 type Subscription struct {
-	BillingMethod   *string           `json:"billingMethod,omitempty"`
-	CreationTime    *int64            `json:"creationTime,omitempty"`
-	Id              *string           `json:"id,omitempty"`
+	BillingMethod *string `json:"billingMethod,omitempty"`
+	CreationTime  *int64  `json:"creationTime,omitempty"`
+	Id            *string `json:"id,omitempty"`
+
+	// Plan Subscription-related metadata for an asset.
 	Plan            *SubscriptionPlan `json:"plan,omitempty"`
 	PurchaseOrderID *string           `json:"purchaseOrderID,omitempty"`
-	RenewalSettings *RenewalSettings  `json:"renewalSettings,omitempty"`
-	ResourceUIURL   *string           `json:"resourceUIURL,omitempty"`
-	Seats           *Seats            `json:"seats,omitempty"`
-	SkuID           *string           `json:"skuID,omitempty"`
-	SkuName         *string           `json:"skuName,omitempty"`
-	Status          *string           `json:"status,omitempty"`
+
+	// RenewalSettings Settings that control subscription renewal behavior.
+	RenewalSettings *RenewalSettings `json:"renewalSettings,omitempty"`
+	ResourceUIURL   *string          `json:"resourceUIURL,omitempty"`
+
+	// Seats Licensing seat counts for a subscription or asset.
+	Seats   *Seats  `json:"seats,omitempty"`
+	SkuID   *string `json:"skuID,omitempty"`
+	SkuName *string `json:"skuName,omitempty"`
+	Status  *string `json:"status,omitempty"`
 }
 
-// SubscriptionPlan defines model for SubscriptionPlan.
+// SubscriptionPlan Subscription-related metadata for an asset.
 type SubscriptionPlan struct {
+	// CommitmentInterval Subscription-related metadata for an asset.
 	CommitmentInterval *SubscriptionPlanCommitmentInterval `json:"commitmentInterval,omitempty"`
 	IsCommitmentPlan   *bool                               `json:"isCommitmentPlan,omitempty"`
 	PlanName           *string                             `json:"planName,omitempty"`
 }
 
-// SubscriptionPlanCommitmentInterval defines model for SubscriptionPlanCommitmentInterval.
+// SubscriptionPlanCommitmentInterval Subscription-related metadata for an asset.
 type SubscriptionPlanCommitmentInterval struct {
 	EndTime   *int64 `json:"endTime,omitempty"`
 	StartTime *int64 `json:"startTime,omitempty"`
 }
 
-// TicketCreateFormExtAPI defines model for TicketCreateFormExtAPI.
+// TicketCreateFormExtAPI Wrapper object for creating support tickets via the external API.
 type TicketCreateFormExtAPI struct {
+	// Ticket Payload to create a support ticket via API.
 	Ticket TicketExtAPI `json:"ticket"`
 }
 
-// TicketExtAPI defines model for TicketExtAPI.
+// TicketExtAPI Payload to create a support ticket via API.
 type TicketExtAPI struct {
-	// Body The body of the ticket (can include html formatting)
+	// Body The body of the ticket (can include html formatting).
 	Body string `json:"body"`
 
-	// Created Ticket create time
+	// Created Ticket creation time.
 	Created *string `json:"created,omitempty"`
 
-	// Platform Platform of the ticket
+	// Platform Platform of the ticket.
 	Platform TicketExtAPIPlatform `json:"platform"`
 
-	// Product Ticket product details
+	// Product Ticket product details.
 	Product string `json:"product"`
 
-	// Severity Ticket severity
+	// Severity Ticket severity.
 	Severity TicketExtAPISeverity `json:"severity"`
 
 	// Subject The subject of the ticket.
 	Subject string `json:"subject"`
 }
 
-// TicketExtAPIPlatform Platform of the ticket
+// TicketExtAPIPlatform Platform of the ticket.
 type TicketExtAPIPlatform string
 
-// TicketExtAPISeverity Ticket severity
+// TicketExtAPISeverity Ticket severity.
 type TicketExtAPISeverity string
 
-// TicketListItem defines model for TicketListItem.
+// TicketListItem Summary information about a support ticket.
 type TicketListItem struct {
 	// CreateTime The time when this ticket was created, in milliseconds since the epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Id ticket id, identifying the report (e.g., "33234")
+	// Id Ticket ID (e.g., "33234").
 	Id *int64 `json:"id,omitempty"`
 
-	// IsPublic is ticket public
+	// IsPublic Whether the ticket is public.
 	IsPublic *bool `json:"is_public,omitempty"`
 
-	// Platform platform of the ticket
+	// Platform Platform of the ticket.
 	Platform *TicketListItemPlatform `json:"platform,omitempty"`
 
-	// Product Ticket product
+	// Product Ticket product.
 	Product *string `json:"product,omitempty"`
 
 	// Requester The ticket requester in the form of user@domain.com
 	Requester *string `json:"requester,omitempty"`
 
-	// Severity Ticket severity
+	// Severity Ticket severity.
 	Severity *string `json:"severity,omitempty"`
 
-	// Status Ticket status
+	// Status Ticket status.
 	Status *string `json:"status,omitempty"`
 
 	// Subject The subject of the ticket.
@@ -2323,55 +2338,52 @@ type TicketListItem struct {
 	// UpdateTime The time when this ticket was last updated, in milliseconds since the epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 
-	// UrlUI Link to the report document in Cloud Management Platform
+	// UrlUI Link to the report in DoiT console.
 	UrlUI *string `json:"urlUI,omitempty"`
 }
 
-// TicketListItemPlatform platform of the ticket
+// TicketListItemPlatform Platform of the ticket.
 type TicketListItemPlatform string
 
-// TicketResponseExtAPI defines model for TicketResponseExtAPI.
+// TicketResponseExtAPI Response returned after creating a ticket.
 type TicketResponseExtAPI struct {
-	// Created ticket created time
+	// Created Ticket creation time.
 	Created *int64 `json:"created,omitempty"`
 
-	// Id ID
+	// Id Ticket ID.
 	Id *int64 `json:"id,omitempty"`
 
-	// Platform ticket platform
+	// Platform Ticket platform.
 	Platform *TicketResponseExtAPIPlatform `json:"platform,omitempty"`
 
-	// Product ticket product
+	// Product Ticket product.
 	Product *string `json:"product,omitempty"`
 
-	// Requester ticket platform
-	Requester *TicketResponseExtAPIRequester `json:"requester,omitempty"`
+	// Requester Email address of the requester.
+	Requester *string `json:"requester,omitempty"`
 
-	// Severity update Severity field
+	// Severity Severity of the ticket.
 	Severity *TicketResponseExtAPISeverity `json:"severity,omitempty"`
 
-	// Status ticket status
+	// Status Ticket status.
 	Status *string `json:"status,omitempty"`
 
-	// Subject ticket subject
+	// Subject Ticket subject.
 	Subject *string `json:"subject,omitempty"`
 
-	// UrlUI ticket URL
+	// UrlUI URL to access the ticket in DoiT console.
 	UrlUI *string `json:"urlUI,omitempty"`
 }
 
-// TicketResponseExtAPIPlatform ticket platform
+// TicketResponseExtAPIPlatform Ticket platform.
 type TicketResponseExtAPIPlatform string
 
-// TicketResponseExtAPIRequester ticket platform
-type TicketResponseExtAPIRequester string
-
-// TicketResponseExtAPISeverity update Severity field
+// TicketResponseExtAPISeverity Severity of the ticket.
 type TicketResponseExtAPISeverity string
 
-// TicketsList defines model for TicketsList.
+// TicketsList List of support tickets.
 type TicketsList struct {
-	// PageToken Page token, returned by a previous call, to request the next page of results
+	// PageToken Page token, returned by a previous call, to request the next page of results.
 	PageToken *string `json:"pageToken,omitempty"`
 
 	// RowCount Tickets rows count
@@ -2402,7 +2414,7 @@ type TimeSettingsMode string
 // TimeSettingsUnit Time unit for the time range.
 type TimeSettingsUnit string
 
-// UpdateAllocationRequest defines model for UpdateAllocationRequest.
+// UpdateAllocationRequest Request body for updating an allocation.
 type UpdateAllocationRequest struct {
 	// Description Allocation description
 	Description *string `json:"description"`
@@ -2410,169 +2422,171 @@ type UpdateAllocationRequest struct {
 	// Name Allocation name
 	Name *string `json:"name"`
 
-	// Rule Single allocation rule (required for single type allocation)
+	// Rule Single allocation rule.
 	Rule  *AllocationRule        `json:"rule"`
 	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
 
-	// UnallocatedCosts Custom label for any values that do not fit into allocation (required for group type allocation)
+	// UnallocatedCosts Custom label for values that do not fit into allocation (required for group type allocation).
 	UnallocatedCosts *string `json:"unallocatedCosts"`
 }
 
-// UpdateAnnotationRequest defines model for UpdateAnnotationRequest.
+// UpdateAnnotationRequest Request body for updating an annotation.
 type UpdateAnnotationRequest struct {
-	// Content The content of the annotation
+	// Content The content of the annotation.
 	Content *string `json:"content"`
 
 	// Labels List of label IDs to associate with the annotation. Labels must already exist.
 	Labels *[]string `json:"labels"`
 
-	// Reports List of report IDs associated with the annotation
+	// Reports List of report IDs associated with the annotation.
 	Reports *[]string `json:"reports"`
 
-	// Timestamp The date associated with the annotation
+	// Timestamp The date associated with the annotation.
 	Timestamp *time.Time `json:"timestamp"`
 }
 
-// UpdateLabelRequest defines model for UpdateLabelRequest.
+// UpdateLabelRequest Request body for updating a label.
 type UpdateLabelRequest struct {
-	// Color The color of the label
+	// Color The color of the label.
 	Color *UpdateLabelRequestColor `json:"color"`
 
-	// Name The name of the label
+	// Name The name of the label.
 	Name *string `json:"name"`
 }
 
-// UpdateLabelRequestColor The color of the label
+// UpdateLabelRequestColor The color of the label.
 type UpdateLabelRequestColor string
 
-// UpdateUserRequest defines model for UpdateUserRequest.
+// UpdateUserRequest Fields allowed when updating an existing user.
 type UpdateUserRequest struct {
-	// FirstName The user's first name
+	// FirstName The user's first name.
 	FirstName *string `json:"firstName,omitempty"`
 
-	// JobFunction The user's job function
+	// JobFunction The user's job function.
 	JobFunction *UpdateUserRequestJobFunction `json:"jobFunction,omitempty"`
 
-	// Language The user's preferred language
+	// Language The user's preferred language.
 	Language *UpdateUserRequestLanguage `json:"language,omitempty"`
 
-	// LastName The user's last name
+	// LastName The user's last name.
 	LastName *string `json:"lastName,omitempty"`
 
-	// Phone The user's country code (e.g., +44)
+	// Phone The user's country code (e.g., +44).
 	Phone *string `json:"phone,omitempty"`
 
-	// PhoneExtension The user's phone extension (8-15 digits)
+	// PhoneExtension The user's phone extension (8-15 digits).
 	PhoneExtension *string `json:"phoneExtension,omitempty"`
 
-	// RoleId The id of the role to assign to the user
+	// RoleId The ID of the role to assign to the user.
 	RoleId *string `json:"roleId,omitempty"`
 }
 
-// UpdateUserRequestJobFunction The user's job function
+// UpdateUserRequestJobFunction The user's job function.
 type UpdateUserRequestJobFunction string
 
-// UpdateUserRequestLanguage The user's preferred language
+// UpdateUserRequestLanguage The user's preferred language.
 type UpdateUserRequestLanguage string
 
-// UpdateUserResponse defines model for UpdateUserResponse.
+// UpdateUserResponse Response of a user update operation.
 type UpdateUserResponse struct {
 	// Message Success message
-	Message *string          `json:"message,omitempty"`
-	User    *UpdatedUserBody `json:"user,omitempty"`
+	Message *string `json:"message,omitempty"`
+
+	// User The updated user record.
+	User *UpdatedUserBody `json:"user,omitempty"`
 }
 
-// UpdatedUserBody defines model for UpdatedUserBody.
+// UpdatedUserBody The updated user record.
 type UpdatedUserBody struct {
-	// DisplayName The user's display name
+	// DisplayName The user's display name.
 	DisplayName *string `json:"displayName,omitempty"`
 
-	// Email The user's email address
+	// Email The user's email address.
 	Email *string `json:"email,omitempty"`
 
-	// FirstName The user's first name
+	// FirstName The user's first name.
 	FirstName *string `json:"firstName,omitempty"`
 
-	// Id The unique id of the user
+	// Id The unique ID of the user.
 	Id *string `json:"id,omitempty"`
 
-	// JobFunction The user's job function
+	// JobFunction The user's job function.
 	JobFunction *UpdatedUserBodyJobFunction `json:"jobFunction,omitempty"`
 
-	// Language The user's preferred language
+	// Language The user's preferred language.
 	Language *UpdatedUserBodyLanguage `json:"language,omitempty"`
 
-	// LastName The user's last name
+	// LastName The user's last name.
 	LastName *string `json:"lastName,omitempty"`
 
-	// OrganizationId The id of the user's organization
+	// OrganizationId The ID of the user's organization.
 	OrganizationId *string `json:"organizationId,omitempty"`
 
-	// Phone The user's country code (e.g., +44)
+	// Phone The user's country code (e.g., +44).
 	Phone *string `json:"phone,omitempty"`
 
-	// PhoneExtension The user's phone extension
+	// PhoneExtension The user's phone extension.
 	PhoneExtension *string `json:"phoneExtension,omitempty"`
 
-	// RoleId The id of the user's role
+	// RoleId The ID of the user's role.
 	RoleId *string `json:"roleId,omitempty"`
 }
 
-// UpdatedUserBodyJobFunction The user's job function
+// UpdatedUserBodyJobFunction The user's job function.
 type UpdatedUserBodyJobFunction string
 
-// UpdatedUserBodyLanguage The user's preferred language
+// UpdatedUserBodyLanguage The user's preferred language.
 type UpdatedUserBodyLanguage string
 
-// UserListItem defines model for UserListItem.
+// UserListItem Summary information of a user.
 type UserListItem struct {
-	// DisplayName The user's display name
+	// DisplayName The user's display name.
 	DisplayName *string `json:"displayName,omitempty"`
 
-	// Email The email address of the user
+	// Email The email address of the user.
 	Email *string `json:"email,omitempty"`
 
-	// FirstName The user's first name
+	// FirstName The user's first name.
 	FirstName *string `json:"firstName,omitempty"`
 
-	// Id The unique id of the user
+	// Id The unique ID of the user.
 	Id *string `json:"id,omitempty"`
 
-	// JobFunction The user's job function
+	// JobFunction The user's job function.
 	JobFunction *UserListItemJobFunction `json:"jobFunction,omitempty"`
 
-	// Language The user's preferred language
+	// Language The user's preferred language.
 	Language *UserListItemLanguage `json:"language,omitempty"`
 
-	// LastName The user's last name
+	// LastName The user's last name.
 	LastName *string `json:"lastName,omitempty"`
 
-	// OrganizationId The id of the user's organization
+	// OrganizationId The ID of the user's organization.
 	OrganizationId *string `json:"organizationId,omitempty"`
 
-	// Phone The user's country code (e.g., +44)
+	// Phone The user's country code (e.g., +44).
 	Phone *string `json:"phone,omitempty"`
 
-	// PhoneExtension The user's phone extension
+	// PhoneExtension The user's phone extension.
 	PhoneExtension *string `json:"phoneExtension,omitempty"`
 
-	// RoleId The id of the user's role
+	// RoleId The ID of the user's role.
 	RoleId *string `json:"roleId,omitempty"`
 
-	// Status The status of the user (active or invited)
+	// Status The status of the user (active or invited).
 	Status *UserListItemStatus `json:"status,omitempty"`
 }
 
-// UserListItemJobFunction The user's job function
+// UserListItemJobFunction The user's job function.
 type UserListItemJobFunction string
 
-// UserListItemLanguage The user's preferred language
+// UserListItemLanguage The user's preferred language.
 type UserListItemLanguage string
 
-// UserListItemStatus The status of the user (active or invited)
+// UserListItemStatus The status of the user (active or invited).
 type UserListItemStatus string
 
-// ValidateResponse defines model for ValidateResponse.
+// ValidateResponse A response confirming caller's domain and email.
 type ValidateResponse struct {
 	Domain *string `json:"domain,omitempty"`
 	Email  *string `json:"email,omitempty"`
@@ -2599,22 +2613,22 @@ type ResourceType string
 // SortOrder defines model for sortOrder.
 type SortOrder string
 
-// N400 defines model for 400.
+// N400 Standard error response structure.
 type N400 = Error
 
-// N401 defines model for 401.
+// N401 Standard error response structure.
 type N401 = Error
 
-// N403 defines model for 403.
+// N403 Standard error response structure.
 type N403 = Error
 
-// N404 defines model for 404.
+// N404 Standard error response structure.
 type N404 = Error
 
-// N429 defines model for 429.
+// N429 Standard error response structure.
 type N429 = Error
 
-// N500 defines model for 500.
+// N500 Standard error response structure.
 type N500 = Error
 
 // ListAlertsParams defines parameters for ListAlerts.
@@ -2625,10 +2639,10 @@ type ListAlertsParams struct {
 	// SortOrder Sort order can be ascending or descending.
 	SortOrder *ListAlertsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
@@ -2644,10 +2658,10 @@ type ListAlertsParamsSortOrder string
 
 // ListAllocationsParams defines parameters for ListAllocations.
 type ListAllocationsParams struct {
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
@@ -2669,10 +2683,10 @@ type ListAllocationsParamsSortOrder string
 
 // ListAnnotationsParams defines parameters for ListAnnotations.
 type ListAnnotationsParams struct {
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
@@ -2694,10 +2708,10 @@ type ListAnnotationsParamsSortOrder string
 
 // ListAttributionGroupsParams defines parameters for ListAttributionGroups.
 type ListAttributionGroupsParams struct {
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// SortBy A field by which the results will be sorted.
@@ -2715,10 +2729,10 @@ type ListAttributionGroupsParamsSortOrder string
 
 // ListAttributionsParams defines parameters for ListAttributions.
 type ListAttributionsParams struct {
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
@@ -2773,7 +2787,7 @@ type ListBudgetsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 	MaxResults *string `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results of the request. The syntax is "key:[<value>]".
@@ -2798,10 +2812,10 @@ type GetDimensionsParams struct {
 
 // ListDimensionsParams defines parameters for ListDimensions.
 type ListDimensionsParams struct {
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
@@ -2823,10 +2837,10 @@ type ListDimensionsParamsSortOrder string
 
 // ListLabelsParams defines parameters for ListLabels.
 type ListLabelsParams struct {
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
@@ -2848,10 +2862,10 @@ type ListLabelsParamsSortOrder string
 
 // ListReportsParams defines parameters for ListReports.
 type ListReportsParams struct {
-	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
@@ -2868,7 +2882,7 @@ type ListReportsParams struct {
 
 // CreateReportJSONBody defines parameters for CreateReport.
 type CreateReportJSONBody struct {
-	// Config Report configuration
+	// Config Report configuration.
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -2880,7 +2894,7 @@ type CreateReportJSONBody struct {
 
 // QueryJSONBody defines parameters for Query.
 type QueryJSONBody struct {
-	// Config Report configuration
+	// Config Report configuration.
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
@@ -2910,7 +2924,7 @@ type ListAnomaliesParams struct {
 	// MaxResults The maximum number of results to return in a single page
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 }
 
@@ -2919,7 +2933,7 @@ type IdOfAssetsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results of the request. The syntax
@@ -2955,7 +2969,7 @@ type ListInvoicesParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 	Filter    *Filter    `form:"filter,omitempty" json:"filter,omitempty"`
 
@@ -2971,7 +2985,7 @@ type ListKnownIssuesParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
@@ -3071,7 +3085,7 @@ type IdOfTicketsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// PageToken Page token, returned by a previous call, to request the next page   of results
+	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results of the request. The syntax is `key:[<value>]`. e.g: "severity:normal". Multiple filters can be
@@ -9046,10 +9060,10 @@ type ListAllocationsResp struct {
 	JSON200      *struct {
 		Allocations *[]AllocationListItem `json:"allocations,omitempty"`
 
-		// PageToken Page token, returned by a previous call, to request the next page of results
+		// PageToken Page token, returned by a previous call, to request the next page of results.
 		PageToken *string `json:"pageToken,omitempty"`
 
-		// RowCount Total number of allocations in the result set
+		// RowCount Total number of allocations in the result set.
 		RowCount *int `json:"rowCount,omitempty"`
 	}
 	JSON400 *N400
@@ -9448,6 +9462,7 @@ type ListAttributionsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
+		// Attributions Summary information for an attribution.
 		Attributions *AttributionListItem `json:"Attributions,omitempty"`
 	}
 	JSON400 *N400
@@ -9528,6 +9543,7 @@ type GetAttributionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
+		// Attribution Definition and metadata of an attribution.
 		Attribution *AttributionAPI `json:"Attribution,omitempty"`
 	}
 	JSON400 *N400
@@ -10034,19 +10050,19 @@ type GetReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		// CreateTime The time when the report was created, in milliseconds since the epoch.
+		// CreateTime The creation time of the report, in milliseconds since the epoch.
 		CreateTime *int64 `json:"createTime,omitempty"`
 
-		// Id Report id.
+		// Id Report ID.
 		Id *string `json:"id,omitempty"`
 
-		// Owner The report owner in the form of user@domain.com
+		// Owner Email address of the report owner.
 		Owner *string `json:"owner,omitempty"`
 
 		// ReportName The name of the report.
 		ReportName *string `json:"reportName,omitempty"`
 		Result     *struct {
-			// CacheHit If set to true, results were fetched from the cache.
+			// CacheHit If true, results were fetched from the cache.
 			CacheHit     *bool                           `json:"cacheHit,omitempty"`
 			ForecastRows *[][]Value                      `json:"forecastRows,omitempty"`
 			MlFeatures   *[]GetReport200ResultMlFeatures `json:"mlFeatures,omitempty"`
@@ -10058,7 +10074,7 @@ type GetReportResp struct {
 		// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
 		UpdateTime *int64 `json:"updateTime,omitempty"`
 
-		// UrlUI The URL of the report in DoiT Cloud Navigator.
+		// UrlUI The URL of the report in DoiT console.
 		UrlUI *string `json:"urlUI,omitempty"`
 	}
 	JSON400 *N400
@@ -10190,7 +10206,7 @@ type GetAnomalyResp struct {
 		// Platform Cloud Provider name
 		Platform string `json:"platform"`
 
-		// ResourceData Resources contributing to the anomaly
+		// ResourceData Array of resources contributing to an anomaly.
 		ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
 
 		// Scope Scope: Project or Account
@@ -10207,8 +10223,10 @@ type GetAnomalyResp struct {
 		Status    *GetAnomaly200Status `json:"status"`
 
 		// TimeFrame Timeframe: Daily or Hourly
-		TimeFrame string          `json:"timeFrame"`
-		Top3SKUs  AnomalySKUArray `json:"top3SKUs"`
+		TimeFrame string `json:"timeFrame"`
+
+		// Top3SKUs Array of SKU entries contributing to an anomaly.
+		Top3SKUs AnomalySKUArray `json:"top3SKUs"`
 	}
 	JSON400 *N400
 	JSON401 *N401
@@ -10297,7 +10315,9 @@ type IdOfAssetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Id         *string          `json:"id,omitempty"`
+		Id *string `json:"id,omitempty"`
+
+		// Properties Additional properties associated with an asset.
 		Properties *AssetProperties `json:"properties,omitempty"`
 		Type       *string          `json:"type,omitempty"`
 	}
@@ -10404,8 +10424,10 @@ type GetInvoiceResp struct {
 		InvoiceDate *int64 `json:"invoiceDate,omitempty"`
 
 		// LineItems Invoice line items.
-		LineItems *[]ListItem      `json:"lineItems,omitempty"`
-		Platform  *InvoicePlatform `json:"platform,omitempty"`
+		LineItems *[]ListItem `json:"lineItems,omitempty"`
+
+		// Platform Platform identifier for invoice source.
+		Platform *InvoicePlatform `json:"platform,omitempty"`
 
 		// Status Status of the invoice
 		Status *GetInvoice200Status `json:"status,omitempty"`
@@ -12163,10 +12185,10 @@ func ParseListAllocationsResp(rsp *http.Response) (*ListAllocationsResp, error) 
 		var dest struct {
 			Allocations *[]AllocationListItem `json:"allocations,omitempty"`
 
-			// PageToken Page token, returned by a previous call, to request the next page of results
+			// PageToken Page token, returned by a previous call, to request the next page of results.
 			PageToken *string `json:"pageToken,omitempty"`
 
-			// RowCount Total number of allocations in the result set
+			// RowCount Total number of allocations in the result set.
 			RowCount *int `json:"rowCount,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12973,6 +12995,7 @@ func ParseListAttributionsResp(rsp *http.Response) (*ListAttributionsResp, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
+			// Attributions Summary information for an attribution.
 			Attributions *AttributionListItem `json:"Attributions,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -13137,6 +13160,7 @@ func ParseGetAttributionResp(rsp *http.Response) (*GetAttributionResp, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
+			// Attribution Definition and metadata of an attribution.
 			Attribution *AttributionAPI `json:"Attribution,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -14163,19 +14187,19 @@ func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			// CreateTime The time when the report was created, in milliseconds since the epoch.
+			// CreateTime The creation time of the report, in milliseconds since the epoch.
 			CreateTime *int64 `json:"createTime,omitempty"`
 
-			// Id Report id.
+			// Id Report ID.
 			Id *string `json:"id,omitempty"`
 
-			// Owner The report owner in the form of user@domain.com
+			// Owner Email address of the report owner.
 			Owner *string `json:"owner,omitempty"`
 
 			// ReportName The name of the report.
 			ReportName *string `json:"reportName,omitempty"`
 			Result     *struct {
-				// CacheHit If set to true, results were fetched from the cache.
+				// CacheHit If true, results were fetched from the cache.
 				CacheHit     *bool                           `json:"cacheHit,omitempty"`
 				ForecastRows *[][]Value                      `json:"forecastRows,omitempty"`
 				MlFeatures   *[]GetReport200ResultMlFeatures `json:"mlFeatures,omitempty"`
@@ -14187,7 +14211,7 @@ func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
 			// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
 			UpdateTime *int64 `json:"updateTime,omitempty"`
 
-			// UrlUI The URL of the report in DoiT Cloud Navigator.
+			// UrlUI The URL of the report in DoiT console.
 			UrlUI *string `json:"urlUI,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -14441,7 +14465,7 @@ func ParseGetAnomalyResp(rsp *http.Response) (*GetAnomalyResp, error) {
 			// Platform Cloud Provider name
 			Platform string `json:"platform"`
 
-			// ResourceData Resources contributing to the anomaly
+			// ResourceData Array of resources contributing to an anomaly.
 			ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
 
 			// Scope Scope: Project or Account
@@ -14458,8 +14482,10 @@ func ParseGetAnomalyResp(rsp *http.Response) (*GetAnomalyResp, error) {
 			Status    *GetAnomaly200Status `json:"status"`
 
 			// TimeFrame Timeframe: Daily or Hourly
-			TimeFrame string          `json:"timeFrame"`
-			Top3SKUs  AnomalySKUArray `json:"top3SKUs"`
+			TimeFrame string `json:"timeFrame"`
+
+			// Top3SKUs Array of SKU entries contributing to an anomaly.
+			Top3SKUs AnomalySKUArray `json:"top3SKUs"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -14625,7 +14651,9 @@ func ParseIdOfAssetResp(rsp *http.Response) (*IdOfAssetResp, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Id         *string          `json:"id,omitempty"`
+			Id *string `json:"id,omitempty"`
+
+			// Properties Additional properties associated with an asset.
 			Properties *AssetProperties `json:"properties,omitempty"`
 			Type       *string          `json:"type,omitempty"`
 		}
@@ -14816,8 +14844,10 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 			InvoiceDate *int64 `json:"invoiceDate,omitempty"`
 
 			// LineItems Invoice line items.
-			LineItems *[]ListItem      `json:"lineItems,omitempty"`
-			Platform  *InvoicePlatform `json:"platform,omitempty"`
+			LineItems *[]ListItem `json:"lineItems,omitempty"`
+
+			// Platform Platform identifier for invoice source.
+			Platform *InvoicePlatform `json:"platform,omitempty"`
 
 			// Status Status of the invoice
 			Status *GetInvoice200Status `json:"status,omitempty"`
