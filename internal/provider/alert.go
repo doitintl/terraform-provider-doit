@@ -227,7 +227,7 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (res
 
 	// Build scopes list
 	var scopesVal types.List
-	if config.Scopes != nil && len(*config.Scopes) > 0 {
+	if config.Scopes != nil {
 		scopesList := make([]resource_alert.ScopesValue, len(*config.Scopes))
 		for i, scope := range *config.Scopes {
 			var valuesVal types.List
