@@ -129,6 +129,29 @@ func TestAccAlert_WithScopes(t *testing.T) {
 	})
 }
 
+// TestAccAlert_WithEmptyScopes tests that explicitly setting scopes = [] works correctly.
+// This verifies the fix for state inconsistency between empty list and null.
+func TestAccAlert_WithEmptyScopes(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertWithEmptyScopes(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{})), // Empty list, not null
+				},
+			},
+		},
+	})
+}
+
 // TestAccAlert_WithInverseScope tests scope exclusion filters.
 func TestAccAlert_WithInverseScope(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
@@ -387,6 +410,26 @@ resource "doit_alert" "this" {
         values = ["amazon-web-services"]
       }
     ]
+  }
+}
+`, i)
+}
+
+func testAccAlertWithEmptyScopes(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-empty-scopes-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes        = []
   }
 }
 `, i)
