@@ -3,12 +3,12 @@
 page_title: "doit_alert Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.
+  Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
 ---
 
 # doit_alert (Resource)
 
-Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.
+Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
 
 ## Example Usage
 
@@ -60,12 +60,12 @@ resource "doit_alert" "aws_cost_alert" {
 
 ### Required
 
-- `config` (Attributes) (see [below for nested schema](#nestedatt--config))
+- `config` (Attributes) Parameters that define when and how an alert is evaluated. (see [below for nested schema](#nestedatt--config))
 - `name` (String) Name of the alert.
 
 ### Optional
 
-- `recipients` (List of String) List of emails that will be notified when the alert is triggered
+- `recipients` (List of String) List of emails to notify when the alert is triggered.
 
 ### Read-Only
 
@@ -79,18 +79,18 @@ resource "doit_alert" "aws_cost_alert" {
 
 Required:
 
-- `metric` (Attributes) (see [below for nested schema](#nestedatt--config--metric))
+- `metric` (Attributes) Define how metrics are selected and filtered in reports. (see [below for nested schema](#nestedatt--config--metric))
 - `value` (Number)
 
 Optional:
 
-- `attributions` (List of String) The attributions selected define the scope to monitor.
-- `condition` (String)
+- `attributions` (List of String, Deprecated) Use 'scopes' instead. The attributions selected define the scope to monitor.
+- `condition` (String) Condition key or expression used in alert configurations.
 - `currency` (String) Currency code for monetary values.
 Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `data_source` (String)
 - `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
-- `operator` (String)
+- `operator` (String) Text/operator used to filter metric values in metric filters.
 - `scopes` (Attributes List) The filters selected define the scope of the alert. (see [below for nested schema](#nestedatt--config--scopes))
 - `time_interval` (String) The time interval to evaluate the condition.
 Possible values: `hour`, `day`, `week`, `month`, `quarter`, `year`
@@ -100,7 +100,7 @@ Possible values: `hour`, `day`, `week`, `month`, `quarter`, `year`
 
 Required:
 
-- `type` (String)
+- `type` (String) Identifier for metric type (e.g., basic, custom, extended).
 - `value` (String)
 
 
@@ -112,10 +112,10 @@ Required:
 - `id` (String) The field to filter on
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Type of dimension or filter field.
+- `type` (String) Enumeration of supported dimension/filter types.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 Optional:
 
 - `inverse` (Boolean) Set to `true` to exclude the values.
-- `values` (List of String) Values to filter on
+- `values` (List of String) Values to filter on.
