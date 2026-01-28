@@ -27,14 +27,15 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 						ElementType:         types.StringType,
 						Optional:            true,
 						Computed:            true,
-						Description:         "The attributions selected define the scope to monitor.",
-						MarkdownDescription: "The attributions selected define the scope to monitor.",
+						Description:         "Use 'scopes' instead. The attributions selected define the scope to monitor.",
+						MarkdownDescription: "Use 'scopes' instead. The attributions selected define the scope to monitor.",
+						DeprecationMessage:  "This attribute is deprecated.",
 					},
 					"condition": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         "Condition key or expression used in alert configurations.",
+						MarkdownDescription: "Condition key or expression used in alert configurations.",
 					},
 					"currency": schema.StringAttribute{
 						Optional:            true,
@@ -84,8 +85,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
 								Required:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "Identifier for metric type (e.g., basic, custom, extended).",
+								MarkdownDescription: "Identifier for metric type (e.g., basic, custom, extended).",
 							},
 							"value": schema.StringAttribute{
 								Required:            true,
@@ -98,13 +99,15 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 								AttrTypes: MetricValue{}.AttributeTypes(ctx),
 							},
 						},
-						Required: true,
+						Required:            true,
+						Description:         "Define how metrics are selected and filtered in reports.",
+						MarkdownDescription: "Define how metrics are selected and filtered in reports.",
 					},
 					"operator": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         "Text/operator used to filter metric values in metric filters.",
+						MarkdownDescription: "Text/operator used to filter metric values in metric filters.",
 					},
 					"scopes": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{
@@ -136,8 +139,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -158,8 +161,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 									ElementType:         types.StringType,
 									Optional:            true,
 									Computed:            true,
-									Description:         "Values to filter on",
-									MarkdownDescription: "Values to filter on",
+									Description:         "Values to filter on.",
+									MarkdownDescription: "Values to filter on.",
 								},
 							},
 							CustomType: ScopesType{
@@ -199,7 +202,9 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: ConfigValue{}.AttributeTypes(ctx),
 					},
 				},
-				Required: true,
+				Required:            true,
+				Description:         "Parameters that define when and how an alert is evaluated.",
+				MarkdownDescription: "Parameters that define when and how an alert is evaluated.",
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
@@ -225,8 +230,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of emails that will be notified when the alert is triggered",
-				MarkdownDescription: "List of emails that will be notified when the alert is triggered",
+				Description:         "List of emails to notify when the alert is triggered.",
+				MarkdownDescription: "List of emails to notify when the alert is triggered.",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
@@ -234,8 +239,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Last time the alert was modified (in UNIX timestamp).",
 			},
 		},
-		Description:         "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
-		MarkdownDescription: "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
+		Description:         "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
+		MarkdownDescription: "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
 	}
 }
 
