@@ -19,13 +19,15 @@
 										"element_type": {
 											"string": {}
 										},
-										"description": "The attributions selected define the scope to monitor."
+										"deprecation_message": "This attribute is deprecated.",
+										"description": "Use 'scopes' instead. The attributions selected define the scope to monitor."
 									}
 								},
 								{
 									"name": "condition",
 									"string": {
-										"computed_optional_required": "computed_optional"
+										"computed_optional_required": "computed_optional",
+										"description": "Condition key or expression used in alert configurations."
 									}
 								},
 								{
@@ -68,7 +70,8 @@
 											{
 												"name": "type",
 												"string": {
-													"computed_optional_required": "required"
+													"computed_optional_required": "required",
+													"description": "Identifier for metric type (e.g., basic, custom, extended)."
 												}
 											},
 											{
@@ -77,13 +80,15 @@
 													"computed_optional_required": "required"
 												}
 											}
-										]
+										],
+										"description": "Define how metrics are selected and filtered in reports."
 									}
 								},
 								{
 									"name": "operator",
 									"string": {
-										"computed_optional_required": "computed_optional"
+										"computed_optional_required": "computed_optional",
+										"description": "Text/operator used to filter metric values in metric filters."
 									}
 								},
 								{
@@ -129,7 +134,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Type of dimension or filter field.",
+														"description": "Enumeration of supported dimension/filter types.",
 														"validators": [
 															{
 																"custom": {
@@ -151,7 +156,7 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on"
+														"description": "Values to filter on."
 													}
 												}
 											]
@@ -187,7 +192,8 @@
 										"computed_optional_required": "required"
 									}
 								}
-							]
+							],
+							"description": "Parameters that define when and how an alert is evaluated."
 						}
 					},
 					{
@@ -204,7 +210,7 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "List of emails that will be notified when the alert is triggered"
+							"description": "List of emails to notify when the alert is triggered."
 						}
 					},
 					{
@@ -236,8 +242,8 @@
 						}
 					}
 				],
-				"description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
-				"markdown_description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions."
+				"description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
+				"markdown_description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions."
 			}
 		},
 		{
@@ -248,14 +254,14 @@
 						"name": "description",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "Allocation description"
+							"description": "Allocation description."
 						}
 					},
 					{
 						"name": "name",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "Allocation name"
+							"description": "Allocation name."
 						}
 					},
 					{
@@ -276,7 +282,7 @@
 														"default": {
 															"static": false
 														},
-														"description": "Include null values"
+														"description": "Include null values."
 													}
 												},
 												{
@@ -293,14 +299,14 @@
 													"name": "key",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
+														"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\"."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Filter mode to apply",
+														"description": "Filter mode to apply.",
 														"validators": [
 															{
 																"custom": {
@@ -319,7 +325,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Type of dimension or filter field.",
+														"description": "Enumeration of supported dimension/filter types.",
 														"validators": [
 															{
 																"custom": {
@@ -345,18 +351,18 @@
 												}
 											]
 										},
-										"description": "List of allocation filter components"
+										"description": "List of allocation filter components."
 									}
 								},
 								{
 									"name": "formula",
 									"string": {
 										"computed_optional_required": "required",
-										"description": "Formula for combining components (A is the first component, B is the second one, etc.)"
+										"description": "Formula for combining components (A is the first component, B is the second one, etc.)."
 									}
 								}
 							],
-							"description": "Single allocation rule (required for single type allocation)"
+							"description": "Single allocation rule."
 						}
 					},
 					{
@@ -369,7 +375,7 @@
 										"name": "action",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "Action to perform with this rule",
+											"description": "Action to perform with this rule.",
 											"validators": [
 												{
 													"custom": {
@@ -397,7 +403,7 @@
 															"default": {
 																"static": false
 															},
-															"description": "Include null values"
+															"description": "Include null values."
 														}
 													},
 													{
@@ -414,14 +420,14 @@
 														"name": "key",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
+															"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\"."
 														}
 													},
 													{
 														"name": "mode",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Filter mode to apply",
+															"description": "Filter mode to apply.",
 															"validators": [
 																{
 																	"custom": {
@@ -440,7 +446,7 @@
 														"name": "type",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Type of dimension or filter field.",
+															"description": "Enumeration of supported dimension/filter types.",
 															"validators": [
 																{
 																	"custom": {
@@ -466,14 +472,14 @@
 													}
 												]
 											},
-											"description": "List of allocation filter components (required for 'create' or 'update' action)"
+											"description": "List of allocation filter components (required for 'create' or 'update' action)."
 										}
 									},
 									{
 										"name": "description",
 										"string": {
 											"computed_optional_required": "computed_optional",
-											"description": "Description for the allocation rule"
+											"description": "Description of the allocation rule."
 										}
 									},
 									{
@@ -487,14 +493,14 @@
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed_optional",
-											"description": "ID of existing allocation (required for 'update' or 'select' action)"
+											"description": "ID of existing allocation (required for 'update' or 'select' action)."
 										}
 									},
 									{
 										"name": "name",
 										"string": {
 											"computed_optional_required": "computed_optional",
-											"description": "Name for the allocation rule"
+											"description": "Name of the allocation rule."
 										}
 									}
 								]
@@ -505,35 +511,35 @@
 						"name": "unallocated_costs",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Custom label for any values that do not fit into allocation (required for group type allocation)"
+							"description": "Custom label for values that do not fit into allocation (required for group type allocation)."
 						}
 					},
 					{
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "ID of the created allocation"
+							"description": "ID of the new allocation."
 						}
 					},
 					{
 						"name": "type",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Type of the created allocation"
+							"description": "Type of the new allocation."
 						}
 					},
 					{
 						"name": "allocation_type",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Type of allocation (single or group)"
+							"description": "Composition type of allocation."
 						}
 					},
 					{
 						"name": "anomaly_detection",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Whether anomaly detection is enabled for this allocation"
+							"description": "Whether anomaly detection is enabled for this allocation."
 						}
 					},
 					{
@@ -551,8 +557,8 @@
 						}
 					}
 				],
-				"description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
-				"markdown_description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more."
+				"description": "Define how costs are distributed across your organization.",
+				"markdown_description": "Define how costs are distributed across your organization."
 			}
 		},
 		{
@@ -585,7 +591,7 @@
 									}
 								]
 							},
-							"description": "List of up to three thresholds defined as a percentage of the amount"
+							"description": "List of up to three thresholds defined as a percentage of the amount."
 						}
 					},
 					{
@@ -627,7 +633,7 @@
 									}
 								]
 							},
-							"description": "List of permitted users to view/edit the report"
+							"description": "List of permitted users to view/edit the report."
 						}
 					},
 					{
@@ -690,7 +696,7 @@
 						"name": "name",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Budget Name"
+							"description": "Budget Name."
 						}
 					},
 					{
@@ -719,7 +725,7 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "List of emails to notify when reaching alert threshold"
+							"description": "List of emails to notify when reaching alert threshold."
 						}
 					},
 					{
@@ -766,7 +772,7 @@
 									}
 								]
 							},
-							"description": "List of Slack channels to notify when reaching alert threshold"
+							"description": "List of Slack channels to notify when reaching alert threshold."
 						}
 					},
 					{
@@ -777,7 +783,7 @@
 								"string": {}
 							},
 							"deprecation_message": "This attribute is deprecated.",
-							"description": "List of attributions that define the budget scope."
+							"description": "List of allocations that define the budget scope."
 						}
 					},
 					{
@@ -823,7 +829,7 @@
 										"name": "type",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "Type of dimension or filter field.",
+											"description": "Enumeration of supported dimension/filter types.",
 											"validators": [
 												{
 													"custom": {
@@ -845,7 +851,7 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "Values to filter on"
+											"description": "Values to filter on."
 										}
 									}
 								]
@@ -860,7 +866,7 @@
 							"element_type": {
 								"float64": {}
 							},
-							"description": "List of seasonal amounts for recurring budgets with different amounts per period"
+							"description": "List of seasonal amounts for recurring budgets with different amounts per period."
 						}
 					},
 					{
@@ -898,7 +904,7 @@
 						"name": "create_time",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Creation time (in UNIX timestamp)"
+							"description": "Creation time (in UNIX timestamp)."
 						}
 					},
 					{
@@ -924,12 +930,12 @@
 						"name": "update_time",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Update time (in UNIX timestamp)"
+							"description": "Update time (in UNIX timestamp)."
 						}
 					}
 				],
-				"description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
-				"markdown_description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached."
+				"description": "Track actual cloud spend against planned spend.",
+				"markdown_description": "Track actual cloud spend against planned spend."
 			}
 		},
 		{
@@ -971,7 +977,7 @@
 												}
 											}
 										],
-										"description": "Advanced analysis options. Each of these can be set independently"
+										"description": "Advanced analysis options. Each can be set independently."
 									}
 								},
 								{
@@ -1064,14 +1070,14 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "The field to apply to the dimension."
+														"description": "The identifier of the dimension."
 													}
 												},
 												{
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "Type of dimension or filter field.",
+														"description": "Enumeration of supported dimension/filter types.",
 														"validators": [
 															{
 																"custom": {
@@ -1153,7 +1159,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Type of dimension or filter field.",
+														"description": "Enumeration of supported dimension/filter types.",
 														"validators": [
 															{
 																"custom": {
@@ -1175,7 +1181,7 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on"
+														"description": "Values to filter on."
 													}
 												}
 											]
@@ -1229,11 +1235,11 @@
 																			"name": "value",
 																			"string": {
 																				"computed_optional_required": "computed_optional",
-																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
+																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
 																			}
 																		}
 																	],
-																	"description": "The metric to apply."
+																	"description": "Metric selector used in reports and filters."
 																}
 															},
 															{
@@ -1270,7 +1276,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "Type of dimension or filter field.",
+														"description": "Enumeration of supported dimension/filter types.",
 														"validators": [
 															{
 																"custom": {
@@ -1311,7 +1317,7 @@
 									"name": "layout",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "The visualization of the report.",
+										"description": "Type of visualization or output format.",
 										"validators": [
 											{
 												"custom": {
@@ -1354,11 +1360,11 @@
 												"name": "value",
 												"string": {
 													"computed_optional_required": "computed_optional",
-													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
+													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
 												}
 											}
 										],
-										"description": "The metric to apply."
+										"description": "Metric selector used in reports and filters."
 									}
 								},
 								{
@@ -1394,11 +1400,11 @@
 															"name": "value",
 															"string": {
 																"computed_optional_required": "computed_optional",
-																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
+																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
 															}
 														}
 													],
-													"description": "The metric to apply."
+													"description": "Metric selector used in reports and filters."
 												}
 											},
 											{
@@ -1430,7 +1436,7 @@
 												}
 											}
 										],
-										"description": "The metric filter to limit the report results by value"
+										"description": "Metric filter to limit report rows by metric value."
 									}
 								},
 								{
@@ -1487,14 +1493,14 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "ID of the field to split"
+														"description": "ID of the field to split."
 													}
 												},
 												{
 													"name": "include_origin",
 													"bool": {
 														"computed_optional_required": "computed_optional",
-														"description": "if set, include the origin"
+														"description": "Indicate whether to include the origin."
 													}
 												},
 												{
@@ -1524,7 +1530,7 @@
 																"name": "id",
 																"string": {
 																	"computed_optional_required": "computed_optional",
-																	"description": "ID of the origin"
+																	"description": "ID of the origin."
 																}
 															},
 															{
@@ -1546,7 +1552,8 @@
 																	]
 																}
 															}
-														]
+														],
+														"description": "Origin info for cost splitting."
 													}
 												},
 												{
@@ -1559,7 +1566,7 @@
 																	"name": "id",
 																	"string": {
 																		"computed_optional_required": "computed_optional",
-																		"description": "ID of the target"
+																		"description": "ID of the target."
 																	}
 																},
 																{
@@ -1585,12 +1592,12 @@
 																	"name": "value",
 																	"float64": {
 																		"computed_optional_required": "computed_optional",
-																		"description": "Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom."
+																		"description": "Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom."
 																	}
 																}
 															]
 														},
-														"description": "Targets for the split"
+														"description": "Targets for the split."
 													}
 												},
 												{
@@ -1710,7 +1717,7 @@
 									}
 								}
 							],
-							"description": "Report configuration"
+							"description": "Report configuration."
 						}
 					},
 					{
@@ -1742,8 +1749,8 @@
 						}
 					}
 				],
-				"description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
-				"markdown_description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters."
+				"description": "Manage Cloud Analytics reports and get reports data in JSON format.",
+				"markdown_description": "Manage Cloud Analytics reports and get reports data in JSON format."
 			}
 		}
 	],
