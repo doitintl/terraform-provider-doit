@@ -152,6 +152,30 @@ func TestAccAlert_WithEmptyScopes(t *testing.T) {
 	})
 }
 
+// TestAccAlert_WithAttributions tests the deprecated attributions field for backward compatibility.
+func TestAccAlert_WithAttributions(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertWithAttributions(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("attributions"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact(testAttribution()),
+						})),
+				},
+			},
+		},
+	})
+}
+
 // TestAccAlert_WithInverseScope tests scope exclusion filters.
 func TestAccAlert_WithInverseScope(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
@@ -433,6 +457,26 @@ resource "doit_alert" "this" {
   }
 }
 `, i)
+}
+
+func testAccAlertWithAttributions(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-attributions-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    attributions  = ["%s"]
+  }
+}
+`, i, testAttribution())
 }
 
 func testAccAlertWithInverseScope(i int) string {
