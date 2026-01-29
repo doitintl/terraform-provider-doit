@@ -88,7 +88,19 @@
 									"name": "operator",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "Text/operator used to filter metric values in metric filters."
+										"description": "Text/operator used to filter metric values in metric filters.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"gt\",\n\"lt\",\n)"
+												}
+											}
+										]
 									}
 								},
 								{

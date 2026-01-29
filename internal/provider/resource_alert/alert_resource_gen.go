@@ -106,8 +106,14 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 					"operator": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Text/operator used to filter metric values in metric filters.",
-						MarkdownDescription: "Text/operator used to filter metric values in metric filters.",
+						Description:         "Text/operator used to filter metric values in metric filters.\nPossible values: `gt`, `lt`",
+						MarkdownDescription: "Text/operator used to filter metric values in metric filters.\nPossible values: `gt`, `lt`",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"gt",
+								"lt",
+							),
+						},
 					},
 					"scopes": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{

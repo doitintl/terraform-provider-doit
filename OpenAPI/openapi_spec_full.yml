@@ -5294,6 +5294,9 @@ components:
     MetricFilterText:
       type: string
       description: Text/operator used to filter metric values in metric filters.
+      enum:
+        - gt
+        - lt
     MetricType:
       type: string
       description: Identifier for metric type (e.g., basic, custom, extended).
