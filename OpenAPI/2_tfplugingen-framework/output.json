@@ -1077,6 +1077,69 @@
 			}
 		},
 		{
+			"name": "label",
+			"schema": {
+				"attributes": [
+					{
+						"name": "color",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The color of the label",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"blue\",\n\"skyBlue\",\n\"teal\",\n\"mint\",\n\"lime\",\n\"softYellow\",\n\"apricot\",\n\"lavender\",\n\"purple\",\n\"rosePink\",\n\"slateGrey\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the label"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the label was created"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the label"
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The type of the label (custom or preset)"
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the label was last updated"
+						}
+					}
+				],
+				"description": "Labels help you organize and categorize your cloud resources.",
+				"markdown_description": "Labels help you organize and categorize your cloud resources."
+			}
+		},
+		{
 			"name": "report",
 			"schema": {
 				"attributes": [
