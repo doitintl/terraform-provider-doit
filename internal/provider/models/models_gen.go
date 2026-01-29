@@ -218,14 +218,14 @@ const (
 
 // Defines values for ExternalConfigMetricFilterOperator.
 const (
-	B   ExternalConfigMetricFilterOperator = "b"
-	E   ExternalConfigMetricFilterOperator = "e"
-	Gt  ExternalConfigMetricFilterOperator = "gt"
-	Gte ExternalConfigMetricFilterOperator = "gte"
-	Lt  ExternalConfigMetricFilterOperator = "lt"
-	Lte ExternalConfigMetricFilterOperator = "lte"
-	Nb  ExternalConfigMetricFilterOperator = "nb"
-	Ne  ExternalConfigMetricFilterOperator = "ne"
+	ExternalConfigMetricFilterOperatorB   ExternalConfigMetricFilterOperator = "b"
+	ExternalConfigMetricFilterOperatorE   ExternalConfigMetricFilterOperator = "e"
+	ExternalConfigMetricFilterOperatorGt  ExternalConfigMetricFilterOperator = "gt"
+	ExternalConfigMetricFilterOperatorGte ExternalConfigMetricFilterOperator = "gte"
+	ExternalConfigMetricFilterOperatorLt  ExternalConfigMetricFilterOperator = "lt"
+	ExternalConfigMetricFilterOperatorLte ExternalConfigMetricFilterOperator = "lte"
+	ExternalConfigMetricFilterOperatorNb  ExternalConfigMetricFilterOperator = "nb"
+	ExternalConfigMetricFilterOperatorNe  ExternalConfigMetricFilterOperator = "ne"
 )
 
 // Defines values for ExternalMetricType.
@@ -383,6 +383,12 @@ const (
 	LimitSortAToZ LimitSort = "a_to_z"
 	LimitSortAsc  LimitSort = "asc"
 	LimitSortDesc LimitSort = "desc"
+)
+
+// Defines values for MetricFilterText.
+const (
+	MetricFilterTextGt MetricFilterText = "gt"
+	MetricFilterTextLt MetricFilterText = "lt"
 )
 
 // Defines values for NewAllocationResponseType.
@@ -2046,7 +2052,7 @@ type MetricConfig struct {
 }
 
 // MetricFilterText Text/operator used to filter metric values in metric filters.
-type MetricFilterText = string
+type MetricFilterText string
 
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string

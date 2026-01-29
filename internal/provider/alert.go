@@ -98,7 +98,7 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 	}
 
 	if !configVal.Operator.IsNull() && !configVal.Operator.IsUnknown() {
-		operator := configVal.Operator.ValueString()
+		operator := models.MetricFilterText(configVal.Operator.ValueString())
 		config.Operator = &operator
 	}
 
@@ -277,7 +277,7 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (res
 		"data_source":       types.StringPointerValue(config.DataSource),
 		"evaluate_for_each": types.StringPointerValue(config.EvaluateForEach),
 		"metric":            metricVal,
-		"operator":          types.StringPointerValue(config.Operator),
+		"operator":          types.StringPointerValue((*string)(config.Operator)),
 		"scopes":            scopesVal,
 		"time_interval":     types.StringValue(string(config.TimeInterval)),
 		"value":             types.Float64Value(config.Value),
