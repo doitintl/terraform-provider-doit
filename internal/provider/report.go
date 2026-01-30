@@ -418,11 +418,32 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			"from": types.StringNull(),
 			"to":   types.StringNull(),
 		}
+
+		// Get existing custom_time_range values to preserve user's timestamp format
+		var existingFrom, existingTo string
+		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+			!state.Config.CustomTimeRange.IsNull() && !state.Config.CustomTimeRange.IsUnknown() {
+			existingFrom = state.Config.CustomTimeRange.From.ValueString()
+			existingTo = state.Config.CustomTimeRange.To.ValueString()
+		}
+
 		if config.CustomTimeRange.From != nil {
-			ctrMap["from"] = types.StringValue(config.CustomTimeRange.From.Format(time.RFC3339))
+			// Preserve user's timestamp format if semantically equal
+			existingTime, err := time.Parse(time.RFC3339, existingFrom)
+			if err == nil && existingTime.Equal(*config.CustomTimeRange.From) {
+				ctrMap["from"] = types.StringValue(existingFrom)
+			} else {
+				ctrMap["from"] = types.StringValue(config.CustomTimeRange.From.Format(time.RFC3339))
+			}
 		}
 		if config.CustomTimeRange.To != nil {
-			ctrMap["to"] = types.StringValue(config.CustomTimeRange.To.Format(time.RFC3339))
+			// Preserve user's timestamp format if semantically equal
+			existingTime, err := time.Parse(time.RFC3339, existingTo)
+			if err == nil && existingTime.Equal(*config.CustomTimeRange.To) {
+				ctrMap["to"] = types.StringValue(existingTo)
+			} else {
+				ctrMap["to"] = types.StringValue(config.CustomTimeRange.To.Format(time.RFC3339))
+			}
 		}
 		ctrVal, d := resource_report.NewCustomTimeRangeValue(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
 		diags.Append(d...)

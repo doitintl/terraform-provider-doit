@@ -53,6 +53,18 @@ resources:
     delete:
       path: /analytics/v1/reports/{id}
       method: DELETE
+  annotation:
+    create:
+      path: /analytics/v1/annotations
+      method: POST
+    read:
+      path: /analytics/v1/annotations/{id}
+      method: GET
+    update:
+      path: /analytics/v1/annotations/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/annotations/{id}
   label:
     create:
       path: /analytics/v1/labels

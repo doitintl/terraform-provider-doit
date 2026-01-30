@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -62,7 +63,18 @@ func (r *allocationResource) Metadata(_ context.Context, req resource.MetadataRe
 }
 
 func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_allocation.AllocationResourceSchema(ctx)
+	s := resource_allocation.AllocationResourceSchema(ctx)
+
+	// Inject validator for rules attribute to enforce 'name' is required for 'create'/'update' actions.
+	// See allocationRulesValidator for context on why this workaround is needed.
+	if rules, ok := s.Attributes["rules"]; ok {
+		if listAttr, ok := rules.(schema.ListNestedAttribute); ok {
+			listAttr.Validators = append(listAttr.Validators, allocationRulesValidator{})
+			s.Attributes["rules"] = listAttr
+		}
+	}
+
+	resp.Schema = s
 }
 
 func (r *allocationResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
