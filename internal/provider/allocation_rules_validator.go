@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // allocationRulesValidator validates that rules with action="create" or "update" have a name.
@@ -37,43 +37,27 @@ func (v allocationRulesValidator) ValidateList(ctx context.Context, req validato
 
 	elements := req.ConfigValue.Elements()
 	for i, elem := range elements {
-		objVal, ok := elem.(types.Object)
-		if !ok || objVal.IsNull() || objVal.IsUnknown() {
+		// The generated schema uses resource_allocation.RulesValue
+		ruleVal, ok := elem.(resource_allocation.RulesValue)
+		if !ok {
 			continue
 		}
 
-		attrs := objVal.Attributes()
+		// Skip if the element is null or unknown
+		if ruleVal.IsNull() || ruleVal.IsUnknown() {
+			continue
+		}
 
 		// Get the action value
-		actionAttr, hasAction := attrs["action"]
-		if !hasAction {
-			continue
-		}
-		actionVal, ok := actionAttr.(types.String)
-		if !ok || actionVal.IsNull() || actionVal.IsUnknown() {
+		if ruleVal.Action.IsNull() || ruleVal.Action.IsUnknown() {
 			continue
 		}
 
-		action := actionVal.ValueString()
+		action := ruleVal.Action.ValueString()
 
 		// For "create" or "update" actions, name is required
 		if action == "create" || action == "update" {
-			nameAttr, hasName := attrs["name"]
-			if !hasName {
-				resp.Diagnostics.AddAttributeError(
-					req.Path.AtListIndex(i).AtName("name"),
-					"Missing Required Attribute",
-					fmt.Sprintf("rules[%d]: 'name' is required when action is '%s'", i, action),
-				)
-				continue
-			}
-
-			nameVal, ok := nameAttr.(types.String)
-			if !ok {
-				continue
-			}
-
-			if nameVal.IsNull() || nameVal.IsUnknown() || nameVal.ValueString() == "" {
+			if ruleVal.Name.IsNull() || ruleVal.Name.IsUnknown() || ruleVal.Name.ValueString() == "" {
 				resp.Diagnostics.AddAttributeError(
 					req.Path.AtListIndex(i).AtName("name"),
 					"Missing Required Attribute",
