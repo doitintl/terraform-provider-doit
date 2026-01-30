@@ -253,6 +253,7 @@ resource "doit_allocation" "group" {
     rules = [
         {
             action = "create"
+            name   = "JP Rule"
        formula = "A AND B"
        components = [
         {
@@ -271,6 +272,7 @@ resource "doit_allocation" "group" {
     },
            {
             action = "create"
+            name   = "US Rule"
        formula = "A AND B"
        components = [
         {
