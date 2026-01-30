@@ -17,7 +17,7 @@ import (
 // this requirement, this validator provides early feedback at plan time rather
 // than failing at apply time with a cryptic API error.
 //
-// See: https://github.com/doitintl/terraform-provider-doit/issues/XXX for tracking.
+// See: https://github.com/doitintl/terraform-provider-doit/issues/70 for tracking.
 var _ validator.List = allocationRulesValidator{}
 
 type allocationRulesValidator struct{}
