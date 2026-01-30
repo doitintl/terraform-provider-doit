@@ -256,6 +256,7 @@ resource "doit_allocation" "group" {
     rules = [
         {
             action = "create"
+            name   = "JP Rule"
        formula = "A AND B"
        components = [
         {
@@ -274,6 +275,7 @@ resource "doit_allocation" "group" {
     },
            {
             action = "create"
+            name   = "US Rule"
        formula = "A AND B"
        components = [
         {
@@ -401,6 +403,48 @@ resource "doit_allocation" "single_with_unallocated" {
          }
        ]
     }
+}
+`, i)
+}
+
+// TestAccAllocation_MissingNameInCreateAction tests that rules with action="create"
+// are rejected at plan time if they don't have a "name" field.
+func TestAccAllocation_MissingNameInCreateAction(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupMissingName(n),
+				ExpectError: regexp.MustCompile(`'name' is required when action is 'create'`),
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupMissingName(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "missing_name" {
+    name = "test-missing-name-%d"
+	description = "test allocation group missing name in rule"
+    unallocated_costs = "Other"
+    rules = [
+        {
+            action = "create"
+            formula = "A"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                }
+            ]
+        }
+    ]
 }
 `, i)
 }

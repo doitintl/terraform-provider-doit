@@ -206,6 +206,7 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewReportResource,
 		NewBudgetResource,
 		NewAllocationResource,
+		NewAnnotationResource,
 		NewLabelResource,
 	}
 }
