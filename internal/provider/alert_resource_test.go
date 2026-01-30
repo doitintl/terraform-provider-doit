@@ -177,6 +177,29 @@ func TestAccAlert_WithAttributions(t *testing.T) {
 	})
 }
 
+// TestAccAlert_WithEmptyAttributions tests that explicitly setting attributions = [] works correctly.
+// This verifies the fix for state inconsistency between empty list and null.
+func TestAccAlert_WithEmptyAttributions(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertWithEmptyAttributions(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("attributions"),
+						knownvalue.ListExact([]knownvalue.Check{})), // Empty list, not null
+				},
+			},
+		},
+	})
+}
+
 // TestAccAlert_WithInverseScope tests scope exclusion filters.
 func TestAccAlert_WithInverseScope(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
@@ -478,6 +501,26 @@ resource "doit_alert" "this" {
   }
 }
 `, i, testAttribution())
+}
+
+func testAccAlertWithEmptyAttributions(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-empty-attributions-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    attributions  = []
+  }
+}
+`, i)
 }
 
 func testAccAlertWithInverseScope(i int) string {
