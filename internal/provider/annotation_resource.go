@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -61,7 +62,17 @@ func (r *annotationResource) ImportState(ctx context.Context, req resource.Impor
 }
 
 func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_annotation.AnnotationResourceSchema(ctx)
+	s := resource_annotation.AnnotationResourceSchema(ctx)
+
+	// Add RFC3339 validator for timestamp
+	if timestamp, ok := s.Attributes["timestamp"]; ok {
+		if strAttr, ok := timestamp.(schema.StringAttribute); ok {
+			strAttr.Validators = append(strAttr.Validators, rfc3339Validator{})
+			s.Attributes["timestamp"] = strAttr
+		}
+	}
+
+	resp.Schema = s
 }
 
 func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -461,4 +462,29 @@ resource "doit_annotation" "timezone_test" {
   timestamp = "%s"
 }
 `, i, timestamp)
+}
+
+// TestAccAnnotation_InvalidTimestamp tests that invalid timestamp formats are rejected
+// at plan time by the RFC3339 validator.
+func TestAccAnnotation_InvalidTimestamp(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAnnotationInvalidTimestamp(),
+				ExpectError: regexp.MustCompile(`Invalid RFC3339 Timestamp`),
+			},
+		},
+	})
+}
+
+func testAccAnnotationInvalidTimestamp() string {
+	return `
+resource "doit_annotation" "invalid" {
+  content   = "Test annotation with invalid timestamp"
+  timestamp = "not-a-valid-timestamp"
+}
+`
 }
