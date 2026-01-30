@@ -61,6 +61,9 @@ func TestAccAllocation(t *testing.T) {
 				ResourceName:      "doit_allocation.this",
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"update_time", // Computed field that changes on each modification
+				},
 			},
 		},
 	})
@@ -97,8 +100,8 @@ func TestAccAllocation_Group(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"description",
-					"rules",
+					"update_time", // Computed field that changes on each modification
+					"rules",       // API doesn't return the 'action' field for rules
 				},
 			},
 		},
@@ -152,8 +155,8 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"description",
-					"rules",
+					"update_time", // Computed field that changes on each modification
+					"rules",       // API doesn't return the 'action' field for rules
 				},
 			},
 		},
