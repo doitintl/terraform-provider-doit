@@ -513,3 +513,74 @@ resource "doit_report" "this" {
 }
 `, i)
 }
+
+// TestAccReport_CustomTimeRangeTimezonePreservation tests that custom_time_range timestamps
+// with non-UTC timezone offsets are preserved correctly, avoiding "Provider produced inconsistent result" errors.
+func TestAccReport_CustomTimeRangeTimezonePreservation(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithTimezoneOffset(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.timezone_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.timezone_test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-timezone-%d", n))),
+					// Verify the timestamp is preserved with the original timezone offset
+					statecheck.ExpectKnownValue(
+						"doit_report.timezone_test",
+						tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("from"),
+						knownvalue.StringExact("2024-01-01T00:00:00-05:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.timezone_test",
+						tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("to"),
+						knownvalue.StringExact("2024-02-01T00:00:00-05:00")),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithTimezoneOffset(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "timezone_test" {
+    name = "test-timezone-%d"
+	description = "Report with non-UTC timezone to test timestamp preservation"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		custom_time_range = {
+		  # Use EST timezone offset (-05:00) instead of UTC
+		  from = "2024-01-01T00:00:00-05:00"
+		  to   = "2024-02-01T00:00:00-05:00"
+		}
+		time_range = {
+			mode = "custom"
+			unit = "day"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
