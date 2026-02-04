@@ -82,31 +82,94 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		params.SortOrder = &sortOrderVal
 	}
 
-	// Call the API to list dimensions
-	apiResp, err := d.client.ListDimensionsWithResponse(ctx, params)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Dimensions",
-			fmt.Sprintf("Unable to read dimensions: %v", err),
-		)
-		return
-	}
+	// Smart pagination: honor user-provided values, otherwise auto-paginate
+	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
 
-	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Dimensions",
-			fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-		)
-		return
-	}
+	var allDimensions []models.SortableItem
 
-	// Map API response to data source model
-	result := apiResp.JSON200
+	if userControlsPagination {
+		// Manual mode: single API call with user's params
+		maxResultsVal := data.MaxResults.ValueString()
+		params.MaxResults = &maxResultsVal
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pageTokenVal := data.PageToken.ValueString()
+			params.PageToken = &pageTokenVal
+		}
+
+		apiResp, err := d.client.ListDimensionsWithResponse(ctx, params)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Dimensions",
+				fmt.Sprintf("Unable to read dimensions: %v", err),
+			)
+			return
+		}
+
+		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Dimensions",
+				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			)
+			return
+		}
+
+		result := apiResp.JSON200
+		if result.Dimensions != nil {
+			allDimensions = *result.Dimensions
+		}
+
+		// Preserve API's page_token for user to fetch next page
+		data.PageToken = types.StringPointerValue(result.PageToken)
+		if result.RowCount != nil {
+			data.RowCount = types.Int64Value(*result.RowCount)
+		} else {
+			data.RowCount = types.Int64Value(int64(len(allDimensions)))
+		}
+		// max_results is already set by user, no change needed
+	} else {
+		// Auto mode: fetch all pages
+		for {
+			apiResp, err := d.client.ListDimensionsWithResponse(ctx, params)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Dimensions",
+					fmt.Sprintf("Unable to read dimensions: %v", err),
+				)
+				return
+			}
+
+			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Dimensions",
+					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+				)
+				return
+			}
+
+			result := apiResp.JSON200
+			if result.Dimensions != nil {
+				allDimensions = append(allDimensions, *result.Dimensions...)
+			}
+
+			if result.PageToken == nil || *result.PageToken == "" {
+				break
+			}
+			params.PageToken = result.PageToken
+		}
+
+		// Auto mode: set counts based on what we fetched
+		data.RowCount = types.Int64Value(int64(len(allDimensions)))
+		data.PageToken = types.StringNull()
+		// max_results was not set; preserve null/unknown handling below
+		if data.MaxResults.IsUnknown() {
+			data.MaxResults = types.StringNull()
+		}
+	}
 
 	// Map dimensions list
-	if result.Dimensions != nil && len(*result.Dimensions) > 0 {
-		dimVals := make([]datasource_dimensions.DimensionsValue, 0, len(*result.Dimensions))
-		for _, dim := range *result.Dimensions {
+	if len(allDimensions) > 0 {
+		dimVals := make([]datasource_dimensions.DimensionsValue, 0, len(allDimensions))
+		for _, dim := range allDimensions {
 			dimVal, diags := datasource_dimensions.NewDimensionsValue(
 				datasource_dimensions.DimensionsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
@@ -124,21 +187,10 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		data.Dimensions = types.ListNull(datasource_dimensions.DimensionsValue{}.Type(ctx))
 	}
 
-	// Map pagination fields
-	data.PageToken = types.StringPointerValue(result.PageToken)
-	if result.RowCount != nil {
-		data.RowCount = types.Int64Value(*result.RowCount)
-	} else {
-		data.RowCount = types.Int64Null()
-	}
-
 	// Keep filter params as-is (they're input values)
 	// Only set them if they were null/unknown before
 	if data.Filter.IsUnknown() {
 		data.Filter = types.StringNull()
-	}
-	if data.MaxResults.IsUnknown() {
-		data.MaxResults = types.StringNull()
 	}
 	if data.SortBy.IsUnknown() {
 		data.SortBy = types.StringNull()

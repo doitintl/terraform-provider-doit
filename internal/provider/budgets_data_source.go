@@ -75,11 +75,20 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		params.MaxCreationTime = &maxTime
 	}
 
-	// Auto-paginate: fetch all pages
-	var allBudgets []models.BudgetListItem
-	var totalRowCount int64
+	// Smart pagination: honor user-provided values, otherwise auto-paginate
+	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
 
-	for {
+	var allBudgets []models.BudgetListItem
+
+	if userControlsPagination {
+		// Manual mode: single API call with user's params
+		maxResultsVal := data.MaxResults.ValueString()
+		params.MaxResults = &maxResultsVal
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pageTokenVal := data.PageToken.ValueString()
+			params.PageToken = &pageTokenVal
+		}
+
 		apiResp, err := d.client.ListBudgetsWithResponse(ctx, params)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -98,32 +107,57 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 
 		result := apiResp.JSON200
-
-		// Accumulate budgets
 		if result.Budgets != nil {
-			allBudgets = append(allBudgets, *result.Budgets...)
+			allBudgets = *result.Budgets
 		}
 
-		// Track total from first page (API returns total count)
+		// Preserve API's page_token for user to fetch next page
+		data.PageToken = types.StringPointerValue(result.PageToken)
 		if result.RowCount != nil {
-			totalRowCount = *result.RowCount
+			data.RowCount = types.Int64Value(*result.RowCount)
+		} else {
+			data.RowCount = types.Int64Value(int64(len(allBudgets)))
+		}
+		// max_results is already set by user, no change needed
+	} else {
+		// Auto mode: fetch all pages
+		for {
+			apiResp, err := d.client.ListBudgetsWithResponse(ctx, params)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Budgets",
+					fmt.Sprintf("Unable to read budgets: %v", err),
+				)
+				return
+			}
+
+			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Budgets",
+					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+				)
+				return
+			}
+
+			result := apiResp.JSON200
+			if result.Budgets != nil {
+				allBudgets = append(allBudgets, *result.Budgets...)
+			}
+
+			if result.PageToken == nil || *result.PageToken == "" {
+				break
+			}
+			params.PageToken = result.PageToken
 		}
 
-		// Check for next page
-		if result.PageToken == nil || *result.PageToken == "" {
-			break
+		// Auto mode: set counts based on what we fetched
+		data.RowCount = types.Int64Value(int64(len(allBudgets)))
+		data.PageToken = types.StringNull()
+		// max_results was not set; preserve null/unknown handling below
+		if data.MaxResults.IsUnknown() {
+			data.MaxResults = types.StringNull()
 		}
-		params.PageToken = result.PageToken
 	}
-
-	// Set row count to total accumulated
-	data.RowCount = types.Int64Value(int64(len(allBudgets)))
-
-	// Page token is always null after auto-pagination (we fetched everything)
-	data.PageToken = types.StringNull()
-
-	// Ignore max_results input - we fetch all
-	data.MaxResults = types.StringNull()
 
 	// Map budgets list
 	if len(allBudgets) > 0 {
@@ -192,9 +226,6 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if data.MaxCreationTime.IsUnknown() {
 		data.MaxCreationTime = types.StringNull()
 	}
-
-	// Suppress unused variable warning
-	_ = totalRowCount
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

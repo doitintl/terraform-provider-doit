@@ -66,10 +66,20 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		params.Filter = &filter
 	}
 
-	// Auto-paginate: fetch all pages
+	// Smart pagination: honor user-provided values, otherwise auto-paginate
+	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+
 	var allAllocations []models.AllocationListItem
 
-	for {
+	if userControlsPagination {
+		// Manual mode: single API call with user's params
+		maxResultsVal := data.MaxResults.ValueString()
+		params.MaxResults = &maxResultsVal
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pageTokenVal := data.PageToken.ValueString()
+			params.PageToken = &pageTokenVal
+		}
+
 		apiResp, err := d.client.ListAllocationsWithResponse(ctx, params)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -88,27 +98,57 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		result := apiResp.JSON200
-
-		// Accumulate allocations
 		if result.Allocations != nil {
-			allAllocations = append(allAllocations, *result.Allocations...)
+			allAllocations = *result.Allocations
 		}
 
-		// Check for next page
-		if result.PageToken == nil || *result.PageToken == "" {
-			break
+		// Preserve API's page_token for user to fetch next page
+		data.PageToken = types.StringPointerValue(result.PageToken)
+		if result.RowCount != nil {
+			data.RowCount = types.Int64Value(int64(*result.RowCount))
+		} else {
+			data.RowCount = types.Int64Value(int64(len(allAllocations)))
 		}
-		params.PageToken = result.PageToken
+		// max_results is already set by user, no change needed
+	} else {
+		// Auto mode: fetch all pages
+		for {
+			apiResp, err := d.client.ListAllocationsWithResponse(ctx, params)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Allocations",
+					fmt.Sprintf("Unable to read allocations: %v", err),
+				)
+				return
+			}
+
+			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Allocations",
+					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+				)
+				return
+			}
+
+			result := apiResp.JSON200
+			if result.Allocations != nil {
+				allAllocations = append(allAllocations, *result.Allocations...)
+			}
+
+			if result.PageToken == nil || *result.PageToken == "" {
+				break
+			}
+			params.PageToken = result.PageToken
+		}
+
+		// Auto mode: set counts based on what we fetched
+		data.RowCount = types.Int64Value(int64(len(allAllocations)))
+		data.PageToken = types.StringNull()
+		// max_results was not set; preserve null/unknown handling below
+		if data.MaxResults.IsUnknown() {
+			data.MaxResults = types.StringNull()
+		}
 	}
-
-	// Set row count to total accumulated
-	data.RowCount = types.Int64Value(int64(len(allAllocations)))
-
-	// Page token is always null after auto-pagination
-	data.PageToken = types.StringNull()
-
-	// Ignore max_results input
-	data.MaxResults = types.StringNull()
 
 	// Map allocations list
 	if len(allAllocations) > 0 {

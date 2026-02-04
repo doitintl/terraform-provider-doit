@@ -74,10 +74,20 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		params.MaxCreationTime = &maxCreationTime
 	}
 
-	// Auto-paginate: fetch all pages
+	// Smart pagination: honor user-provided values, otherwise auto-paginate
+	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+
 	var allReports []models.Report
 
-	for {
+	if userControlsPagination {
+		// Manual mode: single API call with user's params
+		maxResultsVal := data.MaxResults.ValueString()
+		params.MaxResults = &maxResultsVal
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pageTokenVal := data.PageToken.ValueString()
+			params.PageToken = &pageTokenVal
+		}
+
 		apiResp, err := d.client.ListReportsWithResponse(ctx, params)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -96,27 +106,57 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 
 		result := apiResp.JSON200
-
-		// Accumulate reports
 		if result.Reports != nil {
-			allReports = append(allReports, *result.Reports...)
+			allReports = *result.Reports
 		}
 
-		// Check for next page
-		if result.PageToken == nil || *result.PageToken == "" {
-			break
+		// Preserve API's page_token for user to fetch next page
+		data.PageToken = types.StringPointerValue(result.PageToken)
+		if result.RowCount != nil {
+			data.RowCount = types.Int64Value(*result.RowCount)
+		} else {
+			data.RowCount = types.Int64Value(int64(len(allReports)))
 		}
-		params.PageToken = result.PageToken
+		// max_results is already set by user, no change needed
+	} else {
+		// Auto mode: fetch all pages
+		for {
+			apiResp, err := d.client.ListReportsWithResponse(ctx, params)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Reports",
+					fmt.Sprintf("Unable to read reports: %v", err),
+				)
+				return
+			}
+
+			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Reports",
+					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+				)
+				return
+			}
+
+			result := apiResp.JSON200
+			if result.Reports != nil {
+				allReports = append(allReports, *result.Reports...)
+			}
+
+			if result.PageToken == nil || *result.PageToken == "" {
+				break
+			}
+			params.PageToken = result.PageToken
+		}
+
+		// Auto mode: set counts based on what we fetched
+		data.RowCount = types.Int64Value(int64(len(allReports)))
+		data.PageToken = types.StringNull()
+		// max_results was not set; preserve null/unknown handling below
+		if data.MaxResults.IsUnknown() {
+			data.MaxResults = types.StringNull()
+		}
 	}
-
-	// Set row count to total accumulated
-	data.RowCount = types.Int64Value(int64(len(allReports)))
-
-	// Page token is always null after auto-pagination
-	data.PageToken = types.StringNull()
-
-	// Ignore max_results input
-	data.MaxResults = types.StringNull()
 
 	// Map reports list
 	if len(allReports) > 0 {

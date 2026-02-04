@@ -74,10 +74,20 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		params.MaxCreationTime = &maxCreationTime
 	}
 
-	// Auto-paginate: fetch all pages
+	// Smart pagination: honor user-provided values, otherwise auto-paginate
+	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+
 	var allTickets []models.TicketListItem
 
-	for {
+	if userControlsPagination {
+		// Manual mode: single API call with user's params
+		maxResultsVal := data.MaxResults.ValueInt64()
+		params.MaxResults = &maxResultsVal
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pageTokenVal := data.PageToken.ValueString()
+			params.PageToken = &pageTokenVal
+		}
+
 		apiResp, err := d.client.IdOfTicketsWithResponse(ctx, params)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -96,27 +106,57 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		}
 
 		result := apiResp.JSON200
-
-		// Accumulate tickets
 		if result.Tickets != nil {
-			allTickets = append(allTickets, *result.Tickets...)
+			allTickets = *result.Tickets
 		}
 
-		// Check for next page
-		if result.PageToken == nil || *result.PageToken == "" {
-			break
+		// Preserve API's page_token for user to fetch next page
+		data.PageToken = types.StringPointerValue(result.PageToken)
+		if result.RowCount != nil {
+			data.RowCount = types.Int64Value(*result.RowCount)
+		} else {
+			data.RowCount = types.Int64Value(int64(len(allTickets)))
 		}
-		params.PageToken = result.PageToken
+		// max_results is already set by user, no change needed
+	} else {
+		// Auto mode: fetch all pages
+		for {
+			apiResp, err := d.client.IdOfTicketsWithResponse(ctx, params)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Support Requests",
+					fmt.Sprintf("Unable to read support requests: %v", err),
+				)
+				return
+			}
+
+			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Support Requests",
+					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+				)
+				return
+			}
+
+			result := apiResp.JSON200
+			if result.Tickets != nil {
+				allTickets = append(allTickets, *result.Tickets...)
+			}
+
+			if result.PageToken == nil || *result.PageToken == "" {
+				break
+			}
+			params.PageToken = result.PageToken
+		}
+
+		// Auto mode: set counts based on what we fetched
+		data.RowCount = types.Int64Value(int64(len(allTickets)))
+		data.PageToken = types.StringNull()
+		// max_results was not set; preserve null/unknown handling below
+		if data.MaxResults.IsUnknown() {
+			data.MaxResults = types.Int64Null()
+		}
 	}
-
-	// Set row count to total accumulated
-	data.RowCount = types.Int64Value(int64(len(allTickets)))
-
-	// Page token is always null after auto-pagination
-	data.PageToken = types.StringNull()
-
-	// Ignore max_results input
-	data.MaxResults = types.Int64Null()
 
 	// Map tickets list
 	if len(allTickets) > 0 {
