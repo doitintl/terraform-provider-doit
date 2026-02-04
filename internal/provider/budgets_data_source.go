@@ -153,10 +153,8 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allBudgets)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.StringNull()
-		}
+		// max_results was not set by user; normalize to null
+		data.MaxResults = types.StringNull()
 	}
 
 	// Map budgets list
