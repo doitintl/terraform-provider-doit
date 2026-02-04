@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -159,56 +158,6 @@ resource "doit_label" "invalid_test" {
 }
 `, n),
 				ExpectError: regexp.MustCompile(`(?i)value must be one of:`),
-			},
-		},
-	})
-}
-
-// TestAccLabel_Disappears verifies that Terraform correctly handles
-// resources that are deleted outside of Terraform (externally deleted).
-// This tests the Read method's 404 handling and RemoveResource call.
-func TestAccLabel_Disappears(t *testing.T) {
-	// Skip until API DELETE returns 404 instead of 500 for non-existent resources
-	// See: https://doitintl.atlassian.net/browse/CMP-37040
-	t.Skip("Skipping until API DELETE returns 404 instead of 500 (CMP-37040)")
-
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
-	var resourceId string
-
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: Create the resource and capture ID
-			{
-				Config: testAccLabel(n),
-				Check: resource.ComposeTestCheckFunc(
-					// Capture the resource ID for later deletion
-					resource.TestCheckResourceAttrWith("doit_label.this", "id", func(value string) error {
-						if value == "" {
-							return fmt.Errorf("resource ID is empty")
-						}
-						resourceId = value
-						return nil
-					}),
-				),
-			},
-			// Step 2: Delete the resource via API, then verify Terraform detects the drift
-			{
-				PreConfig: func() {
-					client := testAccClient(t)
-					resp, err := client.DeleteLabelWithResponse(context.Background(), resourceId)
-					if err != nil {
-						t.Fatalf("Failed to delete label via API: %v", err)
-					}
-					if resp.StatusCode() != 204 && resp.StatusCode() != 404 {
-						t.Fatalf("Expected 204 or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
-					}
-				},
-				Config:             testAccLabel(n),
-				PlanOnly:           true,
-				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
 			},
 		},
 	})

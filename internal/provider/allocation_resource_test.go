@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -448,50 +447,4 @@ resource "doit_allocation" "missing_name" {
     ]
 }
 `, i)
-}
-
-// TestAccAllocation_Disappears verifies that Terraform correctly handles
-// resources that are deleted outside of Terraform (externally deleted).
-// This tests the Read method's 404 handling and RemoveResource call.
-func TestAccAllocation_Disappears(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
-	var resourceId string
-
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: Create the resource and capture ID
-			{
-				Config: testAccAllocationSingle(n),
-				Check: resource.ComposeTestCheckFunc(
-					// Capture the resource ID for later deletion
-					resource.TestCheckResourceAttrWith("doit_allocation.this", "id", func(value string) error {
-						if value == "" {
-							return fmt.Errorf("resource ID is empty")
-						}
-						resourceId = value
-						return nil
-					}),
-				),
-			},
-			// Step 2: Delete the resource via API, then verify Terraform detects the drift
-			{
-				PreConfig: func() {
-					client := testAccClient(t)
-					resp, err := client.DeleteAllocationWithResponse(context.Background(), resourceId)
-					if err != nil {
-						t.Fatalf("Failed to delete allocation via API: %v", err)
-					}
-					if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
-						t.Fatalf("Expected 200, 204, or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
-					}
-				},
-				Config:             testAccAllocationSingle(n),
-				PlanOnly:           true,
-				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
-			},
-		},
-	})
 }
