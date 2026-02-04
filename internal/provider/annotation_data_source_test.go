@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -48,4 +49,26 @@ data "doit_annotation" "test" {
   id = doit_annotation.test.id
 }
 `, n, timestamp)
+}
+
+func TestAccAnnotationDataSource_NotFound(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAnnotationDataSourceNotFoundConfig(),
+				ExpectError: regexp.MustCompile(`(?i)error reading annotation|not found|404`),
+			},
+		},
+	})
+}
+
+func testAccAnnotationDataSourceNotFoundConfig() string {
+	return `
+data "doit_annotation" "notfound" {
+  id = "nonexistent-annotation-id"
+}
+`
 }
