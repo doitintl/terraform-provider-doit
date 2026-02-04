@@ -113,17 +113,7 @@ resource "doit_allocation" "k8s_regions" {
     {
       action  = "select"
       id      = "existing-germany-allocation-id"
-    },
-    {
-      action      = "create"
-      name        = "US in K8s project"
-      description = "United States allocation"
-      formula     = "A AND B"
-      components = [
-        { key = "country", mode = "is", type = "fixed", values = ["US"] },
-        { key = "project_id", mode = "is", type = "fixed", values = ["my-k8s-project"] }
-      ]
-    },
+    }
   ]
 }
 ```
