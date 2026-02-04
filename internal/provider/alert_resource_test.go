@@ -411,9 +411,11 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  recipients = ["%s"]
+  // NOTE: recipients intentionally omitted - CI user email is rejected by API
+  // domain validation, even though omitting it defaults to the same email.
+  // See: https://doitintl.atlassian.net/browse/CMP-XXXXX
 }
-`, i, testUser())
+`, i)
 }
 
 func testAccAlertUpdate(i int) string {
@@ -431,9 +433,10 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  recipients = ["%s"]
+  // NOTE: recipients intentionally omitted - CI user email is rejected by API
+  // domain validation, even though omitting it defaults to the same email.
 }
-`, i, testUser())
+`, i)
 }
 
 func testAccAlertWithScopes(i int) string {
@@ -567,9 +570,10 @@ resource "doit_alert" "this" {
     operator          = "gt"
     evaluate_for_each = "fixed:service_description"
   }
-  recipients = ["%s"]
+  // NOTE: recipients intentionally omitted - CI user email is rejected by API
+  // domain validation, even though omitting it defaults to the same email.
 }
-`, i, testUser())
+`, i)
 }
 
 func testAccAlertPercentageChange(i int) string {
@@ -587,9 +591,10 @@ resource "doit_alert" "this" {
     condition     = "percentage-change"
     operator      = "gt"
   }
-  recipients = ["%s"]
+  // NOTE: recipients intentionally omitted - CI user email is rejected by API
+  // domain validation, even though omitting it defaults to the same email.
 }
-`, i, testUser())
+`, i)
 }
 
 func testAccAlertWithOperator(i int, operator string) string {
@@ -607,9 +612,10 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "%s"
   }
-  recipients = ["%s"]
+  // NOTE: recipients intentionally omitted - CI user email is rejected by API
+  // domain validation, even though omitting it defaults to the same email.
 }
-`, i, operator, testUser())
+`, i, operator)
 }
 
 func testAccAlertWithTimeInterval(i int, interval string) string {
@@ -627,9 +633,10 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  recipients = ["%s"]
+  // NOTE: recipients intentionally omitted - CI user email is rejected by API
+  // domain validation, even though omitting it defaults to the same email.
 }
-`, i, interval, testUser())
+`, i, interval)
 }
 
 func testAccAlertNoRecipients(i int) string {
@@ -676,9 +683,10 @@ resource "doit_alert" "this" {
       }
     ]
   }
-  recipients = ["%s"]
+  // NOTE: recipients intentionally omitted - CI user email is rejected by API
+  // domain validation, even though omitting it defaults to the same email.
 }
-`, i, testUser())
+`, i)
 }
 
 // TestAccAlert_Disappears verifies that Terraform correctly handles
