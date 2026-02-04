@@ -135,7 +135,10 @@ func TestAccAnnotationsDataSource_AutoPagination(t *testing.T) {
 
 func testAccAnnotationsDataSourceConfig() string {
 	return `
-data "doit_annotations" "test" {}
+data "doit_annotations" "test" {
+  sort_by    = "createTime"
+  sort_order = "desc"
+}
 `
 }
 

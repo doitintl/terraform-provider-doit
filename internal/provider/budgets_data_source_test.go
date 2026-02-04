@@ -13,7 +13,10 @@ import (
 
 func testAccBudgetsDataSourceConfig() string {
 	return `
-data "doit_budgets" "test" {}
+data "doit_budgets" "test" {
+  sort_by    = "name"
+  sort_order = "asc"
+}
 `
 }
 

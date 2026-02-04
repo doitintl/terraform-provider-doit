@@ -135,7 +135,10 @@ func TestAccAllocationsDataSource_AutoPagination(t *testing.T) {
 
 func testAccAllocationsDataSourceConfig() string {
 	return `
-data "doit_allocations" "test" {}
+data "doit_allocations" "test" {
+  sort_by    = "createTime"
+  sort_order = "desc"
+}
 `
 }
 

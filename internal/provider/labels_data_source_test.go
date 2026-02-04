@@ -135,7 +135,10 @@ func TestAccLabelsDataSource_AutoPagination(t *testing.T) {
 
 func testAccLabelsDataSourceConfig() string {
 	return `
-data "doit_labels" "test" {}
+data "doit_labels" "test" {
+  sort_by    = "name"
+  sort_order = "asc"
+}
 `
 }
 

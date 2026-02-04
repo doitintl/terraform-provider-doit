@@ -136,7 +136,10 @@ func TestAccAlertsDataSource_AutoPagination(t *testing.T) {
 
 func testAccAlertsDataSourceConfig() string {
 	return `
-data "doit_alerts" "test" {}
+data "doit_alerts" "test" {
+  sort_by    = "name"
+  sort_order = "asc"
+}
 `
 }
 
