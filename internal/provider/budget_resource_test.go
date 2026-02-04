@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -554,4 +555,59 @@ resource "doit_budget" "this" {
   ]
 }
 `, budgetStartPeriod(), i, testSlackChannel(), testCustomerID(), testAttribution(), testUser())
+}
+
+// TestAccBudget_Disappears verifies that Terraform correctly handles
+// resources that are deleted outside of Terraform (externally deleted).
+// This tests the Read method's 404 handling and RemoveResource call.
+func TestAccBudget_Disappears(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	var resourceId string
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create the resource
+			{
+				Config: testAccBudget(n),
+				Check: resource.ComposeTestCheckFunc(
+					// Capture the resource ID for later deletion
+					resource.TestCheckResourceAttrWith("doit_budget.this", "id", func(value string) error {
+						if value == "" {
+							return fmt.Errorf("resource ID is empty")
+						}
+						resourceId = value
+						return nil
+					}),
+				),
+			},
+			// Step 2: Delete the resource via API, then verify Terraform detects the drift
+			{
+				PreConfig: func() {
+					// Delete the resource directly via API
+					client := testAccClient(t)
+					resp, err := client.DeleteBudgetWithResponse(context.Background(), resourceId)
+					if err != nil {
+						t.Fatalf("Failed to delete budget via API: %v", err)
+					}
+					// 200 or 204 = success, 404 = already deleted (both are OK)
+					if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
+						t.Fatalf("Unexpected status code when deleting budget: %d, body: %s",
+							resp.StatusCode(), string(resp.Body))
+					}
+				},
+				Config:             testAccBudget(n),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
+			},
+		},
+	})
 }
