@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"math/rand/v2"
@@ -121,4 +122,26 @@ data "doit_allocation" "test" {
     id = doit_allocation.test.id
 }
 `, i, testProject())
+}
+
+func TestAccAllocationDataSource_NotFound(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationDataSourceNotFoundConfig(),
+				ExpectError: regexp.MustCompile(`(not found|404|Not Found)`),
+			},
+		},
+	})
+}
+
+func testAccAllocationDataSourceNotFoundConfig() string {
+	return `
+data "doit_allocation" "test" {
+    id = "non-existent-allocation-id"
+}
+`
 }

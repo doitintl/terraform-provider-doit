@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"math/rand/v2"
@@ -161,4 +162,26 @@ data "doit_budget" "test" {
     id = doit_budget.test.id
 }
 `, budgetStartPeriod(), i, testUser())
+}
+
+func TestAccBudgetDataSource_NotFound(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccBudgetDataSourceNotFoundConfig(),
+				ExpectError: regexp.MustCompile(`(not found|404|Not Found)`),
+			},
+		},
+	})
+}
+
+func testAccBudgetDataSourceNotFoundConfig() string {
+	return `
+data "doit_budget" "test" {
+    id = "non-existent-budget-id"
+}
+`
 }
