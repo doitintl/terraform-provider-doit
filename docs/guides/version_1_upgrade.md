@@ -134,7 +134,7 @@ resource "doit_allocation" "k8s_regions" {
    ```shell
    terraform state rm doit_allocation_group.k8s_regions
    ```
-2. Update your configuration to use `doit_allocation` with `rules`
+2. Update your configuration to use `doit_allocation` with `rules` to specify the resource is an allocation group
 3. Import the existing allocation group:
    ```shell
    terraform import doit_allocation.k8s_regions <allocation-group-id>

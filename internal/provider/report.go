@@ -13,7 +13,42 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, state *reportResourceModel) diag.Diagnostics {
+// populateStateFromAPI fetches the report from the API and populates the Terraform state.
+//
+// # 404 Handling Strategy
+//
+// The allowNotFound parameter controls how 404 responses are handled:
+//
+//   - allowNotFound=true (used by Read):
+//     404 means the resource was deleted externally (outside Terraform).
+//     We set state.Id to null, which signals Terraform to remove the resource
+//     from state. On next plan, Terraform will propose recreating it.
+//     This is the standard Terraform pattern for "externally deleted" resources.
+//
+//   - allowNotFound=false (used by Create and Update):
+//     404 is unexpected and indicates an error. After a successful Create or
+//     Update API call, the resource MUST exist. A 404 here could indicate:
+//
+//   - A transient API issue (rare, but possible)
+//
+//   - An eventual consistency problem
+//
+//   - A bug in the provider or API
+//     In these cases, we return an error so the user knows something went wrong
+//     and can retry. This prevents silent resource orphaning.
+//
+// # Why This Matters
+//
+// Without this distinction, a transient 404 during Create would:
+//  1. Create the resource successfully (API returns 201 with ID)
+//  2. GET returns 404 (transient issue)
+//  3. populateStateFromAPI sets state.Id = null (no error!)
+//  4. Terraform "succeeds" but loses track of the resource
+//  5. Resource is orphaned - exists in API but not in Terraform state
+//
+// With allowNotFound=false for Create/Update, step 3 returns an error,
+// the user sees the failure, and can retry or investigate.
+func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, state *reportResourceModel, allowNotFound bool) diag.Diagnostics {
 	reportResp, err := r.client.GetReportConfigWithResponse(ctx, id)
 	if err != nil {
 		return diag.Diagnostics{
@@ -21,10 +56,23 @@ func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, st
 		}
 	}
 
-	// Handle externally deleted resource - mark state for removal
+	// Handle 404 based on context
 	if reportResp.StatusCode() == 404 {
-		state.Id = types.StringNull()
-		return nil
+		if allowNotFound {
+			// Read context: Resource was deleted externally, mark for removal from state
+			state.Id = types.StringNull()
+			return nil
+		}
+		// Create/Update context: Resource should exist, 404 is an error
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic(
+				"Resource not found after operation",
+				"The report was successfully created/updated but could not be read back (404). "+
+					"This may indicate a transient API issue. Please retry the operation. "+
+					"If the problem persists, the resource may need to be imported manually. "+
+					"Report ID: "+id,
+			),
+		}
 	}
 
 	if reportResp.StatusCode() != 200 {
@@ -370,11 +418,32 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			"from": types.StringNull(),
 			"to":   types.StringNull(),
 		}
+
+		// Get existing custom_time_range values to preserve user's timestamp format
+		var existingFrom, existingTo string
+		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+			!state.Config.CustomTimeRange.IsNull() && !state.Config.CustomTimeRange.IsUnknown() {
+			existingFrom = state.Config.CustomTimeRange.From.ValueString()
+			existingTo = state.Config.CustomTimeRange.To.ValueString()
+		}
+
 		if config.CustomTimeRange.From != nil {
-			ctrMap["from"] = types.StringValue(config.CustomTimeRange.From.Format(time.RFC3339))
+			// Preserve user's timestamp format if semantically equal
+			existingTime, err := time.Parse(time.RFC3339, existingFrom)
+			if err == nil && existingTime.Equal(*config.CustomTimeRange.From) {
+				ctrMap["from"] = types.StringValue(existingFrom)
+			} else {
+				ctrMap["from"] = types.StringValue(config.CustomTimeRange.From.Format(time.RFC3339))
+			}
 		}
 		if config.CustomTimeRange.To != nil {
-			ctrMap["to"] = types.StringValue(config.CustomTimeRange.To.Format(time.RFC3339))
+			// Preserve user's timestamp format if semantically equal
+			existingTime, err := time.Parse(time.RFC3339, existingTo)
+			if err == nil && existingTime.Equal(*config.CustomTimeRange.To) {
+				ctrMap["to"] = types.StringValue(existingTo)
+			} else {
+				ctrMap["to"] = types.StringValue(config.CustomTimeRange.To.Format(time.RFC3339))
+			}
 		}
 		ctrVal, d := resource_report.NewCustomTimeRangeValue(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
 		diags.Append(d...)

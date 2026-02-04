@@ -106,7 +106,8 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	plan.Id = types.StringPointerValue(reportResp.JSON201.Id)
 
-	diags = r.populateStateFromAPI(ctx, plan.Id.ValueString(), &plan)
+	// allowNotFound=false: After successful create, 404 is an error (resource should exist)
+	diags = r.populateStateFromAPI(ctx, plan.Id.ValueString(), &plan, false)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -123,13 +124,14 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &state)
+	// allowNotFound=true: 404 means resource was deleted externally, remove from state
+	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &state, true)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
-	// Handle externally deleted resource
+	// Handle externally deleted resource (populateStateFromAPI sets Id to null on 404)
 	if state.Id.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
@@ -173,7 +175,8 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &plan)
+	// allowNotFound=false: After successful update, 404 is an error (resource should exist)
+	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &plan, false)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

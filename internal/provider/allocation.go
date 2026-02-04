@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -136,7 +137,42 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 	return diags
 }
 
-func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) (diags diag.Diagnostics) {
+// populateState fetches the allocation from the API and populates the Terraform state.
+//
+// # 404 Handling Strategy
+//
+// The allowNotFound parameter controls how 404 responses are handled:
+//
+//   - allowNotFound=true (used by Read):
+//     404 means the resource was deleted externally (outside Terraform).
+//     We set state.Id to null, which signals Terraform to remove the resource
+//     from state. On next plan, Terraform will propose recreating it.
+//     This is the standard Terraform pattern for "externally deleted" resources.
+//
+//   - allowNotFound=false (used by Create and Update):
+//     404 is unexpected and indicates an error. After a successful Create or
+//     Update API call, the resource MUST exist. A 404 here could indicate:
+//
+//   - A transient API issue (rare, but possible)
+//
+//   - An eventual consistency problem
+//
+//   - A bug in the provider or API
+//     In these cases, we return an error so the user knows something went wrong
+//     and can retry. This prevents silent resource orphaning.
+//
+// # Why This Matters
+//
+// Without this distinction, a transient 404 during Create would:
+//  1. Create the resource successfully (API returns 200 with ID)
+//  2. GET returns 404 (transient issue)
+//  3. populateState sets state.Id = null (no error!)
+//  4. Terraform "succeeds" but loses track of the resource
+//  5. Resource is orphaned - exists in API but not in Terraform state
+//
+// With allowNotFound=false for Create/Update, step 3 returns an error,
+// the user sees the failure, and can retry or investigate.
+func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel, allowNotFound bool) (diags diag.Diagnostics) {
 	var resp *models.Allocation
 
 	// Get refreshed allocation value from DoiT using the ID from the state.
@@ -149,9 +185,31 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	// Handle externally deleted resource - remove from state
+	// Handle 404 based on context
 	if httpResp.StatusCode() == 404 {
-		state.Id = types.StringNull()
+		if allowNotFound {
+			// Read context: Resource was deleted externally, mark for removal from state
+			state.Id = types.StringNull()
+			return
+		}
+		// Create/Update context: Resource should exist, 404 is an error
+		diags.AddError(
+			"Resource not found after operation",
+			"The allocation was successfully created/updated but could not be read back (404). "+
+				"This may indicate a transient API issue. Please retry the operation. "+
+				"If the problem persists, the resource may need to be imported manually. "+
+				"Allocation ID: "+state.Id.ValueString(),
+		)
+		return
+	}
+
+	// Check for successful response
+	if httpResp.StatusCode() != 200 {
+		diags.AddError(
+			"Error Reading Allocation",
+			fmt.Sprintf("Unexpected status code %d for allocation ID %s: %s",
+				httpResp.StatusCode(), state.Id.ValueString(), string(httpResp.Body)),
+		)
 		return
 	}
 
@@ -166,11 +224,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
-	// This is due to a bug in the API where the description is not returned for group allocations
-	// Will be removed once the API is fixed
-	if resp.Description != nil && *resp.Description != "" {
-		state.Description = types.StringPointerValue(resp.Description)
-	}
+	state.Description = types.StringPointerValue(resp.Description)
 	state.AnomalyDetection = types.BoolPointerValue(resp.AnomalyDetection)
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)

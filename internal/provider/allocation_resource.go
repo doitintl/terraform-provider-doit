@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -62,7 +63,18 @@ func (r *allocationResource) Metadata(_ context.Context, req resource.MetadataRe
 }
 
 func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_allocation.AllocationResourceSchema(ctx)
+	s := resource_allocation.AllocationResourceSchema(ctx)
+
+	// Inject validator for rules attribute to enforce 'name' is required for 'create'/'update' actions.
+	// See allocationRulesValidator for context on why this workaround is needed.
+	if rules, ok := s.Attributes["rules"]; ok {
+		if listAttr, ok := rules.(schema.ListNestedAttribute); ok {
+			listAttr.Validators = append(listAttr.Validators, allocationRulesValidator{})
+			s.Attributes["rules"] = listAttr
+		}
+	}
+
+	resp.Schema = s
 }
 
 func (r *allocationResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
@@ -126,7 +138,8 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 
 	plan.Id = types.StringPointerValue(allocationResp.JSON200.Id)
 
-	diags = r.populateState(ctx, plan)
+	// allowNotFound=false: After successful create, 404 is an error (resource should exist)
+	diags = r.populateState(ctx, plan, false)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -143,12 +156,14 @@ func (r *allocationResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	diags = r.populateState(ctx, state)
+	// allowNotFound=true: 404 means resource was deleted externally, remove from state
+	diags = r.populateState(ctx, state, true)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Handle externally deleted resource (populateState sets Id to null on 404)
 	if state.Id.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
@@ -205,7 +220,8 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	diags = r.populateState(ctx, state)
+	// allowNotFound=false: After successful update, 404 is an error (resource should exist)
+	diags = r.populateState(ctx, state, false)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
