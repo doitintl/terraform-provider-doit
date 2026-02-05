@@ -1,8 +1,14 @@
 name: Tests
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    # Run daily at 5am UTC
+    - cron: '0 5 * * *'
 
 jobs:
   test:
