@@ -74,88 +74,50 @@ func (d *cloudIncidentsDataSource) Read(ctx context.Context, req datasource.Read
 		params.MaxCreationTime = &maxCreationTime
 	}
 
-	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
-
-	var allIncidents []models.CloudIncidentListItem
-
-	if userControlsPagination {
-		// Manual mode: single API call with user's params
+	// Cloud incidents can have thousands of records, so we always use manual pagination
+	// (no auto-pagination) to avoid very long fetch times.
+	if !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown() {
 		maxResultsVal := data.MaxResults.ValueInt64()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
-		}
+	}
+	if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		pageTokenVal := data.PageToken.ValueString()
+		params.PageToken = &pageTokenVal
+	}
 
-		apiResp, err := d.client.ListKnownIssuesWithResponse(ctx, params)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Cloud Incidents",
-				fmt.Sprintf("Unable to read cloud incidents: %v", err),
-			)
-			return
-		}
+	apiResp, err := d.client.ListKnownIssuesWithResponse(ctx, params)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Cloud Incidents",
+			fmt.Sprintf("Unable to read cloud incidents: %v", err),
+		)
+		return
+	}
 
-		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Cloud Incidents",
-				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-			)
-			return
-		}
+	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Cloud Incidents",
+			fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+		)
+		return
+	}
 
-		result := apiResp.JSON200
-		if result.Incidents != nil {
-			allIncidents = *result.Incidents
-		}
+	result := apiResp.JSON200
+	var allIncidents []models.CloudIncidentListItem
+	if result.Incidents != nil {
+		allIncidents = *result.Incidents
+	}
 
-		// Preserve API's page_token for user to fetch next page
-		data.PageToken = types.StringPointerValue(result.PageToken)
-		if result.RowCount != nil {
-			data.RowCount = types.Int64Value(*result.RowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allIncidents)))
-		}
-		// max_results is already set by user, no change needed
+	// Preserve API's page_token for user to fetch next page
+	data.PageToken = types.StringPointerValue(result.PageToken)
+	if result.RowCount != nil {
+		data.RowCount = types.Int64Value(*result.RowCount)
 	} else {
-		// Auto mode: fetch all pages
-		for {
-			apiResp, err := d.client.ListKnownIssuesWithResponse(ctx, params)
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Error Reading Cloud Incidents",
-					fmt.Sprintf("Unable to read cloud incidents: %v", err),
-				)
-				return
-			}
-
-			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-				resp.Diagnostics.AddError(
-					"Error Reading Cloud Incidents",
-					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-				)
-				return
-			}
-
-			result := apiResp.JSON200
-			if result.Incidents != nil {
-				allIncidents = append(allIncidents, *result.Incidents...)
-			}
-
-			if result.PageToken == nil || *result.PageToken == "" {
-				break
-			}
-			params.PageToken = result.PageToken
-		}
-
-		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allIncidents)))
-		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.Int64Null()
-		}
+	}
+	// Preserve max_results null/unknown handling
+	if data.MaxResults.IsUnknown() {
+		data.MaxResults = types.Int64Null()
 	}
 
 	// Map incidents list
