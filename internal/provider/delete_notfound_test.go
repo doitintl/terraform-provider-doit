@@ -10,6 +10,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -1890,6 +1891,201 @@ func TestAlertResourceRead_NotFound(t *testing.T) {
 						t.Errorf("Expected resource to be removed from state (ID should be null), got ID: %s", resultState.Id.ValueString())
 					}
 				}
+			}
+		})
+	}
+}
+
+// =============================================================================
+// DATA SOURCE UNIT TESTS
+// =============================================================================
+
+// TestAnnotationDataSource_Read_ErrorHandling tests the annotation data source
+// error handling paths (404, 500, empty response) using a mock HTTP server.
+func TestAnnotationDataSource_Read_ErrorHandling(t *testing.T) {
+	tests := []struct {
+		name         string
+		statusCode   int
+		responseBody string
+		expectError  bool
+	}{
+		{
+			name:         "404 Not Found - should error",
+			statusCode:   http.StatusNotFound,
+			responseBody: `{"message": "Annotation not found"}`,
+			expectError:  true,
+		},
+		{
+			name:         "500 Internal Server Error - should error",
+			statusCode:   http.StatusInternalServerError,
+			responseBody: `{"message": "Internal server error"}`,
+			expectError:  true,
+		},
+		{
+			name:         "200 OK with empty body - should error",
+			statusCode:   http.StatusOK,
+			responseBody: ``,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				if tt.responseBody != "" {
+					_, _ = w.Write([]byte(tt.responseBody))
+				}
+			}))
+			defer server.Close()
+
+			client, err := models.NewClientWithResponses(server.URL)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			ds := &annotationDataSource{client: client}
+
+			ctx := context.Background()
+
+			// Get schema
+			schemaResp := &datasource.SchemaResponse{}
+			ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)
+			if schemaResp.Diagnostics.HasError() {
+				t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+			}
+
+			// Create config with ID
+			configValues := map[string]tftypes.Value{
+				"id":          tftypes.NewValue(tftypes.String, "test-ann-id"),
+				"content":     tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				"timestamp":   tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				"create_time": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				"update_time": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				"labels":      tftypes.NewValue(tftypes.List{ElementType: tftypes.Object{}}, tftypes.UnknownValue),
+				"reports":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, tftypes.UnknownValue),
+			}
+
+			configType := tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":          tftypes.String,
+					"content":     tftypes.String,
+					"timestamp":   tftypes.String,
+					"create_time": tftypes.String,
+					"update_time": tftypes.String,
+					"labels":      tftypes.List{ElementType: tftypes.Object{}},
+					"reports":     tftypes.List{ElementType: tftypes.String},
+				},
+			}
+
+			configVal := tftypes.NewValue(configType, configValues)
+			config := tfsdk.Config{
+				Schema: schemaResp.Schema,
+				Raw:    configVal,
+			}
+
+			readReq := datasource.ReadRequest{
+				Config: config,
+			}
+			readResp := &datasource.ReadResponse{
+				State: tfsdk.State{
+					Schema: schemaResp.Schema,
+				},
+			}
+
+			ds.Read(ctx, readReq, readResp)
+
+			hasError := readResp.Diagnostics.HasError()
+			if hasError != tt.expectError {
+				t.Errorf("Expected error=%v, got error=%v. Diagnostics: %v",
+					tt.expectError, hasError, readResp.Diagnostics)
+			}
+		})
+	}
+}
+
+// TestAlertDataSource_Read_ErrorHandling tests the alert data source
+// error handling paths using a mock HTTP server.
+func TestAlertDataSource_Read_ErrorHandling(t *testing.T) {
+	tests := []struct {
+		name         string
+		statusCode   int
+		responseBody string
+		expectError  bool
+	}{
+		{
+			name:         "404 Not Found - should error",
+			statusCode:   http.StatusNotFound,
+			responseBody: `{"message": "Alert not found"}`,
+			expectError:  true,
+		},
+		{
+			name:         "500 Internal Server Error - should error",
+			statusCode:   http.StatusInternalServerError,
+			responseBody: `{"message": "Internal server error"}`,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				if tt.responseBody != "" {
+					_, _ = w.Write([]byte(tt.responseBody))
+				}
+			}))
+			defer server.Close()
+
+			client, err := models.NewClientWithResponses(server.URL)
+			if err != nil {
+				t.Fatalf("Failed to create client: %v", err)
+			}
+
+			ds := &alertDataSource{client: client}
+
+			ctx := context.Background()
+
+			// Get schema
+			schemaResp := &datasource.SchemaResponse{}
+			ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)
+			if schemaResp.Diagnostics.HasError() {
+				t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+			}
+
+			// Create minimal config with just ID
+			configType := tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id": tftypes.String,
+				},
+			}
+			configValues := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-alert-id"),
+			}
+			configVal := tftypes.NewValue(configType, configValues)
+
+			config := tfsdk.Config{
+				Schema: schemaResp.Schema,
+				Raw:    configVal,
+			}
+
+			readReq := datasource.ReadRequest{
+				Config: config,
+			}
+			readResp := &datasource.ReadResponse{
+				State: tfsdk.State{
+					Schema: schemaResp.Schema,
+				},
+			}
+
+			ds.Read(ctx, readReq, readResp)
+
+			hasError := readResp.Diagnostics.HasError()
+			if hasError != tt.expectError {
+				t.Errorf("Expected error=%v, got error=%v. Diagnostics: %v",
+					tt.expectError, hasError, readResp.Diagnostics)
 			}
 		})
 	}
