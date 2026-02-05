@@ -89,6 +89,26 @@ func TestAccReport_Minimal(t *testing.T) {
 	})
 }
 
+func TestAccReport_Import(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportMinimal(n),
+			},
+			{
+				ResourceName:      "doit_report.this",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccReport_Attributions(t *testing.T) {
 	// Skip if not running acceptance tests - this check must come before
 	// getValidAttributionAndGroup() which makes API calls
