@@ -1,0 +1,105 @@
+provider:
+  name: doit
+data_sources:
+  allocation:
+    read:
+      path: /analytics/v1/allocations/{id}
+      method: GET
+  budget:
+    read:
+      path: /analytics/v1/budgets/{id}
+      method: GET
+  report:
+    read:
+      path: /analytics/v1/reports/{id}/config
+      method: GET
+  annotation:
+    read:
+      path: /analytics/v1/annotations/{id}
+      method: GET
+  label:
+    read:
+      path: /analytics/v1/labels/{id}
+      method: GET
+  alert:
+    read:
+      path: /analytics/v1/alerts/{id}
+      method: GET
+  anomaly:
+    read:
+      path: /anomalies/v1/{id}
+      method: GET
+  invoice:
+    read:
+      path: /billing/v1/invoices/{id}
+      method: GET
+  cloud_incident:
+    read:
+      path: /core/v1/cloudincidents/{id}
+      method: GET
+  dimensions:
+    read:
+      path: /analytics/v1/dimensions
+      method: GET
+  roles:
+    read:
+      path: /iam/v1/roles
+      method: GET
+  current_user:
+    read:
+      path: /auth/v1/validate
+      method: GET
+  account_team:
+    read:
+      path: /customers/v1/accountTeam
+      method: GET
+  users:
+    read:
+      path: /iam/v1/users
+      method: GET
+  # List data sources
+  budgets:
+    read:
+      path: /analytics/v1/budgets
+      method: GET
+  allocations:
+    read:
+      path: /analytics/v1/allocations
+      method: GET
+  annotations:
+    read:
+      path: /analytics/v1/annotations
+      method: GET
+  labels:
+    read:
+      path: /analytics/v1/labels
+      method: GET
+  reports:
+    read:
+      path: /analytics/v1/reports
+      method: GET
+  invoices:
+    read:
+      path: /billing/v1/invoices
+      method: GET
+  anomalies:
+    read:
+      path: /anomalies/v1
+      method: GET
+  alerts:
+    read:
+      path: /analytics/v1/alerts
+      method: GET
+  # Additional list data sources
+  cloud_incidents:
+    read:
+      path: /core/v1/cloudincidents
+      method: GET
+  assets:
+    read:
+      path: /billing/v1/assets
+      method: GET
+  support_requests:
+    read:
+      path: /support/v1/tickets
+      method: GET

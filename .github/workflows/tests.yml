@@ -35,4 +35,7 @@ jobs:
           TEST_SLACK_CHAN: ${{ vars.TEST_SLACK_CHAN }}
           TEST_PROJECT: ${{ vars.TEST_PROJECT }}
           TEST_CUSTOMER_ID: ${{ vars.TEST_CUSTOMER_ID }}
+          TEST_INVOICE_ID: ${{ vars.TEST_INVOICE_ID }}
+          TEST_ANOMALY_ID: ${{ vars.TEST_ANOMALY_ID }}
+          TEST_CLOUD_INCIDENT_ID: ${{ vars.TEST_CLOUD_INCIDENT_ID }}
         run: go test -v -timeout 120m ./...

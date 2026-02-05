@@ -719,7 +719,7 @@ func TestAccAlert_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					// Delete the resource directly via API
-					client := testAccClient(t)
+					client := getAPIClient(t)
 					resp, err := client.DeleteAlertWithResponse(context.Background(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete alert via API: %v", err)
