@@ -693,10 +693,6 @@ resource "doit_alert" "this" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccAlert_Disappears(t *testing.T) {
-	// Skip until API DELETE returns 404 instead of 500 for non-existent resources
-	// See: https://doitintl.atlassian.net/browse/CMP-37342
-	t.Skip("Skipping until API DELETE returns 404 instead of 500 (CMP-37342)")
-
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	var resourceId string
 
