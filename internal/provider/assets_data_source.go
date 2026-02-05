@@ -157,12 +157,13 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			assetVal, diags := datasource_assets.NewAssetsValue(
 				datasource_assets.AssetsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"id":          types.StringPointerValue(asset.Id),
-					"name":        types.StringPointerValue(asset.Name),
-					"type":        types.StringPointerValue(asset.Type),
-					"url":         types.StringPointerValue(asset.Url),
-					"quantity":    types.Int64PointerValue(asset.Quantity),
-					"create_time": types.Int64PointerValue(asset.CreateTime),
+					"id":            types.StringPointerValue(asset.Id),
+					"name":          types.StringPointerValue(asset.Name),
+					"type":          types.StringPointerValue(asset.Type),
+					"url":           types.StringPointerValue(asset.Url),
+					"quantity":      types.Int64PointerValue(asset.Quantity),
+					"create_time":   types.Int64PointerValue(asset.CreateTime),
+					"used_licenses": types.Int64PointerValue(asset.UsedLicenses),
 				},
 			)
 			resp.Diagnostics.Append(diags...)
