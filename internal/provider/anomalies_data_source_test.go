@@ -136,8 +136,6 @@ func TestAccAnomaliesDataSource_AutoPagination(t *testing.T) {
 func testAccAnomaliesDataSourceConfig() string {
 	return `
 data "doit_anomalies" "test" {
-  sort_by    = "createTime"
-  sort_order = "desc"
 }
 `
 }

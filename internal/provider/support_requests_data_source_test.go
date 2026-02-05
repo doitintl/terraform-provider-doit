@@ -136,8 +136,6 @@ func TestAccSupportRequestsDataSource_AutoPagination(t *testing.T) {
 func testAccSupportRequestsDataSourceConfig() string {
 	return `
 data "doit_support_requests" "test" {
-  sort_by    = "createTime"
-  sort_order = "desc"
 }
 `
 }

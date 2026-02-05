@@ -105,6 +105,7 @@ resource "doit_allocation" "test" {
     rules = [
         {
             action  = "create"
+            name    = "Group 1"
             formula = "A"
             components = [
              {

@@ -136,8 +136,6 @@ func TestAccAssetsDataSource_AutoPagination(t *testing.T) {
 func testAccAssetsDataSourceConfig() string {
 	return `
 data "doit_assets" "test" {
-  sort_by    = "createTime"
-  sort_order = "desc"
 }
 `
 }
