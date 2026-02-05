@@ -593,7 +593,7 @@ func TestAccBudget_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					// Delete the resource directly via API
-					client := testAccClient(t)
+					client := getAPIClient(t)
 					resp, err := client.DeleteBudgetWithResponse(context.Background(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete budget via API: %v", err)

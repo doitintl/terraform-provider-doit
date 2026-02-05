@@ -197,7 +197,7 @@ func TestAccLabel_Disappears(t *testing.T) {
 			// Step 2: Delete the resource via API, then verify Terraform detects the drift
 			{
 				PreConfig: func() {
-					client := testAccClient(t)
+					client := getAPIClient(t)
 					resp, err := client.DeleteLabelWithResponse(context.Background(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete label via API: %v", err)

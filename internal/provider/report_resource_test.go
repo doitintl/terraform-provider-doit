@@ -639,7 +639,7 @@ func TestAccReport_Disappears(t *testing.T) {
 			// Step 2: Delete the resource via API, then verify Terraform detects the drift
 			{
 				PreConfig: func() {
-					client := testAccClient(t)
+					client := getAPIClient(t)
 					resp, err := client.DeleteReportWithResponse(context.Background(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete report via API: %v", err)
