@@ -3,10 +3,8 @@ package provider_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -203,24 +201,4 @@ func getFirstPageToken(t *testing.T, maxResults int) string {
 		return ""
 	}
 	return *resp.JSON200.PageToken
-}
-
-func getAPIClient(t *testing.T) *models.ClientWithResponses {
-	t.Helper()
-
-	token := os.Getenv("DOIT_API_TOKEN")
-	host := os.Getenv("DOIT_HOST")
-	customerContext := os.Getenv("DOIT_CUSTOMER_CONTEXT")
-
-	if token == "" || host == "" {
-		t.Skip("DOIT_API_TOKEN and DOIT_HOST must be set")
-	}
-
-	ctx := context.Background()
-	client, err := provider.NewClient(ctx, host, token, customerContext)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
-	return client
 }
