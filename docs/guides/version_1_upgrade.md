@@ -113,7 +113,7 @@ resource "doit_allocation" "k8s_regions" {
     {
       action  = "select"
       id      = "existing-germany-allocation-id"
-    },
+    }
   ]
 }
 ```

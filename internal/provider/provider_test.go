@@ -48,9 +48,9 @@ func testAccPreCheckFunc(t *testing.T) func() {
 	}
 }
 
-// testAccClient creates an API client for test helpers that need to manipulate
-// resources directly via the API (e.g., deleting a resource mid-test).
-func testAccClient(t *testing.T) *models.ClientWithResponses {
+// getAPIClient creates an API client for test helpers that need to call
+// the API directly (e.g., counting resources, deleting a resource mid-test).
+func getAPIClient(t *testing.T) *models.ClientWithResponses {
 	t.Helper()
 	client, err := provider.NewClient(
 		context.Background(),
