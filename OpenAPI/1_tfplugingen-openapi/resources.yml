@@ -1,6 +1,19 @@
 provider:
   name: doit
 resources:
+  alert:
+    create:
+      path: /analytics/v1/alerts
+      method: POST
+    read:
+      path: /analytics/v1/alerts/{id}
+      method: GET
+    update:
+      path: /analytics/v1/alerts/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/alerts/{id}
+      method: DELETE
   allocation:
     create:
       path: /analytics/v1/allocations
