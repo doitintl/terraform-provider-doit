@@ -136,8 +136,6 @@ func TestAccDimensionsDataSource_AutoPagination(t *testing.T) {
 func testAccDimensionsDataSourceConfig() string {
 	return `
 data "doit_dimensions" "test" {
-  sort_by    = "id"
-  sort_order = "asc"
 }
 `
 }

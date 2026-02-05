@@ -136,8 +136,6 @@ func TestAccCloudIncidentsDataSource_AutoPagination(t *testing.T) {
 func testAccCloudIncidentsDataSourceConfig() string {
 	return `
 data "doit_cloud_incidents" "test" {
-  sort_by    = "createTime"
-  sort_order = "desc"
 }
 `
 }

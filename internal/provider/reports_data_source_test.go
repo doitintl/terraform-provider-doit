@@ -136,8 +136,6 @@ func TestAccReportsDataSource_AutoPagination(t *testing.T) {
 func testAccReportsDataSourceConfig() string {
 	return `
 data "doit_reports" "test" {
-  sort_by    = "name"
-  sort_order = "asc"
 }
 `
 }

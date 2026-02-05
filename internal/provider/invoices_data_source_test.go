@@ -136,8 +136,6 @@ func TestAccInvoicesDataSource_AutoPagination(t *testing.T) {
 func testAccInvoicesDataSourceConfig() string {
 	return `
 data "doit_invoices" "test" {
-  sort_by    = "createTime"
-  sort_order = "desc"
 }
 `
 }
