@@ -1,10 +1,12 @@
 package provider_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -44,4 +46,20 @@ func testAccPreCheckFunc(t *testing.T) func() {
 			t.Fatal("TEST_CUSTOMER_ID must be set for acceptance tests")
 		}
 	}
+}
+
+// testAccClient creates an API client for test helpers that need to manipulate
+// resources directly via the API (e.g., deleting a resource mid-test).
+func testAccClient(t *testing.T) *models.ClientWithResponses {
+	t.Helper()
+	client, err := provider.NewClient(
+		context.Background(),
+		os.Getenv("DOIT_HOST"),
+		os.Getenv("DOIT_API_TOKEN"),
+		os.Getenv("DOIT_CUSTOMER_CONTEXT"),
+	)
+	if err != nil {
+		t.Fatalf("Failed to create API client: %v", err)
+	}
+	return client
 }

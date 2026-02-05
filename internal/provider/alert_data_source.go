@@ -158,7 +158,7 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 	// Map operator
 	var operator types.String
 	if config.Operator != nil {
-		operator = types.StringValue(*config.Operator)
+		operator = types.StringValue(string(*config.Operator))
 	} else {
 		operator = types.StringNull()
 	}

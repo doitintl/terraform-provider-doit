@@ -268,10 +268,15 @@ func mapAlertConfig(ctx context.Context, config *models.AlertConfig, diagnostics
 			"data_source":       types.StringPointerValue(config.DataSource),
 			"evaluate_for_each": types.StringPointerValue(config.EvaluateForEach),
 			"metric":            metricVal,
-			"operator":          types.StringPointerValue(config.Operator),
-			"scopes":            scopesList,
-			"time_interval":     types.StringValue(string(config.TimeInterval)),
-			"value":             types.Float64Value(config.Value),
+			"operator": func() types.String {
+				if config.Operator != nil {
+					return types.StringValue(string(*config.Operator))
+				}
+				return types.StringNull()
+			}(),
+			"scopes":        scopesList,
+			"time_interval": types.StringValue(string(config.TimeInterval)),
+			"value":         types.Float64Value(config.Value),
 		},
 	)
 	diagnostics.Append(diags...)
