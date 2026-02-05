@@ -83,3 +83,63 @@ data "doit_alert" "notfound" {
 }
 `
 }
+
+// TestAccAlertDataSource_WithScopes tests reading an alert with scopes configured
+// to exercise the mapScopeToModel function path.
+func TestAccAlertDataSource_WithScopes(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertDataSourceWithScopesConfig(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "id",
+						"doit_alert.test", "id"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.scopes.#",
+						"doit_alert.test", "config.scopes.#"),
+					resource.TestCheckResourceAttr(
+						"data.doit_alert.test", "config.scopes.0.type", "fixed"),
+					resource.TestCheckResourceAttr(
+						"data.doit_alert.test", "config.scopes.0.id", "cloud_provider"),
+				),
+			},
+		},
+	})
+}
+
+func testAccAlertDataSourceWithScopesConfig(n int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "test" {
+  name = "test-alert-ds-scopes-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type   = "fixed"
+        id     = "cloud_provider"
+        mode   = "is"
+        values = ["amazon-web-services"]
+      }
+    ]
+  }
+}
+
+data "doit_alert" "test" {
+  id = doit_alert.test.id
+}
+`, n)
+}
