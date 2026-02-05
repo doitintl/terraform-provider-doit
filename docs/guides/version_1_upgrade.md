@@ -120,15 +120,24 @@ resource "doit_allocation" "k8s_regions" {
 
 **Migration Steps:**
 
-1. Remove `doit_allocation_group` resources from your state:
+1. Note the allocation group ID from the DoiT Console or your state:
+   ```shell
+   terraform state show doit_allocation_group.k8s_regions | grep id
+   # Example output: id = "XWK9KCUoFNUO2UxfDCPK"
+   ```
+2. Check the current `unallocated_costs` value (if set) to match it in your new config
+3. Remove `doit_allocation_group` resources from your state:
    ```shell
    terraform state rm doit_allocation_group.k8s_regions
    ```
-2. Update your configuration to use `doit_allocation` with `rules` to specify the resource is an allocation group
-3. Import the existing allocation group:
+4. Update your configuration to use `doit_allocation` with `rules`
+5. Import the existing allocation group using the same ID:
    ```shell
-   terraform import doit_allocation.k8s_regions <allocation-group-id>
+   terraform import doit_allocation.k8s_regions XWK9KCUoFNUO2UxfDCPK
    ```
+6. Run `terraform plan` to verify. Small diffs like `unallocated_costs` are expected if you set a new value.
+
+-> **Note:** The backend uses the same resource type for both allocation groups and allocations with rules, so the import preserves the original resource ID.
 
 ### `doit_attribution` and `doit_attribution_group` (Removed)
 
@@ -272,7 +281,47 @@ filters = [
 
 - `config.custom_time_range` - For custom time range queries with `from` and `to` RFC3339 timestamps
 
+### API Requirements
+
+The report API may require `data_source` to be explicitly set. If you encounter a `dataSource: invalid datasource value` error, add:
+
+```hcl
+config = {
+  data_source = "billing"  # or other valid data source
+  # ... rest of config
+}
+```
+
 ---
+
+## Common Migration Issues
+
+### Report Filters Missing `mode`
+
+If you see an error like `attribute "mode" is required`, add `mode = "is"` (or another valid mode) to each filter:
+
+```diff
+ filters = [
+   {
+     id     = "project_id"
+     type   = "fixed"
++    mode   = "is"
+     values = ["my-project"]
+   }
+ ]
+```
+
+### Allocation Description Now Required
+
+If you see `attribute "description" is required`, add a description to each allocation:
+
+```diff
+ resource "doit_allocation" "my_allocation" {
+   name        = "My Allocation"
++  description = "Description of this allocation"
+   # ...
+ }
+```
 
 ## Upgrade Checklist
 
