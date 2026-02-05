@@ -2,17 +2,16 @@ package provider_test
 
 import (
 	"fmt"
-	"os"
+	"regexp"
 	"testing"
+
+	"math/rand/v2"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccAlertDataSource_Basic(t *testing.T) {
-	alertID := os.Getenv("TEST_ALERT_ID")
-	if alertID == "" {
-		t.Skip("TEST_ALERT_ID environment variable not set")
-	}
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -20,20 +19,67 @@ func TestAccAlertDataSource_Basic(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAlertDataSourceConfig(alertID),
+				Config: testAccAlertDataSourceConfig(n),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_alert.test", "id", alertID),
-					resource.TestCheckResourceAttrSet("data.doit_alert.test", "name"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "id",
+						"doit_alert.test", "id"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "name",
+						"doit_alert.test", "name"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.time_interval",
+						"doit_alert.test", "config.time_interval"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.value",
+						"doit_alert.test", "config.value"),
 				),
 			},
 		},
 	})
 }
 
-func testAccAlertDataSourceConfig(id string) string {
+func testAccAlertDataSourceConfig(n int) string {
 	return fmt.Sprintf(`
-data "doit_alert" "test" {
-  id = %[1]q
+resource "doit_alert" "test" {
+  name = "test-alert-ds-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
 }
-`, id)
+
+data "doit_alert" "test" {
+  id = doit_alert.test.id
+}
+`, n)
+}
+
+func TestAccAlertDataSource_NotFound(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAlertDataSourceNotFoundConfig(),
+				ExpectError: regexp.MustCompile(`(?i)error reading alert|not found|404`),
+			},
+		},
+	})
+}
+
+func testAccAlertDataSourceNotFoundConfig() string {
+	return `
+data "doit_alert" "notfound" {
+  id = "nonexistent-alert-id"
+}
+`
 }
