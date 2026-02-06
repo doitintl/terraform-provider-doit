@@ -612,6 +612,7 @@ resource "doit_report" "timezone_test" {
 
 // TestAccReport_WithTargets tests reports with targets configuration.
 // Note: targets is a write-only field and not returned in state.
+// This causes drift on subsequent plans - see CMP-38157.
 func TestAccReport_WithTargets(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	attrID := os.Getenv("TEST_ATTRIBUTION")
@@ -631,6 +632,16 @@ func TestAccReport_WithTargets(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_report.targets", "config.layout", "table"),
 				),
 			},
+			// TODO(CMP-38157): Enable drift verification once API returns targets field.
+			// Currently skipped because targets is write-only and causes perpetual drift.
+			// {
+			// 	Config: testAccReportWithTargets(n, attrID),
+			// 	ConfigPlanChecks: resource.ConfigPlanChecks{
+			// 		PreApply: []plancheck.PlanCheck{
+			// 			plancheck.ExpectEmptyPlan(),
+			// 		},
+			// 	},
+			// },
 		},
 	})
 }
