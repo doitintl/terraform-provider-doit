@@ -619,7 +619,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				m["origin"] = originVal
 			}
 
-			if s.Targets != nil {
+			if s.Targets != nil && len(*s.Targets) > 0 {
 				targets := make([]attr.Value, len(*s.Targets))
 				for j, t := range *s.Targets {
 					tMap := map[string]attr.Value{
@@ -635,7 +635,10 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				diags.Append(targetListDiags...)
 				m["targets"] = targetList
 			} else {
-				m["targets"] = types.ListNull(resource_report.TargetsValue{}.Type(ctx))
+				// Return empty list instead of null to match user config when targets = []
+				emptyTargets, emptyTargetsDiags := types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), []attr.Value{})
+				diags.Append(emptyTargetsDiags...)
+				m["targets"] = emptyTargets
 			}
 			splitVal, splitDiags := resource_report.NewSplitsValue(resource_report.SplitsValue{}.AttributeTypes(ctx), m)
 			diags.Append(splitDiags...)

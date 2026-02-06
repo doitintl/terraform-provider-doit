@@ -615,20 +615,10 @@ resource "doit_report" "targets" {
 // TestAccReport_WithSplits tests reports with splits configuration.
 // Splits allow redistributing costs from one attribution to multiple targets.
 //
-// SKIP REASON: The splits API requires complex setup:
-// - The origin attribution must be a member of the specified attribution group
-// - The attribution group must have attributions with cost data for the split to work
-// - TEST_ATTRIBUTION and TEST_ATTRIBUTION_GROUP must point to related entities
-//
-// To run this test manually:
-// 1. Create an attribution group with at least 2 attributions
-// 2. Set TEST_ATTRIBUTION_GROUP to the group ID
-// 3. Set TEST_ATTRIBUTION to an attribution ID that is a member of that group.
+// To run this test:
+// 1. Set TEST_ATTRIBUTION_GROUP to an attribution group ID
+// 2. Set TEST_ATTRIBUTION to an attribution ID that is a member of that group.
 func TestAccReport_WithSplits(t *testing.T) {
-	// Skip: API bug - GET /reports/{id}/config returns 500 for reports with splits
-	// See: https://doitintl.atlassian.net/browse/CMP-38160
-	t.Skip("Skipped: API returns 500 when fetching config for reports with splits (CMP-38160)")
-
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	attrID := os.Getenv("TEST_ATTRIBUTION")
 	attrGroupID := os.Getenv("TEST_ATTRIBUTION_GROUP")
@@ -661,7 +651,7 @@ func TestAccReport_WithSplits(t *testing.T) {
 	})
 }
 
-func testAccReportWithSplits(i int, _ string, attrGroupID string) string {
+func testAccReportWithSplits(i int, attrID, attrGroupID string) string {
 	return fmt.Sprintf(`
 resource "doit_report" "splits" {
     name = "test-splits-%d"
@@ -671,28 +661,35 @@ resource "doit_report" "splits" {
           type  = "basic"
           value = "cost"
         }
-        aggregation   = "total"
-        time_interval = "month"
+        aggregation    = "total"
+        time_interval  = "month"
         data_source    = "billing"
         display_values = "actuals_only"
         currency       = "USD"
         layout         = "table"
+        # group must include the attribution group used in splits
+        group = [
+            {
+                id   = "%s"
+                type = "attribution_group"
+            }
+        ]
         splits = [
             {
                 id   = "%s"
                 type = "attribution_group"
                 mode = "even"
-                include_origin = false
+                include_origin = true
                 origin = {
-                    id   = "unallocated"
-                    type = "unallocated"
+                    id   = "%s"
+                    type = "attribution"
                 }
                 targets = []
             }
         ]
     }
 }
-`, i, attrGroupID)
+`, i, attrGroupID, attrGroupID, attrID)
 }
 
 // TestAccReport_Disappears verifies that Terraform correctly handles
