@@ -610,6 +610,58 @@ resource "doit_report" "timezone_test" {
 `, i)
 }
 
+// TestAccReport_WithTargets tests reports with targets configuration.
+// Note: targets is a write-only field and not returned in state.
+func TestAccReport_WithTargets(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	attrID := os.Getenv("TEST_ATTRIBUTION")
+	if attrID == "" {
+		t.Skip("TEST_ATTRIBUTION must be set for this test")
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithTargets(n, attrID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_report.targets", "id"),
+					resource.TestCheckResourceAttr("doit_report.targets", "config.layout", "table"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportWithTargets(i int, attrID string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "targets" {
+    name = "test-targets-%d"
+    description = "Report with targets configuration"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        targets = [
+            {
+                type = "attribution"
+                id   = "%s"
+            }
+        ]
+    }
+}
+`, i, attrID)
+}
+
 // TestAccReport_Disappears verifies that Terraform correctly handles
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.

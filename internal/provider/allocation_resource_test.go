@@ -450,6 +450,54 @@ resource "doit_allocation" "missing_name" {
 `, i)
 }
 
+// TestAccAllocation_ComponentFlags tests the include_null and inverse_selection
+// boolean flags on allocation rule components.
+func TestAccAllocation_ComponentFlags(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationComponentFlags(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_allocation.flags", "id"),
+					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.include_null", "true"),
+					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.inverse_selection", "true"),
+				),
+			},
+		},
+	})
+}
+
+func testAccAllocationComponentFlags(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "flags" {
+    name = "test-flags-%d"
+    description = "Test allocation with component flags"
+    unallocated_costs = "Other"
+    rules = [
+        {
+            action = "create"
+            name   = "Flag Test Rule"
+            formula = "A"
+            components = [
+                {
+                    key               = "country"
+                    mode              = "is"
+                    type              = "fixed"
+                    values            = ["JP"]
+                    include_null      = true
+                    inverse_selection = true
+                }
+            ]
+        }
+    ]
+}
+`, i)
+}
+
 // TestAccAllocation_Disappears verifies that Terraform correctly handles
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
