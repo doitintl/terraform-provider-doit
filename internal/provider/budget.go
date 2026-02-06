@@ -229,7 +229,13 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		alertsListValue, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), alertsList)
 		diags.Append(d...)
 		state.Alerts = alertsListValue
+	} else if resp.Alerts != nil {
+		// API returned empty slice - reflect as empty list
+		emptyAlerts, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), []resource_budget.AlertsValue{})
+		diags.Append(d...)
+		state.Alerts = emptyAlerts
 	} else {
+		// API returned nil - reflect as null
 		state.Alerts = types.ListNull(resource_budget.AlertsValue{}.Type(ctx))
 	}
 
@@ -279,6 +285,8 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(listDiags...)
 		state.Recipients = recipientsList
 	} else {
+		// API returned null or empty - reflect that reality
+		// Validator blocks empty recipients=[] at plan time, so this is safe
 		state.Recipients = types.ListNull(types.StringType)
 	}
 

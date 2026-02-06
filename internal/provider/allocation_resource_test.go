@@ -552,3 +552,92 @@ func TestAccAllocation_Disappears(t *testing.T) {
 		},
 	})
 }
+
+// TestAccAllocation_ListAttributes_EmptyRules tests that an empty rules list
+// is blocked by the validator. The API returns null for empty lists, which
+// would cause a plan/state mismatch, so we block this at validation time.
+func TestAccAllocation_ListAttributes_EmptyRules(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationWithEmptyRules(n),
+				ExpectError: regexp.MustCompile(`Invalid Rules Configuration|rules cannot be empty`),
+			},
+		},
+	})
+}
+
+func testAccAllocationWithEmptyRules(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name        = "test-empty-rules-%d"
+    description = "test allocation with empty rules"
+    unallocated_costs = "Other"
+    rules = []
+}
+`, i)
+}
+
+// TestAccAllocation_ListAttributes_EmptyComponents tests that an empty components list
+// in a rule is rejected - the formula validation fails without valid components.
+func TestAccAllocation_ListAttributes_EmptyComponents(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationWithEmptyComponents(n),
+				ExpectError: regexp.MustCompile(`formula validation failed|components|required|empty`),
+			},
+		},
+	})
+}
+
+func testAccAllocationWithEmptyComponents(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name        = "test-empty-components-%d"
+    description = "test allocation with empty components"
+    rule = {
+       formula = "A"
+       components = []
+    }
+}
+`, i)
+}
+
+// TestAccAllocation_ListAttributes_OmittedRulesAndRule tests that omitting both
+// rule and rules produces an error.
+func TestAccAllocation_ListAttributes_OmittedRulesAndRule(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationWithOmittedRulesAndRule(n),
+				ExpectError: regexp.MustCompile(`rule|required|expected`),
+			},
+		},
+	})
+}
+
+func testAccAllocationWithOmittedRulesAndRule(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name        = "test-no-rules-%d"
+    description = "test allocation with no rule or rules"
+    # Both rule and rules omitted - should fail
+}
+`, i)
+}

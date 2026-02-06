@@ -467,7 +467,10 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(d...)
 		configMap["dimensions"] = dimList
 	} else {
-		configMap["dimensions"] = types.ListNull(resource_report.DimensionsValue{}.Type(ctx))
+		// Return empty list instead of null to match user config when dimensions = []
+		var emptyDimsDiags diag.Diagnostics
+		configMap["dimensions"], emptyDimsDiags = types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []attr.Value{})
+		diags.Append(emptyDimsDiags...)
 	}
 
 	// Nested List: Filters
@@ -498,7 +501,10 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(d...)
 		configMap["filters"] = filterList
 	} else {
-		configMap["filters"] = types.ListNull(resource_report.FiltersValue{}.Type(ctx))
+		// Return empty list instead of null to match user config when filters = []
+		var emptyFiltersDiags diag.Diagnostics
+		configMap["filters"], emptyFiltersDiags = types.ListValueFrom(ctx, resource_report.FiltersValue{}.Type(ctx), []attr.Value{})
+		diags.Append(emptyFiltersDiags...)
 	}
 
 	// Nested List: Group
@@ -540,7 +546,10 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(d...)
 		configMap["group"] = groupList
 	} else {
-		configMap["group"] = types.ListNull(resource_report.GroupValue{}.Type(ctx))
+		// Return empty list instead of null to match user config when group = []
+		var emptyGroupDiags diag.Diagnostics
+		configMap["group"], emptyGroupDiags = types.ListValueFrom(ctx, resource_report.GroupValue{}.Type(ctx), []attr.Value{})
+		diags.Append(emptyGroupDiags...)
 	}
 
 	// Nested Object: Metric
@@ -636,7 +645,10 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(splitListDiags...)
 		configMap["splits"] = splitList
 	} else {
-		configMap["splits"] = types.ListNull(resource_report.SplitsValue{}.Type(ctx))
+		// Return empty list instead of null to match user config when splits = []
+		var emptySplitsDiags diag.Diagnostics
+		configMap["splits"], emptySplitsDiags = types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), []attr.Value{})
+		diags.Append(emptySplitsDiags...)
 	}
 
 	// Nested Object: TimeRange

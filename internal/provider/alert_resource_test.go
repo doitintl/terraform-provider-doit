@@ -3,6 +3,8 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"regexp"
 	"testing"
 
 	"math/rand/v2"
@@ -204,6 +206,25 @@ func TestAccAlert_WithEmptyAttributions(t *testing.T) {
 						tfjsonpath.New("config").AtMapKey("attributions"),
 						knownvalue.ListExact([]knownvalue.Check{})), // Empty list, not null
 				},
+			},
+		},
+	})
+}
+
+// TestAccAlert_WithEmptyRecipients documents that recipients = [] is not allowed.
+// The API adds the creator as a default recipient when recipients is empty, causing state drift.
+// To prevent this, the provider validates that at least one recipient is specified.
+func TestAccAlert_WithEmptyRecipients(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAlertWithEmptyRecipients(n),
+				ExpectError: regexp.MustCompile(`At Least One Recipient Required`),
 			},
 		},
 	})
@@ -429,9 +450,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
-  // See: https://doitintl.atlassian.net/browse/CMP-XXXXX
 }
 `, i)
 }
@@ -451,8 +469,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -544,6 +560,26 @@ resource "doit_alert" "this" {
 `, i)
 }
 
+func testAccAlertWithEmptyRecipients(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-empty-recipients-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+  recipients = []
+}
+`, i)
+}
+
 func testAccAlertWithInverseScope(i int) string {
 	return fmt.Sprintf(`
 resource "doit_alert" "this" {
@@ -588,8 +624,6 @@ resource "doit_alert" "this" {
     operator          = "gt"
     evaluate_for_each = "fixed:service_description"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -609,8 +643,6 @@ resource "doit_alert" "this" {
     condition     = "percentage-change"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -630,8 +662,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "%s"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i, operator)
 }
@@ -651,8 +681,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i, interval)
 }
@@ -701,8 +729,6 @@ resource "doit_alert" "this" {
       }
     ]
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -751,6 +777,50 @@ func TestAccAlert_Disappears(t *testing.T) {
 				Config:             testAccAlert(n),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
+			},
+		},
+	})
+}
+
+// TestAccAlert_WithExplicitRecipient verifies that the CI user email works as a recipient.
+// This test checks if the API domain validation issue has been fixed.
+func TestAccAlert_WithExplicitRecipient(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	testUser := os.Getenv("TEST_USER")
+	if testUser == "" {
+		t.Skip("TEST_USER not set")
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "test_recipient" {
+  name = "test-explicit-recipient-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      name  = "cost"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+  recipients = ["%s"]
+}
+`, n, testUser),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.test_recipient",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1)),
+				},
 			},
 		},
 	})

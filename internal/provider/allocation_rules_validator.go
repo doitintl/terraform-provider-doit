@@ -36,6 +36,18 @@ func (v allocationRulesValidator) ValidateList(ctx context.Context, req validato
 	}
 
 	elements := req.ConfigValue.Elements()
+
+	// Block empty rules lists - API returns null for empty, causing plan/state mismatch.
+	// Users should omit the attribute instead of setting rules = [].
+	if len(elements) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid Rules Configuration",
+			"Allocation rules cannot be empty. Specify at least one rule or omit the attribute.",
+		)
+		return
+	}
+
 	for i, elem := range elements {
 		// The generated schema uses resource_allocation.RulesValue
 		ruleVal, ok := elem.(resource_allocation.RulesValue)

@@ -740,3 +740,57 @@ func TestAccReport_Disappears(t *testing.T) {
 		},
 	})
 }
+
+// TestAccReport_WithEmptyLists tests that explicitly setting list fields to [] works correctly.
+// Tests the provider fix: API returns null for empty lists, but provider normalizes to [].
+func TestAccReport_WithEmptyLists(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithEmptyLists(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("dimensions"),
+						knownvalue.ListExact([]knownvalue.Check{})), // Empty list
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{})), // Empty list
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("group"),
+						knownvalue.ListExact([]knownvalue.Check{})), // Empty list
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithEmptyLists(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+  name = "test-empty-lists-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+    dimensions     = []
+    filters        = []
+    group          = []
+  }
+}
+`, i)
+}

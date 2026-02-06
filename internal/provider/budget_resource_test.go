@@ -620,3 +620,236 @@ func TestAccBudget_Disappears(t *testing.T) {
 		},
 	})
 }
+
+// TestAccBudget_ListAttributes_Collaborators tests all three scenarios for collaborators:
+// 1. Explicit collaborator with owner role
+// 2. Empty list (validator blocks)
+// 3. Omitted (API adds creator as owner).
+func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Test 1: Empty collaborators = [] blocked by validator
+			{
+				Config:      testAccBudgetWithEmptyCollaborators(n),
+				ExpectError: regexp.MustCompile(`Exactly One Owner Required`),
+			},
+			// Test 2: Explicit collaborator with owner role
+			{
+				Config: testAccBudgetWithExplicitCollaborator(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("collaborators"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Test 3: Omitted collaborators - API adds creator as owner
+			{
+				Config: testAccBudgetNoCollaborators(n + 1),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("collaborators"),
+						knownvalue.ListSizeExact(1)), // API adds creator
+				},
+			},
+		},
+	})
+}
+
+// TestAccBudget_ListAttributes_AlertsAndRecipients tests all three scenarios for alerts and recipients.
+func TestAccBudget_ListAttributes_AlertsAndRecipients(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Test 1: Explicit alerts and recipients
+			{
+				Config: testAccBudgetWithExplicitAlertsAndRecipients(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("alerts"),
+						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Test 2: Empty alerts=[] and recipients=[]
+			// Both are blocked by validators - API doesn't support empty lists for these.
+			{
+				Config:      testAccBudgetWithEmptyAlertsAndRecipients(n + 1),
+				ExpectError: regexp.MustCompile(`Invalid Alerts Configuration|Invalid Recipients Configuration|cannot be empty`),
+			},
+			// Test 3: Omitted alerts and recipients - API behavior
+			// NOTE: When omitted, API provides default alerts, and adds creator as default recipient
+			{
+				Config: testAccBudgetNoAlertsOrRecipients(n + 2),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// API provides default alerts when omitted
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("alerts"),
+						knownvalue.NotNull()),
+					// API adds creator as default recipient
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithEmptyCollaborators(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-empty-collab-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = []
+}
+`, budgetStartPeriod(), i, testAttribution())
+}
+
+func testAccBudgetWithExplicitCollaborator(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-explicit-collab-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}
+
+func testAccBudgetNoCollaborators(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-no-collab-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  # collaborators omitted - API adds creator as owner
+}
+`, budgetStartPeriod(), i, testAttribution())
+}
+
+func testAccBudgetWithExplicitAlertsAndRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-explicit-alerts-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+  alerts = [
+    { percentage = 50 },
+    { percentage = 100 }
+  ]
+  recipients = ["%s"]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser())
+}
+
+func testAccBudgetWithEmptyAlertsAndRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-empty-alerts-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+  alerts     = []
+  recipients = []
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}
+
+func testAccBudgetNoAlertsOrRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-no-alerts-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+  # alerts and recipients omitted - API computes defaults
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}

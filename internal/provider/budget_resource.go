@@ -84,7 +84,9 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 	return []resource.ConfigValidator{
 		budgetTypeEndPeriodValidator{},
 		budgetAlertsLengthValidator{},
+		budgetRecipientsMinLengthValidator{},
 		budgetScopeMutuallyExclusiveValidator{},
+		budgetCollaboratorsOwnerValidator{},
 	}
 }
 

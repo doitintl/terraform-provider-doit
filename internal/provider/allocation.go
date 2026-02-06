@@ -354,6 +354,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			return
 		}
 	} else {
+		// API returned null or empty rules - reflect that reality
 		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
 	}
 	return
