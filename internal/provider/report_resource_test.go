@@ -2,14 +2,12 @@ package provider_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
 
 	"math/rand/v2"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -119,15 +117,13 @@ func TestAccReport_Import(t *testing.T) {
 }
 
 func TestAccReport_Attributions(t *testing.T) {
-	// Skip if not running acceptance tests - this check must come before
-	// getValidAttributionAndGroup() which makes API calls
-	if os.Getenv("TF_ACC") == "" {
-		t.Skip("TF_ACC must be set for acceptance tests")
-	}
 	t.Parallel()
 
-	// Dynamically fetch valid IDs
-	attrID, groupID := getValidAttributionAndGroup(t)
+	attrID := os.Getenv("TEST_ATTRIBUTION")
+	groupID := os.Getenv("TEST_ATTRIBUTION_GROUP")
+	if attrID == "" || groupID == "" {
+		t.Skip("TEST_ATTRIBUTION and TEST_ATTRIBUTION_GROUP must be set for this test")
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheckFunc(t),
@@ -156,90 +152,6 @@ func TestAccReport_Attributions(t *testing.T) {
 			},
 		},
 	})
-}
-
-func getValidAttributionAndGroup(t *testing.T) (string, string) {
-	token := os.Getenv("DOIT_API_TOKEN")
-	host := os.Getenv("DOIT_HOST")
-	customerContext := os.Getenv("DOIT_CUSTOMER_CONTEXT")
-
-	if token == "" || host == "" {
-		t.Skip("DOIT_API_TOKEN and DOIT_HOST must be set for dynamic ID fetching")
-	}
-
-	ctx := context.Background()
-
-	client, err := provider.NewClient(ctx, host, token, customerContext)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
-	// List Attributions
-	attrRawResp, err := client.ListAttributions(ctx, nil)
-	if err != nil {
-		t.Fatalf("Failed to list attributions: %v", err)
-	}
-	defer func() {
-		if closeErr := attrRawResp.Body.Close(); closeErr != nil {
-			t.Logf("[WARN] Error closing response body: %v", closeErr)
-		}
-	}()
-
-	var attrResult map[string]interface{}
-	if decodeErr := json.NewDecoder(attrRawResp.Body).Decode(&attrResult); decodeErr != nil {
-		t.Fatalf("Failed to decode attributions response: %v", decodeErr)
-	}
-
-	var attrID string
-	if attrs, ok := attrResult["attributions"].([]interface{}); ok && len(attrs) > 0 {
-		if aMap, ok := attrs[0].(map[string]interface{}); ok {
-			if id, ok := aMap["id"].(string); ok {
-				attrID = id
-			}
-		}
-	}
-
-	if attrID == "" {
-		t.Skip("No valid attributions found to test with")
-	}
-
-	// List Attribution Groups
-	groupRawResp, err := client.ListAttributionGroups(ctx, nil)
-	if err != nil {
-		t.Fatalf("Failed to list attribution groups: %v", err)
-	}
-	defer func() {
-		if err := groupRawResp.Body.Close(); err != nil {
-			t.Logf("[WARN] Error closing response body: %v", err)
-		}
-	}()
-
-	var groupResult map[string]interface{}
-	if err := json.NewDecoder(groupRawResp.Body).Decode(&groupResult); err != nil {
-		t.Fatalf("Failed to decode attribution groups response: %v", err)
-	}
-
-	var groupID string
-	foundGroupList := false
-	for _, v := range groupResult {
-		if list, ok := v.([]interface{}); ok {
-			foundGroupList = true
-			if len(list) > 0 {
-				if gMap, ok := list[0].(map[string]interface{}); ok {
-					if id, ok := gMap["id"].(string); ok {
-						groupID = id
-					}
-				}
-			}
-			break
-		}
-	}
-
-	if !foundGroupList || groupID == "" {
-		t.Skip("No valid attribution groups found to test with")
-	}
-
-	return attrID, groupID
 }
 
 func testAccReportAttributions(attrID, groupID string) string {
@@ -698,6 +610,89 @@ resource "doit_report" "targets" {
     }
 }
 `, i, attrID)
+}
+
+// TestAccReport_WithSplits tests reports with splits configuration.
+// Splits allow redistributing costs from one attribution to multiple targets.
+//
+// SKIP REASON: The splits API requires complex setup:
+// - The origin attribution must be a member of the specified attribution group
+// - The attribution group must have attributions with cost data for the split to work
+// - TEST_ATTRIBUTION and TEST_ATTRIBUTION_GROUP must point to related entities
+//
+// To run this test manually:
+// 1. Create an attribution group with at least 2 attributions
+// 2. Set TEST_ATTRIBUTION_GROUP to the group ID
+// 3. Set TEST_ATTRIBUTION to an attribution ID that is a member of that group.
+func TestAccReport_WithSplits(t *testing.T) {
+	// Skip: API bug - GET /reports/{id}/config returns 500 for reports with splits
+	// See: https://doitintl.atlassian.net/browse/CMP-38160
+	t.Skip("Skipped: API returns 500 when fetching config for reports with splits (CMP-38160)")
+
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	attrID := os.Getenv("TEST_ATTRIBUTION")
+	attrGroupID := os.Getenv("TEST_ATTRIBUTION_GROUP")
+	if attrID == "" || attrGroupID == "" {
+		t.Skip("TEST_ATTRIBUTION and TEST_ATTRIBUTION_GROUP must be set for this test")
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithSplits(n, attrID, attrGroupID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_report.splits", "id"),
+					resource.TestCheckResourceAttr("doit_report.splits", "config.layout", "table"),
+				),
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithSplits(n, attrID, attrGroupID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSplits(i int, _ string, attrGroupID string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "splits" {
+    name = "test-splits-%d"
+    description = "Report with splits configuration"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        splits = [
+            {
+                id   = "%s"
+                type = "attribution_group"
+                mode = "even"
+                include_origin = false
+                origin = {
+                    id   = "unallocated"
+                    type = "unallocated"
+                }
+                targets = []
+            }
+        ]
+    }
+}
+`, i, attrGroupID)
 }
 
 // TestAccReport_Disappears verifies that Terraform correctly handles
