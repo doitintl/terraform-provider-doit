@@ -32,6 +32,7 @@ jobs:
           DOIT_HOST: ${{ vars.DOIT_HOST }}
           TEST_USER: ${{ vars.TEST_USER }}
           TEST_ATTRIBUTION: ${{ vars.TEST_ATTRIBUTION }}
+          TEST_ATTRIBUTION_GROUP: ${{ vars.TEST_ATTRIBUTION_GROUP }}
           TEST_SLACK_CHAN: ${{ vars.TEST_SLACK_CHAN }}
           TEST_PROJECT: ${{ vars.TEST_PROJECT }}
           TEST_CUSTOMER_ID: ${{ vars.TEST_CUSTOMER_ID }}
