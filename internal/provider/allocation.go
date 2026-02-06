@@ -353,8 +353,16 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		if diags.HasError() {
 			return
 		}
+	} else if resp.Rules != nil {
+		// API returned empty slice [] - reflect as empty list
+		// This preserves API reality and handles import scenarios correctly.
+		// Note: Our validator blocks users from configuring rules = [], so this
+		// path is mainly for imports or if API behavior changes.
+		var d diag.Diagnostics
+		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
+		diags.Append(d...)
 	} else {
-		// API returned null or empty rules - reflect that reality
+		// API returned nil - reflect as null
 		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
 	}
 	return
