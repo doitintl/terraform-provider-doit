@@ -445,6 +445,15 @@ func TestAccBudget_Attributes_Coverage(t *testing.T) {
 						})),
 				},
 			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccBudgetAttributesCoverage(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }

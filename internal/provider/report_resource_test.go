@@ -85,6 +85,15 @@ func TestAccReport_Minimal(t *testing.T) {
 						knownvalue.StringExact(fmt.Sprintf("test-minimal-%d", n))),
 				},
 			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportMinimal(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -135,6 +144,15 @@ func TestAccReport_Attributions(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_report.this", "config.group.0.type", "attribution_group"),
 					resource.TestCheckResourceAttr("doit_report.this", "config.group.0.id", groupID),
 				),
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportAttributions(attrID, groupID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
@@ -314,6 +332,15 @@ func TestAccReport_Full(t *testing.T) {
 						"doit_report.this",
 						tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("from"),
 						knownvalue.StringExact("2024-01-01T00:00:00Z")),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportFull(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},

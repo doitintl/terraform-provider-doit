@@ -467,6 +467,15 @@ func TestAccAllocation_ComponentFlags(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.inverse_selection", "true"),
 				),
 			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAllocationComponentFlags(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }

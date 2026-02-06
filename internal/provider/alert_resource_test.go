@@ -126,6 +126,15 @@ func TestAccAlert_WithScopes(t *testing.T) {
 					),
 				},
 			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertWithScopes(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -390,6 +399,15 @@ func TestAccAlert_AllConfigAttributes(t *testing.T) {
 						"doit_alert.this",
 						tfjsonpath.New("config").AtMapKey("evaluate_for_each"),
 						knownvalue.StringExact("fixed:cloud_provider")),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertAllConfigAttributes(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},
