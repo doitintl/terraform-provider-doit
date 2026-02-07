@@ -265,7 +265,7 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (res
 		diags.Append(listDiags...)
 	} else {
 		// Return empty list for nil to avoid inconsistent result if user sets []
-		emptyScopes, emptyDiags := types.ListValue(resource_alert.ScopesValue{}.Type(ctx), []attr.Value{})
+		emptyScopes, emptyDiags := types.ListValueFrom(ctx, resource_alert.ScopesValue{}.Type(ctx), []resource_alert.ScopesValue{})
 		diags.Append(emptyDiags...)
 		scopesVal = emptyScopes
 	}

@@ -472,7 +472,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		// For user-configurable lists, the API treats empty list and nil as equivalent,
 		// so we return empty list to match user's potential config of field = [].
 		var emptyDimsDiags diag.Diagnostics
-		configMap["dimensions"], emptyDimsDiags = types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []attr.Value{})
+		configMap["dimensions"], emptyDimsDiags = types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{})
 		diags.Append(emptyDimsDiags...)
 	}
 
@@ -508,7 +508,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		// API returned nil or empty slice - return empty list.
 		// For user-configurable lists, the API treats empty list and nil as equivalent.
 		var emptyFiltersDiags diag.Diagnostics
-		configMap["filters"], emptyFiltersDiags = types.ListValueFrom(ctx, resource_report.FiltersValue{}.Type(ctx), []attr.Value{})
+		configMap["filters"], emptyFiltersDiags = types.ListValueFrom(ctx, resource_report.FiltersValue{}.Type(ctx), []resource_report.FiltersValue{})
 		diags.Append(emptyFiltersDiags...)
 	}
 
@@ -554,7 +554,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		// API returned nil or empty slice - return empty list.
 		// For user-configurable lists, the API treats empty list and nil as equivalent.
 		var emptyGroupDiags diag.Diagnostics
-		configMap["group"], emptyGroupDiags = types.ListValueFrom(ctx, resource_report.GroupValue{}.Type(ctx), []attr.Value{})
+		configMap["group"], emptyGroupDiags = types.ListValueFrom(ctx, resource_report.GroupValue{}.Type(ctx), []resource_report.GroupValue{})
 		diags.Append(emptyGroupDiags...)
 	}
 
@@ -639,7 +639,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				m["targets"] = targetList
 			} else {
 				// Return empty list instead of null to match user config when targets = []
-				emptyTargets, emptyTargetsDiags := types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), []attr.Value{})
+				emptyTargets, emptyTargetsDiags := types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), []resource_report.TargetsValue{})
 				diags.Append(emptyTargetsDiags...)
 				m["targets"] = emptyTargets
 			}
@@ -654,7 +654,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		// API returned nil or empty slice - return empty list.
 		// For user-configurable lists, the API treats empty list and nil as equivalent.
 		var emptySplitsDiags diag.Diagnostics
-		configMap["splits"], emptySplitsDiags = types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), []attr.Value{})
+		configMap["splits"], emptySplitsDiags = types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), []resource_report.SplitsValue{})
 		diags.Append(emptySplitsDiags...)
 	}
 
