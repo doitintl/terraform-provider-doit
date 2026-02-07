@@ -229,13 +229,9 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		alertsListValue, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), alertsList)
 		diags.Append(d...)
 		state.Alerts = alertsListValue
-	} else if resp.Alerts != nil {
-		// API returned empty slice - reflect as empty list
-		emptyAlerts, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), []resource_budget.AlertsValue{})
-		diags.Append(d...)
-		state.Alerts = emptyAlerts
 	} else {
-		// API returned nil - return empty list to avoid inconsistent result if user sets []
+		// API returned nil or empty slice - return empty list to avoid inconsistent result if user sets [].
+		// Pattern B: Normalize to empty list for user-configurable attributes.
 		emptyAlerts, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), []resource_budget.AlertsValue{})
 		diags.Append(d...)
 		state.Alerts = emptyAlerts

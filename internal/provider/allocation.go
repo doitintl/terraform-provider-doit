@@ -353,19 +353,12 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		if diags.HasError() {
 			return
 		}
-	} else if resp.Rules != nil {
-		// API returned empty slice [] - reflect as empty list
-		var d diag.Diagnostics
-		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
-		diags.Append(d...)
 	} else {
-		// API returned nil - but we MUST return empty list, not null!
-		// If user configures rules = [] and API returns nil, returning null
-		// would cause "inconsistent result" error. Empty list is semantically
-		// equivalent to null for this field, so this is correct.
-		var d diag.Diagnostics
-		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
+		// API returned nil or empty slice - return empty list to avoid inconsistent result if user sets [].
+		// Pattern B: Normalize to empty list for user-configurable attributes.
+		emptyRules, d := types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
 		diags.Append(d...)
+		state.Rules = emptyRules
 	}
 	return
 }
