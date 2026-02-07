@@ -355,15 +355,17 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		}
 	} else if resp.Rules != nil {
 		// API returned empty slice [] - reflect as empty list
-		// This preserves API reality and handles import scenarios correctly.
-		// Note: Our validator blocks users from configuring rules = [], so this
-		// path is mainly for imports or if API behavior changes.
 		var d diag.Diagnostics
 		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
 		diags.Append(d...)
 	} else {
-		// API returned nil - reflect as null
-		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
+		// API returned nil - but we MUST return empty list, not null!
+		// If user configures rules = [] and API returns nil, returning null
+		// would cause "inconsistent result" error. Empty list is semantically
+		// equivalent to null for this field, so this is correct.
+		var d diag.Diagnostics
+		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
+		diags.Append(d...)
 	}
 	return
 }

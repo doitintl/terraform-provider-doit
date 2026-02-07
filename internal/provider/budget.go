@@ -235,8 +235,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(d...)
 		state.Alerts = emptyAlerts
 	} else {
-		// API returned nil - reflect as null
-		state.Alerts = types.ListNull(resource_budget.AlertsValue{}.Type(ctx))
+		// API returned nil - return empty list to avoid inconsistent result if user sets []
+		emptyAlerts, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), []resource_budget.AlertsValue{})
+		diags.Append(d...)
+		state.Alerts = emptyAlerts
 	}
 
 	state.Amount = types.Float64PointerValue(resp.Amount)
@@ -257,7 +259,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(d...)
 		state.Collaborators = collaboratorsListValue
 	} else {
-		state.Collaborators = types.ListNull(resource_budget.CollaboratorsValue{}.Type(ctx))
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		emptyCollabs, d := types.ListValueFrom(ctx, resource_budget.CollaboratorsValue{}.Type(ctx), []resource_budget.CollaboratorsValue{})
+		diags.Append(d...)
+		state.Collaborators = emptyCollabs
 	}
 
 	state.Currency = types.StringValue(string(resp.Currency))
@@ -285,9 +290,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(listDiags...)
 		state.Recipients = recipientsList
 	} else {
-		// API returned null or empty - reflect that reality
-		// Validator blocks empty recipients=[] at plan time, so this is safe
-		state.Recipients = types.ListNull(types.StringType)
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		var emptyDiags diag.Diagnostics
+		state.Recipients, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
+		diags.Append(emptyDiags...)
 	}
 
 	// Convert recipients_slack_channels
@@ -310,7 +316,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(d...)
 		state.RecipientsSlackChannels = slackChannelsListValue
 	} else {
-		state.RecipientsSlackChannels = types.ListNull(resource_budget.RecipientsSlackChannelsValue{}.Type(ctx))
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		emptyChannels, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []resource_budget.RecipientsSlackChannelsValue{})
+		diags.Append(d...)
+		state.RecipientsSlackChannels = emptyChannels
 	}
 
 	// Convert scope list
@@ -319,7 +328,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(listDiags...)
 		state.Scope = scopeList
 	} else {
-		state.Scope = types.ListNull(types.StringType)
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		var emptyDiags diag.Diagnostics
+		state.Scope, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
+		diags.Append(emptyDiags...)
 	}
 
 	// Convert scopes list
@@ -332,7 +344,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, *scope.Values)
 				diags.Append(listDiags...)
 			} else {
-				valuesVal = types.ListNull(types.StringType)
+				// Return empty list for nil to avoid inconsistent result if user sets []
+				var emptyDiags diag.Diagnostics
+				valuesVal, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
+				diags.Append(emptyDiags...)
 			}
 
 			scopeAttrs := map[string]attr.Value{
@@ -350,7 +365,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(d...)
 		state.Scopes = scopesListValue
 	} else {
-		state.Scopes = types.ListNull(resource_budget.ScopesValue{}.Type(ctx))
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		emptyScopes, d := types.ListValueFrom(ctx, resource_budget.ScopesValue{}.Type(ctx), []resource_budget.ScopesValue{})
+		diags.Append(d...)
+		state.Scopes = emptyScopes
 	}
 
 	// Convert seasonal_amounts list
@@ -359,7 +377,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		diags.Append(listDiags...)
 		state.SeasonalAmounts = seasonalAmountsList
 	} else {
-		state.SeasonalAmounts = types.ListNull(types.Float64Type)
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		var emptyDiags diag.Diagnostics
+		state.SeasonalAmounts, emptyDiags = types.ListValue(types.Float64Type, []attr.Value{})
+		diags.Append(emptyDiags...)
 	}
 
 	state.StartPeriod = types.Int64Value(resp.StartPeriod)

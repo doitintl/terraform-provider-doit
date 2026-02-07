@@ -554,8 +554,9 @@ func TestAccAllocation_Disappears(t *testing.T) {
 }
 
 // TestAccAllocation_ListAttributes_EmptyRules tests that an empty rules list
-// is blocked by the validator. The API returns null for empty lists, which
-// would cause a plan/state mismatch, so we block this at validation time.
+// is blocked by the validator. The provider correctly handles empty lists
+// (returns empty list even when API returns nil), but the validator guides
+// users toward omitting the attribute instead, which is cleaner.
 func TestAccAllocation_ListAttributes_EmptyRules(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 

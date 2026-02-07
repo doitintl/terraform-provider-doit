@@ -36,7 +36,8 @@ func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req reso
 		return
 	}
 
-	// Validate that there's at least one recipient
+	// Validate that there's at least one recipient - this prevents drift
+	// (API returns the creator as default when empty is sent)
 	if len(recipients.Elements()) == 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("recipients"),
