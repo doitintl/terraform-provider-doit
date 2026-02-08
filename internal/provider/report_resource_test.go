@@ -117,8 +117,6 @@ func TestAccReport_Import(t *testing.T) {
 }
 
 func TestAccReport_Attributions(t *testing.T) {
-	t.Parallel()
-
 	attrID := os.Getenv("TEST_ATTRIBUTION")
 	groupID := os.Getenv("TEST_ATTRIBUTION_GROUP")
 	if attrID == "" || groupID == "" {
