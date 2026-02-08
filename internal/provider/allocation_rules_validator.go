@@ -37,9 +37,10 @@ func (v allocationRulesValidator) ValidateList(ctx context.Context, req validato
 
 	elements := req.ConfigValue.Elements()
 
-	// Block empty rules lists - empty rules work but cause drift because API returns
-	// rules as null. The provider handles this correctly (returns empty list), but
-	// blocking this guides users toward the cleaner pattern of omitting the attribute.
+	// Block empty rules lists. While the provider now normalizes nil/empty API
+	// responses to an empty list, an explicit empty list in configuration is
+	// discouraged. Blocking this guides users toward the cleaner pattern of
+	// omitting the attribute entirely when no allocation rules are desired.
 	if len(elements) == 0 {
 		resp.Diagnostics.AddAttributeError(
 			req.Path,

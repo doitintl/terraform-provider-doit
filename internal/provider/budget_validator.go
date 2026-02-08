@@ -204,7 +204,8 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 }
 
 // budgetAlertsLengthValidator validates that alerts list has 1-3 items when specified.
-// Empty alerts are not allowed because the API returns null for empty, causing plan/state mismatch.
+// Empty alerts are not allowed because the API ignores empty lists and applies default alerts;
+// requiring 1-3 alerts or omitting the attribute avoids unexpected API-side defaults.
 type budgetAlertsLengthValidator struct{}
 
 func (v budgetAlertsLengthValidator) Description(_ context.Context) string {

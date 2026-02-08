@@ -803,7 +803,6 @@ resource "doit_alert" "test_recipient" {
   config = {
     metric = {
       type  = "basic"
-      name  = "cost"
       value = "cost"
     }
     time_interval = "month"
