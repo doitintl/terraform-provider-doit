@@ -20,7 +20,7 @@ func TestAccAnnotation(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -75,7 +75,7 @@ func TestAccAnnotation_Import(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -114,7 +114,7 @@ func TestAccAnnotation_WithReport(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -173,7 +173,7 @@ func TestAccAnnotation_WithLabelsAndReports(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -241,7 +241,7 @@ func TestAccAnnotation_WithMultipleLabelsAndReports(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -331,7 +331,7 @@ func TestAccAnnotation_WithEmptyLists(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -380,7 +380,7 @@ func TestAccAnnotation_WithOmittedLists(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -428,7 +428,7 @@ func TestAccAnnotation_TimezonePreservation(t *testing.T) {
 	// Use EST timezone offset (-05:00) instead of UTC
 	timestamp := "2024-06-15T12:00:00-05:00"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -468,7 +468,7 @@ resource "doit_annotation" "timezone_test" {
 // TestAccAnnotation_InvalidTimestamp tests that invalid timestamp formats are rejected
 // at plan time by the RFC3339 validator.
 func TestAccAnnotation_InvalidTimestamp(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -498,7 +498,7 @@ func TestAccAnnotation_Disappears(t *testing.T) {
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 	var resourceId string
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

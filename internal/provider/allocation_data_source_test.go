@@ -16,7 +16,7 @@ import (
 func TestAccAllocationDataSource(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -50,7 +50,7 @@ func TestAccAllocationDataSource(t *testing.T) {
 func TestAccAllocationDataSource_Group(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -126,7 +126,7 @@ data "doit_allocation" "test" {
 }
 
 func TestAccAllocationDataSource_NotFound(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

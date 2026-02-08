@@ -18,7 +18,7 @@ import (
 func TestAccReport(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -60,7 +60,7 @@ func TestAccReport(t *testing.T) {
 func TestAccReport_Minimal(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -99,7 +99,7 @@ func TestAccReport_Minimal(t *testing.T) {
 func TestAccReport_Import(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -125,7 +125,7 @@ func TestAccReport_Attributions(t *testing.T) {
 		t.Skip("TEST_ATTRIBUTION and TEST_ATTRIBUTION_GROUP must be set for this test")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 testAccPreCheckFunc(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		Steps: []resource.TestStep{
@@ -219,7 +219,7 @@ resource "doit_report" "this" {
 func TestAccReport_Full(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -483,7 +483,7 @@ resource "doit_report" "this" {
 func TestAccReport_CustomTimeRangeTimezonePreservation(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -559,7 +559,7 @@ func TestAccReport_WithTargets(t *testing.T) {
 		t.Skip("TEST_ATTRIBUTION must be set for this test")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -626,7 +626,7 @@ func TestAccReport_WithSplits(t *testing.T) {
 		t.Skip("TEST_ATTRIBUTION and TEST_ATTRIBUTION_GROUP must be set for this test")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -699,7 +699,7 @@ func TestAccReport_Disappears(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	var resourceId string
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -743,7 +743,7 @@ func TestAccReport_Disappears(t *testing.T) {
 func TestAccReport_WithEmptyLists(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

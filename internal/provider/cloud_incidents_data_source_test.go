@@ -12,7 +12,7 @@ import (
 
 // TestAccCloudIncidentsDataSource_Basic tests basic cloud incidents data retrieval.
 func TestAccCloudIncidentsDataSource_Basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -43,7 +43,7 @@ func TestAccCloudIncidentsDataSource_SingleIncident(t *testing.T) {
 		t.Skip("TEST_CLOUD_INCIDENT_ID not set")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -74,7 +74,7 @@ func TestAccCloudIncidentsDataSource_Pagination(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 cloud incident)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

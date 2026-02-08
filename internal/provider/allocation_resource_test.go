@@ -23,7 +23,7 @@ func testProject() string {
 func TestAccAllocation(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -73,7 +73,7 @@ func TestAccAllocation(t *testing.T) {
 func TestAccAllocation_Group(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -112,7 +112,7 @@ func TestAccAllocation_Group(t *testing.T) {
 func TestAccAllocation_Validation(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -128,7 +128,7 @@ func TestAccAllocation_Validation(t *testing.T) {
 func TestAccAllocation_Group_Select(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -167,7 +167,7 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -183,7 +183,7 @@ func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -413,7 +413,7 @@ resource "doit_allocation" "single_with_unallocated" {
 func TestAccAllocation_MissingNameInCreateAction(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -454,7 +454,7 @@ resource "doit_allocation" "missing_name" {
 // boolean flags on allocation rule components.
 func TestAccAllocation_ComponentFlags(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -514,7 +514,7 @@ func TestAccAllocation_Disappears(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	var resourceId string
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -560,7 +560,7 @@ func TestAccAllocation_Disappears(t *testing.T) {
 func TestAccAllocation_ListAttributes_EmptyRules(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -589,7 +589,7 @@ resource "doit_allocation" "this" {
 func TestAccAllocation_ListAttributes_EmptyComponents(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -620,7 +620,7 @@ resource "doit_allocation" "this" {
 func TestAccAllocation_ListAttributes_OmittedRulesAndRule(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

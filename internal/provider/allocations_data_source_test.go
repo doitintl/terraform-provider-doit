@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -16,7 +17,7 @@ func TestAccAllocationsDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 allocations to test pagination, got %d", allocationCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -51,7 +52,7 @@ func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 allocation)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -86,7 +87,7 @@ func TestAccAllocationsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 allocations to test pagination, got %d", allocationCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -117,7 +118,7 @@ func TestAccAllocationsDataSource_AutoPagination(t *testing.T) {
 		t.Skip("No allocations available to test auto-pagination")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -142,7 +143,20 @@ data "doit_allocations" "test" {
 
 // Helper functions
 
+var (
+	allocationCount     int
+	allocationCountOnce sync.Once
+)
+
 func getAllocationCount(t *testing.T) int {
+	t.Helper()
+	allocationCountOnce.Do(func() {
+		allocationCount = computeAllocationCount(t)
+	})
+	return allocationCount
+}
+
+func computeAllocationCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()

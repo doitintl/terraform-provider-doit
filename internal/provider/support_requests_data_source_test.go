@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -16,7 +17,7 @@ func TestAccSupportRequestsDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 support requests to test pagination, got %d", ticketCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -51,7 +52,7 @@ func TestAccSupportRequestsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 support request)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -86,7 +87,7 @@ func TestAccSupportRequestsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 support requests to test pagination, got %d", ticketCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -117,7 +118,7 @@ func TestAccSupportRequestsDataSource_AutoPagination(t *testing.T) {
 		t.Skip("No support requests available to test auto-pagination")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -142,7 +143,20 @@ data "doit_support_requests" "test" {
 
 // Helper functions
 
+var (
+	supportRequestCount     int
+	supportRequestCountOnce sync.Once
+)
+
 func getSupportRequestCount(t *testing.T) int {
+	t.Helper()
+	supportRequestCountOnce.Do(func() {
+		supportRequestCount = computeSupportRequestCount(t)
+	})
+	return supportRequestCount
+}
+
+func computeSupportRequestCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()

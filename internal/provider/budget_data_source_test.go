@@ -16,7 +16,7 @@ import (
 func TestAccBudgetDataSource(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -69,7 +69,7 @@ func TestAccBudgetDataSource(t *testing.T) {
 func TestAccBudgetDataSource_WithScopes(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -165,7 +165,7 @@ data "doit_budget" "test" {
 }
 
 func TestAccBudgetDataSource_NotFound(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

@@ -18,7 +18,7 @@ import (
 func TestAccLabel(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -80,7 +80,7 @@ func TestAccLabel(t *testing.T) {
 func TestAccLabel_Import(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -119,7 +119,7 @@ resource "doit_label" "this" {
 func TestAccLabel_Lavender(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -146,7 +146,7 @@ resource "doit_label" "lavender_test" {
 func TestAccLabel_InvalidColor(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -175,7 +175,7 @@ func TestAccLabel_Disappears(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	var resourceId string
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

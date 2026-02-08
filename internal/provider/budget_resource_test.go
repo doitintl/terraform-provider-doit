@@ -19,7 +19,7 @@ import (
 func TestAccBudget(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -247,7 +247,7 @@ resource "doit_budget" "this" {
 func TestAccBudget_Import(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -273,7 +273,7 @@ func TestAccBudget_Import(t *testing.T) {
 func TestAccBudget_Scopes(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -314,7 +314,7 @@ func TestAccBudget_Scopes(t *testing.T) {
 func TestAccBudget_Conflict(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -403,7 +403,7 @@ resource "doit_budget" "this" {
 func TestAccBudget_Attributes_Coverage(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -501,7 +501,7 @@ resource "doit_budget" "this" {
 func TestAccBudget_SlackChannel(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -573,7 +573,7 @@ func TestAccBudget_Disappears(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	var resourceId string
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -628,7 +628,7 @@ func TestAccBudget_Disappears(t *testing.T) {
 func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -672,7 +672,7 @@ func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
 func TestAccBudget_ListAttributes_AlertsAndRecipients(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",

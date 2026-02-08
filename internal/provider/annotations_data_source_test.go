@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -16,7 +17,7 @@ func TestAccAnnotationsDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 annotations to test pagination, got %d", annotationCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -51,7 +52,7 @@ func TestAccAnnotationsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 annotation)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -86,7 +87,7 @@ func TestAccAnnotationsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 annotations to test pagination, got %d", annotationCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -117,7 +118,7 @@ func TestAccAnnotationsDataSource_AutoPagination(t *testing.T) {
 		t.Skip("No annotations available to test auto-pagination")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -142,7 +143,20 @@ data "doit_annotations" "test" {
 
 // Helper functions
 
+var (
+	annotationCount     int
+	annotationCountOnce sync.Once
+)
+
 func getAnnotationCount(t *testing.T) int {
+	t.Helper()
+	annotationCountOnce.Do(func() {
+		annotationCount = computeAnnotationCount(t)
+	})
+	return annotationCount
+}
+
+func computeAnnotationCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()

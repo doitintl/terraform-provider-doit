@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -16,7 +17,7 @@ func TestAccDimensionsDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 dimensions to test pagination, got %d", dimensionCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -51,7 +52,7 @@ func TestAccDimensionsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 dimension)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -86,7 +87,7 @@ func TestAccDimensionsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 dimensions to test pagination, got %d", dimensionCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -117,7 +118,7 @@ func TestAccDimensionsDataSource_AutoPagination(t *testing.T) {
 		t.Skip("No dimensions available to test auto-pagination")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -142,7 +143,20 @@ data "doit_dimensions" "test" {
 
 // Helper functions
 
+var (
+	dimensionCount     int
+	dimensionCountOnce sync.Once
+)
+
 func getDimensionCount(t *testing.T) int {
+	t.Helper()
+	dimensionCountOnce.Do(func() {
+		dimensionCount = computeDimensionCount(t)
+	})
+	return dimensionCount
+}
+
+func computeDimensionCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()

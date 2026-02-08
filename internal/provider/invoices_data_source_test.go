@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -16,7 +17,7 @@ func TestAccInvoicesDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 invoices to test pagination, got %d", invoiceCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -51,7 +52,7 @@ func TestAccInvoicesDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 invoice)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -86,7 +87,7 @@ func TestAccInvoicesDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 invoices to test pagination, got %d", invoiceCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -117,7 +118,7 @@ func TestAccInvoicesDataSource_AutoPagination(t *testing.T) {
 		t.Skip("No invoices available to test auto-pagination")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -142,7 +143,20 @@ data "doit_invoices" "test" {
 
 // Helper functions
 
+var (
+	invoiceCount     int
+	invoiceCountOnce sync.Once
+)
+
 func getInvoiceCount(t *testing.T) int {
+	t.Helper()
+	invoiceCountOnce.Do(func() {
+		invoiceCount = computeInvoiceCount(t)
+	})
+	return invoiceCount
+}
+
+func computeInvoiceCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()
