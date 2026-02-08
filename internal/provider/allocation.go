@@ -354,7 +354,11 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			return
 		}
 	} else {
-		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
+		// API returned nil or empty slice - return empty list to avoid inconsistent result if user sets [].
+		// Pattern B: Normalize to empty list for user-configurable attributes.
+		emptyRules, d := types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
+		diags.Append(d...)
+		state.Rules = emptyRules
 	}
 	return
 }

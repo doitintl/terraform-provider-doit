@@ -451,7 +451,8 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	}
 
 	// Nested List: Dimensions
-	if config.Dimensions != nil {
+	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
+	if config.Dimensions != nil && len(*config.Dimensions) > 0 {
 		dims := make([]attr.Value, len(*config.Dimensions))
 		for i, d := range *config.Dimensions {
 			dType := string(*d.Type)
@@ -467,11 +468,17 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(d...)
 		configMap["dimensions"] = dimList
 	} else {
-		configMap["dimensions"] = types.ListNull(resource_report.DimensionsValue{}.Type(ctx))
+		// API returned nil or empty slice - return empty list.
+		// For user-configurable lists, the API treats empty list and nil as equivalent,
+		// so we return empty list to match user's potential config of field = [].
+		var emptyDimsDiags diag.Diagnostics
+		configMap["dimensions"], emptyDimsDiags = types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{})
+		diags.Append(emptyDimsDiags...)
 	}
 
 	// Nested List: Filters
-	if config.Filters != nil {
+	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
+	if config.Filters != nil && len(*config.Filters) > 0 {
 		filters := make([]attr.Value, len(*config.Filters))
 		for i, f := range *config.Filters {
 			fType := string(f.Type)
@@ -498,11 +505,16 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(d...)
 		configMap["filters"] = filterList
 	} else {
-		configMap["filters"] = types.ListNull(resource_report.FiltersValue{}.Type(ctx))
+		// API returned nil or empty slice - return empty list.
+		// For user-configurable lists, the API treats empty list and nil as equivalent.
+		var emptyFiltersDiags diag.Diagnostics
+		configMap["filters"], emptyFiltersDiags = types.ListValueFrom(ctx, resource_report.FiltersValue{}.Type(ctx), []resource_report.FiltersValue{})
+		diags.Append(emptyFiltersDiags...)
 	}
 
 	// Nested List: Group
-	if config.Group != nil {
+	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
+	if config.Group != nil && len(*config.Group) > 0 {
 		groups := make([]attr.Value, len(*config.Group))
 		for i, g := range *config.Group {
 			groupType := string(*g.Type)
@@ -527,7 +539,6 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				limitVal, d := resource_report.NewLimitValue(resource_report.LimitValue{}.AttributeTypes(ctx), lMap)
 				diags.Append(d...)
 				if diags.HasError() {
-					log.Println("Error creating limit value")
 					return diags
 				}
 				m["limit"] = limitVal
@@ -540,14 +551,17 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(d...)
 		configMap["group"] = groupList
 	} else {
-		configMap["group"] = types.ListNull(resource_report.GroupValue{}.Type(ctx))
+		// API returned nil or empty slice - return empty list.
+		// For user-configurable lists, the API treats empty list and nil as equivalent.
+		var emptyGroupDiags diag.Diagnostics
+		configMap["group"], emptyGroupDiags = types.ListValueFrom(ctx, resource_report.GroupValue{}.Type(ctx), []resource_report.GroupValue{})
+		diags.Append(emptyGroupDiags...)
 	}
 
 	// Nested Object: Metric
 	metricVal, d := externalMetricToBaseTypeObjectValue(ctx, config.Metric)
 	diags.Append(d...)
 	if diags.HasError() {
-		log.Println("Error creating metric value configMap")
 		return diags
 	}
 	configMap["metric"] = metricVal
@@ -561,7 +575,6 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		metricFilterMetricVal, mfMetricDiags := externalMetricToBaseTypeObjectValue(ctx, config.MetricFilter.Metric)
 		diags.Append(mfMetricDiags...)
 		if diags.HasError() {
-			log.Println("Error creating metric value mfMap")
 			return diags
 		}
 		mfMap["metric"] = metricFilterMetricVal
@@ -570,7 +583,6 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			mfMap["values"], mfValueDiags = types.ListValueFrom(ctx, types.Float64Type, *config.MetricFilter.Values)
 			diags.Append(mfValueDiags...)
 			if diags.HasError() {
-				log.Println("Error creating metric filter values mfMap")
 				return diags
 			}
 		} else {
@@ -579,7 +591,6 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		mfv, mfvDiags := resource_report.NewMetricFilterValue(resource_report.MetricFilterValue{}.AttributeTypes(ctx), mfMap)
 		diags.Append(mfvDiags...)
 		if diags.HasError() {
-			log.Println("Error creating metric filter value")
 			return diags
 		}
 		configMap["metric_filter"] = mfv
@@ -588,7 +599,8 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	}
 
 	// Nested List: Splits
-	if config.Splits != nil {
+	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
+	if config.Splits != nil && len(*config.Splits) > 0 {
 		splits := make([]attr.Value, len(*config.Splits))
 		for i, s := range *config.Splits {
 			m := map[string]attr.Value{
@@ -610,7 +622,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				m["origin"] = originVal
 			}
 
-			if s.Targets != nil {
+			if s.Targets != nil && len(*s.Targets) > 0 {
 				targets := make([]attr.Value, len(*s.Targets))
 				for j, t := range *s.Targets {
 					tMap := map[string]attr.Value{
@@ -626,7 +638,10 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				diags.Append(targetListDiags...)
 				m["targets"] = targetList
 			} else {
-				m["targets"] = types.ListNull(resource_report.TargetsValue{}.Type(ctx))
+				// Return empty list instead of null to match user config when targets = []
+				emptyTargets, emptyTargetsDiags := types.ListValueFrom(ctx, resource_report.TargetsValue{}.Type(ctx), []resource_report.TargetsValue{})
+				diags.Append(emptyTargetsDiags...)
+				m["targets"] = emptyTargets
 			}
 			splitVal, splitDiags := resource_report.NewSplitsValue(resource_report.SplitsValue{}.AttributeTypes(ctx), m)
 			diags.Append(splitDiags...)
@@ -636,7 +651,11 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(splitListDiags...)
 		configMap["splits"] = splitList
 	} else {
-		configMap["splits"] = types.ListNull(resource_report.SplitsValue{}.Type(ctx))
+		// API returned nil or empty slice - return empty list.
+		// For user-configurable lists, the API treats empty list and nil as equivalent.
+		var emptySplitsDiags diag.Diagnostics
+		configMap["splits"], emptySplitsDiags = types.ListValueFrom(ctx, resource_report.SplitsValue{}.Type(ctx), []resource_report.SplitsValue{})
+		diags.Append(emptySplitsDiags...)
 	}
 
 	// Nested Object: TimeRange

@@ -3,6 +3,8 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"regexp"
 	"testing"
 
 	"math/rand/v2"
@@ -17,7 +19,7 @@ import (
 func TestAccAlert(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -79,7 +81,7 @@ func TestAccAlert(t *testing.T) {
 func TestAccAlert_Import(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -99,7 +101,7 @@ func TestAccAlert_Import(t *testing.T) {
 func TestAccAlert_WithScopes(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -126,6 +128,15 @@ func TestAccAlert_WithScopes(t *testing.T) {
 					),
 				},
 			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertWithScopes(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -135,7 +146,7 @@ func TestAccAlert_WithScopes(t *testing.T) {
 func TestAccAlert_WithEmptyScopes(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -157,7 +168,7 @@ func TestAccAlert_WithEmptyScopes(t *testing.T) {
 func TestAccAlert_WithAttributions(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -182,7 +193,7 @@ func TestAccAlert_WithAttributions(t *testing.T) {
 func TestAccAlert_WithEmptyAttributions(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -200,11 +211,30 @@ func TestAccAlert_WithEmptyAttributions(t *testing.T) {
 	})
 }
 
+// TestAccAlert_WithEmptyRecipients documents that recipients = [] is not allowed.
+// The API adds the creator as a default recipient when recipients is empty, causing state drift.
+// To prevent this, the provider validates that at least one recipient is specified.
+func TestAccAlert_WithEmptyRecipients(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAlertWithEmptyRecipients(n),
+				ExpectError: regexp.MustCompile(`At Least One Recipient Required`),
+			},
+		},
+	})
+}
+
 // TestAccAlert_WithInverseScope tests scope exclusion filters.
 func TestAccAlert_WithInverseScope(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -235,7 +265,7 @@ func TestAccAlert_WithInverseScope(t *testing.T) {
 func TestAccAlert_WithEvaluateForEach(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -257,7 +287,7 @@ func TestAccAlert_WithEvaluateForEach(t *testing.T) {
 func TestAccAlert_PercentageChange(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -283,7 +313,7 @@ func TestAccAlert_PercentageChange(t *testing.T) {
 func TestAccAlert_DifferentOperators(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -306,7 +336,7 @@ func TestAccAlert_DifferentOperators(t *testing.T) {
 func TestAccAlert_DifferentTimeIntervals(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -339,7 +369,7 @@ func TestAccAlert_DifferentTimeIntervals(t *testing.T) {
 func TestAccAlert_NoRecipients(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -362,7 +392,7 @@ func TestAccAlert_NoRecipients(t *testing.T) {
 func TestAccAlert_AllConfigAttributes(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -392,6 +422,15 @@ func TestAccAlert_AllConfigAttributes(t *testing.T) {
 						knownvalue.StringExact("fixed:cloud_provider")),
 				},
 			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertAllConfigAttributes(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -411,9 +450,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
-  // See: https://doitintl.atlassian.net/browse/CMP-XXXXX
 }
 `, i)
 }
@@ -433,8 +469,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -526,6 +560,26 @@ resource "doit_alert" "this" {
 `, i)
 }
 
+func testAccAlertWithEmptyRecipients(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-empty-recipients-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+  recipients = []
+}
+`, i)
+}
+
 func testAccAlertWithInverseScope(i int) string {
 	return fmt.Sprintf(`
 resource "doit_alert" "this" {
@@ -570,8 +624,6 @@ resource "doit_alert" "this" {
     operator          = "gt"
     evaluate_for_each = "fixed:service_description"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -591,8 +643,6 @@ resource "doit_alert" "this" {
     condition     = "percentage-change"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -612,8 +662,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "%s"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i, operator)
 }
@@ -633,8 +681,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i, interval)
 }
@@ -683,8 +729,6 @@ resource "doit_alert" "this" {
       }
     ]
   }
-  // NOTE: recipients intentionally omitted - CI user email is rejected by API
-  // domain validation, even though omitting it defaults to the same email.
 }
 `, i)
 }
@@ -693,14 +737,10 @@ resource "doit_alert" "this" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccAlert_Disappears(t *testing.T) {
-	// Skip until API DELETE returns 404 instead of 500 for non-existent resources
-	// See: https://doitintl.atlassian.net/browse/CMP-37342
-	t.Skip("Skipping until API DELETE returns 404 instead of 500 (CMP-37342)")
-
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	var resourceId string
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -737,6 +777,50 @@ func TestAccAlert_Disappears(t *testing.T) {
 				Config:             testAccAlert(n),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
+			},
+		},
+	})
+}
+
+// TestAccAlert_WithExplicitRecipient verifies that the CI user email works as a recipient.
+// This test checks if the API domain validation issue has been fixed.
+func TestAccAlert_WithExplicitRecipient(t *testing.T) {
+	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	testUser := os.Getenv("TEST_USER")
+	if testUser == "" {
+		t.Skip("TEST_USER not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "test_recipient" {
+  name = "test-explicit-recipient-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      name  = "cost"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+  recipients = ["%s"]
+}
+`, n, testUser),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.test_recipient",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1)),
+				},
 			},
 		},
 	})

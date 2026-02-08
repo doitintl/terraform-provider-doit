@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -19,7 +20,7 @@ func TestAccAnnotation(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -74,7 +75,7 @@ func TestAccAnnotation_Import(t *testing.T) {
 	n := rand.Int() //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -113,7 +114,7 @@ func TestAccAnnotation_WithReport(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -172,7 +173,7 @@ func TestAccAnnotation_WithLabelsAndReports(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -240,7 +241,7 @@ func TestAccAnnotation_WithMultipleLabelsAndReports(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -330,7 +331,7 @@ func TestAccAnnotation_WithEmptyLists(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -379,7 +380,7 @@ func TestAccAnnotation_WithOmittedLists(t *testing.T) {
 	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -427,7 +428,7 @@ func TestAccAnnotation_TimezonePreservation(t *testing.T) {
 	// Use EST timezone offset (-05:00) instead of UTC
 	timestamp := "2024-06-15T12:00:00-05:00"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -467,7 +468,7 @@ resource "doit_annotation" "timezone_test" {
 // TestAccAnnotation_InvalidTimestamp tests that invalid timestamp formats are rejected
 // at plan time by the RFC3339 validator.
 func TestAccAnnotation_InvalidTimestamp(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -487,4 +488,51 @@ resource "doit_annotation" "invalid" {
   timestamp = "not-a-valid-timestamp"
 }
 `
+}
+
+// TestAccAnnotation_Disappears verifies that Terraform correctly handles
+// resources that are deleted outside of Terraform (externally deleted).
+// This tests the Read method's 404 handling and RemoveResource call.
+func TestAccAnnotation_Disappears(t *testing.T) {
+	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
+	var resourceId string
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create the resource and capture ID
+			{
+				Config: testAccAnnotation(n, timestamp),
+				Check: resource.ComposeTestCheckFunc(
+					// Capture the resource ID for later deletion
+					resource.TestCheckResourceAttrWith("doit_annotation.this", "id", func(value string) error {
+						if value == "" {
+							return fmt.Errorf("resource ID is empty")
+						}
+						resourceId = value
+						return nil
+					}),
+				),
+			},
+			// Step 2: Delete the resource via API, then verify Terraform detects the drift
+			{
+				PreConfig: func() {
+					client := getAPIClient(t)
+					resp, err := client.DeleteAnnotationWithResponse(context.Background(), resourceId)
+					if err != nil {
+						t.Fatalf("Failed to delete annotation via API: %v", err)
+					}
+					if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
+						t.Fatalf("Expected 200, 204, or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
+					}
+				},
+				Config:             testAccAnnotation(n, timestamp),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
+			},
+		},
+	})
 }

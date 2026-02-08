@@ -84,7 +84,9 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 	return []resource.ConfigValidator{
 		budgetTypeEndPeriodValidator{},
 		budgetAlertsLengthValidator{},
+		budgetRecipientsMinLengthValidator{},
 		budgetScopeMutuallyExclusiveValidator{},
+		budgetCollaboratorsOwnerValidator{},
 	}
 }
 
@@ -153,6 +155,12 @@ func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, res
 	// Populate state
 	resp.Diagnostics.Append(r.populateState(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Handle externally deleted resource (populateState sets Id to null on 404)
+	if state.Id.IsNull() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

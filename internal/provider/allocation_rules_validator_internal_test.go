@@ -137,9 +137,11 @@ func TestAllocationRulesValidator(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "valid - empty rules list",
+			// Empty rules list is blocked - API returns null for empty lists,
+			// which would cause a plan/state mismatch.
+			name:        "invalid - empty rules list (blocked)",
 			ruleSpecs:   []ruleSpec{},
-			expectError: false,
+			expectError: true,
 		},
 	}
 
