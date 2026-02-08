@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"math/rand/v2"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestAccReport(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -58,7 +58,7 @@ func TestAccReport(t *testing.T) {
 }
 
 func TestAccReport_Minimal(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -97,7 +97,7 @@ func TestAccReport_Minimal(t *testing.T) {
 }
 
 func TestAccReport_Import(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -215,7 +215,7 @@ resource "doit_report" "this" {
 }
 
 func TestAccReport_Full(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -479,7 +479,7 @@ resource "doit_report" "this" {
 // TestAccReport_CustomTimeRangeTimezonePreservation tests that custom_time_range timestamps
 // with non-UTC timezone offsets are preserved correctly, avoiding "Provider produced inconsistent result" errors.
 func TestAccReport_CustomTimeRangeTimezonePreservation(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -551,7 +551,7 @@ resource "doit_report" "timezone_test" {
 // Note: targets is a write-only field and not returned in state.
 // This causes drift on subsequent plans - see CMP-38157.
 func TestAccReport_WithTargets(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	attrID := os.Getenv("TEST_ATTRIBUTION")
 	if attrID == "" {
 		t.Skip("TEST_ATTRIBUTION must be set for this test")
@@ -617,7 +617,7 @@ resource "doit_report" "targets" {
 // 1. Set TEST_ATTRIBUTION_GROUP to an attribution group ID
 // 2. Set TEST_ATTRIBUTION to an attribution ID that is a member of that group.
 func TestAccReport_WithSplits(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	attrID := os.Getenv("TEST_ATTRIBUTION")
 	attrGroupID := os.Getenv("TEST_ATTRIBUTION_GROUP")
 	if attrID == "" || attrGroupID == "" {
@@ -694,7 +694,7 @@ resource "doit_report" "splits" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccReport_Disappears(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	var resourceId string
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -739,7 +739,7 @@ func TestAccReport_Disappears(t *testing.T) {
 // TestAccReport_WithEmptyLists tests that explicitly setting list fields to [] works correctly.
 // Tests the provider fix: API returns null for empty lists, but provider normalizes to [].
 func TestAccReport_WithEmptyLists(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,

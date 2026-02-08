@@ -6,8 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestAccLabel(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-label")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -25,7 +24,7 @@ func TestAccLabel(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test Label Create
 			{
-				Config: testAccLabel(n),
+				Config: testAccLabel(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -39,7 +38,7 @@ func TestAccLabel(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("name"),
-						knownvalue.StringExact(fmt.Sprintf("test-label-%d", n))),
+						knownvalue.StringExact(rName)),
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("color"),
@@ -52,7 +51,7 @@ func TestAccLabel(t *testing.T) {
 			},
 			// Test Label Update (change name and color)
 			{
-				Config: testAccLabelUpdate(n),
+				Config: testAccLabelUpdate(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -66,7 +65,7 @@ func TestAccLabel(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("name"),
-						knownvalue.StringExact(fmt.Sprintf("test-label-updated-%d", n))),
+						knownvalue.StringExact(rName+"-updated")),
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("color"),
@@ -78,7 +77,7 @@ func TestAccLabel(t *testing.T) {
 }
 
 func TestAccLabel_Import(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-label")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -86,7 +85,7 @@ func TestAccLabel_Import(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLabel(n),
+				Config: testAccLabel(rName),
 			},
 			{
 				ResourceName:      "doit_label.this",
@@ -97,27 +96,27 @@ func TestAccLabel_Import(t *testing.T) {
 	})
 }
 
-func testAccLabel(i int) string {
+func testAccLabel(name string) string {
 	return fmt.Sprintf(`
 resource "doit_label" "this" {
-  name  = "test-label-%d"
+  name  = %q
   color = "blue"
 }
-`, i)
+`, name)
 }
 
-func testAccLabelUpdate(i int) string {
+func testAccLabelUpdate(name string) string {
 	return fmt.Sprintf(`
 resource "doit_label" "this" {
-  name  = "test-label-updated-%d"
+  name  = "%s-updated"
   color = "mint"
 }
-`, i)
+`, name)
 }
 
 // TestAccLabel_Lavender tests that the API accepts the "lavender" color.
 func TestAccLabel_Lavender(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-lavender")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -127,10 +126,10 @@ func TestAccLabel_Lavender(t *testing.T) {
 			{
 				Config: fmt.Sprintf(`
 resource "doit_label" "lavender_test" {
-  name  = "test-lavender-%d"
+  name  = %q
   color = "lavender"
 }
-`, n),
+`, rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_label.lavender_test",
@@ -144,7 +143,7 @@ resource "doit_label" "lavender_test" {
 
 // TestAccLabel_InvalidColor tests that invalid colors are rejected.
 func TestAccLabel_InvalidColor(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-invalid")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -154,10 +153,10 @@ func TestAccLabel_InvalidColor(t *testing.T) {
 			{
 				Config: fmt.Sprintf(`
 resource "doit_label" "invalid_test" {
-  name  = "test-invalid-color-%d"
+  name  = %q
   color = "invalid_color"
 }
-`, n),
+`, rName),
 				ExpectError: regexp.MustCompile(`(?i)value must be one of:`),
 			},
 		},
@@ -172,7 +171,7 @@ func TestAccLabel_Disappears(t *testing.T) {
 	// See: https://doitintl.atlassian.net/browse/CMP-37040
 	t.Skip("Skipping until API DELETE returns 404 instead of 500 (CMP-37040)")
 
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-label")
 	var resourceId string
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -182,7 +181,7 @@ func TestAccLabel_Disappears(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create the resource and capture ID
 			{
-				Config: testAccLabel(n),
+				Config: testAccLabel(rName),
 				Check: resource.ComposeTestCheckFunc(
 					// Capture the resource ID for later deletion
 					resource.TestCheckResourceAttrWith("doit_label.this", "id", func(value string) error {
@@ -206,7 +205,7 @@ func TestAccLabel_Disappears(t *testing.T) {
 						t.Fatalf("Expected 204 or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
 					}
 				},
-				Config:             testAccLabel(n),
+				Config:             testAccLabel(rName),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
 			},

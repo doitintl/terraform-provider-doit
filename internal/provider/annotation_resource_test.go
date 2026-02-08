@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"math/rand/v2"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -17,7 +17,7 @@ import (
 )
 
 func TestAccAnnotation(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -72,7 +72,7 @@ func TestAccAnnotation(t *testing.T) {
 }
 
 func TestAccAnnotation_Import(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -111,7 +111,7 @@ resource "doit_annotation" "this" {
 }
 
 func TestAccAnnotation_WithReport(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -170,7 +170,7 @@ resource "doit_annotation" "with_report" {
 
 // TestAccAnnotation_WithLabelsAndReports tests setting both labels and reports simultaneously.
 func TestAccAnnotation_WithLabelsAndReports(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -238,7 +238,7 @@ resource "doit_annotation" "with_both" {
 
 // TestAccAnnotation_WithMultipleLabelsAndReports tests setting multiple labels and reports.
 func TestAccAnnotation_WithMultipleLabelsAndReports(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -328,7 +328,7 @@ resource "doit_annotation" "with_multiple" {
 // TestAccAnnotation_WithEmptyLists tests that explicit empty lists [] are handled correctly
 // and don't cause "inconsistent result" errors.
 func TestAccAnnotation_WithEmptyLists(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -377,7 +377,7 @@ resource "doit_annotation" "empty_lists" {
 // Note: The API returns empty arrays even when labels/reports are not sent, so the
 // state will contain empty lists rather than null.
 func TestAccAnnotation_WithOmittedLists(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -424,7 +424,7 @@ resource "doit_annotation" "omitted_lists" {
 // TestAccAnnotation_TimezonePreservation tests that timestamps with non-UTC timezone
 // offsets are preserved correctly, avoiding "Provider produced inconsistent result" errors.
 func TestAccAnnotation_TimezonePreservation(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	// Use EST timezone offset (-05:00) instead of UTC
 	timestamp := "2024-06-15T12:00:00-05:00"
 
@@ -494,7 +494,7 @@ resource "doit_annotation" "invalid" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccAnnotation_Disappears(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 	var resourceId string
 

@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -17,7 +17,7 @@ import (
 )
 
 func TestAccAlert(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -79,7 +79,7 @@ func TestAccAlert(t *testing.T) {
 }
 
 func TestAccAlert_Import(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -99,7 +99,7 @@ func TestAccAlert_Import(t *testing.T) {
 }
 
 func TestAccAlert_WithScopes(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -144,7 +144,7 @@ func TestAccAlert_WithScopes(t *testing.T) {
 // TestAccAlert_WithEmptyScopes tests that explicitly setting scopes = [] works correctly.
 // This verifies the fix for state inconsistency between empty list and null.
 func TestAccAlert_WithEmptyScopes(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -166,7 +166,7 @@ func TestAccAlert_WithEmptyScopes(t *testing.T) {
 
 // TestAccAlert_WithAttributions tests the deprecated attributions field for backward compatibility.
 func TestAccAlert_WithAttributions(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -191,7 +191,7 @@ func TestAccAlert_WithAttributions(t *testing.T) {
 // TestAccAlert_WithEmptyAttributions tests that explicitly setting attributions = [] works correctly.
 // This verifies the fix for state inconsistency between empty list and null.
 func TestAccAlert_WithEmptyAttributions(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -215,7 +215,7 @@ func TestAccAlert_WithEmptyAttributions(t *testing.T) {
 // The API adds the creator as a default recipient when recipients is empty, causing state drift.
 // To prevent this, the provider validates that at least one recipient is specified.
 func TestAccAlert_WithEmptyRecipients(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -232,7 +232,7 @@ func TestAccAlert_WithEmptyRecipients(t *testing.T) {
 
 // TestAccAlert_WithInverseScope tests scope exclusion filters.
 func TestAccAlert_WithInverseScope(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -263,7 +263,7 @@ func TestAccAlert_WithInverseScope(t *testing.T) {
 
 // TestAccAlert_WithEvaluateForEach tests dimension breakdown evaluation.
 func TestAccAlert_WithEvaluateForEach(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -285,7 +285,7 @@ func TestAccAlert_WithEvaluateForEach(t *testing.T) {
 
 // TestAccAlert_PercentageChange tests the percentage-change condition.
 func TestAccAlert_PercentageChange(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -311,7 +311,7 @@ func TestAccAlert_PercentageChange(t *testing.T) {
 
 // TestAccAlert_DifferentOperators tests various operator values.
 func TestAccAlert_DifferentOperators(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -334,7 +334,7 @@ func TestAccAlert_DifferentOperators(t *testing.T) {
 
 // TestAccAlert_DifferentTimeIntervals tests various time_interval values.
 func TestAccAlert_DifferentTimeIntervals(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -367,7 +367,7 @@ func TestAccAlert_DifferentTimeIntervals(t *testing.T) {
 
 // TestAccAlert_NoRecipients tests alerts without explicit recipients (defaults to creator).
 func TestAccAlert_NoRecipients(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -390,7 +390,7 @@ func TestAccAlert_NoRecipients(t *testing.T) {
 
 // TestAccAlert_AllConfigAttributes tests an alert with all optional config attributes.
 func TestAccAlert_AllConfigAttributes(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -737,7 +737,7 @@ resource "doit_alert" "this" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccAlert_Disappears(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	var resourceId string
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -785,7 +785,7 @@ func TestAccAlert_Disappears(t *testing.T) {
 // TestAccAlert_WithExplicitRecipient verifies that the CI user email works as a recipient.
 // This test checks if the API domain validation issue has been fixed.
 func TestAccAlert_WithExplicitRecipient(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	testUser := os.Getenv("TEST_USER")
 	if testUser == "" {
 		t.Skip("TEST_USER not set")

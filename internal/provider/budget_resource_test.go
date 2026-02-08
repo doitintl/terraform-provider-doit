@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -17,7 +17,7 @@ import (
 )
 
 func TestAccBudget(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -245,7 +245,7 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_Import(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -271,7 +271,7 @@ func TestAccBudget_Import(t *testing.T) {
 }
 
 func TestAccBudget_Scopes(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -312,7 +312,7 @@ func TestAccBudget_Scopes(t *testing.T) {
 }
 
 func TestAccBudget_Conflict(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -401,7 +401,7 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_Attributes_Coverage(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -499,7 +499,7 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_SlackChannel(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -570,7 +570,7 @@ resource "doit_budget" "this" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccBudget_Disappears(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	var resourceId string
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -626,7 +626,7 @@ func TestAccBudget_Disappears(t *testing.T) {
 // 2. Empty list (validator blocks)
 // 3. Omitted (API adds creator as owner).
 func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -670,7 +670,7 @@ func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
 
 // TestAccBudget_ListAttributes_AlertsAndRecipients tests all three scenarios for alerts and recipients.
 func TestAccBudget_ListAttributes_AlertsAndRecipients(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{

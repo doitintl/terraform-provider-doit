@@ -5,13 +5,12 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccAlertDataSource_Basic(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-alert-ds")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -19,7 +18,7 @@ func TestAccAlertDataSource_Basic(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAlertDataSourceConfig(n),
+				Config: testAccAlertDataSourceConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"data.doit_alert.test", "id",
@@ -39,10 +38,10 @@ func TestAccAlertDataSource_Basic(t *testing.T) {
 	})
 }
 
-func testAccAlertDataSourceConfig(n int) string {
+func testAccAlertDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_alert" "test" {
-  name = "test-alert-ds-%d"
+  name = %q
   config = {
     metric = {
       type  = "basic"
@@ -59,7 +58,7 @@ resource "doit_alert" "test" {
 data "doit_alert" "test" {
   id = doit_alert.test.id
 }
-`, n)
+`, name)
 }
 
 func TestAccAlertDataSource_NotFound(t *testing.T) {
@@ -87,7 +86,7 @@ data "doit_alert" "notfound" {
 // TestAccAlertDataSource_WithScopes tests reading an alert with scopes configured
 // to exercise the mapScopeToModel function path.
 func TestAccAlertDataSource_WithScopes(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-alert-ds-scopes")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -95,7 +94,7 @@ func TestAccAlertDataSource_WithScopes(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAlertDataSourceWithScopesConfig(n),
+				Config: testAccAlertDataSourceWithScopesConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"data.doit_alert.test", "id",
@@ -113,10 +112,10 @@ func TestAccAlertDataSource_WithScopes(t *testing.T) {
 	})
 }
 
-func testAccAlertDataSourceWithScopesConfig(n int) string {
+func testAccAlertDataSourceWithScopesConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_alert" "test" {
-  name = "test-alert-ds-scopes-%d"
+  name = %q
   config = {
     metric = {
       type  = "basic"
@@ -141,5 +140,5 @@ resource "doit_alert" "test" {
 data "doit_alert" "test" {
   id = doit_alert.test.id
 }
-`, n)
+`, name)
 }

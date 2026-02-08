@@ -6,13 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccAnnotationDataSource_Basic(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-annot-ds")
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -21,7 +20,7 @@ func TestAccAnnotationDataSource_Basic(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAnnotationDataSourceConfig(n, timestamp),
+				Config: testAccAnnotationDataSourceConfig(rName, timestamp),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"data.doit_annotation.test", "id",
@@ -38,17 +37,17 @@ func TestAccAnnotationDataSource_Basic(t *testing.T) {
 	})
 }
 
-func testAccAnnotationDataSourceConfig(n int, timestamp string) string {
+func testAccAnnotationDataSourceConfig(name, timestamp string) string {
 	return fmt.Sprintf(`
 resource "doit_annotation" "test" {
-  content   = "Test annotation content %d"
-  timestamp = "%s"
+  content   = %q
+  timestamp = %q
 }
 
 data "doit_annotation" "test" {
   id = doit_annotation.test.id
 }
-`, n, timestamp)
+`, name, timestamp)
 }
 
 func TestAccAnnotationDataSource_NotFound(t *testing.T) {
@@ -76,7 +75,7 @@ data "doit_annotation" "notfound" {
 // TestAccAnnotationDataSource_WithLabelsAndReports tests reading an annotation
 // with labels and reports to cover the optional field mapping paths.
 func TestAccAnnotationDataSource_WithLabelsAndReports(t *testing.T) {
-	n := rand.Int()                                                      //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-annot-ds")
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -85,7 +84,7 @@ func TestAccAnnotationDataSource_WithLabelsAndReports(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAnnotationDataSourceWithLabelsAndReports(n, timestamp),
+				Config: testAccAnnotationDataSourceWithLabelsAndReports(rName, timestamp),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"data.doit_annotation.test", "id",
@@ -112,15 +111,15 @@ func TestAccAnnotationDataSource_WithLabelsAndReports(t *testing.T) {
 	})
 }
 
-func testAccAnnotationDataSourceWithLabelsAndReports(n int, timestamp string) string {
+func testAccAnnotationDataSourceWithLabelsAndReports(name, timestamp string) string {
 	return fmt.Sprintf(`
 resource "doit_label" "test" {
-  name  = "test-label-for-ds-%d"
+  name  = "%s-label"
   color = "blue"
 }
 
 resource "doit_report" "test" {
-  name = "test-report-for-ds-%d"
+  name = "%s-report"
   config = {
     metric = {
       type  = "basic"
@@ -136,8 +135,8 @@ resource "doit_report" "test" {
 }
 
 resource "doit_annotation" "test" {
-  content   = "Annotation with labels and reports for DS test %d"
-  timestamp = "%s"
+  content   = %q
+  timestamp = %q
   labels    = [doit_label.test.id]
   reports   = [doit_report.test.id]
 }
@@ -145,5 +144,5 @@ resource "doit_annotation" "test" {
 data "doit_annotation" "test" {
   id = doit_annotation.test.id
 }
-`, n, n, n, timestamp)
+`, name, name, name, timestamp)
 }

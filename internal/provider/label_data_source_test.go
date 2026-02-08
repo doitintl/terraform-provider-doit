@@ -5,13 +5,12 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccLabelDataSource_Basic(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-label-ds")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -19,7 +18,7 @@ func TestAccLabelDataSource_Basic(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLabelDataSourceConfig(n),
+				Config: testAccLabelDataSourceConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"data.doit_label.test", "id",
@@ -36,17 +35,17 @@ func TestAccLabelDataSource_Basic(t *testing.T) {
 	})
 }
 
-func testAccLabelDataSourceConfig(n int) string {
+func testAccLabelDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_label" "test" {
-  name  = "test-label-ds-%d"
+  name  = %q
   color = "blue"
 }
 
 data "doit_label" "test" {
   id = doit_label.test.id
 }
-`, n)
+`, name)
 }
 
 func TestAccLabelDataSource_NotFound(t *testing.T) {

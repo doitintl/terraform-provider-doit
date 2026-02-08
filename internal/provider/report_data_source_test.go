@@ -5,8 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -14,7 +13,7 @@ import (
 )
 
 func TestAccReportDataSource(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-report-ds")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -22,13 +21,13 @@ func TestAccReportDataSource(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccReportDataSourceConfig(n),
+				Config: testAccReportDataSourceConfig(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					// Verify data source attributes match resource
 					statecheck.ExpectKnownValue(
 						"data.doit_report.test",
 						tfjsonpath.New("name"),
-						knownvalue.StringExact(fmt.Sprintf("test-ds-report-%d", n))),
+						knownvalue.StringExact(rName)),
 					statecheck.ExpectKnownValue(
 						"data.doit_report.test",
 						tfjsonpath.New("description"),
@@ -57,7 +56,7 @@ func TestAccReportDataSource(t *testing.T) {
 }
 
 func TestAccReportDataSource_WithFilters(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-report-ds-f")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -65,7 +64,7 @@ func TestAccReportDataSource_WithFilters(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccReportDataSourceWithFiltersConfig(n),
+				Config: testAccReportDataSourceWithFiltersConfig(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					// Verify filters are populated in data source
 					statecheck.ExpectKnownValue(
@@ -83,10 +82,10 @@ func TestAccReportDataSource_WithFilters(t *testing.T) {
 	})
 }
 
-func testAccReportDataSourceConfig(i int) string {
+func testAccReportDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_report" "test" {
-    name        = "test-ds-report-%d"
+    name        = %q
     description = "test report for data source"
     config = {
         metric = {
@@ -105,13 +104,13 @@ resource "doit_report" "test" {
 data "doit_report" "test" {
     id = doit_report.test.id
 }
-`, i)
+`, name)
 }
 
-func testAccReportDataSourceWithFiltersConfig(i int) string {
+func testAccReportDataSourceWithFiltersConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_report" "test" {
-    name        = "test-ds-report-filters-%d"
+    name        = %q
     description = "test report with filters for data source"
     config = {
         metric = {
@@ -145,7 +144,7 @@ resource "doit_report" "test" {
 data "doit_report" "test" {
     id = doit_report.test.id
 }
-`, i)
+`, name)
 }
 
 func TestAccReportDataSource_NotFound(t *testing.T) {

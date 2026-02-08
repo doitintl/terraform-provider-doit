@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -21,7 +21,7 @@ func testProject() string {
 }
 
 func TestAccAllocation(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -71,7 +71,7 @@ func TestAccAllocation(t *testing.T) {
 }
 
 func TestAccAllocation_Group(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -110,7 +110,7 @@ func TestAccAllocation_Group(t *testing.T) {
 }
 
 func TestAccAllocation_Validation(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -126,7 +126,7 @@ func TestAccAllocation_Validation(t *testing.T) {
 }
 
 func TestAccAllocation_Group_Select(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -165,7 +165,7 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -181,7 +181,7 @@ func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -411,7 +411,7 @@ resource "doit_allocation" "single_with_unallocated" {
 // TestAccAllocation_MissingNameInCreateAction tests that rules with action="create"
 // are rejected at plan time if they don't have a "name" field.
 func TestAccAllocation_MissingNameInCreateAction(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -453,7 +453,7 @@ resource "doit_allocation" "missing_name" {
 // TestAccAllocation_ComponentFlags tests the include_null and inverse_selection
 // boolean flags on allocation rule components.
 func TestAccAllocation_ComponentFlags(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
@@ -511,7 +511,7 @@ resource "doit_allocation" "flags" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccAllocation_Disappears(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 	var resourceId string
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -558,7 +558,7 @@ func TestAccAllocation_Disappears(t *testing.T) {
 // (returns empty list even when API returns nil), but the validator guides
 // users toward omitting the attribute instead, which is cleaner.
 func TestAccAllocation_ListAttributes_EmptyRules(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -587,7 +587,7 @@ resource "doit_allocation" "this" {
 // TestAccAllocation_ListAttributes_EmptyComponents tests that an empty components list
 // in a rule is rejected - the formula validation fails without valid components.
 func TestAccAllocation_ListAttributes_EmptyComponents(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -618,7 +618,7 @@ resource "doit_allocation" "this" {
 // TestAccAllocation_ListAttributes_OmittedRulesAndRule tests that omitting both
 // rule and rules produces an error.
 func TestAccAllocation_ListAttributes_OmittedRulesAndRule(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
