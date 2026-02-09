@@ -23,8 +23,20 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 			"dimensions": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"get_id": schema.StringAttribute{
-							Computed: true,
+						"id": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Unique identifier for the item.",
+							MarkdownDescription: "Unique identifier for the item.",
+						},
+						"label": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Human-readable display label for the item.",
+							MarkdownDescription: "Human-readable display label for the item.",
+						},
+						"type": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Category or classification of the item.",
+							MarkdownDescription: "Category or classification of the item.",
 						},
 					},
 					CustomType: DimensionsType{
@@ -123,22 +135,58 @@ func (t DimensionsType) ValueFromObject(ctx context.Context, in basetypes.Object
 
 	attributes := in.Attributes()
 
-	getIdAttribute, ok := attributes["get_id"]
+	idAttribute, ok := attributes["id"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`get_id is missing from object`)
+			`id is missing from object`)
 
 		return nil, diags
 	}
 
-	getIdVal, ok := getIdAttribute.(basetypes.StringValue)
+	idVal, ok := idAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`get_id expected to be basetypes.StringValue, was: %T`, getIdAttribute))
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	labelAttribute, ok := attributes["label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`label is missing from object`)
+
+		return nil, diags
+	}
+
+	labelVal, ok := labelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`label expected to be basetypes.StringValue, was: %T`, labelAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return nil, diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
 	}
 
 	if diags.HasError() {
@@ -146,8 +194,10 @@ func (t DimensionsType) ValueFromObject(ctx context.Context, in basetypes.Object
 	}
 
 	return DimensionsValue{
-		GetId: getIdVal,
-		state: attr.ValueStateKnown,
+		Id:             idVal,
+		Label:          labelVal,
+		DimensionsType: typeVal,
+		state:          attr.ValueStateKnown,
 	}, diags
 }
 
@@ -214,22 +264,58 @@ func NewDimensionsValue(attributeTypes map[string]attr.Type, attributes map[stri
 		return NewDimensionsValueUnknown(), diags
 	}
 
-	getIdAttribute, ok := attributes["get_id"]
+	idAttribute, ok := attributes["id"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`get_id is missing from object`)
+			`id is missing from object`)
 
 		return NewDimensionsValueUnknown(), diags
 	}
 
-	getIdVal, ok := getIdAttribute.(basetypes.StringValue)
+	idVal, ok := idAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`get_id expected to be basetypes.StringValue, was: %T`, getIdAttribute))
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	labelAttribute, ok := attributes["label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`label is missing from object`)
+
+		return NewDimensionsValueUnknown(), diags
+	}
+
+	labelVal, ok := labelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`label expected to be basetypes.StringValue, was: %T`, labelAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return NewDimensionsValueUnknown(), diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
 	}
 
 	if diags.HasError() {
@@ -237,8 +323,10 @@ func NewDimensionsValue(attributeTypes map[string]attr.Type, attributes map[stri
 	}
 
 	return DimensionsValue{
-		GetId: getIdVal,
-		state: attr.ValueStateKnown,
+		Id:             idVal,
+		Label:          labelVal,
+		DimensionsType: typeVal,
+		state:          attr.ValueStateKnown,
 	}, diags
 }
 
@@ -310,31 +398,51 @@ func (t DimensionsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = DimensionsValue{}
 
 type DimensionsValue struct {
-	GetId basetypes.StringValue `tfsdk:"get_id"`
-	state attr.ValueState
+	Id             basetypes.StringValue `tfsdk:"id"`
+	Label          basetypes.StringValue `tfsdk:"label"`
+	DimensionsType basetypes.StringValue `tfsdk:"type"`
+	state          attr.ValueState
 }
 
 func (v DimensionsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["get_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["label"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 3)
 
-		val, err = v.GetId.ToTerraformValue(ctx)
+		val, err = v.Id.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["get_id"] = val
+		vals["id"] = val
+
+		val, err = v.Label.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["label"] = val
+
+		val, err = v.DimensionsType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -366,7 +474,9 @@ func (v DimensionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	var diags diag.Diagnostics
 
 	attributeTypes := map[string]attr.Type{
-		"get_id": basetypes.StringType{},
+		"id":    basetypes.StringType{},
+		"label": basetypes.StringType{},
+		"type":  basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -380,7 +490,9 @@ func (v DimensionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"get_id": v.GetId,
+			"id":    v.Id,
+			"label": v.Label,
+			"type":  v.DimensionsType,
 		})
 
 	return objVal, diags
@@ -401,7 +513,15 @@ func (v DimensionsValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.GetId.Equal(other.GetId) {
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Label.Equal(other.Label) {
+		return false
+	}
+
+	if !v.DimensionsType.Equal(other.DimensionsType) {
 		return false
 	}
 
@@ -418,6 +538,8 @@ func (v DimensionsValue) Type(ctx context.Context) attr.Type {
 
 func (v DimensionsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"get_id": basetypes.StringType{},
+		"id":    basetypes.StringType{},
+		"label": basetypes.StringType{},
+		"type":  basetypes.StringType{},
 	}
 }

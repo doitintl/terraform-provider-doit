@@ -2243,9 +2243,16 @@ type SlackChannel struct {
 	Workspace  *string `json:"workspace,omitempty"`
 }
 
-// SortableItem An object used in lists where items can be sorted.
+// SortableItem An object used in lists where items can be sorted (e.g., dimensions, attributions).
 type SortableItem struct {
-	GetID *string `json:"GetID,omitempty"`
+	// Id Unique identifier for the item.
+	Id *string `json:"id,omitempty"`
+
+	// Label Human-readable display label for the item.
+	Label *string `json:"label,omitempty"`
+
+	// Type Category or classification of the item.
+	Type *string `json:"type,omitempty"`
 }
 
 // Subscription Subscription-related metadata for an asset.

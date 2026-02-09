@@ -21,9 +21,18 @@ data "doit_dimensions" "gcp" {
   filter = "type:google-cloud"
 }
 
-# Output all dimension keys
-output "all_dimension_keys" {
-  value = [for d in data.doit_dimensions.all.dimensions : d.get_id]
+# Output dimension IDs
+output "all_dimension_ids" {
+  value = [for d in data.doit_dimensions.all.dimensions : d.id]
+}
+
+# Output dimensions with labels and types
+output "dimensions_detailed" {
+  value = [for d in data.doit_dimensions.all.dimensions : {
+    id    = d.id
+    label = d.label
+    type  = d.type
+  }]
 }
 
 output "dimension_count" {
@@ -53,4 +62,6 @@ The fields eligible for filtering are: type, label, key.
 
 Read-Only:
 
-- `get_id` (String)
+- `id` (String) Unique identifier for the item.
+- `label` (String) Human-readable display label for the item.
+- `type` (String) Category or classification of the item.

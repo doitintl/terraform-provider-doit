@@ -2386,9 +2386,24 @@
 							"nested_object": {
 								"attributes": [
 									{
-										"name": "get_id",
+										"name": "id",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "Unique identifier for the item."
+										}
+									},
+									{
+										"name": "label",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Human-readable display label for the item."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Category or classification of the item."
 										}
 									}
 								]
