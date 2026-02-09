@@ -789,3 +789,85 @@ resource "doit_report" "this" {
 }
 `, i)
 }
+
+// TestAccReport_WithMetrics tests reports using the new metrics list (replaces deprecated singular metric).
+// This validates that multiple metrics (up to 4) work correctly.
+func TestAccReport_WithMetrics(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithMetrics(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.metrics_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.metrics_test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-metrics-%d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_report.metrics_test",
+						tfjsonpath.New("config").AtMapKey("metrics"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectExact(map[string]knownvalue.Check{
+								"type":  knownvalue.StringExact("basic"),
+								"value": knownvalue.StringExact("cost"),
+							}),
+							knownvalue.ObjectExact(map[string]knownvalue.Check{
+								"type":  knownvalue.StringExact("basic"),
+								"value": knownvalue.StringExact("usage"),
+							}),
+						})),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithMetrics(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithMetrics(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metrics_test" {
+    name = "test-metrics-%d"
+    description = "Report using new metrics list (multiple metrics)"
+    config = {
+        # Use new metrics list instead of deprecated singular metric
+        metrics = [
+            {
+                type  = "basic"
+                value = "cost"
+            },
+            {
+                type  = "basic"
+                value = "usage"
+            }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}

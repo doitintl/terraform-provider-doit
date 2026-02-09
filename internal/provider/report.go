@@ -257,6 +257,28 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		externalConfig.Metric = metric
 	}
 
+	// Handle metrics list (new multi-metric support, replaces deprecated singular metric)
+	// When user explicitly sets metrics (including []), send it to API.
+	// Empty array means "clear metrics" - API should reject if not allowed.
+	if !config.Metrics.IsNull() && !config.Metrics.IsUnknown() {
+		var metricsValues []resource_report.MetricsValue
+		diags.Append(config.Metrics.ElementsAs(ctx, &metricsValues, false)...)
+		if !diags.HasError() {
+			externalMetrics := make([]models.ExternalMetric, len(metricsValues))
+			for i, m := range metricsValues {
+				externalMetrics[i] = models.ExternalMetric{}
+				if !m.MetricsType.IsNull() && !m.MetricsType.IsUnknown() {
+					mType := models.ExternalMetricType(m.MetricsType.ValueString())
+					externalMetrics[i].Type = &mType
+				}
+				if !m.Value.IsNull() && !m.Value.IsUnknown() {
+					externalMetrics[i].Value = m.Value.ValueStringPointer()
+				}
+			}
+			externalConfig.Metrics = &externalMetrics
+		}
+	}
+
 	if !config.MetricFilter.IsNull() && !config.MetricFilter.IsUnknown() {
 		externalConfig.MetricFilter = &models.ExternalConfigMetricFilter{}
 		if !config.MetricFilter.Metric.IsNull() && !config.MetricFilter.Metric.IsUnknown() {
@@ -565,6 +587,37 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		return diags
 	}
 	configMap["metric"] = metricVal
+
+	// Nested List: Metrics (new multi-metric support)
+	if config.Metrics != nil && len(*config.Metrics) > 0 {
+		metricsVals := make([]attr.Value, len(*config.Metrics))
+		for i, m := range *config.Metrics {
+			mMap := map[string]attr.Value{
+				"value": types.StringPointerValue(m.Value),
+			}
+			if m.Type != nil {
+				mMap["type"] = types.StringValue(string(*m.Type))
+			} else {
+				mMap["type"] = types.StringNull()
+			}
+			mv, mvDiags := resource_report.NewMetricsValue(resource_report.MetricsValue{}.AttributeTypes(ctx), mMap)
+			diags.Append(mvDiags...)
+			if diags.HasError() {
+				return diags
+			}
+			metricsVals[i] = mv
+		}
+		metricsList, metricsListDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), metricsVals)
+		diags.Append(metricsListDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		configMap["metrics"] = metricsList
+	} else {
+		var emptyMetricsDiags diag.Diagnostics
+		configMap["metrics"], emptyMetricsDiags = types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
+		diags.Append(emptyMetricsDiags...)
+	}
 
 	// Nested Object: MetricFilter
 	if config.MetricFilter != nil {
