@@ -173,7 +173,9 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			dimVal, diags := datasource_dimensions.NewDimensionsValue(
 				datasource_dimensions.DimensionsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"get_id": types.StringPointerValue(dim.GetID),
+					"id":    types.StringPointerValue(dim.Id),
+					"label": types.StringPointerValue(dim.Label),
+					"type":  types.StringPointerValue(dim.Type),
 				},
 			)
 			resp.Diagnostics.Append(diags...)

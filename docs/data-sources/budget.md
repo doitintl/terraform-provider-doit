@@ -15,7 +15,7 @@ Track actual cloud spend against planned spend.
 ```terraform
 # Retrieve a budget by its ID
 data "doit_budget" "example" {
-  id = doit_budget.my_budget.id
+  id = "your-budget-id"
 }
 
 # Output budget details

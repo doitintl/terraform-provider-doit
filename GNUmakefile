@@ -35,4 +35,8 @@ testacc:
 testacc-run:
 	@test -f .envrc.local && . ./.envrc.local; TF_ACC=1 go test -v -timeout 120m ./internal/provider/... -run $(TEST)
 
-.PHONY: fmt lint test testacc testacc-run build install generate docs
+# Validate all examples against the provider schema
+validate-examples:
+	./scripts/validate_examples.sh
+
+.PHONY: fmt lint test testacc testacc-run build install generate docs validate-examples

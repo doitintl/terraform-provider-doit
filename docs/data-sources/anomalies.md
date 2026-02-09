@@ -18,7 +18,7 @@ data "doit_anomalies" "all" {}
 
 # Filter by severity
 data "doit_anomalies" "critical" {
-  filter = "severityLevel:[Critical]"
+  filter = "severityLevel:critical"
 }
 
 # Output anomaly details
