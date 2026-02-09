@@ -167,10 +167,6 @@ resource "doit_label" "invalid_test" {
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccLabel_Disappears(t *testing.T) {
-	// Skip until API DELETE returns 404 instead of 500 for non-existent resources
-	// See: https://doitintl.atlassian.net/browse/CMP-37040
-	t.Skip("Skipping until API DELETE returns 404 instead of 500 (CMP-37040)")
-
 	rName := acctest.RandomWithPrefix("tf-acc-label")
 	var resourceId string
 
@@ -201,8 +197,8 @@ func TestAccLabel_Disappears(t *testing.T) {
 					if err != nil {
 						t.Fatalf("Failed to delete label via API: %v", err)
 					}
-					if resp.StatusCode() != 204 && resp.StatusCode() != 404 {
-						t.Fatalf("Expected 204 or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
+					if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
+						t.Fatalf("Expected 200, 204 or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
 					}
 				},
 				Config:             testAccLabel(rName),
