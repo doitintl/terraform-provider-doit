@@ -13,8 +13,8 @@ import (
 // TestAccAnomaliesDataSource_MaxResultsOnly tests that setting max_results limits results.
 func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 	anomalyCount := getAnomalyCount(t)
-	if anomalyCount < 3 {
-		t.Skipf("Need at least 3 anomalies to test pagination, got %d", anomalyCount)
+	if anomalyCount < 2 {
+		t.Skipf("Need at least 2 anomalies to test pagination, got %d", anomalyCount)
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -23,14 +23,14 @@ func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAnomaliesDataSourceMaxResultsConfig(2),
+				Config: testAccAnomaliesDataSourceMaxResultsConfig(1),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "2"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "page_token"),
 				),
 			},
 			{
-				Config:   testAccAnomaliesDataSourceMaxResultsConfig(2),
+				Config:   testAccAnomaliesDataSourceMaxResultsConfig(1),
 				PlanOnly: true,
 			},
 		},
@@ -83,8 +83,8 @@ func TestAccAnomaliesDataSource_MaxResultsAndPageToken(t *testing.T) {
 	}
 
 	anomalyCount := getAnomalyCount(t)
-	if anomalyCount < 3 {
-		t.Skipf("Need at least 3 anomalies to test pagination, got %d", anomalyCount)
+	if anomalyCount < 2 {
+		t.Skipf("Need at least 2 anomalies to test pagination, got %d", anomalyCount)
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
