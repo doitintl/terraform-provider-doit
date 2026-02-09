@@ -258,8 +258,10 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	// Handle metrics list (new multi-metric support, replaces deprecated singular metric)
-	// When user explicitly sets metrics (including []), send it to API.
-	// Empty array means "clear metrics" - API should reject if not allowed.
+	// - If user sets a non-empty list: send it to API
+	// - If user sets an empty list []: send nothing (omit from request), API preserves existing
+	// - If user omits (null): send nothing (omit from request), API uses defaults
+	// Note: We only send metrics if the list has elements to avoid accidental state inconsistency.
 	if !config.Metrics.IsNull() && !config.Metrics.IsUnknown() {
 		var metricsValues []resource_report.MetricsValue
 		diags.Append(config.Metrics.ElementsAs(ctx, &metricsValues, false)...)
@@ -275,7 +277,11 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					externalMetrics[i].Value = m.Value.ValueStringPointer()
 				}
 			}
-			externalConfig.Metrics = &externalMetrics
+			// Only send metrics to API if list is non-empty
+			// Empty list means user wants to clear, but API doesn't support this - omit from request
+			if len(externalMetrics) > 0 {
+				externalConfig.Metrics = &externalMetrics
+			}
 		}
 	}
 
@@ -614,6 +620,8 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		}
 		configMap["metrics"] = metricsList
 	} else {
+		// API returned no metrics - return empty list per GEMINI.md section 10.2
+		// (user-configurable attributes must always return empty list, not null)
 		var emptyMetricsDiags diag.Diagnostics
 		configMap["metrics"], emptyMetricsDiags = types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
 		diags.Append(emptyMetricsDiags...)

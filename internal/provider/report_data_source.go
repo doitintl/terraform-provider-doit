@@ -306,10 +306,18 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	if config.Metrics != nil && len(*config.Metrics) > 0 {
 		metricsVals := make([]attr.Value, len(*config.Metrics))
 		for i, m := range *config.Metrics {
-			mVal, mDiags := ds.externalMetricToValue(ctx, &models.ExternalMetric{
-				Type:  m.Type,
-				Value: m.Value,
-			})
+			// Build MetricsValue directly (not MetricValue - different type!)
+			mMap := map[string]attr.Value{
+				"type":  types.StringNull(),
+				"value": types.StringNull(),
+			}
+			if m.Type != nil {
+				mMap["type"] = types.StringValue(string(*m.Type))
+			}
+			if m.Value != nil {
+				mMap["value"] = types.StringValue(*m.Value)
+			}
+			mVal, mDiags := datasource_report.NewMetricsValue(datasource_report.MetricsValue{}.AttributeTypes(ctx), mMap)
 			diags.Append(mDiags...)
 			if diags.HasError() {
 				log.Println("Error creating metrics list value")

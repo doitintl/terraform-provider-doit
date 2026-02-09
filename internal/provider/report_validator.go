@@ -48,9 +48,10 @@ func (v reportMetricsLengthValidator) ValidateResource(ctx context.Context, req 
 			path.Root("config").AtName("metrics"),
 			"Empty Metrics List Not Supported",
 			"The 'metrics' attribute cannot be set to an empty list. "+
-				"When specified, at least one metric (up to 4) must be provided. "+
-				"If you want to use the deprecated single 'metric' field instead, "+
-				"omit the 'metrics' attribute entirely.",
+				"The API does not support clearing metrics with an empty array - it silently preserves existing values, "+
+				"causing Terraform state inconsistency. Options:\n"+
+				"  - Specify 1-4 metrics: metrics = [{type = \"basic\", value = \"cost\"}]\n"+
+				"  - Omit the attribute entirely to let the API use its default metric",
 		)
 		return
 	}
