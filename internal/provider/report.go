@@ -620,7 +620,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		}
 		configMap["metrics"] = metricsList
 	} else {
-		// API returned no metrics - return empty list per GEMINI.md section 10.2
+		// API returned no metrics - return empty list
 		// (user-configurable attributes must always return empty list, not null)
 		var emptyMetricsDiags diag.Diagnostics
 		configMap["metrics"], emptyMetricsDiags = types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
