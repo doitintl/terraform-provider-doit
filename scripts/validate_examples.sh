@@ -71,6 +71,10 @@ EOF
     # Run terraform init and validate
     cd "$TEMP_DIR"
 
+    # Use plugin cache to avoid re-downloading providers for each example
+    export TF_PLUGIN_CACHE_DIR="$PROVIDER_DIR/.terraform-cache"
+    mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
     if terraform init -backend=false > /dev/null 2>&1; then
         if terraform validate > /dev/null 2>&1; then
             echo -e "${GREEN}✓${NC} $reldir"
@@ -107,7 +111,8 @@ if [ -f "$PROVIDER_DIR/.validate_failed" ]; then
 fi
 
 # Cleanup temp files
-rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" "$PROVIDER_DIR/.terraformrc-validate"
+rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" "$PROVIDER_DIR/.terraformrc-validate" "$PROVIDER_DIR/terraform-provider-doit"
+rm -rf "$PROVIDER_DIR/.terraform-cache"
 
 if [ "$FAILED" -gt 0 ]; then
     exit 1
