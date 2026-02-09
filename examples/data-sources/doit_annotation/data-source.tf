@@ -4,18 +4,18 @@ data "doit_annotation" "example" {
 }
 
 # Output annotation details
-output "annotation_title" {
-  value = data.doit_annotation.example.title
-}
-
 output "annotation_content" {
   value = data.doit_annotation.example.content
 }
 
-output "annotation_scope" {
-  value = data.doit_annotation.example.scope
+output "annotation_timestamp" {
+  value = data.doit_annotation.example.timestamp
 }
 
 output "annotation_labels" {
   value = data.doit_annotation.example.labels
+}
+
+output "annotation_reports" {
+  value = data.doit_annotation.example.reports
 }
