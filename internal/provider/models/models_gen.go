@@ -1038,13 +1038,12 @@ type AnomalySKUArray = []AnomalySKU
 // AssetItem Detailed information about a single asset.
 type AssetItem struct {
 	// CreateTime The time when the asset was created, in milliseconds since the epoch.
-	CreateTime   *int64  `json:"createTime,omitempty"`
-	Id           *string `json:"id,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	Quantity     *int64  `json:"quantity,omitempty"`
-	Type         *string `json:"type,omitempty"`
-	Url          *string `json:"url,omitempty"`
-	UsedLicenses *int64  `json:"usedLicenses,omitempty"`
+	CreateTime *int64  `json:"createTime,omitempty"`
+	Id         *string `json:"id,omitempty"`
+	Name       *string `json:"name,omitempty"`
+	Quantity   *int64  `json:"quantity,omitempty"`
+	Type       *string `json:"type,omitempty"`
+	Url        *string `json:"url,omitempty"`
 }
 
 // AssetProperties Additional properties associated with an asset.
@@ -1640,11 +1639,15 @@ type ExternalConfig struct {
 	// Layout Type of visualization or output format.
 	Layout *ExternalRenderer `json:"layout,omitempty"`
 
-	// Metric Metric selector used in reports and filters.
+	// Metric Deprecated: Use 'metrics' instead.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Metric *ExternalMetric `json:"metric,omitempty"`
 
 	// MetricFilter Metric filter to limit report rows by metric value.
 	MetricFilter *ExternalConfigMetricFilter `json:"metricFilter,omitempty"`
+
+	// Metrics The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
+	Metrics *[]ExternalMetric `json:"metrics,omitempty"`
 
 	// SortDimensions This option has no impact when reading reports via API.
 	SortDimensions *ExternalConfigSortDimensions `json:"sortDimensions,omitempty"`
@@ -3061,8 +3064,15 @@ type DatahubEventsJSONBody_Events_Dimensions_Value struct {
 
 // DeleteDatahubEventsByFilterJSONBody defines parameters for DeleteDatahubEventsByFilter.
 type DeleteDatahubEventsByFilterJSONBody struct {
-	EventIds  *[]string `json:"eventIds,omitempty"`
-	Providers *[]string `json:"providers,omitempty"`
+	// Dataset The dataset (provider) of the events to be deleted.
+	Dataset string `json:"dataset"`
+
+	// EndTime The end timestamp of the time range in RFC3339 format.
+	EndTime  *time.Time `json:"endTime,omitempty"`
+	EventIds *[]string  `json:"eventIds,omitempty"`
+
+	// StartTime The start timestamp of the time range in RFC3339 format.
+	StartTime *time.Time `json:"startTime,omitempty"`
 }
 
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
@@ -3475,9 +3485,6 @@ type ClientInterface interface {
 
 	// DatahubEventsCSVFileWithBody request with any body
 	DatahubEventsCSVFileWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteDatahubEvents request
-	DeleteDatahubEvents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DatahubEventsWithBody request with any body
 	DatahubEventsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4460,18 +4467,6 @@ func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEdito
 
 func (c *Client) DatahubEventsCSVFileWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDatahubEventsCSVFileRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteDatahubEvents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteDatahubEventsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -7984,33 +7979,6 @@ func NewDatahubEventsCSVFileRequestWithBody(server string, contentType string, b
 	return req, nil
 }
 
-// NewDeleteDatahubEventsRequest generates requests for DeleteDatahubEvents
-func NewDeleteDatahubEventsRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/datahub/v1/events")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewDatahubEventsRequest calls the generic DatahubEvents builder with application/json body
 func NewDatahubEventsRequest(server string, body DatahubEventsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -8873,9 +8841,6 @@ type ClientWithResponsesInterface interface {
 
 	// DatahubEventsCSVFileWithBodyWithResponse request with any body
 	DatahubEventsCSVFileWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DatahubEventsCSVFileResp, error)
-
-	// DeleteDatahubEventsWithResponse request
-	DeleteDatahubEventsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteDatahubEventsResp, error)
 
 	// DatahubEventsWithBodyWithResponse request with any body
 	DatahubEventsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DatahubEventsResp, error)
@@ -10645,33 +10610,6 @@ func (r DatahubEventsCSVFileResp) StatusCode() int {
 	return 0
 }
 
-type DeleteDatahubEventsResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *N401
-	JSON403 *N403
-	JSON500 *N500
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteDatahubEventsResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteDatahubEventsResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type DatahubEventsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -11726,15 +11664,6 @@ func (c *ClientWithResponses) DatahubEventsCSVFileWithBodyWithResponse(ctx conte
 		return nil, err
 	}
 	return ParseDatahubEventsCSVFileResp(rsp)
-}
-
-// DeleteDatahubEventsWithResponse request returning *DeleteDatahubEventsResp
-func (c *ClientWithResponses) DeleteDatahubEventsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteDatahubEventsResp, error) {
-	rsp, err := c.DeleteDatahubEvents(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteDatahubEventsResp(rsp)
 }
 
 // DatahubEventsWithBodyWithResponse request with arbitrary body returning *DatahubEventsResp
@@ -15179,55 +15108,6 @@ func ParseDatahubEventsCSVFileResp(rsp *http.Response) (*DatahubEventsCSVFileRes
 			return nil, err
 		}
 		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest N401
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest N500
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteDatahubEventsResp parses an HTTP response from a DeleteDatahubEventsWithResponse call
-func ParseDeleteDatahubEventsResp(rsp *http.Response) (*DeleteDatahubEventsResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteDatahubEventsResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest N401

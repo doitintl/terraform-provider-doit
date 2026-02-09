@@ -581,7 +581,7 @@
 						"name": "content",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "The content of the annotation"
+							"description": "The content of the annotation."
 						}
 					},
 					{
@@ -601,40 +601,40 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "List of report IDs associated with the annotation"
+							"description": "List of report IDs associated with the annotation."
 						}
 					},
 					{
 						"name": "timestamp",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "The date associated with the annotation"
+							"description": "The date associated with the annotation."
 						}
 					},
 					{
 						"name": "create_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The time when the annotation was created"
+							"description": "The creation time of the annotation."
 						}
 					},
 					{
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The unique identifier of the annotation"
+							"description": "The unique identifier of the annotation."
 						}
 					},
 					{
 						"name": "update_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The time when the annotation was last updated"
+							"description": "The time when the annotation was last updated."
 						}
 					}
 				],
-				"description": "Annotations allow you to add notes and context to your cloud cost data.",
-				"markdown_description": "Annotations allow you to add notes and context to your cloud cost data."
+				"description": "Custom notes added to cost data to provide contextual information.",
+				"markdown_description": "Custom notes added to cost data to provide contextual information."
 			}
 		},
 		{
@@ -1022,7 +1022,7 @@
 						"name": "color",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "The color of the label",
+							"description": "The color of the label.",
 							"validators": [
 								{
 									"custom": {
@@ -1041,166 +1041,40 @@
 						"name": "name",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "The name of the label"
+							"description": "The name of the label."
 						}
 					},
 					{
 						"name": "create_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The time when the label was created"
+							"description": "The time when the label was created."
 						}
 					},
 					{
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The unique identifier of the label"
+							"description": "The unique identifier of the label."
 						}
 					},
 					{
 						"name": "type",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The type of the label (custom or preset)"
+							"description": "The type of the label (custom or preset)."
 						}
 					},
 					{
 						"name": "update_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The time when the label was last updated"
+							"description": "The time when the label was last updated."
 						}
 					}
 				],
-				"description": "Labels help you organize and categorize your cloud resources.",
-				"markdown_description": "Labels help you organize and categorize your cloud resources."
-			}
-		},
-		{
-			"name": "label",
-			"schema": {
-				"attributes": [
-					{
-						"name": "color",
-						"string": {
-							"computed_optional_required": "required",
-							"description": "The color of the label",
-							"validators": [
-								{
-									"custom": {
-										"imports": [
-											{
-												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-											}
-										],
-										"schema_definition": "stringvalidator.OneOf(\n\"blue\",\n\"skyBlue\",\n\"teal\",\n\"mint\",\n\"lime\",\n\"softYellow\",\n\"apricot\",\n\"lavender\",\n\"purple\",\n\"rosePink\",\n\"slateGrey\",\n)"
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "name",
-						"string": {
-							"computed_optional_required": "required",
-							"description": "The name of the label"
-						}
-					},
-					{
-						"name": "create_time",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The time when the label was created"
-						}
-					},
-					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The unique identifier of the label"
-						}
-					},
-					{
-						"name": "type",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The type of the label (custom or preset)"
-						}
-					},
-					{
-						"name": "update_time",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The time when the label was last updated"
-						}
-					}
-				],
-				"description": "Labels help you organize and categorize your cloud resources.",
-				"markdown_description": "Labels help you organize and categorize your cloud resources."
-			}
-		},
-		{
-			"name": "label",
-			"schema": {
-				"attributes": [
-					{
-						"name": "color",
-						"string": {
-							"computed_optional_required": "required",
-							"description": "The color of the label",
-							"validators": [
-								{
-									"custom": {
-										"imports": [
-											{
-												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-											}
-										],
-										"schema_definition": "stringvalidator.OneOf(\n\"blue\",\n\"skyBlue\",\n\"teal\",\n\"mint\",\n\"lime\",\n\"softYellow\",\n\"apricot\",\n\"lavender\",\n\"purple\",\n\"rosePink\",\n\"slateGrey\",\n)"
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "name",
-						"string": {
-							"computed_optional_required": "required",
-							"description": "The name of the label"
-						}
-					},
-					{
-						"name": "create_time",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The time when the label was created"
-						}
-					},
-					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The unique identifier of the label"
-						}
-					},
-					{
-						"name": "type",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The type of the label (custom or preset)"
-						}
-					},
-					{
-						"name": "update_time",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The time when the label was last updated"
-						}
-					}
-				],
-				"description": "Labels help you organize and categorize your cloud resources.",
-				"markdown_description": "Labels help you organize and categorize your cloud resources."
+				"description": "Create and manage labels to organize and categorize your cloud resources.",
+				"markdown_description": "Create and manage labels to organize and categorize your cloud resources."
 			}
 		},
 		{
@@ -1504,7 +1378,7 @@
 																			}
 																		}
 																	],
-																	"description": "Metric selector used in reports and filters."
+																	"description": "Deprecated: Use 'metrics' instead."
 																}
 															},
 															{
@@ -1629,7 +1503,7 @@
 												}
 											}
 										],
-										"description": "Metric selector used in reports and filters."
+										"description": "Deprecated: Use 'metrics' instead."
 									}
 								},
 								{
@@ -1669,7 +1543,7 @@
 															}
 														}
 													],
-													"description": "Metric selector used in reports and filters."
+													"description": "Deprecated: Use 'metrics' instead."
 												}
 											},
 											{
@@ -1702,6 +1576,43 @@
 											}
 										],
 										"description": "Metric filter to limit report rows by metric value."
+									}
+								},
+								{
+									"name": "metrics",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Type of metric to use.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"basic\",\n\"custom\",\n\"extended\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "value",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+													}
+												}
+											]
+										},
+										"description": "The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4."
 									}
 								},
 								{

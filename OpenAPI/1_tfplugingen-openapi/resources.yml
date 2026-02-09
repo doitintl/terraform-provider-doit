@@ -65,6 +65,7 @@ resources:
       method: PATCH
     delete:
       path: /analytics/v1/annotations/{id}
+      method: DELETE
   label:
     create:
       path: /analytics/v1/labels

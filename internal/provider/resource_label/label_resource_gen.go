@@ -16,8 +16,8 @@ func LabelResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"color": schema.StringAttribute{
 				Required:            true,
-				Description:         "The color of the label\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`",
-				MarkdownDescription: "The color of the label\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`",
+				Description:         "The color of the label.\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`",
+				MarkdownDescription: "The color of the label.\nPossible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"blue",
@@ -36,32 +36,32 @@ func LabelResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"create_time": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The time when the label was created",
-				MarkdownDescription: "The time when the label was created",
+				Description:         "The time when the label was created.",
+				MarkdownDescription: "The time when the label was created.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The unique identifier of the label",
-				MarkdownDescription: "The unique identifier of the label",
+				Description:         "The unique identifier of the label.",
+				MarkdownDescription: "The unique identifier of the label.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the label",
-				MarkdownDescription: "The name of the label",
+				Description:         "The name of the label.",
+				MarkdownDescription: "The name of the label.",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The type of the label (custom or preset)",
-				MarkdownDescription: "The type of the label (custom or preset)",
+				Description:         "The type of the label (custom or preset).",
+				MarkdownDescription: "The type of the label (custom or preset).",
 			},
 			"update_time": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The time when the label was last updated",
-				MarkdownDescription: "The time when the label was last updated",
+				Description:         "The time when the label was last updated.",
+				MarkdownDescription: "The time when the label was last updated.",
 			},
 		},
-		Description:         "Labels help you organize and categorize your cloud resources.",
-		MarkdownDescription: "Labels help you organize and categorize your cloud resources.",
+		Description:         "Create and manage labels to organize and categorize your cloud resources.",
+		MarkdownDescription: "Create and manage labels to organize and categorize your cloud resources.",
 	}
 }
 

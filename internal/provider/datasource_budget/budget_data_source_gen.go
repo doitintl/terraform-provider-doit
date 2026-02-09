@@ -38,8 +38,8 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "List of up to three thresholds defined as a percentage of amount",
-				MarkdownDescription: "List of up to three thresholds defined as a percentage of amount",
+				Description:         "List of up to three thresholds defined as a percentage of amount.",
+				MarkdownDescription: "List of up to three thresholds defined as a percentage of amount.",
 			},
 			"amount": schema.Float64Attribute{
 				Computed:            true,
@@ -63,13 +63,13 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "List of permitted users to view/edit the report",
-				MarkdownDescription: "List of permitted users to view/edit the report",
+				Description:         "List of permitted users to view/edit the report.",
+				MarkdownDescription: "List of permitted users to view/edit the report.",
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Creation time (in UNIX timestamp)",
-				MarkdownDescription: "Creation time (in UNIX timestamp)",
+				Description:         "Creation time (in UNIX timestamp).",
+				MarkdownDescription: "Creation time (in UNIX timestamp).",
 			},
 			"currency": schema.StringAttribute{
 				Computed:            true,
@@ -81,8 +81,8 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"description": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Budget description",
-				MarkdownDescription: "Budget description",
+				Description:         "Budget description.",
+				MarkdownDescription: "Budget description.",
 			},
 			"end_period": schema.Int64Attribute{
 				Computed:            true,
@@ -94,8 +94,8 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"growth_per_period": schema.Float64Attribute{
 				Computed:            true,
-				Description:         "Periodical growth percentage in recurring budget",
-				MarkdownDescription: "Periodical growth percentage in recurring budget",
+				Description:         "Periodical growth percentage in recurring budgets.",
+				MarkdownDescription: "Periodical growth percentage in recurring budgets.",
 			},
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -120,8 +120,8 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			"recipients": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
-				Description:         "List of emails to notify when reaching alert threshold",
-				MarkdownDescription: "List of emails to notify when reaching alert threshold",
+				Description:         "List of emails to notify when reaching alert threshold.",
+				MarkdownDescription: "List of emails to notify when reaching alert threshold.",
 			},
 			"recipients_slack_channels": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -152,14 +152,14 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "List of Slack channels to notify when reaching alert threshold",
-				MarkdownDescription: "List of Slack channels to notify when reaching alert threshold",
+				Description:         "List of Slack channels to notify when reaching alert threshold.",
+				MarkdownDescription: "List of Slack channels to notify when reaching alert threshold.",
 			},
 			"scope": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
-				Description:         "List of attributions that defines the budget scope",
-				MarkdownDescription: "List of attributions that defines the budget scope",
+				Description:         "List of allocations that defines the budget scope.",
+				MarkdownDescription: "List of allocations that defines the budget scope.",
 			},
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -181,14 +181,14 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Type of dimension or filter field.",
-							MarkdownDescription: "Type of dimension or filter field.",
+							Description:         "Enumeration of supported dimension/filter types.",
+							MarkdownDescription: "Enumeration of supported dimension/filter types.",
 						},
 						"values": schema.ListAttribute{
 							ElementType:         types.StringType,
 							Computed:            true,
-							Description:         "Values to filter on",
-							MarkdownDescription: "Values to filter on",
+							Description:         "Values to filter on.",
+							MarkdownDescription: "Values to filter on.",
 						},
 					},
 					CustomType: ScopesType{
@@ -204,13 +204,13 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			"seasonal_amounts": schema.ListAttribute{
 				ElementType:         types.Float64Type,
 				Computed:            true,
-				Description:         "List of seasonal amounts for recurring budgets with different amounts per period",
-				MarkdownDescription: "List of seasonal amounts for recurring budgets with different amounts per period",
+				Description:         "List of seasonal amounts for recurring budgets with different amounts per period.",
+				MarkdownDescription: "List of seasonal amounts for recurring budgets with different amounts per period.",
 			},
 			"start_period": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Budget start Date (in UNIX timestamp)",
-				MarkdownDescription: "Budget start Date (in UNIX timestamp)",
+				Description:         "Budget start date (in UNIX timestamp).",
+				MarkdownDescription: "Budget start date (in UNIX timestamp).",
 			},
 			"time_interval": schema.StringAttribute{
 				Computed:            true,
@@ -224,17 +224,17 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Update time (in UNIX timestamp)",
-				MarkdownDescription: "Update time (in UNIX timestamp)",
+				Description:         "Update time (in UNIX timestamp).",
+				MarkdownDescription: "Update time (in UNIX timestamp).",
 			},
 			"use_prev_spend": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Use the last period's spend as the target amount for recurring budgets",
-				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets",
+				Description:         "Use the last period's spend as the target amount for recurring budgets.",
+				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets.",
 			},
 		},
-		Description:         "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
-		MarkdownDescription: "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+		Description:         "Track actual cloud spend against planned spend.",
+		MarkdownDescription: "Track actual cloud spend against planned spend.",
 	}
 }
 

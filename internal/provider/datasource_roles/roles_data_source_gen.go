@@ -23,29 +23,29 @@ func RolesDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"customer": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The customer ID if this is a custom role",
-							MarkdownDescription: "The customer ID if this is a custom role",
+							Description:         "The customer ID if this is a custom role.",
+							MarkdownDescription: "The customer ID if this is a custom role.",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The unique ID of the role",
-							MarkdownDescription: "The unique ID of the role",
+							Description:         "The unique ID of the role.",
+							MarkdownDescription: "The unique ID of the role.",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The name of the role",
-							MarkdownDescription: "The name of the role",
+							Description:         "The name of the role.",
+							MarkdownDescription: "The name of the role.",
 						},
 						"permissions": schema.ListAttribute{
 							ElementType:         types.StringType,
 							Computed:            true,
-							Description:         "List of permission IDs assigned to the role",
-							MarkdownDescription: "List of permission IDs assigned to the role",
+							Description:         "List of permission IDs assigned to the role.",
+							MarkdownDescription: "List of permission IDs assigned to the role.",
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The type of the role (preset or custom)",
-							MarkdownDescription: "The type of the role (preset or custom)",
+							Description:         "The type of the role (preset or custom).",
+							MarkdownDescription: "The type of the role (preset or custom).",
 						},
 					},
 					CustomType: RolesType{
@@ -57,8 +57,8 @@ func RolesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
-		Description:         "Roles define permissions and access levels for users in your organization.",
-		MarkdownDescription: "Roles define permissions and access levels for users in your organization.",
+		Description:         "Manage user permissions and access levels in your organization.",
+		MarkdownDescription: "Manage user permissions and access levels in your organization.",
 	}
 }
 

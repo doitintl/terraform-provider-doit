@@ -25,31 +25,31 @@ func AnnotationsDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"content": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The content of the annotation",
-							MarkdownDescription: "The content of the annotation",
+							Description:         "The content of the annotation.",
+							MarkdownDescription: "The content of the annotation.",
 						},
 						"create_time": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The time when the annotation was created",
-							MarkdownDescription: "The time when the annotation was created",
+							Description:         "The creation time of the annotation.",
+							MarkdownDescription: "The creation time of the annotation.",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The unique identifier of the annotation",
-							MarkdownDescription: "The unique identifier of the annotation",
+							Description:         "The unique identifier of the annotation.",
+							MarkdownDescription: "The unique identifier of the annotation.",
 						},
 						"labels": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
 										Computed:            true,
-										Description:         "The unique identifier of the label",
-										MarkdownDescription: "The unique identifier of the label",
+										Description:         "The unique identifier of the label.",
+										MarkdownDescription: "The unique identifier of the label.",
 									},
 									"name": schema.StringAttribute{
 										Computed:            true,
-										Description:         "The name of the label",
-										MarkdownDescription: "The name of the label",
+										Description:         "The name of the label.",
+										MarkdownDescription: "The name of the label.",
 									},
 								},
 								CustomType: LabelsType{
@@ -59,24 +59,24 @@ func AnnotationsDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							Computed:            true,
-							Description:         "List of labels associated with the annotation",
-							MarkdownDescription: "List of labels associated with the annotation",
+							Description:         "List of labels associated with the annotation.",
+							MarkdownDescription: "List of labels associated with the annotation.",
 						},
 						"reports": schema.ListAttribute{
 							ElementType:         types.StringType,
 							Computed:            true,
-							Description:         "List of report IDs associated with the annotation",
-							MarkdownDescription: "List of report IDs associated with the annotation",
+							Description:         "List of report IDs associated with the annotation.",
+							MarkdownDescription: "List of report IDs associated with the annotation.",
 						},
 						"timestamp": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The date associated with the annotation",
-							MarkdownDescription: "The date associated with the annotation",
+							Description:         "The date associated with the annotation.",
+							MarkdownDescription: "The date associated with the annotation.",
 						},
 						"update_time": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The time when the annotation was last updated",
-							MarkdownDescription: "The time when the annotation was last updated",
+							Description:         "The time when the annotation was last updated.",
+							MarkdownDescription: "The time when the annotation was last updated.",
 						},
 					},
 					CustomType: AnnotationsType{
@@ -96,14 +96,14 @@ func AnnotationsDataSourceSchema(ctx context.Context) schema.Schema {
 			"max_results": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
-				MarkdownDescription: "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
+				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
+				MarkdownDescription: "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
 			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page   of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
+				Description:         "Page token, returned by a previous call, to request the next page of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
@@ -138,8 +138,8 @@ func AnnotationsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
-		Description:         "Annotations allow you to add notes and context to your cloud cost data.",
-		MarkdownDescription: "Annotations allow you to add notes and context to your cloud cost data.",
+		Description:         "Custom notes added to cost data to provide contextual information.",
+		MarkdownDescription: "Custom notes added to cost data to provide contextual information.",
 	}
 }
 

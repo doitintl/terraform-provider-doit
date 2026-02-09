@@ -46,8 +46,8 @@ func AccountTeamDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
-		Description:         "Account Team provides access to your DoIT account representatives.",
-		MarkdownDescription: "Account Team provides access to your DoIT account representatives.",
+		Description:         "Find DoiT account managers assigned to your organization.",
+		MarkdownDescription: "Find DoiT account managers assigned to your organization.",
 	}
 }
 
