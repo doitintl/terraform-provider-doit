@@ -69,8 +69,8 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 						"scope": schema.ListAttribute{
 							ElementType:         types.StringType,
 							Computed:            true,
-							Description:         "List of allocations that define the budget scope.",
-							MarkdownDescription: "List of allocations that define the budget scope.",
+							Description:         "List of attributions that define the budget scope.",
+							MarkdownDescription: "List of attributions that define the budget scope.",
 							DeprecationMessage:  "This attribute is deprecated.",
 						},
 						"scopes": schema.ListNestedAttribute{
@@ -93,14 +93,14 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"type": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Enumeration of supported dimension/filter types.",
-										MarkdownDescription: "Enumeration of supported dimension/filter types.",
+										Description:         "Type of dimension or filter field.",
+										MarkdownDescription: "Type of dimension or filter field.",
 									},
 									"values": schema.ListAttribute{
 										ElementType:         types.StringType,
 										Computed:            true,
-										Description:         "Values to filter on.",
-										MarkdownDescription: "Values to filter on.",
+										Description:         "Values to filter on",
+										MarkdownDescription: "Values to filter on",
 									},
 								},
 								CustomType: ScopesType{
@@ -163,8 +163,8 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
+				Description:         "Page token, returned by a previous call, to request the next page   of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
@@ -172,8 +172,8 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Budgets rows count",
 			},
 		},
-		Description:         "Track actual cloud spend against planned spend.",
-		MarkdownDescription: "Track actual cloud spend against planned spend.",
+		Description:         "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+		MarkdownDescription: "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
 	}
 }
 

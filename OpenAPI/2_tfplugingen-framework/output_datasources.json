@@ -45,8 +45,8 @@
 						}
 					}
 				],
-				"description": "Find DoiT account managers assigned to your organization.",
-				"markdown_description": "Find DoiT account managers assigned to your organization."
+				"description": "Account Team provides access to your DoIT account representatives.",
+				"markdown_description": "Account Team provides access to your DoIT account representatives."
 			}
 		},
 		{
@@ -72,15 +72,13 @@
 										"element_type": {
 											"string": {}
 										},
-										"deprecation_message": "This attribute is deprecated.",
-										"description": "Use 'scopes' instead. The attributions selected define the scope to monitor."
+										"description": "The attributions selected define the scope to monitor."
 									}
 								},
 								{
 									"name": "condition",
 									"string": {
-										"computed_optional_required": "computed",
-										"description": "Condition key or expression used in alert configurations."
+										"computed_optional_required": "computed"
 									}
 								},
 								{
@@ -111,8 +109,7 @@
 											{
 												"name": "type",
 												"string": {
-													"computed_optional_required": "computed",
-													"description": "Identifier for metric type (e.g., basic, custom, extended)."
+													"computed_optional_required": "computed"
 												}
 											},
 											{
@@ -121,15 +118,13 @@
 													"computed_optional_required": "computed"
 												}
 											}
-										],
-										"description": "Define how metrics are selected and filtered in reports."
+										]
 									}
 								},
 								{
 									"name": "operator",
 									"string": {
-										"computed_optional_required": "computed",
-										"description": "Text/operator used to filter metric values in metric filters."
+										"computed_optional_required": "computed"
 									}
 								},
 								{
@@ -163,7 +158,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types."
+														"description": "Type of dimension or filter field."
 													}
 												},
 												{
@@ -173,7 +168,7 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "Values to filter on"
 													}
 												}
 											]
@@ -194,15 +189,14 @@
 										"computed_optional_required": "computed"
 									}
 								}
-							],
-							"description": "Parameters that define when and how an alert is evaluated."
+							]
 						}
 					},
 					{
 						"name": "create_time",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "The time when the alert was created (in UNIX timestamp)."
+							"description": "The time when the alter was created (in UNIX timestamp)."
 						}
 					},
 					{
@@ -237,8 +231,8 @@
 						}
 					}
 				],
-				"description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
-				"markdown_description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions."
+				"description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
+				"markdown_description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions."
 			}
 		},
 		{
@@ -287,14 +281,14 @@
 						"name": "max_results",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
 						}
 					},
 					{
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -322,15 +316,13 @@
 														"element_type": {
 															"string": {}
 														},
-														"deprecation_message": "This attribute is deprecated.",
-														"description": "Use 'scopes' instead. The attributions selected define the scope to monitor."
+														"description": "The attributions selected define the scope to monitor."
 													}
 												},
 												{
 													"name": "condition",
 													"string": {
-														"computed_optional_required": "computed",
-														"description": "Condition key or expression used in alert configurations."
+														"computed_optional_required": "computed"
 													}
 												},
 												{
@@ -361,8 +353,7 @@
 															{
 																"name": "type",
 																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Identifier for metric type (e.g., basic, custom, extended)."
+																	"computed_optional_required": "computed"
 																}
 															},
 															{
@@ -371,15 +362,13 @@
 																	"computed_optional_required": "computed"
 																}
 															}
-														],
-														"description": "Define how metrics are selected and filtered in reports."
+														]
 													}
 												},
 												{
 													"name": "operator",
 													"string": {
-														"computed_optional_required": "computed",
-														"description": "Text/operator used to filter metric values in metric filters."
+														"computed_optional_required": "computed"
 													}
 												},
 												{
@@ -413,7 +402,7 @@
 																	"name": "type",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "Enumeration of supported dimension/filter types."
+																		"description": "Type of dimension or filter field."
 																	}
 																},
 																{
@@ -423,7 +412,7 @@
 																		"element_type": {
 																			"string": {}
 																		},
-																		"description": "Values to filter on."
+																		"description": "Values to filter on"
 																	}
 																}
 															]
@@ -444,15 +433,14 @@
 														"computed_optional_required": "computed"
 													}
 												}
-											],
-											"description": "Parameters that define when and how an alert is evaluated."
+											]
 										}
 									},
 									{
 										"name": "create_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "The time when the alert was created (in UNIX timestamp)."
+											"description": "The time when the alter was created (in UNIX timestamp)."
 										}
 									},
 									{
@@ -495,7 +483,7 @@
 									}
 								]
 							},
-							"description": "Array of alerts."
+							"description": "Array of alerts"
 						}
 					},
 					{
@@ -506,8 +494,8 @@
 						}
 					}
 				],
-				"description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
-				"markdown_description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions."
+				"description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
+				"markdown_description": "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions."
 			}
 		},
 		{
@@ -525,14 +513,14 @@
 						"name": "allocation_type",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Composition type of allocation."
+							"description": "Type of allocation (single or group)"
 						}
 					},
 					{
 						"name": "anomaly_detection",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Whether anomaly detection is enabled for this allocation."
+							"description": "Whether anomaly detection is enabled for this allocation"
 						}
 					},
 					{
@@ -546,14 +534,14 @@
 						"name": "description",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Allocation description."
+							"description": "Allocation description"
 						}
 					},
 					{
 						"name": "name",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Allocation name."
+							"description": "Allocation name"
 						}
 					},
 					{
@@ -571,7 +559,7 @@
 													"name": "include_null",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Include null values."
+														"description": "Include null values"
 													}
 												},
 												{
@@ -585,21 +573,21 @@
 													"name": "key",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\"."
+														"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Filter mode to apply."
+														"description": "Filter mode to apply"
 													}
 												},
 												{
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types."
+														"description": "Type of dimension or filter field."
 													}
 												},
 												{
@@ -613,18 +601,18 @@
 												}
 											]
 										},
-										"description": "List of allocation filter components."
+										"description": "List of allocation filter components"
 									}
 								},
 								{
 									"name": "formula",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Formula for combining components (A is the first component, B is the second one, etc.)."
+										"description": "Formula for combining components (A is the first component, B is the second one, etc.)"
 									}
 								}
 							],
-							"description": "Single allocation rule."
+							"description": "Single allocation rule (required for single type allocation)"
 						}
 					},
 					{
@@ -637,7 +625,7 @@
 										"name": "action",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Action to perform with this rule."
+											"description": "Action to perform with this rule"
 										}
 									},
 									{
@@ -650,7 +638,7 @@
 														"name": "include_null",
 														"bool": {
 															"computed_optional_required": "computed",
-															"description": "Include null values."
+															"description": "Include null values"
 														}
 													},
 													{
@@ -664,21 +652,21 @@
 														"name": "key",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\"."
+															"description": "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist."
 														}
 													},
 													{
 														"name": "mode",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Filter mode to apply."
+															"description": "Filter mode to apply"
 														}
 													},
 													{
 														"name": "type",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Enumeration of supported dimension/filter types."
+															"description": "Type of dimension or filter field."
 														}
 													},
 													{
@@ -692,14 +680,14 @@
 													}
 												]
 											},
-											"description": "List of allocation filter components (required for 'create' or 'update' action)."
+											"description": "List of allocation filter components (required for 'create' or 'update' action)"
 										}
 									},
 									{
 										"name": "description",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Description of the allocation rule."
+											"description": "Description for the allocation rule"
 										}
 									},
 									{
@@ -713,14 +701,14 @@
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "ID of existing allocation (required for 'update' or 'select' action)."
+											"description": "ID of existing allocation (required for 'update' or 'select' action)"
 										}
 									},
 									{
 										"name": "name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Name of the allocation rule."
+											"description": "Name for the allocation rule"
 										}
 									}
 								]
@@ -731,14 +719,14 @@
 						"name": "type",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Type of allocation (preset or custom)."
+							"description": "Type of allocation (preset or custom)"
 						}
 					},
 					{
 						"name": "unallocated_costs",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Custom label for values that do not fit into allocation (required for group type allocation)."
+							"description": "Custom label for any values that do not fit into allocation (required for group type allocation)"
 						}
 					},
 					{
@@ -749,8 +737,8 @@
 						}
 					}
 				],
-				"description": "Define how costs are distributed across your organization.",
-				"markdown_description": "Define how costs are distributed across your organization."
+				"description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+				"markdown_description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more."
 			}
 		},
 		{
@@ -761,14 +749,14 @@
 						"name": "max_results",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
 						}
 					},
 					{
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -826,7 +814,7 @@
 										"name": "allocation_type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Composition type of allocation (single or group)."
+											"description": "Type of allocation (single or group)"
 										}
 									},
 									{
@@ -840,35 +828,35 @@
 										"name": "description",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Allocation description."
+											"description": "Allocation description"
 										}
 									},
 									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Allocation ID."
+											"description": "Allocation ID"
 										}
 									},
 									{
 										"name": "name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Allocation name."
+											"description": "Allocation name"
 										}
 									},
 									{
 										"name": "owner",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Allocation owner."
+											"description": "Allocation owner"
 										}
 									},
 									{
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Type of allocation (preset or custom)."
+											"description": "Type of allocation (preset or custom)"
 										}
 									},
 									{
@@ -882,7 +870,7 @@
 										"name": "url_ui",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "URL to view the allocation in the DoiT console."
+											"description": "URL to view the allocation in DoiT Cloud Navigator."
 										}
 									}
 								]
@@ -893,12 +881,12 @@
 						"name": "row_count",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Total number of allocations in the result set."
+							"description": "Total number of allocations in the result set"
 						}
 					}
 				],
-				"description": "Define how costs are distributed across your organization.",
-				"markdown_description": "Define how costs are distributed across your organization."
+				"description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+				"markdown_description": "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more."
 			}
 		},
 		{
@@ -916,14 +904,14 @@
 						"name": "content",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The content of the annotation."
+							"description": "The content of the annotation"
 						}
 					},
 					{
 						"name": "create_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The creation time of the annotation."
+							"description": "The time when the annotation was created"
 						}
 					},
 					{
@@ -936,19 +924,19 @@
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The unique identifier of the label."
+											"description": "The unique identifier of the label"
 										}
 									},
 									{
 										"name": "name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The name of the label."
+											"description": "The name of the label"
 										}
 									}
 								]
 							},
-							"description": "List of labels associated with the annotation."
+							"description": "List of labels associated with the annotation"
 						}
 					},
 					{
@@ -958,26 +946,26 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "List of report IDs associated with the annotation."
+							"description": "List of report IDs associated with the annotation"
 						}
 					},
 					{
 						"name": "timestamp",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The date associated with the annotation."
+							"description": "The date associated with the annotation"
 						}
 					},
 					{
 						"name": "update_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The time when the annotation was last updated."
+							"description": "The time when the annotation was last updated"
 						}
 					}
 				],
-				"description": "Custom notes added to cost data to provide contextual information.",
-				"markdown_description": "Custom notes added to cost data to provide contextual information."
+				"description": "Annotations allow you to add notes and context to your cloud cost data.",
+				"markdown_description": "Annotations allow you to add notes and context to your cloud cost data."
 			}
 		},
 		{
@@ -988,14 +976,14 @@
 						"name": "max_results",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
 						}
 					},
 					{
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -1053,21 +1041,21 @@
 										"name": "content",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The content of the annotation."
+											"description": "The content of the annotation"
 										}
 									},
 									{
 										"name": "create_time",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The creation time of the annotation."
+											"description": "The time when the annotation was created"
 										}
 									},
 									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The unique identifier of the annotation."
+											"description": "The unique identifier of the annotation"
 										}
 									},
 									{
@@ -1080,19 +1068,19 @@
 														"name": "id",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "The unique identifier of the label."
+															"description": "The unique identifier of the label"
 														}
 													},
 													{
 														"name": "name",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "The name of the label."
+															"description": "The name of the label"
 														}
 													}
 												]
 											},
-											"description": "List of labels associated with the annotation."
+											"description": "List of labels associated with the annotation"
 										}
 									},
 									{
@@ -1102,21 +1090,21 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "List of report IDs associated with the annotation."
+											"description": "List of report IDs associated with the annotation"
 										}
 									},
 									{
 										"name": "timestamp",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The date associated with the annotation."
+											"description": "The date associated with the annotation"
 										}
 									},
 									{
 										"name": "update_time",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The time when the annotation was last updated."
+											"description": "The time when the annotation was last updated"
 										}
 									}
 								]
@@ -1131,8 +1119,8 @@
 						}
 					}
 				],
-				"description": "Custom notes added to cost data to provide contextual information.",
-				"markdown_description": "Custom notes added to cost data to provide contextual information."
+				"description": "Annotations allow you to add notes and context to your cloud cost data.",
+				"markdown_description": "Annotations allow you to add notes and context to your cloud cost data."
 			}
 		},
 		{
@@ -1171,7 +1159,7 @@
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -1191,28 +1179,28 @@
 										"name": "attribution",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Attribution ID."
+											"description": "Attribution ID"
 										}
 									},
 									{
 										"name": "billing_account",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Billing account ID."
+											"description": "Billing account ID"
 										}
 									},
 									{
 										"name": "cost_of_anomaly",
 										"float64": {
 											"computed_optional_required": "computed",
-											"description": "Cost of the anomaly over and above the expected normal cost."
+											"description": "Cost of the anomaly over and above the expected normal cost"
 										}
 									},
 									{
 										"name": "end_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "End of the anomaly."
+											"description": "End of the anomaly"
 										}
 									},
 									{
@@ -1225,7 +1213,7 @@
 										"name": "platform",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Cloud Provider name."
+											"description": "Cloud Provider name"
 										}
 									},
 									{
@@ -1261,7 +1249,7 @@
 													}
 												]
 											},
-											"description": "Array of resources contributing to an anomaly."
+											"description": "Resources contributing to the anomaly"
 										}
 									},
 									{
@@ -1275,7 +1263,7 @@
 										"name": "service_name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Service name."
+											"description": "Service name"
 										}
 									},
 									{
@@ -1289,7 +1277,7 @@
 										"name": "start_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "Usage start time of the anomaly."
+											"description": "Usage start time of the anomaly"
 										}
 									},
 									{
@@ -1324,8 +1312,7 @@
 														}
 													}
 												]
-											},
-											"description": "Array of SKU entries contributing to an anomaly."
+											}
 										}
 									}
 								]
@@ -1339,8 +1326,8 @@
 						}
 					}
 				],
-				"description": "Monitor cost spikes in your cloud environment.",
-				"markdown_description": "Monitor cost spikes in your cloud environment."
+				"description": "Anomalies detect unexpected changes in your cloud spending patterns.",
+				"markdown_description": "Anomalies detect unexpected changes in your cloud spending patterns."
 			}
 		},
 		{
@@ -1351,7 +1338,7 @@
 						"name": "id",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "A unique identifier of the anomaly."
+							"description": "anomaly id, uniquely identifying the anomaly"
 						}
 					},
 					{
@@ -1429,7 +1416,7 @@
 									}
 								]
 							},
-							"description": "Array of resources contributing to an anomaly."
+							"description": "Resources contributing to the anomaly"
 						}
 					},
 					{
@@ -1492,13 +1479,12 @@
 										}
 									}
 								]
-							},
-							"description": "Array of SKU entries contributing to an anomaly."
+							}
 						}
 					}
 				],
-				"description": "Monitor cost spikes in your cloud environment.",
-				"markdown_description": "Monitor cost spikes in your cloud environment."
+				"description": "Anomalies detect unexpected changes in your cloud spending patterns.",
+				"markdown_description": "Anomalies detect unexpected changes in your cloud spending patterns."
 			}
 		},
 		{
@@ -1516,7 +1502,7 @@
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -1536,7 +1522,7 @@
 										"name": "create_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "The time when the asset was created, in milliseconds since the epoch."
+											"description": "The time when the asset was created, in milliseconds since the epoch"
 										}
 									},
 									{
@@ -1568,6 +1554,12 @@
 										"string": {
 											"computed_optional_required": "computed"
 										}
+									},
+									{
+										"name": "used_licenses",
+										"int64": {
+											"computed_optional_required": "computed"
+										}
 									}
 								]
 							},
@@ -1582,8 +1574,8 @@
 						}
 					}
 				],
-				"description": "Manage cloud resources or services in your cloud environment.",
-				"markdown_description": "Manage cloud resources or services in your cloud environment."
+				"description": "Assets represent your cloud resources such as compute instances, storage, and databases.",
+				"markdown_description": "Assets represent your cloud resources such as compute instances, storage, and databases."
 			}
 		},
 		{
@@ -1623,7 +1615,7 @@
 									}
 								]
 							},
-							"description": "List of up to three thresholds defined as a percentage of amount."
+							"description": "List of up to three thresholds defined as a percentage of amount"
 						}
 					},
 					{
@@ -1653,14 +1645,14 @@
 									}
 								]
 							},
-							"description": "List of permitted users to view/edit the report."
+							"description": "List of permitted users to view/edit the report"
 						}
 					},
 					{
 						"name": "create_time",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Creation time (in UNIX timestamp)."
+							"description": "Creation time (in UNIX timestamp)"
 						}
 					},
 					{
@@ -1680,7 +1672,7 @@
 						"name": "description",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Budget description."
+							"description": "Budget description"
 						}
 					},
 					{
@@ -1700,7 +1692,7 @@
 						"name": "growth_per_period",
 						"float64": {
 							"computed_optional_required": "computed",
-							"description": "Periodical growth percentage in recurring budgets."
+							"description": "Periodical growth percentage in recurring budget"
 						}
 					},
 					{
@@ -1731,7 +1723,7 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "List of emails to notify when reaching alert threshold."
+							"description": "List of emails to notify when reaching alert threshold"
 						}
 					},
 					{
@@ -1778,7 +1770,7 @@
 									}
 								]
 							},
-							"description": "List of Slack channels to notify when reaching alert threshold."
+							"description": "List of Slack channels to notify when reaching alert threshold"
 						}
 					},
 					{
@@ -1788,7 +1780,7 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "List of allocations that defines the budget scope."
+							"description": "List of attributions that defines the budget scope"
 						}
 					},
 					{
@@ -1822,7 +1814,7 @@
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Enumeration of supported dimension/filter types."
+											"description": "Type of dimension or filter field."
 										}
 									},
 									{
@@ -1832,7 +1824,7 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "Values to filter on."
+											"description": "Values to filter on"
 										}
 									}
 								]
@@ -1847,14 +1839,14 @@
 							"element_type": {
 								"float64": {}
 							},
-							"description": "List of seasonal amounts for recurring budgets with different amounts per period."
+							"description": "List of seasonal amounts for recurring budgets with different amounts per period"
 						}
 					},
 					{
 						"name": "start_period",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Budget start date (in UNIX timestamp)."
+							"description": "Budget start Date (in UNIX timestamp)"
 						}
 					},
 					{
@@ -1875,19 +1867,19 @@
 						"name": "update_time",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Update time (in UNIX timestamp)."
+							"description": "Update time (in UNIX timestamp)"
 						}
 					},
 					{
 						"name": "use_prev_spend",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Use the last period's spend as the target amount for recurring budgets."
+							"description": "Use the last period's spend as the target amount for recurring budgets"
 						}
 					}
 				],
-				"description": "Track actual cloud spend against planned spend.",
-				"markdown_description": "Track actual cloud spend against planned spend."
+				"description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+				"markdown_description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached."
 			}
 		},
 		{
@@ -1905,7 +1897,7 @@
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -2019,7 +2011,7 @@
 												"string": {}
 											},
 											"deprecation_message": "This attribute is deprecated.",
-											"description": "List of allocations that define the budget scope."
+											"description": "List of attributions that define the budget scope."
 										}
 									},
 									{
@@ -2053,7 +2045,7 @@
 														"name": "type",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Enumeration of supported dimension/filter types."
+															"description": "Type of dimension or filter field."
 														}
 													},
 													{
@@ -2063,7 +2055,7 @@
 															"element_type": {
 																"string": {}
 															},
-															"description": "Values to filter on."
+															"description": "Values to filter on"
 														}
 													}
 												]
@@ -2108,8 +2100,8 @@
 						}
 					}
 				],
-				"description": "Track actual cloud spend against planned spend.",
-				"markdown_description": "Track actual cloud spend against planned spend."
+				"description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+				"markdown_description": "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached."
 			}
 		},
 		{
@@ -2187,8 +2179,8 @@
 						}
 					}
 				],
-				"description": "Service disruptions and outages from cloud providers.",
-				"markdown_description": "Service disruptions and outages from cloud providers."
+				"description": "Cloud Incidents track service disruptions and outages from cloud providers.",
+				"markdown_description": "Cloud Incidents track service disruptions and outages from cloud providers."
 			}
 		},
 		{
@@ -2206,7 +2198,7 @@
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -2240,21 +2232,21 @@
 										"name": "create_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "The creation time of this cloud incident, in milliseconds since the epoch."
+											"description": "The time when this cloud incident was created, in milliseconds since the epoch."
 										}
 									},
 									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The unique cloud incident identifier."
+											"description": "cloud incident id, uniquely identifying the cloud incident"
 										}
 									},
 									{
 										"name": "platform",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The Cloud Platform."
+											"description": "The Cloud Platform"
 										}
 									},
 									{
@@ -2291,8 +2283,8 @@
 						}
 					}
 				],
-				"description": "Service disruptions and outages from cloud providers.",
-				"markdown_description": "Service disruptions and outages from cloud providers."
+				"description": "Cloud Incidents track service disruptions and outages from cloud providers.",
+				"markdown_description": "Cloud Incidents track service disruptions and outages from cloud providers."
 			}
 		},
 		{
@@ -2312,8 +2304,8 @@
 						}
 					}
 				],
-				"description": "User authentication.",
-				"markdown_description": "User authentication."
+				"description": "Auth endpoints",
+				"markdown_description": "Auth endpoints"
 			}
 		},
 		{
@@ -2324,14 +2316,14 @@
 						"name": "max_results",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
 						}
 					},
 					{
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -2402,8 +2394,8 @@
 						}
 					}
 				],
-				"description": "View available dimensions for analysis.",
-				"markdown_description": "View available dimensions for analysis."
+				"description": "Dimensions define how you can slice and group your cloud cost data for analysis.",
+				"markdown_description": "Dimensions define how you can slice and group your cloud cost data for analysis."
 			}
 		},
 		{
@@ -2495,8 +2487,7 @@
 					{
 						"name": "platform",
 						"string": {
-							"computed_optional_required": "computed",
-							"description": "Platform identifier for invoice source."
+							"computed_optional_required": "computed"
 						}
 					},
 					{
@@ -2521,8 +2512,8 @@
 						}
 					}
 				],
-				"description": "Access your current and historical billing documents.",
-				"markdown_description": "Access your current and historical billing documents."
+				"description": "Invoices provide access to your current and historical billing documents.",
+				"markdown_description": "Invoices provide access to your current and historical billing documents."
 			}
 		},
 		{
@@ -2540,7 +2531,7 @@
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -2608,8 +2599,7 @@
 									{
 										"name": "platform",
 										"string": {
-											"computed_optional_required": "computed",
-											"description": "Platform identifier for invoice source."
+											"computed_optional_required": "computed"
 										}
 									},
 									{
@@ -2646,8 +2636,8 @@
 						}
 					}
 				],
-				"description": "Access your current and historical billing documents.",
-				"markdown_description": "Access your current and historical billing documents."
+				"description": "Invoices provide access to your current and historical billing documents.",
+				"markdown_description": "Invoices provide access to your current and historical billing documents."
 			}
 		},
 		{
@@ -2665,40 +2655,40 @@
 						"name": "color",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The color of the label."
+							"description": "The color of the label"
 						}
 					},
 					{
 						"name": "create_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The time when the label was created."
+							"description": "The time when the label was created"
 						}
 					},
 					{
 						"name": "name",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The name of the label."
+							"description": "The name of the label"
 						}
 					},
 					{
 						"name": "type",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The type of the label (custom or preset)."
+							"description": "The type of the label (custom or preset)"
 						}
 					},
 					{
 						"name": "update_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The time when the label was last updated."
+							"description": "The time when the label was last updated"
 						}
 					}
 				],
-				"description": "Create and manage labels to organize and categorize your cloud resources.",
-				"markdown_description": "Create and manage labels to organize and categorize your cloud resources."
+				"description": "Labels help you organize and categorize your cloud resources.",
+				"markdown_description": "Labels help you organize and categorize your cloud resources."
 			}
 		},
 		{
@@ -2709,14 +2699,14 @@
 						"name": "max_results",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
 						}
 					},
 					{
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -2774,42 +2764,42 @@
 										"name": "color",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The color of the label."
+											"description": "The color of the label"
 										}
 									},
 									{
 										"name": "create_time",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The time when the label was created."
+											"description": "The time when the label was created"
 										}
 									},
 									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The unique identifier of the label."
+											"description": "The unique identifier of the label"
 										}
 									},
 									{
 										"name": "name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The name of the label."
+											"description": "The name of the label"
 										}
 									},
 									{
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The type of the label (custom or preset)."
+											"description": "The type of the label (custom or preset)"
 										}
 									},
 									{
 										"name": "update_time",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The time when the label was last updated."
+											"description": "The time when the label was last updated"
 										}
 									}
 								]
@@ -2820,12 +2810,12 @@
 						"name": "row_count",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Total number of labels in the result set."
+							"description": "Total number of labels in the result set"
 						}
 					}
 				],
-				"description": "Create and manage labels to organize and categorize your cloud resources.",
-				"markdown_description": "Create and manage labels to organize and categorize your cloud resources."
+				"description": "Labels help you organize and categorize your cloud resources.",
+				"markdown_description": "Labels help you organize and categorize your cloud resources."
 			}
 		},
 		{
@@ -2874,7 +2864,7 @@
 												}
 											}
 										],
-										"description": "Advanced analysis options. Each can be set independently."
+										"description": "Advanced analysis options. Each of these can be set independently"
 									}
 								},
 								{
@@ -2931,14 +2921,14 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "The identifier of the dimension."
+														"description": "The field to apply to the dimension."
 													}
 												},
 												{
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types."
+														"description": "Type of dimension or filter field."
 													}
 												}
 											]
@@ -2984,7 +2974,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types."
+														"description": "Type of dimension or filter field."
 													}
 												},
 												{
@@ -2994,7 +2984,7 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "Values to filter on"
 													}
 												}
 											]
@@ -3036,11 +3026,11 @@
 																			"name": "value",
 																			"string": {
 																				"computed_optional_required": "computed",
-																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
 																			}
 																		}
 																	],
-																	"description": "Deprecated: Use 'metrics' instead."
+																	"description": "The metric to apply."
 																}
 															},
 															{
@@ -3065,7 +3055,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types."
+														"description": "Type of dimension or filter field."
 													}
 												}
 											]
@@ -3091,7 +3081,7 @@
 									"name": "layout",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Type of visualization or output format."
+										"description": "The visualization of the report."
 									}
 								},
 								{
@@ -3110,11 +3100,11 @@
 												"name": "value",
 												"string": {
 													"computed_optional_required": "computed",
-													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
 												}
 											}
 										],
-										"description": "Deprecated: Use 'metrics' instead."
+										"description": "The metric to apply."
 									}
 								},
 								{
@@ -3138,11 +3128,11 @@
 															"name": "value",
 															"string": {
 																"computed_optional_required": "computed",
-																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id."
 															}
 														}
 													],
-													"description": "Deprecated: Use 'metrics' instead."
+													"description": "The metric to apply."
 												}
 											},
 											{
@@ -3162,32 +3152,7 @@
 												}
 											}
 										],
-										"description": "Metric filter to limit report rows by metric value."
-									}
-								},
-								{
-									"name": "metrics",
-									"list_nested": {
-										"computed_optional_required": "computed",
-										"nested_object": {
-											"attributes": [
-												{
-													"name": "type",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Type of metric to use."
-													}
-												},
-												{
-													"name": "value",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
-													}
-												}
-											]
-										},
-										"description": "The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4."
+										"description": "The metric filter to limit the report results by value"
 									}
 								},
 								{
@@ -3214,14 +3179,14 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "ID of the field to split."
+														"description": "ID of the field to split"
 													}
 												},
 												{
 													"name": "include_origin",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Indicate whether to include the origin."
+														"description": "if set, include the origin"
 													}
 												},
 												{
@@ -3239,7 +3204,7 @@
 																"name": "id",
 																"string": {
 																	"computed_optional_required": "computed",
-																	"description": "ID of the origin."
+																	"description": "ID of the origin"
 																}
 															},
 															{
@@ -3249,8 +3214,7 @@
 																	"description": "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\""
 																}
 															}
-														],
-														"description": "Origin info for cost splitting."
+														]
 													}
 												},
 												{
@@ -3263,7 +3227,7 @@
 																	"name": "id",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "ID of the target."
+																		"description": "ID of the target"
 																	}
 																},
 																{
@@ -3277,12 +3241,12 @@
 																	"name": "value",
 																	"float64": {
 																		"computed_optional_required": "computed",
-																		"description": "Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom."
+																		"description": "Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom."
 																	}
 																}
 															]
 														},
-														"description": "Targets for the split."
+														"description": "Targets for the split"
 													}
 												},
 												{
@@ -3342,7 +3306,7 @@
 									}
 								}
 							],
-							"description": "Report configuration."
+							"description": "Report configuration"
 						}
 					},
 					{
@@ -3367,8 +3331,8 @@
 						}
 					}
 				],
-				"description": "Manage Cloud Analytics reports and get reports data in JSON format.",
-				"markdown_description": "Manage Cloud Analytics reports and get reports data in JSON format."
+				"description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+				"markdown_description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters."
 			}
 		},
 		{
@@ -3379,14 +3343,14 @@
 						"name": "max_results",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
 						}
 					},
 					{
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -3420,21 +3384,21 @@
 										"name": "create_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "The creation time of the report, in milliseconds since the epoch."
+											"description": "The time when the report was created, in milliseconds since the epoch."
 										}
 									},
 									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Report ID."
+											"description": "Report id."
 										}
 									},
 									{
 										"name": "owner",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Email address of the report owner."
+											"description": "The report owner in the form of user@domain.com"
 										}
 									},
 									{
@@ -3461,7 +3425,7 @@
 										"name": "url_ui",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The URL of the report in DoiT console."
+											"description": "The URL of the report in DoiT Cloud Navigator."
 										}
 									}
 								]
@@ -3476,8 +3440,8 @@
 						}
 					}
 				],
-				"description": "Manage Cloud Analytics reports and get reports data in JSON format.",
-				"markdown_description": "Manage Cloud Analytics reports and get reports data in JSON format."
+				"description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+				"markdown_description": "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters."
 			}
 		},
 		{
@@ -3494,21 +3458,21 @@
 										"name": "customer",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The customer ID if this is a custom role."
+											"description": "The customer ID if this is a custom role"
 										}
 									},
 									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The unique ID of the role."
+											"description": "The unique ID of the role"
 										}
 									},
 									{
 										"name": "name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The name of the role."
+											"description": "The name of the role"
 										}
 									},
 									{
@@ -3518,14 +3482,14 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "List of permission IDs assigned to the role."
+											"description": "List of permission IDs assigned to the role"
 										}
 									},
 									{
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The type of the role (preset or custom)."
+											"description": "The type of the role (preset or custom)"
 										}
 									}
 								]
@@ -3533,8 +3497,8 @@
 						}
 					}
 				],
-				"description": "Manage user permissions and access levels in your organization.",
-				"markdown_description": "Manage user permissions and access levels in your organization."
+				"description": "Roles define permissions and access levels for users in your organization.",
+				"markdown_description": "Roles define permissions and access levels for users in your organization."
 			}
 		},
 		{
@@ -3564,7 +3528,7 @@
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Page token, returned by a previous call, to request the next page of results"
+							"description": "Page token, returned by a previous call, to request the next page   of results"
 						}
 					},
 					{
@@ -3612,28 +3576,28 @@
 										"name": "id",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "Ticket ID (e.g., \"33234\")."
+											"description": "ticket id, identifying the report (e.g., \"33234\")"
 										}
 									},
 									{
 										"name": "is_public",
 										"bool": {
 											"computed_optional_required": "computed",
-											"description": "Whether the ticket is public."
+											"description": "is ticket public"
 										}
 									},
 									{
 										"name": "platform",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Platform of the ticket."
+											"description": "platform of the ticket"
 										}
 									},
 									{
 										"name": "product",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Ticket product."
+											"description": "Ticket product"
 										}
 									},
 									{
@@ -3647,14 +3611,14 @@
 										"name": "severity",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Ticket severity."
+											"description": "Ticket severity"
 										}
 									},
 									{
 										"name": "status",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Ticket status."
+											"description": "Ticket status"
 										}
 									},
 									{
@@ -3675,7 +3639,7 @@
 										"name": "url_ui",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Link to the report in DoiT console."
+											"description": "Link to the report document in Cloud Management Platform"
 										}
 									}
 								]
@@ -3683,8 +3647,8 @@
 						}
 					}
 				],
-				"description": "Create and manage support tickets with DoiT.",
-				"markdown_description": "Create and manage support tickets with DoiT."
+				"description": "Support Requests allow you to create and manage support tickets with DoIT.",
+				"markdown_description": "Support Requests allow you to create and manage support tickets with DoIT."
 			}
 		},
 		{
@@ -3708,84 +3672,84 @@
 										"name": "display_name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The user's display name."
+											"description": "The user's display name"
 										}
 									},
 									{
 										"name": "email",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The email address of the user."
+											"description": "The email address of the user"
 										}
 									},
 									{
 										"name": "first_name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The user's first name."
+											"description": "The user's first name"
 										}
 									},
 									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The unique ID of the user."
+											"description": "The unique id of the user"
 										}
 									},
 									{
 										"name": "job_function",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The user's job function."
+											"description": "The user's job function"
 										}
 									},
 									{
 										"name": "language",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The user's preferred language."
+											"description": "The user's preferred language"
 										}
 									},
 									{
 										"name": "last_name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The user's last name."
+											"description": "The user's last name"
 										}
 									},
 									{
 										"name": "organization_id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The ID of the user's organization."
+											"description": "The id of the user's organization"
 										}
 									},
 									{
 										"name": "phone",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The user's country code (e.g., +44)."
+											"description": "The user's country code (e.g., +44)"
 										}
 									},
 									{
 										"name": "phone_extension",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The user's phone extension."
+											"description": "The user's phone extension"
 										}
 									},
 									{
 										"name": "role_id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The ID of the user's role."
+											"description": "The id of the user's role"
 										}
 									},
 									{
 										"name": "status",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The status of the user (active or invited)."
+											"description": "The status of the user (active or invited)"
 										}
 									}
 								]
@@ -3793,8 +3757,8 @@
 						}
 					}
 				],
-				"description": "Manage users who have access to the DoiT platform.",
-				"markdown_description": "Manage users who have access to the DoiT platform."
+				"description": "Users manage the people who have access to your DoIT organization.",
+				"markdown_description": "Users manage the people who have access to your DoIT organization."
 			}
 		}
 	],

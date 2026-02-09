@@ -28,63 +28,63 @@ func UsersDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"display_name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The user's display name.",
-							MarkdownDescription: "The user's display name.",
+							Description:         "The user's display name",
+							MarkdownDescription: "The user's display name",
 						},
 						"email": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The email address of the user.",
-							MarkdownDescription: "The email address of the user.",
+							Description:         "The email address of the user",
+							MarkdownDescription: "The email address of the user",
 						},
 						"first_name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The user's first name.",
-							MarkdownDescription: "The user's first name.",
+							Description:         "The user's first name",
+							MarkdownDescription: "The user's first name",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The unique ID of the user.",
-							MarkdownDescription: "The unique ID of the user.",
+							Description:         "The unique id of the user",
+							MarkdownDescription: "The unique id of the user",
 						},
 						"job_function": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The user's job function.",
-							MarkdownDescription: "The user's job function.",
+							Description:         "The user's job function",
+							MarkdownDescription: "The user's job function",
 						},
 						"language": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The user's preferred language.",
-							MarkdownDescription: "The user's preferred language.",
+							Description:         "The user's preferred language",
+							MarkdownDescription: "The user's preferred language",
 						},
 						"last_name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The user's last name.",
-							MarkdownDescription: "The user's last name.",
+							Description:         "The user's last name",
+							MarkdownDescription: "The user's last name",
 						},
 						"organization_id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The ID of the user's organization.",
-							MarkdownDescription: "The ID of the user's organization.",
+							Description:         "The id of the user's organization",
+							MarkdownDescription: "The id of the user's organization",
 						},
 						"phone": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The user's country code (e.g., +44).",
-							MarkdownDescription: "The user's country code (e.g., +44).",
+							Description:         "The user's country code (e.g., +44)",
+							MarkdownDescription: "The user's country code (e.g., +44)",
 						},
 						"phone_extension": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The user's phone extension.",
-							MarkdownDescription: "The user's phone extension.",
+							Description:         "The user's phone extension",
+							MarkdownDescription: "The user's phone extension",
 						},
 						"role_id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The ID of the user's role.",
-							MarkdownDescription: "The ID of the user's role.",
+							Description:         "The id of the user's role",
+							MarkdownDescription: "The id of the user's role",
 						},
 						"status": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The status of the user (active or invited).",
-							MarkdownDescription: "The status of the user (active or invited).",
+							Description:         "The status of the user (active or invited)",
+							MarkdownDescription: "The status of the user (active or invited)",
 						},
 					},
 					CustomType: UsersType{
@@ -96,8 +96,8 @@ func UsersDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
-		Description:         "Manage users who have access to the DoiT platform.",
-		MarkdownDescription: "Manage users who have access to the DoiT platform.",
+		Description:         "Users manage the people who have access to your DoIT organization.",
+		MarkdownDescription: "Users manage the people who have access to your DoIT organization.",
 	}
 }
 

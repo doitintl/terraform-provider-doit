@@ -63,8 +63,8 @@ func CloudIncidentDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Mitigation workaround for the cloud incident, if available.",
 			},
 		},
-		Description:         "Service disruptions and outages from cloud providers.",
-		MarkdownDescription: "Service disruptions and outages from cloud providers.",
+		Description:         "Cloud Incidents track service disruptions and outages from cloud providers.",
+		MarkdownDescription: "Cloud Incidents track service disruptions and outages from cloud providers.",
 	}
 }
 

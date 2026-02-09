@@ -29,18 +29,18 @@ func CloudIncidentsDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"create_time": schema.Int64Attribute{
 							Computed:            true,
-							Description:         "The creation time of this cloud incident, in milliseconds since the epoch.",
-							MarkdownDescription: "The creation time of this cloud incident, in milliseconds since the epoch.",
+							Description:         "The time when this cloud incident was created, in milliseconds since the epoch.",
+							MarkdownDescription: "The time when this cloud incident was created, in milliseconds since the epoch.",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The unique cloud incident identifier.",
-							MarkdownDescription: "The unique cloud incident identifier.",
+							Description:         "cloud incident id, uniquely identifying the cloud incident",
+							MarkdownDescription: "cloud incident id, uniquely identifying the cloud incident",
 						},
 						"platform": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The Cloud Platform.",
-							MarkdownDescription: "The Cloud Platform.",
+							Description:         "The Cloud Platform",
+							MarkdownDescription: "The Cloud Platform",
 						},
 						"product": schema.StringAttribute{
 							Computed:            true,
@@ -89,8 +89,8 @@ func CloudIncidentsDataSourceSchema(ctx context.Context) schema.Schema {
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
+				Description:         "Page token, returned by a previous call, to request the next page   of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
@@ -98,8 +98,8 @@ func CloudIncidentsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Cloud incidents rows count",
 			},
 		},
-		Description:         "Service disruptions and outages from cloud providers.",
-		MarkdownDescription: "Service disruptions and outages from cloud providers.",
+		Description:         "Cloud Incidents track service disruptions and outages from cloud providers.",
+		MarkdownDescription: "Cloud Incidents track service disruptions and outages from cloud providers.",
 	}
 }
 

@@ -53,9 +53,7 @@ func InvoicesDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "The time when this invoice was issued, in milliseconds since the epoch.",
 						},
 						"platform": schema.StringAttribute{
-							Computed:            true,
-							Description:         "Platform identifier for invoice source.",
-							MarkdownDescription: "Platform identifier for invoice source.",
+							Computed: true,
 						},
 						"status": schema.StringAttribute{
 							Computed:            true,
@@ -104,8 +102,8 @@ func InvoicesDataSourceSchema(ctx context.Context) schema.Schema {
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
+				Description:         "Page token, returned by a previous call, to request the next page   of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
@@ -113,8 +111,8 @@ func InvoicesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Invoice rows count",
 			},
 		},
-		Description:         "Access your current and historical billing documents.",
-		MarkdownDescription: "Access your current and historical billing documents.",
+		Description:         "Invoices provide access to your current and historical billing documents.",
+		MarkdownDescription: "Invoices provide access to your current and historical billing documents.",
 	}
 }
 

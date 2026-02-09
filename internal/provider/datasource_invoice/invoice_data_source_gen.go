@@ -76,9 +76,7 @@ func InvoiceDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Invoice line items.",
 			},
 			"platform": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Platform identifier for invoice source.",
-				MarkdownDescription: "Platform identifier for invoice source.",
+				Computed: true,
 			},
 			"status": schema.StringAttribute{
 				Computed:            true,
@@ -96,8 +94,8 @@ func InvoiceDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.",
 			},
 		},
-		Description:         "Access your current and historical billing documents.",
-		MarkdownDescription: "Access your current and historical billing documents.",
+		Description:         "Invoices provide access to your current and historical billing documents.",
+		MarkdownDescription: "Invoices provide access to your current and historical billing documents.",
 	}
 }
 

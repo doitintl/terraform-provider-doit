@@ -28,14 +28,11 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 								"attributions": schema.ListAttribute{
 									ElementType:         types.StringType,
 									Computed:            true,
-									Description:         "Use 'scopes' instead. The attributions selected define the scope to monitor.",
-									MarkdownDescription: "Use 'scopes' instead. The attributions selected define the scope to monitor.",
-									DeprecationMessage:  "This attribute is deprecated.",
+									Description:         "The attributions selected define the scope to monitor.",
+									MarkdownDescription: "The attributions selected define the scope to monitor.",
 								},
 								"condition": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Condition key or expression used in alert configurations.",
-									MarkdownDescription: "Condition key or expression used in alert configurations.",
+									Computed: true,
 								},
 								"currency": schema.StringAttribute{
 									Computed:            true,
@@ -53,9 +50,7 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 								"metric": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
 										"type": schema.StringAttribute{
-											Computed:            true,
-											Description:         "Identifier for metric type (e.g., basic, custom, extended).",
-											MarkdownDescription: "Identifier for metric type (e.g., basic, custom, extended).",
+											Computed: true,
 										},
 										"value": schema.StringAttribute{
 											Computed: true,
@@ -66,14 +61,10 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: MetricValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed:            true,
-									Description:         "Define how metrics are selected and filtered in reports.",
-									MarkdownDescription: "Define how metrics are selected and filtered in reports.",
+									Computed: true,
 								},
 								"operator": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Text/operator used to filter metric values in metric filters.",
-									MarkdownDescription: "Text/operator used to filter metric values in metric filters.",
+									Computed: true,
 								},
 								"scopes": schema.ListNestedAttribute{
 									NestedObject: schema.NestedAttributeObject{
@@ -95,14 +86,14 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											"type": schema.StringAttribute{
 												Computed:            true,
-												Description:         "Enumeration of supported dimension/filter types.",
-												MarkdownDescription: "Enumeration of supported dimension/filter types.",
+												Description:         "Type of dimension or filter field.",
+												MarkdownDescription: "Type of dimension or filter field.",
 											},
 											"values": schema.ListAttribute{
 												ElementType:         types.StringType,
 												Computed:            true,
-												Description:         "Values to filter on.",
-												MarkdownDescription: "Values to filter on.",
+												Description:         "Values to filter on",
+												MarkdownDescription: "Values to filter on",
 											},
 										},
 										CustomType: ScopesType{
@@ -129,14 +120,12 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 									AttrTypes: ConfigValue{}.AttributeTypes(ctx),
 								},
 							},
-							Computed:            true,
-							Description:         "Parameters that define when and how an alert is evaluated.",
-							MarkdownDescription: "Parameters that define when and how an alert is evaluated.",
+							Computed: true,
 						},
 						"create_time": schema.Int64Attribute{
 							Computed:            true,
-							Description:         "The time when the alert was created (in UNIX timestamp).",
-							MarkdownDescription: "The time when the alert was created (in UNIX timestamp).",
+							Description:         "The time when the alter was created (in UNIX timestamp).",
+							MarkdownDescription: "The time when the alter was created (in UNIX timestamp).",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
@@ -172,8 +161,8 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Array of alerts.",
-				MarkdownDescription: "Array of alerts.",
+				Description:         "Array of alerts",
+				MarkdownDescription: "Array of alerts",
 			},
 			"filter": schema.StringAttribute{
 				Optional:            true,
@@ -184,14 +173,14 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 			"max_results": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
-				MarkdownDescription: "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
+				Description:         "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
+				MarkdownDescription: "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
 			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
+				Description:         "Page token, returned by a previous call, to request the next page   of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
@@ -225,8 +214,8 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
-		Description:         "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
-		MarkdownDescription: "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
+		Description:         "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
+		MarkdownDescription: "Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.",
 	}
 }
 

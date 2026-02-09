@@ -20,13 +20,13 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Composition type of allocation.",
-				MarkdownDescription: "Composition type of allocation.",
+				Description:         "Type of allocation (single or group)",
+				MarkdownDescription: "Type of allocation (single or group)",
 			},
 			"anomaly_detection": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Whether anomaly detection is enabled for this allocation.",
-				MarkdownDescription: "Whether anomaly detection is enabled for this allocation.",
+				Description:         "Whether anomaly detection is enabled for this allocation",
+				MarkdownDescription: "Whether anomaly detection is enabled for this allocation",
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
@@ -35,8 +35,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"description": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Allocation description.",
-				MarkdownDescription: "Allocation description.",
+				Description:         "Allocation description",
+				MarkdownDescription: "Allocation description",
 			},
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -45,8 +45,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Allocation name.",
-				MarkdownDescription: "Allocation name.",
+				Description:         "Allocation name",
+				MarkdownDescription: "Allocation name",
 			},
 			"rule": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -55,8 +55,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 							Attributes: map[string]schema.Attribute{
 								"include_null": schema.BoolAttribute{
 									Computed:            true,
-									Description:         "Include null values.",
-									MarkdownDescription: "Include null values.",
+									Description:         "Include null values",
+									MarkdownDescription: "Include null values",
 								},
 								"inverse_selection": schema.BoolAttribute{
 									Computed:            true,
@@ -65,18 +65,18 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
-									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
 								},
 								"mode": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Filter mode to apply.",
-									MarkdownDescription: "Filter mode to apply.",
+									Description:         "Filter mode to apply",
+									MarkdownDescription: "Filter mode to apply",
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Type of dimension or filter field.",
+									MarkdownDescription: "Type of dimension or filter field.",
 								},
 								"values": schema.ListAttribute{
 									ElementType: types.StringType,
@@ -90,13 +90,13 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "List of allocation filter components.",
-						MarkdownDescription: "List of allocation filter components.",
+						Description:         "List of allocation filter components",
+						MarkdownDescription: "List of allocation filter components",
 					},
 					"formula": schema.StringAttribute{
 						Computed:            true,
-						Description:         "Formula for combining components (A is the first component, B is the second one, etc.).",
-						MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.).",
+						Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
+						MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
 					},
 				},
 				CustomType: RuleType{
@@ -105,24 +105,24 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Single allocation rule.",
-				MarkdownDescription: "Single allocation rule.",
+				Description:         "Single allocation rule (required for single type allocation)",
+				MarkdownDescription: "Single allocation rule (required for single type allocation)",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"action": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Action to perform with this rule.",
-							MarkdownDescription: "Action to perform with this rule.",
+							Description:         "Action to perform with this rule",
+							MarkdownDescription: "Action to perform with this rule",
 						},
 						"components": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"include_null": schema.BoolAttribute{
 										Computed:            true,
-										Description:         "Include null values.",
-										MarkdownDescription: "Include null values.",
+										Description:         "Include null values",
+										MarkdownDescription: "Include null values",
 									},
 									"inverse_selection": schema.BoolAttribute{
 										Computed:            true,
@@ -131,18 +131,18 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"key": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
-										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
 									},
 									"mode": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Filter mode to apply.",
-										MarkdownDescription: "Filter mode to apply.",
+										Description:         "Filter mode to apply",
+										MarkdownDescription: "Filter mode to apply",
 									},
 									"type": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Enumeration of supported dimension/filter types.",
-										MarkdownDescription: "Enumeration of supported dimension/filter types.",
+										Description:         "Type of dimension or filter field.",
+										MarkdownDescription: "Type of dimension or filter field.",
 									},
 									"values": schema.ListAttribute{
 										ElementType: types.StringType,
@@ -156,13 +156,13 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							Computed:            true,
-							Description:         "List of allocation filter components (required for 'create' or 'update' action).",
-							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action).",
+							Description:         "List of allocation filter components (required for 'create' or 'update' action)",
+							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action)",
 						},
 						"description": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Description of the allocation rule.",
-							MarkdownDescription: "Description of the allocation rule.",
+							Description:         "Description for the allocation rule",
+							MarkdownDescription: "Description for the allocation rule",
 						},
 						"formula": schema.StringAttribute{
 							Computed:            true,
@@ -171,13 +171,13 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "ID of existing allocation (required for 'update' or 'select' action).",
-							MarkdownDescription: "ID of existing allocation (required for 'update' or 'select' action).",
+							Description:         "ID of existing allocation (required for 'update' or 'select' action)",
+							MarkdownDescription: "ID of existing allocation (required for 'update' or 'select' action)",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Name of the allocation rule.",
-							MarkdownDescription: "Name of the allocation rule.",
+							Description:         "Name for the allocation rule",
+							MarkdownDescription: "Name for the allocation rule",
 						},
 					},
 					CustomType: RulesType{
@@ -190,13 +190,13 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (preset or custom).",
-				MarkdownDescription: "Type of allocation (preset or custom).",
+				Description:         "Type of allocation (preset or custom)",
+				MarkdownDescription: "Type of allocation (preset or custom)",
 			},
 			"unallocated_costs": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Custom label for values that do not fit into allocation (required for group type allocation).",
-				MarkdownDescription: "Custom label for values that do not fit into allocation (required for group type allocation).",
+				Description:         "Custom label for any values that do not fit into allocation (required for group type allocation)",
+				MarkdownDescription: "Custom label for any values that do not fit into allocation (required for group type allocation)",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
@@ -204,8 +204,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
 			},
 		},
-		Description:         "Define how costs are distributed across your organization.",
-		MarkdownDescription: "Define how costs are distributed across your organization.",
+		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
 	}
 }
 

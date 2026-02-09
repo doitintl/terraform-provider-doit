@@ -41,8 +41,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Advanced analysis options. Each can be set independently.",
-						MarkdownDescription: "Advanced analysis options. Each can be set independently.",
+						Description:         "Advanced analysis options. Each of these can be set independently",
+						MarkdownDescription: "Advanced analysis options. Each of these can be set independently",
 					},
 					"aggregation": schema.StringAttribute{
 						Computed:            true,
@@ -86,13 +86,13 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "The identifier of the dimension.",
-									MarkdownDescription: "The identifier of the dimension.",
+									Description:         "The field to apply to the dimension.",
+									MarkdownDescription: "The field to apply to the dimension.",
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Type of dimension or filter field.",
+									MarkdownDescription: "Type of dimension or filter field.",
 								},
 							},
 							CustomType: DimensionsType{
@@ -130,14 +130,14 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Type of dimension or filter field.",
+									MarkdownDescription: "Type of dimension or filter field.",
 								},
 								"values": schema.ListAttribute{
 									ElementType:         types.StringType,
 									Computed:            true,
-									Description:         "Values to filter on.",
-									MarkdownDescription: "Values to filter on.",
+									Description:         "Values to filter on",
+									MarkdownDescription: "Values to filter on",
 								},
 							},
 							CustomType: FiltersType{
@@ -169,8 +169,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 												},
 												"value": schema.StringAttribute{
 													Computed:            true,
-													Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-													MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+													Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id.",
+													MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id.",
 												},
 											},
 											CustomType: MetricType{
@@ -179,8 +179,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 												},
 											},
 											Computed:            true,
-											Description:         "Deprecated: Use 'metrics' instead.",
-											MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+											Description:         "The metric to apply.",
+											MarkdownDescription: "The metric to apply.",
 										},
 										"sort": schema.StringAttribute{
 											Computed:            true,
@@ -204,8 +204,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Type of dimension or filter field.",
+									MarkdownDescription: "Type of dimension or filter field.",
 								},
 							},
 							CustomType: GroupType{
@@ -230,8 +230,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"layout": schema.StringAttribute{
 						Computed:            true,
-						Description:         "Type of visualization or output format.",
-						MarkdownDescription: "Type of visualization or output format.",
+						Description:         "The visualization of the report.",
+						MarkdownDescription: "The visualization of the report.",
 					},
 					"metric": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
@@ -242,8 +242,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 							"value": schema.StringAttribute{
 								Computed:            true,
-								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id.",
+								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id.",
 							},
 						},
 						CustomType: MetricType{
@@ -252,8 +252,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Deprecated: Use 'metrics' instead.",
-						MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+						Description:         "The metric to apply.",
+						MarkdownDescription: "The metric to apply.",
 					},
 					"metric_filter": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
@@ -266,8 +266,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"value": schema.StringAttribute{
 										Computed:            true,
-										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id.",
+										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom id.",
 									},
 								},
 								CustomType: MetricType{
@@ -276,8 +276,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Deprecated: Use 'metrics' instead.",
-								MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+								Description:         "The metric to apply.",
+								MarkdownDescription: "The metric to apply.",
 							},
 							"operator": schema.StringAttribute{
 								Computed:            true,
@@ -295,32 +295,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Metric filter to limit report rows by metric value.",
-						MarkdownDescription: "Metric filter to limit report rows by metric value.",
-					},
-					"metrics": schema.ListNestedAttribute{
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"type": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Type of metric to use.",
-									MarkdownDescription: "Type of metric to use.",
-								},
-								"value": schema.StringAttribute{
-									Computed:            true,
-									Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-									MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-								},
-							},
-							CustomType: MetricsType{
-								ObjectType: types.ObjectType{
-									AttrTypes: MetricsValue{}.AttributeTypes(ctx),
-								},
-							},
-						},
-						Computed:            true,
-						Description:         "The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.",
-						MarkdownDescription: "The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.",
+						Description:         "The metric filter to limit the report results by value",
+						MarkdownDescription: "The metric filter to limit the report results by value",
 					},
 					"sort_dimensions": schema.StringAttribute{
 						Computed:            true,
@@ -337,13 +313,13 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "ID of the field to split.",
-									MarkdownDescription: "ID of the field to split.",
+									Description:         "ID of the field to split",
+									MarkdownDescription: "ID of the field to split",
 								},
 								"include_origin": schema.BoolAttribute{
 									Computed:            true,
-									Description:         "Indicate whether to include the origin.",
-									MarkdownDescription: "Indicate whether to include the origin.",
+									Description:         "if set, include the origin",
+									MarkdownDescription: "if set, include the origin",
 								},
 								"mode": schema.StringAttribute{
 									Computed: true,
@@ -352,8 +328,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
 											Computed:            true,
-											Description:         "ID of the origin.",
-											MarkdownDescription: "ID of the origin.",
+											Description:         "ID of the origin",
+											MarkdownDescription: "ID of the origin",
 										},
 										"type": schema.StringAttribute{
 											Computed:            true,
@@ -366,17 +342,15 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: OriginValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed:            true,
-									Description:         "Origin info for cost splitting.",
-									MarkdownDescription: "Origin info for cost splitting.",
+									Computed: true,
 								},
 								"targets": schema.ListNestedAttribute{
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
 											"id": schema.StringAttribute{
 												Computed:            true,
-												Description:         "ID of the target.",
-												MarkdownDescription: "ID of the target.",
+												Description:         "ID of the target",
+												MarkdownDescription: "ID of the target",
 											},
 											"type": schema.StringAttribute{
 												Computed:            true,
@@ -385,8 +359,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											"value": schema.Float64Attribute{
 												Computed:            true,
-												Description:         "Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.",
-												MarkdownDescription: "Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.",
+												Description:         "Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom.",
+												MarkdownDescription: "Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom.",
 											},
 										},
 										CustomType: TargetsType{
@@ -396,8 +370,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									Computed:            true,
-									Description:         "Targets for the split.",
-									MarkdownDescription: "Targets for the split.",
+									Description:         "Targets for the split",
+									MarkdownDescription: "Targets for the split",
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
@@ -459,8 +433,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Report configuration.",
-				MarkdownDescription: "Report configuration.",
+				Description:         "Report configuration",
+				MarkdownDescription: "Report configuration",
 			},
 			"description": schema.StringAttribute{
 				Computed:            true,
@@ -483,8 +457,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Report type.",
 			},
 		},
-		Description:         "Manage Cloud Analytics reports and get reports data in JSON format.",
-		MarkdownDescription: "Manage Cloud Analytics reports and get reports data in JSON format.",
+		Description:         "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+		MarkdownDescription: "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
 	}
 }
 
@@ -773,24 +747,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterAttribute))
 	}
 
-	metricsAttribute, ok := attributes["metrics"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`metrics is missing from object`)
-
-		return nil, diags
-	}
-
-	metricsVal, ok := metricsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metrics expected to be basetypes.ListValue, was: %T`, metricsAttribute))
-	}
-
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
 
 	if !ok {
@@ -900,7 +856,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		Layout:                    layoutVal,
 		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
-		Metrics:                   metricsVal,
 		SortDimensions:            sortDimensionsVal,
 		SortGroups:                sortGroupsVal,
 		Splits:                    splitsVal,
@@ -1225,24 +1180,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterAttribute))
 	}
 
-	metricsAttribute, ok := attributes["metrics"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`metrics is missing from object`)
-
-		return NewConfigValueUnknown(), diags
-	}
-
-	metricsVal, ok := metricsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metrics expected to be basetypes.ListValue, was: %T`, metricsAttribute))
-	}
-
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
 
 	if !ok {
@@ -1352,7 +1289,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		Layout:                    layoutVal,
 		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
-		Metrics:                   metricsVal,
 		SortDimensions:            sortDimensionsVal,
 		SortGroups:                sortGroupsVal,
 		Splits:                    splitsVal,
@@ -1444,7 +1380,6 @@ type ConfigValue struct {
 	Layout                    basetypes.StringValue `tfsdk:"layout"`
 	Metric                    MetricValue           `tfsdk:"metric"`
 	MetricFilter              MetricFilterValue     `tfsdk:"metric_filter"`
-	Metrics                   basetypes.ListValue   `tfsdk:"metrics"`
 	SortDimensions            basetypes.StringValue `tfsdk:"sort_dimensions"`
 	SortGroups                basetypes.StringValue `tfsdk:"sort_groups"`
 	Splits                    basetypes.ListValue   `tfsdk:"splits"`
@@ -1454,7 +1389,7 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 20)
+	attrTypes := make(map[string]tftypes.Type, 19)
 
 	var val tftypes.Value
 	var err error
@@ -1495,9 +1430,6 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 			AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
 		},
 	}.TerraformType(ctx)
-	attrTypes["metrics"] = basetypes.ListType{
-		ElemType: MetricsValue{}.Type(ctx),
-	}.TerraformType(ctx)
 	attrTypes["sort_dimensions"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["sort_groups"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["splits"] = basetypes.ListType{
@@ -1514,7 +1446,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 20)
+		vals := make(map[string]tftypes.Value, 19)
 
 		val, err = v.AdvancedAnalysis.ToTerraformValue(ctx)
 
@@ -1628,14 +1560,6 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 		vals["metric_filter"] = val
 
-		val, err = v.Metrics.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["metrics"] = val
-
 		val, err = v.SortDimensions.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -1747,12 +1671,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		metricFilter = v.MetricFilter
 	}
 
-	var metrics attr.Value
-
-	{
-		metrics = v.Metrics
-	}
-
 	var splits attr.Value
 
 	{
@@ -1802,9 +1720,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 				AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
 			},
 		},
-		"metrics": basetypes.ListType{
-			ElemType: MetricsValue{}.Type(ctx),
-		},
 		"sort_dimensions": basetypes.StringType{},
 		"sort_groups":     basetypes.StringType{},
 		"splits": basetypes.ListType{
@@ -1843,7 +1758,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"layout":                      v.Layout,
 			"metric":                      metric,
 			"metric_filter":               metricFilter,
-			"metrics":                     metrics,
 			"sort_dimensions":             v.SortDimensions,
 			"sort_groups":                 v.SortGroups,
 			"splits":                      splits,
@@ -1925,10 +1839,6 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.Metrics.Equal(other.Metrics) {
-		return false
-	}
-
 	if !v.SortDimensions.Equal(other.SortDimensions) {
 		return false
 	}
@@ -1997,9 +1907,6 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 			basetypes.ObjectType{
 				AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
 			},
-		},
-		"metrics": basetypes.ListType{
-			ElemType: MetricsValue{}.Type(ctx),
 		},
 		"sort_dimensions": basetypes.StringType{},
 		"sort_groups":     basetypes.StringType{},
@@ -5600,385 +5507,6 @@ func (v MetricFilterValue) AttributeTypes(ctx context.Context) map[string]attr.T
 		"values": basetypes.ListType{
 			ElemType: types.Float64Type,
 		},
-	}
-}
-
-var _ basetypes.ObjectTypable = MetricsType{}
-
-type MetricsType struct {
-	basetypes.ObjectType
-}
-
-func (t MetricsType) Equal(o attr.Type) bool {
-	other, ok := o.(MetricsType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t MetricsType) String() string {
-	return "MetricsType"
-}
-
-func (t MetricsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributes := in.Attributes()
-
-	typeAttribute, ok := attributes["type"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`type is missing from object`)
-
-		return nil, diags
-	}
-
-	typeVal, ok := typeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
-	}
-
-	valueAttribute, ok := attributes["value"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`value is missing from object`)
-
-		return nil, diags
-	}
-
-	valueVal, ok := valueAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return MetricsValue{
-		MetricsType: typeVal,
-		Value:       valueVal,
-		state:       attr.ValueStateKnown,
-	}, diags
-}
-
-func NewMetricsValueNull() MetricsValue {
-	return MetricsValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewMetricsValueUnknown() MetricsValue {
-	return MetricsValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewMetricsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (MetricsValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing MetricsValue Attribute Value",
-				"While creating a MetricsValue value, a missing attribute value was detected. "+
-					"A MetricsValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("MetricsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid MetricsValue Attribute Type",
-				"While creating a MetricsValue value, an invalid attribute value was detected. "+
-					"A MetricsValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("MetricsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("MetricsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra MetricsValue Attribute Value",
-				"While creating a MetricsValue value, an extra attribute value was detected. "+
-					"A MetricsValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra MetricsValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewMetricsValueUnknown(), diags
-	}
-
-	typeAttribute, ok := attributes["type"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`type is missing from object`)
-
-		return NewMetricsValueUnknown(), diags
-	}
-
-	typeVal, ok := typeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
-	}
-
-	valueAttribute, ok := attributes["value"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`value is missing from object`)
-
-		return NewMetricsValueUnknown(), diags
-	}
-
-	valueVal, ok := valueAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
-	}
-
-	if diags.HasError() {
-		return NewMetricsValueUnknown(), diags
-	}
-
-	return MetricsValue{
-		MetricsType: typeVal,
-		Value:       valueVal,
-		state:       attr.ValueStateKnown,
-	}, diags
-}
-
-func NewMetricsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) MetricsValue {
-	object, diags := NewMetricsValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewMetricsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t MetricsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewMetricsValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewMetricsValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewMetricsValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewMetricsValueMust(MetricsValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t MetricsType) ValueType(ctx context.Context) attr.Value {
-	return MetricsValue{}
-}
-
-var _ basetypes.ObjectValuable = MetricsValue{}
-
-type MetricsValue struct {
-	MetricsType basetypes.StringValue `tfsdk:"type"`
-	Value       basetypes.StringValue `tfsdk:"value"`
-	state       attr.ValueState
-}
-
-func (v MetricsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
-
-		val, err = v.MetricsType.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["type"] = val
-
-		val, err = v.Value.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["value"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v MetricsValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v MetricsValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v MetricsValue) String() string {
-	return "MetricsValue"
-}
-
-func (v MetricsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := map[string]attr.Type{
-		"type":  basetypes.StringType{},
-		"value": basetypes.StringType{},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"type":  v.MetricsType,
-			"value": v.Value,
-		})
-
-	return objVal, diags
-}
-
-func (v MetricsValue) Equal(o attr.Value) bool {
-	other, ok := o.(MetricsValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.MetricsType.Equal(other.MetricsType) {
-		return false
-	}
-
-	if !v.Value.Equal(other.Value) {
-		return false
-	}
-
-	return true
-}
-
-func (v MetricsValue) Type(ctx context.Context) attr.Type {
-	return MetricsType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v MetricsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"type":  basetypes.StringType{},
-		"value": basetypes.StringType{},
 	}
 }
 

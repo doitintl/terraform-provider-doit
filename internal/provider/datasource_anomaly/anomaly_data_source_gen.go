@@ -45,8 +45,8 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"id": schema.StringAttribute{
 				Required:            true,
-				Description:         "A unique identifier of the anomaly.",
-				MarkdownDescription: "A unique identifier of the anomaly.",
+				Description:         "anomaly id, uniquely identifying the anomaly",
+				MarkdownDescription: "anomaly id, uniquely identifying the anomaly",
 			},
 			"platform": schema.StringAttribute{
 				Computed:            true,
@@ -78,8 +78,8 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Array of resources contributing to an anomaly.",
-				MarkdownDescription: "Array of resources contributing to an anomaly.",
+				Description:         "Resources contributing to the anomaly",
+				MarkdownDescription: "Resources contributing to the anomaly",
 			},
 			"scope": schema.StringAttribute{
 				Computed:            true,
@@ -125,13 +125,11 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 				},
-				Computed:            true,
-				Description:         "Array of SKU entries contributing to an anomaly.",
-				MarkdownDescription: "Array of SKU entries contributing to an anomaly.",
+				Computed: true,
 			},
 		},
-		Description:         "Monitor cost spikes in your cloud environment.",
-		MarkdownDescription: "Monitor cost spikes in your cloud environment.",
+		Description:         "Anomalies detect unexpected changes in your cloud spending patterns.",
+		MarkdownDescription: "Anomalies detect unexpected changes in your cloud spending patterns.",
 	}
 }
 

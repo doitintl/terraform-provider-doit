@@ -50,8 +50,8 @@ func SupportRequestsDataSourceSchema(ctx context.Context) schema.Schema {
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
+				Description:         "Page token, returned by a previous call, to request the next page   of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
@@ -68,23 +68,23 @@ func SupportRequestsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"id": schema.Int64Attribute{
 							Computed:            true,
-							Description:         "Ticket ID (e.g., \"33234\").",
-							MarkdownDescription: "Ticket ID (e.g., \"33234\").",
+							Description:         "ticket id, identifying the report (e.g., \"33234\")",
+							MarkdownDescription: "ticket id, identifying the report (e.g., \"33234\")",
 						},
 						"is_public": schema.BoolAttribute{
 							Computed:            true,
-							Description:         "Whether the ticket is public.",
-							MarkdownDescription: "Whether the ticket is public.",
+							Description:         "is ticket public",
+							MarkdownDescription: "is ticket public",
 						},
 						"platform": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Platform of the ticket.",
-							MarkdownDescription: "Platform of the ticket.",
+							Description:         "platform of the ticket",
+							MarkdownDescription: "platform of the ticket",
 						},
 						"product": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Ticket product.",
-							MarkdownDescription: "Ticket product.",
+							Description:         "Ticket product",
+							MarkdownDescription: "Ticket product",
 						},
 						"requester": schema.StringAttribute{
 							Computed:            true,
@@ -93,13 +93,13 @@ func SupportRequestsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"severity": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Ticket severity.",
-							MarkdownDescription: "Ticket severity.",
+							Description:         "Ticket severity",
+							MarkdownDescription: "Ticket severity",
 						},
 						"status": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Ticket status.",
-							MarkdownDescription: "Ticket status.",
+							Description:         "Ticket status",
+							MarkdownDescription: "Ticket status",
 						},
 						"subject": schema.StringAttribute{
 							Computed:            true,
@@ -113,8 +113,8 @@ func SupportRequestsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"url_ui": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Link to the report in DoiT console.",
-							MarkdownDescription: "Link to the report in DoiT console.",
+							Description:         "Link to the report document in Cloud Management Platform",
+							MarkdownDescription: "Link to the report document in Cloud Management Platform",
 						},
 					},
 					CustomType: TicketsType{
@@ -126,8 +126,8 @@ func SupportRequestsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
-		Description:         "Create and manage support tickets with DoiT.",
-		MarkdownDescription: "Create and manage support tickets with DoiT.",
+		Description:         "Support Requests allow you to create and manage support tickets with DoIT.",
+		MarkdownDescription: "Support Requests allow you to create and manage support tickets with DoIT.",
 	}
 }
 

@@ -20,13 +20,13 @@ func AnnotationDataSourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"content": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The content of the annotation.",
-				MarkdownDescription: "The content of the annotation.",
+				Description:         "The content of the annotation",
+				MarkdownDescription: "The content of the annotation",
 			},
 			"create_time": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The creation time of the annotation.",
-				MarkdownDescription: "The creation time of the annotation.",
+				Description:         "The time when the annotation was created",
+				MarkdownDescription: "The time when the annotation was created",
 			},
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -38,13 +38,13 @@ func AnnotationDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The unique identifier of the label.",
-							MarkdownDescription: "The unique identifier of the label.",
+							Description:         "The unique identifier of the label",
+							MarkdownDescription: "The unique identifier of the label",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The name of the label.",
-							MarkdownDescription: "The name of the label.",
+							Description:         "The name of the label",
+							MarkdownDescription: "The name of the label",
 						},
 					},
 					CustomType: LabelsType{
@@ -54,28 +54,28 @@ func AnnotationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "List of labels associated with the annotation.",
-				MarkdownDescription: "List of labels associated with the annotation.",
+				Description:         "List of labels associated with the annotation",
+				MarkdownDescription: "List of labels associated with the annotation",
 			},
 			"reports": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
-				Description:         "List of report IDs associated with the annotation.",
-				MarkdownDescription: "List of report IDs associated with the annotation.",
+				Description:         "List of report IDs associated with the annotation",
+				MarkdownDescription: "List of report IDs associated with the annotation",
 			},
 			"timestamp": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The date associated with the annotation.",
-				MarkdownDescription: "The date associated with the annotation.",
+				Description:         "The date associated with the annotation",
+				MarkdownDescription: "The date associated with the annotation",
 			},
 			"update_time": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The time when the annotation was last updated.",
-				MarkdownDescription: "The time when the annotation was last updated.",
+				Description:         "The time when the annotation was last updated",
+				MarkdownDescription: "The time when the annotation was last updated",
 			},
 		},
-		Description:         "Custom notes added to cost data to provide contextual information.",
-		MarkdownDescription: "Custom notes added to cost data to provide contextual information.",
+		Description:         "Annotations allow you to add notes and context to your cloud cost data.",
+		MarkdownDescription: "Annotations allow you to add notes and context to your cloud cost data.",
 	}
 }
 
