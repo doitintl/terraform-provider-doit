@@ -3,12 +3,12 @@
 page_title: "doit_assets Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Assets represent your cloud resources such as compute instances, storage, and databases.
+  Manage cloud resources or services in your cloud environment.
 ---
 
 # doit_assets (Data Source)
 
-Assets represent your cloud resources such as compute instances, storage, and databases.
+Manage cloud resources or services in your cloud environment.
 
 ## Example Usage
 
@@ -38,7 +38,7 @@ connected using a pipe |. Note that using different keys in the same
 filter results in “AND,” while using the same key multiple times in
 the same filter results in “OR”.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 
 ### Read-Only
 
@@ -50,10 +50,9 @@ the same filter results in “OR”.
 
 Read-Only:
 
-- `create_time` (Number) The time when the asset was created, in milliseconds since the epoch
+- `create_time` (Number) The time when the asset was created, in milliseconds since the epoch.
 - `id` (String)
 - `name` (String)
 - `quantity` (Number)
 - `type` (String)
 - `url` (String)
-- `used_licenses` (Number)

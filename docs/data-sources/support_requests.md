@@ -3,12 +3,12 @@
 page_title: "doit_support_requests Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Support Requests allow you to create and manage support tickets with DoIT.
+  Create and manage support tickets with DoiT.
 ---
 
 # doit_support_requests (Data Source)
 
-Support Requests allow you to create and manage support tickets with DoIT.
+Create and manage support tickets with DoiT.
 
 ## Example Usage
 
@@ -39,7 +39,7 @@ the same filter results in “OR”.
 - `max_creation_time` (String) Max value for tickets creation time, in milliseconds since the POSIX epoch. If set, only tickets created before or at this timestamp are returned.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for tickets creation time, in milliseconds since the POSIX epoch. If set, only tickets created after or at this timestamp are returned.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 
 ### Read-Only
 
@@ -52,13 +52,13 @@ the same filter results in “OR”.
 Read-Only:
 
 - `create_time` (Number) The time when this ticket was created, in milliseconds since the epoch.
-- `id` (Number) ticket id, identifying the report (e.g., "33234")
-- `is_public` (Boolean) is ticket public
-- `platform` (String) platform of the ticket
-- `product` (String) Ticket product
+- `id` (Number) Ticket ID (e.g., "33234").
+- `is_public` (Boolean) Whether the ticket is public.
+- `platform` (String) Platform of the ticket.
+- `product` (String) Ticket product.
 - `requester` (String) The ticket requester in the form of user@domain.com
-- `severity` (String) Ticket severity
-- `status` (String) Ticket status
+- `severity` (String) Ticket severity.
+- `status` (String) Ticket status.
 - `subject` (String) The subject of the ticket.
 - `update_time` (Number) The time when this ticket was last updated, in milliseconds since the epoch.
-- `url_ui` (String) Link to the report document in Cloud Management Platform
+- `url_ui` (String) Link to the report in DoiT console.

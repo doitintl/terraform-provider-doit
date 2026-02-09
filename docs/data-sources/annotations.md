@@ -3,12 +3,12 @@
 page_title: "doit_annotations Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Annotations allow you to add notes and context to your cloud cost data.
+  Custom notes added to cost data to provide contextual information.
 ---
 
 # doit_annotations (Data Source)
 
-Annotations allow you to add notes and context to your cloud cost data.
+Custom notes added to cost data to provide contextual information.
 
 ## Example Usage
 
@@ -41,8 +41,8 @@ output "annotation_summary" {
 
 - `filter` (String) An expression for filtering the results.
 Valid fields: **content**, **timestamp**, **labels**.
-- `max_results` (String) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 - `sort_order` (String) Sort order can be ascending or descending.
 
@@ -56,18 +56,18 @@ Valid fields: **content**, **timestamp**, **labels**.
 
 Read-Only:
 
-- `content` (String) The content of the annotation
-- `create_time` (String) The time when the annotation was created
-- `id` (String) The unique identifier of the annotation
-- `labels` (Attributes List) List of labels associated with the annotation (see [below for nested schema](#nestedatt--annotations--labels))
-- `reports` (List of String) List of report IDs associated with the annotation
-- `timestamp` (String) The date associated with the annotation
-- `update_time` (String) The time when the annotation was last updated
+- `content` (String) The content of the annotation.
+- `create_time` (String) The creation time of the annotation.
+- `id` (String) The unique identifier of the annotation.
+- `labels` (Attributes List) List of labels associated with the annotation. (see [below for nested schema](#nestedatt--annotations--labels))
+- `reports` (List of String) List of report IDs associated with the annotation.
+- `timestamp` (String) The date associated with the annotation.
+- `update_time` (String) The time when the annotation was last updated.
 
 <a id="nestedatt--annotations--labels"></a>
 ### Nested Schema for `annotations.labels`
 
 Read-Only:
 
-- `id` (String) The unique identifier of the label
-- `name` (String) The name of the label
+- `id` (String) The unique identifier of the label.
+- `name` (String) The name of the label.

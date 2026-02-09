@@ -52,6 +52,7 @@ resource "doit_alert" "aws_cost_alert" {
       }
     ]
   }
+  recipients = ["ops@company.com"]
 }
 ```
 
@@ -91,6 +92,7 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 - `data_source` (String)
 - `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
 - `operator` (String) Text/operator used to filter metric values in metric filters.
+Possible values: `gt`, `lt`
 - `scopes` (Attributes List) The filters selected define the scope of the alert. (see [below for nested schema](#nestedatt--config--scopes))
 - `time_interval` (String) The time interval to evaluate the condition.
 Possible values: `hour`, `day`, `week`, `month`, `quarter`, `year`
@@ -119,3 +121,13 @@ Optional:
 
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `values` (List of String) Values to filter on.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import doit_alert.alert [id]
+```

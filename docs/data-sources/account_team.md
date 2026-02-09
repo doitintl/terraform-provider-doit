@@ -3,12 +3,12 @@
 page_title: "doit_account_team Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Account Team provides access to your DoIT account representatives.
+  Find DoiT account managers assigned to your organization.
 ---
 
 # doit_account_team (Data Source)
 
-Account Team provides access to your DoIT account representatives.
+Find DoiT account managers assigned to your organization.
 
 ## Example Usage
 

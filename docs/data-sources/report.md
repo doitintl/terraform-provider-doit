@@ -3,12 +3,12 @@
 page_title: "doit_report Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
+  Manage Cloud Analytics reports and get reports data in JSON format.
 ---
 
 # doit_report (Data Source)
 
-Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
+Manage Cloud Analytics reports and get reports data in JSON format.
 
 ## Example Usage
 
@@ -45,7 +45,7 @@ output "report_time_range" {
 
 ### Read-Only
 
-- `config` (Attributes) Report configuration (see [below for nested schema](#nestedatt--config))
+- `config` (Attributes) Report configuration. (see [below for nested schema](#nestedatt--config))
 - `description` (String) Report description.
 - `name` (String) Report name.
 - `type` (String) Report type.
@@ -55,7 +55,7 @@ output "report_time_range" {
 
 Read-Only:
 
-- `advanced_analysis` (Attributes) Advanced analysis options. Each of these can be set independently (see [below for nested schema](#nestedatt--config--advanced_analysis))
+- `advanced_analysis` (Attributes) Advanced analysis options. Each can be set independently. (see [below for nested schema](#nestedatt--config--advanced_analysis))
 - `aggregation` (String) How to aggregate data values in the report.
 - `currency` (String) Currency code for monetary values.
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
@@ -67,9 +67,10 @@ Read-Only:
 - `include_promotional_credits` (Boolean) Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).
 If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
 - `include_subtotals` (Boolean) Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
-- `layout` (String) The visualization of the report.
-- `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric))
-- `metric_filter` (Attributes) The metric filter to limit the report results by value (see [below for nested schema](#nestedatt--config--metric_filter))
+- `layout` (String) Type of visualization or output format.
+- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric))
+- `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
+- `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `sort_dimensions` (String) This option has no impact when reading reports via API.
 - `sort_groups` (String) This option has no impact when reading reports via API.
 - `splits` (Attributes List) The splits to use in the report. (see [below for nested schema](#nestedatt--config--splits))
@@ -103,8 +104,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String) The field to apply to the dimension.
-- `type` (String) Type of dimension or filter field.
+- `id` (String) The identifier of the dimension.
+- `type` (String) Enumeration of supported dimension/filter types.
 
 
 <a id="nestedatt--config--filters"></a>
@@ -115,8 +116,8 @@ Read-Only:
 - `id` (String) The field to filter on
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
-- `type` (String) Type of dimension or filter field.
-- `values` (List of String) Values to filter on
+- `type` (String) Enumeration of supported dimension/filter types.
+- `values` (List of String) Values to filter on.
 
 
 <a id="nestedatt--config--group"></a>
@@ -126,14 +127,14 @@ Read-Only:
 
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
-- `type` (String) Type of dimension or filter field.
+- `type` (String) Enumeration of supported dimension/filter types.
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
 
 Read-Only:
 
-- `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--group--limit--metric))
+- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--group--limit--metric))
 - `sort` (String) Sort order for ranking results.
 - `value` (Number) The number of items to show
 
@@ -144,7 +145,7 @@ Read-Only:
 
 - `type` (String) Type of metric to use.
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom id.
+If using custom metrics, the value must refer to an existing custom ID.
 
 
 
@@ -156,7 +157,7 @@ Read-Only:
 
 - `type` (String) Type of metric to use.
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom id.
+If using custom metrics, the value must refer to an existing custom ID.
 
 
 <a id="nestedatt--config--metric_filter"></a>
@@ -164,7 +165,7 @@ If using custom metrics, the value must refer to an existing custom id.
 
 Read-Only:
 
-- `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
+- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
 - `operator` (String) Comparison operator for filtering metric values.
 - `values` (List of Number)
 
@@ -175,8 +176,18 @@ Read-Only:
 
 - `type` (String) Type of metric to use.
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom id.
+If using custom metrics, the value must refer to an existing custom ID.
 
+
+
+<a id="nestedatt--config--metrics"></a>
+### Nested Schema for `config.metrics`
+
+Read-Only:
+
+- `type` (String) Type of metric to use.
+- `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
+If using custom metrics, the value must refer to an existing custom ID.
 
 
 <a id="nestedatt--config--splits"></a>
@@ -184,11 +195,11 @@ If using custom metrics, the value must refer to an existing custom id.
 
 Read-Only:
 
-- `id` (String) ID of the field to split
-- `include_origin` (Boolean) if set, include the origin
+- `id` (String) ID of the field to split.
+- `include_origin` (Boolean) Indicate whether to include the origin.
 - `mode` (String)
-- `origin` (Attributes) (see [below for nested schema](#nestedatt--config--splits--origin))
-- `targets` (Attributes List) Targets for the split (see [below for nested schema](#nestedatt--config--splits--targets))
+- `origin` (Attributes) Origin info for cost splitting. (see [below for nested schema](#nestedatt--config--splits--origin))
+- `targets` (Attributes List) Targets for the split. (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.
 The only supported value at the moment: "attribution_group"
 
@@ -197,7 +208,7 @@ The only supported value at the moment: "attribution_group"
 
 Read-Only:
 
-- `id` (String) ID of the origin
+- `id` (String) ID of the origin.
 - `type` (String) Type of the origin.
 The only supported values at the moment: "attribution", "unallocated"
 
@@ -207,10 +218,10 @@ The only supported values at the moment: "attribution", "unallocated"
 
 Read-Only:
 
-- `id` (String) ID of the target
+- `id` (String) ID of the target.
 - `type` (String) Type of the target.
 The only supported value at the moment: "attribution"
-- `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom.
+- `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
 
 
 

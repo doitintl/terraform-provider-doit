@@ -3,12 +3,12 @@
 page_title: "doit_allocations Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
+  Define how costs are distributed across your organization.
 ---
 
 # doit_allocations (Data Source)
 
-Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
+Define how costs are distributed across your organization.
 
 ## Example Usage
 
@@ -38,27 +38,27 @@ output "allocation_names" {
 
 - `filter` (String) An expression for filtering the results.
 Valid fields: **type**, **owner**, **name**.
-- `max_results` (String) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 - `sort_order` (String) Sort order can be ascending or descending.
 
 ### Read-Only
 
 - `allocations` (Attributes List) (see [below for nested schema](#nestedatt--allocations))
-- `row_count` (Number) Total number of allocations in the result set
+- `row_count` (Number) Total number of allocations in the result set.
 
 <a id="nestedatt--allocations"></a>
 ### Nested Schema for `allocations`
 
 Read-Only:
 
-- `allocation_type` (String) Type of allocation (single or group)
+- `allocation_type` (String) Composition type of allocation (single or group).
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
-- `description` (String) Allocation description
-- `id` (String) Allocation ID
-- `name` (String) Allocation name
-- `owner` (String) Allocation owner
-- `type` (String) Type of allocation (preset or custom)
+- `description` (String) Allocation description.
+- `id` (String) Allocation ID.
+- `name` (String) Allocation name.
+- `owner` (String) Allocation owner.
+- `type` (String) Type of allocation (preset or custom).
 - `update_time` (Number) Last time the allocation was modified (in UNIX timestamp).
-- `url_ui` (String) URL to view the allocation in DoiT Cloud Navigator.
+- `url_ui` (String) URL to view the allocation in the DoiT console.

@@ -3,12 +3,12 @@
 page_title: "doit_invoice Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Invoices provide access to your current and historical billing documents.
+  Access your current and historical billing documents.
 ---
 
 # doit_invoice (Data Source)
 
-Invoices provide access to your current and historical billing documents.
+Access your current and historical billing documents.
 
 ## Example Usage
 
@@ -54,7 +54,7 @@ output "invoice_url" {
 - `due_date` (Number) The last day to pay the invoice, in milliseconds since the epoch
 - `invoice_date` (Number) The time when this invoice was issued, in milliseconds since the epoch.
 - `line_items` (Attributes List) Invoice line items. (see [below for nested schema](#nestedatt--line_items))
-- `platform` (String)
+- `platform` (String) Platform identifier for invoice source.
 - `status` (String) Status of the invoice
 - `total_amount` (Number) Total invoiced amount
 - `url` (String) Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.

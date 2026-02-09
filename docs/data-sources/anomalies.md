@@ -3,12 +3,12 @@
 page_title: "doit_anomalies Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Anomalies detect unexpected changes in your cloud spending patterns.
+  Monitor cost spikes in your cloud environment.
 ---
 
 # doit_anomalies (Data Source)
 
-Anomalies detect unexpected changes in your cloud spending patterns.
+Monitor cost spikes in your cloud environment.
 
 ## Example Usage
 
@@ -46,7 +46,7 @@ output "anomaly_summary" {
 - `max_creation_time` (String) Max value for the anomaly detection time
 - `max_results` (Number) The maximum number of results to return in a single page
 - `min_creation_time` (String) Min value for the anomaly detection time
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 
 ### Read-Only
 
@@ -59,20 +59,20 @@ output "anomaly_summary" {
 Read-Only:
 
 - `acknowledged` (Boolean) Has the anomaly been acknowledged
-- `attribution` (String) Attribution ID
-- `billing_account` (String) Billing account ID
-- `cost_of_anomaly` (Number) Cost of the anomaly over and above the expected normal cost
-- `end_time` (Number) End of the anomaly
+- `attribution` (String) Attribution ID.
+- `billing_account` (String) Billing account ID.
+- `cost_of_anomaly` (Number) Cost of the anomaly over and above the expected normal cost.
+- `end_time` (Number) End of the anomaly.
 - `id` (String)
-- `platform` (String) Cloud Provider name
-- `resource_data` (Attributes List) Resources contributing to the anomaly (see [below for nested schema](#nestedatt--anomalies--resource_data))
+- `platform` (String) Cloud Provider name.
+- `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--resource_data))
 - `scope` (String) Scope: Project or Account
-- `service_name` (String) Service name
+- `service_name` (String) Service name.
 - `severity_level` (String) Severity level: Information, Warning or Critical
-- `start_time` (Number) Usage start time of the anomaly
+- `start_time` (Number) Usage start time of the anomaly.
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly
-- `top3skus` (Attributes List) (see [below for nested schema](#nestedatt--anomalies--top3skus))
+- `top3skus` (Attributes List) Array of SKU entries contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--top3skus))
 
 <a id="nestedatt--anomalies--resource_data"></a>
 ### Nested Schema for `anomalies.resource_data`

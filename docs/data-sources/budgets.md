@@ -3,12 +3,12 @@
 page_title: "doit_budgets Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
+  Track actual cloud spend against planned spend.
 ---
 
 # doit_budgets (Data Source)
 
-Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
+Track actual cloud spend against planned spend.
 
 ## Example Usage
 
@@ -37,7 +37,7 @@ Available keys: owner, lastModified in ms (>lasModified). Multiple filters can b
 - `max_creation_time` (String) Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
 - `max_results` (String) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 
 ### Read-Only
 
@@ -59,7 +59,7 @@ Read-Only:
 - `forecasted_utilization_date` (Number)
 - `id` (String)
 - `owner` (String)
-- `scope` (List of String, Deprecated) List of attributions that define the budget scope.
+- `scope` (List of String, Deprecated) List of allocations that define the budget scope.
 - `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--budgets--scopes))
 - `start_period` (Number)
 - `time_interval` (String)
@@ -83,5 +83,5 @@ Read-Only:
 - `id` (String) The field to filter on
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
-- `type` (String) Type of dimension or filter field.
-- `values` (List of String) Values to filter on
+- `type` (String) Enumeration of supported dimension/filter types.
+- `values` (List of String) Values to filter on.

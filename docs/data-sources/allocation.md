@@ -3,12 +3,12 @@
 page_title: "doit_allocation Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
+  Define how costs are distributed across your organization.
 ---
 
 # doit_allocation (Data Source)
 
-Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.
+Define how costs are distributed across your organization.
 
 ## Example Usage
 
@@ -50,15 +50,15 @@ resource "doit_report" "allocation_report" {
 
 ### Read-Only
 
-- `allocation_type` (String) Type of allocation (single or group)
-- `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation
+- `allocation_type` (String) Composition type of allocation.
+- `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation.
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
-- `description` (String) Allocation description
-- `name` (String) Allocation name
-- `rule` (Attributes) Single allocation rule (required for single type allocation) (see [below for nested schema](#nestedatt--rule))
+- `description` (String) Allocation description.
+- `name` (String) Allocation name.
+- `rule` (Attributes) Single allocation rule. (see [below for nested schema](#nestedatt--rule))
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
-- `type` (String) Type of allocation (preset or custom)
-- `unallocated_costs` (String) Custom label for any values that do not fit into allocation (required for group type allocation)
+- `type` (String) Type of allocation (preset or custom).
+- `unallocated_costs` (String) Custom label for values that do not fit into allocation (required for group type allocation).
 - `update_time` (Number) Last time the allocation was modified (in UNIX timestamp).
 
 <a id="nestedatt--rule"></a>
@@ -66,19 +66,19 @@ resource "doit_report" "allocation_report" {
 
 Read-Only:
 
-- `components` (Attributes List) List of allocation filter components (see [below for nested schema](#nestedatt--rule--components))
-- `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.)
+- `components` (Attributes List) List of allocation filter components. (see [below for nested schema](#nestedatt--rule--components))
+- `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.).
 
 <a id="nestedatt--rule--components"></a>
 ### Nested Schema for `rule.components`
 
 Read-Only:
 
-- `include_null` (Boolean) Include null values
+- `include_null` (Boolean) Include null values.
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
-- `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
-- `mode` (String) Filter mode to apply
-- `type` (String) Type of dimension or filter field.
+- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country".
+- `mode` (String) Filter mode to apply.
+- `type` (String) Enumeration of supported dimension/filter types.
 - `values` (List of String)
 
 
@@ -88,21 +88,21 @@ Read-Only:
 
 Read-Only:
 
-- `action` (String) Action to perform with this rule
-- `components` (Attributes List) List of allocation filter components (required for 'create' or 'update' action) (see [below for nested schema](#nestedatt--rules--components))
-- `description` (String) Description for the allocation rule
+- `action` (String) Action to perform with this rule.
+- `components` (Attributes List) List of allocation filter components (required for 'create' or 'update' action). (see [below for nested schema](#nestedatt--rules--components))
+- `description` (String) Description of the allocation rule.
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.)
-- `id` (String) ID of existing allocation (required for 'update' or 'select' action)
-- `name` (String) Name for the allocation rule
+- `id` (String) ID of existing allocation (required for 'update' or 'select' action).
+- `name` (String) Name of the allocation rule.
 
 <a id="nestedatt--rules--components"></a>
 ### Nested Schema for `rules.components`
 
 Read-Only:
 
-- `include_null` (Boolean) Include null values
+- `include_null` (Boolean) Include null values.
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
-- `key` (String) Key of a dimension. Examples: "billing_account_id", "country", etc.  Dimension must exist.
-- `mode` (String) Filter mode to apply
-- `type` (String) Type of dimension or filter field.
+- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country".
+- `mode` (String) Filter mode to apply.
+- `type` (String) Enumeration of supported dimension/filter types.
 - `values` (List of String)

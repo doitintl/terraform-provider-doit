@@ -3,24 +3,32 @@
 page_title: "doit_report Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
+  Manage Cloud Analytics reports and get reports data in JSON format.
 ---
 
 # doit_report (Resource)
 
-Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.
+Manage Cloud Analytics reports and get reports data in JSON format.
 
 ## Example Usage
 
 ```terraform
-resource "doit_report" "my-report" {
-  name        = "test_report"
-  description = "test_report"
+# Create a report with multiple metrics
+resource "doit_report" "my_report" {
+  name        = "Monthly Cost Report"
+  description = "Tracks monthly costs and usage across cloud providers"
   config = {
-    metric = {
-      type  = "basic"
-      value = "cost"
-    }
+    # Use metrics list (supports 1-4 metrics)
+    metrics = [
+      {
+        type  = "basic"
+        value = "cost"
+      },
+      {
+        type  = "basic"
+        value = "usage"
+      }
+    ]
     include_promotional_credits = false
     advanced_analysis = {
       trending_up   = false
@@ -30,6 +38,7 @@ resource "doit_report" "my-report" {
     }
     aggregation   = "total"
     time_interval = "month"
+    data_source   = "billing"
     dimensions = [
       {
         id   = "year"
@@ -49,18 +58,13 @@ resource "doit_report" "my-report" {
     filters = [
       {
         inverse = false
-        id      = "attribution"
-        type    = "attribution"
-        values = [
-          "1CE699ZdwN5CRBw0tInY"
-        ]
+        id      = "cloud_provider"
+        type    = "fixed"
+        mode    = "is"
+        values  = ["amazon-web-services", "google-cloud"]
       }
     ]
     group = [
-      {
-        id   = "BSQZmvX6hvuKGPDHX7R3"
-        type = "attribution_group"
-      },
       {
         id   = "cloud_provider"
         type = "fixed"
@@ -78,7 +82,7 @@ resource "doit_report" "my-report" {
 
 ### Optional
 
-- `config` (Attributes) Report configuration (see [below for nested schema](#nestedatt--config))
+- `config` (Attributes) Report configuration. (see [below for nested schema](#nestedatt--config))
 - `description` (String) Report description.
 - `name` (String) Report name.
 
@@ -92,7 +96,7 @@ resource "doit_report" "my-report" {
 
 Optional:
 
-- `advanced_analysis` (Attributes) Advanced analysis options. Each of these can be set independently (see [below for nested schema](#nestedatt--config--advanced_analysis))
+- `advanced_analysis` (Attributes) Advanced analysis options. Each can be set independently. (see [below for nested schema](#nestedatt--config--advanced_analysis))
 - `aggregation` (String) How to aggregate data values in the report.
 Possible values: `total`, `percent_total`, `percent_col`, `percent_row`
 - `currency` (String) Currency code for monetary values.
@@ -108,10 +112,11 @@ Possible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolu
 - `include_promotional_credits` (Boolean) Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).
 If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
 - `include_subtotals` (Boolean) Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
-- `layout` (String) The visualization of the report.
+- `layout` (String) Type of visualization or output format.
 Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`
-- `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric))
-- `metric_filter` (Attributes) The metric filter to limit the report results by value (see [below for nested schema](#nestedatt--config--metric_filter))
+- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric))
+- `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
+- `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `sort_dimensions` (String) This option has no impact when reading reports via API.
 Possible values: `asc`, `desc`, `a_to_z`
 - `sort_groups` (String) This option has no impact when reading reports via API.
@@ -148,8 +153,8 @@ Optional:
 
 Optional:
 
-- `id` (String) The field to apply to the dimension.
-- `type` (String) Type of dimension or filter field.
+- `id` (String) The identifier of the dimension.
+- `type` (String) Enumeration of supported dimension/filter types.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 
@@ -161,13 +166,13 @@ Required:
 - `id` (String) The field to filter on
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Type of dimension or filter field.
+- `type` (String) Enumeration of supported dimension/filter types.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 Optional:
 
 - `inverse` (Boolean) Set to `true` to exclude the values.
-- `values` (List of String) Values to filter on
+- `values` (List of String) Values to filter on.
 
 
 <a id="nestedatt--config--group"></a>
@@ -177,7 +182,7 @@ Optional:
 
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
-- `type` (String) Type of dimension or filter field.
+- `type` (String) Enumeration of supported dimension/filter types.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 <a id="nestedatt--config--group--limit"></a>
@@ -185,7 +190,7 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--group--limit--metric))
+- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--group--limit--metric))
 - `sort` (String) Sort order for ranking results.
 Possible values: `a_to_z`, `asc`, `desc`
 - `value` (Number) The number of items to show
@@ -198,7 +203,7 @@ Optional:
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom id.
+If using custom metrics, the value must refer to an existing custom ID.
 
 
 
@@ -211,7 +216,7 @@ Optional:
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom id.
+If using custom metrics, the value must refer to an existing custom ID.
 
 
 <a id="nestedatt--config--metric_filter"></a>
@@ -219,7 +224,7 @@ If using custom metrics, the value must refer to an existing custom id.
 
 Optional:
 
-- `metric` (Attributes) The metric to apply. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
+- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
 - `operator` (String) Comparison operator for filtering metric values.
 Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)
@@ -232,8 +237,19 @@ Optional:
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom id.
+If using custom metrics, the value must refer to an existing custom ID.
 
+
+
+<a id="nestedatt--config--metrics"></a>
+### Nested Schema for `config.metrics`
+
+Optional:
+
+- `type` (String) Type of metric to use.
+Possible values: `basic`, `custom`, `extended`
+- `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
+If using custom metrics, the value must refer to an existing custom ID.
 
 
 <a id="nestedatt--config--splits"></a>
@@ -241,11 +257,11 @@ If using custom metrics, the value must refer to an existing custom id.
 
 Optional:
 
-- `id` (String) ID of the field to split
-- `include_origin` (Boolean) if set, include the origin
+- `id` (String) ID of the field to split.
+- `include_origin` (Boolean) Indicate whether to include the origin.
 - `mode` (String) Possible values: `even`, `custom`, `proportional`
-- `origin` (Attributes) (see [below for nested schema](#nestedatt--config--splits--origin))
-- `targets` (Attributes List) Targets for the split (see [below for nested schema](#nestedatt--config--splits--targets))
+- `origin` (Attributes) Origin info for cost splitting. (see [below for nested schema](#nestedatt--config--splits--origin))
+- `targets` (Attributes List) Targets for the split. (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.
 The only supported value at the moment: "attribution_group"
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
@@ -255,7 +271,7 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `id` (String) ID of the origin
+- `id` (String) ID of the origin.
 - `type` (String) Type of the origin.
 The only supported values at the moment: "attribution", "unallocated"
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`
@@ -266,11 +282,11 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `id` (String) ID of the target
+- `id` (String) ID of the target.
 - `type` (String) Type of the target.
 The only supported value at the moment: "attribution"
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
-- `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Must be set only if Split Mode is custom.
+- `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
 
 
 
@@ -285,3 +301,13 @@ Optional:
 Possible values: `last`, `current`, `custom`
 - `unit` (String) Time unit for the time range.
 Possible values: `day`, `week`, `month`, `quarter`, `year`
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import doit_report.report [id]
+```

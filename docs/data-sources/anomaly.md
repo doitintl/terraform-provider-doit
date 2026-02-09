@@ -3,12 +3,12 @@
 page_title: "doit_anomaly Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Anomalies detect unexpected changes in your cloud spending patterns.
+  Monitor cost spikes in your cloud environment.
 ---
 
 # doit_anomaly (Data Source)
 
-Anomalies detect unexpected changes in your cloud spending patterns.
+Monitor cost spikes in your cloud environment.
 
 ## Example Usage
 
@@ -41,7 +41,7 @@ output "anomaly_severity" {
 
 ### Required
 
-- `id` (String) anomaly id, uniquely identifying the anomaly
+- `id` (String) A unique identifier of the anomaly.
 
 ### Read-Only
 
@@ -51,14 +51,14 @@ output "anomaly_severity" {
 - `cost_of_anomaly` (Number) The difference between the actual cost and the maximum cost in the normal range.
 - `end_time` (Number) End of the anomaly
 - `platform` (String) Cloud Provider name
-- `resource_data` (Attributes List) Resources contributing to the anomaly (see [below for nested schema](#nestedatt--resource_data))
+- `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--resource_data))
 - `scope` (String) Scope: Project or Account
 - `service_name` (String) Service name
 - `severity_level` (String) Severity level: Information, Warning or Critical
 - `start_time` (Number) Usage start time of the anomaly
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly
-- `top3skus` (Attributes List) (see [below for nested schema](#nestedatt--top3skus))
+- `top3skus` (Attributes List) Array of SKU entries contributing to an anomaly. (see [below for nested schema](#nestedatt--top3skus))
 
 <a id="nestedatt--resource_data"></a>
 ### Nested Schema for `resource_data`

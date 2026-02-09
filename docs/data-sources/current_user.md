@@ -3,12 +3,12 @@
 page_title: "doit_current_user Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Auth endpoints
+  User authentication.
 ---
 
 # doit_current_user (Data Source)
 
-Auth endpoints
+User authentication.
 
 ## Example Usage
 

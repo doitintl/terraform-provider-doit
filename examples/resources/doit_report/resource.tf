@@ -45,6 +45,7 @@ resource "doit_report" "my_report" {
         inverse = false
         id      = "cloud_provider"
         type    = "fixed"
+        mode    = "is"
         values  = ["amazon-web-services", "google-cloud"]
       }
     ]

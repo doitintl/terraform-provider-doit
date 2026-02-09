@@ -3,12 +3,12 @@
 page_title: "doit_label Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Labels help you organize and categorize your cloud resources.
+  Create and manage labels to organize and categorize your cloud resources.
 ---
 
 # doit_label (Data Source)
 
-Labels help you organize and categorize your cloud resources.
+Create and manage labels to organize and categorize your cloud resources.
 
 ## Example Usage
 
@@ -45,8 +45,8 @@ resource "doit_annotation" "example" {
 
 ### Read-Only
 
-- `color` (String) The color of the label
-- `create_time` (String) The time when the label was created
-- `name` (String) The name of the label
-- `type` (String) The type of the label (custom or preset)
-- `update_time` (String) The time when the label was last updated
+- `color` (String) The color of the label.
+- `create_time` (String) The time when the label was created.
+- `name` (String) The name of the label.
+- `type` (String) The type of the label (custom or preset).
+- `update_time` (String) The time when the label was last updated.

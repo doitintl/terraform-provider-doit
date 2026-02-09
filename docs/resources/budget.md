@@ -3,12 +3,12 @@
 page_title: "doit_budget Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
+  Track actual cloud spend against planned spend.
 ---
 
 # doit_budget (Resource)
 
-Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
+Track actual cloud spend against planned spend.
 
 ## Example Usage
 
@@ -54,10 +54,10 @@ resource "doit_budget" "this" {
 
 ### Optional
 
-- `alerts` (Attributes List) List of up to three thresholds defined as a percentage of the amount (see [below for nested schema](#nestedatt--alerts))
+- `alerts` (Attributes List) List of up to three thresholds defined as a percentage of the amount. (see [below for nested schema](#nestedatt--alerts))
 - `amount` (Number) Budget period amount
 required: true(if usePrevSpend is false)
-- `collaborators` (Attributes List) List of permitted users to view/edit the report (see [below for nested schema](#nestedatt--collaborators))
+- `collaborators` (Attributes List) List of permitted users to view/edit the report. (see [below for nested schema](#nestedatt--collaborators))
 - `currency` (String) Currency code for monetary values.
 Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `description` (String) Budget description
@@ -65,14 +65,14 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 required: true(if budget type is fixed)
 - `growth_per_period` (Number) Periodical growth percentage in recurring budget
 - `metric` (String) Budget metric - currently fixed to "cost"
-- `name` (String) Budget Name
+- `name` (String) Budget Name.
 - `public` (String) Public sharing access level for the budget.
 Possible values: `owner`, `editor`, `viewer`
-- `recipients` (List of String) List of emails to notify when reaching alert threshold
-- `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold (see [below for nested schema](#nestedatt--recipients_slack_channels))
-- `scope` (List of String, Deprecated) List of attributions that define the budget scope.
+- `recipients` (List of String) List of emails to notify when reaching alert threshold.
+- `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold. (see [below for nested schema](#nestedatt--recipients_slack_channels))
+- `scope` (List of String, Deprecated) List of allocations that define the budget scope.
 - `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--scopes))
-- `seasonal_amounts` (List of Number) List of seasonal amounts for recurring budgets with different amounts per period
+- `seasonal_amounts` (List of Number) List of seasonal amounts for recurring budgets with different amounts per period.
 - `start_period` (Number) Budget start Date
 - `time_interval` (String) Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
 - `type` (String) budget type can be one of: ["fixed", "recurring"]
@@ -80,12 +80,12 @@ Possible values: `owner`, `editor`, `viewer`
 
 ### Read-Only
 
-- `create_time` (Number) Creation time (in UNIX timestamp)
+- `create_time` (Number) Creation time (in UNIX timestamp).
 - `current_utilization` (Number)
 - `forecasted_utilization` (Number)
 - `id` (String) budget ID, identifying the report
 in:path
-- `update_time` (Number) Update time (in UNIX timestamp)
+- `update_time` (Number) Update time (in UNIX timestamp).
 
 <a id="nestedatt--alerts"></a>
 ### Nested Schema for `alerts`
@@ -130,13 +130,13 @@ Required:
 - `id` (String) The field to filter on
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Type of dimension or filter field.
+- `type` (String) Enumeration of supported dimension/filter types.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 Optional:
 
 - `inverse` (Boolean) Set to `true` to exclude the values.
-- `values` (List of String) Values to filter on
+- `values` (List of String) Values to filter on.
 
 ## Import
 
