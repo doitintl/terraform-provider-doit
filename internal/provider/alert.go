@@ -226,7 +226,10 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (res
 		attributionsVal, listDiags = types.ListValueFrom(ctx, types.StringType, *config.Attributions)
 		diags.Append(listDiags...)
 	} else {
-		attributionsVal = types.ListNull(types.StringType)
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		var emptyDiags diag.Diagnostics
+		attributionsVal, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
+		diags.Append(emptyDiags...)
 	}
 
 	// Build scopes list
@@ -240,7 +243,10 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (res
 				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, *scope.Values)
 				diags.Append(listDiags...)
 			} else {
-				valuesVal = types.ListNull(types.StringType)
+				// Return empty list for nil to avoid inconsistent result if user sets []
+				var emptyDiags diag.Diagnostics
+				valuesVal, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
+				diags.Append(emptyDiags...)
 			}
 
 			scopeAttrs := map[string]attr.Value{
@@ -258,7 +264,10 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (res
 		scopesVal, listDiags = types.ListValueFrom(ctx, resource_alert.ScopesValue{}.Type(ctx), scopesList)
 		diags.Append(listDiags...)
 	} else {
-		scopesVal = types.ListNull(resource_alert.ScopesValue{}.Type(ctx))
+		// Return empty list for nil to avoid inconsistent result if user sets []
+		emptyScopes, emptyDiags := types.ListValueFrom(ctx, resource_alert.ScopesValue{}.Type(ctx), []resource_alert.ScopesValue{})
+		diags.Append(emptyDiags...)
+		scopesVal = emptyScopes
 	}
 
 	// Build metric value

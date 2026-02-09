@@ -5,8 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -14,21 +13,21 @@ import (
 )
 
 func TestAccAllocationDataSource(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-alloc-ds")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationDataSourceConfig(n),
+				Config: testAccAllocationDataSourceConfig(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					// Verify data source attributes match resource
 					statecheck.ExpectKnownValue(
 						"data.doit_allocation.test",
 						tfjsonpath.New("name"),
-						knownvalue.StringExact(fmt.Sprintf("test-ds-%d", n))),
+						knownvalue.StringExact(rName)),
 					statecheck.ExpectKnownValue(
 						"data.doit_allocation.test",
 						tfjsonpath.New("description"),
@@ -48,15 +47,15 @@ func TestAccAllocationDataSource(t *testing.T) {
 }
 
 func TestAccAllocationDataSource_Group(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-alloc-ds-grp")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationDataSourceGroupConfig(n),
+				Config: testAccAllocationDataSourceGroupConfig(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.doit_allocation.test",
@@ -72,10 +71,10 @@ func TestAccAllocationDataSource_Group(t *testing.T) {
 	})
 }
 
-func testAccAllocationDataSourceConfig(i int) string {
+func testAccAllocationDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "test" {
-    name        = "test-ds-%d"
+    name        = %q
     description = "test allocation for data source"
     rule = {
        formula = "A"
@@ -93,13 +92,13 @@ resource "doit_allocation" "test" {
 data "doit_allocation" "test" {
     id = doit_allocation.test.id
 }
-`, i, testProject())
+`, name, testProject())
 }
 
-func testAccAllocationDataSourceGroupConfig(i int) string {
+func testAccAllocationDataSourceGroupConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "test" {
-    name        = "test-ds-group-%d"
+    name        = %q
     description = "test allocation group for data source"
     unallocated_costs = "Other"
     rules = [
@@ -122,11 +121,11 @@ resource "doit_allocation" "test" {
 data "doit_allocation" "test" {
     id = doit_allocation.test.id
 }
-`, i, testProject())
+`, name, testProject())
 }
 
 func TestAccAllocationDataSource_NotFound(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

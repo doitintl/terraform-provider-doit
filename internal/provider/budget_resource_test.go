@@ -1,12 +1,13 @@
 package provider_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -16,9 +17,9 @@ import (
 )
 
 func TestAccBudget(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -244,9 +245,9 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_Import(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -270,9 +271,9 @@ func TestAccBudget_Import(t *testing.T) {
 }
 
 func TestAccBudget_Scopes(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -311,9 +312,9 @@ func TestAccBudget_Scopes(t *testing.T) {
 }
 
 func TestAccBudget_Conflict(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -400,9 +401,9 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_Attributes_Coverage(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -442,6 +443,15 @@ func TestAccBudget_Attributes_Coverage(t *testing.T) {
 								"inverse": knownvalue.Bool(true),
 							}),
 						})),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccBudgetAttributesCoverage(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},
@@ -489,9 +499,9 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_SlackChannel(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -554,4 +564,292 @@ resource "doit_budget" "this" {
   ]
 }
 `, budgetStartPeriod(), i, testSlackChannel(), testCustomerID(), testAttribution(), testUser())
+}
+
+// TestAccBudget_Disappears verifies that Terraform correctly handles
+// resources that are deleted outside of Terraform (externally deleted).
+// This tests the Read method's 404 handling and RemoveResource call.
+func TestAccBudget_Disappears(t *testing.T) {
+	n := acctest.RandInt()
+	var resourceId string
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create the resource
+			{
+				Config: testAccBudget(n),
+				Check: resource.ComposeTestCheckFunc(
+					// Capture the resource ID for later deletion
+					resource.TestCheckResourceAttrWith("doit_budget.this", "id", func(value string) error {
+						if value == "" {
+							return fmt.Errorf("resource ID is empty")
+						}
+						resourceId = value
+						return nil
+					}),
+				),
+			},
+			// Step 2: Delete the resource via API, then verify Terraform detects the drift
+			{
+				PreConfig: func() {
+					// Delete the resource directly via API
+					client := getAPIClient(t)
+					resp, err := client.DeleteBudgetWithResponse(context.Background(), resourceId)
+					if err != nil {
+						t.Fatalf("Failed to delete budget via API: %v", err)
+					}
+					// 200 or 204 = success, 404 = already deleted (both are OK)
+					if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
+						t.Fatalf("Unexpected status code when deleting budget: %d, body: %s",
+							resp.StatusCode(), string(resp.Body))
+					}
+				},
+				Config:             testAccBudget(n),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
+			},
+		},
+	})
+}
+
+// TestAccBudget_ListAttributes_Collaborators tests all three scenarios for collaborators:
+// 1. Explicit collaborator with owner role
+// 2. Empty list (validator blocks)
+// 3. Omitted (API adds creator as owner).
+func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Test 1: Empty collaborators = [] blocked by validator
+			{
+				Config:      testAccBudgetWithEmptyCollaborators(n),
+				ExpectError: regexp.MustCompile(`Exactly One Owner Required`),
+			},
+			// Test 2: Explicit collaborator with owner role
+			{
+				Config: testAccBudgetWithExplicitCollaborator(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("collaborators"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Test 3: Omitted collaborators - API adds creator as owner
+			{
+				Config: testAccBudgetNoCollaborators(n + 1),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("collaborators"),
+						knownvalue.ListSizeExact(1)), // API adds creator
+				},
+			},
+		},
+	})
+}
+
+// TestAccBudget_ListAttributes_AlertsAndRecipients tests all three scenarios for alerts and recipients.
+func TestAccBudget_ListAttributes_AlertsAndRecipients(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Test 1: Explicit alerts and recipients
+			{
+				Config: testAccBudgetWithExplicitAlertsAndRecipients(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("alerts"),
+						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Test 2: Empty alerts=[] and recipients=[]
+			// Both are blocked by validators - API doesn't support empty lists for these.
+			{
+				Config:      testAccBudgetWithEmptyAlertsAndRecipients(n + 1),
+				ExpectError: regexp.MustCompile(`Invalid Alerts Configuration|Invalid Recipients Configuration|cannot be empty`),
+			},
+			// Test 3: Omitted alerts and recipients - API behavior
+			// NOTE: When omitted, API provides default alerts, and adds creator as default recipient
+			{
+				Config: testAccBudgetNoAlertsOrRecipients(n + 2),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// API provides default alerts when omitted
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("alerts"),
+						knownvalue.NotNull()),
+					// API adds creator as default recipient
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithEmptyCollaborators(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-empty-collab-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = []
+}
+`, budgetStartPeriod(), i, testAttribution())
+}
+
+func testAccBudgetWithExplicitCollaborator(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-explicit-collab-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}
+
+func testAccBudgetNoCollaborators(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-no-collab-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  # collaborators omitted - API adds creator as owner
+}
+`, budgetStartPeriod(), i, testAttribution())
+}
+
+func testAccBudgetWithExplicitAlertsAndRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-explicit-alerts-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+  alerts = [
+    { percentage = 50 },
+    { percentage = 100 }
+  ]
+  recipients = ["%s"]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser())
+}
+
+func testAccBudgetWithEmptyAlertsAndRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-empty-alerts-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+  alerts     = []
+  recipients = []
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}
+
+func testAccBudgetNoAlertsOrRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-no-alerts-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      email = "%s"
+      role  = "owner"
+    }
+  ]
+  # alerts and recipients omitted - API computes defaults
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
 }

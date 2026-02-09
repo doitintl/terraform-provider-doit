@@ -36,6 +36,20 @@ func (v allocationRulesValidator) ValidateList(ctx context.Context, req validato
 	}
 
 	elements := req.ConfigValue.Elements()
+
+	// Block empty rules lists. While the provider now normalizes nil/empty API
+	// responses to an empty list, an explicit empty list in configuration is
+	// discouraged. Blocking this guides users toward the cleaner pattern of
+	// omitting the attribute entirely when no allocation rules are desired.
+	if len(elements) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid Rules Configuration",
+			"Allocation rules cannot be empty. Specify at least one rule or omit the attribute.",
+		)
+		return
+	}
+
 	for i, elem := range elements {
 		// The generated schema uses resource_allocation.RulesValue
 		ruleVal, ok := elem.(resource_allocation.RulesValue)

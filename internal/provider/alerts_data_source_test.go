@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -17,7 +18,7 @@ func TestAccAlertsDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 alerts to test pagination, got %d", alertCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -52,7 +53,7 @@ func TestAccAlertsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 alert)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -87,7 +88,7 @@ func TestAccAlertsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 alerts to test pagination, got %d", alertCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -113,12 +114,7 @@ data "doit_alerts" "paginated" {
 
 // TestAccAlertsDataSource_AutoPagination tests that without max_results, all alerts are fetched.
 func TestAccAlertsDataSource_AutoPagination(t *testing.T) {
-	expectedCount := getAlertCount(t)
-	if expectedCount == 0 {
-		t.Skip("No alerts available to test auto-pagination")
-	}
-
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -126,7 +122,9 @@ func TestAccAlertsDataSource_AutoPagination(t *testing.T) {
 			{
 				Config: testAccAlertsDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_alerts.test", "row_count", fmt.Sprintf("%d", expectedCount)),
+					// Just verify row_count is set and pagination completed (no page_token)
+					// Don't check specific values since parallel tests may change the count
+					resource.TestCheckResourceAttrSet("data.doit_alerts.test", "row_count"),
 					resource.TestCheckNoResourceAttr("data.doit_alerts.test", "page_token"),
 				),
 			},
@@ -143,7 +141,20 @@ data "doit_alerts" "test" {
 
 // Helper functions
 
+var (
+	alertCount     int
+	alertCountOnce sync.Once
+)
+
 func getAlertCount(t *testing.T) int {
+	t.Helper()
+	alertCountOnce.Do(func() {
+		alertCount = computeAlertCount(t)
+	})
+	return alertCount
+}
+
+func computeAlertCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()

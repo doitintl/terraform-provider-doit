@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -16,7 +17,7 @@ func TestAccAllocationsDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 allocations to test pagination, got %d", allocationCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -51,7 +52,7 @@ func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 allocation)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -86,7 +87,7 @@ func TestAccAllocationsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 allocations to test pagination, got %d", allocationCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -112,12 +113,7 @@ data "doit_allocations" "paginated" {
 
 // TestAccAllocationsDataSource_AutoPagination tests that without max_results, all allocations are fetched.
 func TestAccAllocationsDataSource_AutoPagination(t *testing.T) {
-	expectedCount := getAllocationCount(t)
-	if expectedCount == 0 {
-		t.Skip("No allocations available to test auto-pagination")
-	}
-
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -125,7 +121,9 @@ func TestAccAllocationsDataSource_AutoPagination(t *testing.T) {
 			{
 				Config: testAccAllocationsDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_allocations.test", "row_count", fmt.Sprintf("%d", expectedCount)),
+					// Just verify row_count is set and pagination completed (no page_token)
+					// Don't check specific values since parallel tests may change the count
+					resource.TestCheckResourceAttrSet("data.doit_allocations.test", "row_count"),
 					resource.TestCheckNoResourceAttr("data.doit_allocations.test", "page_token"),
 				),
 			},
@@ -142,7 +140,20 @@ data "doit_allocations" "test" {
 
 // Helper functions
 
+var (
+	allocationCount     int
+	allocationCountOnce sync.Once
+)
+
 func getAllocationCount(t *testing.T) int {
+	t.Helper()
+	allocationCountOnce.Do(func() {
+		allocationCount = computeAllocationCount(t)
+	})
+	return allocationCount
+}
+
+func computeAllocationCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()

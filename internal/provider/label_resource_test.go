@@ -1,12 +1,12 @@
 package provider_test
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -15,16 +15,16 @@ import (
 )
 
 func TestAccLabel(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-label")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			// Test Label Create
 			{
-				Config: testAccLabel(n),
+				Config: testAccLabel(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -38,7 +38,7 @@ func TestAccLabel(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("name"),
-						knownvalue.StringExact(fmt.Sprintf("test-label-%d", n))),
+						knownvalue.StringExact(rName)),
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("color"),
@@ -51,7 +51,7 @@ func TestAccLabel(t *testing.T) {
 			},
 			// Test Label Update (change name and color)
 			{
-				Config: testAccLabelUpdate(n),
+				Config: testAccLabelUpdate(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -65,7 +65,7 @@ func TestAccLabel(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("name"),
-						knownvalue.StringExact(fmt.Sprintf("test-label-updated-%d", n))),
+						knownvalue.StringExact(rName+"-updated")),
 					statecheck.ExpectKnownValue(
 						"doit_label.this",
 						tfjsonpath.New("color"),
@@ -77,15 +77,15 @@ func TestAccLabel(t *testing.T) {
 }
 
 func TestAccLabel_Import(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-label")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLabel(n),
+				Config: testAccLabel(rName),
 			},
 			{
 				ResourceName:      "doit_label.this",
@@ -96,29 +96,29 @@ func TestAccLabel_Import(t *testing.T) {
 	})
 }
 
-func testAccLabel(i int) string {
+func testAccLabel(name string) string {
 	return fmt.Sprintf(`
 resource "doit_label" "this" {
-  name  = "test-label-%d"
+  name  = %q
   color = "blue"
 }
-`, i)
+`, name)
 }
 
-func testAccLabelUpdate(i int) string {
+func testAccLabelUpdate(name string) string {
 	return fmt.Sprintf(`
 resource "doit_label" "this" {
-  name  = "test-label-updated-%d"
+  name  = "%s-updated"
   color = "mint"
 }
-`, i)
+`, name)
 }
 
 // TestAccLabel_Lavender tests that the API accepts the "lavender" color.
 func TestAccLabel_Lavender(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-lavender")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -126,10 +126,10 @@ func TestAccLabel_Lavender(t *testing.T) {
 			{
 				Config: fmt.Sprintf(`
 resource "doit_label" "lavender_test" {
-  name  = "test-lavender-%d"
+  name  = %q
   color = "lavender"
 }
-`, n),
+`, rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_label.lavender_test",
@@ -143,9 +143,9 @@ resource "doit_label" "lavender_test" {
 
 // TestAccLabel_InvalidColor tests that invalid colors are rejected.
 func TestAccLabel_InvalidColor(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-invalid")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -153,11 +153,57 @@ func TestAccLabel_InvalidColor(t *testing.T) {
 			{
 				Config: fmt.Sprintf(`
 resource "doit_label" "invalid_test" {
-  name  = "test-invalid-color-%d"
+  name  = %q
   color = "invalid_color"
 }
-`, n),
+`, rName),
 				ExpectError: regexp.MustCompile(`(?i)value must be one of:`),
+			},
+		},
+	})
+}
+
+// TestAccLabel_Disappears verifies that Terraform correctly handles
+// resources that are deleted outside of Terraform (externally deleted).
+// This tests the Read method's 404 handling and RemoveResource call.
+func TestAccLabel_Disappears(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-label")
+	var resourceId string
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create the resource and capture ID
+			{
+				Config: testAccLabel(rName),
+				Check: resource.ComposeTestCheckFunc(
+					// Capture the resource ID for later deletion
+					resource.TestCheckResourceAttrWith("doit_label.this", "id", func(value string) error {
+						if value == "" {
+							return fmt.Errorf("resource ID is empty")
+						}
+						resourceId = value
+						return nil
+					}),
+				),
+			},
+			// Step 2: Delete the resource via API, then verify Terraform detects the drift
+			{
+				PreConfig: func() {
+					client := getAPIClient(t)
+					resp, err := client.DeleteLabelWithResponse(context.Background(), resourceId)
+					if err != nil {
+						t.Fatalf("Failed to delete label via API: %v", err)
+					}
+					if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
+						t.Fatalf("Expected 200, 204 or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
+					}
+				},
+				Config:             testAccLabel(rName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
 			},
 		},
 	})

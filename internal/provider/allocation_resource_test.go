@@ -1,12 +1,13 @@
 package provider_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -20,9 +21,9 @@ func testProject() string {
 }
 
 func TestAccAllocation(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -70,9 +71,9 @@ func TestAccAllocation(t *testing.T) {
 }
 
 func TestAccAllocation_Group(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -109,9 +110,9 @@ func TestAccAllocation_Group(t *testing.T) {
 }
 
 func TestAccAllocation_Validation(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -125,9 +126,9 @@ func TestAccAllocation_Validation(t *testing.T) {
 }
 
 func TestAccAllocation_Group_Select(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -164,9 +165,9 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -180,9 +181,9 @@ func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -410,9 +411,9 @@ resource "doit_allocation" "single_with_unallocated" {
 // TestAccAllocation_MissingNameInCreateAction tests that rules with action="create"
 // are rejected at plan time if they don't have a "name" field.
 func TestAccAllocation_MissingNameInCreateAction(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	n := acctest.RandInt()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -445,6 +446,199 @@ resource "doit_allocation" "missing_name" {
             ]
         }
     ]
+}
+`, i)
+}
+
+// TestAccAllocation_ComponentFlags tests the include_null and inverse_selection
+// boolean flags on allocation rule components.
+func TestAccAllocation_ComponentFlags(t *testing.T) {
+	n := acctest.RandInt()
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationComponentFlags(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_allocation.flags", "id"),
+					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.include_null", "true"),
+					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.inverse_selection", "true"),
+				),
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAllocationComponentFlags(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationComponentFlags(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "flags" {
+    name = "test-flags-%d"
+    description = "Test allocation with component flags"
+    unallocated_costs = "Other"
+    rules = [
+        {
+            action = "create"
+            name   = "Flag Test Rule"
+            formula = "A"
+            components = [
+                {
+                    key               = "country"
+                    mode              = "is"
+                    type              = "fixed"
+                    values            = ["JP"]
+                    include_null      = true
+                    inverse_selection = true
+                }
+            ]
+        }
+    ]
+}
+`, i)
+}
+
+// TestAccAllocation_Disappears verifies that Terraform correctly handles
+// resources that are deleted outside of Terraform (externally deleted).
+// This tests the Read method's 404 handling and RemoveResource call.
+func TestAccAllocation_Disappears(t *testing.T) {
+	n := acctest.RandInt()
+	var resourceId string
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create the resource and capture ID
+			{
+				Config: testAccAllocationSingle(n),
+				Check: resource.ComposeTestCheckFunc(
+					// Capture the resource ID for later deletion
+					resource.TestCheckResourceAttrWith("doit_allocation.this", "id", func(value string) error {
+						if value == "" {
+							return fmt.Errorf("resource ID is empty")
+						}
+						resourceId = value
+						return nil
+					}),
+				),
+			},
+			// Step 2: Delete the resource via API, then verify Terraform detects the drift
+			{
+				PreConfig: func() {
+					client := getAPIClient(t)
+					resp, err := client.DeleteAllocationWithResponse(context.Background(), resourceId)
+					if err != nil {
+						t.Fatalf("Failed to delete allocation via API: %v", err)
+					}
+					if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
+						t.Fatalf("Expected 200, 204, or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
+					}
+				},
+				Config:             testAccAllocationSingle(n),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
+			},
+		},
+	})
+}
+
+// TestAccAllocation_ListAttributes_EmptyRules tests that an empty rules list
+// is blocked by the validator. The provider correctly handles empty lists
+// (returns empty list even when API returns nil), but the validator guides
+// users toward omitting the attribute instead, which is cleaner.
+func TestAccAllocation_ListAttributes_EmptyRules(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationWithEmptyRules(n),
+				ExpectError: regexp.MustCompile(`Invalid Rules Configuration|rules cannot be empty`),
+			},
+		},
+	})
+}
+
+func testAccAllocationWithEmptyRules(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name        = "test-empty-rules-%d"
+    description = "test allocation with empty rules"
+    unallocated_costs = "Other"
+    rules = []
+}
+`, i)
+}
+
+// TestAccAllocation_ListAttributes_EmptyComponents tests that an empty components list
+// in a rule is rejected - the formula validation fails without valid components.
+func TestAccAllocation_ListAttributes_EmptyComponents(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationWithEmptyComponents(n),
+				ExpectError: regexp.MustCompile(`formula validation failed|components|required|empty`),
+			},
+		},
+	})
+}
+
+func testAccAllocationWithEmptyComponents(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name        = "test-empty-components-%d"
+    description = "test allocation with empty components"
+    rule = {
+       formula = "A"
+       components = []
+    }
+}
+`, i)
+}
+
+// TestAccAllocation_ListAttributes_OmittedRulesAndRule tests that omitting both
+// rule and rules produces an error.
+func TestAccAllocation_ListAttributes_OmittedRulesAndRule(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationWithOmittedRulesAndRule(n),
+				ExpectError: regexp.MustCompile(`rule|required|expected`),
+			},
+		},
+	})
+}
+
+func testAccAllocationWithOmittedRulesAndRule(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name        = "test-no-rules-%d"
+    description = "test allocation with no rule or rules"
+    # Both rule and rules omitted - should fail
 }
 `, i)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -202,15 +203,17 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 	}
 }
 
-// budgetAlertsLengthValidator validates that alerts list has exactly 3 items.
+// budgetAlertsLengthValidator validates that alerts list has 1-3 items when specified.
+// Empty alerts are not allowed because the API ignores empty lists and applies default alerts;
+// requiring 1-3 alerts or omitting the attribute avoids unexpected API-side defaults.
 type budgetAlertsLengthValidator struct{}
 
 func (v budgetAlertsLengthValidator) Description(_ context.Context) string {
-	return "Validates that alerts list has up to 3 items"
+	return "Validates that alerts list has 1-3 items when specified"
 }
 
 func (v budgetAlertsLengthValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that `alerts` list has up to 3 items"
+	return "Validates that `alerts` list has 1-3 items when specified"
 }
 
 func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -227,11 +230,56 @@ func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req r
 		return
 	}
 
+	if len(alerts.Elements()) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("alerts"),
+			"Invalid Alerts Configuration",
+			"Budget alerts cannot be empty. Specify 1-3 alerts or omit the attribute.",
+		)
+		return
+	}
+
 	if len(alerts.Elements()) > 3 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("alerts"),
 			"Invalid Alerts Configuration",
 			fmt.Sprintf("Budget can have up to 3 alerts. Found %d alerts.", len(alerts.Elements())),
+		)
+	}
+}
+
+// budgetRecipientsMinLengthValidator validates that recipients list is not empty when specified.
+// The API requires at least one recipient and will add a default if none provided,
+// causing a plan/state mismatch. This validator gives early feedback.
+type budgetRecipientsMinLengthValidator struct{}
+
+func (v budgetRecipientsMinLengthValidator) Description(_ context.Context) string {
+	return "Validates that recipients list has at least 1 item when specified"
+}
+
+func (v budgetRecipientsMinLengthValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `recipients` list has at least 1 item when specified"
+}
+
+func (v budgetRecipientsMinLengthValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var recipients types.List
+
+	diags := req.Config.GetAttribute(ctx, path.Root("recipients"), &recipients)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Only validate if explicitly set (not null/unknown)
+	if recipients.IsNull() || recipients.IsUnknown() {
+		return
+	}
+
+	if len(recipients.Elements()) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("recipients"),
+			"Invalid Recipients Configuration",
+			"Budget recipients cannot be empty. Specify at least one recipient or omit the attribute to use the default.",
 		)
 	}
 }
@@ -302,6 +350,86 @@ func (v budgetEndPeriodValidator) ValidateInt64(_ context.Context, req validator
 			req.Path,
 			"Invalid Budget End Period",
 			"The value 2678400000 is reserved and cannot be used as an end_period.",
+		)
+	}
+}
+
+// budgetCollaboratorsOwnerValidator validates that collaborators list contains exactly one owner.
+// Empty collaborators list is not allowed - the API requires exactly one owner.
+type budgetCollaboratorsOwnerValidator struct{}
+
+func (v budgetCollaboratorsOwnerValidator) Description(_ context.Context) string {
+	return "Validates that collaborators list contains exactly one owner"
+}
+
+func (v budgetCollaboratorsOwnerValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `collaborators` list contains exactly one owner"
+}
+
+func (v budgetCollaboratorsOwnerValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var collaborators types.List
+
+	// Get the collaborators attribute
+	diags := req.Config.GetAttribute(ctx, path.Root("collaborators"), &collaborators)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// If null/unknown, skip validation - let API compute default (creator as owner)
+	if collaborators.IsNull() || collaborators.IsUnknown() {
+		return
+	}
+
+	// Empty list is not allowed - API requires exactly one owner
+	if len(collaborators.Elements()) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("collaborators"),
+			"Exactly One Owner Required",
+			"The 'collaborators' attribute cannot be empty. "+
+				"When setting collaborators explicitly, exactly one collaborator with role 'owner' is required. "+
+				"If you want to use the default (creator as owner), omit the collaborators attribute entirely.",
+		)
+		return
+	}
+
+	// Count owners in the collaborators list
+	ownerCount := 0
+	for _, elem := range collaborators.Elements() {
+		// Use the generated CollaboratorsValue type
+		collabVal, ok := elem.(resource_budget.CollaboratorsValue)
+		if !ok {
+			continue
+		}
+
+		// Skip if the element is null or unknown
+		if collabVal.IsNull() || collabVal.IsUnknown() {
+			continue
+		}
+
+		// Check role
+		if collabVal.Role.IsNull() || collabVal.Role.IsUnknown() {
+			continue
+		}
+
+		if collabVal.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+
+	if ownerCount == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("collaborators"),
+			"Exactly One Owner Required",
+			"The 'collaborators' list must contain exactly one collaborator with role 'owner'. "+
+				"Found 0 owners. Add a collaborator with role = \"owner\".",
+		)
+	} else if ownerCount > 1 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("collaborators"),
+			"Exactly One Owner Required",
+			fmt.Sprintf("The 'collaborators' list must contain exactly one collaborator with role 'owner'. "+
+				"Found %d owners. Only one owner is allowed.", ownerCount),
 		)
 	}
 }
