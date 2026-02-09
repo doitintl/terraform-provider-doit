@@ -1,6 +1,6 @@
 # Retrieve a report by its ID
 data "doit_report" "example" {
-  id = doit_report.my_report.id
+  id = "your-report-id"
 }
 
 # Output report details
