@@ -1038,13 +1038,12 @@ type AnomalySKUArray = []AnomalySKU
 // AssetItem Detailed information about a single asset.
 type AssetItem struct {
 	// CreateTime The time when the asset was created, in milliseconds since the epoch.
-	CreateTime   *int64  `json:"createTime,omitempty"`
-	Id           *string `json:"id,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	Quantity     *int64  `json:"quantity,omitempty"`
-	Type         *string `json:"type,omitempty"`
-	Url          *string `json:"url,omitempty"`
-	UsedLicenses *int64  `json:"usedLicenses,omitempty"`
+	CreateTime *int64  `json:"createTime,omitempty"`
+	Id         *string `json:"id,omitempty"`
+	Name       *string `json:"name,omitempty"`
+	Quantity   *int64  `json:"quantity,omitempty"`
+	Type       *string `json:"type,omitempty"`
+	Url        *string `json:"url,omitempty"`
 }
 
 // AssetProperties Additional properties associated with an asset.

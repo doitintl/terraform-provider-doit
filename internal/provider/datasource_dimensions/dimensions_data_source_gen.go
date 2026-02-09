@@ -44,14 +44,14 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 			"max_results": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
-				MarkdownDescription: "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
+				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
+				MarkdownDescription: "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
 			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page   of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
+				Description:         "Page token, returned by a previous call, to request the next page of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed: true,
@@ -83,8 +83,8 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
-		Description:         "Dimensions define how you can slice and group your cloud cost data for analysis.",
-		MarkdownDescription: "Dimensions define how you can slice and group your cloud cost data for analysis.",
+		Description:         "View available dimensions for analysis.",
+		MarkdownDescription: "View available dimensions for analysis.",
 	}
 }
 

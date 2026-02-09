@@ -28,31 +28,31 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"attribution": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Attribution ID",
-							MarkdownDescription: "Attribution ID",
+							Description:         "Attribution ID.",
+							MarkdownDescription: "Attribution ID.",
 						},
 						"billing_account": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Billing account ID",
-							MarkdownDescription: "Billing account ID",
+							Description:         "Billing account ID.",
+							MarkdownDescription: "Billing account ID.",
 						},
 						"cost_of_anomaly": schema.Float64Attribute{
 							Computed:            true,
-							Description:         "Cost of the anomaly over and above the expected normal cost",
-							MarkdownDescription: "Cost of the anomaly over and above the expected normal cost",
+							Description:         "Cost of the anomaly over and above the expected normal cost.",
+							MarkdownDescription: "Cost of the anomaly over and above the expected normal cost.",
 						},
 						"end_time": schema.Int64Attribute{
 							Computed:            true,
-							Description:         "End of the anomaly",
-							MarkdownDescription: "End of the anomaly",
+							Description:         "End of the anomaly.",
+							MarkdownDescription: "End of the anomaly.",
 						},
 						"id": schema.StringAttribute{
 							Computed: true,
 						},
 						"platform": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Cloud Provider name",
-							MarkdownDescription: "Cloud Provider name",
+							Description:         "Cloud Provider name.",
+							MarkdownDescription: "Cloud Provider name.",
 						},
 						"resource_data": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
@@ -79,8 +79,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							Computed:            true,
-							Description:         "Resources contributing to the anomaly",
-							MarkdownDescription: "Resources contributing to the anomaly",
+							Description:         "Array of resources contributing to an anomaly.",
+							MarkdownDescription: "Array of resources contributing to an anomaly.",
 						},
 						"scope": schema.StringAttribute{
 							Computed:            true,
@@ -89,8 +89,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"service_name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Service name",
-							MarkdownDescription: "Service name",
+							Description:         "Service name.",
+							MarkdownDescription: "Service name.",
 						},
 						"severity_level": schema.StringAttribute{
 							Computed:            true,
@@ -99,8 +99,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"start_time": schema.Int64Attribute{
 							Computed:            true,
-							Description:         "Usage start time of the anomaly",
-							MarkdownDescription: "Usage start time of the anomaly",
+							Description:         "Usage start time of the anomaly.",
+							MarkdownDescription: "Usage start time of the anomaly.",
 						},
 						"status": schema.StringAttribute{
 							Computed: true,
@@ -126,7 +126,9 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 							},
-							Computed: true,
+							Computed:            true,
+							Description:         "Array of SKU entries contributing to an anomaly.",
+							MarkdownDescription: "Array of SKU entries contributing to an anomaly.",
 						},
 					},
 					CustomType: AnomaliesType{
@@ -164,15 +166,15 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page   of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
+				Description:         "Page token, returned by a previous call, to request the next page of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed: true,
 			},
 		},
-		Description:         "Anomalies detect unexpected changes in your cloud spending patterns.",
-		MarkdownDescription: "Anomalies detect unexpected changes in your cloud spending patterns.",
+		Description:         "Monitor cost spikes in your cloud environment.",
+		MarkdownDescription: "Monitor cost spikes in your cloud environment.",
 	}
 }
 

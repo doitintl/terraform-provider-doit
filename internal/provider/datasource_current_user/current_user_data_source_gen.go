@@ -19,8 +19,8 @@ func CurrentUserDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
-		Description:         "Auth endpoints",
-		MarkdownDescription: "Auth endpoints",
+		Description:         "User authentication.",
+		MarkdownDescription: "User authentication.",
 	}
 }
 

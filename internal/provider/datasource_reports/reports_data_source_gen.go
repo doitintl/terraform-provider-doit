@@ -33,8 +33,8 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 			"max_results": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
-				MarkdownDescription: "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
+				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
+				MarkdownDescription: "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
 			},
 			"min_creation_time": schema.StringAttribute{
 				Optional:            true,
@@ -45,26 +45,26 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page   of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
+				Description:         "Page token, returned by a previous call, to request the next page of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"reports": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"create_time": schema.Int64Attribute{
 							Computed:            true,
-							Description:         "The time when the report was created, in milliseconds since the epoch.",
-							MarkdownDescription: "The time when the report was created, in milliseconds since the epoch.",
+							Description:         "The creation time of the report, in milliseconds since the epoch.",
+							MarkdownDescription: "The creation time of the report, in milliseconds since the epoch.",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Report id.",
-							MarkdownDescription: "Report id.",
+							Description:         "Report ID.",
+							MarkdownDescription: "Report ID.",
 						},
 						"owner": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The report owner in the form of user@domain.com",
-							MarkdownDescription: "The report owner in the form of user@domain.com",
+							Description:         "Email address of the report owner.",
+							MarkdownDescription: "Email address of the report owner.",
 						},
 						"report_name": schema.StringAttribute{
 							Computed:            true,
@@ -81,8 +81,8 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"url_ui": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The URL of the report in DoiT Cloud Navigator.",
-							MarkdownDescription: "The URL of the report in DoiT Cloud Navigator.",
+							Description:         "The URL of the report in DoiT console.",
+							MarkdownDescription: "The URL of the report in DoiT console.",
 						},
 					},
 					CustomType: ReportsType{
@@ -99,8 +99,8 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The number of returned records.",
 			},
 		},
-		Description:         "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
-		MarkdownDescription: "Reports provide detailed analysis and visualization of your cloud costs. You can create custom reports with various dimensions, metrics, and filters.",
+		Description:         "Manage Cloud Analytics reports and get reports data in JSON format.",
+		MarkdownDescription: "Manage Cloud Analytics reports and get reports data in JSON format.",
 	}
 }
 

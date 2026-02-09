@@ -5505,9 +5505,6 @@ components:
           type: string
         url:
           type: string
-        usedLicenses:
-          type: integer
-          format: int64
     AssetProperties:
       type: object
       description: Additional properties associated with an asset.

@@ -23,8 +23,8 @@ func AssetsDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"create_time": schema.Int64Attribute{
 							Computed:            true,
-							Description:         "The time when the asset was created, in milliseconds since the epoch",
-							MarkdownDescription: "The time when the asset was created, in milliseconds since the epoch",
+							Description:         "The time when the asset was created, in milliseconds since the epoch.",
+							MarkdownDescription: "The time when the asset was created, in milliseconds since the epoch.",
 						},
 						"id": schema.StringAttribute{
 							Computed: true,
@@ -39,9 +39,6 @@ func AssetsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"url": schema.StringAttribute{
-							Computed: true,
-						},
-						"used_licenses": schema.Int64Attribute{
 							Computed: true,
 						},
 					},
@@ -70,8 +67,8 @@ func AssetsDataSourceSchema(ctx context.Context) schema.Schema {
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page   of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
+				Description:         "Page token, returned by a previous call, to request the next page of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
@@ -79,8 +76,8 @@ func AssetsDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Assets rows count",
 			},
 		},
-		Description:         "Assets represent your cloud resources such as compute instances, storage, and databases.",
-		MarkdownDescription: "Assets represent your cloud resources such as compute instances, storage, and databases.",
+		Description:         "Manage cloud resources or services in your cloud environment.",
+		MarkdownDescription: "Manage cloud resources or services in your cloud environment.",
 	}
 }
 
@@ -225,37 +222,18 @@ func (t AssetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`url expected to be basetypes.StringValue, was: %T`, urlAttribute))
 	}
 
-	usedLicensesAttribute, ok := attributes["used_licenses"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`used_licenses is missing from object`)
-
-		return nil, diags
-	}
-
-	usedLicensesVal, ok := usedLicensesAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`used_licenses expected to be basetypes.Int64Value, was: %T`, usedLicensesAttribute))
-	}
-
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	return AssetsValue{
-		CreateTime:   createTimeVal,
-		Id:           idVal,
-		Name:         nameVal,
-		Quantity:     quantityVal,
-		AssetsType:   typeVal,
-		Url:          urlVal,
-		UsedLicenses: usedLicensesVal,
-		state:        attr.ValueStateKnown,
+		CreateTime: createTimeVal,
+		Id:         idVal,
+		Name:       nameVal,
+		Quantity:   quantityVal,
+		AssetsType: typeVal,
+		Url:        urlVal,
+		state:      attr.ValueStateKnown,
 	}, diags
 }
 
@@ -430,37 +408,18 @@ func NewAssetsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`url expected to be basetypes.StringValue, was: %T`, urlAttribute))
 	}
 
-	usedLicensesAttribute, ok := attributes["used_licenses"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`used_licenses is missing from object`)
-
-		return NewAssetsValueUnknown(), diags
-	}
-
-	usedLicensesVal, ok := usedLicensesAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`used_licenses expected to be basetypes.Int64Value, was: %T`, usedLicensesAttribute))
-	}
-
 	if diags.HasError() {
 		return NewAssetsValueUnknown(), diags
 	}
 
 	return AssetsValue{
-		CreateTime:   createTimeVal,
-		Id:           idVal,
-		Name:         nameVal,
-		Quantity:     quantityVal,
-		AssetsType:   typeVal,
-		Url:          urlVal,
-		UsedLicenses: usedLicensesVal,
-		state:        attr.ValueStateKnown,
+		CreateTime: createTimeVal,
+		Id:         idVal,
+		Name:       nameVal,
+		Quantity:   quantityVal,
+		AssetsType: typeVal,
+		Url:        urlVal,
+		state:      attr.ValueStateKnown,
 	}, diags
 }
 
@@ -532,18 +491,17 @@ func (t AssetsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = AssetsValue{}
 
 type AssetsValue struct {
-	CreateTime   basetypes.Int64Value  `tfsdk:"create_time"`
-	Id           basetypes.StringValue `tfsdk:"id"`
-	Name         basetypes.StringValue `tfsdk:"name"`
-	Quantity     basetypes.Int64Value  `tfsdk:"quantity"`
-	AssetsType   basetypes.StringValue `tfsdk:"type"`
-	Url          basetypes.StringValue `tfsdk:"url"`
-	UsedLicenses basetypes.Int64Value  `tfsdk:"used_licenses"`
-	state        attr.ValueState
+	CreateTime basetypes.Int64Value  `tfsdk:"create_time"`
+	Id         basetypes.StringValue `tfsdk:"id"`
+	Name       basetypes.StringValue `tfsdk:"name"`
+	Quantity   basetypes.Int64Value  `tfsdk:"quantity"`
+	AssetsType basetypes.StringValue `tfsdk:"type"`
+	Url        basetypes.StringValue `tfsdk:"url"`
+	state      attr.ValueState
 }
 
 func (v AssetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 7)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
@@ -554,13 +512,12 @@ func (v AssetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["quantity"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["url"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["used_licenses"] = basetypes.Int64Type{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 7)
+		vals := make(map[string]tftypes.Value, 6)
 
 		val, err = v.CreateTime.ToTerraformValue(ctx)
 
@@ -610,14 +567,6 @@ func (v AssetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 		vals["url"] = val
 
-		val, err = v.UsedLicenses.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["used_licenses"] = val
-
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
@@ -648,13 +597,12 @@ func (v AssetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	var diags diag.Diagnostics
 
 	attributeTypes := map[string]attr.Type{
-		"create_time":   basetypes.Int64Type{},
-		"id":            basetypes.StringType{},
-		"name":          basetypes.StringType{},
-		"quantity":      basetypes.Int64Type{},
-		"type":          basetypes.StringType{},
-		"url":           basetypes.StringType{},
-		"used_licenses": basetypes.Int64Type{},
+		"create_time": basetypes.Int64Type{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"quantity":    basetypes.Int64Type{},
+		"type":        basetypes.StringType{},
+		"url":         basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -668,13 +616,12 @@ func (v AssetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"create_time":   v.CreateTime,
-			"id":            v.Id,
-			"name":          v.Name,
-			"quantity":      v.Quantity,
-			"type":          v.AssetsType,
-			"url":           v.Url,
-			"used_licenses": v.UsedLicenses,
+			"create_time": v.CreateTime,
+			"id":          v.Id,
+			"name":        v.Name,
+			"quantity":    v.Quantity,
+			"type":        v.AssetsType,
+			"url":         v.Url,
 		})
 
 	return objVal, diags
@@ -719,10 +666,6 @@ func (v AssetsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.UsedLicenses.Equal(other.UsedLicenses) {
-		return false
-	}
-
 	return true
 }
 
@@ -736,12 +679,11 @@ func (v AssetsValue) Type(ctx context.Context) attr.Type {
 
 func (v AssetsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"create_time":   basetypes.Int64Type{},
-		"id":            basetypes.StringType{},
-		"name":          basetypes.StringType{},
-		"quantity":      basetypes.Int64Type{},
-		"type":          basetypes.StringType{},
-		"url":           basetypes.StringType{},
-		"used_licenses": basetypes.Int64Type{},
+		"create_time": basetypes.Int64Type{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"quantity":    basetypes.Int64Type{},
+		"type":        basetypes.StringType{},
+		"url":         basetypes.StringType{},
 	}
 }
