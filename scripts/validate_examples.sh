@@ -20,6 +20,19 @@ echo -e "${YELLOW}Building provider...${NC}"
 cd "$PROVIDER_DIR"
 go build -o terraform-provider-doit .
 
+# Create a temporary CLI config file with dev_overrides to use the local provider
+# This tells Terraform to use our locally built binary instead of downloading from registry
+TFRC_FILE="$PROVIDER_DIR/.terraformrc-validate"
+cat > "$TFRC_FILE" << EOF
+provider_installation {
+  dev_overrides {
+    "doitintl/doit" = "$PROVIDER_DIR"
+  }
+  direct {}
+}
+EOF
+export TF_CLI_CONFIG_FILE="$TFRC_FILE"
+
 # Clean any existing temp files
 rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
 touch "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
@@ -94,7 +107,7 @@ if [ -f "$PROVIDER_DIR/.validate_failed" ]; then
 fi
 
 # Cleanup temp files
-rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
+rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" "$PROVIDER_DIR/.terraformrc-validate"
 
 if [ "$FAILED" -gt 0 ]; then
     exit 1
