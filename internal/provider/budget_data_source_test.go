@@ -5,8 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"math/rand/v2"
-
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -14,9 +13,9 @@ import (
 )
 
 func TestAccBudgetDataSource(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-budget-ds")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -28,13 +27,13 @@ func TestAccBudgetDataSource(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetDataSourceConfig(n),
+				Config: testAccBudgetDataSourceConfig(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					// Verify data source attributes match resource
 					statecheck.ExpectKnownValue(
 						"data.doit_budget.test",
 						tfjsonpath.New("name"),
-						knownvalue.StringExact(fmt.Sprintf("test-ds-budget-%d", n))),
+						knownvalue.StringExact(rName)),
 					statecheck.ExpectKnownValue(
 						"data.doit_budget.test",
 						tfjsonpath.New("description"),
@@ -67,9 +66,9 @@ func TestAccBudgetDataSource(t *testing.T) {
 }
 
 func TestAccBudgetDataSource_WithScopes(t *testing.T) {
-	n := rand.Int() //nolint:gosec // Weak random is fine for test data
+	rName := acctest.RandomWithPrefix("tf-acc-budget-ds-s")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
@@ -81,7 +80,7 @@ func TestAccBudgetDataSource_WithScopes(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetDataSourceWithScopesConfig(n),
+				Config: testAccBudgetDataSourceWithScopesConfig(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.doit_budget.test",
@@ -97,12 +96,12 @@ func TestAccBudgetDataSource_WithScopes(t *testing.T) {
 	})
 }
 
-func testAccBudgetDataSourceConfig(i int) string {
+func testAccBudgetDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 %s
 
 resource "doit_budget" "test" {
-  name          = "test-ds-budget-%d"
+  name          = %q
   description   = "test budget for data source"
   amount        = 500
   currency      = "EUR"
@@ -125,15 +124,15 @@ resource "doit_budget" "test" {
 data "doit_budget" "test" {
     id = doit_budget.test.id
 }
-`, budgetStartPeriod(), i, testAttribution(), testUser())
+`, budgetStartPeriod(), name, testAttribution(), testUser())
 }
 
-func testAccBudgetDataSourceWithScopesConfig(i int) string {
+func testAccBudgetDataSourceWithScopesConfig(name string) string {
 	return fmt.Sprintf(`
 %s
 
 resource "doit_budget" "test" {
-  name          = "test-ds-budget-scopes-%d"
+  name          = %q
   amount        = 200
   currency      = "EUR"
   time_interval = "month"
@@ -161,11 +160,11 @@ resource "doit_budget" "test" {
 data "doit_budget" "test" {
     id = doit_budget.test.id
 }
-`, budgetStartPeriod(), i, testUser())
+`, budgetStartPeriod(), name, testUser())
 }
 
 func TestAccBudgetDataSource_NotFound(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

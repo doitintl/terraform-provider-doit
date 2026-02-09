@@ -209,6 +209,12 @@ resource "doit_budget" "my_budget" {
 **`alerts`:**
 - New computed fields: `forecasted_date`, `triggered`
 
+### Validation Changes (Breaking)
+
+Empty `alerts` lists are now rejected with a validation error. Previously, `alerts = []` was accepted but the API would ignore it and apply default alerts. This change ensures explicit configuration.
+
+**Fix:** Either specify 1-3 alerts or omit the `alerts` attribute entirely.
+
 ### State Migration
 
 The provider includes an automatic state upgrader that migrates budget resources from the v0 schema to v1. New computed fields will be populated on the next `terraform refresh` or `terraform apply`.
@@ -233,6 +239,28 @@ No manual state manipulation is required.
 - `allocation_type` - Computed: "single" or "group"
 - `create_time` - Computed creation timestamp
 - `update_time` - Computed last update timestamp
+
+### Validation Changes (Breaking)
+
+Empty allocation `rules` lists are now rejected with a validation error. Previously, `rules = []` was accepted but caused unexpected behavior. This change guides users toward omitting the attribute entirely when no rules are needed.
+
+**Before (v0.x - Allowed but problematic):**
+
+```hcl
+resource "doit_allocation" "example" {
+  name  = "Example"
+  rules = []  # Accepted but caused API drift
+}
+```
+
+**After (v1.0.0 - Validation error):**
+
+```hcl
+resource "doit_allocation" "example" {
+  name  = "Example"
+  # Simply omit 'rules' attribute when not needed
+}
+```
 
 ---
 

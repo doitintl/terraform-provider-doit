@@ -14,7 +14,7 @@ func TestAccInvoiceDataSource_Basic(t *testing.T) {
 		t.Skip("TEST_INVOICE_ID environment variable not set")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

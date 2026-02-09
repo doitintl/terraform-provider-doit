@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -12,24 +13,24 @@ import (
 // TestAccAnomaliesDataSource_MaxResultsOnly tests that setting max_results limits results.
 func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 	anomalyCount := getAnomalyCount(t)
-	if anomalyCount < 3 {
-		t.Skipf("Need at least 3 anomalies to test pagination, got %d", anomalyCount)
+	if anomalyCount < 2 {
+		t.Skipf("Need at least 2 anomalies to test pagination, got %d", anomalyCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAnomaliesDataSourceMaxResultsConfig(2),
+				Config: testAccAnomaliesDataSourceMaxResultsConfig(1),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "2"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "page_token"),
 				),
 			},
 			{
-				Config:   testAccAnomaliesDataSourceMaxResultsConfig(2),
+				Config:   testAccAnomaliesDataSourceMaxResultsConfig(1),
 				PlanOnly: true,
 			},
 		},
@@ -51,7 +52,7 @@ func TestAccAnomaliesDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 anomaly)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -82,11 +83,11 @@ func TestAccAnomaliesDataSource_MaxResultsAndPageToken(t *testing.T) {
 	}
 
 	anomalyCount := getAnomalyCount(t)
-	if anomalyCount < 3 {
-		t.Skipf("Need at least 3 anomalies to test pagination, got %d", anomalyCount)
+	if anomalyCount < 2 {
+		t.Skipf("Need at least 2 anomalies to test pagination, got %d", anomalyCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -112,12 +113,7 @@ data "doit_anomalies" "paginated" {
 
 // TestAccAnomaliesDataSource_AutoPagination tests that without max_results, all anomalies are fetched.
 func TestAccAnomaliesDataSource_AutoPagination(t *testing.T) {
-	expectedCount := getAnomalyCount(t)
-	if expectedCount == 0 {
-		t.Skip("No anomalies available to test auto-pagination")
-	}
-
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -125,7 +121,9 @@ func TestAccAnomaliesDataSource_AutoPagination(t *testing.T) {
 			{
 				Config: testAccAnomaliesDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_anomalies.test", "row_count", fmt.Sprintf("%d", expectedCount)),
+					// Just verify row_count is set and pagination completed (no page_token)
+					// Don't check specific values since parallel tests may change the count
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "row_count"),
 					resource.TestCheckNoResourceAttr("data.doit_anomalies.test", "page_token"),
 				),
 			},
@@ -142,7 +140,20 @@ data "doit_anomalies" "test" {
 
 // Helper functions
 
+var (
+	anomalyCount     int
+	anomalyCountOnce sync.Once
+)
+
 func getAnomalyCount(t *testing.T) int {
+	t.Helper()
+	anomalyCountOnce.Do(func() {
+		anomalyCount = computeAnomalyCount(t)
+	})
+	return anomalyCount
+}
+
+func computeAnomalyCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()

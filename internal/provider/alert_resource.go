@@ -13,9 +13,10 @@ import (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                = &alertResource{}
-	_ resource.ResourceWithConfigure   = &alertResource{}
-	_ resource.ResourceWithImportState = &alertResource{}
+	_ resource.Resource                     = &alertResource{}
+	_ resource.ResourceWithConfigure        = &alertResource{}
+	_ resource.ResourceWithImportState      = &alertResource{}
+	_ resource.ResourceWithConfigValidators = &alertResource{}
 )
 
 type (
@@ -60,6 +61,12 @@ func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStat
 
 func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = resource_alert.AlertResourceSchema(ctx)
+}
+
+func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		alertRecipientsValidator{},
+	}
 }
 
 func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

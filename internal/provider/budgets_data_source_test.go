@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -25,7 +26,7 @@ func TestAccBudgetsDataSource_MaxResultsOnly(t *testing.T) {
 		t.Skipf("Need at least 3 budgets to test pagination, got %d", budgetCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -64,7 +65,7 @@ func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skip("No page_token returned (need more than 1 budget)")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -102,7 +103,7 @@ func TestAccBudgetsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		t.Skipf("Need at least 3 budgets to test pagination, got %d", budgetCount)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -129,12 +130,7 @@ data "doit_budgets" "paginated" {
 
 // TestAccBudgetsDataSource_AutoPagination tests that without max_results, all budgets are fetched.
 func TestAccBudgetsDataSource_AutoPagination(t *testing.T) {
-	expectedCount := getBudgetCount(t)
-	if expectedCount == 0 {
-		t.Skip("No budgets available to test auto-pagination")
-	}
-
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -142,9 +138,9 @@ func TestAccBudgetsDataSource_AutoPagination(t *testing.T) {
 			{
 				Config: testAccBudgetsDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify row_count matches total budgets
-					resource.TestCheckResourceAttr("data.doit_budgets.test", "row_count", fmt.Sprintf("%d", expectedCount)),
-					// Verify page_token is null (all fetched)
+					// Just verify row_count is set and pagination completed (no page_token)
+					// Don't check specific values since parallel tests may change the count
+					resource.TestCheckResourceAttrSet("data.doit_budgets.test", "row_count"),
 					resource.TestCheckNoResourceAttr("data.doit_budgets.test", "page_token"),
 				),
 			},
@@ -154,7 +150,20 @@ func TestAccBudgetsDataSource_AutoPagination(t *testing.T) {
 
 // Helper functions
 
+var (
+	budgetCount     int
+	budgetCountOnce sync.Once
+)
+
 func getBudgetCount(t *testing.T) int {
+	t.Helper()
+	budgetCountOnce.Do(func() {
+		budgetCount = computeBudgetCount(t)
+	})
+	return budgetCount
+}
+
+func computeBudgetCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
 	ctx := context.Background()
