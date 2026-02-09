@@ -266,6 +266,48 @@ resource "doit_allocation" "example" {
 
 ## Resource: `doit_report`
 
+### Deprecated Attributes
+
+| Attribute | Replacement | Notes |
+|-----------|-------------|-------|
+| `config.metric` | `config.metrics` | The new `metrics` list supports up to 4 metrics per report |
+
+**Before (v0.x):**
+
+```hcl
+resource "doit_report" "my_report" {
+  name = "Cost Report"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    # ...
+  }
+}
+```
+
+**After (v1.0.0):**
+
+```hcl
+resource "doit_report" "my_report" {
+  name = "Cost Report"
+  config = {
+    metrics = [
+      {
+        type  = "basic"
+        value = "cost"
+      },
+      {
+        type  = "basic"
+        value = "usage"
+      }
+    ]
+    # ...
+  }
+}
+```
+
 ### Schema Changes
 
 Several nested attributes have changed from Required to Optional to improve flexibility. The most notable change is:
@@ -298,7 +340,49 @@ filters = [
 
 ### New Attributes
 
+- `config.metrics` - List of up to 4 metrics per report (replaces `config.metric`)
 - `config.custom_time_range` - For custom time range queries with `from` and `to` RFC3339 timestamps
+
+---
+
+## Resource: `doit_alert`
+
+### Deprecated Attributes
+
+| Attribute | Replacement | Notes |
+|-----------|-------------|-------|
+| `config.attributions` | `config.scopes` | The new `scopes` attribute provides more flexibility with filter modes |
+
+**Before (v0.x):**
+
+```hcl
+resource "doit_alert" "my_alert" {
+  name = "Cost Alert"
+  config = {
+    attributions = ["attribution-id-1", "attribution-id-2"]
+    # ...
+  }
+}
+```
+
+**After (v1.0.0):**
+
+```hcl
+resource "doit_alert" "my_alert" {
+  name = "Cost Alert"
+  config = {
+    scopes = [
+      {
+        type   = "attribution"
+        id     = "attribution"
+        mode   = "is"
+        values = ["attribution-id-1", "attribution-id-2"]
+      }
+    ]
+    # ...
+  }
+}
+```
 
 ---
 
@@ -314,7 +398,10 @@ filters = [
 - [ ] Update `doit_allocation` resources:
   - [ ] Ensure `description` is set (now required)
 - [ ] Update `doit_report` resources:
+  - [ ] Replace `metric` with `metrics` list
   - [ ] Add `mode` to all filter configurations
+- [ ] Update `doit_alert` resources:
+  - [ ] Replace `attributions` with `scopes`
 - [ ] Run `terraform init -upgrade`
 - [ ] Run `terraform plan` to verify changes
 - [ ] Run `terraform apply` to complete migration
