@@ -23,7 +23,7 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881571e4f6d88000bbac8 # v3.1.2
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
 
       - name: Validate Examples
         run: make validate-examples

@@ -20,21 +20,19 @@ echo -e "${YELLOW}Building provider...${NC}"
 cd "$PROVIDER_DIR"
 go build -o terraform-provider-doit .
 
-# Track results
-PASSED=0
-FAILED=0
-FAILED_DIRS=""
+# Clean any existing temp files
+rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
+touch "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
 
 # Find all directories containing .tf files
 echo -e "${YELLOW}Validating examples...${NC}"
 echo ""
 
-for dir in $(find "$EXAMPLES_DIR" -mindepth 2 -name "*.tf" -exec dirname {} \; | sort -u); do
+find "$EXAMPLES_DIR" -mindepth 2 -name "*.tf" -print0 | xargs -0 -I{} dirname {} | sort -u | while IFS= read -r dir; do
     reldir="${dir#$EXAMPLES_DIR/}"
 
     # Create a temporary directory for validation
     TEMP_DIR=$(mktemp -d)
-    trap "rm -rf $TEMP_DIR" EXIT
 
     # Copy the example files
     cp "$dir"/*.tf "$TEMP_DIR/"
@@ -63,33 +61,42 @@ EOF
     if terraform init -backend=false > /dev/null 2>&1; then
         if terraform validate > /dev/null 2>&1; then
             echo -e "${GREEN}✓${NC} $reldir"
-            ((PASSED++))
+            echo "$reldir" >> "$PROVIDER_DIR/.validate_passed"
         else
             echo -e "${RED}✗${NC} $reldir"
             echo "  Error:"
             terraform validate 2>&1 | head -20 | sed 's/^/  /'
-            FAILED_DIRS="$FAILED_DIRS\n  - $reldir"
-            ((FAILED++))
+            echo "$reldir" >> "$PROVIDER_DIR/.validate_failed"
         fi
     else
         echo -e "${RED}✗${NC} $reldir (init failed)"
         terraform init -backend=false 2>&1 | grep -i error | head -5 | sed 's/^/  /'
-        FAILED_DIRS="$FAILED_DIRS\n  - $reldir"
-        ((FAILED++))
+        echo "$reldir" >> "$PROVIDER_DIR/.validate_failed"
     fi
 
     # Cleanup
     rm -rf "$TEMP_DIR"
-    trap - EXIT
+    cd "$PROVIDER_DIR"
 done
+
+# Count results from temp files
+PASSED=$(wc -l < "$PROVIDER_DIR/.validate_passed" 2>/dev/null || echo 0)
+FAILED=$(wc -l < "$PROVIDER_DIR/.validate_failed" 2>/dev/null || echo 0)
 
 echo ""
 echo "================================"
 echo -e "Passed: ${GREEN}$PASSED${NC}"
 echo -e "Failed: ${RED}$FAILED${NC}"
 
-if [ $FAILED -gt 0 ]; then
-    echo -e "\nFailed examples:$FAILED_DIRS"
+if [ -f "$PROVIDER_DIR/.validate_failed" ]; then
+    echo -e "\nFailed examples:"
+    sed 's/^/  - /' "$PROVIDER_DIR/.validate_failed"
+fi
+
+# Cleanup temp files
+rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
+
+if [ "$FAILED" -gt 0 ]; then
     exit 1
 fi
 
