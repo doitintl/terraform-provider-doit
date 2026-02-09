@@ -45,8 +45,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of up to three thresholds defined as a percentage of the amount",
-				MarkdownDescription: "List of up to three thresholds defined as a percentage of the amount",
+				Description:         "List of up to three thresholds defined as a percentage of the amount.",
+				MarkdownDescription: "List of up to three thresholds defined as a percentage of the amount.",
 			},
 			"amount": schema.Float64Attribute{
 				Optional:            true,
@@ -85,13 +85,13 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of permitted users to view/edit the report",
-				MarkdownDescription: "List of permitted users to view/edit the report",
+				Description:         "List of permitted users to view/edit the report.",
+				MarkdownDescription: "List of permitted users to view/edit the report.",
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Creation time (in UNIX timestamp)",
-				MarkdownDescription: "Creation time (in UNIX timestamp)",
+				Description:         "Creation time (in UNIX timestamp).",
+				MarkdownDescription: "Creation time (in UNIX timestamp).",
 			},
 			"currency": schema.StringAttribute{
 				Optional:            true,
@@ -166,8 +166,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Budget Name",
-				MarkdownDescription: "Budget Name",
+				Description:         "Budget Name.",
+				MarkdownDescription: "Budget Name.",
 			},
 			"public": schema.StringAttribute{
 				Optional:            true,
@@ -186,8 +186,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of emails to notify when reaching alert threshold",
-				MarkdownDescription: "List of emails to notify when reaching alert threshold",
+				Description:         "List of emails to notify when reaching alert threshold.",
+				MarkdownDescription: "List of emails to notify when reaching alert threshold.",
 			},
 			"recipients_slack_channels": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -235,15 +235,15 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of Slack channels to notify when reaching alert threshold",
-				MarkdownDescription: "List of Slack channels to notify when reaching alert threshold",
+				Description:         "List of Slack channels to notify when reaching alert threshold.",
+				MarkdownDescription: "List of Slack channels to notify when reaching alert threshold.",
 			},
 			"scope": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of attributions that define the budget scope.",
-				MarkdownDescription: "List of attributions that define the budget scope.",
+				Description:         "List of allocations that define the budget scope.",
+				MarkdownDescription: "List of allocations that define the budget scope.",
 				DeprecationMessage:  "This attribute is deprecated.",
 			},
 			"scopes": schema.ListNestedAttribute{
@@ -276,8 +276,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 						},
 						"type": schema.StringAttribute{
 							Required:            true,
-							Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-							MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+							Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+							MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"datetime",
@@ -298,8 +298,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 							ElementType:         types.StringType,
 							Optional:            true,
 							Computed:            true,
-							Description:         "Values to filter on",
-							MarkdownDescription: "Values to filter on",
+							Description:         "Values to filter on.",
+							MarkdownDescription: "Values to filter on.",
 						},
 					},
 					CustomType: ScopesType{
@@ -317,8 +317,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				ElementType:         types.Float64Type,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of seasonal amounts for recurring budgets with different amounts per period",
-				MarkdownDescription: "List of seasonal amounts for recurring budgets with different amounts per period",
+				Description:         "List of seasonal amounts for recurring budgets with different amounts per period.",
+				MarkdownDescription: "List of seasonal amounts for recurring budgets with different amounts per period.",
 			},
 			"start_period": schema.Int64Attribute{
 				Optional:            true,
@@ -340,8 +340,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Update time (in UNIX timestamp)",
-				MarkdownDescription: "Update time (in UNIX timestamp)",
+				Description:         "Update time (in UNIX timestamp).",
+				MarkdownDescription: "Update time (in UNIX timestamp).",
 			},
 			"use_prev_spend": schema.BoolAttribute{
 				Optional:            true,
@@ -351,8 +351,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Default:             booldefault.StaticBool(false),
 			},
 		},
-		Description:         "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
-		MarkdownDescription: "Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.",
+		Description:         "Track actual cloud spend against planned spend.",
+		MarkdownDescription: "Track actual cloud spend against planned spend.",
 	}
 }
 

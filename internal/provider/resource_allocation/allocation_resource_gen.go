@@ -23,13 +23,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"allocation_type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of allocation (single or group)",
-				MarkdownDescription: "Type of allocation (single or group)",
+				Description:         "Composition type of allocation.",
+				MarkdownDescription: "Composition type of allocation.",
 			},
 			"anomaly_detection": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Whether anomaly detection is enabled for this allocation",
-				MarkdownDescription: "Whether anomaly detection is enabled for this allocation",
+				Description:         "Whether anomaly detection is enabled for this allocation.",
+				MarkdownDescription: "Whether anomaly detection is enabled for this allocation.",
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
@@ -38,18 +38,18 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"description": schema.StringAttribute{
 				Required:            true,
-				Description:         "Allocation description",
-				MarkdownDescription: "Allocation description",
+				Description:         "Allocation description.",
+				MarkdownDescription: "Allocation description.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the created allocation",
-				MarkdownDescription: "ID of the created allocation",
+				Description:         "ID of the new allocation.",
+				MarkdownDescription: "ID of the new allocation.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Allocation name",
-				MarkdownDescription: "Allocation name",
+				Description:         "Allocation name.",
+				MarkdownDescription: "Allocation name.",
 			},
 			"rule": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -59,8 +59,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								"include_null": schema.BoolAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Include null values",
-									MarkdownDescription: "Include null values",
+									Description:         "Include null values.",
+									MarkdownDescription: "Include null values.",
 									Default:             booldefault.StaticBool(false),
 								},
 								"inverse_selection": schema.BoolAttribute{
@@ -72,13 +72,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Required:            true,
-									Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
-									MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
-									Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
-									MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									Description:         "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									MarkdownDescription: "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"is",
@@ -91,8 +91,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -121,13 +121,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Required:            true,
-						Description:         "List of allocation filter components",
-						MarkdownDescription: "List of allocation filter components",
+						Description:         "List of allocation filter components.",
+						MarkdownDescription: "List of allocation filter components.",
 					},
 					"formula": schema.StringAttribute{
 						Required:            true,
-						Description:         "Formula for combining components (A is the first component, B is the second one, etc.)",
-						MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.)",
+						Description:         "Formula for combining components (A is the first component, B is the second one, etc.).",
+						MarkdownDescription: "Formula for combining components (A is the first component, B is the second one, etc.).",
 					},
 				},
 				CustomType: RuleType{
@@ -137,16 +137,16 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "Single allocation rule (required for single type allocation)",
-				MarkdownDescription: "Single allocation rule (required for single type allocation)",
+				Description:         "Single allocation rule.",
+				MarkdownDescription: "Single allocation rule.",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"action": schema.StringAttribute{
 							Required:            true,
-							Description:         "Action to perform with this rule\nPossible values: `create`, `update`, `select`",
-							MarkdownDescription: "Action to perform with this rule\nPossible values: `create`, `update`, `select`",
+							Description:         "Action to perform with this rule.\nPossible values: `create`, `update`, `select`",
+							MarkdownDescription: "Action to perform with this rule.\nPossible values: `create`, `update`, `select`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"create",
@@ -161,8 +161,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									"include_null": schema.BoolAttribute{
 										Optional:            true,
 										Computed:            true,
-										Description:         "Include null values",
-										MarkdownDescription: "Include null values",
+										Description:         "Include null values.",
+										MarkdownDescription: "Include null values.",
 										Default:             booldefault.StaticBool(false),
 									},
 									"inverse_selection": schema.BoolAttribute{
@@ -174,13 +174,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"key": schema.StringAttribute{
 										Required:            true,
-										Description:         "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
-										MarkdownDescription: "Key of a dimension. Examples: \"billing_account_id\", \"country\", etc.  Dimension must exist.",
+										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
 									},
 									"mode": schema.StringAttribute{
 										Required:            true,
-										Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
-										MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+										Description:         "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+										MarkdownDescription: "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"is",
@@ -193,8 +193,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"type": schema.StringAttribute{
 										Required:            true,
-										Description:         "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-										MarkdownDescription: "Type of dimension or filter field.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+										Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+										MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"datetime",
@@ -224,14 +224,14 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 							},
 							Optional:            true,
 							Computed:            true,
-							Description:         "List of allocation filter components (required for 'create' or 'update' action)",
-							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action)",
+							Description:         "List of allocation filter components (required for 'create' or 'update' action).",
+							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action).",
 						},
 						"description": schema.StringAttribute{
 							Optional:            true,
 							Computed:            true,
-							Description:         "Description for the allocation rule",
-							MarkdownDescription: "Description for the allocation rule",
+							Description:         "Description of the allocation rule.",
+							MarkdownDescription: "Description of the allocation rule.",
 						},
 						"formula": schema.StringAttribute{
 							Optional:            true,
@@ -242,14 +242,14 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 						"id": schema.StringAttribute{
 							Optional:            true,
 							Computed:            true,
-							Description:         "ID of existing allocation (required for 'update' or 'select' action)",
-							MarkdownDescription: "ID of existing allocation (required for 'update' or 'select' action)",
+							Description:         "ID of existing allocation (required for 'update' or 'select' action).",
+							MarkdownDescription: "ID of existing allocation (required for 'update' or 'select' action).",
 						},
 						"name": schema.StringAttribute{
 							Optional:            true,
 							Computed:            true,
-							Description:         "Name for the allocation rule",
-							MarkdownDescription: "Name for the allocation rule",
+							Description:         "Name of the allocation rule.",
+							MarkdownDescription: "Name of the allocation rule.",
 						},
 					},
 					CustomType: RulesType{
@@ -263,14 +263,14 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the created allocation",
-				MarkdownDescription: "Type of the created allocation",
+				Description:         "Type of the new allocation.",
+				MarkdownDescription: "Type of the new allocation.",
 			},
 			"unallocated_costs": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Custom label for any values that do not fit into allocation (required for group type allocation)",
-				MarkdownDescription: "Custom label for any values that do not fit into allocation (required for group type allocation)",
+				Description:         "Custom label for values that do not fit into allocation (required for group type allocation).",
+				MarkdownDescription: "Custom label for values that do not fit into allocation (required for group type allocation).",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,
@@ -278,8 +278,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Last time the allocation was modified (in UNIX timestamp).",
 			},
 		},
-		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
-		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+		Description:         "Define how costs are distributed across your organization.",
+		MarkdownDescription: "Define how costs are distributed across your organization.",
 	}
 }
 

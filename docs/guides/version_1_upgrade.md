@@ -124,7 +124,7 @@ resource "doit_allocation" "k8s_regions" {
    ```shell
    terraform state rm doit_allocation_group.k8s_regions
    ```
-2. Update your configuration to use `doit_allocation` with `rules` to specify the resource is an allocation group
+2. Update your configuration to use `doit_allocation` with `rules`
 3. Import the existing allocation group:
    ```shell
    terraform import doit_allocation.k8s_regions <allocation-group-id>
@@ -209,6 +209,12 @@ resource "doit_budget" "my_budget" {
 **`alerts`:**
 - New computed fields: `forecasted_date`, `triggered`
 
+### Validation Changes (Breaking)
+
+Empty `alerts` lists are now rejected with a validation error. Previously, `alerts = []` was accepted but the API would ignore it and apply default alerts. This change ensures explicit configuration.
+
+**Fix:** Either specify 1-3 alerts or omit the `alerts` attribute entirely.
+
 ### State Migration
 
 The provider includes an automatic state upgrader that migrates budget resources from the v0 schema to v1. New computed fields will be populated on the next `terraform refresh` or `terraform apply`.
@@ -234,9 +240,73 @@ No manual state manipulation is required.
 - `create_time` - Computed creation timestamp
 - `update_time` - Computed last update timestamp
 
+### Validation Changes (Breaking)
+
+Empty allocation `rules` lists are now rejected with a validation error. Previously, `rules = []` was accepted but caused unexpected behavior. This change guides users toward omitting the attribute entirely when no rules are needed.
+
+**Before (v0.x - Allowed but problematic):**
+
+```hcl
+resource "doit_allocation" "example" {
+  name  = "Example"
+  rules = []  # Accepted but caused API drift
+}
+```
+
+**After (v1.0.0 - Validation error):**
+
+```hcl
+resource "doit_allocation" "example" {
+  name  = "Example"
+  # Simply omit 'rules' attribute when not needed
+}
+```
+
 ---
 
 ## Resource: `doit_report`
+
+### Deprecated Attributes
+
+| Attribute | Replacement | Notes |
+|-----------|-------------|-------|
+| `config.metric` | `config.metrics` | The new `metrics` list supports up to 4 metrics per report |
+
+**Before (v0.x):**
+
+```hcl
+resource "doit_report" "my_report" {
+  name = "Cost Report"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    # ...
+  }
+}
+```
+
+**After (v1.0.0):**
+
+```hcl
+resource "doit_report" "my_report" {
+  name = "Cost Report"
+  config = {
+    metrics = [
+      {
+        type  = "basic"
+        value = "cost"
+      },
+      {
+        type  = "basic"
+        value = "usage"
+      }
+    ]
+    # ...
+  }
+}
+```
 
 ### Schema Changes
 
@@ -270,7 +340,49 @@ filters = [
 
 ### New Attributes
 
+- `config.metrics` - List of up to 4 metrics per report (replaces `config.metric`)
 - `config.custom_time_range` - For custom time range queries with `from` and `to` RFC3339 timestamps
+
+---
+
+## Resource: `doit_alert`
+
+### Deprecated Attributes
+
+| Attribute | Replacement | Notes |
+|-----------|-------------|-------|
+| `config.attributions` | `config.scopes` | The new `scopes` attribute provides more flexibility with filter modes |
+
+**Before (v0.x):**
+
+```hcl
+resource "doit_alert" "my_alert" {
+  name = "Cost Alert"
+  config = {
+    attributions = ["attribution-id-1", "attribution-id-2"]
+    # ...
+  }
+}
+```
+
+**After (v1.0.0):**
+
+```hcl
+resource "doit_alert" "my_alert" {
+  name = "Cost Alert"
+  config = {
+    scopes = [
+      {
+        type   = "attribution"
+        id     = "attribution"
+        mode   = "is"
+        values = ["attribution-id-1", "attribution-id-2"]
+      }
+    ]
+    # ...
+  }
+}
+```
 
 ---
 
@@ -286,7 +398,10 @@ filters = [
 - [ ] Update `doit_allocation` resources:
   - [ ] Ensure `description` is set (now required)
 - [ ] Update `doit_report` resources:
+  - [ ] Replace `metric` with `metrics` list
   - [ ] Add `mode` to all filter configurations
+- [ ] Update `doit_alert` resources:
+  - [ ] Replace `attributions` with `scopes`
 - [ ] Run `terraform init -upgrade`
 - [ ] Run `terraform plan` to verify changes
 - [ ] Run `terraform apply` to complete migration

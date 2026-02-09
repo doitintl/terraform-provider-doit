@@ -3,12 +3,12 @@
 page_title: "doit_cloud_incident Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Cloud Incidents track service disruptions and outages from cloud providers.
+  Service disruptions and outages from cloud providers.
 ---
 
 # doit_cloud_incident (Data Source)
 
-Cloud Incidents track service disruptions and outages from cloud providers.
+Service disruptions and outages from cloud providers.
 
 ## Example Usage
 

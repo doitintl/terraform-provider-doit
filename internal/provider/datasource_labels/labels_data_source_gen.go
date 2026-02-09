@@ -31,33 +31,33 @@ func LabelsDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"color": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The color of the label",
-							MarkdownDescription: "The color of the label",
+							Description:         "The color of the label.",
+							MarkdownDescription: "The color of the label.",
 						},
 						"create_time": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The time when the label was created",
-							MarkdownDescription: "The time when the label was created",
+							Description:         "The time when the label was created.",
+							MarkdownDescription: "The time when the label was created.",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The unique identifier of the label",
-							MarkdownDescription: "The unique identifier of the label",
+							Description:         "The unique identifier of the label.",
+							MarkdownDescription: "The unique identifier of the label.",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The name of the label",
-							MarkdownDescription: "The name of the label",
+							Description:         "The name of the label.",
+							MarkdownDescription: "The name of the label.",
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The type of the label (custom or preset)",
-							MarkdownDescription: "The type of the label (custom or preset)",
+							Description:         "The type of the label (custom or preset).",
+							MarkdownDescription: "The type of the label (custom or preset).",
 						},
 						"update_time": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The time when the label was last updated",
-							MarkdownDescription: "The time when the label was last updated",
+							Description:         "The time when the label was last updated.",
+							MarkdownDescription: "The time when the label was last updated.",
 						},
 					},
 					CustomType: LabelsType{
@@ -71,19 +71,19 @@ func LabelsDataSourceSchema(ctx context.Context) schema.Schema {
 			"max_results": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
-				MarkdownDescription: "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
+				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
+				MarkdownDescription: "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
 			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page   of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
+				Description:         "Page token, returned by a previous call, to request the next page of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Total number of labels in the result set",
-				MarkdownDescription: "Total number of labels in the result set",
+				Description:         "Total number of labels in the result set.",
+				MarkdownDescription: "Total number of labels in the result set.",
 			},
 			"sort_by": schema.StringAttribute{
 				Optional:            true,
@@ -113,8 +113,8 @@ func LabelsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
-		Description:         "Labels help you organize and categorize your cloud resources.",
-		MarkdownDescription: "Labels help you organize and categorize your cloud resources.",
+		Description:         "Create and manage labels to organize and categorize your cloud resources.",
+		MarkdownDescription: "Create and manage labels to organize and categorize your cloud resources.",
 	}
 }
 

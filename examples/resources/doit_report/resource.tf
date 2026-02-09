@@ -1,11 +1,19 @@
-resource "doit_report" "my-report" {
-  name        = "test_report"
-  description = "test_report"
+# Create a report with multiple metrics
+resource "doit_report" "my_report" {
+  name        = "Monthly Cost Report"
+  description = "Tracks monthly costs and usage across cloud providers"
   config = {
-    metric = {
-      type  = "basic"
-      value = "cost"
-    }
+    # Use metrics list (supports 1-4 metrics)
+    metrics = [
+      {
+        type  = "basic"
+        value = "cost"
+      },
+      {
+        type  = "basic"
+        value = "usage"
+      }
+    ]
     include_promotional_credits = false
     advanced_analysis = {
       trending_up   = false
@@ -15,6 +23,7 @@ resource "doit_report" "my-report" {
     }
     aggregation   = "total"
     time_interval = "month"
+    data_source   = "billing"
     dimensions = [
       {
         id   = "year"
@@ -34,18 +43,13 @@ resource "doit_report" "my-report" {
     filters = [
       {
         inverse = false
-        id      = "attribution"
-        type    = "attribution"
-        values = [
-          "1CE699ZdwN5CRBw0tInY"
-        ]
+        id      = "cloud_provider"
+        type    = "fixed"
+        mode    = "is"
+        values  = ["amazon-web-services", "google-cloud"]
       }
     ]
     group = [
-      {
-        id   = "BSQZmvX6hvuKGPDHX7R3"
-        type = "attribution_group"
-      },
       {
         id   = "cloud_provider"
         type = "fixed"

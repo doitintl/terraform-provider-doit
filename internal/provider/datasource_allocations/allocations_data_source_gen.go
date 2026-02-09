@@ -25,8 +25,8 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"allocation_type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Type of allocation (single or group)",
-							MarkdownDescription: "Type of allocation (single or group)",
+							Description:         "Composition type of allocation (single or group).",
+							MarkdownDescription: "Composition type of allocation (single or group).",
 						},
 						"create_time": schema.Int64Attribute{
 							Computed:            true,
@@ -35,28 +35,28 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"description": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Allocation description",
-							MarkdownDescription: "Allocation description",
+							Description:         "Allocation description.",
+							MarkdownDescription: "Allocation description.",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Allocation ID",
-							MarkdownDescription: "Allocation ID",
+							Description:         "Allocation ID.",
+							MarkdownDescription: "Allocation ID.",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Allocation name",
-							MarkdownDescription: "Allocation name",
+							Description:         "Allocation name.",
+							MarkdownDescription: "Allocation name.",
 						},
 						"owner": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Allocation owner",
-							MarkdownDescription: "Allocation owner",
+							Description:         "Allocation owner.",
+							MarkdownDescription: "Allocation owner.",
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Type of allocation (preset or custom)",
-							MarkdownDescription: "Type of allocation (preset or custom)",
+							Description:         "Type of allocation (preset or custom).",
+							MarkdownDescription: "Type of allocation (preset or custom).",
 						},
 						"update_time": schema.Int64Attribute{
 							Computed:            true,
@@ -65,8 +65,8 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"url_ui": schema.StringAttribute{
 							Computed:            true,
-							Description:         "URL to view the allocation in DoiT Cloud Navigator.",
-							MarkdownDescription: "URL to view the allocation in DoiT Cloud Navigator.",
+							Description:         "URL to view the allocation in the DoiT console.",
+							MarkdownDescription: "URL to view the allocation in the DoiT console.",
 						},
 					},
 					CustomType: AllocationsType{
@@ -86,19 +86,19 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 			"max_results": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
-				MarkdownDescription: "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
+				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
+				MarkdownDescription: "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
 			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Page token, returned by a previous call, to request the next page   of results",
-				MarkdownDescription: "Page token, returned by a previous call, to request the next page   of results",
+				Description:         "Page token, returned by a previous call, to request the next page of results",
+				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Total number of allocations in the result set",
-				MarkdownDescription: "Total number of allocations in the result set",
+				Description:         "Total number of allocations in the result set.",
+				MarkdownDescription: "Total number of allocations in the result set.",
 			},
 			"sort_by": schema.StringAttribute{
 				Optional:            true,
@@ -130,8 +130,8 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
-		Description:         "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
-		MarkdownDescription: "Allocations allow you to define how costs are distributed across your organization. They are used for reports, budgets, alerts, anomalies, and more.",
+		Description:         "Define how costs are distributed across your organization.",
+		MarkdownDescription: "Define how costs are distributed across your organization.",
 	}
 }
 

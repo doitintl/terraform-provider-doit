@@ -3,12 +3,12 @@
 page_title: "doit_labels Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Labels help you organize and categorize your cloud resources.
+  Create and manage labels to organize and categorize your cloud resources.
 ---
 
 # doit_labels (Data Source)
 
-Labels help you organize and categorize your cloud resources.
+Create and manage labels to organize and categorize your cloud resources.
 
 ## Example Usage
 
@@ -39,24 +39,24 @@ output "label_names" {
 
 - `filter` (String) An expression for filtering the results.
 Valid fields: **name**, **type**.
-- `max_results` (String) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 - `sort_order` (String) Sort order can be ascending or descending.
 
 ### Read-Only
 
 - `labels` (Attributes List) (see [below for nested schema](#nestedatt--labels))
-- `row_count` (Number) Total number of labels in the result set
+- `row_count` (Number) Total number of labels in the result set.
 
 <a id="nestedatt--labels"></a>
 ### Nested Schema for `labels`
 
 Read-Only:
 
-- `color` (String) The color of the label
-- `create_time` (String) The time when the label was created
-- `id` (String) The unique identifier of the label
-- `name` (String) The name of the label
-- `type` (String) The type of the label (custom or preset)
-- `update_time` (String) The time when the label was last updated
+- `color` (String) The color of the label.
+- `create_time` (String) The time when the label was created.
+- `id` (String) The unique identifier of the label.
+- `name` (String) The name of the label.
+- `type` (String) The type of the label (custom or preset).
+- `update_time` (String) The time when the label was last updated.

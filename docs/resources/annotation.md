@@ -3,12 +3,12 @@
 page_title: "doit_annotation Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Annotations allow you to add notes and context to your cloud cost data.
+  Custom notes added to cost data to provide contextual information.
 ---
 
 # doit_annotation (Resource)
 
-Annotations allow you to add notes and context to your cloud cost data.
+Custom notes added to cost data to provide contextual information.
 
 ## Example Usage
 
@@ -23,10 +23,12 @@ resource "doit_annotation" "release_2_0_0" {
 resource "doit_report" "monthly_costs" {
   name = "Monthly Cost Overview"
   config = {
-    metric = {
-      type  = "basic"
-      value = "cost"
-    }
+    metrics = [
+      {
+        type  = "basic"
+        value = "cost"
+      }
+    ]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -67,16 +69,26 @@ resource "doit_annotation" "migration_2024_03_01" {
 
 ### Required
 
-- `content` (String) The content of the annotation
-- `timestamp` (String) The date associated with the annotation
+- `content` (String) The content of the annotation.
+- `timestamp` (String) The date associated with the annotation.
 
 ### Optional
 
 - `labels` (List of String) List of label IDs to associate with the annotation. Labels must already exist.
-- `reports` (List of String) List of report IDs associated with the annotation
+- `reports` (List of String) List of report IDs associated with the annotation.
 
 ### Read-Only
 
-- `create_time` (String) The time when the annotation was created
-- `id` (String) The unique identifier of the annotation
-- `update_time` (String) The time when the annotation was last updated
+- `create_time` (String) The creation time of the annotation.
+- `id` (String) The unique identifier of the annotation.
+- `update_time` (String) The time when the annotation was last updated.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import doit_annotation.annotation [id]
+```

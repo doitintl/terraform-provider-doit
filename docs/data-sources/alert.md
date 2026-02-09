@@ -3,12 +3,12 @@
 page_title: "doit_alert Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.
+  Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
 ---
 
 # doit_alert (Data Source)
 
-Alerts notify you when cloud costs exceed defined thresholds or meet specific conditions.
+Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
 
 ## Example Usage
 
@@ -41,8 +41,8 @@ output "alert_last_triggered" {
 
 ### Read-Only
 
-- `config` (Attributes) (see [below for nested schema](#nestedatt--config))
-- `create_time` (Number) The time when the alter was created (in UNIX timestamp).
+- `config` (Attributes) Parameters that define when and how an alert is evaluated. (see [below for nested schema](#nestedatt--config))
+- `create_time` (Number) The time when the alert was created (in UNIX timestamp).
 - `last_alerted` (Number) Last time the alert was triggered (in UNIX timestamp).
 - `name` (String) Alert Name.
 - `recipients` (List of String) List of emails that will be notified when the alert is triggered.
@@ -53,13 +53,13 @@ output "alert_last_triggered" {
 
 Read-Only:
 
-- `attributions` (List of String) The attributions selected define the scope to monitor.
-- `condition` (String)
+- `attributions` (List of String, Deprecated) Use 'scopes' instead. The attributions selected define the scope to monitor.
+- `condition` (String) Condition key or expression used in alert configurations.
 - `currency` (String) Currency code for monetary values.
 - `data_source` (String)
 - `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
-- `metric` (Attributes) (see [below for nested schema](#nestedatt--config--metric))
-- `operator` (String)
+- `metric` (Attributes) Define how metrics are selected and filtered in reports. (see [below for nested schema](#nestedatt--config--metric))
+- `operator` (String) Text/operator used to filter metric values in metric filters.
 - `scopes` (Attributes List) The filters selected define the scope of the alert. (see [below for nested schema](#nestedatt--config--scopes))
 - `time_interval` (String) The time interval to evaluate the condition.
 - `value` (Number)
@@ -69,7 +69,7 @@ Read-Only:
 
 Read-Only:
 
-- `type` (String)
+- `type` (String) Identifier for metric type (e.g., basic, custom, extended).
 - `value` (String)
 
 
@@ -81,5 +81,5 @@ Read-Only:
 - `id` (String) The field to filter on
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
-- `type` (String) Type of dimension or filter field.
-- `values` (List of String) Values to filter on
+- `type` (String) Enumeration of supported dimension/filter types.
+- `values` (List of String) Values to filter on.

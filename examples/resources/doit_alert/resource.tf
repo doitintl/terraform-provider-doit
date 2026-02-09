@@ -37,4 +37,5 @@ resource "doit_alert" "aws_cost_alert" {
       }
     ]
   }
+  recipients = ["ops@company.com"]
 }

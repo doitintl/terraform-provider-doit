@@ -57,7 +57,12 @@ func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
-	return []resource.ConfigValidator{}
+	// Validate metrics list requirements:
+	// - Must have 1-4 metrics if specified (API limitation)
+	// - Cannot be empty (API silently preserves existing metrics, causing state inconsistency)
+	return []resource.ConfigValidator{
+		reportMetricsLengthValidator{},
+	}
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

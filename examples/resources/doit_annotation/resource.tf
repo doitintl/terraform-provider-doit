@@ -8,10 +8,12 @@ resource "doit_annotation" "release_2_0_0" {
 resource "doit_report" "monthly_costs" {
   name = "Monthly Cost Overview"
   config = {
-    metric = {
-      type  = "basic"
-      value = "cost"
-    }
+    metrics = [
+      {
+        type  = "basic"
+        value = "cost"
+      }
+    ]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"

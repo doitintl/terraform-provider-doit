@@ -3,12 +3,12 @@
 page_title: "doit_roles Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Roles define permissions and access levels for users in your organization.
+  Manage user permissions and access levels in your organization.
 ---
 
 # doit_roles (Data Source)
 
-Roles define permissions and access levels for users in your organization.
+Manage user permissions and access levels in your organization.
 
 ## Example Usage
 
@@ -39,8 +39,8 @@ output "admin_role" {
 
 Read-Only:
 
-- `customer` (String) The customer ID if this is a custom role
-- `id` (String) The unique ID of the role
-- `name` (String) The name of the role
-- `permissions` (List of String) List of permission IDs assigned to the role
-- `type` (String) The type of the role (preset or custom)
+- `customer` (String) The customer ID if this is a custom role.
+- `id` (String) The unique ID of the role.
+- `name` (String) The name of the role.
+- `permissions` (List of String) List of permission IDs assigned to the role.
+- `type` (String) The type of the role (preset or custom).

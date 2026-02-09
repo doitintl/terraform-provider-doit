@@ -293,7 +293,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		configMap["group"] = types.ListNull(datasource_report.GroupValue{}.Type(ctx))
 	}
 
-	// Nested Object: Metric
+	// Nested Object: Metric (deprecated, but still supported)
 	metricVal, metricDiags := ds.externalMetricToValue(ctx, config.Metric)
 	diags.Append(metricDiags...)
 	if diags.HasError() {
@@ -301,6 +301,36 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		return diags
 	}
 	configMap["metric"] = metricVal
+
+	// Nested List: Metrics (new - up to 4 metrics per report)
+	if config.Metrics != nil && len(*config.Metrics) > 0 {
+		metricsVals := make([]attr.Value, len(*config.Metrics))
+		for i, m := range *config.Metrics {
+			// Build MetricsValue directly (not MetricValue - different type!)
+			mMap := map[string]attr.Value{
+				"type":  types.StringNull(),
+				"value": types.StringNull(),
+			}
+			if m.Type != nil {
+				mMap["type"] = types.StringValue(string(*m.Type))
+			}
+			if m.Value != nil {
+				mMap["value"] = types.StringValue(*m.Value)
+			}
+			mVal, mDiags := datasource_report.NewMetricsValue(datasource_report.MetricsValue{}.AttributeTypes(ctx), mMap)
+			diags.Append(mDiags...)
+			if diags.HasError() {
+				log.Println("Error creating metrics list value")
+				return diags
+			}
+			metricsVals[i] = mVal
+		}
+		metricsList, metricsListDiags := types.ListValueFrom(ctx, datasource_report.MetricsValue{}.Type(ctx), metricsVals)
+		diags.Append(metricsListDiags...)
+		configMap["metrics"] = metricsList
+	} else {
+		configMap["metrics"] = types.ListNull(datasource_report.MetricsValue{}.Type(ctx))
+	}
 
 	// Nested Object: MetricFilter
 	if config.MetricFilter != nil {

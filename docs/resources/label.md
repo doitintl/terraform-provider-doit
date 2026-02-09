@@ -3,12 +3,12 @@
 page_title: "doit_label Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Labels help you organize and categorize your cloud resources.
+  Create and manage labels to organize and categorize your cloud resources.
 ---
 
 # doit_label (Resource)
 
-Labels help you organize and categorize your cloud resources.
+Create and manage labels to organize and categorize your cloud resources.
 
 ## Example Usage
 
@@ -37,13 +37,23 @@ resource "doit_label" "production" {
 
 ### Required
 
-- `color` (String) The color of the label
+- `color` (String) The color of the label.
 Possible values: `blue`, `skyBlue`, `teal`, `mint`, `lime`, `softYellow`, `apricot`, `lavender`, `purple`, `rosePink`, `slateGrey`
-- `name` (String) The name of the label
+- `name` (String) The name of the label.
 
 ### Read-Only
 
-- `create_time` (String) The time when the label was created
-- `id` (String) The unique identifier of the label
-- `type` (String) The type of the label (custom or preset)
-- `update_time` (String) The time when the label was last updated
+- `create_time` (String) The time when the label was created.
+- `id` (String) The unique identifier of the label.
+- `type` (String) The type of the label (custom or preset).
+- `update_time` (String) The time when the label was last updated.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import doit_label.label [id]
+```

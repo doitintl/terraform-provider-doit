@@ -9,10 +9,49 @@ This is a major release with breaking changes. Please see the [v1.0.0 Upgrade Gu
 * **resource/doit_allocation_group**: Resource has been removed. Use `doit_allocation` with the `rules` attribute instead.
 * **resource/doit_attribution**: Resource has been removed. Use Allocations instead (via DoiT Console or `doit_allocation` resource).
 * **resource/doit_attribution_group**: Resource has been removed. Use Allocations instead.
-* **resource/doit_budget**: The `scope` attribute is deprecated and will be removed in v2.0.0. Use `scopes` instead.
-* **resource/doit_budget**: The `last_updated` attribute has been removed. Use `update_time` instead.
 * **resource/doit_allocation**: The `description` attribute is now required.
 * **resource/doit_report**: The `mode` attribute is now required in filter configurations.
+
+### DEPRECATIONS
+
+* **resource/doit_budget**: The `scope` attribute is deprecated. Use `scopes` instead.
+* **resource/doit_budget**: The `last_updated` attribute has been removed. Use `update_time` instead.
+* **resource/doit_report**: The `config.metric` attribute is deprecated. Use `config.metrics` instead.
+* **resource/doit_alert**: The `config.attributions` attribute is deprecated. Use `config.scopes` instead.
+
+### NEW RESOURCES
+
+* **resource/doit_alert**: Manage cost/usage alerts with threshold notifications
+* **resource/doit_annotation**: Create custom notes on cost data for contextual information
+* **resource/doit_label**: Create labels to categorize annotations
+
+### NEW DATA SOURCES
+
+* **data-source/doit_account_team**: Get account team information
+* **data-source/doit_alert**: Get a single alert by ID
+* **data-source/doit_alerts**: List alerts with filtering
+* **data-source/doit_allocation**: Get a single allocation by ID
+* **data-source/doit_allocations**: List allocations with filtering
+* **data-source/doit_annotation**: Get a single annotation by ID
+* **data-source/doit_annotations**: List annotations with filtering
+* **data-source/doit_anomalies**: List cost anomalies with filtering
+* **data-source/doit_anomaly**: Get a single anomaly by ID
+* **data-source/doit_assets**: List cloud assets with filtering
+* **data-source/doit_budget**: Get a single budget by ID
+* **data-source/doit_budgets**: List budgets with filtering
+* **data-source/doit_cloud_incident**: Get a single cloud incident by ID
+* **data-source/doit_cloud_incidents**: List cloud incidents with filtering
+* **data-source/doit_current_user**: Get current authenticated user information
+* **data-source/doit_dimensions**: List available dimensions for reports
+* **data-source/doit_invoice**: Get a single invoice by ID
+* **data-source/doit_invoices**: List invoices with filtering
+* **data-source/doit_label**: Get a single label by ID
+* **data-source/doit_labels**: List labels with filtering
+* **data-source/doit_report**: Get a single report by ID
+* **data-source/doit_reports**: List reports with filtering
+* **data-source/doit_roles**: List available roles
+* **data-source/doit_support_requests**: List support requests
+* **data-source/doit_users**: List users with filtering
 
 ### FEATURES
 
@@ -20,7 +59,9 @@ This is a major release with breaking changes. Please see the [v1.0.0 Upgrade Gu
 * **resource/doit_allocation**: New `unallocated_costs` attribute for group-type allocations
 * **resource/doit_budget**: New `scopes` attribute with flexible filtering options (type, mode, values)
 * **resource/doit_budget**: New `seasonal_amounts` attribute for varying budget amounts per period
+* **resource/doit_report**: New `config.metrics` attribute supporting up to 4 metrics per report
 * **resource/doit_report**: New `config.custom_time_range` attribute for custom time range queries
+* **resource/doit_alert**: New `config.scopes` attribute with flexible filtering options
 
 ### ENHANCEMENTS
 
@@ -30,16 +71,13 @@ This is a major release with breaking changes. Please see the [v1.0.0 Upgrade Gu
 * Provider now uses generated OpenAPI client for improved API compatibility
 * Improved error handling with automatic retry on rate limits and transient errors
 * OAuth2 token validation for API authentication
+* Automatic state migration for `doit_budget` resources from v0 to v1 schema
 
 ### BUG FIXES
 
 * Various schema validation improvements
 * Fixed state inconsistencies after apply operations
-
-### NOTES
-
-* The provider includes automatic state migration for `doit_budget` resources from v0 to v1 schema
-* Many previously required attributes are now optional for improved flexibility
+* Empty list validation for `doit_budget.alerts`, `doit_allocation.rules`, and `doit_report.config.metrics`
 
 ## v0.26.0 (2025-12-04)
 

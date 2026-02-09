@@ -3,12 +3,12 @@
 page_title: "doit_users Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Users manage the people who have access to your DoIT organization.
+  Manage users who have access to the DoiT platform.
 ---
 
 # doit_users (Data Source)
 
-Users manage the people who have access to your DoIT organization.
+Manage users who have access to the DoiT platform.
 
 ## Example Usage
 
@@ -40,15 +40,15 @@ output "user_emails" {
 
 Read-Only:
 
-- `display_name` (String) The user's display name
-- `email` (String) The email address of the user
-- `first_name` (String) The user's first name
-- `id` (String) The unique id of the user
-- `job_function` (String) The user's job function
-- `language` (String) The user's preferred language
-- `last_name` (String) The user's last name
-- `organization_id` (String) The id of the user's organization
-- `phone` (String) The user's country code (e.g., +44)
-- `phone_extension` (String) The user's phone extension
-- `role_id` (String) The id of the user's role
-- `status` (String) The status of the user (active or invited)
+- `display_name` (String) The user's display name.
+- `email` (String) The email address of the user.
+- `first_name` (String) The user's first name.
+- `id` (String) The unique ID of the user.
+- `job_function` (String) The user's job function.
+- `language` (String) The user's preferred language.
+- `last_name` (String) The user's last name.
+- `organization_id` (String) The ID of the user's organization.
+- `phone` (String) The user's country code (e.g., +44).
+- `phone_extension` (String) The user's phone extension.
+- `role_id` (String) The ID of the user's role.
+- `status` (String) The status of the user (active or invited).

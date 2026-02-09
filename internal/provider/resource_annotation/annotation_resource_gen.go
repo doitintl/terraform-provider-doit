@@ -14,18 +14,18 @@ func AnnotationResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"content": schema.StringAttribute{
 				Required:            true,
-				Description:         "The content of the annotation",
-				MarkdownDescription: "The content of the annotation",
+				Description:         "The content of the annotation.",
+				MarkdownDescription: "The content of the annotation.",
 			},
 			"create_time": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The time when the annotation was created",
-				MarkdownDescription: "The time when the annotation was created",
+				Description:         "The creation time of the annotation.",
+				MarkdownDescription: "The creation time of the annotation.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The unique identifier of the annotation",
-				MarkdownDescription: "The unique identifier of the annotation",
+				Description:         "The unique identifier of the annotation.",
+				MarkdownDescription: "The unique identifier of the annotation.",
 			},
 			"labels": schema.ListAttribute{
 				ElementType:         types.StringType,
@@ -38,22 +38,22 @@ func AnnotationResourceSchema(ctx context.Context) schema.Schema {
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of report IDs associated with the annotation",
-				MarkdownDescription: "List of report IDs associated with the annotation",
+				Description:         "List of report IDs associated with the annotation.",
+				MarkdownDescription: "List of report IDs associated with the annotation.",
 			},
 			"timestamp": schema.StringAttribute{
 				Required:            true,
-				Description:         "The date associated with the annotation",
-				MarkdownDescription: "The date associated with the annotation",
+				Description:         "The date associated with the annotation.",
+				MarkdownDescription: "The date associated with the annotation.",
 			},
 			"update_time": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The time when the annotation was last updated",
-				MarkdownDescription: "The time when the annotation was last updated",
+				Description:         "The time when the annotation was last updated.",
+				MarkdownDescription: "The time when the annotation was last updated.",
 			},
 		},
-		Description:         "Annotations allow you to add notes and context to your cloud cost data.",
-		MarkdownDescription: "Annotations allow you to add notes and context to your cloud cost data.",
+		Description:         "Custom notes added to cost data to provide contextual information.",
+		MarkdownDescription: "Custom notes added to cost data to provide contextual information.",
 	}
 }
 

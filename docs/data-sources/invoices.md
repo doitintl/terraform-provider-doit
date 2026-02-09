@@ -3,12 +3,12 @@
 page_title: "doit_invoices Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Invoices provide access to your current and historical billing documents.
+  Access your current and historical billing documents.
 ---
 
 # doit_invoices (Data Source)
 
-Invoices provide access to your current and historical billing documents.
+Access your current and historical billing documents.
 
 ## Example Usage
 
@@ -45,7 +45,7 @@ output "invoice_summary" {
 - `max_creation_time` (Number) Max value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created before or at this timestamp are returned.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (Number) Min value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created after or at this timestamp are returned.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 
 ### Read-Only
 
@@ -62,7 +62,7 @@ Read-Only:
 - `due_date` (Number) The last day to pay the invoice, in milliseconds since the epoch
 - `id` (String) Invoice number, identifying the invoice.
 - `invoice_date` (Number) The time when this invoice was issued, in milliseconds since the epoch.
-- `platform` (String)
+- `platform` (String) Platform identifier for invoice source.
 - `status` (String) Status of the invoice
 - `total_amount` (Number) Total invoiced amount
 - `url` (String) Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.

@@ -1389,6 +1389,7 @@ paths:
           in: query
           description: Dimension id
           required: true
+          example: "5LTlZvRUavfi0X4412"
           schema:
             type: string
       responses:
@@ -1570,9 +1571,13 @@ paths:
                 includeSubtotals: false
                 sortGroups: asc
                 sortDimensions: desc
-                metric:
-                  type: basic
-                  value: cost
+                metrics:
+                  - type: basic
+                    value: cost
+                  - type: basic
+                    value: usage
+                  - type: extended
+                    value: amortized_cost
                 metricFilter:
                   metric:
                     type: basic
@@ -2171,36 +2176,13 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
-    delete:
-      tags:
-        - DataHub
-      summary: Delete all events
-      description: Deletes all the previously sent events.
-      operationId: deleteDatahubEvents
-      responses:
-        "200":
-          description: Delete success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Delete success"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "500":
-          $ref: "#/components/responses/500"
   /datahub/v1/events/delete:
     post:
       tags:
         - DataHub
       summary: Delete specific events
       description: >-
-        Deletes specific events using filters. Note that the two filters, `eventIds` and `providers`, are mutually exclusive.
+        Deletes specific events using filters. Note that the two filters, `eventIds` and `time ranges`, are mutually exclusive.
       operationId: deleteDatahubEventsByFilter
       requestBody:
         required: true
@@ -2208,20 +2190,30 @@ paths:
           application/json:
             schema:
               type: object
-              description: Exactly one of "eventIds" or "providers" must be provided.
+              description: Exactly one of "eventIds" or "time ranges" must be provided.
+              required:
+                - dataset
               properties:
+                dataset:
+                  type: string
+                  description: The dataset (provider) of the events to be deleted.
+                  example: "Datadog"
                 eventIds:
                   type: array
                   items:
                     type: string
                     description: Id of the event to be deleted.
                     example: "beb21d99-a8c9-4dc0-8a69-5d684cc41e6c"
-                providers:
-                  type: array
-                  items:
-                    type: string
-                    description: The provider (dataset) of the events to be deleted.
-                    example: "Datadog"
+                startTime:
+                  type: string
+                  format: date-time
+                  description: The start timestamp of the time range in RFC3339 format.
+                  example: "2024-03-10T23:00:00Z"
+                endTime:
+                  type: string
+                  format: date-time
+                  description: The end timestamp of the time range in RFC3339 format.
+                  example: "2024-03-12T23:00:00Z"
               minProperties: 1
               maxProperties: 1
       responses:
@@ -4589,7 +4581,15 @@ components:
       description: Report configuration.
       properties:
         metric:
-          $ref: "#/components/schemas/ExternalMetric"
+          deprecated: true
+          description: "Deprecated: Use 'metrics' instead."
+          allOf:
+            - $ref: "#/components/schemas/ExternalMetric"
+        metrics:
+          type: array
+          description: The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
+          items:
+            $ref: "#/components/schemas/ExternalMetric"
         metricFilter:
           $ref: "#/components/schemas/ExternalConfigMetricFilter"
         aggregation:
@@ -4699,9 +4699,13 @@ components:
               description: The end timestamp of the time range in RFC3339 format.
               example: "2024-03-12T23:00:00Z"
       example:
-        metric:
-          type: basic
-          value: cost
+        metrics:
+          - type: basic
+            value: cost
+          - type: basic
+            value: usage
+          - type: extended
+            value: amortized_cost
         metricFilter:
           metric:
             type: basic
@@ -5501,9 +5505,6 @@ components:
           type: string
         url:
           type: string
-        usedLicenses:
-          type: integer
-          format: int64
     AssetProperties:
       type: object
       description: Additional properties associated with an asset.

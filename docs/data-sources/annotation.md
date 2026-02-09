@@ -3,12 +3,12 @@
 page_title: "doit_annotation Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Annotations allow you to add notes and context to your cloud cost data.
+  Custom notes added to cost data to provide contextual information.
 ---
 
 # doit_annotation (Data Source)
 
-Annotations allow you to add notes and context to your cloud cost data.
+Custom notes added to cost data to provide contextual information.
 
 ## Example Usage
 
@@ -45,17 +45,17 @@ output "annotation_labels" {
 
 ### Read-Only
 
-- `content` (String) The content of the annotation
-- `create_time` (String) The time when the annotation was created
-- `labels` (Attributes List) List of labels associated with the annotation (see [below for nested schema](#nestedatt--labels))
-- `reports` (List of String) List of report IDs associated with the annotation
-- `timestamp` (String) The date associated with the annotation
-- `update_time` (String) The time when the annotation was last updated
+- `content` (String) The content of the annotation.
+- `create_time` (String) The creation time of the annotation.
+- `labels` (Attributes List) List of labels associated with the annotation. (see [below for nested schema](#nestedatt--labels))
+- `reports` (List of String) List of report IDs associated with the annotation.
+- `timestamp` (String) The date associated with the annotation.
+- `update_time` (String) The time when the annotation was last updated.
 
 <a id="nestedatt--labels"></a>
 ### Nested Schema for `labels`
 
 Read-Only:
 
-- `id` (String) The unique identifier of the label
-- `name` (String) The name of the label
+- `id` (String) The unique identifier of the label.
+- `name` (String) The name of the label.

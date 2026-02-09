@@ -3,27 +3,40 @@
 page_title: "doit_cloud_incidents Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Cloud Incidents track service disruptions and outages from cloud providers.
+  Service disruptions and outages from cloud providers.
 ---
 
 # doit_cloud_incidents (Data Source)
 
-Cloud Incidents track service disruptions and outages from cloud providers.
+Service disruptions and outages from cloud providers.
 
 ## Example Usage
 
 ```terraform
-# List all cloud incidents
-data "doit_cloud_incidents" "all" {
+# List recent cloud incidents (max_results recommended to avoid long fetch times)
+data "doit_cloud_incidents" "recent" {
+  max_results = 100
 }
 
 # Filter cloud incidents by platform
 data "doit_cloud_incidents" "gcp_only" {
-  filter = "platform:google-cloud"
+  max_results = 50
+  filter      = "platform:google-cloud"
+}
+
+# Paginate through cloud incidents
+data "doit_cloud_incidents" "page1" {
+  max_results = 25
+}
+
+# Use the page_token from the previous data source to get the next page
+data "doit_cloud_incidents" "page2" {
+  max_results = 25
+  page_token  = data.doit_cloud_incidents.page1.page_token
 }
 
 output "incident_count" {
-  value = data.doit_cloud_incidents.all.row_count
+  value = data.doit_cloud_incidents.recent.row_count
 }
 ```
 
@@ -37,7 +50,7 @@ output "incident_count" {
 timestamp are returned.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created after or at this timestamp are returned.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 
 ### Read-Only
 
@@ -49,9 +62,9 @@ timestamp are returned.
 
 Read-Only:
 
-- `create_time` (Number) The time when this cloud incident was created, in milliseconds since the epoch.
-- `id` (String) cloud incident id, uniquely identifying the cloud incident
-- `platform` (String) The Cloud Platform
+- `create_time` (Number) The creation time of this cloud incident, in milliseconds since the epoch.
+- `id` (String) The unique cloud incident identifier.
+- `platform` (String) The Cloud Platform.
 - `product` (String) The name of the product affected by the cloud incident
 - `status` (String) The Status of the issue
 - `title` (String) Cloud incident name as provided by the cloud platform vendor

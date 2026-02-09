@@ -3,12 +3,12 @@
 page_title: "doit_dimensions Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Dimensions define how you can slice and group your cloud cost data for analysis.
+  View available dimensions for analysis.
 ---
 
 # doit_dimensions (Data Source)
 
-Dimensions define how you can slice and group your cloud cost data for analysis.
+View available dimensions for analysis.
 
 ## Example Usage
 
@@ -38,8 +38,8 @@ output "dimension_count" {
 
 - `filter` (String) An expression for filtering the results.
 The fields eligible for filtering are: type, label, key.
-- `max_results` (String) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-- `page_token` (String) Page token, returned by a previous call, to request the next page   of results
+- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 - `sort_order` (String) Sort order can be ascending or descending.
 

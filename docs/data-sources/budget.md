@@ -3,12 +3,12 @@
 page_title: "doit_budget Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
+  Track actual cloud spend against planned spend.
 ---
 
 # doit_budget (Data Source)
 
-Budgets allow you to set spending limits for your cloud costs. You can configure alerts and notifications when budget thresholds are reached.
+Track actual cloud spend against planned spend.
 
 ## Example Usage
 
@@ -45,31 +45,31 @@ output "budget_time_period" {
 
 ### Read-Only
 
-- `alerts` (Attributes List) List of up to three thresholds defined as a percentage of amount (see [below for nested schema](#nestedatt--alerts))
+- `alerts` (Attributes List) List of up to three thresholds defined as a percentage of amount. (see [below for nested schema](#nestedatt--alerts))
 - `amount` (Number) Budget period amount
 required: true(if usePrevSpend is false)
-- `collaborators` (Attributes List) List of permitted users to view/edit the report (see [below for nested schema](#nestedatt--collaborators))
-- `create_time` (Number) Creation time (in UNIX timestamp)
+- `collaborators` (Attributes List) List of permitted users to view/edit the report. (see [below for nested schema](#nestedatt--collaborators))
+- `create_time` (Number) Creation time (in UNIX timestamp).
 - `currency` (String) Currency code for monetary values.
 - `current_utilization` (Number)
-- `description` (String) Budget description
+- `description` (String) Budget description.
 - `end_period` (Number) Fixed budget end date (in UNIX timestamp)
 required: true(if budget type is fixed)
 - `forecasted_utilization` (Number)
-- `growth_per_period` (Number) Periodical growth percentage in recurring budget
+- `growth_per_period` (Number) Periodical growth percentage in recurring budgets.
 - `metric` (String) Budget metric - currently fixed to "cost"
 - `name` (String) Budget Name
 - `public` (String) Public sharing access level for the budget.
-- `recipients` (List of String) List of emails to notify when reaching alert threshold
-- `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold (see [below for nested schema](#nestedatt--recipients_slack_channels))
-- `scope` (List of String) List of attributions that defines the budget scope
+- `recipients` (List of String) List of emails to notify when reaching alert threshold.
+- `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold. (see [below for nested schema](#nestedatt--recipients_slack_channels))
+- `scope` (List of String) List of allocations that defines the budget scope.
 - `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--scopes))
-- `seasonal_amounts` (List of Number) List of seasonal amounts for recurring budgets with different amounts per period
-- `start_period` (Number) Budget start Date (in UNIX timestamp)
+- `seasonal_amounts` (List of Number) List of seasonal amounts for recurring budgets with different amounts per period.
+- `start_period` (Number) Budget start date (in UNIX timestamp).
 - `time_interval` (String) Recurring budget interval can be one of: ["day", "week", "month", "quarter" ,"year"]
 - `type` (String) budget type can be one of: ["fixed", "recurring"]
-- `update_time` (Number) Update time (in UNIX timestamp)
-- `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets
+- `update_time` (Number) Update time (in UNIX timestamp).
+- `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets.
 
 <a id="nestedatt--alerts"></a>
 ### Nested Schema for `alerts`
@@ -111,5 +111,5 @@ Read-Only:
 - `id` (String) The field to filter on
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
-- `type` (String) Type of dimension or filter field.
-- `values` (List of String) Values to filter on
+- `type` (String) Enumeration of supported dimension/filter types.
+- `values` (List of String) Values to filter on.
