@@ -1,5 +1,11 @@
 # DoiT Cloud Intelligence Provider
 
+[![Tests](https://github.com/doitintl/terraform-provider-doit/actions/workflows/tests.yml/badge.svg)](https://github.com/doitintl/terraform-provider-doit/actions/workflows/tests.yml)
+[![Release](https://img.shields.io/github/v/release/doitintl/terraform-provider-doit)](https://github.com/doitintl/terraform-provider-doit/releases/latest)
+[![Terraform Registry](https://img.shields.io/badge/terraform-registry-blueviolet?logo=terraform)](https://registry.terraform.io/providers/doitintl/doit/latest)
+[![Go](https://img.shields.io/github/go-mod/go-version/doitintl/terraform-provider-doit)](https://go.dev/)
+[![License](https://img.shields.io/github/license/doitintl/terraform-provider-doit)](LICENSE)
+
 This Terraform provider allows you to manage DoiT Cloud Intelligence resources using the [DoiT API](https://developer.doit.com/reference/welcome).
 
 While the provider does not yet support all available API endpoints, version 1.0.0 marks the first stable release.
@@ -46,7 +52,7 @@ Alternatively, you can also use the `DOIT_API_TOKEN` and `DOIT_CUSTOMER_CONTEXT`
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.19
+- [Go](https://golang.org/doc/install) >= 1.25
 
 ### Optional: Using Nix Flake
 
@@ -117,12 +123,23 @@ Acceptance tests create real resources in a DoiT account and require proper conf
 | Variable | Description |
 |----------|-------------|
 | `DOIT_API_TOKEN` | Your DoiT API token |
-| `DOIT_HOST` | The DoiT API host (e.g., `https://api.doit.com`) |
+| `DOIT_HOST` | The DoiT API host (must be set; for most users this is `https://api.doit.com`) |
 | `TEST_USER` | Email address for test budget collaborators/recipients |
 | `TEST_ATTRIBUTION` | Attribution ID for test budget scope |
 | `TEST_SLACK_CHAN` | Slack channel ID for notification tests |
 | `TEST_PROJECT` | Project ID for allocation rule tests |
 | `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient |
+
+### Optional Environment Variables
+
+These variables are used by specific data source tests that will be skipped if unset:
+
+| Variable | Description |
+|----------|-------------|
+| `TEST_ATTRIBUTION_GROUP` | Attribution group ID for report tests |
+| `TEST_INVOICE_ID` | Invoice ID for invoice data source tests |
+| `TEST_ANOMALY_ID` | Anomaly ID for anomaly data source tests |
+| `TEST_CLOUD_INCIDENT_ID` | Cloud incident ID for cloud incident data source tests |
 
 ### Running Tests
 
@@ -155,6 +172,12 @@ export TEST_ATTRIBUTION="your-attribution-id"
 export TEST_SLACK_CHAN="your-slack-channel-id"
 export TEST_PROJECT="your-project-id"
 export TEST_CUSTOMER_ID="your-customer-id"
+
+# Optional - specific data source tests will be skipped if these are unset
+# export TEST_ATTRIBUTION_GROUP="your-attribution-group-id"
+# export TEST_INVOICE_ID="your-invoice-id"
+# export TEST_ANOMALY_ID="your-anomaly-id"
+# export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
 
 go test -v -timeout 120m ./...
 ```

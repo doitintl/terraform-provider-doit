@@ -56,10 +56,10 @@ func (p *doitProvider) Metadata(ctx context.Context, _ provider.MetadataRequest,
 func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	tflog.Debug(ctx, "provider Schema")
 	resp.Schema = schema.Schema{
-		Description: "DoiT Cloud Intelligence Terraform Provider. Note that this version of the provider is still currently in a preview state and it is not currently supported.",
+		Description: "The DoiT Cloud Intelligence Terraform Provider allows you to manage DoiT Cloud Intelligence resources using the DoiT API.",
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
-				Description: "URI for DoiT API. May also be provided via DOIT_HOST environment variable.",
+				Description: "URI for DoiT API. May also be provided via DOIT_HOST environment variable. Defaults to " + HostURL + ".",
 				Optional:    true,
 			},
 			"api_token": schema.StringAttribute{
@@ -71,7 +71,7 @@ func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, res
 			},
 			"customer_context": schema.StringAttribute{
 				Description: "Customer context. May also be provided by DOIT_CUSTOMER_CONTEXT " +
-					"environment variable. This field is requiered just for DoiT employees ",
+					"environment variable. This field is required for DoiT employees only.",
 				Optional: true,
 			},
 		},
