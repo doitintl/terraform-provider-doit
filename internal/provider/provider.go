@@ -59,7 +59,7 @@ func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, res
 		Description: "The DoiT Cloud Intelligence Terraform Provider allows you to manage DoiT Cloud Intelligence resources using the DoiT API.",
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
-				Description: "URI for DoiT API. May also be provided via DOIT_HOST environment variable. Defaults to https://api.doit.com.",
+				Description: "URI for DoiT API. May also be provided via DOIT_HOST environment variable. Defaults to " + HostURL + ".",
 				Optional:    true,
 			},
 			"api_token": schema.StringAttribute{

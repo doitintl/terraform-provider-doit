@@ -123,7 +123,7 @@ Acceptance tests create real resources in a DoiT account and require proper conf
 | Variable | Description |
 |----------|-------------|
 | `DOIT_API_TOKEN` | Your DoiT API token |
-| `DOIT_HOST` | The DoiT API host (defaults to `https://api.doit.com`) |
+| `DOIT_HOST` | The DoiT API host (must be set; for most users this is `https://api.doit.com`) |
 | `TEST_USER` | Email address for test budget collaborators/recipients |
 | `TEST_ATTRIBUTION` | Attribution ID for test budget scope |
 | `TEST_SLACK_CHAN` | Slack channel ID for notification tests |
