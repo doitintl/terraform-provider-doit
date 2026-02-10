@@ -175,7 +175,7 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	}
 
 	// Create a new DoiT client using the configuration values
-	client, err := NewClient(ctx, host, doiTAPIToken, customerContext)
+	client, err := NewClient(ctx, host, doiTAPIToken, customerContext, req.TerraformVersion, p.version)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create DoiT API Client",
