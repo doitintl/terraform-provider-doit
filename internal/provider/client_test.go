@@ -4,22 +4,39 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 )
 
-func TestNewClient_UserAgent(t *testing.T) {
-	t.Parallel()
-
-	// Capture the User-Agent header from actual requests
-	var capturedUA string
+// captureUserAgent returns an httptest.Server that records the User-Agent
+// header of the first request it receives, and a function to retrieve it.
+func captureUserAgent(t *testing.T) (*httptest.Server, func() string) {
+	t.Helper()
+	var (
+		mu sync.Mutex
+		ua string
+	)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		capturedUA = r.Header.Get("User-Agent")
-		// Return a valid JSON response for the Validate call
+		mu.Lock()
+		ua = r.Header.Get("User-Agent")
+		mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"email":"test@example.com"}`))
 	}))
-	defer server.Close()
+	t.Cleanup(server.Close)
+	return server, func() string {
+		mu.Lock()
+		defer mu.Unlock()
+		return ua
+	}
+}
+
+func TestNewClient_UserAgent(t *testing.T) {
+	// Not parallel — uses t.Setenv
+	t.Setenv("TF_APPEND_USER_AGENT", "") // ensure clean env
+
+	server, getUA := captureUserAgent(t)
 
 	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0")
 	if err != nil {
@@ -30,22 +47,16 @@ func TestNewClient_UserAgent(t *testing.T) {
 	}
 
 	expected := "Terraform/1.9.0 terraform-provider-doit/1.0.0"
-	if capturedUA != expected {
-		t.Errorf("User-Agent = %q, want %q", capturedUA, expected)
+	if got := getUA(); got != expected {
+		t.Errorf("User-Agent = %q, want %q", got, expected)
 	}
 }
 
 func TestNewClient_UserAgentDev(t *testing.T) {
-	t.Parallel()
+	// Not parallel — uses t.Setenv
+	t.Setenv("TF_APPEND_USER_AGENT", "") // ensure clean env
 
-	var capturedUA string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		capturedUA = r.Header.Get("User-Agent")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"email":"test@example.com"}`))
-	}))
-	defer server.Close()
+	server, getUA := captureUserAgent(t)
 
 	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "dev")
 	if err != nil {
@@ -56,23 +67,16 @@ func TestNewClient_UserAgentDev(t *testing.T) {
 	}
 
 	expected := "Terraform/1.9.0 terraform-provider-doit/dev"
-	if capturedUA != expected {
-		t.Errorf("User-Agent = %q, want %q", capturedUA, expected)
+	if got := getUA(); got != expected {
+		t.Errorf("User-Agent = %q, want %q", got, expected)
 	}
 }
 
 func TestNewClient_UserAgentAppend(t *testing.T) {
-	// Not parallel — modifies environment variable
+	// Not parallel — uses t.Setenv
 	t.Setenv("TF_APPEND_USER_AGENT", "my-ci-system/2.0")
 
-	var capturedUA string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		capturedUA = r.Header.Get("User-Agent")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"email":"test@example.com"}`))
-	}))
-	defer server.Close()
+	server, getUA := captureUserAgent(t)
 
 	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0")
 	if err != nil {
@@ -83,7 +87,7 @@ func TestNewClient_UserAgentAppend(t *testing.T) {
 	}
 
 	expected := "Terraform/1.9.0 terraform-provider-doit/1.0.0 my-ci-system/2.0"
-	if capturedUA != expected {
-		t.Errorf("User-Agent = %q, want %q", capturedUA, expected)
+	if got := getUA(); got != expected {
+		t.Errorf("User-Agent = %q, want %q", got, expected)
 	}
 }

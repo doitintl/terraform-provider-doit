@@ -200,8 +200,8 @@ func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVe
 	)
 
 	userAgent := fmt.Sprintf("Terraform/%s terraform-provider-doit/%s", terraformVersion, providerVersion)
-	if add := os.Getenv("TF_APPEND_USER_AGENT"); add != "" {
-		userAgent += " " + strings.TrimSpace(add)
+	if add := strings.TrimSpace(os.Getenv("TF_APPEND_USER_AGENT")); add != "" {
+		userAgent += " " + add
 	}
 
 	client, err := models.NewClientWithResponses(host,
