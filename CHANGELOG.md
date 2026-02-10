@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.0.0 (Unreleased)
+## v1.0.0 (2026-02-10)
 
 This is a major release with breaking changes. Please see the [v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md) for migration instructions.
 
