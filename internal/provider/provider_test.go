@@ -57,6 +57,8 @@ func getAPIClient(t *testing.T) *models.ClientWithResponses {
 		os.Getenv("DOIT_HOST"),
 		os.Getenv("DOIT_API_TOKEN"),
 		os.Getenv("DOIT_CUSTOMER_CONTEXT"),
+		"test", // terraformVersion - not available outside provider lifecycle
+		"dev",  // providerVersion - matches default in main.go
 	)
 	if err != nil {
 		t.Fatalf("Failed to create API client: %v", err)

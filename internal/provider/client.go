@@ -7,7 +7,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
@@ -178,7 +180,15 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 // NewClient creates a new API client with retry logic.
-func NewClient(ctx context.Context, host, apiToken, customerContext string) (*models.ClientWithResponses, error) {
+//
+// The terraformVersion and providerVersion parameters are used to construct
+// a User-Agent header following HashiCorp conventions:
+//
+//	Terraform/{tfVersion} terraform-provider-doit/{provVersion}
+//
+// The TF_APPEND_USER_AGENT environment variable is also respected, allowing
+// users to append custom identifiers (e.g., CI system, org name).
+func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVersion, providerVersion string) (*models.ClientWithResponses, error) {
 	retryClient := &DCIRetryClient{
 		client: &http.Client{
 			Timeout: 30 * time.Second,
@@ -189,6 +199,11 @@ func NewClient(ctx context.Context, host, apiToken, customerContext string) (*mo
 		&oauth2.Token{AccessToken: apiToken},
 	)
 
+	userAgent := fmt.Sprintf("Terraform/%s terraform-provider-doit/%s", terraformVersion, providerVersion)
+	if add := strings.TrimSpace(os.Getenv("TF_APPEND_USER_AGENT")); add != "" {
+		userAgent += " " + add
+	}
+
 	client, err := models.NewClientWithResponses(host,
 		models.WithHTTPClient(retryClient),
 		models.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
@@ -197,6 +212,7 @@ func NewClient(ctx context.Context, host, apiToken, customerContext string) (*mo
 				return err
 			}
 			token.SetAuthHeader(req)
+			req.Header.Set("User-Agent", userAgent)
 			if customerContext != "" {
 				url := req.URL.Query()
 				url.Set("customerContext", customerContext)
