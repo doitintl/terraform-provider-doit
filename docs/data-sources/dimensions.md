@@ -54,7 +54,7 @@ The fields eligible for filtering are: type, label, key.
 
 ### Read-Only
 
-- `dimensions` (Attributes List) (see [below for nested schema](#nestedatt--dimensions))
+- `dimensions` (Attributes List) Array of dimensions. (see [below for nested schema](#nestedatt--dimensions))
 - `row_count` (Number)
 
 <a id="nestedatt--dimensions"></a>
@@ -62,6 +62,6 @@ The fields eligible for filtering are: type, label, key.
 
 Read-Only:
 
-- `id` (String) Unique identifier for the item.
-- `label` (String) Human-readable display label for the item.
-- `type` (String) Category or classification of the item.
+- `id` (String)
+- `label` (String)
+- `type` (String) Enumeration of supported dimension/filter types.
