@@ -2094,6 +2094,8 @@ paths:
               properties:
                 events:
                   type: array
+                  minItems: 1
+                  maxItems: 50000
                   items:
                     type: object
                     required:
@@ -3687,8 +3689,9 @@ components:
       properties:
         attributions:
           type: array
+          description: Array of attributions in this attribution group.
           items:
-            $ref: "#/components/schemas/SortableItem"
+            $ref: "#/components/schemas/AttributionGroupAttributionItem"
         cloud:
           type: array
           items:
@@ -3711,6 +3714,33 @@ components:
           format: date-time
         type:
           $ref: "#/components/schemas/ObjectType"
+    AttributionGroupAttributionItem:
+      type: object
+      description: Summary information about an attribution within an attribution group.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the attribution.
+        name:
+          type: string
+          description: The name of the attribution.
+        owner:
+          type: string
+          description: The email of the attribution owner.
+        description:
+          type: string
+          description: The description of the attribution.
+        type:
+          type: string
+          description: Type of attribution can be either preset or custom.
+        createTime:
+          type: integer
+          format: int64
+          description: The timestamp when the attribution was created.
+        updateTime:
+          type: integer
+          format: int64
+          description: The timestamp when the attribution was last updated.
     AttributionGroupRequest:
       required:
         - attributions
@@ -3767,7 +3797,7 @@ components:
           type: array
           description: Array of AttributionGroup.
           items:
-            $ref: "#/components/schemas/SortableItem"
+            $ref: "#/components/schemas/AttributionGroupListItem"
         pageToken:
           type: string
           description: Page token, returned by a previous call, to request the next page of results.
@@ -3775,6 +3805,37 @@ components:
           type: integer
           description: AttributionGroup rows count.
           format: int64
+    AttributionGroupListItem:
+      type: object
+      description: Summary information about an attribution group.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the attribution group.
+        name:
+          type: string
+          description: The name of the attribution group.
+        owner:
+          type: string
+          description: The email of the attribution group owner.
+        description:
+          type: string
+          description: The description of the attribution group.
+        type:
+          type: string
+          description: The type of the attribution group.
+          enum:
+            - custom
+            - preset
+            - managed
+        createTime:
+          type: integer
+          format: int64
+          description: The timestamp when the attribution group was created (Unix milliseconds).
+        updateTime:
+          type: integer
+          format: int64
+          description: The timestamp when the attribution group was last updated (Unix milliseconds).
     LabelInfo:
       required:
         - id
@@ -4495,23 +4556,24 @@ components:
       properties:
         dimensions:
           type: array
+          description: Array of dimensions.
           items:
-            description: Definition of a dimension.
-            type: object
-            properties:
-              id:
-                type: string
-                description: The identifier of the dimension.
-              label:
-                type: string
-                description: The label of the dimension.
-              type:
-                $ref: "#/components/schemas/DimensionsTypes"
+            $ref: "#/components/schemas/DimensionExternalAPIListItem"
         pageToken:
           type: string
         rowCount:
           type: integer
           format: int64
+    DimensionExternalAPIListItem:
+      type: object
+      description: Summary information about a dimension.
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        type:
+          $ref: "#/components/schemas/DimensionsTypes"
     DimensionsTypes:
       description: Enumeration of supported dimension/filter types.
       type: string
@@ -5439,12 +5501,6 @@ components:
         type:
           type: string
         workspace:
-          type: string
-    SortableItem:
-      type: object
-      description: An object used in lists where items can be sorted.
-      properties:
-        GetID:
           type: string
     TimeSettings:
       type: object

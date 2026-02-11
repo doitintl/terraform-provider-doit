@@ -24,14 +24,10 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed:            true,
-							Description:         "The identifier of the dimension.",
-							MarkdownDescription: "The identifier of the dimension.",
+							Computed: true,
 						},
 						"label": schema.StringAttribute{
-							Computed:            true,
-							Description:         "The label of the dimension.",
-							MarkdownDescription: "The label of the dimension.",
+							Computed: true,
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
@@ -45,7 +41,9 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 				},
-				Computed: true,
+				Computed:            true,
+				Description:         "Array of dimensions.",
+				MarkdownDescription: "Array of dimensions.",
 			},
 			"filter": schema.StringAttribute{
 				Optional:            true,

@@ -2388,15 +2388,13 @@
 									{
 										"name": "id",
 										"string": {
-											"computed_optional_required": "computed",
-											"description": "The identifier of the dimension."
+											"computed_optional_required": "computed"
 										}
 									},
 									{
 										"name": "label",
 										"string": {
-											"computed_optional_required": "computed",
-											"description": "The label of the dimension."
+											"computed_optional_required": "computed"
 										}
 									},
 									{
@@ -2407,7 +2405,8 @@
 										}
 									}
 								]
-							}
+							},
+							"description": "Array of dimensions."
 						}
 					},
 					{
