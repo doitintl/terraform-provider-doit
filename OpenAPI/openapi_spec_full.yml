@@ -4,7 +4,7 @@ info:
   description: Programmatic access to DoiT Platform
   version: v1
 servers:
-  - url: ${API_BASE_URL}
+  - url: https://api-dev.doit.com
 security:
   - api_key: []
   - customerContext: []
@@ -2941,7 +2941,7 @@ paths:
       description: Returns diagram URLs matching the provided resource IDs.
       operationId: findCloudDiagrams
       servers:
-        - url: ${API_BASE_URL}
+        - url: https://api-dev.doit.com
       requestBody:
         required: true
         content:
@@ -4496,7 +4496,17 @@ components:
         dimensions:
           type: array
           items:
-            $ref: "#/components/schemas/SortableItem"
+            description: Definition of a dimension.
+            type: object
+            properties:
+              id:
+                type: string
+                description: The identifier of the dimension.
+              label:
+                type: string
+                description: The label of the dimension.
+              type:
+                $ref: "#/components/schemas/DimensionsTypes"
         pageToken:
           type: string
         rowCount:
@@ -5432,17 +5442,10 @@ components:
           type: string
     SortableItem:
       type: object
-      description: An object used in lists where items can be sorted (e.g., dimensions, attributions).
+      description: An object used in lists where items can be sorted.
       properties:
-        id:
+        GetID:
           type: string
-          description: Unique identifier for the item.
-        label:
-          type: string
-          description: Human-readable display label for the item.
-        type:
-          type: string
-          description: Category or classification of the item.
     TimeSettings:
       type: object
       description: >-
