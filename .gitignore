@@ -42,5 +42,5 @@ tftest.sh
 GEMINI.md
 .direnv/
 .envrc.local
-.agent/
+.gemini/
 OpenAPI/api_endpoint_analysis.md
