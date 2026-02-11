@@ -27,6 +27,10 @@ func TestAccDimensionsDataSource_MaxResultsOnly(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_dimensions.limited", "dimensions.#", "2"),
 					resource.TestCheckResourceAttrSet("data.doit_dimensions.limited", "page_token"),
+					// Verify field values are populated (not empty)
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.limited", "dimensions.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.limited", "dimensions.0.label"),
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.limited", "dimensions.0.type"),
 				),
 			},
 			{
