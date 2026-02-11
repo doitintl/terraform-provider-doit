@@ -1543,9 +1543,18 @@ type DimensionsExternalAPIGetResponse struct {
 
 // DimensionsExternalAPIList Paged list of available dimensions.
 type DimensionsExternalAPIList struct {
-	Dimensions *[]SortableItem `json:"dimensions,omitempty"`
-	PageToken  *string         `json:"pageToken,omitempty"`
-	RowCount   *int64          `json:"rowCount,omitempty"`
+	Dimensions *[]struct {
+		// Id The identifier of the dimension.
+		Id *string `json:"id,omitempty"`
+
+		// Label The label of the dimension.
+		Label *string `json:"label,omitempty"`
+
+		// Type Enumeration of supported dimension/filter types.
+		Type *DimensionsTypes `json:"type,omitempty"`
+	} `json:"dimensions,omitempty"`
+	PageToken *string `json:"pageToken,omitempty"`
+	RowCount  *int64  `json:"rowCount,omitempty"`
 }
 
 // DimensionsTypes Enumeration of supported dimension/filter types.
@@ -2243,16 +2252,9 @@ type SlackChannel struct {
 	Workspace  *string `json:"workspace,omitempty"`
 }
 
-// SortableItem An object used in lists where items can be sorted (e.g., dimensions, attributions).
+// SortableItem An object used in lists where items can be sorted.
 type SortableItem struct {
-	// Id Unique identifier for the item.
-	Id *string `json:"id,omitempty"`
-
-	// Label Human-readable display label for the item.
-	Label *string `json:"label,omitempty"`
-
-	// Type Category or classification of the item.
-	Type *string `json:"type,omitempty"`
+	GetID *string `json:"GetID,omitempty"`
 }
 
 // Subscription Subscription-related metadata for an asset.

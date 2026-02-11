@@ -85,7 +85,13 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
 	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
 
-	var allDimensions []models.SortableItem
+	// dimensionItem matches the inline struct generated for DimensionsExternalAPIList.Dimensions
+	type dimensionItem = struct {
+		Id    *string                 `json:"id,omitempty"`
+		Label *string                 `json:"label,omitempty"`
+		Type  *models.DimensionsTypes `json:"type,omitempty"`
+	}
+	var allDimensions []dimensionItem
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
@@ -175,7 +181,7 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				map[string]attr.Value{
 					"id":    types.StringPointerValue(dim.Id),
 					"label": types.StringPointerValue(dim.Label),
-					"type":  types.StringPointerValue(dim.Type),
+					"type":  types.StringPointerValue((*string)(dim.Type)),
 				},
 			)
 			resp.Diagnostics.Append(diags...)
