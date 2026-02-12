@@ -4570,8 +4570,10 @@ components:
       properties:
         id:
           type: string
+          description: The identifier of the dimension.
         label:
           type: string
+          description: The label of the dimension.
         type:
           $ref: "#/components/schemas/DimensionsTypes"
     DimensionsTypes:
@@ -6228,18 +6230,6 @@ components:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProductAPI"
-    successGetDimensionsResponse:
-      description: Gets the dimension with the given type and key values
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/DimensionsExternalAPIGetResponse"
-    successListDimensionsResponse:
-      description: Lists dimensions available for the user
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/DimensionsExternalAPIList"
     successRespWithAsset:
       description: Updates existing asset to add or remove licenses
       content:

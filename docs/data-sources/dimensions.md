@@ -62,6 +62,6 @@ The fields eligible for filtering are: type, label, key.
 
 Read-Only:
 
-- `id` (String)
-- `label` (String)
+- `id` (String) The identifier of the dimension.
+- `label` (String) The label of the dimension.
 - `type` (String) Enumeration of supported dimension/filter types.

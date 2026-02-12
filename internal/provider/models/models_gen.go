@@ -1592,7 +1592,10 @@ type Dimension struct {
 
 // DimensionExternalAPIListItem Summary information about a dimension.
 type DimensionExternalAPIListItem struct {
-	Id    *string `json:"id,omitempty"`
+	// Id The identifier of the dimension.
+	Id *string `json:"id,omitempty"`
+
+	// Label The label of the dimension.
 	Label *string `json:"label,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
