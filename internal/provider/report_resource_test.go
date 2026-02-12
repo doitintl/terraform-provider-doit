@@ -872,6 +872,69 @@ resource "doit_report" "metrics_test" {
 `, i)
 }
 
+// TestAccReport_WithoutDataSource verifies that the API accepts report creation
+// without the data_source field. In v0.26.0 the field didn't exist in the provider
+// at all (never sent to the API). The OpenAPI spec marks it as optional.
+// This test confirms no regression when omitting data_source.
+func TestAccReport_WithoutDataSource(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithoutDataSource(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.no_datasource",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.no_datasource",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-no-ds-%d", n))),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithoutDataSource(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithoutDataSource(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "no_datasource" {
+    name = "test-no-ds-%d"
+    description = "Report without data_source to verify it is truly optional"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
 // TestAccReport_DataSource tests that non-default dataSource values
 // (specifically billing-datahub) work correctly after fixing the enum
 // mismatch between the OpenAPI spec and actual API.
