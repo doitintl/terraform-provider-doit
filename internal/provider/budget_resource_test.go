@@ -454,6 +454,30 @@ func TestAccBudget_Attributes_Coverage(t *testing.T) {
 					},
 				},
 			},
+			// Test metric = "amortized_cost" to verify API round-trip
+			{
+				Config: testAccBudgetAttributesCoverageAmortizedCost(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("metric"),
+						knownvalue.StringExact("amortized_cost")),
+				},
+			},
+			// Verify no drift on re-apply with amortized_cost
+			{
+				Config: testAccBudgetAttributesCoverageAmortizedCost(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -476,6 +500,46 @@ resource "doit_budget" "this" {
 
   # Covered: metric explicitly
   metric           = "cost"
+
+  # Covered: scopes with inverse
+  scopes = [
+    {
+      type    = "fixed"
+      id      = "cloud_provider"
+      mode    = "is"
+      values  = ["google-cloud-platform"]
+      inverse = true
+    }
+  ]
+
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+}
+`, budgetStartPeriod(), i, testUser())
+}
+
+func testAccBudgetAttributesCoverageAmortizedCost(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name             = "test-attributes-%d"
+  currency         = "EUR"
+  time_interval    = "quarter"
+  type             = "recurring"
+  start_period     = local.start_period
+
+  amount           = 100
+
+  # Covered: seasonal_amounts instead of amount
+  seasonal_amounts = [100, 200, 300, 400]
+
+  # Covered: metric with amortized_cost value
+  metric           = "amortized_cost"
 
   # Covered: scopes with inverse
   scopes = [
