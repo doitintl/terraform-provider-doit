@@ -167,9 +167,9 @@ const (
 // Defines values for ExternalConfigDataSource.
 const (
 	Billing               ExternalConfigDataSource = "billing"
-	BillingDatahub        ExternalConfigDataSource = "billing_datahub"
+	BillingDatahub        ExternalConfigDataSource = "billing-datahub"
 	Bqlens                ExternalConfigDataSource = "bqlens"
-	KubernetesUtilization ExternalConfigDataSource = "kubernetes_utilization"
+	KubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
 )
 
 // Defines values for ExternalConfigDisplayValues.
