@@ -141,12 +141,12 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		TimeInterval:              &timeInterval,
 	}
 
-	if !config.DataSource.IsNull() {
+	if !config.DataSource.IsNull() && !config.DataSource.IsUnknown() {
 		dataSource := models.ExternalConfigDataSource(config.DataSource.ValueString())
 		externalConfig.DataSource = &dataSource
 	}
 
-	if !config.AdvancedAnalysis.IsNull() {
+	if !config.AdvancedAnalysis.IsNull() && !config.AdvancedAnalysis.IsUnknown() {
 		externalConfig.AdvancedAnalysis = &models.AdvancedAnalysis{
 			Forecast:     config.AdvancedAnalysis.Forecast.ValueBoolPointer(),
 			NotTrending:  config.AdvancedAnalysis.NotTrending.ValueBoolPointer(),
@@ -316,14 +316,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					Mode:          &splitMode,
 					Type:          &splitType,
 				}
-				if !s.Origin.IsNull() {
+				if !s.Origin.IsNull() && !s.Origin.IsUnknown() {
 					originType := models.ExternalOriginType(s.Origin.OriginType.ValueString())
 					externalSplits[i].Origin = &models.ExternalOrigin{
 						Id:   s.Origin.Id.ValueStringPointer(),
 						Type: &originType,
 					}
 				}
-				if !s.Targets.IsNull() {
+				if !s.Targets.IsNull() && !s.Targets.IsUnknown() {
 					var targets []resource_report.TargetsValue
 					diags.Append(s.Targets.ElementsAs(ctx, &targets, false)...)
 					if diags.HasError() {

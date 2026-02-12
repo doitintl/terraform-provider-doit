@@ -4158,7 +4158,10 @@ components:
             in:path
         metric:
           type: string
-          description: Budget metric - currently fixed to "cost"
+          description: Budget metric
+          enum:
+            - cost
+            - amortized_cost
           default: "cost"
         name:
           type: string
@@ -4421,7 +4424,10 @@ components:
           default: 0
         metric:
           type: string
-          description: Budget metric - currently fixed to "cost"
+          description: Budget metric
+          enum:
+            - cost
+            - amortized_cost
           default: "cost"
         name:
           type: string
@@ -4751,8 +4757,8 @@ components:
           enum:
             - billing
             - bqlens
-            - billing_datahub
-            - kubernetes_utilization
+            - billing-datahub
+            - kubernetes-utilization
         splits:
           type: array
           description: The splits to use in the report.

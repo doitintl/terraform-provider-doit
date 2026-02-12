@@ -103,7 +103,7 @@ Possible values: `total`, `percent_total`, `percent_col`, `percent_row`
 Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
-Possible values: `billing`, `bqlens`, `billing_datahub`, `kubernetes_utilization`
+Possible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
 - `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 Possible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolute_and_percentage`

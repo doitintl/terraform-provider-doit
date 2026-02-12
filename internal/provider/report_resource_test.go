@@ -871,3 +871,87 @@ resource "doit_report" "metrics_test" {
 }
 `, i)
 }
+
+// TestAccReport_DataSource tests that non-default dataSource values
+// (specifically billing-datahub) work correctly after fixing the enum
+// mismatch between the OpenAPI spec and actual API.
+// See: https://github.com/doitintl/terraform-provider-doit/issues/74
+func TestAccReport_DataSource(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with billing-datahub data source
+			{
+				Config: testAccReportDataSource(n, "billing-datahub"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.datasource_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.datasource_test",
+						tfjsonpath.New("config").AtMapKey("data_source"),
+						knownvalue.StringExact("billing-datahub")),
+				},
+			},
+			// Step 2: Update to bqlens data source
+			{
+				Config: testAccReportDataSource(n, "bqlens"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.datasource_test",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.datasource_test",
+						tfjsonpath.New("config").AtMapKey("data_source"),
+						knownvalue.StringExact("bqlens")),
+				},
+			},
+			// Step 3: Verify no drift on re-apply
+			{
+				Config: testAccReportDataSource(n, "bqlens"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDataSource(i int, dataSource string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "datasource_test" {
+    name = "test-datasource-%d"
+    description = "Report testing dataSource enum values"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "%s"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i, dataSource)
+}

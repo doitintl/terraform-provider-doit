@@ -128,14 +128,14 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"data_source": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing_datahub`, `kubernetes_utilization`",
-						MarkdownDescription: "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing_datahub`, `kubernetes_utilization`",
+						Description:         "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
+						MarkdownDescription: "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"billing",
 								"bqlens",
-								"billing_datahub",
-								"kubernetes_utilization",
+								"billing-datahub",
+								"kubernetes-utilization",
 							),
 						},
 					},

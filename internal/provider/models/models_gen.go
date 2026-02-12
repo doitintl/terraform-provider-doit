@@ -80,6 +80,12 @@ const (
 	BudgetAPIPublicViewer BudgetAPIPublic = "viewer"
 )
 
+// Defines values for BudgetCreateUpdateRequestMetric.
+const (
+	AmortizedCost BudgetCreateUpdateRequestMetric = "amortized_cost"
+	Cost          BudgetCreateUpdateRequestMetric = "cost"
+)
+
 // Defines values for BudgetCreateUpdateRequestPublic.
 const (
 	BudgetCreateUpdateRequestPublicEditor BudgetCreateUpdateRequestPublic = "editor"
@@ -174,9 +180,9 @@ const (
 // Defines values for ExternalConfigDataSource.
 const (
 	Billing               ExternalConfigDataSource = "billing"
-	BillingDatahub        ExternalConfigDataSource = "billing_datahub"
+	BillingDatahub        ExternalConfigDataSource = "billing-datahub"
 	Bqlens                ExternalConfigDataSource = "bqlens"
-	KubernetesUtilization ExternalConfigDataSource = "kubernetes_utilization"
+	KubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
 )
 
 // Defines values for ExternalConfigDisplayValues.
@@ -1414,8 +1420,8 @@ type BudgetCreateUpdateRequest struct {
 	// GrowthPerPeriod Periodical growth percentage in recurring budget
 	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
 
-	// Metric Budget metric - currently fixed to "cost"
-	Metric *string `json:"metric,omitempty"`
+	// Metric Budget metric
+	Metric *BudgetCreateUpdateRequestMetric `json:"metric,omitempty"`
 
 	// Name Budget Name.
 	Name   *string                          `json:"name,omitempty"`
@@ -1449,6 +1455,9 @@ type BudgetCreateUpdateRequest struct {
 	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
+
+// BudgetCreateUpdateRequestMetric Budget metric
+type BudgetCreateUpdateRequestMetric string
 
 // BudgetCreateUpdateRequestPublic defines model for BudgetCreateUpdateRequest.Public.
 type BudgetCreateUpdateRequestPublic string
