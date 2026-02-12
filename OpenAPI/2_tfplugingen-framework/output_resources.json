@@ -1205,7 +1205,7 @@
 															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 														}
 													],
-													"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"bqlens\",\n\"billing_datahub\",\n\"kubernetes_utilization\",\n)"
+													"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"bqlens\",\n\"billing-datahub\",\n\"kubernetes-utilization\",\n)"
 												}
 											}
 										]

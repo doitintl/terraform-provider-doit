@@ -342,6 +342,36 @@ filters = [
 
 - `config.metrics` - List of up to 4 metrics per report (replaces `config.metric`)
 - `config.custom_time_range` - For custom time range queries with `from` and `to` RFC3339 timestamps
+- `config.data_source` - Data source selector (new in v1.0.0, not available in v0.26.x)
+
+### Important: `data_source` Values Use Hyphens
+
+The `data_source` attribute values use **hyphens** (not underscores):
+
+| ✅ Correct | ❌ Incorrect |
+|-----------|-------------|
+| `billing` | |
+| `bqlens` | |
+| `billing-datahub` | `billing_datahub` |
+| `kubernetes-utilization` | `kubernetes_utilization` |
+
+### Important: All Attributes Must Use `snake_case`
+
+All HCL attribute names in the `config` block must use `snake_case` format.
+Using `camelCase` attributes (e.g., `dataSource`, `sortGroups`) will be **silently ignored**
+and the values will not be applied to the report.
+
+| ✅ Correct (snake_case) | ❌ Incorrect (camelCase) |
+|------------------------|------------------------|
+| `data_source` | `dataSource` |
+| `sort_groups` | `sortGroups` |
+| `sort_dimensions` | `sortDimensions` |
+| `time_interval` | `timeInterval` |
+| `display_values` | `displayValues` |
+| `time_range` | `timeRange` |
+| `advanced_analysis` | `advancedAnalysis` |
+| `include_promotional_credits` | `includePromotionalCredits` |
+| `custom_time_range` | `customTimeRange` |
 
 ---
 
@@ -400,6 +430,8 @@ resource "doit_alert" "my_alert" {
 - [ ] Update `doit_report` resources:
   - [ ] Replace `metric` with `metrics` list
   - [ ] Add `mode` to all filter configurations
+  - [ ] Use `snake_case` for all attribute names (e.g., `data_source` not `dataSource`)
+  - [ ] Use hyphens in `data_source` values (e.g., `billing-datahub` not `billing_datahub`)
 - [ ] Update `doit_alert` resources:
   - [ ] Replace `attributions` with `scopes`
 - [ ] Run `terraform init -upgrade`

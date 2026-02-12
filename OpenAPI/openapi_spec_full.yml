@@ -4683,8 +4683,8 @@ components:
           enum:
             - billing
             - bqlens
-            - billing_datahub
-            - kubernetes_utilization
+            - billing-datahub
+            - kubernetes-utilization
         splits:
           type: array
           description: The splits to use in the report.
