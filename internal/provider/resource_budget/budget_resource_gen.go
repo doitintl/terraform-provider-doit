@@ -159,9 +159,15 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"metric": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Budget metric - currently fixed to \"cost\"",
-				MarkdownDescription: "Budget metric - currently fixed to \"cost\"",
-				Default:             stringdefault.StaticString("cost"),
+				Description:         "Budget metric\nPossible values: `cost`, `amortized_cost`",
+				MarkdownDescription: "Budget metric\nPossible values: `cost`, `amortized_cost`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"cost",
+						"amortized_cost",
+					),
+				},
+				Default: stringdefault.StaticString("cost"),
 			},
 			"name": schema.StringAttribute{
 				Optional:            true,
