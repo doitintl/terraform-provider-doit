@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.0.1 (2026-02-13)
+
+### BUG FIXES
+
+* **resource/doit_report**: Corrected `data_source` enum values from underscores to hyphens (`billing_datahub` → `billing-datahub`, `kubernetes_utilization` → `kubernetes-utilization`) and added `IsUnknown` guards to prevent sending empty strings to the API ([#82](https://github.com/doitintl/terraform-provider-doit/pull/82))
+* **resource/doit_budget**: Fixed handling of `BudgetCreateUpdateRequestMetric` enum type after upstream spec changes ([#83](https://github.com/doitintl/terraform-provider-doit/pull/83))
+* **data-source/doit_dimensions**: Updated dimensions data source to align with latest API spec ([#81](https://github.com/doitintl/terraform-provider-doit/pull/81))
+
+### FEATURES
+
+* Provider now sends a custom `User-Agent` header (`Terraform/{version} terraform-provider-doit/{version}`) following HashiCorp conventions. Also respects `TF_APPEND_USER_AGENT` for custom identifiers ([#79](https://github.com/doitintl/terraform-provider-doit/pull/79))
+
+### DOCUMENTATION
+
+* Added group allocation example with `unallocated_costs` attribute ([#85](https://github.com/doitintl/terraform-provider-doit/pull/85))
+* Clarified possible values for the `metric` field in the `budget` resource documentation ([#85](https://github.com/doitintl/terraform-provider-doit/pull/85))
+
+### INTERNAL
+
+* **ci**: Pre-install Terraform CLI via `hashicorp/setup-terraform` to prevent 502 download flakes during tests ([#80](https://github.com/doitintl/terraform-provider-doit/pull/80))
+* **build**: Ignore Windows ARM builds and update archive format syntax in goreleaser config ([#78](https://github.com/doitintl/terraform-provider-doit/pull/78))
+* **test**: Added acceptance test verifying report creation without `data_source` attribute ([#84](https://github.com/doitintl/terraform-provider-doit/pull/84))
+
 ## v1.0.0 (2026-02-10)
 
 This is a major release with breaking changes. Please see the [v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md) for migration instructions.
