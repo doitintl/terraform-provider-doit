@@ -64,7 +64,8 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 - `end_period` (Number) Fixed budget end date
 required: true(if budget type is fixed)
 - `growth_per_period` (Number) Periodical growth percentage in recurring budget
-- `metric` (String) Budget metric - currently fixed to "cost"
+- `metric` (String) Budget metric
+Possible values: `cost`, `amortized_cost`
 - `name` (String) Budget Name.
 - `public` (String) Public sharing access level for the budget.
 Possible values: `owner`, `editor`, `viewer`
