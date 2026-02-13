@@ -66,6 +66,13 @@ const (
 	AnomalyItemStatusInactive AnomalyItemStatus = "inactive"
 )
 
+// Defines values for AttributionGroupListItemType.
+const (
+	AttributionGroupListItemTypeCustom  AttributionGroupListItemType = "custom"
+	AttributionGroupListItemTypeManaged AttributionGroupListItemType = "managed"
+	AttributionGroupListItemTypePreset  AttributionGroupListItemType = "preset"
+)
+
 // Defines values for BudgetAPIPublic.
 const (
 	BudgetAPIPublicEditor BudgetAPIPublic = "editor"
@@ -472,9 +479,9 @@ const (
 
 // Defines values for TimeSettingsMode.
 const (
-	TimeSettingsModeCurrent TimeSettingsMode = "current"
-	TimeSettingsModeCustom  TimeSettingsMode = "custom"
-	TimeSettingsModeLast    TimeSettingsMode = "last"
+	Current TimeSettingsMode = "current"
+	Custom  TimeSettingsMode = "custom"
+	Last    TimeSettingsMode = "last"
 )
 
 // Defines values for TimeSettingsUnit.
@@ -1137,6 +1144,30 @@ type AttributionDeleteValidation struct {
 	Resources *BlockingResources `json:"resources,omitempty"`
 }
 
+// AttributionGroupAttributionItem Summary information about an attribution within an attribution group.
+type AttributionGroupAttributionItem struct {
+	// CreateTime The timestamp when the attribution was created.
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Description The description of the attribution.
+	Description *string `json:"description,omitempty"`
+
+	// Id The unique identifier of the attribution.
+	Id *string `json:"id,omitempty"`
+
+	// Name The name of the attribution.
+	Name *string `json:"name,omitempty"`
+
+	// Owner The email of the attribution owner.
+	Owner *string `json:"owner,omitempty"`
+
+	// Type Type of attribution can be either preset or custom.
+	Type *string `json:"type,omitempty"`
+
+	// UpdateTime The timestamp when the attribution was last updated.
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+}
+
 // AttributionGroupDeleteValidation Validation result when deleting an attribution group.
 type AttributionGroupDeleteValidation struct {
 	// Error Error message explaining why the deletion failed.
@@ -1151,8 +1182,9 @@ type AttributionGroupDeleteValidation struct {
 
 // AttributionGroupGetExternal Attribution group returned by the API.
 type AttributionGroupGetExternal struct {
-	Attributions *[]SortableItem `json:"attributions,omitempty"`
-	Cloud        *[]string       `json:"cloud,omitempty"`
+	// Attributions Array of attributions in this attribution group.
+	Attributions *[]AttributionGroupAttributionItem `json:"attributions,omitempty"`
+	Cloud        *[]string                          `json:"cloud,omitempty"`
 
 	// Customer Reference to a Firestore document.
 	Customer    *DocumentRef `json:"customer,omitempty"`
@@ -1168,6 +1200,33 @@ type AttributionGroupGetExternal struct {
 	// Type Generic object type identifier.
 	Type *ObjectType `json:"type,omitempty"`
 }
+
+// AttributionGroupListItem Summary information about an attribution group.
+type AttributionGroupListItem struct {
+	// CreateTime The timestamp when the attribution group was created (Unix milliseconds).
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Description The description of the attribution group.
+	Description *string `json:"description,omitempty"`
+
+	// Id The unique identifier of the attribution group.
+	Id *string `json:"id,omitempty"`
+
+	// Name The name of the attribution group.
+	Name *string `json:"name,omitempty"`
+
+	// Owner The email of the attribution group owner.
+	Owner *string `json:"owner,omitempty"`
+
+	// Type The type of the attribution group.
+	Type *AttributionGroupListItemType `json:"type,omitempty"`
+
+	// UpdateTime The timestamp when the attribution group was last updated (Unix milliseconds).
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+}
+
+// AttributionGroupListItemType The type of the attribution group.
+type AttributionGroupListItemType string
 
 // AttributionGroupRequest Request body for creating an attribution group.
 type AttributionGroupRequest struct {
@@ -1202,7 +1261,7 @@ type AttributionGroupUpdateRequest struct {
 // AttributionGroupsListExternal List of attribution groups.
 type AttributionGroupsListExternal struct {
 	// AttributionGroups Array of AttributionGroup.
-	AttributionGroups *[]SortableItem `json:"attributionGroups,omitempty"`
+	AttributionGroups *[]AttributionGroupListItem `json:"attributionGroups,omitempty"`
 
 	// PageToken Page token, returned by a previous call, to request the next page of results.
 	PageToken *string `json:"pageToken,omitempty"`
@@ -1540,6 +1599,18 @@ type Dimension struct {
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
+// DimensionExternalAPIListItem Summary information about a dimension.
+type DimensionExternalAPIListItem struct {
+	// Id The identifier of the dimension.
+	Id *string `json:"id,omitempty"`
+
+	// Label The label of the dimension.
+	Label *string `json:"label,omitempty"`
+
+	// Type Enumeration of supported dimension/filter types.
+	Type *DimensionsTypes `json:"type,omitempty"`
+}
+
 // DimensionsExternalAPIGetResponse Dimension metadata returned by the API.
 type DimensionsExternalAPIGetResponse struct {
 	Id    *string `json:"id,omitempty"`
@@ -1552,9 +1623,10 @@ type DimensionsExternalAPIGetResponse struct {
 
 // DimensionsExternalAPIList Paged list of available dimensions.
 type DimensionsExternalAPIList struct {
-	Dimensions *[]SortableItem `json:"dimensions,omitempty"`
-	PageToken  *string         `json:"pageToken,omitempty"`
-	RowCount   *int64          `json:"rowCount,omitempty"`
+	// Dimensions Array of dimensions.
+	Dimensions *[]DimensionExternalAPIListItem `json:"dimensions,omitempty"`
+	PageToken  *string                         `json:"pageToken,omitempty"`
+	RowCount   *int64                          `json:"rowCount,omitempty"`
 }
 
 // DimensionsTypes Enumeration of supported dimension/filter types.
@@ -2250,18 +2322,6 @@ type SlackChannel struct {
 	Shared     *bool   `json:"shared,omitempty"`
 	Type       *string `json:"type,omitempty"`
 	Workspace  *string `json:"workspace,omitempty"`
-}
-
-// SortableItem An object used in lists where items can be sorted (e.g., dimensions, attributions).
-type SortableItem struct {
-	// Id Unique identifier for the item.
-	Id *string `json:"id,omitempty"`
-
-	// Label Human-readable display label for the item.
-	Label *string `json:"label,omitempty"`
-
-	// Type Category or classification of the item.
-	Type *string `json:"type,omitempty"`
 }
 
 // Subscription Subscription-related metadata for an asset.

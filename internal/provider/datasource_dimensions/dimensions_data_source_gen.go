@@ -25,18 +25,18 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Unique identifier for the item.",
-							MarkdownDescription: "Unique identifier for the item.",
+							Description:         "The identifier of the dimension.",
+							MarkdownDescription: "The identifier of the dimension.",
 						},
 						"label": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Human-readable display label for the item.",
-							MarkdownDescription: "Human-readable display label for the item.",
+							Description:         "The label of the dimension.",
+							MarkdownDescription: "The label of the dimension.",
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Category or classification of the item.",
-							MarkdownDescription: "Category or classification of the item.",
+							Description:         "Enumeration of supported dimension/filter types.",
+							MarkdownDescription: "Enumeration of supported dimension/filter types.",
 						},
 					},
 					CustomType: DimensionsType{
@@ -45,7 +45,9 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 				},
-				Computed: true,
+				Computed:            true,
+				Description:         "Array of dimensions.",
+				MarkdownDescription: "Array of dimensions.",
 			},
 			"filter": schema.StringAttribute{
 				Optional:            true,

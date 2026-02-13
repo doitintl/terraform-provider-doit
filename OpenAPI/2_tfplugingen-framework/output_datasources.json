@@ -2389,25 +2389,26 @@
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Unique identifier for the item."
+											"description": "The identifier of the dimension."
 										}
 									},
 									{
 										"name": "label",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Human-readable display label for the item."
+											"description": "The label of the dimension."
 										}
 									},
 									{
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Category or classification of the item."
+											"description": "Enumeration of supported dimension/filter types."
 										}
 									}
 								]
-							}
+							},
+							"description": "Array of dimensions."
 						}
 					},
 					{
