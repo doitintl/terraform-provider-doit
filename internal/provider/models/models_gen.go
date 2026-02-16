@@ -1621,8 +1621,8 @@ type DimensionsExternalAPIGetResponse struct {
 	Values *[]ExternalAPIGetValue `json:"values,omitempty"`
 }
 
-// DimensionsExternalAPIList Paged list of available dimensions.
-type DimensionsExternalAPIList struct {
+// DimensionsExternalAPIListResponse Paged list of available dimensions.
+type DimensionsExternalAPIListResponse struct {
 	// Dimensions Array of dimensions.
 	Dimensions *[]DimensionExternalAPIListItem `json:"dimensions,omitempty"`
 	PageToken  *string                         `json:"pageToken,omitempty"`
@@ -9811,7 +9811,7 @@ func (r GetDimensionsResp) StatusCode() int {
 type ListDimensionsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *DimensionsExternalAPIList
+	JSON200      *DimensionsExternalAPIListResponse
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -13622,7 +13622,7 @@ func ParseListDimensionsResp(rsp *http.Response) (*ListDimensionsResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DimensionsExternalAPIList
+		var dest DimensionsExternalAPIListResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
