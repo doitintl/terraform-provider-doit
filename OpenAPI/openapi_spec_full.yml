@@ -4702,6 +4702,8 @@ components:
             $ref: "#/components/schemas/Dimension"
         timeRange:
           $ref: "#/components/schemas/TimeSettings"
+        secondaryTimeRange:
+          $ref: "#/components/schemas/TimeSettingsSecondary"
         includePromotionalCredits:
           type: boolean
           description: |-
@@ -5477,6 +5479,13 @@ components:
                 type: array
                 items:
                   $ref: "#/components/schemas/Value"
+            secondaryRows:
+              type: array
+              description: Secondary time range rows.
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Value"
             forecastRows:
               type: array
               items:
@@ -5549,6 +5558,44 @@ components:
         includeCurrent: false
         mode: last
         unit: month
+    TimeSettingsSecondary:
+      type: object
+      description: Secondary time range for comparative reports.
+      properties:
+        amount:
+          description: Number of periods to shift back.
+          type: integer
+          format: int64
+        includeCurrent:
+          description: >-
+            Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.
+                When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).
+                When `false`, shifts dates by amount, which may result in partial periods extending to today.
+          type: boolean
+        unit:
+          description: Time interval unit for shifting.
+          type: string
+          enum:
+            - day
+            - month
+            - quarter
+            - year
+        customTimeRange:
+          description: Custom date range for the secondary time range.
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+              description: Start date.
+            to:
+              type: string
+              format: date-time
+              description: End date.
+      example:
+        amount: 1
+        includeCurrent: false
+        unit: year
     ValidateResponse:
       type: object
       description: A response confirming caller's domain and email.

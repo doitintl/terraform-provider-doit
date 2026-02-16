@@ -1018,3 +1018,297 @@ resource "doit_report" "datasource_test" {
 }
 `, i, dataSource)
 }
+
+// TestAccReport_SecondaryTimeRange tests reports with a relative secondary time range
+// (e.g., compare to last year). Validates create and drift-free re-apply.
+func TestAccReport_SecondaryTimeRange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithSecondaryTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.secondary_tr",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_tr",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("amount"),
+						knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_tr",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("unit"),
+						knownvalue.StringExact("year")),
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_tr",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("include_current"),
+						knownvalue.Bool(false)),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithSecondaryTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSecondaryTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "secondary_tr" {
+    name = "test-sec-tr-%d"
+    description = "Report with secondary time range (relative)"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          include_current = true
+          unit            = "month"
+        }
+        secondary_time_range = {
+          amount          = 1
+          unit            = "year"
+          include_current = false
+        }
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_SecondaryTimeRangeCustom tests a secondary time range with
+// an explicit custom date range, verifying timestamps are preserved in state.
+func TestAccReport_SecondaryTimeRangeCustom(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithSecondaryTimeRangeCustom(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.secondary_custom",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_custom",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("from"),
+						knownvalue.StringExact("2023-01-01T00:00:00Z")),
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_custom",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("to"),
+						knownvalue.StringExact("2023-12-31T23:59:59Z")),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithSecondaryTimeRangeCustom(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSecondaryTimeRangeCustom(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "secondary_custom" {
+    name = "test-sec-custom-%d"
+    description = "Report with secondary time range using custom dates"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        custom_time_range = {
+          from = "2024-01-01T00:00:00Z"
+          to   = "2024-12-31T23:59:59Z"
+        }
+        time_range = {
+          mode = "custom"
+          unit = "day"
+        }
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2023-01-01T00:00:00Z"
+            to   = "2023-12-31T23:59:59Z"
+          }
+        }
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_SecondaryTimeRangeUpdate tests updating a report's secondary time range
+// from a relative comparison to a custom date range in a multi-step test.
+func TestAccReport_SecondaryTimeRangeUpdate(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with relative secondary time range
+			{
+				Config: testAccReportSecondaryTimeRangeStep1(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_update",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("amount"),
+						knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_update",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("unit"),
+						knownvalue.StringExact("month")),
+				},
+			},
+			// Verify no drift
+			{
+				Config: testAccReportSecondaryTimeRangeStep1(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: Update to a different relative period
+			{
+				Config: testAccReportSecondaryTimeRangeStep2(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.secondary_update",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_update",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("amount"),
+						knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_update",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("unit"),
+						knownvalue.StringExact("quarter")),
+				},
+			},
+			// Verify no drift after update
+			{
+				Config: testAccReportSecondaryTimeRangeStep2(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportSecondaryTimeRangeStep1(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "secondary_update" {
+    name = "test-sec-update-%d"
+    description = "Report testing secondary time range updates"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          include_current = true
+          unit            = "month"
+        }
+        secondary_time_range = {
+          amount          = 1
+          unit            = "month"
+          include_current = false
+        }
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportSecondaryTimeRangeStep2(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "secondary_update" {
+    name = "test-sec-update-%d"
+    description = "Report testing secondary time range updates"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          include_current = true
+          unit            = "month"
+        }
+        secondary_time_range = {
+          amount          = 1
+          unit            = "quarter"
+          include_current = false
+        }
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}

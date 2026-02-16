@@ -166,7 +166,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		}
 
 		if !diags.HasError() {
-			// Anonymous struct matching models_gen.go definition
+			// Anonymous struct matching models_gen.go inline definition
 			customTimeRange := struct {
 				From *time.Time `json:"from,omitempty"`
 				To   *time.Time `json:"to,omitempty"`
@@ -354,6 +354,39 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			Mode:           &timeSettingsMode,
 			Unit:           &timeSettingsUnit,
 		}
+	}
+
+	if !config.SecondaryTimeRange.IsNull() && !config.SecondaryTimeRange.IsUnknown() {
+		secondaryTimeRange := &models.TimeSettingsSecondary{
+			Amount:         config.SecondaryTimeRange.Amount.ValueInt64Pointer(),
+			IncludeCurrent: config.SecondaryTimeRange.IncludeCurrent.ValueBoolPointer(),
+		}
+		if !config.SecondaryTimeRange.Unit.IsNull() && !config.SecondaryTimeRange.Unit.IsUnknown() {
+			unit := models.TimeSettingsSecondaryUnit(config.SecondaryTimeRange.Unit.ValueString())
+			secondaryTimeRange.Unit = &unit
+		}
+		if !config.SecondaryTimeRange.CustomTimeRange.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.IsUnknown() {
+			fromTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.From.ValueString())
+			if err != nil {
+				diags.AddError("Invalid From Time", "Could not parse SecondaryTimeRange.CustomTimeRange.From as RFC3339: "+err.Error())
+			}
+			toTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.To.ValueString())
+			if err != nil {
+				diags.AddError("Invalid To Time", "Could not parse SecondaryTimeRange.CustomTimeRange.To as RFC3339: "+err.Error())
+			}
+			if !diags.HasError() {
+				// Anonymous struct matching models_gen.go inline definition
+				ctr := struct {
+					From *time.Time `json:"from,omitempty"`
+					To   *time.Time `json:"to,omitempty"`
+				}{
+					From: &fromTime,
+					To:   &toTime,
+				}
+				secondaryTimeRange.CustomTimeRange = &ctr
+			}
+		}
+		externalConfig.SecondaryTimeRange = secondaryTimeRange
 	}
 
 	return externalConfig, diags
@@ -732,6 +765,63 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		configMap["time_range"] = trv
 	} else {
 		configMap["time_range"] = resource_report.NewTimeRangeValueNull()
+	}
+
+	// Nested Object: SecondaryTimeRange
+	if config.SecondaryTimeRange != nil {
+		strMap := map[string]attr.Value{
+			"amount":          types.Int64PointerValue(config.SecondaryTimeRange.Amount),
+			"include_current": types.BoolPointerValue(config.SecondaryTimeRange.IncludeCurrent),
+			"unit":            types.StringNull(),
+		}
+		if config.SecondaryTimeRange.Unit != nil {
+			strMap["unit"] = types.StringValue(string(*config.SecondaryTimeRange.Unit))
+		}
+
+		// Nested Object: SecondaryTimeRange.CustomTimeRange
+		if config.SecondaryTimeRange.CustomTimeRange != nil {
+			ctrMap := map[string]attr.Value{
+				"from": types.StringNull(),
+				"to":   types.StringNull(),
+			}
+
+			// Get existing secondary custom_time_range values to preserve user's timestamp format
+			var existingFrom, existingTo string
+			if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+				!state.Config.SecondaryTimeRange.IsNull() && !state.Config.SecondaryTimeRange.IsUnknown() &&
+				!state.Config.SecondaryTimeRange.CustomTimeRange.IsNull() && !state.Config.SecondaryTimeRange.CustomTimeRange.IsUnknown() {
+				existingFrom = state.Config.SecondaryTimeRange.CustomTimeRange.From.ValueString()
+				existingTo = state.Config.SecondaryTimeRange.CustomTimeRange.To.ValueString()
+			}
+
+			if config.SecondaryTimeRange.CustomTimeRange.From != nil {
+				existingTime, err := time.Parse(time.RFC3339, existingFrom)
+				if err == nil && existingTime.Equal(*config.SecondaryTimeRange.CustomTimeRange.From) {
+					ctrMap["from"] = types.StringValue(existingFrom)
+				} else {
+					ctrMap["from"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.From.Format(time.RFC3339))
+				}
+			}
+			if config.SecondaryTimeRange.CustomTimeRange.To != nil {
+				existingTime, err := time.Parse(time.RFC3339, existingTo)
+				if err == nil && existingTime.Equal(*config.SecondaryTimeRange.CustomTimeRange.To) {
+					ctrMap["to"] = types.StringValue(existingTo)
+				} else {
+					ctrMap["to"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.To.Format(time.RFC3339))
+				}
+			}
+			ctrVal, ctrDiags := resource_report.NewCustomTimeRangeValue(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
+			diags.Append(ctrDiags...)
+			strMap["custom_time_range"] = ctrVal
+		} else {
+			strMap["custom_time_range"] = resource_report.NewCustomTimeRangeValueNull()
+		}
+
+		strVal, strDiags := resource_report.NewSecondaryTimeRangeValue(resource_report.SecondaryTimeRangeValue{}.AttributeTypes(ctx), strMap)
+		diags.Append(strDiags...)
+		configMap["secondary_time_range"] = strVal
+	} else {
+		configMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
 	}
 
 	state.Config, d = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)

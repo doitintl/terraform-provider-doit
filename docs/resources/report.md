@@ -117,6 +117,7 @@ Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_b
 - `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric))
 - `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
+- `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
 - `sort_dimensions` (String) This option has no impact when reading reports via API.
 Possible values: `asc`, `desc`, `a_to_z`
 - `sort_groups` (String) This option has no impact when reading reports via API.
@@ -250,6 +251,29 @@ Optional:
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom ID.
+
+
+<a id="nestedatt--config--secondary_time_range"></a>
+### Nested Schema for `config.secondary_time_range`
+
+Optional:
+
+- `amount` (Number) Number of periods to shift back.
+- `custom_time_range` (Attributes) Custom date range for the secondary time range. (see [below for nested schema](#nestedatt--config--secondary_time_range--custom_time_range))
+- `include_current` (Boolean) Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.
+    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).
+    When `false`, shifts dates by amount, which may result in partial periods extending to today.
+- `unit` (String) Time interval unit for shifting.
+Possible values: `day`, `month`, `quarter`, `year`
+
+<a id="nestedatt--config--secondary_time_range--custom_time_range"></a>
+### Nested Schema for `config.secondary_time_range.custom_time_range`
+
+Optional:
+
+- `from` (String) Start date.
+- `to` (String) End date.
+
 
 
 <a id="nestedatt--config--splits"></a>

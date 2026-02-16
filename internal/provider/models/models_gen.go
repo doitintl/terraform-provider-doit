@@ -486,11 +486,19 @@ const (
 
 // Defines values for TimeSettingsUnit.
 const (
-	Day     TimeSettingsUnit = "day"
-	Month   TimeSettingsUnit = "month"
-	Quarter TimeSettingsUnit = "quarter"
-	Week    TimeSettingsUnit = "week"
-	Year    TimeSettingsUnit = "year"
+	TimeSettingsUnitDay     TimeSettingsUnit = "day"
+	TimeSettingsUnitMonth   TimeSettingsUnit = "month"
+	TimeSettingsUnitQuarter TimeSettingsUnit = "quarter"
+	TimeSettingsUnitWeek    TimeSettingsUnit = "week"
+	TimeSettingsUnitYear    TimeSettingsUnit = "year"
+)
+
+// Defines values for TimeSettingsSecondaryUnit.
+const (
+	TimeSettingsSecondaryUnitDay     TimeSettingsSecondaryUnit = "day"
+	TimeSettingsSecondaryUnitMonth   TimeSettingsSecondaryUnit = "month"
+	TimeSettingsSecondaryUnitQuarter TimeSettingsSecondaryUnit = "quarter"
+	TimeSettingsSecondaryUnitYear    TimeSettingsSecondaryUnit = "year"
 )
 
 // Defines values for UpdateLabelRequestColor.
@@ -1730,6 +1738,9 @@ type ExternalConfig struct {
 	// Metrics The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
 	Metrics *[]ExternalMetric `json:"metrics,omitempty"`
 
+	// SecondaryTimeRange Secondary time range for comparative reports.
+	SecondaryTimeRange *TimeSettingsSecondary `json:"secondaryTimeRange,omitempty"`
+
 	// SortDimensions This option has no impact when reading reports via API.
 	SortDimensions *ExternalConfigSortDimensions `json:"sortDimensions,omitempty"`
 
@@ -2295,6 +2306,9 @@ type RunReportResult struct {
 		MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
 		Rows         *[][]Value                         `json:"rows,omitempty"`
 		Schema       *[]SchemaField                     `json:"schema,omitempty"`
+
+		// SecondaryRows Secondary time range rows.
+		SecondaryRows *[][]Value `json:"secondaryRows,omitempty"`
 	} `json:"result,omitempty"`
 }
 
@@ -2499,6 +2513,32 @@ type TimeSettingsMode string
 
 // TimeSettingsUnit Time unit for the time range.
 type TimeSettingsUnit string
+
+// TimeSettingsSecondary Secondary time range for comparative reports.
+type TimeSettingsSecondary struct {
+	// Amount Number of periods to shift back.
+	Amount *int64 `json:"amount,omitempty"`
+
+	// CustomTimeRange Custom date range for the secondary time range.
+	CustomTimeRange *struct {
+		// From Start date.
+		From *time.Time `json:"from,omitempty"`
+
+		// To End date.
+		To *time.Time `json:"to,omitempty"`
+	} `json:"customTimeRange,omitempty"`
+
+	// IncludeCurrent Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.
+	//     When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).
+	//     When `false`, shifts dates by amount, which may result in partial periods extending to today.
+	IncludeCurrent *bool `json:"includeCurrent,omitempty"`
+
+	// Unit Time interval unit for shifting.
+	Unit *TimeSettingsSecondaryUnit `json:"unit,omitempty"`
+}
+
+// TimeSettingsSecondaryUnit Time interval unit for shifting.
+type TimeSettingsSecondaryUnit string
 
 // UpdateAllocationRequest Request body for updating an allocation.
 type UpdateAllocationRequest struct {
@@ -10116,6 +10156,9 @@ type GetReportResp struct {
 			MlFeatures   *[]GetReport200ResultMlFeatures `json:"mlFeatures,omitempty"`
 			Rows         *[][]Value                      `json:"rows,omitempty"`
 			Schema       *[]SchemaField                  `json:"schema,omitempty"`
+
+			// SecondaryRows Secondary time range rows.
+			SecondaryRows *[][]Value `json:"secondaryRows,omitempty"`
 		} `json:"result,omitempty"`
 		Type *GetReport200Type `json:"type,omitempty"`
 
@@ -14217,6 +14260,9 @@ func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
 				MlFeatures   *[]GetReport200ResultMlFeatures `json:"mlFeatures,omitempty"`
 				Rows         *[][]Value                      `json:"rows,omitempty"`
 				Schema       *[]SchemaField                  `json:"schema,omitempty"`
+
+				// SecondaryRows Secondary time range rows.
+				SecondaryRows *[][]Value `json:"secondaryRows,omitempty"`
 			} `json:"result,omitempty"`
 			Type *GetReport200Type `json:"type,omitempty"`
 

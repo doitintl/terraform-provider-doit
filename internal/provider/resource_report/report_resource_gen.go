@@ -541,6 +541,70 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						Description:         "The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.",
 						MarkdownDescription: "The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.",
 					},
+					"secondary_time_range": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"amount": schema.Int64Attribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Number of periods to shift back.",
+								MarkdownDescription: "Number of periods to shift back.",
+							},
+							"custom_time_range": schema.SingleNestedAttribute{
+								Attributes: map[string]schema.Attribute{
+									"from": schema.StringAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "Start date.",
+										MarkdownDescription: "Start date.",
+									},
+									"to": schema.StringAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "End date.",
+										MarkdownDescription: "End date.",
+									},
+								},
+								CustomType: CustomTimeRangeType{
+									ObjectType: types.ObjectType{
+										AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+									},
+								},
+								Optional:            true,
+								Computed:            true,
+								Description:         "Custom date range for the secondary time range.",
+								MarkdownDescription: "Custom date range for the secondary time range.",
+							},
+							"include_current": schema.BoolAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today.",
+								MarkdownDescription: "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today.",
+							},
+							"unit": schema.StringAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Time interval unit for shifting.\nPossible values: `day`, `month`, `quarter`, `year`",
+								MarkdownDescription: "Time interval unit for shifting.\nPossible values: `day`, `month`, `quarter`, `year`",
+								Validators: []validator.String{
+									stringvalidator.OneOf(
+										"day",
+										"month",
+										"quarter",
+										"year",
+									),
+								},
+							},
+						},
+						CustomType: SecondaryTimeRangeType{
+							ObjectType: types.ObjectType{
+								AttrTypes: SecondaryTimeRangeValue{}.AttributeTypes(ctx),
+							},
+						},
+						Optional:            true,
+						Computed:            true,
+						Description:         "Secondary time range for comparative reports.",
+						MarkdownDescription: "Secondary time range for comparative reports.",
+					},
 					"sort_dimensions": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
@@ -1136,6 +1200,24 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`metrics expected to be basetypes.ListValue, was: %T`, metricsAttribute))
 	}
 
+	secondaryTimeRangeAttribute, ok := attributes["secondary_time_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`secondary_time_range is missing from object`)
+
+		return nil, diags
+	}
+
+	secondaryTimeRangeVal, ok := secondaryTimeRangeAttribute.(SecondaryTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`secondary_time_range expected to be SecondaryTimeRangeValue, was: %T`, secondaryTimeRangeAttribute))
+	}
+
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
 
 	if !ok {
@@ -1246,6 +1328,7 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
 		Metrics:                   metricsVal,
+		SecondaryTimeRange:        secondaryTimeRangeVal,
 		SortDimensions:            sortDimensionsVal,
 		SortGroups:                sortGroupsVal,
 		Splits:                    splitsVal,
@@ -1588,6 +1671,24 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`metrics expected to be basetypes.ListValue, was: %T`, metricsAttribute))
 	}
 
+	secondaryTimeRangeAttribute, ok := attributes["secondary_time_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`secondary_time_range is missing from object`)
+
+		return NewConfigValueUnknown(), diags
+	}
+
+	secondaryTimeRangeVal, ok := secondaryTimeRangeAttribute.(SecondaryTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`secondary_time_range expected to be SecondaryTimeRangeValue, was: %T`, secondaryTimeRangeAttribute))
+	}
+
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
 
 	if !ok {
@@ -1698,6 +1799,7 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
 		Metrics:                   metricsVal,
+		SecondaryTimeRange:        secondaryTimeRangeVal,
 		SortDimensions:            sortDimensionsVal,
 		SortGroups:                sortGroupsVal,
 		Splits:                    splitsVal,
@@ -1775,31 +1877,32 @@ func (t ConfigType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ConfigValue{}
 
 type ConfigValue struct {
-	AdvancedAnalysis          AdvancedAnalysisValue `tfsdk:"advanced_analysis"`
-	Aggregation               basetypes.StringValue `tfsdk:"aggregation"`
-	Currency                  basetypes.StringValue `tfsdk:"currency"`
-	CustomTimeRange           CustomTimeRangeValue  `tfsdk:"custom_time_range"`
-	DataSource                basetypes.StringValue `tfsdk:"data_source"`
-	Dimensions                basetypes.ListValue   `tfsdk:"dimensions"`
-	DisplayValues             basetypes.StringValue `tfsdk:"display_values"`
-	Filters                   basetypes.ListValue   `tfsdk:"filters"`
-	Group                     basetypes.ListValue   `tfsdk:"group"`
-	IncludePromotionalCredits basetypes.BoolValue   `tfsdk:"include_promotional_credits"`
-	IncludeSubtotals          basetypes.BoolValue   `tfsdk:"include_subtotals"`
-	Layout                    basetypes.StringValue `tfsdk:"layout"`
-	Metric                    MetricValue           `tfsdk:"metric"`
-	MetricFilter              MetricFilterValue     `tfsdk:"metric_filter"`
-	Metrics                   basetypes.ListValue   `tfsdk:"metrics"`
-	SortDimensions            basetypes.StringValue `tfsdk:"sort_dimensions"`
-	SortGroups                basetypes.StringValue `tfsdk:"sort_groups"`
-	Splits                    basetypes.ListValue   `tfsdk:"splits"`
-	TimeInterval              basetypes.StringValue `tfsdk:"time_interval"`
-	TimeRange                 TimeRangeValue        `tfsdk:"time_range"`
+	AdvancedAnalysis          AdvancedAnalysisValue   `tfsdk:"advanced_analysis"`
+	Aggregation               basetypes.StringValue   `tfsdk:"aggregation"`
+	Currency                  basetypes.StringValue   `tfsdk:"currency"`
+	CustomTimeRange           CustomTimeRangeValue    `tfsdk:"custom_time_range"`
+	DataSource                basetypes.StringValue   `tfsdk:"data_source"`
+	Dimensions                basetypes.ListValue     `tfsdk:"dimensions"`
+	DisplayValues             basetypes.StringValue   `tfsdk:"display_values"`
+	Filters                   basetypes.ListValue     `tfsdk:"filters"`
+	Group                     basetypes.ListValue     `tfsdk:"group"`
+	IncludePromotionalCredits basetypes.BoolValue     `tfsdk:"include_promotional_credits"`
+	IncludeSubtotals          basetypes.BoolValue     `tfsdk:"include_subtotals"`
+	Layout                    basetypes.StringValue   `tfsdk:"layout"`
+	Metric                    MetricValue             `tfsdk:"metric"`
+	MetricFilter              MetricFilterValue       `tfsdk:"metric_filter"`
+	Metrics                   basetypes.ListValue     `tfsdk:"metrics"`
+	SecondaryTimeRange        SecondaryTimeRangeValue `tfsdk:"secondary_time_range"`
+	SortDimensions            basetypes.StringValue   `tfsdk:"sort_dimensions"`
+	SortGroups                basetypes.StringValue   `tfsdk:"sort_groups"`
+	Splits                    basetypes.ListValue     `tfsdk:"splits"`
+	TimeInterval              basetypes.StringValue   `tfsdk:"time_interval"`
+	TimeRange                 TimeRangeValue          `tfsdk:"time_range"`
 	state                     attr.ValueState
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 20)
+	attrTypes := make(map[string]tftypes.Type, 21)
 
 	var val tftypes.Value
 	var err error
@@ -1843,6 +1946,11 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["metrics"] = basetypes.ListType{
 		ElemType: MetricsValue{}.Type(ctx),
 	}.TerraformType(ctx)
+	attrTypes["secondary_time_range"] = SecondaryTimeRangeType{
+		basetypes.ObjectType{
+			AttrTypes: SecondaryTimeRangeValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 	attrTypes["sort_dimensions"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["sort_groups"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["splits"] = basetypes.ListType{
@@ -1859,7 +1967,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 20)
+		vals := make(map[string]tftypes.Value, 21)
 
 		val, err = v.AdvancedAnalysis.ToTerraformValue(ctx)
 
@@ -1981,6 +2089,14 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 		vals["metrics"] = val
 
+		val, err = v.SecondaryTimeRange.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["secondary_time_range"] = val
+
 		val, err = v.SortDimensions.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -2098,6 +2214,12 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		metrics = v.Metrics
 	}
 
+	var secondaryTimeRange attr.Value
+
+	{
+		secondaryTimeRange = v.SecondaryTimeRange
+	}
+
 	var splits attr.Value
 
 	{
@@ -2150,6 +2272,11 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"metrics": basetypes.ListType{
 			ElemType: MetricsValue{}.Type(ctx),
 		},
+		"secondary_time_range": SecondaryTimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: SecondaryTimeRangeValue{}.AttributeTypes(ctx),
+			},
+		},
 		"sort_dimensions": basetypes.StringType{},
 		"sort_groups":     basetypes.StringType{},
 		"splits": basetypes.ListType{
@@ -2189,6 +2316,7 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"metric":                      metric,
 			"metric_filter":               metricFilter,
 			"metrics":                     metrics,
+			"secondary_time_range":        secondaryTimeRange,
 			"sort_dimensions":             v.SortDimensions,
 			"sort_groups":                 v.SortGroups,
 			"splits":                      splits,
@@ -2274,6 +2402,10 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.SecondaryTimeRange.Equal(other.SecondaryTimeRange) {
+		return false
+	}
+
 	if !v.SortDimensions.Equal(other.SortDimensions) {
 		return false
 	}
@@ -2345,6 +2477,11 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		},
 		"metrics": basetypes.ListType{
 			ElemType: MetricsValue{}.Type(ctx),
+		},
+		"secondary_time_range": SecondaryTimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: SecondaryTimeRangeValue{}.AttributeTypes(ctx),
+			},
 		},
 		"sort_dimensions": basetypes.StringType{},
 		"sort_groups":     basetypes.StringType{},
@@ -6324,6 +6461,513 @@ func (v MetricsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":  basetypes.StringType{},
 		"value": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = SecondaryTimeRangeType{}
+
+type SecondaryTimeRangeType struct {
+	basetypes.ObjectType
+}
+
+func (t SecondaryTimeRangeType) Equal(o attr.Type) bool {
+	other, ok := o.(SecondaryTimeRangeType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SecondaryTimeRangeType) String() string {
+	return "SecondaryTimeRangeType"
+}
+
+func (t SecondaryTimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	amountAttribute, ok := attributes["amount"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`amount is missing from object`)
+
+		return nil, diags
+	}
+
+	amountVal, ok := amountAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`amount expected to be basetypes.Int64Value, was: %T`, amountAttribute))
+	}
+
+	customTimeRangeAttribute, ok := attributes["custom_time_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`custom_time_range is missing from object`)
+
+		return nil, diags
+	}
+
+	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
+	}
+
+	includeCurrentAttribute, ok := attributes["include_current"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_current is missing from object`)
+
+		return nil, diags
+	}
+
+	includeCurrentVal, ok := includeCurrentAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_current expected to be basetypes.BoolValue, was: %T`, includeCurrentAttribute))
+	}
+
+	unitAttribute, ok := attributes["unit"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`unit is missing from object`)
+
+		return nil, diags
+	}
+
+	unitVal, ok := unitAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`unit expected to be basetypes.StringValue, was: %T`, unitAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SecondaryTimeRangeValue{
+		Amount:          amountVal,
+		CustomTimeRange: customTimeRangeVal,
+		IncludeCurrent:  includeCurrentVal,
+		Unit:            unitVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSecondaryTimeRangeValueNull() SecondaryTimeRangeValue {
+	return SecondaryTimeRangeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSecondaryTimeRangeValueUnknown() SecondaryTimeRangeValue {
+	return SecondaryTimeRangeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSecondaryTimeRangeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SecondaryTimeRangeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SecondaryTimeRangeValue Attribute Value",
+				"While creating a SecondaryTimeRangeValue value, a missing attribute value was detected. "+
+					"A SecondaryTimeRangeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SecondaryTimeRangeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SecondaryTimeRangeValue Attribute Type",
+				"While creating a SecondaryTimeRangeValue value, an invalid attribute value was detected. "+
+					"A SecondaryTimeRangeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SecondaryTimeRangeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SecondaryTimeRangeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SecondaryTimeRangeValue Attribute Value",
+				"While creating a SecondaryTimeRangeValue value, an extra attribute value was detected. "+
+					"A SecondaryTimeRangeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SecondaryTimeRangeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
+
+	amountAttribute, ok := attributes["amount"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`amount is missing from object`)
+
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
+
+	amountVal, ok := amountAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`amount expected to be basetypes.Int64Value, was: %T`, amountAttribute))
+	}
+
+	customTimeRangeAttribute, ok := attributes["custom_time_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`custom_time_range is missing from object`)
+
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
+
+	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
+	}
+
+	includeCurrentAttribute, ok := attributes["include_current"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_current is missing from object`)
+
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
+
+	includeCurrentVal, ok := includeCurrentAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_current expected to be basetypes.BoolValue, was: %T`, includeCurrentAttribute))
+	}
+
+	unitAttribute, ok := attributes["unit"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`unit is missing from object`)
+
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
+
+	unitVal, ok := unitAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`unit expected to be basetypes.StringValue, was: %T`, unitAttribute))
+	}
+
+	if diags.HasError() {
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
+
+	return SecondaryTimeRangeValue{
+		Amount:          amountVal,
+		CustomTimeRange: customTimeRangeVal,
+		IncludeCurrent:  includeCurrentVal,
+		Unit:            unitVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSecondaryTimeRangeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SecondaryTimeRangeValue {
+	object, diags := NewSecondaryTimeRangeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSecondaryTimeRangeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SecondaryTimeRangeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSecondaryTimeRangeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSecondaryTimeRangeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSecondaryTimeRangeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSecondaryTimeRangeValueMust(SecondaryTimeRangeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SecondaryTimeRangeType) ValueType(ctx context.Context) attr.Value {
+	return SecondaryTimeRangeValue{}
+}
+
+var _ basetypes.ObjectValuable = SecondaryTimeRangeValue{}
+
+type SecondaryTimeRangeValue struct {
+	Amount          basetypes.Int64Value  `tfsdk:"amount"`
+	CustomTimeRange CustomTimeRangeValue  `tfsdk:"custom_time_range"`
+	IncludeCurrent  basetypes.BoolValue   `tfsdk:"include_current"`
+	Unit            basetypes.StringValue `tfsdk:"unit"`
+	state           attr.ValueState
+}
+
+func (v SecondaryTimeRangeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["amount"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["custom_time_range"] = CustomTimeRangeType{
+		basetypes.ObjectType{
+			AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["include_current"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["unit"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.Amount.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["amount"] = val
+
+		val, err = v.CustomTimeRange.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["custom_time_range"] = val
+
+		val, err = v.IncludeCurrent.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["include_current"] = val
+
+		val, err = v.Unit.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["unit"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SecondaryTimeRangeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SecondaryTimeRangeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SecondaryTimeRangeValue) String() string {
+	return "SecondaryTimeRangeValue"
+}
+
+func (v SecondaryTimeRangeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var customTimeRange attr.Value
+
+	{
+		customTimeRange = v.CustomTimeRange
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"amount": basetypes.Int64Type{},
+		"custom_time_range": CustomTimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+			},
+		},
+		"include_current": basetypes.BoolType{},
+		"unit":            basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"amount":            v.Amount,
+			"custom_time_range": customTimeRange,
+			"include_current":   v.IncludeCurrent,
+			"unit":              v.Unit,
+		})
+
+	return objVal, diags
+}
+
+func (v SecondaryTimeRangeValue) Equal(o attr.Value) bool {
+	other, ok := o.(SecondaryTimeRangeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Amount.Equal(other.Amount) {
+		return false
+	}
+
+	if !v.CustomTimeRange.Equal(other.CustomTimeRange) {
+		return false
+	}
+
+	if !v.IncludeCurrent.Equal(other.IncludeCurrent) {
+		return false
+	}
+
+	if !v.Unit.Equal(other.Unit) {
+		return false
+	}
+
+	return true
+}
+
+func (v SecondaryTimeRangeValue) Type(ctx context.Context) attr.Type {
+	return SecondaryTimeRangeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SecondaryTimeRangeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"amount": basetypes.Int64Type{},
+		"custom_time_range": CustomTimeRangeType{
+			basetypes.ObjectType{
+				AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
+			},
+		},
+		"include_current": basetypes.BoolType{},
+		"unit":            basetypes.StringType{},
 	}
 }
 
