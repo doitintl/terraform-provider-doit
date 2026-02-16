@@ -140,6 +140,7 @@ These variables are used by specific data source tests that will be skipped if u
 | `TEST_INVOICE_ID` | Invoice ID for invoice data source tests |
 | `TEST_ANOMALY_ID` | Anomaly ID for anomaly data source tests |
 | `TEST_CLOUD_INCIDENT_ID` | Cloud incident ID for cloud incident data source tests |
+| `TEST_COMMITMENT_ID` | Commitment ID for commitment data source tests |
 
 ### Running Tests
 
@@ -178,6 +179,7 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # export TEST_INVOICE_ID="your-invoice-id"
 # export TEST_ANOMALY_ID="your-anomaly-id"
 # export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
+# export TEST_COMMITMENT_ID="your-commitment-id"
 
 go test -v -timeout 120m ./...
 ```

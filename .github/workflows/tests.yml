@@ -65,4 +65,5 @@ jobs:
           TEST_INVOICE_ID: ${{ vars.TEST_INVOICE_ID }}
           TEST_ANOMALY_ID: ${{ vars.TEST_ANOMALY_ID }}
           TEST_CLOUD_INCIDENT_ID: ${{ vars.TEST_CLOUD_INCIDENT_ID }}
+          TEST_COMMITMENT_ID: ${{ vars.TEST_COMMITMENT_ID }}
         run: go test -v -timeout 120m ./...

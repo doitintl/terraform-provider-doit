@@ -58,6 +58,8 @@ tags:
     description: Metadata about cloud services and offerings.
   - name: Support Requests
     description: Create and manage support tickets with DoiT.
+  - name: Commitment Manager
+    description: View and manage commitment contracts with DoiT.
 
 paths:
   /analytics/v1/alerts:
@@ -2963,6 +2965,86 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /analytics/v1/commitment-manager:
+    get:
+      tags:
+        - Commitment Manager
+      summary: List commitments
+      description: |-
+        Returns a list of commitments for the customer.
+        Commitments are listed in reverse chronological order by default.
+      operationId: listCommitments
+      parameters:
+        - name: sortBy
+          in: query
+          description: A field by which the results will be sorted.
+          schema:
+            type: string
+            enum:
+              - name
+              - startDate
+              - endDate
+              - provider
+              - createTime
+              - updateTime
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+        - name: filter
+          in: query
+          description: >-
+            An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+
+            Available filter keys: **name**, **provider**
+          example: "provider:google-cloud"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: >-
+            OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitmentExternalList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/analytics/v1/commitment-manager/{id}":
+    get:
+      tags:
+        - Commitment Manager
+      summary: Retrieve a commitment
+      description: Returns a commitment by the specified Id.
+      operationId: getCommitment
+      parameters:
+        - name: id
+          in: path
+          description: Commitment ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: >-
+            OK - Commitment returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitmentExternal"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
 components:
   schemas:
     AccountManagerListItem:
@@ -6003,6 +6085,144 @@ components:
           description: The status of the user (invited)
           enum:
             - invited
+    CommitmentExternal:
+      type: object
+      description: A commitment contract.
+      properties:
+        name:
+          type: string
+          description: The name of the commitment.
+        startDate:
+          type: string
+          format: date-time
+          example: "2024-03-10T23:00:00Z"
+          description: The start date of the commitment.
+        endDate:
+          type: string
+          format: date-time
+          example: "2024-03-10T23:00:00Z"
+          description: The end date of the commitment.
+        currency:
+          type: string
+          description: The currency of the commitment (e.g., USD).
+          example: USD
+        provider:
+          type: string
+          description: The cloud provider associated with the commitment.
+          enum:
+            - google-cloud
+            - amazon-web-services
+            - microsoft-azure
+        totalCommitmentValue:
+          type: number
+          format: double
+          description: The total value of the commitment across all periods.
+        totalCurrentAttainment:
+          type: number
+          format: double
+          description: The total current spend attainment across all periods.
+        periods:
+          type: array
+          description: The list of commitment periods.
+          items:
+            $ref: "#/components/schemas/CommitmentPeriod"
+        createTime:
+          type: integer
+          format: int64
+          description: The creation time in milliseconds since epoch.
+        updateTime:
+          type: integer
+          format: int64
+          description: The last update time in milliseconds since epoch.
+    CommitmentExternalList:
+      type: object
+      description: List of commitments.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 1
+        commitments:
+          type: array
+          description: Array of commitments.
+          items:
+            $ref: "#/components/schemas/CommitmentExternalListItem"
+    CommitmentExternalListItem:
+      type: object
+      description: Summary information of a commitment in a list.
+      properties:
+        name:
+          type: string
+          description: The name of the commitment.
+        startDate:
+          type: string
+          format: date-time
+          example: "2024-03-10T23:00:00Z"
+          description: The start date of the commitment.
+        endDate:
+          type: string
+          format: date-time
+          example: "2024-03-10T23:00:00Z"
+          description: The end date of the commitment.
+        currency:
+          type: string
+          description: The currency of the commitment.
+          example: USD
+        provider:
+          type: string
+          description: The cloud provider associated with the commitment.
+          enum:
+            - google-cloud
+            - amazon-web-services
+            - microsoft-azure
+        totalCommitmentValue:
+          type: number
+          format: double
+          description: The total value of the commitment across all periods.
+        totalCurrentAttainment:
+          type: number
+          format: double
+          description: The total current spend attainment across all periods.
+        periods:
+          type: array
+          description: The list of commitment periods.
+          items:
+            $ref: "#/components/schemas/CommitmentPeriod"
+        createTime:
+          type: integer
+          format: int64
+          description: The creation time in milliseconds since epoch.
+        updateTime:
+          type: integer
+          format: int64
+          description: The last update time in milliseconds since epoch.
+    CommitmentPeriod:
+      type: object
+      description: A single period within a commitment.
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          example: "2024-03-10T23:00:00Z"
+          description: The start date of the period.
+        endDate:
+          type: string
+          format: date-time
+          example: "2024-03-10T23:00:00Z"
+          description: The end date of the period.
+        commitmentValue:
+          type: number
+          format: double
+          description: The commitment value for this period.
+        marketplaceLimitPercentage:
+          type: number
+          format: double
+          description: The marketplace limit as a percentage (0-100).
   responses:
     "400":
       description: >-
