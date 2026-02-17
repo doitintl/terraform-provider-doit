@@ -65,10 +65,15 @@ func (ds *commitmentDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 	// so we must do this manually.
 	providerAttr := generated.Attributes["provider"]
 	delete(generated.Attributes, "provider")
+	strAttr, ok := providerAttr.(datasourceschema.StringAttribute)
+	if !ok {
+		resp.Diagnostics.AddError("Schema Error", "expected provider attribute to be StringAttribute")
+		return
+	}
 	generated.Attributes["cloud_provider"] = datasourceschema.StringAttribute{
-		Computed:            providerAttr.(datasourceschema.StringAttribute).Computed,
-		Description:         providerAttr.(datasourceschema.StringAttribute).Description,
-		MarkdownDescription: providerAttr.(datasourceschema.StringAttribute).MarkdownDescription,
+		Computed:            strAttr.Computed,
+		Description:         strAttr.Description,
+		MarkdownDescription: strAttr.MarkdownDescription,
 	}
 	generated.Description = "Retrieves details of a specific commitment contract."
 	generated.MarkdownDescription = generated.Description
