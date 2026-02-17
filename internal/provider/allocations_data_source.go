@@ -111,7 +111,11 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 		// max_results is already set by user, no change needed
 	} else {
-		// Auto mode: fetch all pages
+		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pageTokenVal := data.PageToken.ValueString()
+			params.PageToken = &pageTokenVal
+		}
 		for {
 			apiResp, err := d.client.ListAllocationsWithResponse(ctx, params)
 			if err != nil {
