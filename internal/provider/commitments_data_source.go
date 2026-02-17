@@ -104,16 +104,8 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 			allCommitments = *apiResp.JSON200.Commitments
 		}
 
-		// Preserve user-provided pagination values to prevent drift
-		// max_results stays as user set it
-		if apiResp.JSON200.PageToken != nil && *apiResp.JSON200.PageToken != "" {
-			data.PageToken = types.StringValue(*apiResp.JSON200.PageToken)
-		} else {
-			// If no next page token and user didn't provide one, keep their value
-			if data.PageToken.IsNull() || data.PageToken.IsUnknown() {
-				data.PageToken = types.StringNull()
-			}
-		}
+		// Set page_token from API response (null when no next page)
+		data.PageToken = types.StringPointerValue(apiResp.JSON200.PageToken)
 		if apiResp.JSON200.RowCount != nil {
 			data.RowCount = types.Int64Value(*apiResp.JSON200.RowCount)
 		} else {
