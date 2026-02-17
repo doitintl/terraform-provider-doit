@@ -64,7 +64,10 @@ func main() {
 		extractor.walkPaths(pathsNode)
 	}
 
-	// Phase 3: Insert extracted schemas into components/schemas
+	// Phase 3: Insert extracted schemas into components/schemas.
+	// NOTE: This requires a pre-existing components/schemas section. The tool
+	// does not create one automatically. This is acceptable for our spec but
+	// limits reuse with specs that lack this section.
 	if len(extractor.extracted) > 0 {
 		if schemasNode == nil {
 			log.Fatal("spec has no components/schemas section to insert into")
@@ -496,7 +499,16 @@ func isComposition(node *yaml.Node) bool {
 }
 
 // replaceWithRef replaces a property value in a mapping node with a $ref.
-// It preserves description and nullable if present on the original.
+// It preserves the description from the original inline definition by wrapping
+// the $ref in an allOf.
+//
+// Limitation: Only the "description" field is preserved from the usage site.
+// Other property-level metadata (e.g., "example", custom extensions like
+// "x-terraform-*") present on the original inline object will be dropped.
+// This is currently acceptable because our spec does not use such metadata
+// at inline usage sites, and the equivalence validator would catch any
+// structural loss. If the spec evolves to include such metadata, this
+// function should be updated to preserve all non-structural sibling fields.
 func replaceWithRef(parentMapping *yaml.Node, propertyKey string, schemaName string) {
 	if parentMapping.Kind != yaml.MappingNode {
 		return
