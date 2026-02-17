@@ -434,6 +434,42 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		configMap["time_range"] = datasource_report.NewTimeRangeValueNull()
 	}
 
+	// Nested Object: SecondaryTimeRange
+	if config.SecondaryTimeRange != nil {
+		strMap := map[string]attr.Value{
+			"amount":          types.Int64PointerValue(config.SecondaryTimeRange.Amount),
+			"include_current": types.BoolPointerValue(config.SecondaryTimeRange.IncludeCurrent),
+			"unit":            types.StringNull(),
+		}
+		if config.SecondaryTimeRange.Unit != nil {
+			strMap["unit"] = types.StringValue(string(*config.SecondaryTimeRange.Unit))
+		}
+
+		if config.SecondaryTimeRange.CustomTimeRange != nil {
+			ctrMap := map[string]attr.Value{
+				"from": types.StringNull(),
+				"to":   types.StringNull(),
+			}
+			if config.SecondaryTimeRange.CustomTimeRange.From != nil {
+				ctrMap["from"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.From.Format(time.RFC3339))
+			}
+			if config.SecondaryTimeRange.CustomTimeRange.To != nil {
+				ctrMap["to"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.To.Format(time.RFC3339))
+			}
+			ctrVal, ctrDiags := datasource_report.NewCustomTimeRangeValue(datasource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
+			diags.Append(ctrDiags...)
+			strMap["custom_time_range"] = ctrVal
+		} else {
+			strMap["custom_time_range"] = datasource_report.NewCustomTimeRangeValueNull()
+		}
+
+		strVal, strDiags := datasource_report.NewSecondaryTimeRangeValue(datasource_report.SecondaryTimeRangeValue{}.AttributeTypes(ctx), strMap)
+		diags.Append(strDiags...)
+		configMap["secondary_time_range"] = strVal
+	} else {
+		configMap["secondary_time_range"] = datasource_report.NewSecondaryTimeRangeValueNull()
+	}
+
 	var configDiags diag.Diagnostics
 	state.Config, configDiags = datasource_report.NewConfigValue(datasource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
 	diags.Append(configDiags...)

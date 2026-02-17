@@ -10,8 +10,9 @@ lint:
 	golangci-lint run
 
 # Generate OpenAPI models and Terraform resource schemas
-# Must be run in order: openapi -> framework -> models
+# Must be run in order: extract-inline-schemas -> openapi -> framework -> models
 generate:
+	go run ./tools/extract-inline-schemas -input OpenAPI/openapi_spec_full.yml -output OpenAPI/openapi_spec_processed.yml
 	cd OpenAPI/1_tfplugingen-openapi && go generate ./...
 	cd OpenAPI/2_tfplugingen-framework && go generate ./...
 	cd internal/provider/models && go generate ./...

@@ -1628,6 +1628,71 @@
 									}
 								},
 								{
+									"name": "secondary_time_range",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "amount",
+												"int64": {
+													"computed_optional_required": "computed_optional",
+													"description": "Number of periods to shift back."
+												}
+											},
+											{
+												"name": "custom_time_range",
+												"single_nested": {
+													"computed_optional_required": "computed_optional",
+													"attributes": [
+														{
+															"name": "from",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "Start date."
+															}
+														},
+														{
+															"name": "to",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "End date."
+															}
+														}
+													],
+													"description": "Custom date range for the secondary time range."
+												}
+											},
+											{
+												"name": "include_current",
+												"bool": {
+													"computed_optional_required": "computed_optional",
+													"description": "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today."
+												}
+											},
+											{
+												"name": "unit",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Time interval unit for shifting.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"day\",\n\"month\",\n\"quarter\",\n\"year\",\n)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "Secondary time range for comparative reports."
+									}
+								},
+								{
 									"name": "sort_dimensions",
 									"string": {
 										"computed_optional_required": "computed_optional",

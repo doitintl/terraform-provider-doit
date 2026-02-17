@@ -154,6 +154,14 @@ const (
 	ZAR Currency = "ZAR"
 )
 
+// Defines values for DatahubEventsRequestBodyEventsItemDimensionsItemType.
+const (
+	DatahubEventsRequestBodyEventsItemDimensionsItemTypeFixed        DatahubEventsRequestBodyEventsItemDimensionsItemType = "fixed"
+	DatahubEventsRequestBodyEventsItemDimensionsItemTypeLabel        DatahubEventsRequestBodyEventsItemDimensionsItemType = "label"
+	DatahubEventsRequestBodyEventsItemDimensionsItemTypeProjectLabel DatahubEventsRequestBodyEventsItemDimensionsItemType = "project_label"
+	DatahubEventsRequestBodyEventsItemDimensionsItemTypeSystemLabel  DatahubEventsRequestBodyEventsItemDimensionsItemType = "system_label"
+)
+
 // Defines values for DimensionsTypes.
 const (
 	DimensionsTypesAttribution      DimensionsTypes = "attribution"
@@ -328,6 +336,37 @@ const (
 	ExternalSplitTargetTypeTag              ExternalSplitTargetType = "tag"
 )
 
+// Defines values for GetAnomaly200ResponseStatus.
+const (
+	GetAnomaly200ResponseStatusActive   GetAnomaly200ResponseStatus = "active"
+	GetAnomaly200ResponseStatusInactive GetAnomaly200ResponseStatus = "inactive"
+)
+
+// Defines values for GetInvoice200ResponseStatus.
+const (
+	GetInvoice200ResponseStatusOPEN    GetInvoice200ResponseStatus = "OPEN"
+	GetInvoice200ResponseStatusPAID    GetInvoice200ResponseStatus = "PAID"
+	GetInvoice200ResponseStatusPASTDUE GetInvoice200ResponseStatus = "PAST DUE"
+)
+
+// Defines values for GetKnownIssue200ResponsePlatform.
+const (
+	GetKnownIssue200ResponsePlatformAmazonWebServices GetKnownIssue200ResponsePlatform = "amazon-web-services"
+	GetKnownIssue200ResponsePlatformGoogleCloud       GetKnownIssue200ResponsePlatform = "google-cloud"
+)
+
+// Defines values for GetKnownIssue200ResponseStatus.
+const (
+	GetKnownIssue200ResponseStatusActive   GetKnownIssue200ResponseStatus = "active"
+	GetKnownIssue200ResponseStatusArchived GetKnownIssue200ResponseStatus = "archived"
+)
+
+// Defines values for GetReport200ResponseType.
+const (
+	GetReport200ResponseTypeCustom GetReport200ResponseType = "custom"
+	GetReport200ResponseTypePreset GetReport200ResponseType = "preset"
+)
+
 // Defines values for GroupAllocationRuleAction.
 const (
 	Create GroupAllocationRuleAction = "create"
@@ -342,9 +381,9 @@ const (
 
 // Defines values for InvoiceListItemStatus.
 const (
-	OPEN    InvoiceListItemStatus = "OPEN"
-	PAID    InvoiceListItemStatus = "PAID"
-	PASTDUE InvoiceListItemStatus = "PAST DUE"
+	InvoiceListItemStatusOPEN    InvoiceListItemStatus = "OPEN"
+	InvoiceListItemStatusPAID    InvoiceListItemStatus = "PAID"
+	InvoiceListItemStatusPASTDUE InvoiceListItemStatus = "PAST DUE"
 )
 
 // Defines values for InvoicePlatform.
@@ -463,10 +502,10 @@ const (
 
 // Defines values for TicketResponseExtAPIPlatform.
 const (
-	AmazonWebServices   TicketResponseExtAPIPlatform = "amazon_web_services"
-	Doit                TicketResponseExtAPIPlatform = "doit"
-	GoogleCloudPlatform TicketResponseExtAPIPlatform = "google_cloud_platform"
-	MicrosoftAzure      TicketResponseExtAPIPlatform = "microsoft_azure"
+	TicketResponseExtAPIPlatformAmazonWebServices   TicketResponseExtAPIPlatform = "amazon_web_services"
+	TicketResponseExtAPIPlatformDoit                TicketResponseExtAPIPlatform = "doit"
+	TicketResponseExtAPIPlatformGoogleCloudPlatform TicketResponseExtAPIPlatform = "google_cloud_platform"
+	TicketResponseExtAPIPlatformMicrosoftAzure      TicketResponseExtAPIPlatform = "microsoft_azure"
 )
 
 // Defines values for TicketResponseExtAPISeverity.
@@ -479,18 +518,26 @@ const (
 
 // Defines values for TimeSettingsMode.
 const (
-	Current TimeSettingsMode = "current"
-	Custom  TimeSettingsMode = "custom"
-	Last    TimeSettingsMode = "last"
+	TimeSettingsModeCurrent TimeSettingsMode = "current"
+	TimeSettingsModeCustom  TimeSettingsMode = "custom"
+	TimeSettingsModeLast    TimeSettingsMode = "last"
 )
 
 // Defines values for TimeSettingsUnit.
 const (
-	Day     TimeSettingsUnit = "day"
-	Month   TimeSettingsUnit = "month"
-	Quarter TimeSettingsUnit = "quarter"
-	Week    TimeSettingsUnit = "week"
-	Year    TimeSettingsUnit = "year"
+	TimeSettingsUnitDay     TimeSettingsUnit = "day"
+	TimeSettingsUnitMonth   TimeSettingsUnit = "month"
+	TimeSettingsUnitQuarter TimeSettingsUnit = "quarter"
+	TimeSettingsUnitWeek    TimeSettingsUnit = "week"
+	TimeSettingsUnitYear    TimeSettingsUnit = "year"
+)
+
+// Defines values for TimeSettingsSecondaryUnit.
+const (
+	TimeSettingsSecondaryUnitDay     TimeSettingsSecondaryUnit = "day"
+	TimeSettingsSecondaryUnitMonth   TimeSettingsSecondaryUnit = "month"
+	TimeSettingsSecondaryUnitQuarter TimeSettingsSecondaryUnit = "quarter"
+	TimeSettingsSecondaryUnitYear    TimeSettingsSecondaryUnit = "year"
 )
 
 // Defines values for UpdateLabelRequestColor.
@@ -506,6 +553,12 @@ const (
 	SlateGrey  UpdateLabelRequestColor = "slateGrey"
 	SoftYellow UpdateLabelRequestColor = "softYellow"
 	Teal       UpdateLabelRequestColor = "teal"
+)
+
+// Defines values for UpdateResourcePermissionRequestBodyPublic.
+const (
+	UpdateResourcePermissionRequestBodyPublicEditor UpdateResourcePermissionRequestBodyPublic = "editor"
+	UpdateResourcePermissionRequestBodyPublicViewer UpdateResourcePermissionRequestBodyPublic = "viewer"
 )
 
 // Defines values for UpdateUserRequestJobFunction.
@@ -678,25 +731,17 @@ const (
 
 // Defines values for ListLabelsParamsSortBy.
 const (
-	CreateTime ListLabelsParamsSortBy = "createTime"
-	Id         ListLabelsParamsSortBy = "id"
-	Name       ListLabelsParamsSortBy = "name"
-	Type       ListLabelsParamsSortBy = "type"
-	UpdateTime ListLabelsParamsSortBy = "updateTime"
+	ListLabelsParamsSortByCreateTime ListLabelsParamsSortBy = "createTime"
+	ListLabelsParamsSortById         ListLabelsParamsSortBy = "id"
+	ListLabelsParamsSortByName       ListLabelsParamsSortBy = "name"
+	ListLabelsParamsSortByType       ListLabelsParamsSortBy = "type"
+	ListLabelsParamsSortByUpdateTime ListLabelsParamsSortBy = "updateTime"
 )
 
 // Defines values for ListLabelsParamsSortOrder.
 const (
 	Asc  ListLabelsParamsSortOrder = "asc"
 	Desc ListLabelsParamsSortOrder = "desc"
-)
-
-// Defines values for DatahubEventsJSONBodyEventsDimensionsType.
-const (
-	Fixed        DatahubEventsJSONBodyEventsDimensionsType = "fixed"
-	Label        DatahubEventsJSONBodyEventsDimensionsType = "label"
-	ProjectLabel DatahubEventsJSONBodyEventsDimensionsType = "project_label"
-	SystemLabel  DatahubEventsJSONBodyEventsDimensionsType = "system_label"
 )
 
 // Defines values for GetResourcePermissionParamsResourceType.
@@ -717,12 +762,6 @@ const (
 	Attributions      UpdateResourcePermissionParamsResourceType = "attributions"
 	Budgets           UpdateResourcePermissionParamsResourceType = "budgets"
 	Reports           UpdateResourcePermissionParamsResourceType = "reports"
-)
-
-// Defines values for UpdateResourcePermissionJSONBodyPublic.
-const (
-	UpdateResourcePermissionJSONBodyPublicEditor UpdateResourcePermissionJSONBodyPublic = "editor"
-	UpdateResourcePermissionJSONBodyPublicViewer UpdateResourcePermissionJSONBodyPublic = "viewer"
 )
 
 // AccountManagerListItem Information of a DoiT account manager assigned to your organization.
@@ -1569,6 +1608,21 @@ type CreateAnnotationRequest struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// CreateAttributionRequestBody defines model for CreateAttributionRequestBody.
+type CreateAttributionRequestBody struct {
+	// Components List of Attribution filters
+	Components []AttributionComponent `json:"components"`
+
+	// Description Description of the attribution
+	Description *string `json:"description,omitempty"`
+
+	// Formula Attribution formula (A is the first component, B is the second one, and so on.)
+	Formula *string `json:"formula,omitempty"`
+
+	// Name Name of the attribution
+	Name string `json:"name"`
+}
+
 // CreateLabelRequest Request body for creating a label.
 type CreateLabelRequest struct {
 	// Color The color of the label.
@@ -1581,8 +1635,120 @@ type CreateLabelRequest struct {
 // CreateLabelRequestColor The color of the label.
 type CreateLabelRequestColor string
 
+// CreateReport201Response defines model for CreateReport201Response.
+type CreateReport201Response struct {
+	// Id ID of the new report.
+	Id *string `json:"id,omitempty"`
+}
+
+// CreateReportRequestBody defines model for CreateReportRequestBody.
+type CreateReportRequestBody struct {
+	// Config Report configuration.
+	Config *ExternalConfig `json:"config,omitempty"`
+
+	// Description Report description.
+	Description *string `json:"description,omitempty"`
+
+	// Name Report name.
+	Name *string `json:"name,omitempty"`
+}
+
 // Currency Currency code for monetary values.
 type Currency string
+
+// DatahubEvents201Response defines model for DatahubEvents201Response.
+type DatahubEvents201Response struct {
+	Message *string `json:"message,omitempty"`
+}
+
+// DatahubEventsCSVFile201Response defines model for DatahubEventsCSVFile201Response.
+type DatahubEventsCSVFile201Response struct {
+	// Batch batch id, generated during ingestion
+	Batch *string `json:"batch,omitempty"`
+
+	// IngestedRows the number of events that have been accepted for processing
+	IngestedRows *int `json:"ingestedRows,omitempty"`
+}
+
+// DatahubEventsCSVFileRequestBody defines model for DatahubEventsCSVFileRequestBody.
+type DatahubEventsCSVFileRequestBody struct {
+	// File The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
+	File *openapi_types.File `json:"file,omitempty"`
+
+	// Provider The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
+	Provider *string `json:"provider,omitempty"`
+}
+
+// DatahubEventsRequestBody defines model for DatahubEventsRequestBody.
+type DatahubEventsRequestBody struct {
+	Events *[]DatahubEventsRequestBodyEventsItem `json:"events,omitempty"`
+}
+
+// DatahubEventsRequestBodyEventsItem defines model for DatahubEventsRequestBodyEventsItem.
+type DatahubEventsRequestBodyEventsItem struct {
+	Dimensions *[]DatahubEventsRequestBodyEventsItemDimensionsItem `json:"dimensions,omitempty"`
+
+	// Id The event id. Must be unique within the dataset. If not set, a UUIDv4 will be generated at ingestion time.
+	Id      *string                                          `json:"id,omitempty"`
+	Metrics *[]DatahubEventsRequestBodyEventsItemMetricsItem `json:"metrics,omitempty"`
+
+	// Provider The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
+	Provider string `json:"provider"`
+
+	// Time The timestamp of the event in RFC3339 format.
+	Time time.Time `json:"time"`
+}
+
+// DatahubEventsRequestBodyEventsItemDimensionsItem defines model for DatahubEventsRequestBodyEventsItemDimensionsItem.
+type DatahubEventsRequestBodyEventsItemDimensionsItem struct {
+	// Key If the type is `fixed`, the key must be a valid fixed value. See the [DataHub API Guide](https://developer.doit.com/docs/datahub-api) for more information.
+	Key *string `json:"key,omitempty"`
+
+	// Type The dimension type.
+	Type  *DatahubEventsRequestBodyEventsItemDimensionsItemType   `json:"type,omitempty"`
+	Value *DatahubEventsRequestBodyEventsItemDimensionsItem_Value `json:"value,omitempty"`
+}
+
+// DatahubEventsRequestBodyEventsItemDimensionsItemType The dimension type.
+type DatahubEventsRequestBodyEventsItemDimensionsItemType string
+
+// DatahubEventsRequestBodyEventsItemDimensionsItemValue0 defines model for .
+type DatahubEventsRequestBodyEventsItemDimensionsItemValue0 = string
+
+// DatahubEventsRequestBodyEventsItemDimensionsItemValue1 defines model for .
+type DatahubEventsRequestBodyEventsItemDimensionsItemValue1 = bool
+
+// DatahubEventsRequestBodyEventsItemDimensionsItem_Value defines model for DatahubEventsRequestBodyEventsItemDimensionsItem.Value.
+type DatahubEventsRequestBodyEventsItemDimensionsItem_Value struct {
+	union json.RawMessage
+}
+
+// DatahubEventsRequestBodyEventsItemMetricsItem defines model for DatahubEventsRequestBodyEventsItemMetricsItem.
+type DatahubEventsRequestBodyEventsItemMetricsItem struct {
+	// Type The type of the metric. If you choose "cost" or "usage", it will map to the basic "Cost" or "Usage" metric in Cloud Analytics reports. You can also use this field to define custom metric types, such as "working_hours", "ride", etc.
+	Type *string `json:"type,omitempty"`
+
+	// Value The value of the metric.
+	Value *float64 `json:"value,omitempty"`
+}
+
+// DeleteDatahubEventsByFilter200Response defines model for DeleteDatahubEventsByFilter200Response.
+type DeleteDatahubEventsByFilter200Response struct {
+	Message *string `json:"message,omitempty"`
+}
+
+// DeleteDatahubEventsByFilterRequestBody Exactly one of "eventIds" or "time ranges" must be provided.
+type DeleteDatahubEventsByFilterRequestBody struct {
+	// Dataset The dataset (provider) of the events to be deleted.
+	Dataset string `json:"dataset"`
+
+	// EndTime The end timestamp of the time range in RFC3339 format.
+	EndTime  *time.Time `json:"endTime,omitempty"`
+	EventIds *[]string  `json:"eventIds,omitempty"`
+
+	// StartTime The start timestamp of the time range in RFC3339 format.
+	StartTime *time.Time `json:"startTime,omitempty"`
+}
 
 // DeleteUserResponse Response confirming user deletion.
 type DeleteUserResponse struct {
@@ -1687,13 +1853,7 @@ type ExternalConfig struct {
 	Currency *Currency `json:"currency,omitempty"`
 
 	// CustomTimeRange Required when the time range is set to "custom".
-	CustomTimeRange *struct {
-		// From The start timestamp of the time range in RFC3339 format.
-		From *time.Time `json:"from,omitempty"`
-
-		// To The end timestamp of the time range in RFC3339 format.
-		To *time.Time `json:"to,omitempty"`
-	} `json:"customTimeRange,omitempty"`
+	CustomTimeRange *ExternalConfigCustomTimeRange `json:"customTimeRange,omitempty"`
 
 	// DataSource Data source of the report.
 	DataSource *ExternalConfigDataSource `json:"dataSource,omitempty"`
@@ -1730,6 +1890,9 @@ type ExternalConfig struct {
 	// Metrics The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
 	Metrics *[]ExternalMetric `json:"metrics,omitempty"`
 
+	// SecondaryTimeRange Secondary time range for comparative reports.
+	SecondaryTimeRange *TimeSettingsSecondary `json:"secondaryTimeRange,omitempty"`
+
 	// SortDimensions This option has no impact when reading reports via API.
 	SortDimensions *ExternalConfigSortDimensions `json:"sortDimensions,omitempty"`
 
@@ -1765,6 +1928,15 @@ type ExternalConfigSortGroups string
 
 // ExternalConfigTimeInterval Time interval for grouping data in the report.
 type ExternalConfigTimeInterval string
+
+// ExternalConfigCustomTimeRange Required when the time range is set to "custom".
+type ExternalConfigCustomTimeRange struct {
+	// From The start timestamp of the time range in RFC3339 format.
+	From *time.Time `json:"from,omitempty"`
+
+	// To The end timestamp of the time range in RFC3339 format.
+	To *time.Time `json:"to,omitempty"`
+}
 
 // ExternalConfigFilter To include or exclude certain values.
 // When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
@@ -1918,13 +2090,169 @@ type FindCloudDiagramsRequest struct {
 }
 
 // FindCloudDiagramsResponse List of diagram URLs matching the criteria.
-type FindCloudDiagramsResponse = []struct {
+type FindCloudDiagramsResponse = []FindCloudDiagramsResponseItem
+
+// FindCloudDiagramsResponseItem defines model for FindCloudDiagramsResponseItem.
+type FindCloudDiagramsResponseItem struct {
 	// DiagramUrl URL to the diagram viewer.
 	DiagramUrl string `json:"diagramUrl"`
 
 	// ImageUrl URL to the diagram image.
 	ImageUrl string `json:"imageUrl"`
 }
+
+// GetAnomaly200Response defines model for GetAnomaly200Response.
+type GetAnomaly200Response struct {
+	// Acknowledged Has the anomaly been acknowledged
+	Acknowledged *bool `json:"acknowledged,omitempty"`
+
+	// Attribution Attribution ID
+	Attribution string `json:"attribution"`
+
+	// BillingAccount Billing account ID
+	BillingAccount string `json:"billingAccount"`
+
+	// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
+	CostOfAnomaly float64 `json:"costOfAnomaly"`
+
+	// EndTime End of the anomaly
+	EndTime *int `json:"endTime"`
+
+	// Platform Cloud Provider name
+	Platform string `json:"platform"`
+
+	// ResourceData Array of resources contributing to an anomaly.
+	ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
+
+	// Scope Scope: Project or Account
+	Scope string `json:"scope"`
+
+	// ServiceName Service name
+	ServiceName string `json:"serviceName"`
+
+	// SeverityLevel Severity level: Information, Warning or Critical
+	SeverityLevel string `json:"severityLevel"`
+
+	// StartTime Usage start time of the anomaly
+	StartTime int64                        `json:"startTime"`
+	Status    *GetAnomaly200ResponseStatus `json:"status"`
+
+	// TimeFrame Timeframe: Daily or Hourly
+	TimeFrame string `json:"timeFrame"`
+
+	// Top3SKUs Array of SKU entries contributing to an anomaly.
+	Top3SKUs AnomalySKUArray `json:"top3SKUs"`
+}
+
+// GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
+type GetAnomaly200ResponseStatus string
+
+// GetAttribution200Response defines model for GetAttribution200Response.
+type GetAttribution200Response struct {
+	// Attribution Definition and metadata of an attribution.
+	Attribution *AttributionAPI `json:"Attribution,omitempty"`
+}
+
+// GetInvoice200Response defines model for GetInvoice200Response.
+type GetInvoice200Response struct {
+	// BalanceAmount Invoice balance to be paid
+	BalanceAmount *float64 `json:"balanceAmount,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
+
+	// DueDate The last day to pay the invoice, in milliseconds since the epoch
+	DueDate *int64 `json:"dueDate,omitempty"`
+
+	// Id Invoice number, identifying the invoice.
+	Id *string `json:"id,omitempty"`
+
+	// InvoiceDate The time when this invoice was issued, in milliseconds since the epoch.
+	InvoiceDate *int64 `json:"invoiceDate,omitempty"`
+
+	// LineItems Invoice line items.
+	LineItems *[]ListItem `json:"lineItems,omitempty"`
+
+	// Platform Platform identifier for invoice source.
+	Platform *InvoicePlatform `json:"platform,omitempty"`
+
+	// Status Status of the invoice
+	Status *GetInvoice200ResponseStatus `json:"status,omitempty"`
+
+	// TotalAmount Total invoiced amount
+	TotalAmount *float64 `json:"totalAmount,omitempty"`
+
+	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+	Url *string `json:"url,omitempty"`
+}
+
+// GetInvoice200ResponseStatus Status of the invoice
+type GetInvoice200ResponseStatus string
+
+// GetKnownIssue200Response defines model for GetKnownIssue200Response.
+type GetKnownIssue200Response struct {
+	// CreateTime The time when this cloud incident was created, in milliseconds since the epoch.
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Description Detailed explanation on the cloud incident.
+	Description *string `json:"description,omitempty"`
+
+	// Id The unique id of a cloud incident
+	Id *string `json:"id,omitempty"`
+
+	// Platform The cloud platform.
+	Platform *GetKnownIssue200ResponsePlatform `json:"platform,omitempty"`
+
+	// Product The name of the product affected by the cloud incident
+	Product *string `json:"product,omitempty"`
+
+	// Status The Status of the issue
+	Status *GetKnownIssue200ResponseStatus `json:"status,omitempty"`
+
+	// Summary A summary of the cloud incident.
+	Summary *string `json:"summary,omitempty"`
+
+	// Symptoms Cloud incident symptoms, if available.
+	Symptoms *string `json:"symptoms,omitempty"`
+
+	// Title Cloud incident name provided by the cloud vendor.
+	Title *string `json:"title,omitempty"`
+
+	// Workaround Mitigation workaround for the cloud incident, if available.
+	Workaround *string `json:"workaround,omitempty"`
+}
+
+// GetKnownIssue200ResponsePlatform The cloud platform.
+type GetKnownIssue200ResponsePlatform string
+
+// GetKnownIssue200ResponseStatus The Status of the issue
+type GetKnownIssue200ResponseStatus string
+
+// GetReport200Response defines model for GetReport200Response.
+type GetReport200Response struct {
+	// CreateTime The creation time of the report, in milliseconds since the epoch.
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Id Report ID.
+	Id *string `json:"id,omitempty"`
+
+	// Owner Email address of the report owner.
+	Owner *string `json:"owner,omitempty"`
+
+	// ReportName The name of the report.
+	ReportName *string                   `json:"reportName,omitempty"`
+	Result     *RunReportResultResult    `json:"result,omitempty"`
+	Type       *GetReport200ResponseType `json:"type,omitempty"`
+
+	// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+
+	// UrlUI The URL of the report in DoiT console.
+	UrlUI *string `json:"urlUI,omitempty"`
+}
+
+// GetReport200ResponseType defines model for GetReport200Response.Type.
+type GetReport200ResponseType string
 
 // Group The dimension that defines a row in the report.
 type Group struct {
@@ -1961,6 +2289,32 @@ type GroupAllocationRule struct {
 
 // GroupAllocationRuleAction Action to perform with this rule.
 type GroupAllocationRuleAction string
+
+// IdOfAsset200Response defines model for IdOfAsset200Response.
+type IdOfAsset200Response struct {
+	Id *string `json:"id,omitempty"`
+
+	// Properties Additional properties associated with an asset.
+	Properties *AssetProperties `json:"properties,omitempty"`
+	Type       *string          `json:"type,omitempty"`
+}
+
+// IdOfAssetRequestBody defines model for IdOfAssetRequestBody.
+type IdOfAssetRequestBody struct {
+	Quantity *int64 `json:"quantity,omitempty"`
+}
+
+// IdOfAssets200Response defines model for IdOfAssets200Response.
+type IdOfAssets200Response struct {
+	// Assets Array of Assets
+	Assets *[]AssetItem `json:"assets,omitempty"`
+
+	// PageToken Page token. Can be used to request the next page of results.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Assets rows count
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
 
 // InviteResponse Response returned after creating a user invitation.
 type InviteResponse struct {
@@ -2112,6 +2466,63 @@ type Limit struct {
 // LimitSort Sort order for ranking results.
 type LimitSort string
 
+// ListAccountTeam200Response defines model for ListAccountTeam200Response.
+type ListAccountTeam200Response struct {
+	AccountManagers *[]AccountManagerListItem `json:"accountManagers,omitempty"`
+}
+
+// ListAllocations200Response defines model for ListAllocations200Response.
+type ListAllocations200Response struct {
+	Allocations *[]AllocationListItem `json:"allocations,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of allocations in the result set.
+	RowCount *int `json:"rowCount,omitempty"`
+}
+
+// ListAnnotations200Response defines model for ListAnnotations200Response.
+type ListAnnotations200Response struct {
+	Annotations *[]AnnotationListItem `json:"annotations,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of annotations in the result set
+	RowCount *int `json:"rowCount,omitempty"`
+}
+
+// ListAttributions200Response defines model for ListAttributions200Response.
+type ListAttributions200Response struct {
+	// Attributions Summary information for an attribution.
+	Attributions *AttributionListItem `json:"Attributions,omitempty"`
+}
+
+// ListBudgets200Response defines model for ListBudgets200Response.
+type ListBudgets200Response struct {
+	// Budgets Array of Budgets
+	Budgets *[]BudgetListItem `json:"budgets,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Budgets rows count
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// ListInvoices200Response defines model for ListInvoices200Response.
+type ListInvoices200Response struct {
+	// Invoices Array of Invoices
+	Invoices *[]InvoiceListItem `json:"invoices,omitempty"`
+
+	// PageToken Page token. Can be used to request the next page of results.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Invoice rows count
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
 // ListItem Invoice line item.
 type ListItem struct {
 	Currency    *string  `json:"currency,omitempty"`
@@ -2120,6 +2531,33 @@ type ListItem struct {
 	Price       *float64 `json:"price,omitempty"`
 	Qty         *float64 `json:"qty,omitempty"`
 	Type        *string  `json:"type,omitempty"`
+}
+
+// ListKnownIssues200Response defines model for ListKnownIssues200Response.
+type ListKnownIssues200Response struct {
+	// Incidents Array of cloud incidents
+	Incidents *[]CloudIncidentListItem `json:"incidents,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Cloud incidents rows count
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// ListPlatforms200Response defines model for ListPlatforms200Response.
+type ListPlatforms200Response struct {
+	Platforms *[]PlatformAPI `json:"platforms,omitempty"`
+}
+
+// ListProducts200Response defines model for ListProducts200Response.
+type ListProducts200Response struct {
+	Products *[]ProductAPI `json:"products,omitempty"`
+}
+
+// ListRoles200Response defines model for ListRoles200Response.
+type ListRoles200Response struct {
+	Roles *[]Role `json:"roles,omitempty"`
 }
 
 // ListUsersResponseBody Response body for the list users endpoint.
@@ -2177,6 +2615,12 @@ type ProductAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
 	Platform    *string `json:"platform,omitempty"`
+}
+
+// QueryRequestBody defines model for QueryRequestBody.
+type QueryRequestBody struct {
+	// Config Report configuration.
+	Config *ExternalConfig `json:"config,omitempty"`
 }
 
 // RenewalSettings Settings that control subscription renewal behavior.
@@ -2288,17 +2732,23 @@ type Role struct {
 
 // RunReportResult Results returned when running a report; includes schema and rows.
 type RunReportResult struct {
-	Result *struct {
-		// CacheHit If true, results were fetched from the cache.
-		CacheHit     *bool                              `json:"cacheHit,omitempty"`
-		ForecastRows *[][]Value                         `json:"forecastRows,omitempty"`
-		MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
-		Rows         *[][]Value                         `json:"rows,omitempty"`
-		Schema       *[]SchemaField                     `json:"schema,omitempty"`
-	} `json:"result,omitempty"`
+	Result *RunReportResultResult `json:"result,omitempty"`
 }
 
-// RunReportResultResultMlFeatures defines model for RunReportResult.Result.MlFeatures.
+// RunReportResultResult defines model for RunReportResultResult.
+type RunReportResultResult struct {
+	// CacheHit If true, results were fetched from the cache.
+	CacheHit     *bool                              `json:"cacheHit,omitempty"`
+	ForecastRows *[][]Value                         `json:"forecastRows,omitempty"`
+	MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
+	Rows         *[][]Value                         `json:"rows,omitempty"`
+	Schema       *[]SchemaField                     `json:"schema,omitempty"`
+
+	// SecondaryRows Secondary time range rows.
+	SecondaryRows *[][]Value `json:"secondaryRows,omitempty"`
+}
+
+// RunReportResultResultMlFeatures defines model for RunReportResultResult.MlFeatures.
 type RunReportResultResultMlFeatures string
 
 // SchemaField Schema of a report result column.
@@ -2500,6 +2950,36 @@ type TimeSettingsMode string
 // TimeSettingsUnit Time unit for the time range.
 type TimeSettingsUnit string
 
+// TimeSettingsSecondary Secondary time range for comparative reports.
+type TimeSettingsSecondary struct {
+	// Amount Number of periods to shift back.
+	Amount *int64 `json:"amount,omitempty"`
+
+	// CustomTimeRange Custom date range for the secondary time range.
+	CustomTimeRange *TimeSettingsSecondaryCustomTimeRange `json:"customTimeRange,omitempty"`
+
+	// IncludeCurrent Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.
+	//
+	//     When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).
+	//     When `false`, shifts dates by amount, which may result in partial periods extending to today.
+	IncludeCurrent *bool `json:"includeCurrent,omitempty"`
+
+	// Unit Time interval unit for shifting.
+	Unit *TimeSettingsSecondaryUnit `json:"unit,omitempty"`
+}
+
+// TimeSettingsSecondaryUnit Time interval unit for shifting.
+type TimeSettingsSecondaryUnit string
+
+// TimeSettingsSecondaryCustomTimeRange Custom date range for the secondary time range.
+type TimeSettingsSecondaryCustomTimeRange struct {
+	// From Start date.
+	From *time.Time `json:"from,omitempty"`
+
+	// To End date.
+	To *time.Time `json:"to,omitempty"`
+}
+
 // UpdateAllocationRequest Request body for updating an allocation.
 type UpdateAllocationRequest struct {
 	// Description Allocation description
@@ -2531,6 +3011,21 @@ type UpdateAnnotationRequest struct {
 	Timestamp *time.Time `json:"timestamp"`
 }
 
+// UpdateAttributionRequestBody defines model for UpdateAttributionRequestBody.
+type UpdateAttributionRequestBody struct {
+	// Components List of Attribution filters
+	Components *[]AttributionComponent `json:"components,omitempty"`
+
+	// Description Description of the attribution
+	Description *string `json:"description,omitempty"`
+
+	// Formula Attribution formula (A is the first component, B is the second one, C is the third, and so on.)
+	Formula *string `json:"formula,omitempty"`
+
+	// Name Attribution Name
+	Name *string `json:"name,omitempty"`
+}
+
 // UpdateLabelRequest Request body for updating a label.
 type UpdateLabelRequest struct {
 	// Color The color of the label.
@@ -2542,6 +3037,23 @@ type UpdateLabelRequest struct {
 
 // UpdateLabelRequestColor The color of the label.
 type UpdateLabelRequestColor string
+
+// UpdateReport200Response defines model for UpdateReport200Response.
+type UpdateReport200Response struct {
+	// Id ID of the updated report.
+	Id *string `json:"id,omitempty"`
+}
+
+// UpdateResourcePermissionRequestBody defines model for UpdateResourcePermissionRequestBody.
+type UpdateResourcePermissionRequestBody struct {
+	Permissions *[]ResourcePermission `json:"permissions,omitempty"`
+
+	// Public The type of permissions granted to all users in the organization for this resource.
+	Public *UpdateResourcePermissionRequestBodyPublic `json:"public"`
+}
+
+// UpdateResourcePermissionRequestBodyPublic The type of permissions granted to all users in the organization for this resource.
+type UpdateResourcePermissionRequestBodyPublic string
 
 // UpdateUserRequest Fields allowed when updating an existing user.
 type UpdateUserRequest struct {
@@ -2838,36 +3350,6 @@ type ListAttributionsParamsSortBy string
 // ListAttributionsParamsSortOrder defines parameters for ListAttributions.
 type ListAttributionsParamsSortOrder string
 
-// CreateAttributionJSONBody defines parameters for CreateAttribution.
-type CreateAttributionJSONBody struct {
-	// Components List of Attribution filters
-	Components []AttributionComponent `json:"components"`
-
-	// Description Description of the attribution
-	Description *string `json:"description,omitempty"`
-
-	// Formula Attribution formula (A is the first component, B is the second one, and so on.)
-	Formula *string `json:"formula,omitempty"`
-
-	// Name Name of the attribution
-	Name string `json:"name"`
-}
-
-// UpdateAttributionJSONBody defines parameters for UpdateAttribution.
-type UpdateAttributionJSONBody struct {
-	// Components List of Attribution filters
-	Components *[]AttributionComponent `json:"components,omitempty"`
-
-	// Description Description of the attribution
-	Description *string `json:"description,omitempty"`
-
-	// Formula Attribution formula (A is the first component, B is the second one, C is the third, and so on.)
-	Formula *string `json:"formula,omitempty"`
-
-	// Name Attribution Name
-	Name *string `json:"name,omitempty"`
-}
-
 // ListBudgetsParams defines parameters for ListBudgets.
 type ListBudgetsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -2966,24 +3448,6 @@ type ListReportsParams struct {
 	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
-// CreateReportJSONBody defines parameters for CreateReport.
-type CreateReportJSONBody struct {
-	// Config Report configuration.
-	Config *ExternalConfig `json:"config,omitempty"`
-
-	// Description Report description.
-	Description *string `json:"description,omitempty"`
-
-	// Name Report name.
-	Name *string `json:"name,omitempty"`
-}
-
-// QueryJSONBody defines parameters for Query.
-type QueryJSONBody struct {
-	// Config Report configuration.
-	Config *ExternalConfig `json:"config,omitempty"`
-}
-
 // GetReportParams defines parameters for GetReport.
 type GetReportParams struct {
 	// TimeRange An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
@@ -3028,11 +3492,6 @@ type IdOfAssetsParams struct {
 	// filter results in “AND,” while using the same key multiple times in
 	// the same filter results in “OR”.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-}
-
-// IdOfAssetJSONBody defines parameters for IdOfAsset.
-type IdOfAssetJSONBody struct {
-	Quantity *int64 `json:"quantity,omitempty"`
 }
 
 // CreateAssetParams defines parameters for CreateAsset.
@@ -3085,88 +3544,11 @@ type ListKnownIssuesParams struct {
 	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
-// DatahubEventsCSVFileMultipartBody defines parameters for DatahubEventsCSVFile.
-type DatahubEventsCSVFileMultipartBody struct {
-	// File The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
-	File *openapi_types.File `json:"file,omitempty"`
-
-	// Provider The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
-	Provider *string `json:"provider,omitempty"`
-}
-
-// DatahubEventsJSONBody defines parameters for DatahubEvents.
-type DatahubEventsJSONBody struct {
-	Events *[]struct {
-		Dimensions *[]struct {
-			// Key If the type is `fixed`, the key must be a valid fixed value. See the [DataHub API Guide](https://developer.doit.com/docs/datahub-api) for more information.
-			Key *string `json:"key,omitempty"`
-
-			// Type The dimension type.
-			Type  *DatahubEventsJSONBodyEventsDimensionsType     `json:"type,omitempty"`
-			Value *DatahubEventsJSONBody_Events_Dimensions_Value `json:"value,omitempty"`
-		} `json:"dimensions,omitempty"`
-
-		// Id The event id. Must be unique within the dataset. If not set, a UUIDv4 will be generated at ingestion time.
-		Id      *string `json:"id,omitempty"`
-		Metrics *[]struct {
-			// Type The type of the metric. If you choose "cost" or "usage", it will map to the basic "Cost" or "Usage" metric in Cloud Analytics reports. You can also use this field to define custom metric types, such as "working_hours", "ride", etc.
-			Type *string `json:"type,omitempty"`
-
-			// Value The value of the metric.
-			Value *float64 `json:"value,omitempty"`
-		} `json:"metrics,omitempty"`
-
-		// Provider The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).
-		Provider string `json:"provider"`
-
-		// Time The timestamp of the event in RFC3339 format.
-		Time time.Time `json:"time"`
-	} `json:"events,omitempty"`
-}
-
-// DatahubEventsJSONBodyEventsDimensionsType defines parameters for DatahubEvents.
-type DatahubEventsJSONBodyEventsDimensionsType string
-
-// DatahubEventsJSONBodyEventsDimensionsValue0 defines parameters for DatahubEvents.
-type DatahubEventsJSONBodyEventsDimensionsValue0 = string
-
-// DatahubEventsJSONBodyEventsDimensionsValue1 defines parameters for DatahubEvents.
-type DatahubEventsJSONBodyEventsDimensionsValue1 = bool
-
-// DatahubEventsJSONBody_Events_Dimensions_Value defines parameters for DatahubEvents.
-type DatahubEventsJSONBody_Events_Dimensions_Value struct {
-	union json.RawMessage
-}
-
-// DeleteDatahubEventsByFilterJSONBody defines parameters for DeleteDatahubEventsByFilter.
-type DeleteDatahubEventsByFilterJSONBody struct {
-	// Dataset The dataset (provider) of the events to be deleted.
-	Dataset string `json:"dataset"`
-
-	// EndTime The end timestamp of the time range in RFC3339 format.
-	EndTime  *time.Time `json:"endTime,omitempty"`
-	EventIds *[]string  `json:"eventIds,omitempty"`
-
-	// StartTime The start timestamp of the time range in RFC3339 format.
-	StartTime *time.Time `json:"startTime,omitempty"`
-}
-
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
 type GetResourcePermissionParamsResourceType string
 
-// UpdateResourcePermissionJSONBody defines parameters for UpdateResourcePermission.
-type UpdateResourcePermissionJSONBody struct {
-	Permissions *[]ResourcePermission `json:"permissions,omitempty"`
-
-	// Public The type of permissions granted to all users in the organization for this resource.
-	Public *UpdateResourcePermissionJSONBodyPublic `json:"public"`
-}
-
 // UpdateResourcePermissionParamsResourceType defines parameters for UpdateResourcePermission.
 type UpdateResourcePermissionParamsResourceType string
-
-// UpdateResourcePermissionJSONBodyPublic defines parameters for UpdateResourcePermission.
-type UpdateResourcePermissionJSONBodyPublic string
 
 // ListProductsParams defines parameters for ListProducts.
 type ListProductsParams struct {
@@ -3219,10 +3601,10 @@ type CreateAttributionGroupJSONRequestBody = AttributionGroupRequest
 type UpdateAttributionGroupJSONRequestBody = AttributionGroupUpdateRequest
 
 // CreateAttributionJSONRequestBody defines body for CreateAttribution for application/json ContentType.
-type CreateAttributionJSONRequestBody CreateAttributionJSONBody
+type CreateAttributionJSONRequestBody = CreateAttributionRequestBody
 
 // UpdateAttributionJSONRequestBody defines body for UpdateAttribution for application/json ContentType.
-type UpdateAttributionJSONRequestBody UpdateAttributionJSONBody
+type UpdateAttributionJSONRequestBody = UpdateAttributionRequestBody
 
 // CreateBudgetJSONRequestBody defines body for CreateBudget for application/json ContentType.
 type CreateBudgetJSONRequestBody = BudgetCreateUpdateRequest
@@ -3240,28 +3622,28 @@ type UpdateLabelJSONRequestBody = UpdateLabelRequest
 type AssignObjectsToLabelJSONRequestBody = AssignObjectsToLabelRequest
 
 // CreateReportJSONRequestBody defines body for CreateReport for application/json ContentType.
-type CreateReportJSONRequestBody CreateReportJSONBody
+type CreateReportJSONRequestBody = CreateReportRequestBody
 
 // QueryJSONRequestBody defines body for Query for application/json ContentType.
-type QueryJSONRequestBody QueryJSONBody
+type QueryJSONRequestBody = QueryRequestBody
 
 // UpdateReportJSONRequestBody defines body for UpdateReport for application/json ContentType.
 type UpdateReportJSONRequestBody = ExternalUpdateReport
 
 // IdOfAssetJSONRequestBody defines body for IdOfAsset for application/json ContentType.
-type IdOfAssetJSONRequestBody IdOfAssetJSONBody
+type IdOfAssetJSONRequestBody = IdOfAssetRequestBody
 
 // FindCloudDiagramsJSONRequestBody defines body for FindCloudDiagrams for application/json ContentType.
 type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
 
 // DatahubEventsCSVFileMultipartRequestBody defines body for DatahubEventsCSVFile for multipart/form-data ContentType.
-type DatahubEventsCSVFileMultipartRequestBody DatahubEventsCSVFileMultipartBody
+type DatahubEventsCSVFileMultipartRequestBody = DatahubEventsCSVFileRequestBody
 
 // DatahubEventsJSONRequestBody defines body for DatahubEvents for application/json ContentType.
-type DatahubEventsJSONRequestBody DatahubEventsJSONBody
+type DatahubEventsJSONRequestBody = DatahubEventsRequestBody
 
 // DeleteDatahubEventsByFilterJSONRequestBody defines body for DeleteDatahubEventsByFilter for application/json ContentType.
-type DeleteDatahubEventsByFilterJSONRequestBody DeleteDatahubEventsByFilterJSONBody
+type DeleteDatahubEventsByFilterJSONRequestBody = DeleteDatahubEventsByFilterRequestBody
 
 // InviteUserJSONRequestBody defines body for InviteUser for application/json ContentType.
 type InviteUserJSONRequestBody = InviteUserRequest
@@ -3270,10 +3652,72 @@ type InviteUserJSONRequestBody = InviteUserRequest
 type UpdateUserJSONRequestBody = UpdateUserRequest
 
 // UpdateResourcePermissionJSONRequestBody defines body for UpdateResourcePermission for application/json ContentType.
-type UpdateResourcePermissionJSONRequestBody UpdateResourcePermissionJSONBody
+type UpdateResourcePermissionJSONRequestBody = UpdateResourcePermissionRequestBody
 
 // IdOfTicketsPostJSONRequestBody defines body for IdOfTicketsPost for application/json ContentType.
 type IdOfTicketsPostJSONRequestBody = TicketCreateFormExtAPI
+
+// AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0 returns the union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value as a DatahubEventsRequestBodyEventsItemDimensionsItemValue0
+func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0() (DatahubEventsRequestBodyEventsItemDimensionsItemValue0, error) {
+	var body DatahubEventsRequestBodyEventsItemDimensionsItemValue0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDatahubEventsRequestBodyEventsItemDimensionsItemValue0 overwrites any union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value as the provided DatahubEventsRequestBodyEventsItemDimensionsItemValue0
+func (t *DatahubEventsRequestBodyEventsItemDimensionsItem_Value) FromDatahubEventsRequestBodyEventsItemDimensionsItemValue0(v DatahubEventsRequestBodyEventsItemDimensionsItemValue0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDatahubEventsRequestBodyEventsItemDimensionsItemValue0 performs a merge with any union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value, using the provided DatahubEventsRequestBodyEventsItemDimensionsItemValue0
+func (t *DatahubEventsRequestBodyEventsItemDimensionsItem_Value) MergeDatahubEventsRequestBodyEventsItemDimensionsItemValue0(v DatahubEventsRequestBodyEventsItemDimensionsItemValue0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDatahubEventsRequestBodyEventsItemDimensionsItemValue1 returns the union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value as a DatahubEventsRequestBodyEventsItemDimensionsItemValue1
+func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) AsDatahubEventsRequestBodyEventsItemDimensionsItemValue1() (DatahubEventsRequestBodyEventsItemDimensionsItemValue1, error) {
+	var body DatahubEventsRequestBodyEventsItemDimensionsItemValue1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDatahubEventsRequestBodyEventsItemDimensionsItemValue1 overwrites any union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value as the provided DatahubEventsRequestBodyEventsItemDimensionsItemValue1
+func (t *DatahubEventsRequestBodyEventsItemDimensionsItem_Value) FromDatahubEventsRequestBodyEventsItemDimensionsItemValue1(v DatahubEventsRequestBodyEventsItemDimensionsItemValue1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDatahubEventsRequestBodyEventsItemDimensionsItemValue1 performs a merge with any union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value, using the provided DatahubEventsRequestBodyEventsItemDimensionsItemValue1
+func (t *DatahubEventsRequestBodyEventsItemDimensionsItem_Value) MergeDatahubEventsRequestBodyEventsItemDimensionsItemValue1(v DatahubEventsRequestBodyEventsItemDimensionsItemValue1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DatahubEventsRequestBodyEventsItemDimensionsItem_Value) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -9105,19 +9549,11 @@ func (r UpdateAlertResp) StatusCode() int {
 type ListAllocationsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Allocations *[]AllocationListItem `json:"allocations,omitempty"`
-
-		// PageToken Page token, returned by a previous call, to request the next page of results.
-		PageToken *string `json:"pageToken,omitempty"`
-
-		// RowCount Total number of allocations in the result set.
-		RowCount *int `json:"rowCount,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *ListAllocations200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -9243,19 +9679,11 @@ func (r UpdateAllocationResp) StatusCode() int {
 type ListAnnotationsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Annotations *[]AnnotationListItem `json:"annotations,omitempty"`
-
-		// PageToken Page token, returned by a previous call, to request the next page of results
-		PageToken *string `json:"pageToken,omitempty"`
-
-		// RowCount Total number of annotations in the result set
-		RowCount *int `json:"rowCount,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *ListAnnotations200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -9509,14 +9937,11 @@ func (r UpdateAttributionGroupResp) StatusCode() int {
 type ListAttributionsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Attributions Summary information for an attribution.
-		Attributions *AttributionListItem `json:"Attributions,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *ListAttributions200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -9590,15 +10015,12 @@ func (r DeleteAttributionResp) StatusCode() int {
 type GetAttributionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Attribution Definition and metadata of an attribution.
-		Attribution *AttributionAPI `json:"Attribution,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
-	JSON500 *N500
+	JSON200      *GetAttribution200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
@@ -9646,20 +10068,11 @@ func (r UpdateAttributionResp) StatusCode() int {
 type ListBudgetsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Budgets Array of Budgets
-		Budgets *[]BudgetListItem `json:"budgets,omitempty"`
-
-		// PageToken Page token, returned by a previous call, to request the next page of results
-		PageToken *string `json:"pageToken,omitempty"`
-
-		// RowCount Budgets rows count
-		RowCount *int64 `json:"rowCount,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *ListBudgets200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -10017,14 +10430,11 @@ func (r ListReportsResp) StatusCode() int {
 type CreateReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *struct {
-		// Id ID of the new report.
-		Id *string `json:"id,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON500 *N500
+	JSON201      *CreateReport201Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
@@ -10097,42 +10507,13 @@ func (r DeleteReportResp) StatusCode() int {
 type GetReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// CreateTime The creation time of the report, in milliseconds since the epoch.
-		CreateTime *int64 `json:"createTime,omitempty"`
-
-		// Id Report ID.
-		Id *string `json:"id,omitempty"`
-
-		// Owner Email address of the report owner.
-		Owner *string `json:"owner,omitempty"`
-
-		// ReportName The name of the report.
-		ReportName *string `json:"reportName,omitempty"`
-		Result     *struct {
-			// CacheHit If true, results were fetched from the cache.
-			CacheHit     *bool                           `json:"cacheHit,omitempty"`
-			ForecastRows *[][]Value                      `json:"forecastRows,omitempty"`
-			MlFeatures   *[]GetReport200ResultMlFeatures `json:"mlFeatures,omitempty"`
-			Rows         *[][]Value                      `json:"rows,omitempty"`
-			Schema       *[]SchemaField                  `json:"schema,omitempty"`
-		} `json:"result,omitempty"`
-		Type *GetReport200Type `json:"type,omitempty"`
-
-		// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
-		UpdateTime *int64 `json:"updateTime,omitempty"`
-
-		// UrlUI The URL of the report in DoiT console.
-		UrlUI *string `json:"urlUI,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
-	JSON429 *N429
+	JSON200      *GetReport200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON429      *N429
 }
-type GetReport200ResultMlFeatures string
-type GetReport200Type string
 
 // Status returns HTTPResponse.Status
 func (r GetReportResp) Status() string {
@@ -10153,14 +10534,11 @@ func (r GetReportResp) StatusCode() int {
 type UpdateReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Id ID of the updated report.
-		Id *string `json:"id,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON500 *N500
+	JSON200      *UpdateReport200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
@@ -10235,53 +10613,12 @@ func (r ListAnomaliesResp) StatusCode() int {
 type GetAnomalyResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Acknowledged Has the anomaly been acknowledged
-		Acknowledged *bool `json:"acknowledged,omitempty"`
-
-		// Attribution Attribution ID
-		Attribution string `json:"attribution"`
-
-		// BillingAccount Billing account ID
-		BillingAccount string `json:"billingAccount"`
-
-		// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
-		CostOfAnomaly float64 `json:"costOfAnomaly"`
-
-		// EndTime End of the anomaly
-		EndTime *int `json:"endTime"`
-
-		// Platform Cloud Provider name
-		Platform string `json:"platform"`
-
-		// ResourceData Array of resources contributing to an anomaly.
-		ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
-
-		// Scope Scope: Project or Account
-		Scope string `json:"scope"`
-
-		// ServiceName Service name
-		ServiceName string `json:"serviceName"`
-
-		// SeverityLevel Severity level: Information, Warning or Critical
-		SeverityLevel string `json:"severityLevel"`
-
-		// StartTime Usage start time of the anomaly
-		StartTime int64                `json:"startTime"`
-		Status    *GetAnomaly200Status `json:"status"`
-
-		// TimeFrame Timeframe: Daily or Hourly
-		TimeFrame string `json:"timeFrame"`
-
-		// Top3SKUs Array of SKU entries contributing to an anomaly.
-		Top3SKUs AnomalySKUArray `json:"top3SKUs"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *GetAnomaly200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
-type GetAnomaly200Status string
 
 // Status returns HTTPResponse.Status
 func (r GetAnomalyResp) Status() string {
@@ -10327,20 +10664,11 @@ func (r ValidateResp) StatusCode() int {
 type IdOfAssetsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Assets Array of Assets
-		Assets *[]AssetItem `json:"assets,omitempty"`
-
-		// PageToken Page token. Can be used to request the next page of results.
-		PageToken *string `json:"pageToken,omitempty"`
-
-		// RowCount Assets rows count
-		RowCount *int64 `json:"rowCount,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *IdOfAssets200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -10362,17 +10690,11 @@ func (r IdOfAssetsResp) StatusCode() int {
 type IdOfAssetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Id *string `json:"id,omitempty"`
-
-		// Properties Additional properties associated with an asset.
-		Properties *AssetProperties `json:"properties,omitempty"`
-		Type       *string          `json:"type,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *IdOfAsset200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -10420,20 +10742,11 @@ func (r CreateAssetResp) StatusCode() int {
 type ListInvoicesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Invoices Array of Invoices
-		Invoices *[]InvoiceListItem `json:"invoices,omitempty"`
-
-		// PageToken Page token. Can be used to request the next page of results.
-		PageToken *string `json:"pageToken,omitempty"`
-
-		// RowCount Invoice rows count
-		RowCount *int64 `json:"rowCount,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *ListInvoices200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -10455,43 +10768,12 @@ func (r ListInvoicesResp) StatusCode() int {
 type GetInvoiceResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// BalanceAmount Invoice balance to be paid
-		BalanceAmount *float64 `json:"balanceAmount,omitempty"`
-
-		// Currency Currency code for monetary values.
-		Currency *Currency `json:"currency,omitempty"`
-
-		// DueDate The last day to pay the invoice, in milliseconds since the epoch
-		DueDate *int64 `json:"dueDate,omitempty"`
-
-		// Id Invoice number, identifying the invoice.
-		Id *string `json:"id,omitempty"`
-
-		// InvoiceDate The time when this invoice was issued, in milliseconds since the epoch.
-		InvoiceDate *int64 `json:"invoiceDate,omitempty"`
-
-		// LineItems Invoice line items.
-		LineItems *[]ListItem `json:"lineItems,omitempty"`
-
-		// Platform Platform identifier for invoice source.
-		Platform *InvoicePlatform `json:"platform,omitempty"`
-
-		// Status Status of the invoice
-		Status *GetInvoice200Status `json:"status,omitempty"`
-
-		// TotalAmount Total invoiced amount
-		TotalAmount *float64 `json:"totalAmount,omitempty"`
-
-		// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
-		Url *string `json:"url,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *GetInvoice200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
-type GetInvoice200Status string
 
 // Status returns HTTPResponse.Status
 func (r GetInvoiceResp) Status() string {
@@ -10537,20 +10819,11 @@ func (r FindCloudDiagramsResp) StatusCode() int {
 type ListKnownIssuesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Incidents Array of cloud incidents
-		Incidents *[]CloudIncidentListItem `json:"incidents,omitempty"`
-
-		// PageToken Page token, returned by a previous call, to request the next page of results
-		PageToken *string `json:"pageToken,omitempty"`
-
-		// RowCount Cloud incidents rows count
-		RowCount *int64 `json:"rowCount,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *ListKnownIssues200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -10572,44 +10845,12 @@ func (r ListKnownIssuesResp) StatusCode() int {
 type GetKnownIssueResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		// CreateTime The time when this cloud incident was created, in milliseconds since the epoch.
-		CreateTime *int64 `json:"createTime,omitempty"`
-
-		// Description Detailed explanation on the cloud incident.
-		Description *string `json:"description,omitempty"`
-
-		// Id The unique id of a cloud incident
-		Id *string `json:"id,omitempty"`
-
-		// Platform The cloud platform.
-		Platform *GetKnownIssue200Platform `json:"platform,omitempty"`
-
-		// Product The name of the product affected by the cloud incident
-		Product *string `json:"product,omitempty"`
-
-		// Status The Status of the issue
-		Status *GetKnownIssue200Status `json:"status,omitempty"`
-
-		// Summary A summary of the cloud incident.
-		Summary *string `json:"summary,omitempty"`
-
-		// Symptoms Cloud incident symptoms, if available.
-		Symptoms *string `json:"symptoms,omitempty"`
-
-		// Title Cloud incident name provided by the cloud vendor.
-		Title *string `json:"title,omitempty"`
-
-		// Workaround Mitigation workaround for the cloud incident, if available.
-		Workaround *string `json:"workaround,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON404 *N404
+	JSON200      *GetKnownIssue200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
 }
-type GetKnownIssue200Platform string
-type GetKnownIssue200Status string
 
 // Status returns HTTPResponse.Status
 func (r GetKnownIssueResp) Status() string {
@@ -10630,12 +10871,10 @@ func (r GetKnownIssueResp) StatusCode() int {
 type ListAccountTeamResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		AccountManagers *[]AccountManagerListItem `json:"accountManagers,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
+	JSON200      *ListAccountTeam200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
 }
 
 // Status returns HTTPResponse.Status
@@ -10657,17 +10896,11 @@ func (r ListAccountTeamResp) StatusCode() int {
 type DatahubEventsCSVFileResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *struct {
-		// Batch batch id, generated during ingestion
-		Batch *string `json:"batch,omitempty"`
-
-		// IngestedRows the number of events that have been accepted for processing
-		IngestedRows *int `json:"ingestedRows,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON500 *N500
+	JSON201      *DatahubEventsCSVFile201Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
@@ -10689,13 +10922,11 @@ func (r DatahubEventsCSVFileResp) StatusCode() int {
 type DatahubEventsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON500 *N500
+	JSON201      *DatahubEvents201Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
@@ -10717,13 +10948,11 @@ func (r DatahubEventsResp) StatusCode() int {
 type DeleteDatahubEventsByFilterResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON500 *N500
+	JSON200      *DeleteDatahubEventsByFilter200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
@@ -10771,13 +11000,11 @@ func (r ListOrganizationsResp) StatusCode() int {
 type ListRolesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Roles *[]Role `json:"roles,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
-	JSON500 *N500
+	JSON200      *ListRoles200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
@@ -10957,12 +11184,10 @@ func (r UpdateResourcePermissionResp) StatusCode() int {
 type ListPlatformsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Platforms *[]PlatformAPI `json:"platforms,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
+	JSON200      *ListPlatforms200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
 }
 
 // Status returns HTTPResponse.Status
@@ -10984,12 +11209,10 @@ func (r ListPlatformsResp) StatusCode() int {
 type ListProductsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Products *[]ProductAPI `json:"products,omitempty"`
-	}
-	JSON400 *N400
-	JSON401 *N401
-	JSON403 *N403
+	JSON200      *ListProducts200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
 }
 
 // Status returns HTTPResponse.Status
@@ -12194,15 +12417,7 @@ func ParseListAllocationsResp(rsp *http.Response) (*ListAllocationsResp, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Allocations *[]AllocationListItem `json:"allocations,omitempty"`
-
-			// PageToken Page token, returned by a previous call, to request the next page of results.
-			PageToken *string `json:"pageToken,omitempty"`
-
-			// RowCount Total number of allocations in the result set.
-			RowCount *int `json:"rowCount,omitempty"`
-		}
+		var dest ListAllocations200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -12472,15 +12687,7 @@ func ParseListAnnotationsResp(rsp *http.Response) (*ListAnnotationsResp, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Annotations *[]AnnotationListItem `json:"annotations,omitempty"`
-
-			// PageToken Page token, returned by a previous call, to request the next page of results
-			PageToken *string `json:"pageToken,omitempty"`
-
-			// RowCount Total number of annotations in the result set
-			RowCount *int `json:"rowCount,omitempty"`
-		}
+		var dest ListAnnotations200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13006,10 +13213,7 @@ func ParseListAttributionsResp(rsp *http.Response) (*ListAttributionsResp, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Attributions Summary information for an attribution.
-			Attributions *AttributionListItem `json:"Attributions,omitempty"`
-		}
+		var dest ListAttributions200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13171,10 +13375,7 @@ func ParseGetAttributionResp(rsp *http.Response) (*GetAttributionResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Attribution Definition and metadata of an attribution.
-			Attribution *AttributionAPI `json:"Attribution,omitempty"`
-		}
+		var dest GetAttribution200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13289,16 +13490,7 @@ func ParseListBudgetsResp(rsp *http.Response) (*ListBudgetsResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Budgets Array of Budgets
-			Budgets *[]BudgetListItem `json:"budgets,omitempty"`
-
-			// PageToken Page token, returned by a previous call, to request the next page of results
-			PageToken *string `json:"pageToken,omitempty"`
-
-			// RowCount Budgets rows count
-			RowCount *int64 `json:"rowCount,omitempty"`
-		}
+		var dest ListBudgets200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14040,10 +14232,7 @@ func ParseCreateReportResp(rsp *http.Response) (*CreateReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest struct {
-			// Id ID of the new report.
-			Id *string `json:"id,omitempty"`
-		}
+		var dest CreateReport201Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14198,34 +14387,7 @@ func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// CreateTime The creation time of the report, in milliseconds since the epoch.
-			CreateTime *int64 `json:"createTime,omitempty"`
-
-			// Id Report ID.
-			Id *string `json:"id,omitempty"`
-
-			// Owner Email address of the report owner.
-			Owner *string `json:"owner,omitempty"`
-
-			// ReportName The name of the report.
-			ReportName *string `json:"reportName,omitempty"`
-			Result     *struct {
-				// CacheHit If true, results were fetched from the cache.
-				CacheHit     *bool                           `json:"cacheHit,omitempty"`
-				ForecastRows *[][]Value                      `json:"forecastRows,omitempty"`
-				MlFeatures   *[]GetReport200ResultMlFeatures `json:"mlFeatures,omitempty"`
-				Rows         *[][]Value                      `json:"rows,omitempty"`
-				Schema       *[]SchemaField                  `json:"schema,omitempty"`
-			} `json:"result,omitempty"`
-			Type *GetReport200Type `json:"type,omitempty"`
-
-			// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
-			UpdateTime *int64 `json:"updateTime,omitempty"`
-
-			// UrlUI The URL of the report in DoiT console.
-			UrlUI *string `json:"urlUI,omitempty"`
-		}
+		var dest GetReport200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14286,10 +14448,7 @@ func ParseUpdateReportResp(rsp *http.Response) (*UpdateReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Id ID of the updated report.
-			Id *string `json:"id,omitempty"`
-		}
+		var dest UpdateReport200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14458,47 +14617,7 @@ func ParseGetAnomalyResp(rsp *http.Response) (*GetAnomalyResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Acknowledged Has the anomaly been acknowledged
-			Acknowledged *bool `json:"acknowledged,omitempty"`
-
-			// Attribution Attribution ID
-			Attribution string `json:"attribution"`
-
-			// BillingAccount Billing account ID
-			BillingAccount string `json:"billingAccount"`
-
-			// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
-			CostOfAnomaly float64 `json:"costOfAnomaly"`
-
-			// EndTime End of the anomaly
-			EndTime *int `json:"endTime"`
-
-			// Platform Cloud Provider name
-			Platform string `json:"platform"`
-
-			// ResourceData Array of resources contributing to an anomaly.
-			ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
-
-			// Scope Scope: Project or Account
-			Scope string `json:"scope"`
-
-			// ServiceName Service name
-			ServiceName string `json:"serviceName"`
-
-			// SeverityLevel Severity level: Information, Warning or Critical
-			SeverityLevel string `json:"severityLevel"`
-
-			// StartTime Usage start time of the anomaly
-			StartTime int64                `json:"startTime"`
-			Status    *GetAnomaly200Status `json:"status"`
-
-			// TimeFrame Timeframe: Daily or Hourly
-			TimeFrame string `json:"timeFrame"`
-
-			// Top3SKUs Array of SKU entries contributing to an anomaly.
-			Top3SKUs AnomalySKUArray `json:"top3SKUs"`
-		}
+		var dest GetAnomaly200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14599,16 +14718,7 @@ func ParseIdOfAssetsResp(rsp *http.Response) (*IdOfAssetsResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Assets Array of Assets
-			Assets *[]AssetItem `json:"assets,omitempty"`
-
-			// PageToken Page token. Can be used to request the next page of results.
-			PageToken *string `json:"pageToken,omitempty"`
-
-			// RowCount Assets rows count
-			RowCount *int64 `json:"rowCount,omitempty"`
-		}
+		var dest IdOfAssets200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14662,13 +14772,7 @@ func ParseIdOfAssetResp(rsp *http.Response) (*IdOfAssetResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Id *string `json:"id,omitempty"`
-
-			// Properties Additional properties associated with an asset.
-			Properties *AssetProperties `json:"properties,omitempty"`
-			Type       *string          `json:"type,omitempty"`
-		}
+		var dest IdOfAsset200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14776,16 +14880,7 @@ func ParseListInvoicesResp(rsp *http.Response) (*ListInvoicesResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Invoices Array of Invoices
-			Invoices *[]InvoiceListItem `json:"invoices,omitempty"`
-
-			// PageToken Page token. Can be used to request the next page of results.
-			PageToken *string `json:"pageToken,omitempty"`
-
-			// RowCount Invoice rows count
-			RowCount *int64 `json:"rowCount,omitempty"`
-		}
+		var dest ListInvoices200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14839,37 +14934,7 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// BalanceAmount Invoice balance to be paid
-			BalanceAmount *float64 `json:"balanceAmount,omitempty"`
-
-			// Currency Currency code for monetary values.
-			Currency *Currency `json:"currency,omitempty"`
-
-			// DueDate The last day to pay the invoice, in milliseconds since the epoch
-			DueDate *int64 `json:"dueDate,omitempty"`
-
-			// Id Invoice number, identifying the invoice.
-			Id *string `json:"id,omitempty"`
-
-			// InvoiceDate The time when this invoice was issued, in milliseconds since the epoch.
-			InvoiceDate *int64 `json:"invoiceDate,omitempty"`
-
-			// LineItems Invoice line items.
-			LineItems *[]ListItem `json:"lineItems,omitempty"`
-
-			// Platform Platform identifier for invoice source.
-			Platform *InvoicePlatform `json:"platform,omitempty"`
-
-			// Status Status of the invoice
-			Status *GetInvoice200Status `json:"status,omitempty"`
-
-			// TotalAmount Total invoiced amount
-			TotalAmount *float64 `json:"totalAmount,omitempty"`
-
-			// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
-			Url *string `json:"url,omitempty"`
-		}
+		var dest GetInvoice200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14970,16 +15035,7 @@ func ParseListKnownIssuesResp(rsp *http.Response) (*ListKnownIssuesResp, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Incidents Array of cloud incidents
-			Incidents *[]CloudIncidentListItem `json:"incidents,omitempty"`
-
-			// PageToken Page token, returned by a previous call, to request the next page of results
-			PageToken *string `json:"pageToken,omitempty"`
-
-			// RowCount Cloud incidents rows count
-			RowCount *int64 `json:"rowCount,omitempty"`
-		}
+		var dest ListKnownIssues200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15033,37 +15089,7 @@ func ParseGetKnownIssueResp(rsp *http.Response) (*GetKnownIssueResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// CreateTime The time when this cloud incident was created, in milliseconds since the epoch.
-			CreateTime *int64 `json:"createTime,omitempty"`
-
-			// Description Detailed explanation on the cloud incident.
-			Description *string `json:"description,omitempty"`
-
-			// Id The unique id of a cloud incident
-			Id *string `json:"id,omitempty"`
-
-			// Platform The cloud platform.
-			Platform *GetKnownIssue200Platform `json:"platform,omitempty"`
-
-			// Product The name of the product affected by the cloud incident
-			Product *string `json:"product,omitempty"`
-
-			// Status The Status of the issue
-			Status *GetKnownIssue200Status `json:"status,omitempty"`
-
-			// Summary A summary of the cloud incident.
-			Summary *string `json:"summary,omitempty"`
-
-			// Symptoms Cloud incident symptoms, if available.
-			Symptoms *string `json:"symptoms,omitempty"`
-
-			// Title Cloud incident name provided by the cloud vendor.
-			Title *string `json:"title,omitempty"`
-
-			// Workaround Mitigation workaround for the cloud incident, if available.
-			Workaround *string `json:"workaround,omitempty"`
-		}
+		var dest GetKnownIssue200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15117,9 +15143,7 @@ func ParseListAccountTeamResp(rsp *http.Response) (*ListAccountTeamResp, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			AccountManagers *[]AccountManagerListItem `json:"accountManagers,omitempty"`
-		}
+		var dest ListAccountTeam200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15166,13 +15190,7 @@ func ParseDatahubEventsCSVFileResp(rsp *http.Response) (*DatahubEventsCSVFileRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest struct {
-			// Batch batch id, generated during ingestion
-			Batch *string `json:"batch,omitempty"`
-
-			// IngestedRows the number of events that have been accepted for processing
-			IngestedRows *int `json:"ingestedRows,omitempty"`
-		}
+		var dest DatahubEventsCSVFile201Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15226,9 +15244,7 @@ func ParseDatahubEventsResp(rsp *http.Response) (*DatahubEventsResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest DatahubEvents201Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15282,9 +15298,7 @@ func ParseDeleteDatahubEventsByFilterResp(rsp *http.Response) (*DeleteDatahubEve
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest DeleteDatahubEventsByFilter200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15392,9 +15406,7 @@ func ParseListRolesResp(rsp *http.Response) (*ListRolesResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Roles *[]Role `json:"roles,omitempty"`
-		}
+		var dest ListRoles200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15786,9 +15798,7 @@ func ParseListPlatformsResp(rsp *http.Response) (*ListPlatformsResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Platforms *[]PlatformAPI `json:"platforms,omitempty"`
-		}
+		var dest ListPlatforms200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15835,9 +15845,7 @@ func ParseListProductsResp(rsp *http.Response) (*ListProductsResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Products *[]ProductAPI `json:"products,omitempty"`
-		}
+		var dest ListProducts200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

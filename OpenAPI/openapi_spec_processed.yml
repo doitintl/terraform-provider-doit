@@ -58,7 +58,6 @@ tags:
     description: Metadata about cloud services and offerings.
   - name: Support Requests
     description: Create and manage support tickets with DoiT.
-
 paths:
   /analytics/v1/alerts:
     get:
@@ -265,18 +264,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  pageToken:
-                    type: string
-                    description: Page token, returned by a previous call, to request the next page of results.
-                  rowCount:
-                    type: integer
-                    description: Total number of allocations in the result set.
-                  allocations:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/AllocationListItem"
+                $ref: '#/components/schemas/ListAllocations200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -449,18 +437,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  pageToken:
-                    type: string
-                    description: Page token, returned by a previous call, to request the next page of results
-                  rowCount:
-                    type: integer
-                    description: Total number of annotations in the result set
-                  annotations:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/AnnotationListItem"
+                $ref: '#/components/schemas/ListAnnotations200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -994,10 +971,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  Attributions:
-                    $ref: "#/components/schemas/AttributionListItem"
+                $ref: '#/components/schemas/ListAttributions200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1017,44 +991,7 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - components
-                - name
-              type: object
-              properties:
-                components:
-                  type: array
-                  description: List of Attribution filters
-                  example:
-                    - key: cloud_provider
-                      type: fixed
-                      values:
-                        - amazon-web-services
-                      inverse_selection: false
-                      regexp:
-                      include_null: false
-                    - key: cost_type
-                      type: fixed
-                      values:
-                        - Fee
-                        - RIFee
-                      inverse_selection: false
-                      regexp:
-                      include_null: false
-                  items:
-                    $ref: "#/components/schemas/AttributionComponent"
-                description:
-                  type: string
-                  description: Description of the attribution
-                  example: This is an example attribution
-                formula:
-                  type: string
-                  description: Attribution formula (A is the first component, B is the second one, and so on.)
-                  example: A AND B
-                name:
-                  type: string
-                  description: Name of the attribution
-                  example: An example attribution
+              $ref: '#/components/schemas/CreateAttributionRequestBody'
       responses:
         "201":
           description: >-
@@ -1093,10 +1030,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  Attribution:
-                    $ref: "#/components/schemas/AttributionAPI"
+                $ref: '#/components/schemas/GetAttribution200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1158,22 +1092,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                components:
-                  type: array
-                  description: List of Attribution filters
-                  items:
-                    $ref: "#/components/schemas/AttributionComponent"
-                description:
-                  type: string
-                  description: Description of the attribution
-                formula:
-                  type: string
-                  description: Attribution formula (A is the first component, B is the second one, C is the third, and so on.)
-                name:
-                  type: string
-                  description: Attribution Name
+              $ref: '#/components/schemas/UpdateAttributionRequestBody'
       responses:
         "200":
           description: OK - Attribution updated.
@@ -1215,16 +1134,12 @@ paths:
             type: string
         - name: minCreationTime
           in: query
-          description: Min value for reports creation time, in milliseconds since the
-            POSIX epoch. If set, only reports created after or at this timestamp
-            are returned.
+          description: Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
           schema:
             type: string
         - name: maxCreationTime
           in: query
-          description: Max value for reports creation time, in milliseconds since the
-            POSIX epoch. If set, only reports created before or at this
-            timestamp are returned.
+          description: Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
           schema:
             type: string
       responses:
@@ -1234,20 +1149,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  budgets:
-                    type: array
-                    description: Array of Budgets
-                    items:
-                      $ref: "#/components/schemas/BudgetListItem"
-                  pageToken:
-                    type: string
-                    description: Page token, returned by a previous call, to request the next page of results
-                  rowCount:
-                    type: integer
-                    description: Budgets rows count
-                    format: int64
+                $ref: '#/components/schemas/ListBudgets200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1443,7 +1345,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DimensionsExternalAPIListResponse"
+                $ref: "#/components/schemas/DimensionsExternalAPIList"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1477,16 +1379,12 @@ paths:
             type: string
         - name: minCreationTime
           in: query
-          description: Min value for reports creation time, in milliseconds since the
-            POSIX epoch. If set, only reports created after or at this timestamp
-            are returned.
+          description: Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
           schema:
             type: string
         - name: maxCreationTime
           in: query
-          description: Max value for reports creation time, in milliseconds since the
-            POSIX epoch. If set, only reports created before or at this
-            timestamp are returned.
+          description: Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
           schema:
             type: string
       responses:
@@ -1515,29 +1413,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Report name.
-                  example: A test report by API
-                description:
-                  type: string
-                  description: Report description.
-                  example: Cost breakdown by service in the last 3 months
-                config:
-                  $ref: "#/components/schemas/ExternalConfig"
+              $ref: '#/components/schemas/CreateReportRequestBody'
       responses:
         "201":
           description: Created - The request succeeded.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: ID of the new report.
+                $ref: '#/components/schemas/CreateReport201Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1553,8 +1436,7 @@ paths:
         - Reports
       summary: Run a query
       description: >-
-        Runs a report query with the specified configuration without persisting
-        it.
+        Runs a report query with the specified configuration without persisting it.
 
         Fields that are not populated will use their default values if needed.
       operationId: query
@@ -1562,10 +1444,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                config:
-                  $ref: "#/components/schemas/ExternalConfig"
+              $ref: '#/components/schemas/QueryRequestBody'
             example:
               config:
                 includeSubtotals: false
@@ -1635,24 +1514,19 @@ paths:
         - name: timeRange
           in: query
           description: >-
-            An optional parameter to override the report time settings. Value
-            should be represented in the format P[n]Y[n]M[n]D[n]. In the
-            representations, the [n] is replaced by the value for each of the
-            date and time elements that follow the [n].
+            An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
           schema:
             type: string
         - name: startDate
           in: query
           description: >-
-            An optional parameter to override the report time settings. Must be
-            provided together with `endDate`. Format: yyyy-mm-dd
+            An optional parameter to override the report time settings. Must be provided together with `endDate`. Format: yyyy-mm-dd
           schema:
             type: string
         - name: endDate
           in: query
           description: >-
-            An optional parameter to override the report time settings. Must be
-            provided together with `startDate`. Format: yyyy-mm-dd
+            An optional parameter to override the report time settings. Must be provided together with `startDate`. Format: yyyy-mm-dd
           schema:
             type: string
       responses:
@@ -1661,9 +1535,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/Report"
-                  - $ref: "#/components/schemas/RunReportResult"
+                $ref: '#/components/schemas/GetReport200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1718,11 +1590,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: ID of the updated report.
+                $ref: '#/components/schemas/UpdateReport200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1802,19 +1670,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                permissions:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/ResourcePermission"
-                public:
-                  type: string
-                  description: The type of permissions granted to all users in the organization for this resource.
-                  enum:
-                    - editor
-                    - viewer
-                  nullable: true
+              $ref: '#/components/schemas/UpdateResourcePermissionRequestBody'
       responses:
         "200":
           description: OK - Resource permissions configuration updated.
@@ -1899,65 +1755,7 @@ paths:
           content:
             application/json:
               schema:
-                required:
-                  - attribution
-                  - billingAccount
-                  - costOfAnomaly
-                  - platform
-                  - scope
-                  - serviceName
-                  - severityLevel
-                  - startTime
-                  - timeFrame
-                  - top3SKUs
-                type: object
-                properties:
-                  attribution:
-                    type: string
-                    description: Attribution ID
-                  billingAccount:
-                    type: string
-                    description: Billing account ID
-                  costOfAnomaly:
-                    type: number
-                    description: The difference between the actual cost and the maximum cost in the normal range.
-                    format: double
-                  platform:
-                    type: string
-                    description: Cloud Provider name
-                  scope:
-                    type: string
-                    description: "Scope: Project or Account"
-                  serviceName:
-                    type: string
-                    description: Service name
-                  severityLevel:
-                    type: string
-                    description: "Severity level: Information, Warning or Critical"
-                  startTime:
-                    type: integer
-                    description: Usage start time of the anomaly
-                    format: int64
-                  endTime:
-                    type: integer
-                    nullable: true
-                    description: End of the anomaly
-                  timeFrame:
-                    type: string
-                    description: "Timeframe: Daily or Hourly"
-                  top3SKUs:
-                    $ref: "#/components/schemas/AnomalySKUArray"
-                  resourceData:
-                    $ref: "#/components/schemas/AnomalyResourceArray"
-                  status:
-                    type: string
-                    nullable: true
-                    enum:
-                      - active
-                      - inactive
-                  acknowledged:
-                    description: "Has the anomaly been acknowledged"
-                    type: boolean
+                $ref: '#/components/schemas/GetAnomaly200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2044,32 +1842,14 @@ paths:
         content:
           multipart/form-data:
             schema:
-              type: object
-              properties:
-                provider:
-                  type: string
-                  description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
-                  example: "Datadog"
-                file:
-                  type: string
-                  format: binary
-                  description: The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
+              $ref: '#/components/schemas/DatahubEventsCSVFileRequestBody'
       responses:
         "201":
           description: OK - Ingestion succeeded.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  batch:
-                    type: string
-                    description: batch id, generated during ingestion
-                    example: "your_file.csv.gz_1730972725212"
-                  ingestedRows:
-                    type: integer
-                    description: the number of events that have been accepted for processing
-                    example: 15
+                $ref: '#/components/schemas/DatahubEventsCSVFile201Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2090,86 +1870,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                events:
-                  type: array
-                  minItems: 1
-                  maxItems: 50000
-                  items:
-                    type: object
-                    required:
-                      - provider
-                      - time
-                    properties:
-                      provider:
-                        type: string
-                        description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
-                        example: "Datadog"
-                      id:
-                        type: string
-                        description: The event id. Must be unique within the dataset. If not set, a UUIDv4 will be generated at ingestion time.
-                        example: "beb21d99-a8c9-4dc0-8a69-5d684cc41e6c"
-                      dimensions:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            key:
-                              type: string
-                              example: "project_id"
-                              description: If the type is `fixed`, the key must
-                                be a valid fixed value. See the
-                                [DataHub API Guide](https://developer.doit.com/docs/datahub-api) for more information.
-                            type:
-                              type: string
-                              description: The dimension type.
-                              x-type: string
-                              enum:
-                                - fixed
-                                - label
-                                - project_label
-                                - system_label
-                            value:
-                              oneOf:
-                                - type: string
-                                - type: boolean
-                              example: "production-project"
-                      time:
-                        type: string
-                        format: date-time
-                        description: The timestamp of the event in RFC3339 format.
-                        example: "2024-03-10T23:00:00Z"
-                      metrics:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            value:
-                              type: number
-                              format: double
-                              description: The value of the metric.
-                              example: 10.5
-                            type:
-                              type: string
-                              description: 'The type of the metric. If you
-                                choose "cost" or "usage", it will map to the
-                                basic "Cost" or "Usage" metric in Cloud
-                                Analytics reports. You can also use this field
-                                to define custom metric types, such as
-                                "working_hours", "ride", etc.'
-                              example: "cost"
+              $ref: '#/components/schemas/DatahubEventsRequestBody'
       responses:
         "201":
           description: OK - Ingestion succeeded.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Ingestion success"
+                $ref: '#/components/schemas/DatahubEvents201Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2191,44 +1899,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              description: Exactly one of "eventIds" or "time ranges" must be provided.
-              required:
-                - dataset
-              properties:
-                dataset:
-                  type: string
-                  description: The dataset (provider) of the events to be deleted.
-                  example: "Datadog"
-                eventIds:
-                  type: array
-                  items:
-                    type: string
-                    description: Id of the event to be deleted.
-                    example: "beb21d99-a8c9-4dc0-8a69-5d684cc41e6c"
-                startTime:
-                  type: string
-                  format: date-time
-                  description: The start timestamp of the time range in RFC3339 format.
-                  example: "2024-03-10T23:00:00Z"
-                endTime:
-                  type: string
-                  format: date-time
-                  description: The end timestamp of the time range in RFC3339 format.
-                  example: "2024-03-12T23:00:00Z"
-              minProperties: 1
-              maxProperties: 1
+              $ref: '#/components/schemas/DeleteDatahubEventsByFilterRequestBody'
       responses:
         "200":
           description: OK - Events deleted.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Delete success"
+                $ref: '#/components/schemas/DeleteDatahubEventsByFilter200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2277,20 +1955,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  invoices:
-                    type: array
-                    description: Array of Invoices
-                    items:
-                      $ref: "#/components/schemas/InvoiceListItem"
-                  pageToken:
-                    type: string
-                    description: Page token. Can be used to request the next page of results.
-                  rowCount:
-                    type: integer
-                    description: Invoice rows count
-                    format: int64
+                $ref: '#/components/schemas/ListInvoices200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2319,46 +1984,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Invoice number, identifying the invoice.
-                  invoiceDate:
-                    type: integer
-                    description: The time when this invoice was issued, in milliseconds since the epoch.
-                    format: int64
-                  platform:
-                    $ref: "#/components/schemas/InvoicePlatform"
-                  dueDate:
-                    type: integer
-                    description: The last day to pay the invoice, in milliseconds since the epoch
-                    format: int64
-                  status:
-                    type: string
-                    description: Status of the invoice
-                    enum:
-                      - OPEN
-                      - PAST DUE
-                      - PAID
-                  totalAmount:
-                    type: number
-                    description: Total invoiced amount
-                    format: double
-                  balanceAmount:
-                    type: number
-                    description: Invoice balance to be paid
-                    format: double
-                  currency:
-                    $ref: "#/components/schemas/Currency"
-                  url:
-                    type: string
-                    description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
-                  lineItems:
-                    type: array
-                    description: Invoice line items.
-                    items:
-                      $ref: "#/components/schemas/ListItem"
+                $ref: '#/components/schemas/GetInvoice200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2388,9 +2014,7 @@ paths:
         - $ref: "#/components/parameters/pageToken"
         - name: filter
           in: query
-          description: An expression for filtering the results. The syntax
-            is `key:[<value>]`. Multiple filters can be connected using a pipe
-            |. See [Filters](https://developer.doit.com/docs/filters).
+          description: An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
           schema:
             type: string
         - name: minCreationTime
@@ -2411,21 +2035,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  incidents:
-                    type: array
-                    description: Array of cloud incidents
-                    items:
-                      $ref: "#/components/schemas/CloudIncidentListItem"
-                  pageToken:
-                    type: string
-                    description: Page token, returned by a previous call, to request the next page
-                      of results
-                  rowCount:
-                    type: integer
-                    description: Cloud incidents rows count
-                    format: int64
+                $ref: '#/components/schemas/ListKnownIssues200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2454,45 +2064,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  createTime:
-                    type: integer
-                    description: The time when this cloud incident was created, in milliseconds since the epoch.
-                    format: int64
-                  description:
-                    type: string
-                    description: Detailed explanation on the cloud incident.
-                  id:
-                    type: string
-                    description: The unique id of a cloud incident
-                  platform:
-                    type: string
-                    description: The cloud platform.
-                    enum:
-                      - google-cloud
-                      - amazon-web-services
-                  product:
-                    type: string
-                    description: The name of the product affected by the cloud incident
-                  status:
-                    type: string
-                    description: The Status of the issue
-                    enum:
-                      - active
-                      - archived
-                  summary:
-                    type: string
-                    description: A summary of the cloud incident.
-                  symptoms:
-                    type: string
-                    description: Cloud incident symptoms, if available.
-                  title:
-                    type: string
-                    description: Cloud incident name provided by the cloud vendor.
-                  workaround:
-                    type: string
-                    description: Mitigation workaround for the cloud incident, if available.
+                $ref: '#/components/schemas/GetKnownIssue200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2514,12 +2086,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  accountManagers:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/AccountManagerListItem"
+                $ref: '#/components/schemas/ListAccountTeam200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2624,12 +2191,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  roles:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Role"
+                $ref: '#/components/schemas/ListRoles200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2675,12 +2237,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  platforms:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/PlatformAPI"
+                $ref: '#/components/schemas/ListPlatforms200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2705,12 +2262,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  products:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ProductAPI"
+                $ref: '#/components/schemas/ListProducts200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2723,8 +2275,7 @@ paths:
         - Assets
       summary: List assets
       description: >-
-        Returns a list of all available customer assets, such as Google Cloud billing
-        accounts, G Suite/Workspace subscriptions, etc.
+        Returns a list of all available customer assets, such as Google Cloud billing accounts, G Suite/Workspace subscriptions, etc.
 
         Assets are returned in reverse chronological order by default.
       operationId: idOfAssets
@@ -2753,20 +2304,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  assets:
-                    type: array
-                    description: Array of Assets
-                    items:
-                      $ref: "#/components/schemas/AssetItem"
-                  pageToken:
-                    type: string
-                    description: Page token. Can be used to request the next page of results.
-                  rowCount:
-                    type: integer
-                    description: Assets rows count
-                    format: int64
+                $ref: '#/components/schemas/IdOfAssets200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2793,11 +2331,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                quantity:
-                  type: integer
-                  format: int64
+              $ref: '#/components/schemas/IdOfAssetRequestBody'
         required: false
       responses:
         "200":
@@ -2805,14 +2339,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  properties:
-                    $ref: "#/components/schemas/AssetProperties"
-                  type:
-                    type: string
+                $ref: '#/components/schemas/IdOfAsset200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2852,16 +2379,12 @@ paths:
             type: string
         - name: minCreationTime
           in: query
-          description: Min value for tickets creation time, in milliseconds since the
-            POSIX epoch. If set, only tickets created after or at this timestamp
-            are returned.
+          description: Min value for tickets creation time, in milliseconds since the POSIX epoch. If set, only tickets created after or at this timestamp are returned.
           schema:
             type: string
         - name: maxCreationTime
           in: query
-          description: Max value for tickets creation time, in milliseconds since the
-            POSIX epoch. If set, only tickets created before or at this
-            timestamp are returned.
+          description: Max value for tickets creation time, in milliseconds since the POSIX epoch. If set, only tickets created before or at this timestamp are returned.
           schema:
             type: string
       responses:
@@ -2979,183 +2502,6 @@ components:
           type: string
         calendlyLink:
           type: string
-    UserListItem:
-      type: object
-      description: Summary information of a user.
-      properties:
-        id:
-          type: string
-          description: The unique ID of the user.
-        email:
-          type: string
-          description: The email address of the user.
-        displayName:
-          type: string
-          description: The user's display name.
-        firstName:
-          type: string
-          description: The user's first name.
-        lastName:
-          type: string
-          description: The user's last name.
-        jobFunction:
-          type: string
-          description: The user's job function.
-          enum:
-            - "Data Engineer / Data Analysts"
-            - "Executive Team"
-            - "Finance / Accounting"
-            - "Founder"
-            - "Legal / Purchasing"
-            - "Management"
-            - "Sales / Marketing"
-            - "Software / Ops Engineer"
-        phone:
-          type: string
-          description: The user's country code (e.g., +44).
-          pattern: '^\+[0-9]+$'
-        phoneExtension:
-          type: string
-          description: The user's phone extension.
-        language:
-          type: string
-          description: The user's preferred language.
-          enum:
-            - en
-            - ja
-        roleId:
-          type: string
-          description: The ID of the user's role.
-        organizationId:
-          type: string
-          description: The ID of the user's organization.
-        status:
-          type: string
-          description: The status of the user (active or invited).
-          enum:
-            - active
-            - invited
-    InviteUserRequest:
-      type: object
-      description: Request body to invite a new user to the organization.
-      required:
-        - email
-      properties:
-        email:
-          type: string
-          description: The email address of the user.
-          format: email
-        roleId:
-          type: string
-          description: The ID of the role to assign to the user.
-        organizationId:
-          type: string
-          description: The ID of the organization to assign the user to.
-    UpdateUserRequest:
-      type: object
-      description: Fields allowed when updating an existing user.
-      properties:
-        firstName:
-          type: string
-          description: The user's first name.
-        lastName:
-          type: string
-          description: The user's last name.
-        jobFunction:
-          type: string
-          description: The user's job function.
-          enum:
-            - "Data Engineer / Data Analysts"
-            - "Executive Team"
-            - "Finance / Accounting"
-            - "Founder"
-            - "Legal / Purchasing"
-            - "Management"
-            - "Sales / Marketing"
-            - "Software / Ops Engineer"
-        phone:
-          type: string
-          description: The user's country code (e.g., +44).
-          pattern: '^\+[0-9]+$'
-        phoneExtension:
-          type: string
-          description: The user's phone extension (8-15 digits).
-          pattern: "^[0-9]{8,15}$"
-        language:
-          type: string
-          description: The user's preferred language.
-          enum:
-            - en
-            - ja
-        roleId:
-          type: string
-          description: The ID of the role to assign to the user.
-    UpdateUserResponse:
-      type: object
-      description: Response of a user update operation.
-      properties:
-        message:
-          type: string
-          description: Success message
-        user:
-          $ref: "#/components/schemas/UpdatedUserBody"
-    UpdatedUserBody:
-      type: object
-      description: The updated user record.
-      properties:
-        id:
-          type: string
-          description: The unique ID of the user.
-        displayName:
-          type: string
-          description: The user's display name.
-        firstName:
-          type: string
-          description: The user's first name.
-        lastName:
-          type: string
-          description: The user's last name.
-        email:
-          type: string
-          description: The user's email address.
-        jobFunction:
-          type: string
-          description: The user's job function.
-          enum:
-            - "Data Engineer / Data Analysts"
-            - "Executive Team"
-            - "Finance / Accounting"
-            - "Founder"
-            - "Legal / Purchasing"
-            - "Management"
-            - "Sales / Marketing"
-            - "Software / Ops Engineer"
-        phone:
-          type: string
-          description: The user's country code (e.g., +44).
-          pattern: '^\+[0-9]+$'
-        phoneExtension:
-          type: string
-          description: The user's phone extension.
-        language:
-          type: string
-          description: The user's preferred language.
-          enum:
-            - en
-            - ja
-        roleId:
-          type: string
-          description: The ID of the user's role.
-        organizationId:
-          type: string
-          description: The ID of the user's organization.
-    DeleteUserResponse:
-      type: object
-      description: Response confirming user deletion.
-      properties:
-        message:
-          type: string
-          description: Success message
     AdvancedAnalysis:
       type: object
       description: Advanced analysis options. Each can be set independently.
@@ -3329,6 +2675,50 @@ components:
           description: List of emails to notify when the alert is triggered.
           items:
             type: string
+    Allocation:
+      type: object
+      description: Allocation object, including rules and metadata.
+      properties:
+        id:
+          type: string
+          description: Allocation ID.
+        name:
+          type: string
+          description: Allocation name.
+        description:
+          type: string
+          description: Allocation description.
+        type:
+          type: string
+          description: Type of allocation (preset or custom).
+        allocationType:
+          type: string
+          description: Composition type of allocation.
+          enum:
+            - single
+            - group
+        createTime:
+          type: integer
+          description: The time when the allocation was created (in UNIX timestamp).
+          format: int64
+        updateTime:
+          type: integer
+          description: Last time the allocation was modified (in UNIX timestamp).
+          format: int64
+        anomalyDetection:
+          type: boolean
+          description: Whether anomaly detection is enabled for this allocation.
+          nullable: true
+        rule:
+          $ref: "#/components/schemas/AllocationRule"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupAllocationRule"
+        unallocatedCosts:
+          type: string
+          description: Custom label for values that do not fit into allocation (required for group type allocation).
+          nullable: true
     AllocationComponent:
       required:
         - key
@@ -3365,64 +2755,29 @@ components:
             - ends_with
             - contains
             - regexp
-    NewAllocationResponse:
+    AllocationDeleteValidation:
       type: object
-      description: Response returned after creating a new allocation.
+      description: Details about why an allocation cannot be deleted.
       properties:
         id:
           type: string
-          description: ID of the new allocation.
+          description: Allocation ID.
         type:
           type: string
-          description: Type of the new allocation.
+          description: Type of allocation.
           enum:
             - single
             - group
-    CreateAllocationRequest:
-      required:
-        - name
-        - description
-      type: object
-      description: Request body for creating an allocation.
-      properties:
-        name:
+        error:
           type: string
-          description: Allocation name.
-        description:
-          type: string
-          description: Allocation description.
-        rule:
-          $ref: "#/components/schemas/AllocationRule"
-        rules:
-          type: array
-          items:
-            $ref: "#/components/schemas/GroupAllocationRule"
-        unallocatedCosts:
-          type: string
-          description: Custom label for values that do not fit into allocation (required for group type allocation).
-          nullable: true
-    UpdateAllocationRequest:
-      type: object
-      description: Request body for updating an allocation.
-      properties:
-        name:
-          type: string
-          description: Allocation name
-          nullable: true
-        description:
-          type: string
-          description: Allocation description
-          nullable: true
-        rule:
-          $ref: "#/components/schemas/AllocationRule"
-        rules:
-          type: array
-          items:
-            $ref: "#/components/schemas/GroupAllocationRule"
-        unallocatedCosts:
-          type: string
-          description: Custom label for values that do not fit into allocation (required for group type allocation).
-          nullable: true
+          description: Error message explaining why deletion failed.
+        resources:
+          type: object
+          description: Map of resources using this allocation, keyed by resource type.
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/ResourceReference"
     AllocationListItem:
       type: object
       description: Summary information for an allocation.
@@ -3476,29 +2831,42 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.).
           example: "A AND B"
-    AllocationDeleteValidation:
+    AnnotationListItem:
+      required:
+        - id
+        - content
+        - timestamp
       type: object
-      description: Details about why an allocation cannot be deleted.
+      description: Summary information about an annotation.
       properties:
         id:
           type: string
-          description: Allocation ID.
-        type:
+          description: The unique identifier of the annotation.
+        content:
           type: string
-          description: Type of allocation.
-          enum:
-            - single
-            - group
-        error:
+          description: The content of the annotation.
+        timestamp:
           type: string
-          description: Error message explaining why deletion failed.
-        resources:
-          type: object
-          description: Map of resources using this allocation, keyed by resource type.
-          additionalProperties:
-            type: array
-            items:
-              $ref: "#/components/schemas/ResourceReference"
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelInfo"
+          description: List of labels associated with the annotation.
+        createTime:
+          type: string
+          format: date-time
+          description: The creation time of the annotation.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the annotation was last updated.
     AnomaliesResponse:
       type: object
       description: List of detected cloud cost anomalies.
@@ -3575,21 +2943,6 @@ components:
         acknowledged:
           description: "Has the anomaly been acknowledged"
           type: boolean
-
-    AnomalySKU:
-      type: object
-      description: SKU-level information contributing to an anomaly.
-      properties:
-        cost:
-          type: number
-          format: double
-        name:
-          type: string
-    AnomalySKUArray:
-      type: array
-      description: Array of SKU entries contributing to an anomaly.
-      items:
-        $ref: "#/components/schemas/AnomalySKU"
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -3609,12 +2962,71 @@ components:
       description: Array of resources contributing to an anomaly.
       items:
         $ref: "#/components/schemas/AnomalyResource"
+    AnomalySKU:
+      type: object
+      description: SKU-level information contributing to an anomaly.
+      properties:
+        cost:
+          type: number
+          format: double
+        name:
+          type: string
+    AnomalySKUArray:
+      type: array
+      description: Array of SKU entries contributing to an anomaly.
+      items:
+        $ref: "#/components/schemas/AnomalySKU"
+    AssetItem:
+      type: object
+      description: Detailed information about a single asset.
+      properties:
+        createTime:
+          type: integer
+          description: The time when the asset was created, in milliseconds since the epoch.
+          format: int64
+        id:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: integer
+          format: int64
+        type:
+          type: string
+        url:
+          type: string
+    AssetProperties:
+      type: object
+      description: Additional properties associated with an asset.
+      properties:
+        customerDomain:
+          type: string
+        customerID:
+          type: string
+        reseller:
+          type: string
+        subscription:
+          $ref: "#/components/schemas/Subscription"
     AssetResponse:
       type: object
       description: Response returned after creating or updating an asset.
       properties:
         accountID:
           type: string
+    AssignObjectsToLabelRequest:
+      type: object
+      description: Request to assign or remove objects from a label.
+      properties:
+        add:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelAssignmentObject"
+          description: Array of objects to assign to the label.
+        remove:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelAssignmentObject"
+          description: Array of objects to unassign from the label.
     AttributionAPI:
       required:
         - name
@@ -3683,6 +3095,73 @@ components:
             type: string
             description: 'Value of the dimension. Examples: "152E-C115-5142", "google-cloud", "team-a"'
             example: "google-cloud"
+    AttributionDeleteValidation:
+      type: object
+      description: Validation result when deleting an attribution.
+      properties:
+        id:
+          type: string
+          description: ID of the attribution that could not be deleted.
+        error:
+          type: string
+          description: Error message explaining why the deletion failed.
+          nullable: true
+        resources:
+          $ref: "#/components/schemas/BlockingResources"
+      example:
+        id: "attribution-id"
+        error: null
+        resources:
+          budgets:
+            - id: "budget-id"
+              name: "Example Budget"
+    AttributionGroupAttributionItem:
+      type: object
+      description: Summary information about an attribution within an attribution group.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the attribution.
+        name:
+          type: string
+          description: The name of the attribution.
+        owner:
+          type: string
+          description: The email of the attribution owner.
+        description:
+          type: string
+          description: The description of the attribution.
+        type:
+          type: string
+          description: Type of attribution can be either preset or custom.
+        createTime:
+          type: integer
+          format: int64
+          description: The timestamp when the attribution was created.
+        updateTime:
+          type: integer
+          format: int64
+          description: The timestamp when the attribution was last updated.
+    AttributionGroupDeleteValidation:
+      type: object
+      description: Validation result when deleting an attribution group.
+      properties:
+        id:
+          type: string
+          description: ID of the attribution group that could not be deleted.
+        error:
+          type: string
+          description: Error message explaining why the deletion failed.
+          nullable: true
+        resources:
+          $ref: "#/components/schemas/BlockingResources"
+      example:
+        id: "attribution-group-id"
+        error: null
+        resources:
+          budgets:
+            - id: "budget-id"
+              name: "Example Budget"
     AttributionGroupGetExternal:
       type: object
       description: Attribution group returned by the API.
@@ -3714,33 +3193,37 @@ components:
           format: date-time
         type:
           $ref: "#/components/schemas/ObjectType"
-    AttributionGroupAttributionItem:
+    AttributionGroupListItem:
       type: object
-      description: Summary information about an attribution within an attribution group.
+      description: Summary information about an attribution group.
       properties:
         id:
           type: string
-          description: The unique identifier of the attribution.
+          description: The unique identifier of the attribution group.
         name:
           type: string
-          description: The name of the attribution.
+          description: The name of the attribution group.
         owner:
           type: string
-          description: The email of the attribution owner.
+          description: The email of the attribution group owner.
         description:
           type: string
-          description: The description of the attribution.
+          description: The description of the attribution group.
         type:
           type: string
-          description: Type of attribution can be either preset or custom.
+          description: The type of the attribution group.
+          enum:
+            - custom
+            - preset
+            - managed
         createTime:
           type: integer
           format: int64
-          description: The timestamp when the attribution was created.
+          description: The timestamp when the attribution group was created (Unix milliseconds).
         updateTime:
           type: integer
           format: int64
-          description: The timestamp when the attribution was last updated.
+          description: The timestamp when the attribution group was last updated (Unix milliseconds).
     AttributionGroupRequest:
       required:
         - attributions
@@ -3805,275 +3288,6 @@ components:
           type: integer
           description: AttributionGroup rows count.
           format: int64
-    AttributionGroupListItem:
-      type: object
-      description: Summary information about an attribution group.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the attribution group.
-        name:
-          type: string
-          description: The name of the attribution group.
-        owner:
-          type: string
-          description: The email of the attribution group owner.
-        description:
-          type: string
-          description: The description of the attribution group.
-        type:
-          type: string
-          description: The type of the attribution group.
-          enum:
-            - custom
-            - preset
-            - managed
-        createTime:
-          type: integer
-          format: int64
-          description: The timestamp when the attribution group was created (Unix milliseconds).
-        updateTime:
-          type: integer
-          format: int64
-          description: The timestamp when the attribution group was last updated (Unix milliseconds).
-    LabelInfo:
-      required:
-        - id
-        - name
-      type: object
-      description: Metadata for a label.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the label.
-        name:
-          type: string
-          description: The name of the label.
-    AnnotationListItem:
-      required:
-        - id
-        - content
-        - timestamp
-      type: object
-      description: Summary information about an annotation.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the annotation.
-        content:
-          type: string
-          description: The content of the annotation.
-        timestamp:
-          type: string
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type: array
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type: array
-          items:
-            $ref: "#/components/schemas/LabelInfo"
-          description: List of labels associated with the annotation.
-        createTime:
-          type: string
-          format: date-time
-          description: The creation time of the annotation.
-        updateTime:
-          type: string
-          format: date-time
-          description: The time when the annotation was last updated.
-    CreateAnnotationRequest:
-      required:
-        - content
-        - timestamp
-      type: object
-      description: Request body to create an annotation.
-      properties:
-        content:
-          type: string
-          description: The content of the annotation.
-        timestamp:
-          type: string
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type: array
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type: array
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
-    UpdateAnnotationRequest:
-      type: object
-      description: Request body for updating an annotation.
-      properties:
-        content:
-          type: string
-          description: The content of the annotation.
-          nullable: true
-        timestamp:
-          type: string
-          format: date-time
-          description: The date associated with the annotation.
-          nullable: true
-        reports:
-          type: array
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-          nullable: true
-        labels:
-          type: array
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
-          nullable: true
-    LabelListItem:
-      required:
-        - id
-        - name
-        - color
-      type: object
-      description: Label metadata.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the label.
-        name:
-          type: string
-          description: The name of the label.
-        color:
-          type: string
-          enum:
-            - blue
-            - skyBlue
-            - teal
-            - mint
-            - lime
-            - softYellow
-            - apricot
-            - lavender
-            - purple
-            - rosePink
-            - slateGrey
-          description: The color of the label.
-        type:
-          type: string
-          enum:
-            - custom
-            - preset
-          description: The type of the label (custom or preset).
-        createTime:
-          type: string
-          format: date-time
-          description: The time when the label was created.
-        updateTime:
-          type: string
-          format: date-time
-          description: The time when the label was last updated.
-    LabelList:
-      type: object
-      description: Paged list of labels.
-      properties:
-        pageToken:
-          type: string
-          description: Page token, returned by a previous call, to request the next page of results.
-        rowCount:
-          type: integer
-          description: Total number of labels in the result set.
-        labels:
-          type: array
-          items:
-            $ref: "#/components/schemas/LabelListItem"
-    CreateLabelRequest:
-      required:
-        - name
-        - color
-      type: object
-      description: Request body for creating a label.
-      properties:
-        name:
-          type: string
-          description: The name of the label.
-        color:
-          type: string
-          enum:
-            - blue
-            - skyBlue
-            - teal
-            - mint
-            - lime
-            - softYellow
-            - apricot
-            - lavender
-            - purple
-            - rosePink
-            - slateGrey
-          description: The color of the label.
-    UpdateLabelRequest:
-      type: object
-      description: Request body for updating a label.
-      properties:
-        name:
-          type: string
-          description: The name of the label.
-          nullable: true
-        color:
-          type: string
-          enum:
-            - blue
-            - skyBlue
-            - teal
-            - mint
-            - lime
-            - softYellow
-            - apricot
-            - lavender
-            - purple
-            - rosePink
-            - slateGrey
-          description: The color of the label.
-          nullable: true
-    AssignObjectsToLabelRequest:
-      type: object
-      description: Request to assign or remove objects from a label.
-      properties:
-        add:
-          type: array
-          items:
-            $ref: "#/components/schemas/LabelAssignmentObject"
-          description: Array of objects to assign to the label.
-        remove:
-          type: array
-          items:
-            $ref: "#/components/schemas/LabelAssignmentObject"
-          description: Array of objects to unassign from the label.
-    LabelAssignmentObject:
-      required:
-        - objectId
-        - objectType
-      type: object
-      description: Object identifier and type used for label assignments.
-      properties:
-        objectId:
-          type: string
-          description: The ID of the object to assign/unassign.
-        objectType:
-          type: string
-          enum:
-            - alert
-            - allocation
-            - budget
-            - metric
-            - report
-            - annotation
-          description: The type of the object.
     AttributionListItem:
       required:
         - name
@@ -4107,6 +3321,39 @@ components:
           type: integer
           description: Last time the attribution was modified (in unix milliseconds).
           format: int64
+    BlockingResources:
+      type: object
+      description: Map of resources that block deletion operations.
+      properties:
+        alerts:
+          type: array
+          description: List of alerts using this resource.
+          items:
+            $ref: "#/components/schemas/ResourceReference"
+        attributionGroups:
+          type: array
+          description: List of attribution groups using this resource (only applicable for attribution deletion).
+          items:
+            $ref: "#/components/schemas/ResourceReference"
+        attributions:
+          type: array
+          description: List of attributions using this resource (only applicable for attribution deletion).
+          items:
+            $ref: "#/components/schemas/ResourceReference"
+        budgets:
+          type: array
+          description: List of budgets using this resource.
+          items:
+            $ref: "#/components/schemas/ResourceReference"
+        reports:
+          type: array
+          description: List of reports using this resource.
+          items:
+            $ref: "#/components/schemas/ResourceReference"
+      example:
+        budgets:
+          - id: "budget-id"
+            name: "Example Budget"
     Budget:
       required:
         - currency
@@ -4194,15 +3441,13 @@ components:
           format: int64
         timeInterval:
           type: string
-          description: 'Recurring budget interval can be one of: ["day", "week", "month",
-            "quarter", "year"]'
+          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]'
         type:
           type: string
           description: 'budget type can be one of: ["fixed", "recurring"]'
         usePrevSpend:
           type: boolean
-          description: Use the last period's spend as the target amount for recurring
-            budgets.
+          description: Use the last period's spend as the target amount for recurring budgets.
           default: false
     BudgetAPI:
       required:
@@ -4320,58 +3565,6 @@ components:
           type: boolean
           description: Use the last period's spend as the target amount for recurring budgets.
           default: false
-    BudgetListItem:
-      type: object
-      description: Summary information for a budget.
-      properties:
-        alertThresholds:
-          type: array
-          items:
-            $ref: "#/components/schemas/AlertThreshold"
-        amount:
-          type: number
-          format: double
-        budgetName:
-          type: string
-        createTime:
-          type: integer
-          format: int64
-        currency:
-          type: string
-        currentUtilization:
-          type: number
-          format: double
-        endPeriod:
-          type: integer
-          format: int64
-        forecastedUtilizationDate:
-          type: integer
-          format: int64
-        id:
-          type: string
-        owner:
-          type: string
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
-        startPeriod:
-          type: integer
-          format: int64
-        timeInterval:
-          type: string
-        updateTime:
-          type: integer
-          format: int64
-        url:
-          type: string
     BudgetCreateUpdateAlert:
       type: object
       description: Threshold settings for budget alerts.
@@ -4465,16 +3658,96 @@ components:
           format: int64
         timeInterval:
           type: string
-          description: 'Recurring budget interval can be one of: ["day", "week", "month",
-            "quarter", "year"]'
+          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]'
         type:
           type: string
           description: 'budget type can be one of: ["fixed", "recurring"]'
         usePrevSpend:
           type: boolean
-          description: Use the last period's spend as the target amount for recurring
-            budgets
+          description: Use the last period's spend as the target amount for recurring budgets
           default: false
+    BudgetListItem:
+      type: object
+      description: Summary information for a budget.
+      properties:
+        alertThresholds:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertThreshold"
+        amount:
+          type: number
+          format: double
+        budgetName:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        currentUtilization:
+          type: number
+          format: double
+        endPeriod:
+          type: integer
+          format: int64
+        forecastedUtilizationDate:
+          type: integer
+          format: int64
+        id:
+          type: string
+        owner:
+          type: string
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: "#/components/schemas/ExternalConfigFilter"
+        startPeriod:
+          type: integer
+          format: int64
+        timeInterval:
+          type: string
+        updateTime:
+          type: integer
+          format: int64
+        url:
+          type: string
+    CloudIncidentListItem:
+      type: object
+      description: Summary information for a cloud incident.
+      properties:
+        createTime:
+          type: integer
+          description: The creation time of this cloud incident, in milliseconds since the epoch.
+          format: int64
+        id:
+          type: string
+          description: The unique cloud incident identifier.
+        platform:
+          type: string
+          description: The Cloud Platform.
+          enum:
+            - google-cloud
+            - amazon-web-services
+            - microsoft-azure
+        product:
+          type: string
+          description: The name of the product affected by the cloud incident
+        status:
+          type: string
+          description: The Status of the issue
+          enum:
+            - active
+            - archived
+        title:
+          type: string
+          description: Cloud incident name as provided by the cloud platform vendor
     Collaborator:
       type: object
       description: A user or identity that has access to a resource.
@@ -4499,11 +3772,140 @@ components:
           description: The root collection.
         Path:
           type: string
-          description: 'The full resource path of the collection:
-            "projects/P/databases/D/documents..."'
+          description: 'The full resource path of the collection: "projects/P/databases/D/documents..."'
     Condition:
       type: string
       description: Condition key or expression used in alert configurations.
+    CreateAllocationRequest:
+      required:
+        - name
+        - description
+      type: object
+      description: Request body for creating an allocation.
+      properties:
+        name:
+          type: string
+          description: Allocation name.
+        description:
+          type: string
+          description: Allocation description.
+        rule:
+          $ref: "#/components/schemas/AllocationRule"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupAllocationRule"
+        unallocatedCosts:
+          type: string
+          description: Custom label for values that do not fit into allocation (required for group type allocation).
+          nullable: true
+    CreateAnnotationRequest:
+      required:
+        - content
+        - timestamp
+      type: object
+      description: Request body to create an annotation.
+      properties:
+        content:
+          type: string
+          description: The content of the annotation.
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type: array
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
+    CreateAttributionRequestBody:
+      required:
+        - components
+        - name
+      type: object
+      properties:
+        components:
+          type: array
+          description: List of Attribution filters
+          example:
+            - key: cloud_provider
+              type: fixed
+              values:
+                - amazon-web-services
+              inverse_selection: false
+              regexp:
+              include_null: false
+            - key: cost_type
+              type: fixed
+              values:
+                - Fee
+                - RIFee
+              inverse_selection: false
+              regexp:
+              include_null: false
+          items:
+            $ref: "#/components/schemas/AttributionComponent"
+        description:
+          type: string
+          description: Description of the attribution
+          example: This is an example attribution
+        formula:
+          type: string
+          description: Attribution formula (A is the first component, B is the second one, and so on.)
+          example: A AND B
+        name:
+          type: string
+          description: Name of the attribution
+          example: An example attribution
+    CreateLabelRequest:
+      required:
+        - name
+        - color
+      type: object
+      description: Request body for creating a label.
+      properties:
+        name:
+          type: string
+          description: The name of the label.
+        color:
+          type: string
+          enum:
+            - blue
+            - skyBlue
+            - teal
+            - mint
+            - lime
+            - softYellow
+            - apricot
+            - lavender
+            - purple
+            - rosePink
+            - slateGrey
+          description: The color of the label.
+    CreateReport201Response:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the new report.
+    CreateReportRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Report name.
+          example: A test report by API
+        description:
+          type: string
+          description: Report description.
+          example: Cost breakdown by service in the last 3 months
+        config:
+          $ref: "#/components/schemas/ExternalConfig"
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -4530,6 +3932,144 @@ components:
         - AED
         - THB
         - COP
+    DatahubEvents201Response:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Ingestion success"
+    DatahubEventsCSVFile201Response:
+      type: object
+      properties:
+        batch:
+          type: string
+          description: batch id, generated during ingestion
+          example: "your_file.csv.gz_1730972725212"
+        ingestedRows:
+          type: integer
+          description: the number of events that have been accepted for processing
+          example: 15
+    DatahubEventsCSVFileRequestBody:
+      type: object
+      properties:
+        provider:
+          type: string
+          description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
+          example: "Datadog"
+        file:
+          type: string
+          format: binary
+          description: The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
+    DatahubEventsRequestBody:
+      type: object
+      properties:
+        events:
+          type: array
+          minItems: 1
+          maxItems: 50000
+          items:
+            $ref: '#/components/schemas/DatahubEventsRequestBodyEventsItem'
+    DatahubEventsRequestBodyEventsItem:
+      type: object
+      required:
+        - provider
+        - time
+      properties:
+        provider:
+          type: string
+          description: "The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-)."
+          example: "Datadog"
+        id:
+          type: string
+          description: The event id. Must be unique within the dataset. If not set, a UUIDv4 will be generated at ingestion time.
+          example: "beb21d99-a8c9-4dc0-8a69-5d684cc41e6c"
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatahubEventsRequestBodyEventsItemDimensionsItem'
+        time:
+          type: string
+          format: date-time
+          description: The timestamp of the event in RFC3339 format.
+          example: "2024-03-10T23:00:00Z"
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatahubEventsRequestBodyEventsItemMetricsItem'
+    DatahubEventsRequestBodyEventsItemDimensionsItem:
+      type: object
+      properties:
+        key:
+          type: string
+          example: "project_id"
+          description: If the type is `fixed`, the key must be a valid fixed value. See the [DataHub API Guide](https://developer.doit.com/docs/datahub-api) for more information.
+        type:
+          type: string
+          description: The dimension type.
+          x-type: string
+          enum:
+            - fixed
+            - label
+            - project_label
+            - system_label
+        value:
+          oneOf:
+            - type: string
+            - type: boolean
+          example: "production-project"
+    DatahubEventsRequestBodyEventsItemMetricsItem:
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+          description: The value of the metric.
+          example: 10.5
+        type:
+          type: string
+          description: 'The type of the metric. If you choose "cost" or "usage", it will map to the basic "Cost" or "Usage" metric in Cloud Analytics reports. You can also use this field to define custom metric types, such as "working_hours", "ride", etc.'
+          example: "cost"
+    DeleteDatahubEventsByFilter200Response:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Delete success"
+    DeleteDatahubEventsByFilterRequestBody:
+      type: object
+      description: Exactly one of "eventIds" or "time ranges" must be provided.
+      required:
+        - dataset
+      properties:
+        dataset:
+          type: string
+          description: The dataset (provider) of the events to be deleted.
+          example: "Datadog"
+        eventIds:
+          type: array
+          items:
+            type: string
+            description: Id of the event to be deleted.
+            example: "beb21d99-a8c9-4dc0-8a69-5d684cc41e6c"
+        startTime:
+          type: string
+          format: date-time
+          description: The start timestamp of the time range in RFC3339 format.
+          example: "2024-03-10T23:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          description: The end timestamp of the time range in RFC3339 format.
+          example: "2024-03-12T23:00:00Z"
+      minProperties: 1
+      maxProperties: 1
+    DeleteUserResponse:
+      type: object
+      description: Response confirming user deletion.
+      properties:
+        message:
+          type: string
+          description: Success message
     Dimension:
       description: Definition of a report dimension.
       type: object
@@ -4542,6 +4082,18 @@ components:
       example:
         id: sku_description
         type: fixed
+    DimensionExternalAPIListItem:
+      type: object
+      description: Summary information about a dimension.
+      properties:
+        id:
+          type: string
+          description: The identifier of the dimension.
+        label:
+          type: string
+          description: The label of the dimension.
+        type:
+          $ref: "#/components/schemas/DimensionsTypes"
     DimensionsExternalAPIGetResponse:
       type: object
       description: Dimension metadata returned by the API.
@@ -4556,7 +4108,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ExternalAPIGetValue"
-    DimensionsExternalAPIListResponse:
+    DimensionsExternalAPIList:
       type: object
       description: Paged list of available dimensions.
       properties:
@@ -4570,18 +4122,6 @@ components:
         rowCount:
           type: integer
           format: int64
-    DimensionExternalAPIListItem:
-      type: object
-      description: Summary information about a dimension.
-      properties:
-        id:
-          type: string
-          description: The identifier of the dimension.
-        label:
-          type: string
-          description: The label of the dimension.
-        type:
-          $ref: "#/components/schemas/DimensionsTypes"
     DimensionsTypes:
       description: Enumeration of supported dimension/filter types.
       type: string
@@ -4609,8 +4149,7 @@ components:
         Path:
           type: string
           description: >-
-            The full resource path of the document. A document "doc-1" in
-            collection "coll-1" would be: "projects/P/databases/D/documents/coll-1/doc-1".
+            The full resource path of the document. A document "doc-1" in collection "coll-1" would be: "projects/P/databases/D/documents/coll-1/doc-1".
     Error:
       type: object
       description: Standard error response structure.
@@ -4768,18 +4307,8 @@ components:
             $ref: "#/components/schemas/ExternalSplit"
         customTimeRange:
           description: Required when the time range is set to "custom".
-          type: object
-          properties:
-            from:
-              type: string
-              format: date-time
-              description: The start timestamp of the time range in RFC3339 format.
-              example: "2024-03-10T23:00:00Z"
-            to:
-              type: string
-              format: date-time
-              description: The end timestamp of the time range in RFC3339 format.
-              example: "2024-03-12T23:00:00Z"
+          allOf:
+            - $ref: '#/components/schemas/ExternalConfigCustomTimeRange'
       example:
         metrics:
           - type: basic
@@ -4843,6 +4372,20 @@ components:
         sortGroups: a_to_z
         sortDimensions: a_to_z
         dataSource: billing
+    ExternalConfigCustomTimeRange:
+      description: Required when the time range is set to "custom".
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+          description: The start timestamp of the time range in RFC3339 format.
+          example: "2024-03-10T23:00:00Z"
+        to:
+          type: string
+          format: date-time
+          description: The end timestamp of the time range in RFC3339 format.
+          example: "2024-03-12T23:00:00Z"
     ExternalConfigFilter:
       description: |-
         To include or exclude certain values.
@@ -4925,8 +4468,7 @@ components:
         value:
           type: string
           description: >-
-            For basic metrics, the value can be one of: ["cost", "usage",
-            "savings"]
+            For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 
             If using custom metrics, the value must refer to an existing custom ID.
       example:
@@ -5070,8 +4612,7 @@ components:
             - gke_label
         value:
           type: number
-          description: Percent of the target, represented in float format. E.g. 30% is
-            0.3. Required only if the Split Mode is custom.
+          description: Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
           format: double
     ExternalUpdateReport:
       type: object
@@ -5095,50 +4636,211 @@ components:
           timeInterval: week
         description: An update via API
         name: A new name
-    Allocation:
+    Filter:
+      type: string
+      description: >-
+        An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+    FindCloudDiagramsRequest:
       type: object
-      description: Allocation object, including rules and metadata.
+      required:
+        - resources
+      description: Request body for locating cloud diagrams for given resource IDs.
+      properties:
+        resources:
+          type: array
+          description: Resource IDs to find diagrams for.
+          items:
+            type: string
+    FindCloudDiagramsResponse:
+      type: array
+      description: List of diagram URLs matching the criteria.
+      items:
+        $ref: '#/components/schemas/FindCloudDiagramsResponseItem'
+    FindCloudDiagramsResponseItem:
+      type: object
+      required:
+        - diagramUrl
+        - imageUrl
+      properties:
+        diagramUrl:
+          type: string
+          format: uri
+          description: URL to the diagram viewer.
+        imageUrl:
+          type: string
+          format: uri
+          description: URL to the diagram image.
+    GetAnomaly200Response:
+      required:
+        - attribution
+        - billingAccount
+        - costOfAnomaly
+        - platform
+        - scope
+        - serviceName
+        - severityLevel
+        - startTime
+        - timeFrame
+        - top3SKUs
+      type: object
+      properties:
+        attribution:
+          type: string
+          description: Attribution ID
+        billingAccount:
+          type: string
+          description: Billing account ID
+        costOfAnomaly:
+          type: number
+          description: The difference between the actual cost and the maximum cost in the normal range.
+          format: double
+        platform:
+          type: string
+          description: Cloud Provider name
+        scope:
+          type: string
+          description: "Scope: Project or Account"
+        serviceName:
+          type: string
+          description: Service name
+        severityLevel:
+          type: string
+          description: "Severity level: Information, Warning or Critical"
+        startTime:
+          type: integer
+          description: Usage start time of the anomaly
+          format: int64
+        endTime:
+          type: integer
+          nullable: true
+          description: End of the anomaly
+        timeFrame:
+          type: string
+          description: "Timeframe: Daily or Hourly"
+        top3SKUs:
+          $ref: "#/components/schemas/AnomalySKUArray"
+        resourceData:
+          $ref: "#/components/schemas/AnomalyResourceArray"
+        status:
+          type: string
+          nullable: true
+          enum:
+            - active
+            - inactive
+        acknowledged:
+          description: "Has the anomaly been acknowledged"
+          type: boolean
+    GetAttribution200Response:
+      type: object
+      properties:
+        Attribution:
+          $ref: "#/components/schemas/AttributionAPI"
+    GetInvoice200Response:
+      type: object
       properties:
         id:
           type: string
-          description: Allocation ID.
-        name:
+          description: Invoice number, identifying the invoice.
+        invoiceDate:
+          type: integer
+          description: The time when this invoice was issued, in milliseconds since the epoch.
+          format: int64
+        platform:
+          $ref: "#/components/schemas/InvoicePlatform"
+        dueDate:
+          type: integer
+          description: The last day to pay the invoice, in milliseconds since the epoch
+          format: int64
+        status:
           type: string
-          description: Allocation name.
-        description:
-          type: string
-          description: Allocation description.
-        type:
-          type: string
-          description: Type of allocation (preset or custom).
-        allocationType:
-          type: string
-          description: Composition type of allocation.
+          description: Status of the invoice
           enum:
-            - single
-            - group
+            - OPEN
+            - PAST DUE
+            - PAID
+        totalAmount:
+          type: number
+          description: Total invoiced amount
+          format: double
+        balanceAmount:
+          type: number
+          description: Invoice balance to be paid
+          format: double
+        currency:
+          $ref: "#/components/schemas/Currency"
+        url:
+          type: string
+          description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+        lineItems:
+          type: array
+          description: Invoice line items.
+          items:
+            $ref: "#/components/schemas/ListItem"
+    GetKnownIssue200Response:
+      type: object
+      properties:
         createTime:
           type: integer
-          description: The time when the allocation was created (in UNIX timestamp).
+          description: The time when this cloud incident was created, in milliseconds since the epoch.
           format: int64
-        updateTime:
-          type: integer
-          description: Last time the allocation was modified (in UNIX timestamp).
-          format: int64
-        anomalyDetection:
-          type: boolean
-          description: Whether anomaly detection is enabled for this allocation.
-          nullable: true
-        rule:
-          $ref: "#/components/schemas/AllocationRule"
-        rules:
-          type: array
-          items:
-            $ref: "#/components/schemas/GroupAllocationRule"
-        unallocatedCosts:
+        description:
           type: string
-          description: Custom label for values that do not fit into allocation (required for group type allocation).
-          nullable: true
+          description: Detailed explanation on the cloud incident.
+        id:
+          type: string
+          description: The unique id of a cloud incident
+        platform:
+          type: string
+          description: The cloud platform.
+          enum:
+            - google-cloud
+            - amazon-web-services
+        product:
+          type: string
+          description: The name of the product affected by the cloud incident
+        status:
+          type: string
+          description: The Status of the issue
+          enum:
+            - active
+            - archived
+        summary:
+          type: string
+          description: A summary of the cloud incident.
+        symptoms:
+          type: string
+          description: Cloud incident symptoms, if available.
+        title:
+          type: string
+          description: Cloud incident name provided by the cloud vendor.
+        workaround:
+          type: string
+          description: Mitigation workaround for the cloud incident, if available.
+    GetReport200Response:
+      allOf:
+        - $ref: "#/components/schemas/Report"
+        - $ref: "#/components/schemas/RunReportResult"
+    Group:
+      description: The dimension that defines a row in the report.
+      type: object
+      properties:
+        id:
+          type: string
+          description: Dimension ID.
+          example: service_description
+        limit:
+          $ref: "#/components/schemas/Limit"
+        type:
+          $ref: "#/components/schemas/DimensionsTypes"
+      example:
+        id: service_description
+        type: fixed
+        limit:
+          value: 3
+          sort: desc
+          metric:
+            type: basic
+            value: cost
     GroupAllocationRule:
       required:
         - action
@@ -5171,77 +4873,81 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.)
           example: "A AND B"
-    ResourcePermissionsResponse:
-      type: object
-      description: Permissions and metadata for a resource returned by the sharing API.
-      properties:
-        id:
-          type: string
-          description: Resource ID.
-        name:
-          type: string
-          description: Resource name.
-        description:
-          type: string
-          description: Resource description.
-        createTime:
-          type: integer
-          description: The time when this resource was created, in milliseconds since the epoch.
-          format: int64
-        updateTime:
-          type: integer
-          description: The time when this resource was last updated, in milliseconds since the epoch.
-          format: int64
-        permissions:
-          type: array
-          items:
-            $ref: "#/components/schemas/ResourcePermission"
-        public:
-          type: string
-          description: Type of permissions users in the entire organization have for this resource
-          enum:
-            - editor
-            - viewer
-          nullable: true
-    ResourcePermission:
-      type: object
-      description: A single user's permission entry for a resource.
-      properties:
-        user:
-          type: string
-          description: The email address of the user to whom the role is assigned.
-        role:
-          type: string
-          description: The role assigned to the user, defining their level of access to the resource.
-          enum:
-            - owner
-            - editor
-            - viewer
-    Filter:
-      type: string
-      description: >-
-        An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
-    Group:
-      description: The dimension that defines a row in the report.
+    IdOfAsset200Response:
       type: object
       properties:
         id:
           type: string
-          description: Dimension ID.
-          example: service_description
-        limit:
-          $ref: "#/components/schemas/Limit"
+        properties:
+          $ref: "#/components/schemas/AssetProperties"
         type:
-          $ref: "#/components/schemas/DimensionsTypes"
-      example:
-        id: service_description
-        type: fixed
-        limit:
-          value: 3
-          sort: desc
-          metric:
-            type: basic
-            value: cost
+          type: string
+    IdOfAssetRequestBody:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          format: int64
+    IdOfAssets200Response:
+      type: object
+      properties:
+        assets:
+          type: array
+          description: Array of Assets
+          items:
+            $ref: "#/components/schemas/AssetItem"
+        pageToken:
+          type: string
+          description: Page token. Can be used to request the next page of results.
+        rowCount:
+          type: integer
+          description: Assets rows count
+          format: int64
+    InviteResponse:
+      type: object
+      description: Response returned after creating a user invitation.
+      properties:
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: "#/components/schemas/InvitedUserBody"
+    InviteUserRequest:
+      type: object
+      description: Request body to invite a new user to the organization.
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          description: The email address of the user.
+          format: email
+        roleId:
+          type: string
+          description: The ID of the role to assign to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization to assign the user to.
+    InvitedUserBody:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique ID of the invited user.
+        email:
+          type: string
+          description: The email address of the invited user.
+        roleId:
+          type: string
+          description: The ID of the role assigned to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization assigned to the user.
+        status:
+          type: string
+          description: The status of the user (invited)
+          enum:
+            - invited
     InvoiceListItem:
       type: object
       description: Summary information about an invoice.
@@ -5251,8 +4957,7 @@ components:
           description: Invoice number, identifying the invoice.
         invoiceDate:
           type: integer
-          description: The time when this invoice was issued, in milliseconds since the
-            epoch.
+          description: The time when this invoice was issued, in milliseconds since the epoch.
           format: int64
         platform:
           $ref: "#/components/schemas/InvoicePlatform"
@@ -5293,37 +4998,96 @@ components:
         - looker
         - navigator
         - solve
-    CloudIncidentListItem:
+    LabelAssignmentObject:
+      required:
+        - objectId
+        - objectType
       type: object
-      description: Summary information for a cloud incident.
+      description: Object identifier and type used for label assignments.
       properties:
-        createTime:
-          type: integer
-          description: The creation time of this cloud incident, in milliseconds since
-            the epoch.
-          format: int64
+        objectId:
+          type: string
+          description: The ID of the object to assign/unassign.
+        objectType:
+          type: string
+          enum:
+            - alert
+            - allocation
+            - budget
+            - metric
+            - report
+            - annotation
+          description: The type of the object.
+    LabelInfo:
+      required:
+        - id
+        - name
+      type: object
+      description: Metadata for a label.
+      properties:
         id:
           type: string
-          description: The unique cloud incident identifier.
-        platform:
+          description: The unique identifier of the label.
+        name:
           type: string
-          description: The Cloud Platform.
+          description: The name of the label.
+    LabelList:
+      type: object
+      description: Paged list of labels.
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Total number of labels in the result set.
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelListItem"
+    LabelListItem:
+      required:
+        - id
+        - name
+        - color
+      type: object
+      description: Label metadata.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label.
+        name:
+          type: string
+          description: The name of the label.
+        color:
+          type: string
           enum:
-            - google-cloud
-            - amazon-web-services
-            - microsoft-azure
-        product:
+            - blue
+            - skyBlue
+            - teal
+            - mint
+            - lime
+            - softYellow
+            - apricot
+            - lavender
+            - purple
+            - rosePink
+            - slateGrey
+          description: The color of the label.
+        type:
           type: string
-          description: The name of the product affected by the cloud incident
-        status:
-          type: string
-          description: The Status of the issue
           enum:
-            - active
-            - archived
-        title:
+            - custom
+            - preset
+          description: The type of the label (custom or preset).
+        createTime:
           type: string
-          description: Cloud incident name as provided by the cloud platform vendor
+          format: date-time
+          description: The time when the label was created.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the label was last updated.
     Limit:
       type: object
       description: |-
@@ -5348,6 +5112,74 @@ components:
         metric:
           type: basic
           value: cost
+    ListAccountTeam200Response:
+      type: object
+      properties:
+        accountManagers:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccountManagerListItem"
+    ListAllocations200Response:
+      type: object
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Total number of allocations in the result set.
+        allocations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AllocationListItem"
+    ListAnnotations200Response:
+      type: object
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results
+        rowCount:
+          type: integer
+          description: Total number of annotations in the result set
+        annotations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnnotationListItem"
+    ListAttributions200Response:
+      type: object
+      properties:
+        Attributions:
+          $ref: "#/components/schemas/AttributionListItem"
+    ListBudgets200Response:
+      type: object
+      properties:
+        budgets:
+          type: array
+          description: Array of Budgets
+          items:
+            $ref: "#/components/schemas/BudgetListItem"
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results
+        rowCount:
+          type: integer
+          description: Budgets rows count
+          format: int64
+    ListInvoices200Response:
+      type: object
+      properties:
+        invoices:
+          type: array
+          description: Array of Invoices
+          items:
+            $ref: "#/components/schemas/InvoiceListItem"
+        pageToken:
+          type: string
+          description: Page token. Can be used to request the next page of results.
+        rowCount:
+          type: integer
+          description: Invoice rows count
+          format: int64
     ListItem:
       type: object
       description: Invoice line item.
@@ -5366,6 +5198,55 @@ components:
           format: double
         type:
           type: string
+    ListKnownIssues200Response:
+      type: object
+      properties:
+        incidents:
+          type: array
+          description: Array of cloud incidents
+          items:
+            $ref: "#/components/schemas/CloudIncidentListItem"
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results
+        rowCount:
+          type: integer
+          description: Cloud incidents rows count
+          format: int64
+    ListPlatforms200Response:
+      type: object
+      properties:
+        platforms:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformAPI"
+    ListProducts200Response:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductAPI"
+    ListRoles200Response:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+    ListUsersResponseBody:
+      type: object
+      description: Response body for the list users endpoint.
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserListItem"
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 5
     MetricConfig:
       type: object
       description: Define how metrics are selected and filtered in reports.
@@ -5386,9 +5267,32 @@ components:
     MetricType:
       type: string
       description: Identifier for metric type (e.g., basic, custom, extended).
+    NewAllocationResponse:
+      type: object
+      description: Response returned after creating a new allocation.
+      properties:
+        id:
+          type: string
+          description: ID of the new allocation.
+        type:
+          type: string
+          description: Type of the new allocation.
+          enum:
+            - single
+            - group
     ObjectType:
       type: string
       description: Generic object type identifier.
+    Organization:
+      type: object
+      description: Organization metadata returned by the API.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the organization
+        name:
+          type: string
+          description: The name of the organization
     PlatformAPI:
       type: object
       description: Platform metadata used by product listing endpoints.
@@ -5406,6 +5310,17 @@ components:
         id:
           type: string
         platform:
+          type: string
+    QueryRequestBody:
+      type: object
+      properties:
+        config:
+          $ref: "#/components/schemas/ExternalConfig"
+    RenewalSettings:
+      type: object
+      description: Settings that control subscription renewal behavior.
+      properties:
+        renewalType:
           type: string
     Report:
       type: object
@@ -5431,8 +5346,7 @@ components:
           format: int64
         updateTime:
           type: integer
-          description: The time when this report was last updated, in milliseconds since
-            the epoch.
+          description: The time when this report was last updated, in milliseconds since the epoch.
           format: int64
         urlUI:
           type: string
@@ -5453,48 +5367,130 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Report"
+    ResourcePermission:
+      type: object
+      description: A single user's permission entry for a resource.
+      properties:
+        user:
+          type: string
+          description: The email address of the user to whom the role is assigned.
+        role:
+          type: string
+          description: The role assigned to the user, defining their level of access to the resource.
+          enum:
+            - owner
+            - editor
+            - viewer
+    ResourcePermissionsResponse:
+      type: object
+      description: Permissions and metadata for a resource returned by the sharing API.
+      properties:
+        id:
+          type: string
+          description: Resource ID.
+        name:
+          type: string
+          description: Resource name.
+        description:
+          type: string
+          description: Resource description.
+        createTime:
+          type: integer
+          description: The time when this resource was created, in milliseconds since the epoch.
+          format: int64
+        updateTime:
+          type: integer
+          description: The time when this resource was last updated, in milliseconds since the epoch.
+          format: int64
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourcePermission"
+        public:
+          type: string
+          description: Type of permissions users in the entire organization have for this resource
+          enum:
+            - editor
+            - viewer
+          nullable: true
+    ResourceReference:
+      type: object
+      description: Reference to another resource, used when listing blockers or usages.
+      properties:
+        id:
+          type: string
+          description: Resource identifier
+        name:
+          type: string
+          description: Resource name
+        owner:
+          type: string
+          description: Resource owner (only present if requester doesn't have access)
+    Role:
+      type: object
+      description: Definition and permissions assigned to a role.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the role.
+        name:
+          type: string
+          description: The name of the role.
+        type:
+          type: string
+          description: The type of the role (preset or custom).
+        customer:
+          type: string
+          description: The customer ID if this is a custom role.
+        permissions:
+          type: array
+          description: List of permission IDs assigned to the role.
+          items:
+            type: string
     RunReportResult:
       type: object
       description: Results returned when running a report; includes schema and rows.
       properties:
         result:
-          type: object
-          properties:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/SchemaField"
-            mlFeatures:
-              type: array
-              items:
-                type: string
-                enum:
-                  - increasing
-                  - decreasing
-                  - none
-                  - forecast
-            rows:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Value"
-            secondaryRows:
-              type: array
-              description: Secondary time range rows.
-              items:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Value"
-            forecastRows:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Value"
-            cacheHit:
-              type: boolean
-              description: If true, results were fetched from the cache.
+          $ref: '#/components/schemas/RunReportResultResult'
+    RunReportResultResult:
+      type: object
+      properties:
+        schema:
+          type: array
+          items:
+            $ref: "#/components/schemas/SchemaField"
+        mlFeatures:
+          type: array
+          items:
+            type: string
+            enum:
+              - increasing
+              - decreasing
+              - none
+              - forecast
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/Value"
+        secondaryRows:
+          type: array
+          description: Secondary time range rows.
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/Value"
+        forecastRows:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/Value"
+        cacheHit:
+          type: boolean
+          description: If true, results were fetched from the cache.
     SchemaField:
       type: object
       description: Schema of a report result column.
@@ -5503,6 +5499,19 @@ components:
           type: string
         type:
           type: string
+    Seats:
+      type: object
+      description: Licensing seat counts for a subscription or asset.
+      properties:
+        licensedNumberOfSeats:
+          type: integer
+          format: int64
+        maximumNumberOfSeats:
+          type: integer
+          format: int64
+        numberOfSeats:
+          type: integer
+          format: int64
     SlackChannel:
       type: object
       description: Information of a Slack channel for notifications.
@@ -5519,144 +5528,6 @@ components:
           type: string
         workspace:
           type: string
-    TimeSettings:
-      type: object
-      description: >-
-        Specify a predefined or custom time range for the report.
-
-        For example, to specify a custom time range of "last 2 days", set the mode to `last`, the amount to `2`, and the unit to `day`. If `includeCurrent` is `true`, the range will be yesterday and today; otherwise, the range will be yesterday and the day before yesterday.
-
-        If "custom" type is specified, you need to provide a custom time range in the `customTimeRange` field.
-      properties:
-        amount:
-          description: Number of time units to include in the time range.
-          maximum: 5000
-          minimum: 0
-          type: integer
-          format: int64
-        includeCurrent:
-          description: Whether to include the current time period.
-          type: boolean
-        mode:
-          description: Time range mode (last N periods, current period, or custom).
-          type: string
-          enum:
-            - last
-            - current
-            - custom
-        unit:
-          description: Time unit for the time range.
-          type: string
-          enum:
-            - day
-            - week
-            - month
-            - quarter
-            - year
-      example:
-        amount: 3
-        includeCurrent: false
-        mode: last
-        unit: month
-    TimeSettingsSecondary:
-      type: object
-      description: Secondary time range for comparative reports.
-      properties:
-        amount:
-          description: Number of periods to shift back.
-          type: integer
-          format: int64
-        includeCurrent:
-          description: >-
-            Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.
-                When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).
-                When `false`, shifts dates by amount, which may result in partial periods extending to today.
-          type: boolean
-        unit:
-          description: Time interval unit for shifting.
-          type: string
-          enum:
-            - day
-            - month
-            - quarter
-            - year
-        customTimeRange:
-          description: Custom date range for the secondary time range.
-          type: object
-          properties:
-            from:
-              type: string
-              format: date-time
-              description: Start date.
-            to:
-              type: string
-              format: date-time
-              description: End date.
-      example:
-        amount: 1
-        includeCurrent: false
-        unit: year
-    ValidateResponse:
-      type: object
-      description: A response confirming caller's domain and email.
-      properties:
-        domain:
-          type: string
-        email:
-          type: string
-    Value:
-      description: The content of a single cell from a BigQuery result.
-      type: object
-    AssetItem:
-      type: object
-      description: Detailed information about a single asset.
-      properties:
-        createTime:
-          type: integer
-          description: The time when the asset was created, in milliseconds since the epoch.
-          format: int64
-        id:
-          type: string
-        name:
-          type: string
-        quantity:
-          type: integer
-          format: int64
-        type:
-          type: string
-        url:
-          type: string
-    AssetProperties:
-      type: object
-      description: Additional properties associated with an asset.
-      properties:
-        customerDomain:
-          type: string
-        customerID:
-          type: string
-        reseller:
-          type: string
-        subscription:
-          $ref: "#/components/schemas/Subscription"
-    RenewalSettings:
-      type: object
-      description: Settings that control subscription renewal behavior.
-      properties:
-        renewalType:
-          type: string
-    Seats:
-      type: object
-      description: Licensing seat counts for a subscription or asset.
-      properties:
-        licensedNumberOfSeats:
-          type: integer
-          format: int64
-        maximumNumberOfSeats:
-          type: integer
-          format: int64
-        numberOfSeats:
-          type: integer
-          format: int64
     Subscription:
       type: object
       description: Subscription-related metadata for an asset.
@@ -5760,8 +5631,7 @@ components:
       properties:
         createTime:
           type: integer
-          description: The time when this ticket was created, in milliseconds since the
-            epoch.
+          description: The time when this ticket was created, in milliseconds since the epoch.
           format: int64
         id:
           type: integer
@@ -5795,8 +5665,7 @@ components:
           description: The subject of the ticket.
         updateTime:
           type: integer
-          description: The time when this ticket was last updated, in milliseconds since
-            the epoch.
+          description: The time when this ticket was last updated, in milliseconds since the epoch.
           format: int64
         urlUI:
           type: string
@@ -5850,8 +5719,7 @@ components:
       properties:
         pageToken:
           type: string
-          description: Page token, returned by a previous call, to request the next page
-            of results.
+          description: Page token, returned by a previous call, to request the next page of results.
         rowCount:
           type: integer
           description: Tickets rows count
@@ -5860,196 +5728,361 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TicketListItem"
-    ResourceReference:
+    TimeSettings:
       type: object
-      description: Reference to another resource, used when listing blockers or usages.
+      description: >-
+        Specify a predefined or custom time range for the report.
+
+        For example, to specify a custom time range of "last 2 days", set the mode to `last`, the amount to `2`, and the unit to `day`. If `includeCurrent` is `true`, the range will be yesterday and today; otherwise, the range will be yesterday and the day before yesterday.
+
+        If "custom" type is specified, you need to provide a custom time range in the `customTimeRange` field.
       properties:
-        id:
+        amount:
+          description: Number of time units to include in the time range.
+          maximum: 5000
+          minimum: 0
+          type: integer
+          format: int64
+        includeCurrent:
+          description: Whether to include the current time period.
+          type: boolean
+        mode:
+          description: Time range mode (last N periods, current period, or custom).
           type: string
-          description: Resource identifier
+          enum:
+            - last
+            - current
+            - custom
+        unit:
+          description: Time unit for the time range.
+          type: string
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+      example:
+        amount: 3
+        includeCurrent: false
+        mode: last
+        unit: month
+    TimeSettingsSecondary:
+      type: object
+      description: Secondary time range for comparative reports.
+      properties:
+        amount:
+          description: Number of periods to shift back.
+          type: integer
+          format: int64
+        includeCurrent:
+          description: >-
+            Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.
+
+                When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).
+                When `false`, shifts dates by amount, which may result in partial periods extending to today.
+          type: boolean
+        unit:
+          description: Time interval unit for shifting.
+          type: string
+          enum:
+            - day
+            - month
+            - quarter
+            - year
+        customTimeRange:
+          description: Custom date range for the secondary time range.
+          allOf:
+            - $ref: '#/components/schemas/TimeSettingsSecondaryCustomTimeRange'
+      example:
+        amount: 1
+        includeCurrent: false
+        unit: year
+    TimeSettingsSecondaryCustomTimeRange:
+      description: Custom date range for the secondary time range.
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+          description: Start date.
+        to:
+          type: string
+          format: date-time
+          description: End date.
+    UpdateAllocationRequest:
+      type: object
+      description: Request body for updating an allocation.
+      properties:
         name:
           type: string
-          description: Resource name
-        owner:
+          description: Allocation name
+          nullable: true
+        description:
           type: string
-          description: Resource owner (only present if requester doesn't have access)
-
-    BlockingResources:
+          description: Allocation description
+          nullable: true
+        rule:
+          $ref: "#/components/schemas/AllocationRule"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupAllocationRule"
+        unallocatedCosts:
+          type: string
+          description: Custom label for values that do not fit into allocation (required for group type allocation).
+          nullable: true
+    UpdateAnnotationRequest:
       type: object
-      description: Map of resources that block deletion operations.
+      description: Request body for updating an annotation.
       properties:
-        alerts:
-          type: array
-          description: List of alerts using this resource.
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-        attributionGroups:
-          type: array
-          description: List of attribution groups using this resource (only applicable for attribution deletion).
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-        attributions:
-          type: array
-          description: List of attributions using this resource (only applicable for attribution deletion).
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-        budgets:
-          type: array
-          description: List of budgets using this resource.
-          items:
-            $ref: "#/components/schemas/ResourceReference"
+        content:
+          type: string
+          description: The content of the annotation.
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation.
+          nullable: true
         reports:
           type: array
-          description: List of reports using this resource.
           items:
-            $ref: "#/components/schemas/ResourceReference"
-      example:
-        budgets:
-          - id: "budget-id"
-            name: "Example Budget"
-
-    AttributionGroupDeleteValidation:
-      type: object
-      description: Validation result when deleting an attribution group.
-      properties:
-        id:
-          type: string
-          description: ID of the attribution group that could not be deleted.
-        error:
-          type: string
-          description: Error message explaining why the deletion failed.
+            type: string
+          description: List of report IDs associated with the annotation.
           nullable: true
-        resources:
-          $ref: "#/components/schemas/BlockingResources"
-      example:
-        id: "attribution-group-id"
-        error: null
-        resources:
-          budgets:
-            - id: "budget-id"
-              name: "Example Budget"
-
-    AttributionDeleteValidation:
-      type: object
-      description: Validation result when deleting an attribution.
-      properties:
-        id:
-          type: string
-          description: ID of the attribution that could not be deleted.
-        error:
-          type: string
-          description: Error message explaining why the deletion failed.
+        labels:
+          type: array
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
           nullable: true
-        resources:
-          $ref: "#/components/schemas/BlockingResources"
-      example:
-        id: "attribution-id"
-        error: null
-        resources:
-          budgets:
-            - id: "budget-id"
-              name: "Example Budget"
-    Role:
+    UpdateAttributionRequestBody:
       type: object
-      description: Definition and permissions assigned to a role.
       properties:
-        id:
+        components:
+          type: array
+          description: List of Attribution filters
+          items:
+            $ref: "#/components/schemas/AttributionComponent"
+        description:
           type: string
-          description: The unique ID of the role.
+          description: Description of the attribution
+        formula:
+          type: string
+          description: Attribution formula (A is the first component, B is the second one, C is the third, and so on.)
         name:
           type: string
-          description: The name of the role.
-        type:
+          description: Attribution Name
+    UpdateLabelRequest:
+      type: object
+      description: Request body for updating a label.
+      properties:
+        name:
           type: string
-          description: The type of the role (preset or custom).
-        customer:
+          description: The name of the label.
+          nullable: true
+        color:
           type: string
-          description: The customer ID if this is a custom role.
+          enum:
+            - blue
+            - skyBlue
+            - teal
+            - mint
+            - lime
+            - softYellow
+            - apricot
+            - lavender
+            - purple
+            - rosePink
+            - slateGrey
+          description: The color of the label.
+          nullable: true
+    UpdateReport200Response:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the updated report.
+    UpdateResourcePermissionRequestBody:
+      type: object
+      properties:
         permissions:
           type: array
-          description: List of permission IDs assigned to the role.
           items:
-            type: string
-    FindCloudDiagramsRequest:
-      type: object
-      required:
-        - resources
-      description: Request body for locating cloud diagrams for given resource IDs.
-      properties:
-        resources:
-          type: array
-          description: Resource IDs to find diagrams for.
-          items:
-            type: string
-    FindCloudDiagramsResponse:
-      type: array
-      description: List of diagram URLs matching the criteria.
-      items:
-        type: object
-        required:
-          - diagramUrl
-          - imageUrl
-        properties:
-          diagramUrl:
-            type: string
-            format: uri
-            description: URL to the diagram viewer.
-          imageUrl:
-            type: string
-            format: uri
-            description: URL to the diagram image.
-    Organization:
-      type: object
-      description: Organization metadata returned by the API.
-      properties:
-        id:
+            $ref: "#/components/schemas/ResourcePermission"
+        public:
           type: string
-          description: The unique ID of the organization
-        name:
-          type: string
-          description: The name of the organization
-    ListUsersResponseBody:
+          description: The type of permissions granted to all users in the organization for this resource.
+          enum:
+            - editor
+            - viewer
+          nullable: true
+    UpdateUserRequest:
       type: object
-      description: Response body for the list users endpoint.
+      description: Fields allowed when updating an existing user.
       properties:
-        users:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserListItem"
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 5
-    InviteResponse:
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
+        jobFunction:
+          type: string
+          description: The user's job function.
+          enum:
+            - "Data Engineer / Data Analysts"
+            - "Executive Team"
+            - "Finance / Accounting"
+            - "Founder"
+            - "Legal / Purchasing"
+            - "Management"
+            - "Sales / Marketing"
+            - "Software / Ops Engineer"
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: '^\+[0-9]+$'
+        phoneExtension:
+          type: string
+          description: The user's phone extension (8-15 digits).
+          pattern: "^[0-9]{8,15}$"
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+            - en
+            - ja
+        roleId:
+          type: string
+          description: The ID of the role to assign to the user.
+    UpdateUserResponse:
       type: object
-      description: Response returned after creating a user invitation.
+      description: Response of a user update operation.
       properties:
         message:
           type: string
           description: Success message
         user:
-          $ref: "#/components/schemas/InvitedUserBody"
-    InvitedUserBody:
+          $ref: "#/components/schemas/UpdatedUserBody"
+    UpdatedUserBody:
       type: object
+      description: The updated user record.
       properties:
         id:
           type: string
-          description: The unique ID of the invited user.
+          description: The unique ID of the user.
+        displayName:
+          type: string
+          description: The user's display name.
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
         email:
           type: string
-          description: The email address of the invited user.
+          description: The user's email address.
+        jobFunction:
+          type: string
+          description: The user's job function.
+          enum:
+            - "Data Engineer / Data Analysts"
+            - "Executive Team"
+            - "Finance / Accounting"
+            - "Founder"
+            - "Legal / Purchasing"
+            - "Management"
+            - "Sales / Marketing"
+            - "Software / Ops Engineer"
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: '^\+[0-9]+$'
+        phoneExtension:
+          type: string
+          description: The user's phone extension.
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+            - en
+            - ja
         roleId:
           type: string
-          description: The ID of the role assigned to the user.
+          description: The ID of the user's role.
         organizationId:
           type: string
-          description: The ID of the organization assigned to the user.
+          description: The ID of the user's organization.
+    UserListItem:
+      type: object
+      description: Summary information of a user.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the user.
+        email:
+          type: string
+          description: The email address of the user.
+        displayName:
+          type: string
+          description: The user's display name.
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
+        jobFunction:
+          type: string
+          description: The user's job function.
+          enum:
+            - "Data Engineer / Data Analysts"
+            - "Executive Team"
+            - "Finance / Accounting"
+            - "Founder"
+            - "Legal / Purchasing"
+            - "Management"
+            - "Sales / Marketing"
+            - "Software / Ops Engineer"
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: '^\+[0-9]+$'
+        phoneExtension:
+          type: string
+          description: The user's phone extension.
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+            - en
+            - ja
+        roleId:
+          type: string
+          description: The ID of the user's role.
+        organizationId:
+          type: string
+          description: The ID of the user's organization.
         status:
           type: string
-          description: The status of the user (invited)
+          description: The status of the user (active or invited).
           enum:
+            - active
             - invited
+    ValidateResponse:
+      type: object
+      description: A response confirming caller's domain and email.
+      properties:
+        domain:
+          type: string
+        email:
+          type: string
+    Value:
+      description: The content of a single cell from a BigQuery result.
+      type: object
   responses:
     "400":
       description: >-
@@ -6310,8 +6343,7 @@ components:
                   $ref: "#/components/schemas/AssetItem"
               pageToken:
                 type: string
-                description: Page token, returned by a previous call, to request the next page
-                  of results
+                description: Page token, returned by a previous call, to request the next page of results
               rowCount:
                 type: integer
                 description: Assets rows count
@@ -6354,8 +6386,7 @@ components:
                   $ref: "#/components/schemas/BudgetListItem"
               pageToken:
                 type: string
-                description: Page token, returned by a previous call, to request the next page
-                  of results
+                description: Page token, returned by a previous call, to request the next page of results
               rowCount:
                 type: integer
                 description: Budget rows count
@@ -6383,8 +6414,7 @@ components:
                 description: invoice number, identifying the invoice (e.g., "IN204005474")
               invoiceDate:
                 type: integer
-                description: The time when this invoice was issued, in milliseconds since the
-                  epoch.
+                description: The time when this invoice was issued, in milliseconds since the epoch.
                 format: int64
               lineItems:
                 type: array
@@ -6393,8 +6423,7 @@ components:
                   $ref: "#/components/schemas/ListItem"
               platform:
                 type: string
-                description: Platform can be "google-cloud", "amazon-web-services",
-                  "microsoft-azure", "g-suite", "office-365", "superquery"
+                description: Platform can be "google-cloud", "amazon-web-services", "microsoft-azure", "g-suite", "office-365", "superquery"
               status:
                 type: string
                 description: can be either OPEN, PAST DUE, or PAID
@@ -6419,8 +6448,7 @@ components:
                   $ref: "#/components/schemas/InvoiceListItem"
               pageToken:
                 type: string
-                description: Page token, returned by a previous call, to request the next page
-                  of results
+                description: Page token, returned by a previous call, to request the next page of results
               rowCount:
                 type: integer
                 description: Invoices rows count
@@ -6434,8 +6462,7 @@ components:
             properties:
               createTime:
                 type: integer
-                description: The time when this cloud incident was created, in milliseconds since
-                  the epoch.
+                description: The time when this cloud incident was created, in milliseconds since the epoch.
                 format: int64
               description:
                 type: string
@@ -6485,8 +6512,7 @@ components:
                   $ref: "#/components/schemas/CloudIncidentListItem"
               pageToken:
                 type: string
-                description: Page token, returned by a previous call, to request the next page
-                  of results.
+                description: Page token, returned by a previous call, to request the next page of results.
               rowCount:
                 type: integer
                 description: Cloud incidents rows count.
