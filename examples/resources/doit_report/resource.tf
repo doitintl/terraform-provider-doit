@@ -40,6 +40,12 @@ resource "doit_report" "my_report" {
       include_current = true
       unit            = "month"
     }
+    # Compare against the same period last year
+    secondary_time_range = {
+      amount          = 1
+      unit            = "year"
+      include_current = false
+    }
     filters = [
       {
         inverse = false

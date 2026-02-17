@@ -199,6 +199,7 @@ Read-Only:
 - `amount` (Number) Number of periods to shift back.
 - `custom_time_range` (Attributes) Custom date range for the secondary time range. (see [below for nested schema](#nestedatt--config--secondary_time_range--custom_time_range))
 - `include_current` (Boolean) Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.
+
     When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).
     When `false`, shifts dates by amount, which may result in partial periods extending to today.
 - `unit` (String) Time interval unit for shifting.
