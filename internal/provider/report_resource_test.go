@@ -1181,7 +1181,7 @@ resource "doit_report" "secondary_custom" {
 }
 
 // TestAccReport_SecondaryTimeRangeUpdate tests updating a report's secondary time range
-// from a relative comparison to a custom date range in a multi-step test.
+// from a relative comparison (year-over-year) to a custom date range in a multi-step test.
 func TestAccReport_SecondaryTimeRangeUpdate(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -1190,7 +1190,7 @@ func TestAccReport_SecondaryTimeRangeUpdate(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: Create with relative secondary time range
+			// Step 1: Create with relative secondary time range (year-over-year)
 			{
 				Config: testAccReportSecondaryTimeRangeStep1(n),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -1201,7 +1201,7 @@ func TestAccReport_SecondaryTimeRangeUpdate(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_report.secondary_update",
 						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("unit"),
-						knownvalue.StringExact("month")),
+						knownvalue.StringExact("year")),
 				},
 			},
 			// Verify no drift
@@ -1213,7 +1213,7 @@ func TestAccReport_SecondaryTimeRangeUpdate(t *testing.T) {
 					},
 				},
 			},
-			// Step 2: Update to a different relative period
+			// Step 2: Update to a custom date range secondary time range
 			{
 				Config: testAccReportSecondaryTimeRangeStep2(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -1228,12 +1228,12 @@ func TestAccReport_SecondaryTimeRangeUpdate(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_report.secondary_update",
-						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("amount"),
-						knownvalue.Int64Exact(1)),
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("from"),
+						knownvalue.StringExact("2023-01-01T00:00:00Z")),
 					statecheck.ExpectKnownValue(
 						"doit_report.secondary_update",
-						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("unit"),
-						knownvalue.StringExact("quarter")),
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("to"),
+						knownvalue.StringExact("2023-12-31T23:59:59Z")),
 				},
 			},
 			// Verify no drift after update
@@ -1269,7 +1269,7 @@ resource "doit_report" "secondary_update" {
         }
         secondary_time_range = {
           amount          = 1
-          unit            = "month"
+          unit            = "year"
           include_current = false
         }
         data_source    = "billing"
@@ -1293,16 +1293,19 @@ resource "doit_report" "secondary_update" {
         }
         aggregation   = "total"
         time_interval = "month"
+        custom_time_range = {
+          from = "2024-01-01T00:00:00Z"
+          to   = "2024-12-31T23:59:59Z"
+        }
         time_range = {
-          mode            = "last"
-          amount          = 3
-          include_current = true
-          unit            = "month"
+          mode = "custom"
+          unit = "day"
         }
         secondary_time_range = {
-          amount          = 1
-          unit            = "quarter"
-          include_current = false
+          custom_time_range = {
+            from = "2023-01-01T00:00:00Z"
+            to   = "2023-12-31T23:59:59Z"
+          }
         }
         data_source    = "billing"
         display_values = "actuals_only"
