@@ -84,7 +84,7 @@ func main() {
 	enc.Close()
 	out := buf.Bytes()
 
-	if err := os.WriteFile(*outputPath, out, 0644); err != nil {
+	if err := os.WriteFile(*outputPath, out, 0600); err != nil {
 		log.Fatalf("writing output: %v", err)
 	}
 
@@ -655,8 +655,13 @@ func validateEquivalence(originalData, processedData []byte) error {
 
 	if !reflect.DeepEqual(resolvedOrig, resolvedProc) {
 		// Find the first differing path for a useful error message
-		for path, origOp := range resolvedOrig.(map[string]any) {
-			procOp, ok := resolvedProc.(map[string]any)[path]
+		origMap, ok1 := resolvedOrig.(map[string]any)
+		procMap, ok2 := resolvedProc.(map[string]any)
+		if !ok1 || !ok2 {
+			return fmt.Errorf("paths differ after resolution (unexpected type)")
+		}
+		for path, origOp := range origMap {
+			procOp, ok := procMap[path]
 			if !ok {
 				return fmt.Errorf("path %q missing from processed spec", path)
 			}
@@ -665,8 +670,8 @@ func validateEquivalence(originalData, processedData []byte) error {
 			}
 		}
 		// Check for extra paths in processed
-		for path := range resolvedProc.(map[string]any) {
-			if _, ok := resolvedOrig.(map[string]any)[path]; !ok {
+		for path := range procMap {
+			if _, ok := origMap[path]; !ok {
 				return fmt.Errorf("extra path %q in processed spec", path)
 			}
 		}
