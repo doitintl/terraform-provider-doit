@@ -45,8 +45,14 @@ data "doit_support_requests" "limited" {
 `, maxResults)
 }
 
-// TestAccSupportRequestsDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccSupportRequestsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccSupportRequestsDataSource_PageTokenOnly(t *testing.T) {
+	totalRequests := getSupportRequestCount(t)
+	if totalRequests < 2 {
+		t.Skipf("Need at least 2 support requests to test page_token-only, got %d", totalRequests)
+	}
+
 	pageToken := getSupportRequestFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 support request)")
@@ -61,6 +67,7 @@ func TestAccSupportRequestsDataSource_PageTokenOnly(t *testing.T) {
 				Config: testAccSupportRequestsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_support_requests.from_token", "tickets.#"),
+					testCheckResourceAttrLessThan("data.doit_support_requests.from_token", "row_count", totalRequests),
 				),
 			},
 		},

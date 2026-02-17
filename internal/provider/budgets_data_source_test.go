@@ -57,10 +57,21 @@ data "doit_budgets" "limited" {
 `, maxResults)
 }
 
-// TestAccBudgetsDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccBudgetsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
-	// Fetch page_token via API client
-	pageToken := getFirstPageToken(t, 1) // Get token after first item
+	// TODO(CMP-38591): The budgets API returns 500 when pageToken is sent without maxResults.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: budgets API returns 500 with pageToken without maxResults (CMP-38591)")
+
+	// We need at least 2 budgets: one before the token and one after.
+	totalBudgets := getBudgetCount(t)
+	if totalBudgets < 2 {
+		t.Skipf("Need at least 2 budgets to test page_token-only, got %d", totalBudgets)
+	}
+
+	// Fetch page_token after the first item
+	pageToken := getFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 budget)")
 	}
@@ -75,6 +86,8 @@ func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify we got some budgets (starting from page 2)
 					resource.TestCheckResourceAttrSet("data.doit_budgets.from_token", "budgets.#"),
+					// Verify row_count is less than total, proving the token was honored
+					testCheckResourceAttrLessThan("data.doit_budgets.from_token", "row_count", totalBudgets),
 				),
 			},
 		},

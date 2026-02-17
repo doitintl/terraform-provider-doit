@@ -65,14 +65,6 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		filterVal := data.Filter.ValueString()
 		params.Filter = &filterVal
 	}
-	if !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown() {
-		maxResultsVal := data.MaxResults.ValueString()
-		params.MaxResults = &maxResultsVal
-	}
-	if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
-		pageTokenVal := data.PageToken.ValueString()
-		params.PageToken = &pageTokenVal
-	}
 	if !data.SortBy.IsNull() && !data.SortBy.IsUnknown() {
 		sortByVal := models.ListDimensionsParamsSortBy(data.SortBy.ValueString())
 		params.SortBy = &sortByVal
@@ -127,7 +119,11 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 		// max_results is already set by user, no change needed
 	} else {
-		// Auto mode: fetch all pages
+		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pageTokenVal := data.PageToken.ValueString()
+			params.PageToken = &pageTokenVal
+		}
 		for {
 			apiResp, err := d.client.ListDimensionsWithResponse(ctx, params)
 			if err != nil {
