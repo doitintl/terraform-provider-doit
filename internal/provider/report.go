@@ -166,11 +166,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		}
 
 		if !diags.HasError() {
-			// Anonymous struct matching models_gen.go inline definition
-			customTimeRange := struct {
-				From *time.Time `json:"from,omitempty"`
-				To   *time.Time `json:"to,omitempty"`
-			}{
+			customTimeRange := models.ExternalConfigCustomTimeRange{
 				From: &fromTime,
 				To:   &toTime,
 			}
@@ -375,11 +371,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 				diags.AddError("Invalid To Time", "Could not parse SecondaryTimeRange.CustomTimeRange.To as RFC3339: "+err.Error())
 			}
 			if !diags.HasError() {
-				// Anonymous struct matching models_gen.go inline definition
-				ctr := struct {
-					From *time.Time `json:"from,omitempty"`
-					To   *time.Time `json:"to,omitempty"`
-				}{
+				ctr := models.TimeSettingsSecondaryCustomTimeRange{
 					From: &fromTime,
 					To:   &toTime,
 				}

@@ -3245,7 +3245,7 @@
 												"name": "include_current",
 												"bool": {
 													"computed_optional_required": "computed",
-													"description": "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today."
+													"description": "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today."
 												}
 											},
 											{

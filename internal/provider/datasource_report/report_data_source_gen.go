@@ -353,8 +353,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 							"include_current": schema.BoolAttribute{
 								Computed:            true,
-								Description:         "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today.",
-								MarkdownDescription: "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today.",
+								Description:         "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today.",
+								MarkdownDescription: "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today.",
 							},
 							"unit": schema.StringAttribute{
 								Computed:            true,
