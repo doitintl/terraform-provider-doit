@@ -81,7 +81,9 @@ func main() {
 	if err := enc.Encode(&root); err != nil {
 		log.Fatalf("marshaling YAML: %v", err)
 	}
-	enc.Close()
+	if err := enc.Close(); err != nil {
+		log.Fatalf("closing YAML encoder: %v", err)
+	}
 	out := buf.Bytes()
 
 	if err := os.WriteFile(*outputPath, out, 0600); err != nil {
@@ -433,6 +435,17 @@ func getScalarValue(node *yaml.Node, key string) string {
 	return ""
 }
 
+// getScalarNode gets a scalar node from a mapping node by key.
+// Unlike getScalarValue, this returns the full node so callers can access
+// metadata like Style (e.g., folded >- or literal | block styles).
+func getScalarNode(node *yaml.Node, key string) *yaml.Node {
+	v := getMappingValue(node, key)
+	if v != nil && v.Kind == yaml.ScalarNode {
+		return v
+	}
+	return nil
+}
+
 // hasRef checks if a mapping node contains a $ref key.
 func hasRef(node *yaml.Node) bool {
 	if node.Kind != yaml.MappingNode {
@@ -517,8 +530,10 @@ func replaceWithRef(parentMapping *yaml.Node, propertyKey string, schemaName str
 		if parentMapping.Content[i].Value == propertyKey {
 			oldNode := parentMapping.Content[i+1]
 
-			// Preserve description from the inline definition
-			description := getScalarValue(oldNode, "description")
+			// Preserve description from the inline definition.
+			// We capture the full scalar node (not just the value) to preserve
+			// the original Style (e.g., folded >- or literal | block styles).
+			descNode := getScalarNode(oldNode, "description")
 
 			// Build new $ref node
 			refNode := &yaml.Node{
@@ -530,12 +545,12 @@ func replaceWithRef(parentMapping *yaml.Node, propertyKey string, schemaName str
 			}
 
 			// If description exists, wrap in allOf to preserve it
-			if description != "" {
+			if descNode != nil && descNode.Value != "" {
 				parentMapping.Content[i+1] = &yaml.Node{
 					Kind: yaml.MappingNode,
 					Content: []*yaml.Node{
 						{Kind: yaml.ScalarNode, Value: "description", Tag: "!!str"},
-						{Kind: yaml.ScalarNode, Value: description, Tag: "!!str", Style: oldNode.Style},
+						{Kind: yaml.ScalarNode, Value: descNode.Value, Tag: "!!str", Style: descNode.Style},
 						{Kind: yaml.ScalarNode, Value: "allOf", Tag: "!!str"},
 						{Kind: yaml.SequenceNode, Content: []*yaml.Node{refNode}},
 					},
