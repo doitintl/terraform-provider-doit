@@ -45,8 +45,14 @@ data "doit_invoices" "limited" {
 `, maxResults)
 }
 
-// TestAccInvoicesDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccInvoicesDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccInvoicesDataSource_PageTokenOnly(t *testing.T) {
+	totalInvoices := getInvoiceCount(t)
+	if totalInvoices < 2 {
+		t.Skipf("Need at least 2 invoices to test page_token-only, got %d", totalInvoices)
+	}
+
 	pageToken := getInvoiceFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 invoice)")
@@ -61,6 +67,7 @@ func TestAccInvoicesDataSource_PageTokenOnly(t *testing.T) {
 				Config: testAccInvoicesDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_invoices.from_token", "invoices.#"),
+					testCheckResourceAttrLessThan("data.doit_invoices.from_token", "row_count", totalInvoices),
 				),
 			},
 		},

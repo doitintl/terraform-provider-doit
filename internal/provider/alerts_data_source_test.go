@@ -46,8 +46,18 @@ data "doit_alerts" "limited" {
 `, maxResults)
 }
 
-// TestAccAlertsDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccAlertsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAlertsDataSource_PageTokenOnly(t *testing.T) {
+	// TODO(CMP-38591): The alerts API ignores pageToken when maxResults is not set, returning all results.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: alerts API ignores pageToken without maxResults (CMP-38591)")
+
+	totalAlerts := getAlertCount(t)
+	if totalAlerts < 2 {
+		t.Skipf("Need at least 2 alerts to test page_token-only, got %d", totalAlerts)
+	}
+
 	pageToken := getAlertFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 alert)")
@@ -62,6 +72,8 @@ func TestAccAlertsDataSource_PageTokenOnly(t *testing.T) {
 				Config: testAccAlertsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_alerts.from_token", "alerts.#"),
+					// Verify row_count is less than total, proving the token was honored
+					testCheckResourceAttrLessThan("data.doit_alerts.from_token", "row_count", totalAlerts),
 				),
 			},
 		},

@@ -45,8 +45,14 @@ data "doit_assets" "limited" {
 `, maxResults)
 }
 
-// TestAccAssetsDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccAssetsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAssetsDataSource_PageTokenOnly(t *testing.T) {
+	totalAssets := getAssetCount(t)
+	if totalAssets < 2 {
+		t.Skipf("Need at least 2 assets to test page_token-only, got %d", totalAssets)
+	}
+
 	pageToken := getAssetFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 asset)")
@@ -61,6 +67,7 @@ func TestAccAssetsDataSource_PageTokenOnly(t *testing.T) {
 				Config: testAccAssetsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_assets.from_token", "assets.#"),
+					testCheckResourceAttrLessThan("data.doit_assets.from_token", "row_count", totalAssets),
 				),
 			},
 		},

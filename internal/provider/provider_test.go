@@ -2,7 +2,9 @@ package provider_test
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider"
@@ -10,6 +12,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -64,4 +68,28 @@ func getAPIClient(t *testing.T) *models.ClientWithResponses {
 		t.Fatalf("Failed to create API client: %v", err)
 	}
 	return client
+}
+
+// testCheckResourceAttrLessThan returns a TestCheckFunc that verifies the given
+// integer attribute is strictly less than the threshold. Used to prove that
+// page_token-only auto-pagination starts from the token (fewer results than a full run).
+func testCheckResourceAttrLessThan(name, key string, threshold int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("resource %s not found", name)
+		}
+		val, ok := rs.Primary.Attributes[key]
+		if !ok {
+			return fmt.Errorf("attribute %s not found on %s", key, name)
+		}
+		intVal, err := strconv.Atoi(val)
+		if err != nil {
+			return fmt.Errorf("attribute %s on %s is not an integer: %s", key, name, val)
+		}
+		if intVal >= threshold {
+			return fmt.Errorf("expected %s on %s to be less than %d, got %d", key, name, threshold, intVal)
+		}
+		return nil
+	}
 }

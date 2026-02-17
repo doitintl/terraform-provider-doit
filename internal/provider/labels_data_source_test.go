@@ -45,8 +45,18 @@ data "doit_labels" "limited" {
 `, maxResults)
 }
 
-// TestAccLabelsDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccLabelsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
+	// TODO(CMP-38591): The labels API ignores pageToken when maxResults is not set, returning all results.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: labels API ignores pageToken without maxResults (CMP-38591)")
+
+	totalLabels := getLabelCount(t)
+	if totalLabels < 2 {
+		t.Skipf("Need at least 2 labels to test page_token-only, got %d", totalLabels)
+	}
+
 	pageToken := getLabelFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 label)")
@@ -61,6 +71,7 @@ func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
 				Config: testAccLabelsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_labels.from_token", "labels.#"),
+					testCheckResourceAttrLessThan("data.doit_labels.from_token", "row_count", totalLabels),
 				),
 			},
 		},

@@ -45,8 +45,18 @@ data "doit_allocations" "limited" {
 `, maxResults)
 }
 
-// TestAccAllocationsDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccAllocationsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
+	// TODO(CMP-38591): The allocations API ignores pageToken when maxResults is not set, returning all results.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: allocations API ignores pageToken without maxResults (CMP-38591)")
+
+	totalAllocations := getAllocationCount(t)
+	if totalAllocations < 2 {
+		t.Skipf("Need at least 2 allocations to test page_token-only, got %d", totalAllocations)
+	}
+
 	pageToken := getAllocationFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 allocation)")
@@ -61,6 +71,7 @@ func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 				Config: testAccAllocationsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_allocations.from_token", "allocations.#"),
+					testCheckResourceAttrLessThan("data.doit_allocations.from_token", "row_count", totalAllocations),
 				),
 			},
 		},

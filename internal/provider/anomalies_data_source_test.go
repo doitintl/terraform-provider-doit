@@ -45,8 +45,14 @@ data "doit_anomalies" "limited" {
 `, maxResults)
 }
 
-// TestAccAnomaliesDataSource_PageTokenOnly tests using a page_token from a previous API call.
+// TestAccAnomaliesDataSource_PageTokenOnly tests that setting only page_token (without max_results)
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAnomaliesDataSource_PageTokenOnly(t *testing.T) {
+	totalAnomalies := getAnomalyCount(t)
+	if totalAnomalies < 2 {
+		t.Skipf("Need at least 2 anomalies to test page_token-only, got %d", totalAnomalies)
+	}
+
 	pageToken := getAnomalyFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 anomaly)")
@@ -61,6 +67,7 @@ func TestAccAnomaliesDataSource_PageTokenOnly(t *testing.T) {
 				Config: testAccAnomaliesDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.from_token", "anomalies.#"),
+					testCheckResourceAttrLessThan("data.doit_anomalies.from_token", "row_count", totalAnomalies),
 				),
 			},
 		},
