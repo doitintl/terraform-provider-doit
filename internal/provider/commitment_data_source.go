@@ -3,14 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_commitment"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ datasource.DataSource = &commitmentDataSource{}
@@ -24,6 +25,8 @@ type commitmentDataSource struct {
 }
 
 // commitmentDataSourceModel extends the generated model to rename 'provider' to 'cloud_provider'.
+// The generator aliases feature only works on operation parameters, not response body properties,
+// so we need a custom model with the correct tfsdk tag.
 type commitmentDataSourceModel struct {
 	CreateTime             types.Int64   `tfsdk:"create_time"`
 	Currency               types.String  `tfsdk:"currency"`
@@ -57,7 +60,9 @@ func (ds *commitmentDataSource) Configure(_ context.Context, req datasource.Conf
 
 func (ds *commitmentDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	generated := datasource_commitment.CommitmentDataSourceSchema(ctx)
-	// Rename 'provider' -> 'cloud_provider' (provider is a reserved Terraform attribute name)
+	// Rename 'provider' -> 'cloud_provider' (provider is a reserved Terraform root attribute name).
+	// The generator aliases feature only works on operation parameters, not response body properties,
+	// so we must do this manually.
 	providerAttr := generated.Attributes["provider"]
 	delete(generated.Attributes, "provider")
 	generated.Attributes["cloud_provider"] = datasourceschema.StringAttribute{
@@ -133,66 +138,72 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		state.TotalCurrentAttainment = types.Float64Null()
 	}
 
-	// Map date-time fields (time.Time -> string via RFC3339)
+	// Map date-time fields using RFC3339 for consistency with other data sources
 	if commitment.StartDate != nil {
-		state.StartDate = types.StringValue(commitment.StartDate.Format("2006-01-02"))
+		state.StartDate = types.StringValue(commitment.StartDate.UTC().Format(time.RFC3339))
 	} else {
 		state.StartDate = types.StringNull()
 	}
 	if commitment.EndDate != nil {
-		state.EndDate = types.StringValue(commitment.EndDate.Format("2006-01-02"))
+		state.EndDate = types.StringValue(commitment.EndDate.UTC().Format(time.RFC3339))
 	} else {
 		state.EndDate = types.StringNull()
 	}
 
-	// Map periods
-	state.Periods = mapCommitmentPeriods(ctx, commitment.Periods)
+	// Map periods with proper diagnostics handling
+	periodsList, periodsDiags := mapCommitmentPeriods(ctx, commitment.Periods)
+	resp.Diagnostics.Append(periodsDiags...)
+	state.Periods = periodsList
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 // mapCommitmentPeriods converts API period models to Terraform periods list value.
-func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPeriod) types.List {
+func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPeriod) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	periodsType := datasource_commitment.PeriodsType{
 		ObjectType: types.ObjectType{
 			AttrTypes: datasource_commitment.PeriodsValue{}.AttributeTypes(ctx),
 		},
 	}
 	if periods == nil || len(*periods) == 0 {
-		return types.ListValueMust(periodsType, []attr.Value{})
+		emptyList, d := types.ListValueFrom(ctx, periodsType, []datasource_commitment.PeriodsValue{})
+		diags.Append(d...)
+		return emptyList, diags
 	}
 
-	periodValues := make([]attr.Value, 0, len(*periods))
+	periodValues := make([]datasource_commitment.PeriodsValue, 0, len(*periods))
 	for _, p := range *periods {
-		var commitmentValue basetypes.Float64Value
+		var commitmentValue types.Float64
 		if p.CommitmentValue != nil {
 			commitmentValue = types.Float64Value(*p.CommitmentValue)
 		} else {
 			commitmentValue = types.Float64Null()
 		}
 
-		var marketplaceLimitPercentage basetypes.Float64Value
+		var marketplaceLimitPercentage types.Float64
 		if p.MarketplaceLimitPercentage != nil {
 			marketplaceLimitPercentage = types.Float64Value(*p.MarketplaceLimitPercentage)
 		} else {
 			marketplaceLimitPercentage = types.Float64Null()
 		}
 
-		var startDate basetypes.StringValue
+		var startDate types.String
 		if p.StartDate != nil {
-			startDate = types.StringValue(p.StartDate.Format("2006-01-02"))
+			startDate = types.StringValue(p.StartDate.UTC().Format(time.RFC3339))
 		} else {
 			startDate = types.StringNull()
 		}
 
-		var endDate basetypes.StringValue
+		var endDate types.String
 		if p.EndDate != nil {
-			endDate = types.StringValue(p.EndDate.Format("2006-01-02"))
+			endDate = types.StringValue(p.EndDate.UTC().Format(time.RFC3339))
 		} else {
 			endDate = types.StringNull()
 		}
 
-		pv := datasource_commitment.NewPeriodsValueMust(
+		pv, pvDiags := datasource_commitment.NewPeriodsValue(
 			datasource_commitment.PeriodsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"commitment_value":             commitmentValue,
@@ -201,8 +212,11 @@ func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPerio
 				"start_date":                   startDate,
 			},
 		)
+		diags.Append(pvDiags...)
 		periodValues = append(periodValues, pv)
 	}
 
-	return types.ListValueMust(periodsType, periodValues)
+	periodList, d := types.ListValueFrom(ctx, periodsType, periodValues)
+	diags.Append(d...)
+	return periodList, diags
 }

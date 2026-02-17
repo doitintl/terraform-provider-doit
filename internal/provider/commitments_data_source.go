@@ -3,13 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_commitments"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ datasource.DataSource = &commitmentsDataSource{}
@@ -159,7 +160,10 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		data.SortOrder = types.StringNull()
 	}
 
-	// Map commitment items
+	// Map commitment items with proper diagnostics.
+	// Note: nested attributes use "provider" (not "cloud_provider") because the reserved name
+	// restriction only applies to root-level attributes. The singular data source uses
+	// "cloud_provider" because "provider" IS a root attribute there.
 	commitmentsType := datasource_commitments.CommitmentsType{
 		ObjectType: types.ObjectType{
 			AttrTypes: datasource_commitments.CommitmentsValue{}.AttributeTypes(ctx),
@@ -167,87 +171,95 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	if len(allCommitments) == 0 {
-		data.Commitments = types.ListValueMust(commitmentsType, []attr.Value{})
+		emptyList, d := types.ListValueFrom(ctx, commitmentsType, []datasource_commitments.CommitmentsValue{})
+		resp.Diagnostics.Append(d...)
+		data.Commitments = emptyList
 	} else {
-		commitmentValues := make([]attr.Value, 0, len(allCommitments))
+		commitmentValues := make([]datasource_commitments.CommitmentsValue, 0, len(allCommitments))
 		for _, c := range allCommitments {
-			cv := mapCommitmentListItem(ctx, c)
+			cv, cvDiags := mapCommitmentListItem(ctx, c)
+			resp.Diagnostics.Append(cvDiags...)
 			commitmentValues = append(commitmentValues, cv)
 		}
-		data.Commitments = types.ListValueMust(commitmentsType, commitmentValues)
+		commitmentList, d := types.ListValueFrom(ctx, commitmentsType, commitmentValues)
+		resp.Diagnostics.Append(d...)
+		data.Commitments = commitmentList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListItem) datasource_commitments.CommitmentsValue {
-	var name basetypes.StringValue
+func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListItem) (datasource_commitments.CommitmentsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var name types.String
 	if c.Name != nil {
 		name = types.StringValue(*c.Name)
 	} else {
 		name = types.StringNull()
 	}
 
-	var currency basetypes.StringValue
+	var currency types.String
 	if c.Currency != nil {
 		currency = types.StringValue(*c.Currency)
 	} else {
 		currency = types.StringNull()
 	}
 
-	var provider basetypes.StringValue
+	var provider types.String
 	if c.Provider != nil {
 		provider = types.StringValue(string(*c.Provider))
 	} else {
 		provider = types.StringNull()
 	}
 
-	var createTime basetypes.Int64Value
+	var createTime types.Int64
 	if c.CreateTime != nil {
 		createTime = types.Int64Value(*c.CreateTime)
 	} else {
 		createTime = types.Int64Null()
 	}
 
-	var updateTime basetypes.Int64Value
+	var updateTime types.Int64
 	if c.UpdateTime != nil {
 		updateTime = types.Int64Value(*c.UpdateTime)
 	} else {
 		updateTime = types.Int64Null()
 	}
 
-	var totalCommitmentValue basetypes.Float64Value
+	var totalCommitmentValue types.Float64
 	if c.TotalCommitmentValue != nil {
 		totalCommitmentValue = types.Float64Value(*c.TotalCommitmentValue)
 	} else {
 		totalCommitmentValue = types.Float64Null()
 	}
 
-	var totalCurrentAttainment basetypes.Float64Value
+	var totalCurrentAttainment types.Float64
 	if c.TotalCurrentAttainment != nil {
 		totalCurrentAttainment = types.Float64Value(*c.TotalCurrentAttainment)
 	} else {
 		totalCurrentAttainment = types.Float64Null()
 	}
 
-	var startDate basetypes.StringValue
+	var startDate types.String
 	if c.StartDate != nil {
-		startDate = types.StringValue(c.StartDate.Format("2006-01-02"))
+		startDate = types.StringValue(c.StartDate.UTC().Format(time.RFC3339))
 	} else {
 		startDate = types.StringNull()
 	}
 
-	var endDate basetypes.StringValue
+	var endDate types.String
 	if c.EndDate != nil {
-		endDate = types.StringValue(c.EndDate.Format("2006-01-02"))
+		endDate = types.StringValue(c.EndDate.UTC().Format(time.RFC3339))
 	} else {
 		endDate = types.StringNull()
 	}
 
-	// Map nested periods
-	periods := mapCommitmentsListPeriods(ctx, c.Periods)
+	// Map nested periods with proper diagnostics
+	periods, periodsDiags := mapCommitmentsListPeriods(ctx, c.Periods)
+	diags.Append(periodsDiags...)
 
-	return datasource_commitments.NewCommitmentsValueMust(
+	cv, cvDiags := datasource_commitments.NewCommitmentsValue(
 		datasource_commitments.CommitmentsValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
 			"create_time":              createTime,
@@ -262,9 +274,13 @@ func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListI
 			"update_time":              updateTime,
 		},
 	)
+	diags.Append(cvDiags...)
+	return cv, diags
 }
 
-func mapCommitmentsListPeriods(ctx context.Context, periods *[]models.CommitmentPeriod) basetypes.ListValue {
+func mapCommitmentsListPeriods(ctx context.Context, periods *[]models.CommitmentPeriod) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	periodsType := datasource_commitments.PeriodsType{
 		ObjectType: types.ObjectType{
 			AttrTypes: datasource_commitments.PeriodsValue{}.AttributeTypes(ctx),
@@ -272,40 +288,42 @@ func mapCommitmentsListPeriods(ctx context.Context, periods *[]models.Commitment
 	}
 
 	if periods == nil || len(*periods) == 0 {
-		return types.ListValueMust(periodsType, []attr.Value{})
+		emptyList, d := types.ListValueFrom(ctx, periodsType, []datasource_commitments.PeriodsValue{})
+		diags.Append(d...)
+		return emptyList, diags
 	}
 
-	periodValues := make([]attr.Value, 0, len(*periods))
+	periodValues := make([]datasource_commitments.PeriodsValue, 0, len(*periods))
 	for _, p := range *periods {
-		var commitmentValue basetypes.Float64Value
+		var commitmentValue types.Float64
 		if p.CommitmentValue != nil {
 			commitmentValue = types.Float64Value(*p.CommitmentValue)
 		} else {
 			commitmentValue = types.Float64Null()
 		}
 
-		var marketplaceLimitPercentage basetypes.Float64Value
+		var marketplaceLimitPercentage types.Float64
 		if p.MarketplaceLimitPercentage != nil {
 			marketplaceLimitPercentage = types.Float64Value(*p.MarketplaceLimitPercentage)
 		} else {
 			marketplaceLimitPercentage = types.Float64Null()
 		}
 
-		var startDate basetypes.StringValue
+		var startDate types.String
 		if p.StartDate != nil {
-			startDate = types.StringValue(p.StartDate.Format("2006-01-02"))
+			startDate = types.StringValue(p.StartDate.UTC().Format(time.RFC3339))
 		} else {
 			startDate = types.StringNull()
 		}
 
-		var endDate basetypes.StringValue
+		var endDate types.String
 		if p.EndDate != nil {
-			endDate = types.StringValue(p.EndDate.Format("2006-01-02"))
+			endDate = types.StringValue(p.EndDate.UTC().Format(time.RFC3339))
 		} else {
 			endDate = types.StringNull()
 		}
 
-		pv := datasource_commitments.NewPeriodsValueMust(
+		pv, pvDiags := datasource_commitments.NewPeriodsValue(
 			datasource_commitments.PeriodsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"commitment_value":             commitmentValue,
@@ -314,8 +332,11 @@ func mapCommitmentsListPeriods(ctx context.Context, periods *[]models.Commitment
 				"start_date":                   startDate,
 			},
 		)
+		diags.Append(pvDiags...)
 		periodValues = append(periodValues, pv)
 	}
 
-	return types.ListValueMust(periodsType, periodValues)
+	periodList, d := types.ListValueFrom(ctx, periodsType, periodValues)
+	diags.Append(d...)
+	return periodList, diags
 }
