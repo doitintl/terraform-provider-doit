@@ -59,9 +59,18 @@ func (d *productsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	// If platform is unknown (depends on an unresolved resource), we cannot
+	// determine the correct product list. Return unknown list to prevent
+	// Terraform from using potentially incorrect data during planning.
+	if data.Platform.IsUnknown() {
+		data.Products = types.ListUnknown(datasource_products.ProductsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	// Build query parameters from optional inputs
 	params := &models.ListProductsParams{}
-	if !data.Platform.IsNull() && !data.Platform.IsUnknown() {
+	if !data.Platform.IsNull() {
 		platformVal := data.Platform.ValueString()
 		params.Platform = &platformVal
 	}
@@ -102,12 +111,9 @@ func (d *productsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.Append(diags...)
 		data.Products = prodList
 	} else {
-		data.Products = types.ListNull(datasource_products.ProductsValue{}.Type(ctx))
-	}
-
-	// Preserve platform filter in state; set to null if it was unknown
-	if data.Platform.IsUnknown() {
-		data.Platform = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_products.ProductsValue{}.Type(ctx), []datasource_products.ProductsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Products = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

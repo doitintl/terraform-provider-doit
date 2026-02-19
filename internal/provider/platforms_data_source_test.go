@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestAccPlatformsDataSource_Basic(t *testing.T) {
@@ -20,6 +21,15 @@ func TestAccPlatformsDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_platforms.test", "platforms.0.id"),
 					resource.TestCheckResourceAttrSet("data.doit_platforms.test", "platforms.0.display_name"),
 				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccPlatformsDataSourceConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

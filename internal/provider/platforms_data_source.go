@@ -94,7 +94,9 @@ func (d *platformsDataSource) Read(ctx context.Context, req datasource.ReadReque
 		resp.Diagnostics.Append(diags...)
 		data.Platforms = platList
 	} else {
-		data.Platforms = types.ListNull(datasource_platforms.PlatformsValue{}.Type(ctx))
+		emptyList, diags := types.ListValueFrom(ctx, datasource_platforms.PlatformsValue{}.Type(ctx), []datasource_platforms.PlatformsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Platforms = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

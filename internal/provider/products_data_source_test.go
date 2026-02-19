@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestAccProductsDataSource_Basic(t *testing.T) {
@@ -21,6 +22,15 @@ func TestAccProductsDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_products.test", "products.0.display_name"),
 					resource.TestCheckResourceAttrSet("data.doit_products.test", "products.0.platform"),
 				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccProductsDataSourceConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
@@ -42,7 +52,17 @@ func TestAccProductsDataSource_WithPlatformFilter(t *testing.T) {
 				Config: testAccProductsDataSourceWithPlatformConfig("google_cloud_platform"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_products.filtered", "products.#"),
+					resource.TestCheckResourceAttr("data.doit_products.filtered", "platform", "google_cloud_platform"),
 				),
+			},
+			// Drift verification: re-apply with filter should produce an empty plan
+			{
+				Config: testAccProductsDataSourceWithPlatformConfig("google_cloud_platform"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
