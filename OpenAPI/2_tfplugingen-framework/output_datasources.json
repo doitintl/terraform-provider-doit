@@ -2296,6 +2296,319 @@
 			}
 		},
 		{
+			"name": "commitment",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Commitment ID"
+						}
+					},
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The cloud provider associated with the commitment."
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The creation time in milliseconds since epoch."
+						}
+					},
+					{
+						"name": "currency",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The currency of the commitment (e.g., USD)."
+						}
+					},
+					{
+						"name": "end_date",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The end date of the commitment."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the commitment."
+						}
+					},
+					{
+						"name": "periods",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "commitment_value",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The commitment value for this period."
+										}
+									},
+									{
+										"name": "end_date",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The end date of the period."
+										}
+									},
+									{
+										"name": "marketplace_limit_percentage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The marketplace limit as a percentage (0-100)."
+										}
+									},
+									{
+										"name": "start_date",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The start date of the period."
+										}
+									}
+								]
+							},
+							"description": "The list of commitment periods."
+						}
+					},
+					{
+						"name": "start_date",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The start date of the commitment."
+						}
+					},
+					{
+						"name": "total_commitment_value",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "The total value of the commitment across all periods."
+						}
+					},
+					{
+						"name": "total_current_attainment",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "The total current spend attainment across all periods."
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The last update time in milliseconds since epoch."
+						}
+					}
+				],
+				"description": "View and manage commitment contracts with DoiT.",
+				"markdown_description": "View and manage commitment contracts with DoiT."
+			}
+		},
+		{
+			"name": "commitments",
+			"schema": {
+				"attributes": [
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"name\",\n\"startDate\",\n\"endDate\",\n\"provider\",\n\"createTime\",\n\"updateTime\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results. The syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nAvailable filter keys: **name**, **provider**"
+						}
+					},
+					{
+						"name": "commitments",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "cloud_provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud provider associated with the commitment."
+										}
+									},
+									{
+										"name": "create_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The creation time in milliseconds since epoch."
+										}
+									},
+									{
+										"name": "currency",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The currency of the commitment."
+										}
+									},
+									{
+										"name": "end_date",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The end date of the commitment."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique identifier of the commitment."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the commitment."
+										}
+									},
+									{
+										"name": "periods",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "commitment_value",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The commitment value for this period."
+														}
+													},
+													{
+														"name": "end_date",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The end date of the period."
+														}
+													},
+													{
+														"name": "marketplace_limit_percentage",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The marketplace limit as a percentage (0-100)."
+														}
+													},
+													{
+														"name": "start_date",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The start date of the period."
+														}
+													}
+												]
+											},
+											"description": "The list of commitment periods."
+										}
+									},
+									{
+										"name": "start_date",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The start date of the commitment."
+										}
+									},
+									{
+										"name": "total_commitment_value",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The total value of the commitment across all periods."
+										}
+									},
+									{
+										"name": "total_current_attainment",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The total current spend attainment across all periods."
+										}
+									},
+									{
+										"name": "update_time",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The last update time in milliseconds since epoch."
+										}
+									}
+								]
+							},
+							"description": "Array of commitments."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The number of returned records."
+						}
+					}
+				],
+				"description": "View and manage commitment contracts with DoiT.",
+				"markdown_description": "View and manage commitment contracts with DoiT."
+			}
+		},
+		{
 			"name": "current_user",
 			"schema": {
 				"attributes": [

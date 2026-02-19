@@ -113,6 +113,20 @@ const (
 	CollaboratorRoleViewer CollaboratorRole = "viewer"
 )
 
+// Defines values for CommitmentExternalCloudProvider.
+const (
+	CommitmentExternalCloudProviderAmazonWebServices CommitmentExternalCloudProvider = "amazon-web-services"
+	CommitmentExternalCloudProviderGoogleCloud       CommitmentExternalCloudProvider = "google-cloud"
+	CommitmentExternalCloudProviderMicrosoftAzure    CommitmentExternalCloudProvider = "microsoft-azure"
+)
+
+// Defines values for CommitmentExternalListItemCloudProvider.
+const (
+	CommitmentExternalListItemCloudProviderAmazonWebServices CommitmentExternalListItemCloudProvider = "amazon-web-services"
+	CommitmentExternalListItemCloudProviderGoogleCloud       CommitmentExternalListItemCloudProvider = "google-cloud"
+	CommitmentExternalListItemCloudProviderMicrosoftAzure    CommitmentExternalListItemCloudProvider = "microsoft-azure"
+)
+
 // Defines values for CreateLabelRequestColor.
 const (
 	CreateLabelRequestColorApricot    CreateLabelRequestColor = "apricot"
@@ -715,6 +729,22 @@ const (
 	ListAttributionsParamsSortOrderDesc ListAttributionsParamsSortOrder = "desc"
 )
 
+// Defines values for ListCommitmentsParamsSortBy.
+const (
+	ListCommitmentsParamsSortByCreateTime ListCommitmentsParamsSortBy = "createTime"
+	ListCommitmentsParamsSortByEndDate    ListCommitmentsParamsSortBy = "endDate"
+	ListCommitmentsParamsSortByName       ListCommitmentsParamsSortBy = "name"
+	ListCommitmentsParamsSortByProvider   ListCommitmentsParamsSortBy = "provider"
+	ListCommitmentsParamsSortByStartDate  ListCommitmentsParamsSortBy = "startDate"
+	ListCommitmentsParamsSortByUpdateTime ListCommitmentsParamsSortBy = "updateTime"
+)
+
+// Defines values for ListCommitmentsParamsSortOrder.
+const (
+	ListCommitmentsParamsSortOrderAsc  ListCommitmentsParamsSortOrder = "asc"
+	ListCommitmentsParamsSortOrderDesc ListCommitmentsParamsSortOrder = "desc"
+)
+
 // Defines values for ListDimensionsParamsSortBy.
 const (
 	ListDimensionsParamsSortByKey       ListDimensionsParamsSortBy = "key"
@@ -740,8 +770,8 @@ const (
 
 // Defines values for ListLabelsParamsSortOrder.
 const (
-	Asc  ListLabelsParamsSortOrder = "asc"
-	Desc ListLabelsParamsSortOrder = "desc"
+	ListLabelsParamsSortOrderAsc  ListLabelsParamsSortOrder = "asc"
+	ListLabelsParamsSortOrderDesc ListLabelsParamsSortOrder = "desc"
 )
 
 // Defines values for GetResourcePermissionParamsResourceType.
@@ -1572,6 +1602,111 @@ type CollectionRef struct {
 
 	// Path The full resource path of the collection: "projects/P/databases/D/documents..."
 	Path *string `json:"Path,omitempty"`
+}
+
+// CommitmentExternal A commitment contract.
+type CommitmentExternal struct {
+	// CloudProvider The cloud provider associated with the commitment.
+	CloudProvider *CommitmentExternalCloudProvider `json:"cloudProvider,omitempty"`
+
+	// CreateTime The creation time in milliseconds since epoch.
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Currency The currency of the commitment (e.g., USD).
+	Currency *string `json:"currency,omitempty"`
+
+	// EndDate The end date of the commitment.
+	EndDate *time.Time `json:"endDate,omitempty"`
+
+	// Id The unique identifier of the commitment.
+	Id *string `json:"id,omitempty"`
+
+	// Name The name of the commitment.
+	Name *string `json:"name,omitempty"`
+
+	// Periods The list of commitment periods.
+	Periods *[]CommitmentPeriod `json:"periods,omitempty"`
+
+	// StartDate The start date of the commitment.
+	StartDate *time.Time `json:"startDate,omitempty"`
+
+	// TotalCommitmentValue The total value of the commitment across all periods.
+	TotalCommitmentValue *float64 `json:"totalCommitmentValue,omitempty"`
+
+	// TotalCurrentAttainment The total current spend attainment across all periods.
+	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
+
+	// UpdateTime The last update time in milliseconds since epoch.
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+}
+
+// CommitmentExternalCloudProvider The cloud provider associated with the commitment.
+type CommitmentExternalCloudProvider string
+
+// CommitmentExternalList List of commitments.
+type CommitmentExternalList struct {
+	// Commitments Array of commitments.
+	Commitments *[]CommitmentExternalListItem `json:"commitments,omitempty"`
+
+	// PageToken Page token. It is used to request a specific page of the list results.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount The number of returned records.
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// CommitmentExternalListItem Summary information of a commitment in a list.
+type CommitmentExternalListItem struct {
+	// CloudProvider The cloud provider associated with the commitment.
+	CloudProvider *CommitmentExternalListItemCloudProvider `json:"cloudProvider,omitempty"`
+
+	// CreateTime The creation time in milliseconds since epoch.
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Currency The currency of the commitment.
+	Currency *string `json:"currency,omitempty"`
+
+	// EndDate The end date of the commitment.
+	EndDate *time.Time `json:"endDate,omitempty"`
+
+	// Id The unique identifier of the commitment.
+	Id *string `json:"id,omitempty"`
+
+	// Name The name of the commitment.
+	Name *string `json:"name,omitempty"`
+
+	// Periods The list of commitment periods.
+	Periods *[]CommitmentPeriod `json:"periods,omitempty"`
+
+	// StartDate The start date of the commitment.
+	StartDate *time.Time `json:"startDate,omitempty"`
+
+	// TotalCommitmentValue The total value of the commitment across all periods.
+	TotalCommitmentValue *float64 `json:"totalCommitmentValue,omitempty"`
+
+	// TotalCurrentAttainment The total current spend attainment across all periods.
+	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
+
+	// UpdateTime The last update time in milliseconds since epoch.
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+}
+
+// CommitmentExternalListItemCloudProvider The cloud provider associated with the commitment.
+type CommitmentExternalListItemCloudProvider string
+
+// CommitmentPeriod A single period within a commitment.
+type CommitmentPeriod struct {
+	// CommitmentValue The commitment value for this period.
+	CommitmentValue *float64 `json:"commitmentValue,omitempty"`
+
+	// EndDate The end date of the period.
+	EndDate *time.Time `json:"endDate,omitempty"`
+
+	// MarketplaceLimitPercentage The marketplace limit as a percentage (0-100).
+	MarketplaceLimitPercentage *float64 `json:"marketplaceLimitPercentage,omitempty"`
+
+	// StartDate The start date of the period.
+	StartDate *time.Time `json:"startDate,omitempty"`
 }
 
 // Condition Condition key or expression used in alert configurations.
@@ -3369,6 +3504,31 @@ type ListBudgetsParams struct {
 	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
+// ListCommitmentsParams defines parameters for ListCommitments.
+type ListCommitmentsParams struct {
+	// SortBy A field by which the results will be sorted.
+	SortBy *ListCommitmentsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort order can be ascending or descending.
+	SortOrder *ListCommitmentsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+	// Available filter keys: **name**, **provider**
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// ListCommitmentsParamsSortBy defines parameters for ListCommitments.
+type ListCommitmentsParamsSortBy string
+
+// ListCommitmentsParamsSortOrder defines parameters for ListCommitments.
+type ListCommitmentsParamsSortOrder string
+
 // GetDimensionsParams defines parameters for GetDimensions.
 type GetDimensionsParams struct {
 	// Type Dimension type
@@ -3905,6 +4065,12 @@ type ClientInterface interface {
 	UpdateBudgetWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UpdateBudget(ctx context.Context, id string, body UpdateBudgetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCommitments request
+	ListCommitments(ctx context.Context, params *ListCommitmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCommitment request
+	GetCommitment(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDimensions request
 	GetDimensions(ctx context.Context, params *GetDimensionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4555,6 +4721,30 @@ func (c *Client) UpdateBudgetWithBody(ctx context.Context, id string, contentTyp
 
 func (c *Client) UpdateBudget(ctx context.Context, id string, body UpdateBudgetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateBudgetRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCommitments(ctx context.Context, params *ListCommitmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCommitmentsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCommitment(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCommitmentRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -6825,6 +7015,153 @@ func NewUpdateBudgetRequestWithBody(server string, id string, contentType string
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListCommitmentsRequest generates requests for ListCommitments
+func NewListCommitmentsRequest(server string, params *ListCommitmentsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/commitment-manager")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortBy", runtime.ParamLocationQuery, *params.SortBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortOrder", runtime.ParamLocationQuery, *params.SortOrder); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "maxResults", runtime.ParamLocationQuery, *params.MaxResults); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageToken", runtime.ParamLocationQuery, *params.PageToken); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCommitmentRequest generates requests for GetCommitment
+func NewGetCommitmentRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/commitment-manager/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -9262,6 +9599,12 @@ type ClientWithResponsesInterface interface {
 
 	UpdateBudgetWithResponse(ctx context.Context, id string, body UpdateBudgetJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBudgetResp, error)
 
+	// ListCommitmentsWithResponse request
+	ListCommitmentsWithResponse(ctx context.Context, params *ListCommitmentsParams, reqEditors ...RequestEditorFn) (*ListCommitmentsResp, error)
+
+	// GetCommitmentWithResponse request
+	GetCommitmentWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCommitmentResp, error)
+
 	// GetDimensionsWithResponse request
 	GetDimensionsWithResponse(ctx context.Context, params *GetDimensionsParams, reqEditors ...RequestEditorFn) (*GetDimensionsResp, error)
 
@@ -10188,6 +10531,58 @@ func (r UpdateBudgetResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateBudgetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListCommitmentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CommitmentExternalList
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCommitmentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCommitmentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetCommitmentResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CommitmentExternal
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCommitmentResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCommitmentResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -11647,6 +12042,24 @@ func (c *ClientWithResponses) UpdateBudgetWithResponse(ctx context.Context, id s
 		return nil, err
 	}
 	return ParseUpdateBudgetResp(rsp)
+}
+
+// ListCommitmentsWithResponse request returning *ListCommitmentsResp
+func (c *ClientWithResponses) ListCommitmentsWithResponse(ctx context.Context, params *ListCommitmentsParams, reqEditors ...RequestEditorFn) (*ListCommitmentsResp, error) {
+	rsp, err := c.ListCommitments(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCommitmentsResp(rsp)
+}
+
+// GetCommitmentWithResponse request returning *GetCommitmentResp
+func (c *ClientWithResponses) GetCommitmentWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCommitmentResp, error) {
+	rsp, err := c.GetCommitment(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCommitmentResp(rsp)
 }
 
 // GetDimensionsWithResponse request returning *GetDimensionsResp
@@ -13700,6 +14113,114 @@ func ParseUpdateBudgetResp(rsp *http.Response) (*UpdateBudgetResp, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BudgetAPI
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCommitmentsResp parses an HTTP response from a ListCommitmentsWithResponse call
+func ParseListCommitmentsResp(rsp *http.Response) (*ListCommitmentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCommitmentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CommitmentExternalList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCommitmentResp parses an HTTP response from a GetCommitmentWithResponse call
+func ParseGetCommitmentResp(rsp *http.Response) (*GetCommitmentResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCommitmentResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CommitmentExternal
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

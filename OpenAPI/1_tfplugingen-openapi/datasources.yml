@@ -37,6 +37,10 @@ data_sources:
     read:
       path: /core/v1/cloudincidents/{id}
       method: GET
+  commitment:
+    read:
+      path: /analytics/v1/commitment-manager/{id}
+      method: GET
   dimensions:
     read:
       path: /analytics/v1/dimensions
@@ -102,4 +106,8 @@ data_sources:
   support_requests:
     read:
       path: /support/v1/tickets
+      method: GET
+  commitments:
+    read:
+      path: /analytics/v1/commitment-manager
       method: GET

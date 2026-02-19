@@ -206,6 +206,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewAnomalyDataSource,
 		NewInvoiceDataSource,
 		NewCloudIncidentDataSource,
+		NewCommitmentDataSource,
 		NewDimensionsDataSource,
 		NewRolesDataSource,
 		NewCurrentUserDataSource,
@@ -221,6 +222,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewAnomaliesDataSource,
 		NewAlertsDataSource,
 		NewCloudIncidentsDataSource,
+		NewCommitmentsDataSource,
 		NewAssetsDataSource,
 		NewSupportRequestsDataSource,
 	}
