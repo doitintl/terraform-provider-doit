@@ -60,23 +60,29 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Alerts = types.ListUnknown(datasource_alerts.AlertsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.ListAlertsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.SortBy.IsNull() && !data.SortBy.IsUnknown() {
+	if !data.SortBy.IsNull() {
 		sortBy := models.ListAlertsParamsSortBy(data.SortBy.ValueString())
 		params.SortBy = &sortBy
 	}
-	if !data.SortOrder.IsNull() && !data.SortOrder.IsUnknown() {
+	if !data.SortOrder.IsNull() {
 		sortOrder := models.ListAlertsParamsSortOrder(data.SortOrder.ValueString())
 		params.SortOrder = &sortOrder
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allAlerts []models.Alert
 
@@ -84,7 +90,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueString()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -121,7 +127,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -157,10 +163,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allAlerts)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.StringNull()
-		}
+		// max_results was not set; preserve null
 	}
 
 	// Map alerts list
@@ -181,7 +184,9 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 				recipientsList, diags = types.ListValue(types.StringType, recipientVals)
 				resp.Diagnostics.Append(diags...)
 			} else {
-				recipientsList = types.ListNull(types.StringType)
+				emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
+				resp.Diagnostics.Append(d...)
+				recipientsList = emptyList1
 			}
 
 			alertVal, diags := datasource_alerts.NewAlertsValue(
@@ -204,18 +209,9 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		resp.Diagnostics.Append(diags...)
 		data.Alerts = alertList
 	} else {
-		data.Alerts = types.ListNull(datasource_alerts.AlertsValue{}.Type(ctx))
-	}
-
-	// Set optional filter params to null if they were unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.SortBy.IsUnknown() {
-		data.SortBy = types.StringNull()
-	}
-	if data.SortOrder.IsUnknown() {
-		data.SortOrder = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_alerts.AlertsValue{}.Type(ctx), []datasource_alerts.AlertsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Alerts = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -238,7 +234,9 @@ func mapAlertConfig(ctx context.Context, config *models.AlertConfig, diagnostics
 		attributionsList, diags = types.ListValue(types.StringType, attrVals)
 		diagnostics.Append(diags...)
 	} else {
-		attributionsList = types.ListNull(types.StringType)
+		emptyAttrs, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		diagnostics.Append(d...)
+		attributionsList = emptyAttrs
 	}
 
 	// Map scopes list
@@ -303,7 +301,9 @@ func mapAlertMetric(ctx context.Context, metric models.MetricConfig, diagnostics
 // mapAlertScopes maps API ExternalConfigFilter slice to Terraform scopes list.
 func mapAlertScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter, diagnostics *diag.Diagnostics) types.List {
 	if scopes == nil || len(*scopes) == 0 {
-		return types.ListNull(datasource_alerts.ScopesValue{}.Type(ctx))
+		emptyScopesList, d := types.ListValueFrom(ctx, datasource_alerts.ScopesValue{}.Type(ctx), []datasource_alerts.ScopesValue{})
+		diagnostics.Append(d...)
+		return emptyScopesList
 	}
 
 	vals := make([]datasource_alerts.ScopesValue, 0, len(*scopes))
@@ -319,7 +319,9 @@ func mapAlertScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter, 
 			valuesList, diags = types.ListValue(types.StringType, valStrs)
 			diagnostics.Append(diags...)
 		} else {
-			valuesList = types.ListNull(types.StringType)
+			emptyVals, d := types.ListValueFrom(ctx, types.StringType, []string{})
+			diagnostics.Append(d...)
+			valuesList = emptyVals
 		}
 
 		scopeVal, diags := datasource_alerts.NewScopesValue(

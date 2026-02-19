@@ -59,15 +59,21 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Assets = types.ListUnknown(datasource_assets.AssetsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.IdOfAssetsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allAssets []models.AssetItem
 
@@ -75,7 +81,7 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueInt64()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -112,7 +118,7 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -148,10 +154,7 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allAssets)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.Int64Null()
-		}
+		// max_results was not set; preserve null
 	}
 
 	// Map assets list
@@ -177,12 +180,9 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		resp.Diagnostics.Append(diags...)
 		data.Assets = assetList
 	} else {
-		data.Assets = types.ListNull(datasource_assets.AssetsValue{}.Type(ctx))
-	}
-
-	// Set optional filter param to null if it was unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_assets.AssetsValue{}.Type(ctx), []datasource_assets.AssetsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Assets = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

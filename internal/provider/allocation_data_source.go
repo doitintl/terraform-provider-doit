@@ -177,7 +177,9 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 		data.Rules, rulesListDiags = types.ListValueFrom(ctx, datasource_allocation.RulesValue{}.Type(ctx), rules)
 		diags.Append(rulesListDiags...)
 	} else {
-		data.Rules = types.ListNull(datasource_allocation.RulesValue{}.Type(ctx))
+		emptyRules, d := types.ListValueFrom(ctx, datasource_allocation.RulesValue{}.Type(ctx), []datasource_allocation.RulesValue{})
+		diags.Append(d...)
+		data.Rules = emptyRules
 	}
 
 	return diags
@@ -188,7 +190,9 @@ func (ds *allocationDataSource) mapComponentsToList(ctx context.Context, compone
 	var diags diag.Diagnostics
 
 	if len(components) == 0 {
-		return types.ListNull(datasource_allocation.ComponentsValue{}.Type(ctx)), diags
+		emptyList, d := types.ListValueFrom(ctx, datasource_allocation.ComponentsValue{}.Type(ctx), []datasource_allocation.ComponentsValue{})
+		diags.Append(d...)
+		return emptyList, diags
 	}
 
 	componentValues := make([]attr.Value, len(components))
@@ -200,7 +204,9 @@ func (ds *allocationDataSource) mapComponentsToList(ctx context.Context, compone
 		valuesList, valsDiags := types.ListValue(types.StringType, valuesAttrList)
 		diags.Append(valsDiags...)
 		if diags.HasError() {
-			return types.ListNull(datasource_allocation.ComponentsValue{}.Type(ctx)), diags
+			emptyList, d := types.ListValueFrom(ctx, datasource_allocation.ComponentsValue{}.Type(ctx), []datasource_allocation.ComponentsValue{})
+			diags.Append(d...)
+			return emptyList, diags
 		}
 
 		componentMap := map[string]attr.Value{
@@ -215,7 +221,9 @@ func (ds *allocationDataSource) mapComponentsToList(ctx context.Context, compone
 		componentValue, compDiags := datasource_allocation.NewComponentsValue(datasource_allocation.ComponentsValue{}.AttributeTypes(ctx), componentMap)
 		diags.Append(compDiags...)
 		if diags.HasError() {
-			return types.ListNull(datasource_allocation.ComponentsValue{}.Type(ctx)), diags
+			emptyList, d := types.ListValueFrom(ctx, datasource_allocation.ComponentsValue{}.Type(ctx), []datasource_allocation.ComponentsValue{})
+			diags.Append(d...)
+			return emptyList, diags
 		}
 		componentValues[i] = componentValue
 	}

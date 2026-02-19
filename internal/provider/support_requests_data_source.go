@@ -59,23 +59,29 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Tickets = types.ListUnknown(datasource_support_requests.TicketsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.IdOfTicketsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MinCreationTime.IsNull() && !data.MinCreationTime.IsUnknown() {
+	if !data.MinCreationTime.IsNull() {
 		minCreationTime := data.MinCreationTime.ValueString()
 		params.MinCreationTime = &minCreationTime
 	}
-	if !data.MaxCreationTime.IsNull() && !data.MaxCreationTime.IsUnknown() {
+	if !data.MaxCreationTime.IsNull() {
 		maxCreationTime := data.MaxCreationTime.ValueString()
 		params.MaxCreationTime = &maxCreationTime
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allTickets []models.TicketListItem
 
@@ -83,7 +89,7 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueInt64()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -120,7 +126,7 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -156,10 +162,7 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allTickets)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.Int64Null()
-		}
+		// max_results was not set; preserve null
 	}
 
 	// Map tickets list
@@ -198,18 +201,9 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		resp.Diagnostics.Append(diags...)
 		data.Tickets = ticketList
 	} else {
-		data.Tickets = types.ListNull(datasource_support_requests.TicketsValue{}.Type(ctx))
-	}
-
-	// Set optional filter params to null if they were unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.MinCreationTime.IsUnknown() {
-		data.MinCreationTime = types.StringNull()
-	}
-	if data.MaxCreationTime.IsUnknown() {
-		data.MaxCreationTime = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_support_requests.TicketsValue{}.Type(ctx), []datasource_support_requests.TicketsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Tickets = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

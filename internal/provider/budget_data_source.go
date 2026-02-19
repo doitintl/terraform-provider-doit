@@ -148,7 +148,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		diags.Append(d...)
 		data.Alerts = alertsListValue
 	} else {
-		data.Alerts = types.ListNull(datasource_budget.AlertsValue{}.Type(ctx))
+		emptyAlerts, d := types.ListValueFrom(ctx, datasource_budget.AlertsValue{}.Type(ctx), []datasource_budget.AlertsValue{})
+		diags.Append(d...)
+		data.Alerts = emptyAlerts
 	}
 
 	// Map collaborators
@@ -167,7 +169,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		diags.Append(d...)
 		data.Collaborators = collaboratorsListValue
 	} else {
-		data.Collaborators = types.ListNull(datasource_budget.CollaboratorsValue{}.Type(ctx))
+		emptyCollabs, d := types.ListValueFrom(ctx, datasource_budget.CollaboratorsValue{}.Type(ctx), []datasource_budget.CollaboratorsValue{})
+		diags.Append(d...)
+		data.Collaborators = emptyCollabs
 	}
 
 	// Map recipients list
@@ -176,7 +180,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		diags.Append(listDiags...)
 		data.Recipients = recipientsList
 	} else {
-		data.Recipients = types.ListNull(types.StringType)
+		emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(d...)
+		data.Recipients = emptyList1
 	}
 
 	// Map recipients_slack_channels
@@ -199,7 +205,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		diags.Append(d...)
 		data.RecipientsSlackChannels = slackChannelsListValue
 	} else {
-		data.RecipientsSlackChannels = types.ListNull(datasource_budget.RecipientsSlackChannelsValue{}.Type(ctx))
+		emptySlack, d := types.ListValueFrom(ctx, datasource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []datasource_budget.RecipientsSlackChannelsValue{})
+		diags.Append(d...)
+		data.RecipientsSlackChannels = emptySlack
 	}
 
 	// Map scope list
@@ -208,7 +216,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		diags.Append(listDiags...)
 		data.Scope = scopeList
 	} else {
-		data.Scope = types.ListNull(types.StringType)
+		emptyList2, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(d...)
+		data.Scope = emptyList2
 	}
 
 	// Map scopes list
@@ -221,7 +231,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, *scope.Values)
 				diags.Append(listDiags...)
 			} else {
-				valuesVal = types.ListNull(types.StringType)
+				emptyList3, d := types.ListValueFrom(ctx, types.StringType, []string{})
+				diags.Append(d...)
+				valuesVal = emptyList3
 			}
 
 			scopeAttrs := map[string]attr.Value{
@@ -239,7 +251,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		diags.Append(d...)
 		data.Scopes = scopesListValue
 	} else {
-		data.Scopes = types.ListNull(datasource_budget.ScopesValue{}.Type(ctx))
+		emptyScopes, d := types.ListValueFrom(ctx, datasource_budget.ScopesValue{}.Type(ctx), []datasource_budget.ScopesValue{})
+		diags.Append(d...)
+		data.Scopes = emptyScopes
 	}
 
 	// Map seasonal_amounts list
@@ -248,7 +262,9 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		diags.Append(listDiags...)
 		data.SeasonalAmounts = seasonalAmountsList
 	} else {
-		data.SeasonalAmounts = types.ListNull(types.Float64Type)
+		emptyList4, d := types.ListValueFrom(ctx, types.Float64Type, []float64{})
+		diags.Append(d...)
+		data.SeasonalAmounts = emptyList4
 	}
 
 	return diags

@@ -59,28 +59,34 @@ func (d *cloudIncidentsDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Incidents = types.ListUnknown(datasource_cloud_incidents.IncidentsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.ListKnownIssuesParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MinCreationTime.IsNull() && !data.MinCreationTime.IsUnknown() {
+	if !data.MinCreationTime.IsNull() {
 		minCreationTime := data.MinCreationTime.ValueString()
 		params.MinCreationTime = &minCreationTime
 	}
-	if !data.MaxCreationTime.IsNull() && !data.MaxCreationTime.IsUnknown() {
+	if !data.MaxCreationTime.IsNull() {
 		maxCreationTime := data.MaxCreationTime.ValueString()
 		params.MaxCreationTime = &maxCreationTime
 	}
 
 	// Cloud incidents can have thousands of records, so we always use manual pagination
 	// (no auto-pagination) to avoid very long fetch times.
-	if !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown() {
+	if !data.MaxResults.IsNull() {
 		maxResultsVal := data.MaxResults.ValueInt64()
 		params.MaxResults = &maxResultsVal
 	}
-	if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+	if !data.PageToken.IsNull() {
 		pageTokenVal := data.PageToken.ValueString()
 		params.PageToken = &pageTokenVal
 	}
@@ -115,10 +121,7 @@ func (d *cloudIncidentsDataSource) Read(ctx context.Context, req datasource.Read
 	} else {
 		data.RowCount = types.Int64Value(int64(len(allIncidents)))
 	}
-	// Preserve max_results null/unknown handling
-	if data.MaxResults.IsUnknown() {
-		data.MaxResults = types.Int64Null()
-	}
+	// max_results was not set; preserve null
 
 	// Map incidents list
 	if len(allIncidents) > 0 {
@@ -159,18 +162,9 @@ func (d *cloudIncidentsDataSource) Read(ctx context.Context, req datasource.Read
 		resp.Diagnostics.Append(diags...)
 		data.Incidents = incidentList
 	} else {
-		data.Incidents = types.ListNull(datasource_cloud_incidents.IncidentsValue{}.Type(ctx))
-	}
-
-	// Set optional filter params to null if they were unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.MinCreationTime.IsUnknown() {
-		data.MinCreationTime = types.StringNull()
-	}
-	if data.MaxCreationTime.IsUnknown() {
-		data.MaxCreationTime = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_cloud_incidents.IncidentsValue{}.Type(ctx), []datasource_cloud_incidents.IncidentsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Incidents = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

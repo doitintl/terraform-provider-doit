@@ -127,7 +127,9 @@ func (ds *invoiceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.Append(d...)
 		state.LineItems = lineItemsList
 	} else {
-		state.LineItems = types.ListNull(datasource_invoice.LineItemsValue{}.Type(ctx))
+		emptyList, d := types.ListValueFrom(ctx, datasource_invoice.LineItemsValue{}.Type(ctx), []datasource_invoice.LineItemsValue{})
+		resp.Diagnostics.Append(d...)
+		state.LineItems = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

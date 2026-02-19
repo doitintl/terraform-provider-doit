@@ -97,7 +97,9 @@ func (d *accountTeamDataSource) Read(ctx context.Context, req datasource.ReadReq
 		resp.Diagnostics.Append(diags...)
 		data.AccountManagers = amList
 	} else {
-		data.AccountManagers = types.ListNull(datasource_account_team.AccountManagersValue{}.Type(ctx))
+		emptyList, diags := types.ListValueFrom(ctx, datasource_account_team.AccountManagersValue{}.Type(ctx), []datasource_account_team.AccountManagersValue{})
+		resp.Diagnostics.Append(diags...)
+		data.AccountManagers = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

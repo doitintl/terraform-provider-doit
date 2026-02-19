@@ -60,23 +60,29 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Annotations = types.ListUnknown(datasource_annotations.AnnotationsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.ListAnnotationsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.SortBy.IsNull() && !data.SortBy.IsUnknown() {
+	if !data.SortBy.IsNull() {
 		sortBy := models.ListAnnotationsParamsSortBy(data.SortBy.ValueString())
 		params.SortBy = &sortBy
 	}
-	if !data.SortOrder.IsNull() && !data.SortOrder.IsUnknown() {
+	if !data.SortOrder.IsNull() {
 		sortOrder := models.ListAnnotationsParamsSortOrder(data.SortOrder.ValueString())
 		params.SortOrder = &sortOrder
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allAnnotations []models.AnnotationListItem
 
@@ -84,7 +90,7 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueString()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -121,7 +127,7 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -157,10 +163,7 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allAnnotations)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.StringNull()
-		}
+		// max_results was not set; preserve null
 	}
 
 	// Map annotations list
@@ -181,7 +184,9 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 				reportsList, diags = types.ListValue(types.StringType, reportVals)
 				resp.Diagnostics.Append(diags...)
 			} else {
-				reportsList = types.ListNull(types.StringType)
+				emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
+				resp.Diagnostics.Append(d...)
+				reportsList = emptyList1
 			}
 
 			// Handle time.Time to string conversion
@@ -217,18 +222,9 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		resp.Diagnostics.Append(diags...)
 		data.Annotations = annotationList
 	} else {
-		data.Annotations = types.ListNull(datasource_annotations.AnnotationsValue{}.Type(ctx))
-	}
-
-	// Set optional filter params to null if they were unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.SortBy.IsUnknown() {
-		data.SortBy = types.StringNull()
-	}
-	if data.SortOrder.IsUnknown() {
-		data.SortOrder = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_annotations.AnnotationsValue{}.Type(ctx), []datasource_annotations.AnnotationsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Annotations = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -237,7 +233,9 @@ func (d *annotationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 // mapAnnotationLabels maps API LabelInfo slice to Terraform list.
 func mapAnnotationLabels(ctx context.Context, labels *[]models.LabelInfo, diagnostics *diag.Diagnostics) types.List {
 	if labels == nil || len(*labels) == 0 {
-		return types.ListNull(datasource_annotations.LabelsValue{}.Type(ctx))
+		emptyLabels, d := types.ListValueFrom(ctx, datasource_annotations.LabelsValue{}.Type(ctx), []datasource_annotations.LabelsValue{})
+		diagnostics.Append(d...)
+		return emptyLabels
 	}
 
 	vals := make([]datasource_annotations.LabelsValue, 0, len(*labels))

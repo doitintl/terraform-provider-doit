@@ -136,7 +136,9 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		resp.Diagnostics.Append(diags...)
 		data.Users = usersList
 	} else {
-		data.Users = types.ListNull(datasource_users.UsersValue{}.Type(ctx))
+		emptyList, diags := types.ListValueFrom(ctx, datasource_users.UsersValue{}.Type(ctx), []datasource_users.UsersValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Users = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
