@@ -4,7 +4,7 @@ info:
   description: Programmatic access to DoiT Platform
   version: v1
 servers:
-  - url: https://api-dev.doit.com
+  - url: ${API_BASE_URL}
 security:
   - api_key: []
   - customerContext: []
@@ -2945,7 +2945,7 @@ paths:
       description: Returns diagram URLs matching the provided resource IDs.
       operationId: findCloudDiagrams
       servers:
-        - url: https://api-dev.doit.com
+        - url: ${API_BASE_URL}
       requestBody:
         required: true
         content:
