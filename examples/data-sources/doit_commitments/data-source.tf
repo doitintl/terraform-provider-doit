@@ -9,7 +9,7 @@ data "doit_commitments" "recent" {
 
 # Filter commitments by provider
 data "doit_commitments" "gcp_only" {
-  filter = "provider:[google-cloud]"
+  filter = "provider:google-cloud"
 }
 
 # Paginate through commitments

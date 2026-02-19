@@ -113,18 +113,18 @@ const (
 	CollaboratorRoleViewer CollaboratorRole = "viewer"
 )
 
-// Defines values for CommitmentExternalProvider.
+// Defines values for CommitmentExternalCloudProvider.
 const (
-	CommitmentExternalProviderAmazonWebServices CommitmentExternalProvider = "amazon-web-services"
-	CommitmentExternalProviderGoogleCloud       CommitmentExternalProvider = "google-cloud"
-	CommitmentExternalProviderMicrosoftAzure    CommitmentExternalProvider = "microsoft-azure"
+	CommitmentExternalCloudProviderAmazonWebServices CommitmentExternalCloudProvider = "amazon-web-services"
+	CommitmentExternalCloudProviderGoogleCloud       CommitmentExternalCloudProvider = "google-cloud"
+	CommitmentExternalCloudProviderMicrosoftAzure    CommitmentExternalCloudProvider = "microsoft-azure"
 )
 
-// Defines values for CommitmentExternalListItemProvider.
+// Defines values for CommitmentExternalListItemCloudProvider.
 const (
-	CommitmentExternalListItemProviderAmazonWebServices CommitmentExternalListItemProvider = "amazon-web-services"
-	CommitmentExternalListItemProviderGoogleCloud       CommitmentExternalListItemProvider = "google-cloud"
-	CommitmentExternalListItemProviderMicrosoftAzure    CommitmentExternalListItemProvider = "microsoft-azure"
+	CommitmentExternalListItemCloudProviderAmazonWebServices CommitmentExternalListItemCloudProvider = "amazon-web-services"
+	CommitmentExternalListItemCloudProviderGoogleCloud       CommitmentExternalListItemCloudProvider = "google-cloud"
+	CommitmentExternalListItemCloudProviderMicrosoftAzure    CommitmentExternalListItemCloudProvider = "microsoft-azure"
 )
 
 // Defines values for CreateLabelRequestColor.
@@ -1567,6 +1567,9 @@ type CollectionRef struct {
 
 // CommitmentExternal A commitment contract.
 type CommitmentExternal struct {
+	// CloudProvider The cloud provider associated with the commitment.
+	CloudProvider *CommitmentExternalCloudProvider `json:"cloudProvider,omitempty"`
+
 	// CreateTime The creation time in milliseconds since epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
@@ -1576,14 +1579,14 @@ type CommitmentExternal struct {
 	// EndDate The end date of the commitment.
 	EndDate *time.Time `json:"endDate,omitempty"`
 
+	// Id The unique identifier of the commitment.
+	Id *string `json:"id,omitempty"`
+
 	// Name The name of the commitment.
 	Name *string `json:"name,omitempty"`
 
 	// Periods The list of commitment periods.
 	Periods *[]CommitmentPeriod `json:"periods,omitempty"`
-
-	// Provider The cloud provider associated with the commitment.
-	Provider *CommitmentExternalProvider `json:"provider,omitempty"`
 
 	// StartDate The start date of the commitment.
 	StartDate *time.Time `json:"startDate,omitempty"`
@@ -1598,8 +1601,8 @@ type CommitmentExternal struct {
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
-// CommitmentExternalProvider The cloud provider associated with the commitment.
-type CommitmentExternalProvider string
+// CommitmentExternalCloudProvider The cloud provider associated with the commitment.
+type CommitmentExternalCloudProvider string
 
 // CommitmentExternalList List of commitments.
 type CommitmentExternalList struct {
@@ -1615,6 +1618,9 @@ type CommitmentExternalList struct {
 
 // CommitmentExternalListItem Summary information of a commitment in a list.
 type CommitmentExternalListItem struct {
+	// CloudProvider The cloud provider associated with the commitment.
+	CloudProvider *CommitmentExternalListItemCloudProvider `json:"cloudProvider,omitempty"`
+
 	// CreateTime The creation time in milliseconds since epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
@@ -1624,14 +1630,14 @@ type CommitmentExternalListItem struct {
 	// EndDate The end date of the commitment.
 	EndDate *time.Time `json:"endDate,omitempty"`
 
+	// Id The unique identifier of the commitment.
+	Id *string `json:"id,omitempty"`
+
 	// Name The name of the commitment.
 	Name *string `json:"name,omitempty"`
 
 	// Periods The list of commitment periods.
 	Periods *[]CommitmentPeriod `json:"periods,omitempty"`
-
-	// Provider The cloud provider associated with the commitment.
-	Provider *CommitmentExternalListItemProvider `json:"provider,omitempty"`
 
 	// StartDate The start date of the commitment.
 	StartDate *time.Time `json:"startDate,omitempty"`
@@ -1646,8 +1652,8 @@ type CommitmentExternalListItem struct {
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
-// CommitmentExternalListItemProvider The cloud provider associated with the commitment.
-type CommitmentExternalListItemProvider string
+// CommitmentExternalListItemCloudProvider The cloud provider associated with the commitment.
+type CommitmentExternalListItemCloudProvider string
 
 // CommitmentPeriod A single period within a commitment.
 type CommitmentPeriod struct {

@@ -153,9 +153,6 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	// Map commitment items with proper diagnostics.
-	// Note: nested attributes use "provider" (not "cloud_provider") because the reserved name
-	// restriction only applies to root-level attributes. The singular data source uses
-	// "cloud_provider" because "provider" IS a root attribute there.
 	commitmentsType := datasource_commitments.CommitmentsType{
 		ObjectType: types.ObjectType{
 			AttrTypes: datasource_commitments.CommitmentsValue{}.AttributeTypes(ctx),
@@ -184,6 +181,13 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListItem) (datasource_commitments.CommitmentsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var id types.String
+	if c.Id != nil {
+		id = types.StringValue(*c.Id)
+	} else {
+		id = types.StringNull()
+	}
+
 	var name types.String
 	if c.Name != nil {
 		name = types.StringValue(*c.Name)
@@ -198,11 +202,11 @@ func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListI
 		currency = types.StringNull()
 	}
 
-	var provider types.String
-	if c.Provider != nil {
-		provider = types.StringValue(string(*c.Provider))
+	var cloudProvider types.String
+	if c.CloudProvider != nil {
+		cloudProvider = types.StringValue(string(*c.CloudProvider))
 	} else {
-		provider = types.StringNull()
+		cloudProvider = types.StringNull()
 	}
 
 	var createTime types.Int64
@@ -257,9 +261,10 @@ func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListI
 			"create_time":              createTime,
 			"currency":                 currency,
 			"end_date":                 endDate,
+			"id":                       id,
 			"name":                     name,
 			"periods":                  periods,
-			"provider":                 provider,
+			"cloud_provider":           cloudProvider,
 			"start_date":               startDate,
 			"total_commitment_value":   totalCommitmentValue,
 			"total_current_attainment": totalCurrentAttainment,

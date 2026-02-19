@@ -23,6 +23,11 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 			"commitments": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"cloud_provider": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The cloud provider associated with the commitment.",
+							MarkdownDescription: "The cloud provider associated with the commitment.",
+						},
 						"create_time": schema.Int64Attribute{
 							Computed:            true,
 							Description:         "The creation time in milliseconds since epoch.",
@@ -37,6 +42,11 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "The end date of the commitment.",
 							MarkdownDescription: "The end date of the commitment.",
+						},
+						"id": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The unique identifier of the commitment.",
+							MarkdownDescription: "The unique identifier of the commitment.",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
@@ -76,11 +86,6 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "The list of commitment periods.",
 							MarkdownDescription: "The list of commitment periods.",
-						},
-						"provider": schema.StringAttribute{
-							Computed:            true,
-							Description:         "The cloud provider associated with the commitment.",
-							MarkdownDescription: "The cloud provider associated with the commitment.",
 						},
 						"start_date": schema.StringAttribute{
 							Computed:            true,
@@ -205,6 +210,24 @@ func (t CommitmentsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 
 	attributes := in.Attributes()
 
+	cloudProviderAttribute, ok := attributes["cloud_provider"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud_provider is missing from object`)
+
+		return nil, diags
+	}
+
+	cloudProviderVal, ok := cloudProviderAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_provider expected to be basetypes.StringValue, was: %T`, cloudProviderAttribute))
+	}
+
 	createTimeAttribute, ok := attributes["create_time"]
 
 	if !ok {
@@ -259,6 +282,24 @@ func (t CommitmentsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 			fmt.Sprintf(`end_date expected to be basetypes.StringValue, was: %T`, endDateAttribute))
 	}
 
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
 	nameAttribute, ok := attributes["name"]
 
 	if !ok {
@@ -293,24 +334,6 @@ func (t CommitmentsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`periods expected to be basetypes.ListValue, was: %T`, periodsAttribute))
-	}
-
-	providerAttribute, ok := attributes["provider"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`provider is missing from object`)
-
-		return nil, diags
-	}
-
-	providerVal, ok := providerAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`provider expected to be basetypes.StringValue, was: %T`, providerAttribute))
 	}
 
 	startDateAttribute, ok := attributes["start_date"]
@@ -390,12 +413,13 @@ func (t CommitmentsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 	}
 
 	return CommitmentsValue{
+		CloudProvider:          cloudProviderVal,
 		CreateTime:             createTimeVal,
 		Currency:               currencyVal,
 		EndDate:                endDateVal,
+		Id:                     idVal,
 		Name:                   nameVal,
 		Periods:                periodsVal,
-		Provider:               providerVal,
 		StartDate:              startDateVal,
 		TotalCommitmentValue:   totalCommitmentValueVal,
 		TotalCurrentAttainment: totalCurrentAttainmentVal,
@@ -467,6 +491,24 @@ func NewCommitmentsValue(attributeTypes map[string]attr.Type, attributes map[str
 		return NewCommitmentsValueUnknown(), diags
 	}
 
+	cloudProviderAttribute, ok := attributes["cloud_provider"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud_provider is missing from object`)
+
+		return NewCommitmentsValueUnknown(), diags
+	}
+
+	cloudProviderVal, ok := cloudProviderAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_provider expected to be basetypes.StringValue, was: %T`, cloudProviderAttribute))
+	}
+
 	createTimeAttribute, ok := attributes["create_time"]
 
 	if !ok {
@@ -521,6 +563,24 @@ func NewCommitmentsValue(attributeTypes map[string]attr.Type, attributes map[str
 			fmt.Sprintf(`end_date expected to be basetypes.StringValue, was: %T`, endDateAttribute))
 	}
 
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewCommitmentsValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
 	nameAttribute, ok := attributes["name"]
 
 	if !ok {
@@ -555,24 +615,6 @@ func NewCommitmentsValue(attributeTypes map[string]attr.Type, attributes map[str
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`periods expected to be basetypes.ListValue, was: %T`, periodsAttribute))
-	}
-
-	providerAttribute, ok := attributes["provider"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`provider is missing from object`)
-
-		return NewCommitmentsValueUnknown(), diags
-	}
-
-	providerVal, ok := providerAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`provider expected to be basetypes.StringValue, was: %T`, providerAttribute))
 	}
 
 	startDateAttribute, ok := attributes["start_date"]
@@ -652,12 +694,13 @@ func NewCommitmentsValue(attributeTypes map[string]attr.Type, attributes map[str
 	}
 
 	return CommitmentsValue{
+		CloudProvider:          cloudProviderVal,
 		CreateTime:             createTimeVal,
 		Currency:               currencyVal,
 		EndDate:                endDateVal,
+		Id:                     idVal,
 		Name:                   nameVal,
 		Periods:                periodsVal,
-		Provider:               providerVal,
 		StartDate:              startDateVal,
 		TotalCommitmentValue:   totalCommitmentValueVal,
 		TotalCurrentAttainment: totalCurrentAttainmentVal,
@@ -734,12 +777,13 @@ func (t CommitmentsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = CommitmentsValue{}
 
 type CommitmentsValue struct {
+	CloudProvider          basetypes.StringValue  `tfsdk:"cloud_provider"`
 	CreateTime             basetypes.Int64Value   `tfsdk:"create_time"`
 	Currency               basetypes.StringValue  `tfsdk:"currency"`
 	EndDate                basetypes.StringValue  `tfsdk:"end_date"`
+	Id                     basetypes.StringValue  `tfsdk:"id"`
 	Name                   basetypes.StringValue  `tfsdk:"name"`
 	Periods                basetypes.ListValue    `tfsdk:"periods"`
-	Provider               basetypes.StringValue  `tfsdk:"provider"`
 	StartDate              basetypes.StringValue  `tfsdk:"start_date"`
 	TotalCommitmentValue   basetypes.Float64Value `tfsdk:"total_commitment_value"`
 	TotalCurrentAttainment basetypes.Float64Value `tfsdk:"total_current_attainment"`
@@ -748,19 +792,20 @@ type CommitmentsValue struct {
 }
 
 func (v CommitmentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 10)
+	attrTypes := make(map[string]tftypes.Type, 11)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["cloud_provider"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["create_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["end_date"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["periods"] = basetypes.ListType{
 		ElemType: PeriodsValue{}.Type(ctx),
 	}.TerraformType(ctx)
-	attrTypes["provider"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["start_date"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["total_commitment_value"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["total_current_attainment"] = basetypes.Float64Type{}.TerraformType(ctx)
@@ -770,7 +815,15 @@ func (v CommitmentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 10)
+		vals := make(map[string]tftypes.Value, 11)
+
+		val, err = v.CloudProvider.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cloud_provider"] = val
 
 		val, err = v.CreateTime.ToTerraformValue(ctx)
 
@@ -796,6 +849,14 @@ func (v CommitmentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 
 		vals["end_date"] = val
 
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
 		val, err = v.Name.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -811,14 +872,6 @@ func (v CommitmentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 		}
 
 		vals["periods"] = val
-
-		val, err = v.Provider.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["provider"] = val
 
 		val, err = v.StartDate.ToTerraformValue(ctx)
 
@@ -888,14 +941,15 @@ func (v CommitmentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"create_time": basetypes.Int64Type{},
-		"currency":    basetypes.StringType{},
-		"end_date":    basetypes.StringType{},
-		"name":        basetypes.StringType{},
+		"cloud_provider": basetypes.StringType{},
+		"create_time":    basetypes.Int64Type{},
+		"currency":       basetypes.StringType{},
+		"end_date":       basetypes.StringType{},
+		"id":             basetypes.StringType{},
+		"name":           basetypes.StringType{},
 		"periods": basetypes.ListType{
 			ElemType: PeriodsValue{}.Type(ctx),
 		},
-		"provider":                 basetypes.StringType{},
 		"start_date":               basetypes.StringType{},
 		"total_commitment_value":   basetypes.Float64Type{},
 		"total_current_attainment": basetypes.Float64Type{},
@@ -913,12 +967,13 @@ func (v CommitmentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"cloud_provider":           v.CloudProvider,
 			"create_time":              v.CreateTime,
 			"currency":                 v.Currency,
 			"end_date":                 v.EndDate,
+			"id":                       v.Id,
 			"name":                     v.Name,
 			"periods":                  periods,
-			"provider":                 v.Provider,
 			"start_date":               v.StartDate,
 			"total_commitment_value":   v.TotalCommitmentValue,
 			"total_current_attainment": v.TotalCurrentAttainment,
@@ -943,6 +998,10 @@ func (v CommitmentsValue) Equal(o attr.Value) bool {
 		return true
 	}
 
+	if !v.CloudProvider.Equal(other.CloudProvider) {
+		return false
+	}
+
 	if !v.CreateTime.Equal(other.CreateTime) {
 		return false
 	}
@@ -955,15 +1014,15 @@ func (v CommitmentsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
 	if !v.Name.Equal(other.Name) {
 		return false
 	}
 
 	if !v.Periods.Equal(other.Periods) {
-		return false
-	}
-
-	if !v.Provider.Equal(other.Provider) {
 		return false
 	}
 
@@ -996,14 +1055,15 @@ func (v CommitmentsValue) Type(ctx context.Context) attr.Type {
 
 func (v CommitmentsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"create_time": basetypes.Int64Type{},
-		"currency":    basetypes.StringType{},
-		"end_date":    basetypes.StringType{},
-		"name":        basetypes.StringType{},
+		"cloud_provider": basetypes.StringType{},
+		"create_time":    basetypes.Int64Type{},
+		"currency":       basetypes.StringType{},
+		"end_date":       basetypes.StringType{},
+		"id":             basetypes.StringType{},
+		"name":           basetypes.StringType{},
 		"periods": basetypes.ListType{
 			ElemType: PeriodsValue{}.Type(ctx),
 		},
-		"provider":                 basetypes.StringType{},
 		"start_date":               basetypes.StringType{},
 		"total_commitment_value":   basetypes.Float64Type{},
 		"total_current_attainment": basetypes.Float64Type{},

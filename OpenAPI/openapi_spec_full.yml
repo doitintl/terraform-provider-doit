@@ -6089,6 +6089,9 @@ components:
       type: object
       description: A commitment contract.
       properties:
+        id:
+          type: string
+          description: The unique identifier of the commitment.
         name:
           type: string
           description: The name of the commitment.
@@ -6106,7 +6109,7 @@ components:
           type: string
           description: The currency of the commitment (e.g., USD).
           example: USD
-        provider:
+        cloudProvider:
           type: string
           description: The cloud provider associated with the commitment.
           enum:
@@ -6156,6 +6159,9 @@ components:
       type: object
       description: Summary information of a commitment in a list.
       properties:
+        id:
+          type: string
+          description: The unique identifier of the commitment.
         name:
           type: string
           description: The name of the commitment.
@@ -6173,7 +6179,7 @@ components:
           type: string
           description: The currency of the commitment.
           example: USD
-        provider:
+        cloudProvider:
           type: string
           description: The cloud provider associated with the commitment.
           enum:

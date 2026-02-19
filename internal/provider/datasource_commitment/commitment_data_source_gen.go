@@ -18,6 +18,11 @@ import (
 func CommitmentDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"cloud_provider": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The cloud provider associated with the commitment.",
+				MarkdownDescription: "The cloud provider associated with the commitment.",
+			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,
 				Description:         "The creation time in milliseconds since epoch.",
@@ -77,11 +82,6 @@ func CommitmentDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The list of commitment periods.",
 				MarkdownDescription: "The list of commitment periods.",
 			},
-			"provider": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The cloud provider associated with the commitment.",
-				MarkdownDescription: "The cloud provider associated with the commitment.",
-			},
 			"start_date": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The start date of the commitment.",
@@ -109,13 +109,13 @@ func CommitmentDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type CommitmentModel struct {
+	CloudProvider          types.String  `tfsdk:"cloud_provider"`
 	CreateTime             types.Int64   `tfsdk:"create_time"`
 	Currency               types.String  `tfsdk:"currency"`
 	EndDate                types.String  `tfsdk:"end_date"`
 	Id                     types.String  `tfsdk:"id"`
 	Name                   types.String  `tfsdk:"name"`
 	Periods                types.List    `tfsdk:"periods"`
-	Provider               types.String  `tfsdk:"provider"`
 	StartDate              types.String  `tfsdk:"start_date"`
 	TotalCommitmentValue   types.Float64 `tfsdk:"total_commitment_value"`
 	TotalCurrentAttainment types.Float64 `tfsdk:"total_current_attainment"`

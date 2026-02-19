@@ -24,7 +24,7 @@ data "doit_commitments" "recent" {
 
 # Filter commitments by provider
 data "doit_commitments" "gcp_only" {
-  filter = "provider:[google-cloud]"
+  filter = "provider:google-cloud"
 }
 
 # Paginate through commitments
@@ -65,12 +65,13 @@ Available filter keys: **name**, **provider**
 
 Read-Only:
 
+- `cloud_provider` (String) The cloud provider associated with the commitment.
 - `create_time` (Number) The creation time in milliseconds since epoch.
 - `currency` (String) The currency of the commitment.
 - `end_date` (String) The end date of the commitment.
+- `id` (String) The unique identifier of the commitment.
 - `name` (String) The name of the commitment.
 - `periods` (Attributes List) The list of commitment periods. (see [below for nested schema](#nestedatt--commitments--periods))
-- `provider` (String) The cloud provider associated with the commitment.
 - `start_date` (String) The start date of the commitment.
 - `total_commitment_value` (Number) The total value of the commitment across all periods.
 - `total_current_attainment` (Number) The total current spend attainment across all periods.

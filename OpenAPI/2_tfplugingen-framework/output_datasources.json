@@ -2307,6 +2307,13 @@
 						}
 					},
 					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The cloud provider associated with the commitment."
+						}
+					},
+					{
 						"name": "create_time",
 						"int64": {
 							"computed_optional_required": "computed",
@@ -2371,13 +2378,6 @@
 								]
 							},
 							"description": "The list of commitment periods."
-						}
-					},
-					{
-						"name": "provider",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "The cloud provider associated with the commitment."
 						}
 					},
 					{
@@ -2483,6 +2483,13 @@
 							"nested_object": {
 								"attributes": [
 									{
+										"name": "cloud_provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud provider associated with the commitment."
+										}
+									},
+									{
 										"name": "create_time",
 										"int64": {
 											"computed_optional_required": "computed",
@@ -2501,6 +2508,13 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "The end date of the commitment."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique identifier of the commitment."
 										}
 									},
 									{
@@ -2547,13 +2561,6 @@
 												]
 											},
 											"description": "The list of commitment periods."
-										}
-									},
-									{
-										"name": "provider",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "The cloud provider associated with the commitment."
 										}
 									},
 									{

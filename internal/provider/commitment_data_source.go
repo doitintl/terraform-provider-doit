@@ -9,7 +9,6 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -24,9 +23,7 @@ type commitmentDataSource struct {
 	client *models.ClientWithResponses
 }
 
-// commitmentDataSourceModel extends the generated model to rename 'provider' to 'cloud_provider'.
-// The generator aliases feature only works on operation parameters, not response body properties,
-// so we need a custom model with the correct tfsdk tag.
+// commitmentDataSourceModel extends the generated model for custom field mapping.
 type commitmentDataSourceModel struct {
 	CreateTime             types.Int64   `tfsdk:"create_time"`
 	Currency               types.String  `tfsdk:"currency"`
@@ -59,31 +56,9 @@ func (ds *commitmentDataSource) Configure(_ context.Context, req datasource.Conf
 }
 
 func (ds *commitmentDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	generated := datasource_commitment.CommitmentDataSourceSchema(ctx)
-	// Rename 'provider' -> 'cloud_provider' (provider is a reserved Terraform root attribute name).
-	// The generator aliases feature only works on operation parameters, not response body properties,
-	// so we must do this manually.
-	providerAttr, exists := generated.Attributes["provider"]
-	if !exists {
-		resp.Diagnostics.AddError("Schema Error",
-			"expected \"provider\" attribute in generated commitment schema, but it was not found")
-		return
-	}
-	delete(generated.Attributes, "provider")
-	strAttr, ok := providerAttr.(datasourceschema.StringAttribute)
-	if !ok {
-		resp.Diagnostics.AddError("Schema Error",
-			fmt.Sprintf("expected \"provider\" to be StringAttribute, got %T", providerAttr))
-		return
-	}
-	generated.Attributes["cloud_provider"] = datasourceschema.StringAttribute{
-		Computed:            strAttr.Computed,
-		Description:         strAttr.Description,
-		MarkdownDescription: strAttr.MarkdownDescription,
-	}
-	generated.Description = "Retrieves details of a specific commitment contract."
-	generated.MarkdownDescription = generated.Description
-	resp.Schema = generated
+	resp.Schema = datasource_commitment.CommitmentDataSourceSchema(ctx)
+	resp.Schema.Description = "Retrieves details of a specific commitment contract."
+	resp.Schema.MarkdownDescription = resp.Schema.Description
 }
 
 func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -123,8 +98,8 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	} else {
 		state.Currency = types.StringNull()
 	}
-	if commitment.Provider != nil {
-		state.CloudProvider = types.StringValue(string(*commitment.Provider))
+	if commitment.CloudProvider != nil {
+		state.CloudProvider = types.StringValue(string(*commitment.CloudProvider))
 	} else {
 		state.CloudProvider = types.StringNull()
 	}
