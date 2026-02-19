@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestAccInvoiceDataSource_Basic(t *testing.T) {
@@ -25,6 +26,15 @@ func TestAccInvoiceDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_invoice.test", "id", invoiceID),
 					resource.TestCheckResourceAttrSet("data.doit_invoice.test", "currency"),
 				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccInvoiceDataSourceConfig(invoiceID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

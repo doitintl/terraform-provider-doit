@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestAccCloudIncidentDataSource_Basic(t *testing.T) {
@@ -26,6 +27,15 @@ func TestAccCloudIncidentDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_cloud_incident.test", "title"),
 					resource.TestCheckResourceAttrSet("data.doit_cloud_incident.test", "platform"),
 				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccCloudIncidentDataSourceConfig(incidentID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

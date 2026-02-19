@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestAccAnomalyDataSource_Basic(t *testing.T) {
@@ -26,6 +27,15 @@ func TestAccAnomalyDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "platform"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "service_name"),
 				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccAnomalyDataSourceConfig(anomalyID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

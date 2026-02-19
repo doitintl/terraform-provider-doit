@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -49,6 +50,15 @@ func TestAccReportDataSource(t *testing.T) {
 						"data.doit_report.test",
 						tfjsonpath.New("config").AtMapKey("layout"),
 						knownvalue.StringExact("table")),
+				},
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccReportDataSourceConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},
