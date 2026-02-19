@@ -52,6 +52,12 @@ func (ds *invoiceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if state.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		return
+	}
+
 	id := state.Id.ValueString()
 	invoiceResp, err := ds.client.GetInvoiceWithResponse(ctx, id)
 	if err != nil {
@@ -127,7 +133,9 @@ func (ds *invoiceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.Append(d...)
 		state.LineItems = lineItemsList
 	} else {
-		state.LineItems = types.ListNull(datasource_invoice.LineItemsValue{}.Type(ctx))
+		emptyList, d := types.ListValueFrom(ctx, datasource_invoice.LineItemsValue{}.Type(ctx), []datasource_invoice.LineItemsValue{})
+		resp.Diagnostics.Append(d...)
+		state.LineItems = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 // TestAccCloudIncidentsDataSource_Basic tests basic cloud incidents data retrieval.
@@ -23,6 +24,15 @@ func TestAccCloudIncidentsDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_cloud_incidents.test", "incidents.#"),
 					resource.TestCheckResourceAttrSet("data.doit_cloud_incidents.test", "row_count"),
 				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccCloudIncidentsDataSourceBasicConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

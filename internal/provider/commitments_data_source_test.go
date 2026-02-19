@@ -8,6 +8,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 // TestAccCommitmentsDataSource_MaxResultsOnly tests that setting max_results limits results.
@@ -32,6 +33,15 @@ func TestAccCommitmentsDataSource_MaxResultsOnly(t *testing.T) {
 			{
 				Config:   testAccCommitmentsDataSourceMaxResultsConfig("1"),
 				PlanOnly: true,
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccCommitmentsDataSourceMaxResultsConfig("1"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

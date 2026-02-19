@@ -62,6 +62,12 @@ func (d *annotationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if data.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	// Call API to get annotation
 	annotationResp, err := d.client.GetAnnotationWithResponse(ctx, data.Id.ValueString())
 	if err != nil {
@@ -116,7 +122,9 @@ func (d *annotationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 		data.Reports = reportsList
 	} else {
-		data.Reports = types.ListNull(types.StringType)
+		emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		resp.Diagnostics.Append(d...)
+		data.Reports = emptyList1
 	}
 
 	// Map labels list
@@ -144,7 +152,9 @@ func (d *annotationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 		data.Labels = labelsList
 	} else {
-		data.Labels = types.ListNull(datasource_annotation.LabelsValue{}.Type(ctx))
+		emptyLabels, d := types.ListValueFrom(ctx, datasource_annotation.LabelsValue{}.Type(ctx), []datasource_annotation.LabelsValue{})
+		resp.Diagnostics.Append(d...)
+		data.Labels = emptyLabels
 	}
 
 	// Save data into Terraform state

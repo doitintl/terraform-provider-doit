@@ -8,6 +8,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func testAccBudgetsDataSourceConfig() string {
@@ -44,6 +45,15 @@ func TestAccBudgetsDataSource_MaxResultsOnly(t *testing.T) {
 			{
 				Config:   testAccBudgetsDataSourceMaxResultsConfig("2"),
 				PlanOnly: true,
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccBudgetsDataSourceMaxResultsConfig("2"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

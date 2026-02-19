@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -59,6 +60,15 @@ func TestAccBudgetDataSource(t *testing.T) {
 						"data.doit_budget.test",
 						tfjsonpath.New("alerts"),
 						knownvalue.ListSizeExact(2)),
+				},
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccBudgetDataSourceConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},

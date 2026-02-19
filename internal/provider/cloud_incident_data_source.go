@@ -51,6 +51,12 @@ func (ds *cloudIncidentDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if state.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		return
+	}
+
 	id := state.Id.ValueString()
 	incidentResp, err := ds.client.GetKnownIssueWithResponse(ctx, id)
 	if err != nil {

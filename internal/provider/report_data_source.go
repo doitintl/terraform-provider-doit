@@ -64,6 +64,12 @@ func (ds *reportDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if data.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	// Call API to get report config
 	reportResp, err := ds.client.GetReportConfigWithResponse(ctx, data.Id.ValueString())
 	if err != nil {
@@ -219,7 +225,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		diags.Append(dimListDiags...)
 		configMap["dimensions"] = dimList
 	} else {
-		configMap["dimensions"] = types.ListNull(datasource_report.DimensionsValue{}.Type(ctx))
+		emptyDims, d := types.ListValueFrom(ctx, datasource_report.DimensionsValue{}.Type(ctx), []datasource_report.DimensionsValue{})
+		diags.Append(d...)
+		configMap["dimensions"] = emptyDims
 	}
 
 	// Nested List: Filters
@@ -239,7 +247,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 				diags.Append(valuesDiags...)
 				m["values"] = values
 			} else {
-				m["values"] = types.ListNull(types.StringType)
+				emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
+				diags.Append(d...)
+				m["values"] = emptyList1
 			}
 			filterVal, filterDiags := datasource_report.NewFiltersValue(datasource_report.FiltersValue{}.AttributeTypes(ctx), m)
 			diags.Append(filterDiags...)
@@ -249,7 +259,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		diags.Append(filterListDiags...)
 		configMap["filters"] = filterList
 	} else {
-		configMap["filters"] = types.ListNull(datasource_report.FiltersValue{}.Type(ctx))
+		emptyFilters, d := types.ListValueFrom(ctx, datasource_report.FiltersValue{}.Type(ctx), []datasource_report.FiltersValue{})
+		diags.Append(d...)
+		configMap["filters"] = emptyFilters
 	}
 
 	// Nested List: Group
@@ -290,7 +302,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		diags.Append(groupListDiags...)
 		configMap["group"] = groupList
 	} else {
-		configMap["group"] = types.ListNull(datasource_report.GroupValue{}.Type(ctx))
+		emptyGroup, d := types.ListValueFrom(ctx, datasource_report.GroupValue{}.Type(ctx), []datasource_report.GroupValue{})
+		diags.Append(d...)
+		configMap["group"] = emptyGroup
 	}
 
 	// Nested Object: Metric (deprecated, but still supported)
@@ -329,7 +343,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		diags.Append(metricsListDiags...)
 		configMap["metrics"] = metricsList
 	} else {
-		configMap["metrics"] = types.ListNull(datasource_report.MetricsValue{}.Type(ctx))
+		emptyMetrics, d := types.ListValueFrom(ctx, datasource_report.MetricsValue{}.Type(ctx), []datasource_report.MetricsValue{})
+		diags.Append(d...)
+		configMap["metrics"] = emptyMetrics
 	}
 
 	// Nested Object: MetricFilter
@@ -354,7 +370,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 			}
 			mfMap["values"] = mfValues
 		} else {
-			mfMap["values"] = types.ListNull(types.Float64Type)
+			emptyList2, d := types.ListValueFrom(ctx, types.Float64Type, []float64{})
+			diags.Append(d...)
+			mfMap["values"] = emptyList2
 		}
 		mfv, mfvDiags := datasource_report.NewMetricFilterValue(datasource_report.MetricFilterValue{}.AttributeTypes(ctx), mfMap)
 		diags.Append(mfvDiags...)
@@ -406,7 +424,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 				diags.Append(targetListDiags...)
 				m["targets"] = targetList
 			} else {
-				m["targets"] = types.ListNull(datasource_report.TargetsValue{}.Type(ctx))
+				emptyTargets, d := types.ListValueFrom(ctx, datasource_report.TargetsValue{}.Type(ctx), []datasource_report.TargetsValue{})
+				diags.Append(d...)
+				m["targets"] = emptyTargets
 			}
 			splitVal, splitDiags := datasource_report.NewSplitsValue(datasource_report.SplitsValue{}.AttributeTypes(ctx), m)
 			diags.Append(splitDiags...)
@@ -416,7 +436,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		diags.Append(splitListDiags...)
 		configMap["splits"] = splitList
 	} else {
-		configMap["splits"] = types.ListNull(datasource_report.SplitsValue{}.Type(ctx))
+		emptySplits, d := types.ListValueFrom(ctx, datasource_report.SplitsValue{}.Type(ctx), []datasource_report.SplitsValue{})
+		diags.Append(d...)
+		configMap["splits"] = emptySplits
 	}
 
 	// Nested Object: TimeRange

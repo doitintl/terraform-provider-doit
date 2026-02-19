@@ -52,6 +52,12 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if state.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		return
+	}
+
 	id := state.Id.ValueString()
 	anomalyResp, err := ds.client.GetAnomalyWithResponse(ctx, id)
 	if err != nil {
@@ -119,7 +125,9 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.Append(d...)
 		state.ResourceData = resourceDataList
 	} else {
-		state.ResourceData = types.ListNull(datasource_anomaly.ResourceDataValue{}.Type(ctx))
+		emptyList, d := types.ListValueFrom(ctx, datasource_anomaly.ResourceDataValue{}.Type(ctx), []datasource_anomaly.ResourceDataValue{})
+		resp.Diagnostics.Append(d...)
+		state.ResourceData = emptyList
 	}
 
 	// Map top3skus
@@ -140,7 +148,9 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		resp.Diagnostics.Append(d...)
 		state.Top3skus = top3List
 	} else {
-		state.Top3skus = types.ListNull(datasource_anomaly.Top3skusValue{}.Type(ctx))
+		emptyList, d := types.ListValueFrom(ctx, datasource_anomaly.Top3skusValue{}.Type(ctx), []datasource_anomaly.Top3skusValue{})
+		resp.Diagnostics.Append(d...)
+		state.Top3skus = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

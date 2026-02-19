@@ -59,23 +59,29 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Reports = types.ListUnknown(datasource_reports.ReportsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.ListReportsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MinCreationTime.IsNull() && !data.MinCreationTime.IsUnknown() {
+	if !data.MinCreationTime.IsNull() {
 		minCreationTime := data.MinCreationTime.ValueString()
 		params.MinCreationTime = &minCreationTime
 	}
-	if !data.MaxCreationTime.IsNull() && !data.MaxCreationTime.IsUnknown() {
+	if !data.MaxCreationTime.IsNull() {
 		maxCreationTime := data.MaxCreationTime.ValueString()
 		params.MaxCreationTime = &maxCreationTime
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allReports []models.Report
 
@@ -83,7 +89,7 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueString()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -120,7 +126,7 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -156,10 +162,7 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allReports)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.StringNull()
-		}
+		// max_results was not set; preserve null
 	}
 
 	// Map reports list
@@ -194,18 +197,9 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		resp.Diagnostics.Append(diags...)
 		data.Reports = reportList
 	} else {
-		data.Reports = types.ListNull(datasource_reports.ReportsValue{}.Type(ctx))
-	}
-
-	// Set optional filter params to null if they were unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.MinCreationTime.IsUnknown() {
-		data.MinCreationTime = types.StringNull()
-	}
-	if data.MaxCreationTime.IsUnknown() {
-		data.MaxCreationTime = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_reports.ReportsValue{}.Type(ctx), []datasource_reports.ReportsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Reports = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

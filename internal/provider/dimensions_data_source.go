@@ -59,23 +59,29 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Dimensions = types.ListUnknown(datasource_dimensions.DimensionsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters from optional inputs
 	params := &models.ListDimensionsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filterVal := data.Filter.ValueString()
 		params.Filter = &filterVal
 	}
-	if !data.SortBy.IsNull() && !data.SortBy.IsUnknown() {
+	if !data.SortBy.IsNull() {
 		sortByVal := models.ListDimensionsParamsSortBy(data.SortBy.ValueString())
 		params.SortBy = &sortByVal
 	}
-	if !data.SortOrder.IsNull() && !data.SortOrder.IsUnknown() {
+	if !data.SortOrder.IsNull() {
 		sortOrderVal := models.ListDimensionsParamsSortOrder(data.SortOrder.ValueString())
 		params.SortOrder = &sortOrderVal
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allDimensions []models.DimensionExternalAPIListItem
 
@@ -83,7 +89,7 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueString()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -120,7 +126,7 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -156,10 +162,7 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allDimensions)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.StringNull()
-		}
+		// max_results was not set; preserve null
 	}
 
 	// Map dimensions list
@@ -182,19 +185,9 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		resp.Diagnostics.Append(diags...)
 		data.Dimensions = dimsList
 	} else {
-		data.Dimensions = types.ListNull(datasource_dimensions.DimensionsValue{}.Type(ctx))
-	}
-
-	// Keep filter params as-is (they're input values)
-	// Only set them if they were null/unknown before
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.SortBy.IsUnknown() {
-		data.SortBy = types.StringNull()
-	}
-	if data.SortOrder.IsUnknown() {
-		data.SortOrder = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_dimensions.DimensionsValue{}.Type(ctx), []datasource_dimensions.DimensionsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Dimensions = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

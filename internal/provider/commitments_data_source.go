@@ -54,29 +54,36 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Commitments = types.ListUnknown(datasource_commitments.CommitmentsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	// Build API params
 	params := &models.ListCommitmentsParams{}
 
 	// Optional filter
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filterVal := data.Filter.ValueString()
 		params.Filter = &filterVal
 	}
 
 	// Optional sort_by
-	if !data.SortBy.IsNull() && !data.SortBy.IsUnknown() {
+	if !data.SortBy.IsNull() {
 		sortByVal := models.ListCommitmentsParamsSortBy(data.SortBy.ValueString())
 		params.SortBy = &sortByVal
 	}
 
 	// Optional sort_order
-	if !data.SortOrder.IsNull() && !data.SortOrder.IsUnknown() {
+	if !data.SortOrder.IsNull() {
 		sortOrderVal := models.ListCommitmentsParamsSortOrder(data.SortOrder.ValueString())
 		params.SortOrder = &sortOrderVal
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allCommitments []models.CommitmentExternalListItem
 
@@ -85,7 +92,7 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		maxResultsVal := data.MaxResults.ValueString()
 		params.MaxResults = &maxResultsVal
 
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -140,17 +147,6 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		data.RowCount = types.Int64Value(int64(len(allCommitments)))
 		data.PageToken = types.StringNull()
 		data.MaxResults = types.StringNull()
-	}
-
-	// Set optional params to null if not user-provided (prevent drift)
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.SortBy.IsUnknown() {
-		data.SortBy = types.StringNull()
-	}
-	if data.SortOrder.IsUnknown() {
-		data.SortOrder = types.StringNull()
 	}
 
 	// Map commitment items with proper diagnostics.

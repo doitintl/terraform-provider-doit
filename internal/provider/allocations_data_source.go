@@ -59,15 +59,21 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Allocations = types.ListUnknown(datasource_allocations.AllocationsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.ListAllocationsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allAllocations []models.AllocationListItem
 
@@ -75,7 +81,7 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueString()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -112,7 +118,7 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -148,10 +154,7 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allAllocations)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null/unknown handling below
-		if data.MaxResults.IsUnknown() {
-			data.MaxResults = types.StringNull()
-		}
+		// max_results was not set; preserve null
 	}
 
 	// Map allocations list
@@ -188,12 +191,9 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		resp.Diagnostics.Append(diags...)
 		data.Allocations = allocationList
 	} else {
-		data.Allocations = types.ListNull(datasource_allocations.AllocationsValue{}.Type(ctx))
-	}
-
-	// Set optional filter params to null if they were unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_allocations.AllocationsValue{}.Type(ctx), []datasource_allocations.AllocationsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Allocations = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

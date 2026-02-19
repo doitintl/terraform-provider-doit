@@ -92,7 +92,9 @@ func (d *rolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 				resp.Diagnostics.Append(diags...)
 				permissionsList = permsListVal
 			} else {
-				permissionsList = types.ListNull(types.StringType)
+				permsList, d := types.ListValueFrom(ctx, types.StringType, []string{})
+				resp.Diagnostics.Append(d...)
+				permissionsList = permsList
 			}
 
 			roleVal, diags := datasource_roles.NewRolesValue(
@@ -113,7 +115,9 @@ func (d *rolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		resp.Diagnostics.Append(diags...)
 		data.Roles = rolesList
 	} else {
-		data.Roles = types.ListNull(datasource_roles.RolesValue{}.Type(ctx))
+		emptyList, diags := types.ListValueFrom(ctx, datasource_roles.RolesValue{}.Type(ctx), []datasource_roles.RolesValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Roles = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

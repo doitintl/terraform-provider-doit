@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestAccCommitmentDataSource_Basic(t *testing.T) {
@@ -30,6 +31,15 @@ func TestAccCommitmentDataSource_Basic(t *testing.T) {
 			{
 				Config:   testAccCommitmentDataSourceConfig(commitmentID),
 				PlanOnly: true,
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccCommitmentDataSourceConfig(commitmentID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})

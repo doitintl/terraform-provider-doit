@@ -60,23 +60,29 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
+	// If any filter/pagination input is unknown, return unknown list
+	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+		data.Budgets = types.ListUnknown(datasource_budgets.BudgetsValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 	// Build query parameters
 	params := &models.ListBudgetsParams{}
-	if !data.Filter.IsNull() && !data.Filter.IsUnknown() {
+	if !data.Filter.IsNull() {
 		filter := data.Filter.ValueString()
 		params.Filter = &filter
 	}
-	if !data.MinCreationTime.IsNull() && !data.MinCreationTime.IsUnknown() {
+	if !data.MinCreationTime.IsNull() {
 		minTime := data.MinCreationTime.ValueString()
 		params.MinCreationTime = &minTime
 	}
-	if !data.MaxCreationTime.IsNull() && !data.MaxCreationTime.IsUnknown() {
+	if !data.MaxCreationTime.IsNull() {
 		maxTime := data.MaxCreationTime.ValueString()
 		params.MaxCreationTime = &maxTime
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
-	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allBudgets []models.BudgetListItem
 
@@ -84,7 +90,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		// Manual mode: single API call with user's params
 		maxResultsVal := data.MaxResults.ValueString()
 		params.MaxResults = &maxResultsVal
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -121,7 +127,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
-		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+		if !data.PageToken.IsNull() {
 			pageTokenVal := data.PageToken.ValueString()
 			params.PageToken = &pageTokenVal
 		}
@@ -183,7 +189,9 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 				scopeList, diags = types.ListValue(types.StringType, scopeVals)
 				resp.Diagnostics.Append(diags...)
 			} else {
-				scopeList = types.ListNull(types.StringType)
+				emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
+				resp.Diagnostics.Append(d...)
+				scopeList = emptyList1
 			}
 
 			budgetVal, diags := datasource_budgets.NewBudgetsValue(
@@ -215,18 +223,9 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		resp.Diagnostics.Append(diags...)
 		data.Budgets = budgetList
 	} else {
-		data.Budgets = types.ListNull(datasource_budgets.BudgetsValue{}.Type(ctx))
-	}
-
-	// Set optional filter params to null if they were unknown
-	if data.Filter.IsUnknown() {
-		data.Filter = types.StringNull()
-	}
-	if data.MinCreationTime.IsUnknown() {
-		data.MinCreationTime = types.StringNull()
-	}
-	if data.MaxCreationTime.IsUnknown() {
-		data.MaxCreationTime = types.StringNull()
+		emptyList, diags := types.ListValueFrom(ctx, datasource_budgets.BudgetsValue{}.Type(ctx), []datasource_budgets.BudgetsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Budgets = emptyList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -234,7 +233,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 func mapAlertThresholds(ctx context.Context, thresholds *[]models.AlertThreshold) (types.List, diag.Diagnostics) {
 	if thresholds == nil || len(*thresholds) == 0 {
-		return types.ListNull(datasource_budgets.AlertThresholdsValue{}.Type(ctx)), nil
+		return types.ListValueFrom(ctx, datasource_budgets.AlertThresholdsValue{}.Type(ctx), []datasource_budgets.AlertThresholdsValue{})
 	}
 
 	vals := make([]datasource_budgets.AlertThresholdsValue, 0, len(*thresholds))
@@ -247,7 +246,9 @@ func mapAlertThresholds(ctx context.Context, thresholds *[]models.AlertThreshold
 			},
 		)
 		if diags.HasError() {
-			return types.ListNull(datasource_budgets.AlertThresholdsValue{}.Type(ctx)), diags
+			emptyAlerts, d := types.ListValueFrom(ctx, datasource_budgets.AlertThresholdsValue{}.Type(ctx), []datasource_budgets.AlertThresholdsValue{})
+			diags.Append(d...)
+			return emptyAlerts, diags
 		}
 		vals = append(vals, val)
 	}
@@ -257,7 +258,7 @@ func mapAlertThresholds(ctx context.Context, thresholds *[]models.AlertThreshold
 
 func mapBudgetScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter) (types.List, diag.Diagnostics) {
 	if scopes == nil || len(*scopes) == 0 {
-		return types.ListNull(datasource_budgets.ScopesValue{}.Type(ctx)), nil
+		return types.ListValueFrom(ctx, datasource_budgets.ScopesValue{}.Type(ctx), []datasource_budgets.ScopesValue{})
 	}
 
 	vals := make([]datasource_budgets.ScopesValue, 0, len(*scopes))
@@ -269,13 +270,17 @@ func mapBudgetScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter)
 			for _, v := range *s.Values {
 				valStrs = append(valStrs, types.StringValue(v))
 			}
-			var diags diag.Diagnostics
-			valuesList, diags = types.ListValue(types.StringType, valStrs)
-			if diags.HasError() {
-				return types.ListNull(datasource_budgets.ScopesValue{}.Type(ctx)), diags
+			var d diag.Diagnostics
+			valuesList, d = types.ListValue(types.StringType, valStrs)
+			if d.HasError() {
+				emptyScopes, ed := types.ListValueFrom(ctx, datasource_budgets.ScopesValue{}.Type(ctx), []datasource_budgets.ScopesValue{})
+				d.Append(ed...)
+				return emptyScopes, d
 			}
 		} else {
-			valuesList = types.ListNull(types.StringType)
+			emptyVals, d := types.ListValueFrom(ctx, types.StringType, []string{})
+			_ = d // ListValueFrom with empty typed slice never errors
+			valuesList = emptyVals
 		}
 
 		val, diags := datasource_budgets.NewScopesValue(
@@ -289,7 +294,9 @@ func mapBudgetScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter)
 			},
 		)
 		if diags.HasError() {
-			return types.ListNull(datasource_budgets.ScopesValue{}.Type(ctx)), diags
+			emptyScopes, d := types.ListValueFrom(ctx, datasource_budgets.ScopesValue{}.Type(ctx), []datasource_budgets.ScopesValue{})
+			diags.Append(d...)
+			return emptyScopes, diags
 		}
 		vals = append(vals, val)
 	}

@@ -60,6 +60,12 @@ func (d *labelDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if data.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	// Call API to get label
 	labelResp, err := d.client.GetLabelWithResponse(ctx, data.Id.ValueString())
 	if err != nil {

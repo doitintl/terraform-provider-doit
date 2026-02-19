@@ -53,6 +53,12 @@ func (ds *alertDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if state.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		return
+	}
+
 	id := state.Id.ValueString()
 	alertResp, err := ds.client.GetAlertWithResponse(ctx, id)
 	if err != nil {
@@ -95,7 +101,9 @@ func (ds *alertDataSource) mapAlertToModel(ctx context.Context, alert *models.Al
 		diags.Append(d...)
 		state.Recipients = recipientsList
 	} else {
-		state.Recipients = types.ListNull(types.StringType)
+		emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(d...)
+		state.Recipients = emptyList1
 	}
 
 	// Map config
@@ -120,7 +128,9 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 		diags.Append(d...)
 		attributions = attrList
 	} else {
-		attributions = types.ListNull(types.StringType)
+		emptyList2, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(d...)
+		attributions = emptyList2
 	}
 
 	// Map condition
@@ -186,7 +196,9 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 		diags.Append(scopesListDiags...)
 		scopes = scopesList
 	} else {
-		scopes = types.ListNull(datasource_alert.ScopesValue{}.Type(ctx))
+		emptyScopes, scopesDiags := types.ListValueFrom(ctx, datasource_alert.ScopesValue{}.Type(ctx), []datasource_alert.ScopesValue{})
+		diags.Append(scopesDiags...)
+		scopes = emptyScopes
 	}
 
 	configVal, d := datasource_alert.NewConfigValue(
@@ -234,7 +246,9 @@ func (ds *alertDataSource) mapScopeToModel(ctx context.Context, scope *models.Ex
 		diags.Append(d...)
 		values = valList
 	} else {
-		values = types.ListNull(types.StringType)
+		emptyList3, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(d...)
+		values = emptyList3
 	}
 
 	// Map mode - Mode is not a pointer, it's a string type

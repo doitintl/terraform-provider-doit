@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestAccUsersDataSource_Basic(t *testing.T) {
@@ -18,6 +19,15 @@ func TestAccUsersDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_users.test", "users.#"),
 					resource.TestCheckResourceAttrSet("data.doit_users.test", "row_count"),
 				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccUsersDataSourceConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
