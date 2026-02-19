@@ -111,3 +111,11 @@ data_sources:
     read:
       path: /analytics/v1/commitment-manager
       method: GET
+  platforms:
+    read:
+      path: /support/v1/metadata/platforms
+      method: GET
+  products:
+    read:
+      path: /support/v1/metadata/products
+      method: GET

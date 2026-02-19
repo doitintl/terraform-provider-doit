@@ -731,12 +731,12 @@ const (
 
 // Defines values for ListCommitmentsParamsSortBy.
 const (
-	ListCommitmentsParamsSortByCreateTime ListCommitmentsParamsSortBy = "createTime"
-	ListCommitmentsParamsSortByEndDate    ListCommitmentsParamsSortBy = "endDate"
-	ListCommitmentsParamsSortByName       ListCommitmentsParamsSortBy = "name"
-	ListCommitmentsParamsSortByProvider   ListCommitmentsParamsSortBy = "provider"
-	ListCommitmentsParamsSortByStartDate  ListCommitmentsParamsSortBy = "startDate"
-	ListCommitmentsParamsSortByUpdateTime ListCommitmentsParamsSortBy = "updateTime"
+	CreateTime ListCommitmentsParamsSortBy = "createTime"
+	EndDate    ListCommitmentsParamsSortBy = "endDate"
+	Name       ListCommitmentsParamsSortBy = "name"
+	Provider   ListCommitmentsParamsSortBy = "provider"
+	StartDate  ListCommitmentsParamsSortBy = "startDate"
+	UpdateTime ListCommitmentsParamsSortBy = "updateTime"
 )
 
 // Defines values for ListCommitmentsParamsSortOrder.

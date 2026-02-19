@@ -3158,6 +3158,80 @@
 			}
 		},
 		{
+			"name": "platforms",
+			"schema": {
+				"attributes": [
+					{
+						"name": "platforms",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "display_name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Metadata about supported cloud providers.",
+				"markdown_description": "Metadata about supported cloud providers."
+			}
+		},
+		{
+			"name": "products",
+			"schema": {
+				"attributes": [
+					{
+						"name": "platform",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "products",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "display_name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "platform",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Metadata about cloud services and offerings.",
+				"markdown_description": "Metadata about cloud services and offerings."
+			}
+		},
+		{
 			"name": "report",
 			"schema": {
 				"attributes": [
