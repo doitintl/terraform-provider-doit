@@ -13,7 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var _ datasource.DataSource = &commitmentDataSource{}
+var _ datasource.DataSource = (*commitmentDataSource)(nil)
+var _ datasource.DataSourceWithConfigure = (*commitmentDataSource)(nil)
 
 func NewCommitmentDataSource() datasource.DataSource {
 	return &commitmentDataSource{}
