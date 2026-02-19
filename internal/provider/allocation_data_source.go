@@ -62,6 +62,12 @@ func (ds *allocationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if data.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	// Call API to get allocation
 	allocationResp, err := ds.client.GetAllocationWithResponse(ctx, data.Id.ValueString())
 	if err != nil {

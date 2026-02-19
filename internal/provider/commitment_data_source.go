@@ -69,6 +69,12 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if state.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		return
+	}
+
 	id := state.Id.ValueString()
 	apiResp, err := ds.client.GetCommitmentWithResponse(ctx, id)
 	if err != nil {

@@ -53,6 +53,12 @@ func (ds *alertDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if state.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		return
+	}
+
 	id := state.Id.ValueString()
 	alertResp, err := ds.client.GetAlertWithResponse(ctx, id)
 	if err != nil {

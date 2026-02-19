@@ -52,6 +52,12 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if state.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		return
+	}
+
 	id := state.Id.ValueString()
 	anomalyResp, err := ds.client.GetAnomalyWithResponse(ctx, id)
 	if err != nil {

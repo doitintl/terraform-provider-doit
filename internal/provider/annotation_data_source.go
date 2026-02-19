@@ -62,6 +62,12 @@ func (d *annotationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	if data.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	// Call API to get annotation
 	annotationResp, err := d.client.GetAnnotationWithResponse(ctx, data.Id.ValueString())
 	if err != nil {
