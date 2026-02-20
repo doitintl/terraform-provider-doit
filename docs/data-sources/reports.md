@@ -28,11 +28,6 @@ data "doit_reports" "custom_reports" {
   filter = "type:[custom]"
 }
 
-# Paginate through results
-data "doit_reports" "paginated" {
-  max_results = "10"
-}
-
 # Output the list of reports
 output "report_names" {
   value = [for r in data.doit_reports.all.reports : r.report_name]
