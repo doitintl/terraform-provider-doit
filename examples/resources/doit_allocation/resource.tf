@@ -71,3 +71,38 @@ resource "doit_allocation" "allocation_by_region" {
     }
   ]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Discovering valid component values using data sources
+# ─────────────────────────────────────────────────────────────────────────────
+# Allocation components use `type` and `key` fields that correspond to dimension
+# types and IDs. Use doit_dimensions to discover valid combinations.
+
+data "doit_dimensions" "all" {}
+
+# Build a lookup map from dimension ID to its type
+locals {
+  dimension_types = { for id, types in {
+    for d in data.doit_dimensions.all.dimensions : d.id => d.type...
+  } : id => types[0] }
+}
+
+# Use doit_products to discover valid service IDs for allocation components
+data "doit_products" "gcp" {
+  platform = "google_cloud_platform"
+}
+
+# Create an allocation scoped to GCP Compute Engine services using data sources
+resource "doit_allocation" "gcp_compute" {
+  name        = "GCP Compute"
+  description = "GCP Compute Engine costs"
+  rule = {
+    formula = "A"
+    components = [{
+      mode   = "is"
+      type   = local.dimension_types["service_description"]
+      key    = "service_description"
+      values = [for p in data.doit_products.gcp.products : p.id if p.display_name == "Compute Engine"]
+    }]
+  }
+}
