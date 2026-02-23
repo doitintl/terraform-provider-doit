@@ -44,6 +44,10 @@ data "doit_products" "gcp" {
   platform = "google_cloud_platform"
 }
 
+locals {
+  gcp_product_names = [for p in data.doit_products.gcp.products : p.display_name]
+}
+
 # Group GCP incidents by product and show which ones match known products
 output "gcp_incidents_by_product" {
   description = "GCP incidents enriched with product matching"
@@ -53,7 +57,7 @@ output "gcp_incidents_by_product" {
     product = i.product
     status  = i.status
     # Check if this incident's product matches a known GCP product
-    known_product = contains([for p in data.doit_products.gcp.products : p.display_name], i.product)
+    known_product = contains(local.gcp_product_names, i.product)
   }]
 }
 ```
