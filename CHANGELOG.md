@@ -15,6 +15,14 @@
 - **data-sources**: Fixed auto-pagination to honor user-provided `page_token` instead of always starting from the beginning ([#90](https://github.com/doitintl/terraform-provider-doit/pull/90))
 - **data-sources**: Replaced `types.ListNull` with empty lists for list attributes on data sources and added unknown input guards to all singular data sources ([#92](https://github.com/doitintl/terraform-provider-doit/pull/92))
 
+### DOCUMENTATION
+
+- **guide**: Added [Pagination Guide](docs/guides/pagination.md) explaining auto and manual pagination with examples
+- **examples**: Added cross-resource composition examples for `doit_alert`, `doit_budget`, `doit_allocation`, and `doit_report` showing how to use `doit_products`, `doit_dimensions`, `doit_allocations`, and `doit_users` to dynamically populate scopes, filters, and collaborators
+- **examples**: Added data source composition examples for `doit_cloud_incidents`, `doit_support_requests`, and `doit_anomalies` showing cross-referencing with `doit_platforms` and `doit_products`
+- **examples**: Replaced all hardcoded email addresses with `data.doit_current_user.me.email`
+- **examples**: Removed redundant inline pagination examples in favor of the centralized Pagination Guide
+
 ### INTERNAL
 
 - **spec**: Synced upstream rename of `DimensionsExternalAPIList` to `DimensionsExternalAPIListResponse` ([#88](https://github.com/doitintl/terraform-provider-doit/pull/88))
