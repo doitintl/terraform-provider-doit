@@ -1,11 +1,6 @@
 # Retrieve all annotations
 data "doit_annotations" "all" {}
 
-# With pagination
-data "doit_annotations" "paginated" {
-  max_results = "10"
-}
-
 # Output annotation info
 output "total_annotations" {
   value = data.doit_annotations.all.row_count
