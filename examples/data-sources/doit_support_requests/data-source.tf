@@ -23,17 +23,15 @@ data "doit_users" "all" {}
 output "tickets_by_user" {
   description = "Support tickets grouped by requester from the users data source"
   value = {
-    for u in data.doit_users.all.users : u.email => [
-      for t in data.doit_support_requests.all.tickets : {
+    for requester, tickets in { for t in data.doit_support_requests.all.tickets : t.requester => t... } : requester => [
+      for t in tickets : {
         id       = t.id
         subject  = t.subject
         severity = t.severity
         status   = t.status
         platform = t.platform
-      } if t.requester == u.email
-      ] if length([
-        for t in data.doit_support_requests.all.tickets : t if t.requester == u.email
-    ]) > 0
+      }
+    ] if contains([for u in data.doit_users.all.users : u.email], requester)
   }
 }
 
@@ -43,14 +41,12 @@ data "doit_platforms" "all" {}
 output "tickets_by_platform" {
   description = "Support tickets grouped by platform"
   value = {
-    for p in data.doit_platforms.all.platforms : p.display_name => [
-      for t in data.doit_support_requests.all.tickets : {
+    for platform, tickets in { for t in data.doit_support_requests.all.tickets : t.platform => t... } : platform => [
+      for t in tickets : {
         id       = t.id
         subject  = t.subject
         severity = t.severity
-      } if t.platform == p.display_name
-      ] if length([
-        for t in data.doit_support_requests.all.tickets : t if t.platform == p.display_name
-    ]) > 0
+      }
+    ] if contains([for p in data.doit_platforms.all.platforms : p.display_name], platform)
   }
 }

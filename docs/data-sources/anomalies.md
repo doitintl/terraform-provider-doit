@@ -46,16 +46,14 @@ data "doit_platforms" "all" {}
 output "anomalies_by_platform" {
   description = "Cost anomalies grouped by cloud platform"
   value = {
-    for p in data.doit_platforms.all.platforms : p.display_name => [
-      for a in data.doit_anomalies.all.anomalies : {
+    for platform, anomalies in { for a in data.doit_anomalies.all.anomalies : a.platform => a... } : platform => [
+      for a in anomalies : {
         id          = a.id
         service     = a.service_name
         cost_impact = a.cost_of_anomaly
         severity    = a.severity_level
-      } if a.platform == p.display_name
-      ] if length([
-        for a in data.doit_anomalies.all.anomalies : a if a.platform == p.display_name
-    ]) > 0
+      }
+    ] if contains([for p in data.doit_platforms.all.platforms : p.display_name], platform)
   }
 }
 
