@@ -13,6 +13,11 @@ import (
 
 // TestAccSupportRequestsDataSource_MaxResultsOnly tests that setting max_results limits results.
 func TestAccSupportRequestsDataSource_MaxResultsOnly(t *testing.T) {
+	// TODO(CMP-38591): The support requests API ignores maxResults entirely, returning all results
+	// regardless of the value. This is different from other APIs which honor maxResults but ignore
+	// pageToken without it. Remove this skip once the API supports maxResults.
+	t.Skip("Skipped: support requests API ignores maxResults entirely (CMP-38591)")
+
 	ticketCount := getSupportRequestCount(t)
 	if ticketCount < 3 {
 		t.Skipf("Need at least 3 support requests to test pagination, got %d", ticketCount)
