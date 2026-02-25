@@ -78,11 +78,16 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	result := apiResp.JSON200
 
+	userCount := int64(0)
+	if result.Users != nil {
+		userCount = int64(len(*result.Users))
+	}
+
 	// Map row count
 	if result.RowCount != nil {
 		data.RowCount = types.Int64Value(*result.RowCount)
 	} else {
-		data.RowCount = types.Int64Null()
+		data.RowCount = types.Int64Value(userCount)
 	}
 
 	// Map users list
