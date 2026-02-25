@@ -3158,6 +3158,46 @@
 			}
 		},
 		{
+			"name": "organizations",
+			"schema": {
+				"attributes": [
+					{
+						"name": "organizations",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique ID of the organization"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the organization"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Organizations row count"
+						}
+					}
+				],
+				"description": "Organizations help you segment data by your company or team structure.",
+				"markdown_description": "Organizations help you segment data by your company or team structure."
+			}
+		},
+		{
 			"name": "platforms",
 			"schema": {
 				"attributes": [
