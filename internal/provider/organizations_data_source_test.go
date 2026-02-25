@@ -20,6 +20,8 @@ func TestAccOrganizationsDataSource(t *testing.T) {
 					// Verify that some data is returned
 					resource.TestCheckResourceAttrSet("data.doit_organizations.test", "organizations.#"),
 					resource.TestCheckResourceAttrSet("data.doit_organizations.test", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_organizations.test", "organizations.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_organizations.test", "organizations.0.name"),
 				),
 			},
 			// Drift verification

@@ -99,10 +99,15 @@ func (d *organizationsDataSource) Read(ctx context.Context, req datasource.ReadR
 		data.Organizations = emptyList
 	}
 
+	orgCount := int64(0)
+	if apiResp.JSON200.Organizations != nil {
+		orgCount = int64(len(*apiResp.JSON200.Organizations))
+	}
+
 	if apiResp.JSON200.RowCount != nil {
 		data.RowCount = types.Int64Value(*apiResp.JSON200.RowCount)
 	} else {
-		data.RowCount = types.Int64Null()
+		data.RowCount = types.Int64Value(orgCount)
 	}
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
