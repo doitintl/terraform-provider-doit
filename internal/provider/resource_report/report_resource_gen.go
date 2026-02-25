@@ -672,8 +672,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										"type": schema.StringAttribute{
 											Optional:            true,
 											Computed:            true,
-											Description:         "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`",
-											MarkdownDescription: "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`",
+											Description:         "Type of the origin.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`",
+											MarkdownDescription: "Type of the origin.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`",
 											Validators: []validator.String{
 												stringvalidator.OneOf(
 													"datetime",
@@ -714,8 +714,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"type": schema.StringAttribute{
 												Optional:            true,
 												Computed:            true,
-												Description:         "Type of the target.\nThe only supported value at the moment: \"attribution\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-												MarkdownDescription: "Type of the target.\nThe only supported value at the moment: \"attribution\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+												Description:         "Type of the target.\nIf split type is \"attribution_group\", then target type must be \"attribution\".\nOtherwise split types and target types must be the same.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+												MarkdownDescription: "Type of the target.\nIf split type is \"attribution_group\", then target type must be \"attribution\".\nOtherwise split types and target types must be the same.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 												Validators: []validator.String{
 													stringvalidator.OneOf(
 														"datetime",
@@ -753,8 +753,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Type of the split.\nThe only supported value at the moment: \"attribution_group\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Type of the split.\nThe only supported value at the moment: \"attribution_group\"\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Type of the split.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									MarkdownDescription: "Type of the split.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",

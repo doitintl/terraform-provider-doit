@@ -2127,12 +2127,10 @@ type ExternalOrigin struct {
 	Id *string `json:"id,omitempty"`
 
 	// Type Type of the origin.
-	// The only supported values at the moment: "attribution", "unallocated"
 	Type *ExternalOriginType `json:"type,omitempty"`
 }
 
 // ExternalOriginType Type of the origin.
-// The only supported values at the moment: "attribution", "unallocated"
 type ExternalOriginType string
 
 // ExternalRenderer Type of visualization or output format.
@@ -2175,7 +2173,6 @@ type ExternalSplit struct {
 	Targets *[]ExternalSplitTarget `json:"targets,omitempty"`
 
 	// Type Type of the split.
-	// The only supported value at the moment: "attribution_group"
 	Type *ExternalSplitType `json:"type,omitempty"`
 }
 
@@ -2183,7 +2180,6 @@ type ExternalSplit struct {
 type ExternalSplitMode string
 
 // ExternalSplitType Type of the split.
-// The only supported value at the moment: "attribution_group"
 type ExternalSplitType string
 
 // ExternalSplitTarget Target and value of a split definition.
@@ -2192,7 +2188,8 @@ type ExternalSplitTarget struct {
 	Id *string `json:"id,omitempty"`
 
 	// Type Type of the target.
-	// The only supported value at the moment: "attribution"
+	// If split type is "attribution_group", then target type must be "attribution".
+	// Otherwise split types and target types must be the same.
 	Type *ExternalSplitTargetType `json:"type,omitempty"`
 
 	// Value Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
@@ -2200,7 +2197,8 @@ type ExternalSplitTarget struct {
 }
 
 // ExternalSplitTargetType Type of the target.
-// The only supported value at the moment: "attribution"
+// If split type is "attribution_group", then target type must be "attribution".
+// Otherwise split types and target types must be the same.
 type ExternalSplitTargetType string
 
 // ExternalUpdateReport Partial report object used for updates.

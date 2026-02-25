@@ -405,7 +405,6 @@ Optional:
 - `origin` (Attributes) Origin info for cost splitting. (see [below for nested schema](#nestedatt--config--splits--origin))
 - `targets` (Attributes List) Targets for the split. (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.
-The only supported value at the moment: "attribution_group"
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 <a id="nestedatt--config--splits--origin"></a>
@@ -415,7 +414,6 @@ Optional:
 
 - `id` (String) ID of the origin.
 - `type` (String) Type of the origin.
-The only supported values at the moment: "attribution", "unallocated"
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`
 
 
@@ -426,7 +424,8 @@ Optional:
 
 - `id` (String) ID of the target.
 - `type` (String) Type of the target.
-The only supported value at the moment: "attribution"
+If split type is "attribution_group", then target type must be "attribution".
+Otherwise split types and target types must be the same.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 - `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
 

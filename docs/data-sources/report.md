@@ -225,7 +225,6 @@ Read-Only:
 - `origin` (Attributes) Origin info for cost splitting. (see [below for nested schema](#nestedatt--config--splits--origin))
 - `targets` (Attributes List) Targets for the split. (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.
-The only supported value at the moment: "attribution_group"
 
 <a id="nestedatt--config--splits--origin"></a>
 ### Nested Schema for `config.splits.origin`
@@ -234,7 +233,6 @@ Read-Only:
 
 - `id` (String) ID of the origin.
 - `type` (String) Type of the origin.
-The only supported values at the moment: "attribution", "unallocated"
 
 
 <a id="nestedatt--config--splits--targets"></a>
@@ -244,7 +242,8 @@ Read-Only:
 
 - `id` (String) ID of the target.
 - `type` (String) Type of the target.
-The only supported value at the moment: "attribution"
+If split type is "attribution_group", then target type must be "attribution".
+Otherwise split types and target types must be the same.
 - `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
 
 
