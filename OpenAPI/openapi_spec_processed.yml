@@ -2215,9 +2215,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Organization"
+                $ref: '#/components/schemas/ListOrganizations200Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -5437,6 +5435,17 @@ components:
         rowCount:
           type: integer
           description: Cloud incidents rows count
+          format: int64
+    ListOrganizations200Response:
+      type: object
+      properties:
+        organizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Organization"
+        rowCount:
+          type: integer
+          description: Organizations row count
           format: int64
     ListPlatforms200Response:
       type: object

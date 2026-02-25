@@ -2678,6 +2678,14 @@ type ListKnownIssues200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ListOrganizations200Response defines model for ListOrganizations200Response.
+type ListOrganizations200Response struct {
+	Organizations *[]Organization `json:"organizations,omitempty"`
+
+	// RowCount Organizations row count
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
 // ListPlatforms200Response defines model for ListPlatforms200Response.
 type ListPlatforms200Response struct {
 	Platforms *[]PlatformAPI `json:"platforms,omitempty"`
@@ -11367,7 +11375,7 @@ func (r DeleteDatahubEventsByFilterResp) StatusCode() int {
 type ListOrganizationsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Organization
+	JSON200      *ListOrganizations200Response
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -15871,7 +15879,7 @@ func ParseListOrganizationsResp(rsp *http.Response) (*ListOrganizationsResp, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Organization
+		var dest ListOrganizations200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

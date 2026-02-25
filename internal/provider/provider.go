@@ -227,6 +227,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewSupportRequestsDataSource,
 		NewPlatformsDataSource,
 		NewProductsDataSource,
+		NewOrganizationsDataSource,
 	}
 }
 
