@@ -406,8 +406,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 										},
 										"type": schema.StringAttribute{
 											Computed:            true,
-											Description:         "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"",
-											MarkdownDescription: "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"",
+											Description:         "Type of the origin.",
+											MarkdownDescription: "Type of the origin.",
 										},
 									},
 									CustomType: OriginType{
@@ -429,8 +429,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											"type": schema.StringAttribute{
 												Computed:            true,
-												Description:         "Type of the target.\nThe only supported value at the moment: \"attribution\"",
-												MarkdownDescription: "Type of the target.\nThe only supported value at the moment: \"attribution\"",
+												Description:         "Type of the target.\nIf split type is \"attribution_group\", then target type must be \"attribution\".\nOtherwise split types and target types must be the same.",
+												MarkdownDescription: "Type of the target.\nIf split type is \"attribution_group\", then target type must be \"attribution\".\nOtherwise split types and target types must be the same.",
 											},
 											"value": schema.Float64Attribute{
 												Computed:            true,
@@ -450,8 +450,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Type of the split.\nThe only supported value at the moment: \"attribution_group\"",
-									MarkdownDescription: "Type of the split.\nThe only supported value at the moment: \"attribution_group\"",
+									Description:         "Type of the split.",
+									MarkdownDescription: "Type of the split.",
 								},
 							},
 							CustomType: SplitsType{

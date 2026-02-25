@@ -5025,7 +5025,6 @@ components:
           type: string
           description: |-
             Type of the origin.
-            The only supported values at the moment: "attribution", "unallocated"
           example: "attribution"
           enum:
             - datetime
@@ -5111,7 +5110,6 @@ components:
           type: string
           description: |-
             Type of the split.
-            The only supported value at the moment: "attribution_group"
           example: "attribution_group"
           enum:
             - datetime
@@ -5136,7 +5134,8 @@ components:
           type: string
           description: |-
             Type of the target.
-            The only supported value at the moment: "attribution"
+            If split type is "attribution_group", then target type must be "attribution".
+            Otherwise split types and target types must be the same.
           example: "attribution"
           enum:
             - datetime

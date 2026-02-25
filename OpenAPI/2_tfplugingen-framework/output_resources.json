@@ -1790,7 +1790,7 @@
 																"name": "type",
 																"string": {
 																	"computed_optional_required": "computed_optional",
-																	"description": "Type of the origin.\nThe only supported values at the moment: \"attribution\", \"unallocated\"",
+																	"description": "Type of the origin.",
 																	"validators": [
 																		{
 																			"custom": {
@@ -1826,7 +1826,7 @@
 																	"name": "type",
 																	"string": {
 																		"computed_optional_required": "computed_optional",
-																		"description": "Type of the target.\nThe only supported value at the moment: \"attribution\"",
+																		"description": "Type of the target.\nIf split type is \"attribution_group\", then target type must be \"attribution\".\nOtherwise split types and target types must be the same.",
 																		"validators": [
 																			{
 																				"custom": {
@@ -1857,7 +1857,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "Type of the split.\nThe only supported value at the moment: \"attribution_group\"",
+														"description": "Type of the split.",
 														"validators": [
 															{
 																"custom": {
