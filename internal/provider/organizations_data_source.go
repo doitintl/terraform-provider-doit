@@ -22,6 +22,10 @@ type organizationsDataSource struct {
 	client *models.ClientWithResponses
 }
 
+type organizationsDataSourceModel struct {
+	datasource_organizations.OrganizationsModel
+}
+
 func (d *organizationsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -48,7 +52,7 @@ func (d *organizationsDataSource) Schema(ctx context.Context, req datasource.Sch
 }
 
 func (d *organizationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_organizations.OrganizationsModel
+	var data organizationsDataSourceModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -60,23 +64,22 @@ func (d *organizationsDataSource) Read(ctx context.Context, req datasource.ReadR
 	apiResp, err := d.client.ListOrganizationsWithResponse(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Organizations",
-			"Could not read Organizations: "+err.Error(),
+			"Unable to read organizations",
+			"Unable to read organizations: "+err.Error(),
 		)
 		return
 	}
 
-	if apiResp.StatusCode() != 200 {
+	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Organizations",
-			fmt.Sprintf("Could not read Organizations, status: %d, body: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			"Unable to read organizations",
+			fmt.Sprintf("Unable to read organizations, status: %d, body: %s", apiResp.StatusCode(), string(apiResp.Body)),
 		)
 		return
 	}
 
-	organizationsVal := []datasource_organizations.OrganizationsValue{}
-
-	if apiResp.JSON200 != nil && apiResp.JSON200.Organizations != nil {
+	if apiResp.JSON200.Organizations != nil && len(*apiResp.JSON200.Organizations) > 0 {
+		organizationsVal := make([]datasource_organizations.OrganizationsValue, 0, len(*apiResp.JSON200.Organizations))
 		for _, org := range *apiResp.JSON200.Organizations {
 			orgAttrs := map[string]attr.Value{
 				"id":   types.StringPointerValue(org.Id),
@@ -87,14 +90,20 @@ func (d *organizationsDataSource) Read(ctx context.Context, req datasource.ReadR
 			resp.Diagnostics.Append(diags...)
 			organizationsVal = append(organizationsVal, orgVal)
 		}
-		data.RowCount = types.Int64PointerValue(apiResp.JSON200.RowCount)
+		list, listDiags := types.ListValueFrom(ctx, datasource_organizations.OrganizationsValue{}.Type(ctx), organizationsVal)
+		resp.Diagnostics.Append(listDiags...)
+		data.Organizations = list
 	} else {
-		data.RowCount = types.Int64Value(0)
+		emptyList, diags := types.ListValueFrom(ctx, datasource_organizations.OrganizationsValue{}.Type(ctx), []datasource_organizations.OrganizationsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Organizations = emptyList
 	}
 
-	list, listDiags := types.ListValueFrom(ctx, datasource_organizations.OrganizationsValue{}.Type(ctx), organizationsVal)
-	resp.Diagnostics.Append(listDiags...)
-	data.Organizations = list
+	if apiResp.JSON200.RowCount != nil {
+		data.RowCount = types.Int64Value(*apiResp.JSON200.RowCount)
+	} else {
+		data.RowCount = types.Int64Null()
+	}
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
