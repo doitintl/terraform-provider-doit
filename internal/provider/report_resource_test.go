@@ -1318,7 +1318,7 @@ resource "doit_report" "secondary_update" {
 }
 
 // TestAccReport_InvalidTimestamp verifies that invalid RFC3339 timestamps in
-// custom_time_range.from are caught at plan time by the rfc3339Validator,
+// custom_time_range.from are caught at plan time by the reportTimestampValidator,
 // rather than waiting for API rejection at apply time.
 func TestAccReport_InvalidTimestamp(t *testing.T) {
 	n := acctest.RandInt()

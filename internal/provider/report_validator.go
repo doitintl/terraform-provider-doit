@@ -94,7 +94,7 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 	for _, p := range timestampPaths {
 		var val types.String
 		diags := req.Config.GetAttribute(ctx, p, &val)
-		// Skip if path doesn't exist (e.g. custom_time_range not set)
+		resp.Diagnostics.Append(diags...)
 		if diags.HasError() {
 			continue
 		}
