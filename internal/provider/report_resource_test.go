@@ -803,8 +803,8 @@ resource "doit_report" "this" {
 }
 
 // TestAccReport_WithFilterEmptyValues tests that a filter with values = [] is handled
-// correctly. This exercises report.go L551 where types.ListNull was used for filter
-// values when the API returned nil.
+// correctly. This exercises the report filter value handling logic where types.ListNull
+// was used for filter values when the API returned nil.
 func TestAccReport_WithFilterEmptyValues(t *testing.T) {
 	n := acctest.RandInt()
 

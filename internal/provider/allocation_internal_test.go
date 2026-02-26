@@ -10,7 +10,6 @@ import (
 // TestToAllocationRuleComponentsListValue_EmptySlice verifies that passing an
 // empty-but-non-nil slice does not panic. The function indexes stateComponents[0]
 // to get the element type, which would panic with len=0.
-// This was caught by Copilot code review on PR #100.
 func TestToAllocationRuleComponentsListValue_EmptySlice(t *testing.T) {
 	ctx := context.Background()
 
