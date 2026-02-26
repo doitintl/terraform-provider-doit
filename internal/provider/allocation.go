@@ -330,7 +330,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 				"id":          types.StringPointerValue(rule.Id),
 				"name":        types.StringPointerValue(rule.Name),
 			}
-			if components != nil {
+			if len(components) > 0 {
 				var d diag.Diagnostics
 				m["components"], d = toAllocationRuleComponentsListValue(ctx, components)
 				diags.Append(d...)
@@ -366,6 +366,11 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 }
 
 func toAllocationRuleComponentsListValue(ctx context.Context, components []models.AllocationComponent) (res basetypes.ListValue, diags diag.Diagnostics) {
+	// Handle empty slice: return an empty list without indexing stateComponents[0].
+	if len(components) == 0 {
+		res, diags = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
+		return
+	}
 	stateComponents := make([]attr.Value, len(components))
 	for i, component := range components {
 		m := map[string]attr.Value{
