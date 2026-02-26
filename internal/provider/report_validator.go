@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -63,5 +64,49 @@ func (v reportMetricsLengthValidator) ValidateResource(ctx context.Context, req 
 			"Invalid Metrics Configuration",
 			fmt.Sprintf("Report can have up to 4 metrics. Found %d metrics.", len(metrics.Elements())),
 		)
+	}
+}
+
+// reportTimestampValidator validates that custom_time_range.from/to values are valid
+// RFC3339 timestamps at plan time. This is a ConfigValidator because attribute-level
+// validators do not fire on attributes inside SingleNestedAttribute with CustomType
+// (which the code generator adds to all nested objects).
+type reportTimestampValidator struct{}
+
+var _ resource.ConfigValidator = reportTimestampValidator{}
+
+func (v reportTimestampValidator) Description(_ context.Context) string {
+	return "Validates RFC3339 timestamps in custom_time_range and secondary_time_range.custom_time_range"
+}
+
+func (v reportTimestampValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates RFC3339 timestamps in `custom_time_range` and `secondary_time_range.custom_time_range`"
+}
+
+func (v reportTimestampValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	timestampPaths := []path.Path{
+		path.Root("config").AtName("custom_time_range").AtName("from"),
+		path.Root("config").AtName("custom_time_range").AtName("to"),
+		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("from"),
+		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("to"),
+	}
+
+	for _, p := range timestampPaths {
+		var val types.String
+		diags := req.Config.GetAttribute(ctx, p, &val)
+		// Skip if path doesn't exist (e.g. custom_time_range not set)
+		if diags.HasError() {
+			continue
+		}
+		if val.IsNull() || val.IsUnknown() {
+			continue
+		}
+		if _, err := time.Parse(time.RFC3339, val.ValueString()); err != nil {
+			resp.Diagnostics.AddAttributeError(
+				p,
+				"Invalid RFC3339 Timestamp",
+				fmt.Sprintf("Value must be a valid RFC3339 timestamp (e.g., '2024-06-15T12:00:00Z'). Got: %s", val.ValueString()),
+			)
+		}
 	}
 }
