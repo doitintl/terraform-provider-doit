@@ -232,13 +232,14 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			alertElements,
 		)
 	} else {
-		newModel.Alerts = types.ListNull(types.ObjectType{
+		// Empty list, not null — preserves user's config of alerts = [] (Pattern 10.2).
+		newModel.Alerts = types.ListValueMust(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"percentage":      types.Float64Type,
 				"forecasted_date": types.Int64Type,
 				"triggered":       types.BoolType,
 			},
-		})
+		}, []attr.Value{})
 	}
 
 	// Transform collaborators list
@@ -266,12 +267,13 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			collabElements,
 		)
 	} else {
-		newModel.Collaborators = types.ListNull(types.ObjectType{
+		// Empty list, not null — preserves user's config of collaborators = [] (Pattern 10.2).
+		newModel.Collaborators = types.ListValueMust(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"email": types.StringType,
 				"role":  types.StringType,
 			},
-		})
+		}, []attr.Value{})
 	}
 
 	// Transform slack channels list
@@ -311,7 +313,8 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			slackElements,
 		)
 	} else {
-		newModel.RecipientsSlackChannels = types.ListNull(types.ObjectType{
+		// Empty list, not null — preserves user's config of recipients_slack_channels = [] (Pattern 10.2).
+		newModel.RecipientsSlackChannels = types.ListValueMust(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"customer_id": types.StringType,
 				"id":          types.StringType,
@@ -320,16 +323,16 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 				"type":        types.StringType,
 				"workspace":   types.StringType,
 			},
-		})
+		}, []attr.Value{})
 	}
 
-	// Initialize new fields
-	newModel.SeasonalAmounts = types.ListNull(types.Float64Type) // New field in v1
-
-	// Initialize other new v1 fields to Null/Unknown
-	newModel.Scopes = types.ListNull(types.ObjectType{
+	// Initialize new fields — use empty list instead of null for consistency (Pattern 10.2).
+	// These fields are new in V1 and don't exist in V0 state, but empty list is safer
+	// than null because subsequent Read will populate them from the API.
+	newModel.SeasonalAmounts = types.ListValueMust(types.Float64Type, []attr.Value{})
+	newModel.Scopes = types.ListValueMust(types.ObjectType{
 		AttrTypes: resource_budget.ScopesValue{}.AttributeTypes(ctx),
-	})
+	}, []attr.Value{})
 	newModel.CreateTime = types.Int64Null()
 	newModel.UpdateTime = types.Int64Null()
 	newModel.CurrentUtilization = types.Float64Null()
