@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -101,12 +100,6 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 		if val.IsNull() || val.IsUnknown() {
 			continue
 		}
-		if _, err := time.Parse(time.RFC3339, val.ValueString()); err != nil {
-			resp.Diagnostics.AddAttributeError(
-				p,
-				"Invalid RFC3339 Timestamp",
-				fmt.Sprintf("Value must be a valid RFC3339 timestamp (e.g., '2024-06-15T12:00:00Z'). Got: %s", val.ValueString()),
-			)
-		}
+		validateRFC3339(val.ValueString(), p, &resp.Diagnostics)
 	}
 }
