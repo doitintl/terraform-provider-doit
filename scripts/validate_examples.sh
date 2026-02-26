@@ -9,6 +9,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROVIDER_DIR="$(dirname "$SCRIPT_DIR")"
 EXAMPLES_DIR="$PROVIDER_DIR/examples"
 
+# Ensure temp files and built binary are cleaned up on exit (including early failures)
+cleanup() {
+    rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" \
+         "$PROVIDER_DIR/.terraformrc-validate" "$PROVIDER_DIR/terraform-provider-doit"
+}
+trap cleanup EXIT
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -60,7 +67,6 @@ else
     echo -e "${RED}Output was:${NC}"
     echo "$VALIDATE_OUTPUT" | sed 's/^/  /'
     echo -e "${RED}Check that TF_CLI_CONFIG_FILE is set correctly and not overridden (e.g. by terraform_wrapper).${NC}"
-    rm -f "$TFRC_FILE"
     exit 1
 fi
 
@@ -101,18 +107,18 @@ EOF
     # Try terraform validate directly first — with dev_overrides, init is not
     # needed for the doit provider. If validate fails because a third-party
     # provider is missing (e.g. hashicorp/time), fall back to init + validate.
-    VALIDATE_RESULT=$(terraform validate 2>&1) || true
+    VALIDATE_RESULT=$(terraform validate 2>&1 || true)
     if echo "$VALIDATE_RESULT" | grep -q "Missing required provider"; then
         # Example uses a third-party provider — install it first
         if ! terraform init -backend=false > /dev/null 2>&1; then
             echo -e "${RED}✗${NC} $reldir (init failed)"
             terraform init -backend=false 2>&1 | grep -i error | head -5 | sed 's/^/  /'
             echo "$reldir" >> "$PROVIDER_DIR/.validate_failed"
-            rm -rf "$TEMP_DIR"
             cd "$PROVIDER_DIR"
+            rm -rf "$TEMP_DIR"
             continue
         fi
-        VALIDATE_RESULT=$(terraform validate 2>&1) || true
+        VALIDATE_RESULT=$(terraform validate 2>&1 || true)
     fi
 
     if echo "$VALIDATE_RESULT" | grep -q "Success"; then
@@ -126,8 +132,8 @@ EOF
     fi
 
     # Cleanup
-    rm -rf "$TEMP_DIR"
     cd "$PROVIDER_DIR"
+    rm -rf "$TEMP_DIR"
 done
 
 # Count results from temp files
@@ -144,7 +150,7 @@ if [ -f "$PROVIDER_DIR/.validate_failed" ]; then
     sed 's/^/  - /' "$PROVIDER_DIR/.validate_failed"
 fi
 
-# Cleanup temp files
+# Cleanup temp files (also handled by trap, but explicit for clarity)
 rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" "$PROVIDER_DIR/.terraformrc-validate" "$PROVIDER_DIR/terraform-provider-doit"
 
 if [ "$FAILED" -gt 0 ]; then
