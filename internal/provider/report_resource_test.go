@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -1312,6 +1313,105 @@ resource "doit_report" "secondary_update" {
         currency       = "USD"
         layout         = "table"
     }
+}
+`, i)
+}
+
+// TestAccReport_InvalidTimestamp verifies that invalid RFC3339 timestamps in
+// custom_time_range.from are caught at plan time by the reportTimestampValidator,
+// rather than waiting for API rejection at apply time.
+func TestAccReport_InvalidTimestamp(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportInvalidTimestamp(n),
+				ExpectError: regexp.MustCompile(`Invalid RFC3339 Timestamp`),
+			},
+		},
+	})
+}
+
+func testAccReportInvalidTimestamp(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "invalid_ts" {
+  name = "test-invalid-ts-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation   = "total"
+    time_interval = "month"
+    custom_time_range = {
+      from = "not-a-valid-timestamp"
+      to   = "2024-12-31T23:59:59Z"
+    }
+    time_range = {
+      mode = "custom"
+      unit = "day"
+    }
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i)
+}
+
+// TestAccReport_InvalidSecondaryTimestamp verifies that invalid RFC3339 timestamps
+// in secondary_time_range.custom_time_range.to are also caught at plan time.
+func TestAccReport_InvalidSecondaryTimestamp(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportInvalidSecondaryTimestamp(n),
+				ExpectError: regexp.MustCompile(`Invalid RFC3339 Timestamp`),
+			},
+		},
+	})
+}
+
+func testAccReportInvalidSecondaryTimestamp(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "invalid_sec_ts" {
+  name = "test-invalid-sec-ts-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation   = "total"
+    time_interval = "month"
+    custom_time_range = {
+      from = "2024-01-01T00:00:00Z"
+      to   = "2024-12-31T23:59:59Z"
+    }
+    time_range = {
+      mode = "custom"
+      unit = "day"
+    }
+    secondary_time_range = {
+      custom_time_range = {
+        from = "2023-01-01T00:00:00Z"
+        to   = "2023-31-12"
+      }
+    }
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
 }
 `, i)
 }
