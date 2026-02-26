@@ -548,69 +548,6 @@ resource "doit_report" "timezone_test" {
 `, i)
 }
 
-// TestAccReport_WithTargets tests reports with targets configuration.
-// Note: targets is a write-only field and not returned in state.
-// This causes drift on subsequent plans - see CMP-38157.
-func TestAccReport_WithTargets(t *testing.T) {
-	n := acctest.RandInt()
-	attrID := os.Getenv("TEST_ATTRIBUTION")
-	if attrID == "" {
-		t.Skip("TEST_ATTRIBUTION must be set for this test")
-	}
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccReportWithTargets(n, attrID),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("doit_report.targets", "id"),
-					resource.TestCheckResourceAttr("doit_report.targets", "config.layout", "table"),
-				),
-			},
-			// TODO(CMP-38157): Enable drift verification once API returns targets field.
-			// Currently skipped because targets is write-only and causes perpetual drift.
-			// {
-			// 	Config: testAccReportWithTargets(n, attrID),
-			// 	ConfigPlanChecks: resource.ConfigPlanChecks{
-			// 		PreApply: []plancheck.PlanCheck{
-			// 			plancheck.ExpectEmptyPlan(),
-			// 		},
-			// 	},
-			// },
-		},
-	})
-}
-
-func testAccReportWithTargets(i int, attrID string) string {
-	return fmt.Sprintf(`
-resource "doit_report" "targets" {
-    name = "test-targets-%d"
-    description = "Report with targets configuration"
-    config = {
-        metric = {
-          type  = "basic"
-          value = "cost"
-        }
-        aggregation   = "total"
-        time_interval = "month"
-        data_source    = "billing"
-        display_values = "actuals_only"
-        currency       = "USD"
-        layout         = "table"
-        targets = [
-            {
-                type = "attribution"
-                id   = "%s"
-            }
-        ]
-    }
-}
-`, i, attrID)
-}
-
 // TestAccReport_WithSplits tests reports with splits configuration.
 // Splits allow redistributing costs from one attribution to multiple targets.
 //
@@ -689,6 +626,100 @@ resource "doit_report" "splits" {
     }
 }
 `, i, attrGroupID, attrGroupID, attrID)
+}
+
+// TestAccReport_WithSplitTargets tests reports with populated splits[].targets.
+// This verifies that explicit targets within a split are correctly sent to the API,
+// returned in the config, and cause no drift on subsequent plans.
+// Uses a fixed-dimension split (cloud_provider) with custom mode to avoid
+// attribution-specific constraints around origin/target uniqueness.
+func TestAccReport_WithSplitTargets(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithSplitTargets(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.split_targets",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.split_targets",
+						tfjsonpath.New("config").AtMapKey("splits").AtSliceIndex(0).AtMapKey("targets"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type": knownvalue.StringExact("fixed"),
+							}),
+						})),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithSplitTargets(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSplitTargets(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "split_targets" {
+    name = "test-split-targets-%d"
+    description = "Report with populated split targets"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        group = [
+            {
+                id   = "cloud_provider"
+                type = "fixed"
+            }
+        ]
+        splits = [
+            {
+                id   = "cloud_provider"
+                type = "fixed"
+                mode = "custom"
+                include_origin = true
+                origin = {
+                    id   = "google-cloud"
+                    type = "fixed"
+                }
+                targets = [
+                    {
+                        id    = "amazon-web-services"
+                        type  = "fixed"
+                        value = 1.0
+                    }
+                ]
+            }
+        ]
+    }
+}
+`, i)
 }
 
 // TestAccReport_Disappears verifies that Terraform correctly handles
