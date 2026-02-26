@@ -277,7 +277,7 @@ func TestBudgetStateUpgradeV0ToV1(t *testing.T) {
 				}
 			}
 
-			// Verify empty lists are preserved as empty (not null) after upgrade (Pattern 10.2).
+			// Verify empty lists are preserved as empty (not null) after upgrade.
 			// This applies to the "minimal budget" test case which has empty alerts and slack channels,
 			// and to new V1 fields (seasonal_amounts, scopes) which are initialized as empty lists.
 			for _, tc := range []struct {
@@ -291,7 +291,7 @@ func TestBudgetStateUpgradeV0ToV1(t *testing.T) {
 				{"Scopes", upgradedModel.Scopes},
 			} {
 				if tc.list.IsNull() {
-					t.Errorf("Expected %s to be empty list, not null (Pattern 10.2)", tc.name)
+					t.Errorf("Expected %s to be empty list, not null", tc.name)
 				}
 			}
 

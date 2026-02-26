@@ -232,7 +232,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			alertElements,
 		)
 	} else {
-		// Empty list, not null — preserves user's config of alerts = [] (Pattern 10.2).
+		// Empty list, not null — preserves user's config of alerts = []
 		newModel.Alerts = types.ListValueMust(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"percentage":      types.Float64Type,
@@ -267,7 +267,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			collabElements,
 		)
 	} else {
-		// Empty list, not null — preserves user's config of collaborators = [] (Pattern 10.2).
+		// Empty list, not null — preserves user's config of collaborators = []
 		newModel.Collaborators = types.ListValueMust(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"email": types.StringType,
@@ -313,7 +313,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 			slackElements,
 		)
 	} else {
-		// Empty list, not null — preserves user's config of recipients_slack_channels = [] (Pattern 10.2).
+		// Empty list, not null — preserves user's config of recipients_slack_channels = []
 		newModel.RecipientsSlackChannels = types.ListValueMust(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"customer_id": types.StringType,
@@ -326,7 +326,7 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 		}, []attr.Value{})
 	}
 
-	// Initialize new fields — use empty list instead of null for consistency (Pattern 10.2).
+	// Initialize new fields — use empty list instead of null for consistency.
 	// These fields are new in V1 and don't exist in V0 state, but empty list is safer
 	// than null because subsequent Read will populate them from the API.
 	newModel.SeasonalAmounts = types.ListValueMust(types.Float64Type, []attr.Value{})
