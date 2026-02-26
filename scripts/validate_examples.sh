@@ -48,9 +48,9 @@ terraform {
 provider "doit" {}
 EOF
 cd "$VERIFY_DIR"
-VALIDATE_OUTPUT=$(terraform validate 2>&1)
-rm -rf "$VERIFY_DIR"
+VALIDATE_OUTPUT=$(terraform validate 2>&1 || true)
 cd "$PROVIDER_DIR"
+rm -rf "$VERIFY_DIR"
 
 if echo "$VALIDATE_OUTPUT" | grep -q "Provider development overrides are in effect"; then
     echo -e "${GREEN}✓${NC} Provider dev_overrides active (using locally built provider)"
@@ -88,9 +88,6 @@ terraform {
   required_providers {
     doit = {
       source = "doitintl/doit"
-    }
-    time = {
-      source = "hashicorp/time"
     }
   }
 }
