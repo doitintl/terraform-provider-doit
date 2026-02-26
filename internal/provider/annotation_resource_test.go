@@ -358,6 +358,17 @@ func TestAccAnnotation_WithEmptyLists(t *testing.T) {
 						knownvalue.ListSizeExact(0)),
 				},
 			},
+			// Step 2: Re-apply same config - verify no drift.
+			// If mapAnnotationToModel returns null instead of [] for labels/reports,
+			// Terraform will see config ([]) ≠ state (null) and produce a non-empty plan.
+			{
+				Config: testAccAnnotationWithEmptyLists(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }

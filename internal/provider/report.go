@@ -548,7 +548,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				diags.Append(d...)
 				m["values"] = values
 			} else {
-				m["values"] = types.ListNull(types.StringType)
+				var emptyDiags diag.Diagnostics
+				m["values"], emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+				diags.Append(emptyDiags...)
 			}
 			filterVal, d := resource_report.NewFiltersValue(resource_report.FiltersValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
@@ -672,7 +674,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				return diags
 			}
 		} else {
-			mfMap["values"] = types.ListNull(types.Float64Type)
+			var emptyDiags diag.Diagnostics
+			mfMap["values"], emptyDiags = types.ListValueFrom(ctx, types.Float64Type, []float64{})
+			diags.Append(emptyDiags...)
 		}
 		mfv, mfvDiags := resource_report.NewMetricFilterValue(resource_report.MetricFilterValue{}.AttributeTypes(ctx), mfMap)
 		diags.Append(mfvDiags...)

@@ -338,7 +338,9 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 					return
 				}
 			} else {
-				m["components"] = types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx))
+				var d diag.Diagnostics
+				m["components"], d = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
+				diags.Append(d...)
 			}
 			var d diag.Diagnostics
 			rules[i], d = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)

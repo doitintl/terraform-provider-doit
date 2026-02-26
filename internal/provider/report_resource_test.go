@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -763,6 +764,17 @@ func TestAccReport_WithEmptyLists(t *testing.T) {
 						knownvalue.ListExact([]knownvalue.Check{})), // Empty list
 				},
 			},
+			// Step 2: Re-apply same config - verify no drift.
+			// If toExternalConfig returns null instead of [] for these lists,
+			// Terraform will see config ([]) ≠ state (null) and produce a non-empty plan.
+			{
+				Config: testAccReportWithEmptyLists(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -785,6 +797,118 @@ resource "doit_report" "this" {
     dimensions     = []
     filters        = []
     group          = []
+  }
+}
+`, i)
+}
+
+// TestAccReport_WithFilterEmptyValues tests that a filter with values = [] is handled
+// correctly. This exercises report.go L551 where types.ListNull was used for filter
+// values when the API returned nil.
+func TestAccReport_WithFilterEmptyValues(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithFilterEmptyValues(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.filter_empty_values",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 2: Re-apply - verify no drift
+			{
+				Config: testAccReportWithFilterEmptyValues(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithFilterEmptyValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "filter_empty_values" {
+  name = "test-filter-empty-values-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+    filters = [
+      {
+        id      = "cloud_provider"
+        type    = "fixed"
+        inverse = false
+        values  = []
+        mode    = "is"
+      }
+    ]
+  }
+}
+`, i)
+}
+
+// TestAccReport_WithMetricFilterEmptyValues tests that a metric_filter with values = []
+// is rejected by the API. Unlike filter.values (which accepts []), the API requires
+// at least one value for metric_filter.
+// The code fix in report.go (returning empty list instead of null) is still correct
+// defensively for when the API returns nil on read, but users can't trigger the
+// inconsistent result bug from HCL because the API blocks it.
+func TestAccReport_WithMetricFilterEmptyValues(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithMetricFilterEmptyValues(n),
+				ExpectError: regexp.MustCompile(`invalid number of values`),
+			},
+		},
+	})
+}
+
+func testAccReportWithMetricFilterEmptyValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_filter_empty" {
+  name = "test-mf-empty-values-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    metric_filter = {
+      metric = {
+        type  = "basic"
+        value = "cost"
+      }
+      operator = "nb"
+      values   = []
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
   }
 }
 `, i)

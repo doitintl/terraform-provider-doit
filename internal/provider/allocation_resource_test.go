@@ -151,6 +151,17 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 						knownvalue.StringExact("group")),
 				},
 			},
+			// Step 2: Re-apply - verify no drift.
+			// Tests that components handling for "select" rules doesn't cause
+			// an inconsistent result (user omits components, API may return null/empty).
+			{
+				Config: testAccAllocationGroupSelect(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 			{
 				ResourceName:      "doit_allocation.group_select",
 				ImportState:       true,
