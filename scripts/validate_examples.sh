@@ -33,6 +33,37 @@ provider_installation {
 EOF
 export TF_CLI_CONFIG_FILE="$TFRC_FILE"
 
+# Verify dev_overrides is working by checking that the local provider is used
+echo -e "${YELLOW}Verifying dev_overrides configuration...${NC}"
+VERIFY_DIR=$(mktemp -d)
+cat > "$VERIFY_DIR/main.tf" << 'EOF'
+terraform {
+  required_providers {
+    doit = {
+      source = "doitintl/doit"
+    }
+  }
+}
+
+provider "doit" {}
+EOF
+cd "$VERIFY_DIR"
+VALIDATE_OUTPUT=$(terraform validate 2>&1)
+rm -rf "$VERIFY_DIR"
+cd "$PROVIDER_DIR"
+
+if echo "$VALIDATE_OUTPUT" | grep -q "Provider development overrides are in effect"; then
+    echo -e "${GREEN}✓${NC} Provider dev_overrides active (using locally built provider)"
+else
+    echo -e "${RED}ERROR: dev_overrides not working!${NC}"
+    echo -e "${RED}Expected 'Provider development overrides are in effect' warning.${NC}"
+    echo -e "${RED}Output was:${NC}"
+    echo "$VALIDATE_OUTPUT" | sed 's/^/  /'
+    echo -e "${RED}Check that TF_CLI_CONFIG_FILE is set correctly and not overridden (e.g. by terraform_wrapper).${NC}"
+    rm -f "$TFRC_FILE"
+    exit 1
+fi
+
 # Clean any existing temp files
 rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
 touch "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
@@ -68,26 +99,32 @@ provider "doit" {}
 EOF
     fi
 
-    # Run terraform init and validate
     cd "$TEMP_DIR"
 
-    # Use plugin cache to avoid re-downloading providers for each example
-    export TF_PLUGIN_CACHE_DIR="$PROVIDER_DIR/.terraform-cache"
-    mkdir -p "$TF_PLUGIN_CACHE_DIR"
-
-    if terraform init -backend=false > /dev/null 2>&1; then
-        if terraform validate > /dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} $reldir"
-            echo "$reldir" >> "$PROVIDER_DIR/.validate_passed"
-        else
-            echo -e "${RED}✗${NC} $reldir"
-            echo "  Error:"
-            terraform validate 2>&1 | head -20 | sed 's/^/  /'
+    # Try terraform validate directly first — with dev_overrides, init is not
+    # needed for the doit provider. If validate fails because a third-party
+    # provider is missing (e.g. hashicorp/time), fall back to init + validate.
+    VALIDATE_RESULT=$(terraform validate 2>&1) || true
+    if echo "$VALIDATE_RESULT" | grep -q "Missing required provider"; then
+        # Example uses a third-party provider — install it first
+        if ! terraform init -backend=false > /dev/null 2>&1; then
+            echo -e "${RED}✗${NC} $reldir (init failed)"
+            terraform init -backend=false 2>&1 | grep -i error | head -5 | sed 's/^/  /'
             echo "$reldir" >> "$PROVIDER_DIR/.validate_failed"
+            rm -rf "$TEMP_DIR"
+            cd "$PROVIDER_DIR"
+            continue
         fi
+        VALIDATE_RESULT=$(terraform validate 2>&1) || true
+    fi
+
+    if echo "$VALIDATE_RESULT" | grep -q "Success"; then
+        echo -e "${GREEN}✓${NC} $reldir"
+        echo "$reldir" >> "$PROVIDER_DIR/.validate_passed"
     else
-        echo -e "${RED}✗${NC} $reldir (init failed)"
-        terraform init -backend=false 2>&1 | grep -i error | head -5 | sed 's/^/  /'
+        echo -e "${RED}✗${NC} $reldir"
+        echo "  Error:"
+        echo "$VALIDATE_RESULT" | head -20 | sed 's/^/  /'
         echo "$reldir" >> "$PROVIDER_DIR/.validate_failed"
     fi
 
@@ -112,7 +149,6 @@ fi
 
 # Cleanup temp files
 rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" "$PROVIDER_DIR/.terraformrc-validate" "$PROVIDER_DIR/terraform-provider-doit"
-rm -rf "$PROVIDER_DIR/.terraform-cache"
 
 if [ "$FAILED" -gt 0 ]; then
     exit 1
