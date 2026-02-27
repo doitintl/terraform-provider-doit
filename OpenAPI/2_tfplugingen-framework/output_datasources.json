@@ -2630,6 +2630,104 @@
 			}
 		},
 		{
+			"name": "datahub_dataset",
+			"schema": {
+				"attributes": [
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the dataset to retrieve."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The description of the dataset."
+						}
+					},
+					{
+						"name": "last_updated",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The timestamp of the last update."
+						}
+					},
+					{
+						"name": "records",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The number of records in the dataset."
+						}
+					},
+					{
+						"name": "updated_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The email of the user who last updated the dataset."
+						}
+					}
+				],
+				"description": "Ingest third-party cost, usage, and metric-based data for analysis.",
+				"markdown_description": "Ingest third-party cost, usage, and metric-based data for analysis."
+			}
+		},
+		{
+			"name": "datahub_datasets",
+			"schema": {
+				"attributes": [
+					{
+						"name": "datasets",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The description of the dataset."
+										}
+									},
+									{
+										"name": "last_updated",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The timestamp of the last update."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the dataset."
+										}
+									},
+									{
+										"name": "records",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The number of records in the dataset."
+										}
+									},
+									{
+										"name": "updated_by",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The email of the user who last updated the dataset."
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Ingest third-party cost, usage, and metric-based data for analysis.",
+				"markdown_description": "Ingest third-party cost, usage, and metric-based data for analysis."
+			}
+		},
+		{
 			"name": "dimensions",
 			"schema": {
 				"attributes": [
