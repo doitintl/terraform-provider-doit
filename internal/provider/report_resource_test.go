@@ -657,8 +657,10 @@ func TestAccReport_WithSplitTargets(t *testing.T) {
 						"doit_report.split_targets",
 						tfjsonpath.New("config").AtMapKey("splits").AtSliceIndex(0).AtMapKey("targets"),
 						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"type": knownvalue.StringExact("fixed"),
+							knownvalue.ObjectExact(map[string]knownvalue.Check{
+								"id":    knownvalue.StringExact("amazon-web-services"),
+								"type":  knownvalue.StringExact("fixed"),
+								"value": knownvalue.Float64Exact(1.0),
 							}),
 						})),
 				},
