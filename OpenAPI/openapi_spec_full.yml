@@ -1529,6 +1529,11 @@ paths:
                   example: Cost breakdown by service in the last 3 months
                 config:
                   $ref: "#/components/schemas/ExternalConfig"
+                labels:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of label IDs assigned to the report
       responses:
         "201":
           description: Created - The request succeeded.
@@ -2675,7 +2680,7 @@ paths:
     get:
       tags:
         - Platforms
-      summary: List available platforms.
+      summary: List available platforms
       description: Returns a list of all the available platforms.
       operationId: listPlatforms
       responses:
@@ -2700,7 +2705,7 @@ paths:
     get:
       tags:
         - Products
-      summary: List available products.
+      summary: List available products
       description: Returns a list of all the available products of specific platforms.
       operationId: listProducts
       parameters:
@@ -5090,6 +5095,11 @@ components:
             - managed
         config:
           $ref: "#/components/schemas/ExternalConfig"
+        labels:
+          type: array
+          items:
+            type: string
+          description: Array of label IDs assigned to the report
     ExternalSplit:
       type: object
       description: Specification of how to split costs.
@@ -5173,6 +5183,11 @@ components:
         name:
           type: string
           description: Report name
+        labels:
+          type: array
+          items:
+            type: string
+          description: Array of label IDs assigned to the report
       example:
         config:
           timeRange:
@@ -5525,6 +5540,11 @@ components:
         urlUI:
           type: string
           description: The URL of the report in DoiT console.
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelInfo"
+          description: List of labels associated with the report.
     ReportList:
       type: object
       description: List of reports.

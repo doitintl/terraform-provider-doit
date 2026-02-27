@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -187,6 +188,7 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 					"create_time": types.Int64PointerValue(report.CreateTime),
 					"update_time": types.Int64PointerValue(report.UpdateTime),
 					"url_ui":      types.StringPointerValue(report.UrlUI),
+					"labels":      mapReportLabels(ctx, report.Labels, &resp.Diagnostics),
 				},
 			)
 			resp.Diagnostics.Append(diags...)
@@ -203,4 +205,32 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// mapReportLabels converts a *[]LabelInfo from the API into a types.List of
+// datasource_reports.LabelsValue. Returns an empty list when labels is nil.
+func mapReportLabels(ctx context.Context, labels *[]models.LabelInfo, diags *diag.Diagnostics) types.List {
+	elemType := datasource_reports.LabelsValue{}.Type(ctx)
+
+	if labels != nil && len(*labels) > 0 {
+		labelVals := make([]attr.Value, len(*labels))
+		for i, l := range *labels {
+			lVal, d := datasource_reports.NewLabelsValue(
+				datasource_reports.LabelsValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"id":   types.StringValue(l.Id),
+					"name": types.StringValue(l.Name),
+				},
+			)
+			diags.Append(d...)
+			labelVals[i] = lVal
+		}
+		labelList, d := types.ListValueFrom(ctx, elemType, labelVals)
+		diags.Append(d...)
+		return labelList
+	}
+
+	emptyList, d := types.ListValueFrom(ctx, elemType, []datasource_reports.LabelsValue{})
+	diags.Append(d...)
+	return emptyList
 }

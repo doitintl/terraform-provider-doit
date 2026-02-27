@@ -122,6 +122,17 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		state.Type = types.StringNull()
 	}
 
+	// Labels: always return empty list instead of null
+	if resp.Labels != nil && len(*resp.Labels) > 0 {
+		var labelsDiags diag.Diagnostics
+		state.Labels, labelsDiags = types.ListValueFrom(ctx, types.StringType, *resp.Labels)
+		diags.Append(labelsDiags...)
+	} else {
+		var emptyLabelsDiags diag.Diagnostics
+		state.Labels, emptyLabelsDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(emptyLabelsDiags...)
+	}
+
 	if resp.Config == nil {
 		state.Config = datasource_report.NewConfigValueNull()
 		return diags

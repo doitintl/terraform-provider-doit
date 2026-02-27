@@ -1981,6 +1981,16 @@
 						}
 					},
 					{
+						"name": "labels",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Array of label IDs assigned to the report"
+						}
+					},
+					{
 						"name": "name",
 						"string": {
 							"computed_optional_required": "computed_optional",

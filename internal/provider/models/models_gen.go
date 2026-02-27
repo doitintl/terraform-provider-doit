@@ -1784,6 +1784,9 @@ type CreateReportRequestBody struct {
 	// Description Report description.
 	Description *string `json:"description,omitempty"`
 
+	// Labels Array of label IDs assigned to the report
+	Labels *[]string `json:"labels,omitempty"`
+
 	// Name Report name.
 	Name *string `json:"name,omitempty"`
 }
@@ -2147,6 +2150,9 @@ type ExternalReport struct {
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
 
+	// Labels Array of label IDs assigned to the report
+	Labels *[]string `json:"labels,omitempty"`
+
 	// Name Report name.
 	Name string `json:"name"`
 
@@ -2208,6 +2214,9 @@ type ExternalUpdateReport struct {
 
 	// Description Report description
 	Description *string `json:"description,omitempty"`
+
+	// Labels Array of label IDs assigned to the report
+	Labels *[]string `json:"labels,omitempty"`
 
 	// Name Report name
 	Name *string `json:"name,omitempty"`
@@ -2368,6 +2377,9 @@ type GetReport200Response struct {
 
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
+
+	// Labels List of labels associated with the report.
+	Labels *[]LabelInfo `json:"labels,omitempty"`
 
 	// Owner Email address of the report owner.
 	Owner *string `json:"owner,omitempty"`
@@ -2776,6 +2788,9 @@ type Report struct {
 
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
+
+	// Labels List of labels associated with the report.
+	Labels *[]LabelInfo `json:"labels,omitempty"`
 
 	// Owner Email address of the report owner.
 	Owner *string `json:"owner,omitempty"`

@@ -94,6 +94,15 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 	req.Name = plan.Name.ValueStringPointer()
 	req.Description = plan.Description.ValueStringPointer()
 
+	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
+		var labels []string
+		diags.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
+		req.Labels = &labels
+	}
+
 	config, d := toExternalConfig(ctx, plan.Config)
 	diags.Append(d...)
 	if diags.HasError() {
@@ -107,6 +116,15 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateReportJSONRequestBody, diags diag.Diagnostics) {
 	req.Name = plan.Name.ValueStringPointer()
 	req.Description = plan.Description.ValueStringPointer()
+
+	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
+		var labels []string
+		diags.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
+		req.Labels = &labels
+	}
 
 	config, d := toExternalConfig(ctx, plan.Config)
 	diags.Append(d...)
@@ -394,6 +412,17 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		state.Type = types.StringValue(string(*resp.Type))
 	} else {
 		state.Type = types.StringNull()
+	}
+
+	// Labels: user-configurable list — always return empty list instead of null
+	if resp.Labels != nil && len(*resp.Labels) > 0 {
+		var labelsDiags diag.Diagnostics
+		state.Labels, labelsDiags = types.ListValueFrom(ctx, types.StringType, *resp.Labels)
+		diags.Append(labelsDiags...)
+	} else {
+		var emptyLabelsDiags diag.Diagnostics
+		state.Labels, emptyLabelsDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(emptyLabelsDiags...)
 	}
 
 	if resp.Config == nil {

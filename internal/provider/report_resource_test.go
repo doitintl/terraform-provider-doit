@@ -1571,3 +1571,107 @@ resource "doit_report" "invalid_sec_ts" {
 }
 `, i)
 }
+
+// TestAccReport_WithLabels tests that labels can be assigned to reports,
+// verified uniquely, updated, and removed (set to []).
+func TestAccReport_WithLabels(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report with one label
+			{
+				Config: testAccReportWithLabel(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("labels"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 2: Verify no drift on re-apply
+			{
+				Config: testAccReportWithLabel(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Remove labels (set to [])
+			{
+				Config: testAccReportWithNoLabels(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("labels"),
+						knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			// Step 4: Verify no drift after removing labels
+			{
+				Config: testAccReportWithNoLabels(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithLabel(i int) string {
+	return fmt.Sprintf(`
+resource "doit_label" "test" {
+  name  = "test-report-label-%d"
+  color = "blue"
+}
+
+resource "doit_report" "this" {
+  name   = "test-labels-%d"
+  labels = [doit_label.test.id]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i, i)
+}
+
+func testAccReportWithNoLabels(i int) string {
+	return fmt.Sprintf(`
+resource "doit_label" "test" {
+  name  = "test-report-label-%d"
+  color = "blue"
+}
+
+resource "doit_report" "this" {
+  name   = "test-labels-%d"
+  labels = []
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i, i)
+}

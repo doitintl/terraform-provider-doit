@@ -19,3 +19,8 @@ output "report_metric" {
 output "report_time_range" {
   value = data.doit_report.example.config.time_range
 }
+
+# Output label IDs assigned to this report
+output "report_labels" {
+  value = data.doit_report.example.labels
+}
