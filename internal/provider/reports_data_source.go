@@ -225,7 +225,7 @@ func mapReportLabels(ctx context.Context, labels *[]models.LabelInfo, diags *dia
 			diags.Append(d...)
 			labelVals[i] = lVal
 		}
-		labelList, d := types.ListValueFrom(ctx, elemType, labelVals)
+		labelList, d := types.ListValue(elemType, labelVals)
 		diags.Append(d...)
 		return labelList
 	}

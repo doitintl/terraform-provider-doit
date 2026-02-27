@@ -421,7 +421,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		diags.Append(labelsDiags...)
 	} else {
 		var emptyLabelsDiags diag.Diagnostics
-		state.Labels, emptyLabelsDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+		state.Labels, emptyLabelsDiags = types.ListValue(types.StringType, []attr.Value{})
 		diags.Append(emptyLabelsDiags...)
 	}
 
