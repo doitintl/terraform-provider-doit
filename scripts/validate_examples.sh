@@ -23,9 +23,9 @@ cleanup() {
     rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" \
          "$PROVIDER_DIR/.terraformrc-validate" "$PROVIDER_DIR/terraform-provider-doit"
     rm -rf "$MIRROR_DIR"
-    [ -n "${MIRROR_CONFIG_DIR:-}" ] && rm -rf "$MIRROR_CONFIG_DIR"
-    [ -n "${VERIFY_DIR:-}" ] && rm -rf "$VERIFY_DIR"
-    [ -n "${TEMP_DIR:-}" ] && rm -rf "$TEMP_DIR"
+    if [ -n "${MIRROR_CONFIG_DIR:-}" ]; then rm -rf "$MIRROR_CONFIG_DIR"; fi
+    if [ -n "${VERIFY_DIR:-}" ]; then rm -rf "$VERIFY_DIR"; fi
+    if [ -n "${TEMP_DIR:-}" ]; then rm -rf "$TEMP_DIR"; fi
 }
 trap cleanup EXIT
 
