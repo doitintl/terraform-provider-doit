@@ -23,6 +23,9 @@ cleanup() {
     rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed" \
          "$PROVIDER_DIR/.terraformrc-validate" "$PROVIDER_DIR/terraform-provider-doit"
     rm -rf "$MIRROR_DIR"
+    [ -n "${MIRROR_CONFIG_DIR:-}" ] && rm -rf "$MIRROR_CONFIG_DIR"
+    [ -n "${VERIFY_DIR:-}" ] && rm -rf "$VERIFY_DIR"
+    [ -n "${TEMP_DIR:-}" ] && rm -rf "$TEMP_DIR"
 }
 trap cleanup EXIT
 
@@ -63,8 +66,8 @@ PROVIDERS=$(find "$EXAMPLES_DIR" -name "*.tf" -print0 | \
 # e.g. time_static → hashicorp/time, null_resource → hashicorp/null
 # Extracts the resource TYPE (first quoted string), then takes the prefix before "_".
 IMPLICIT_PROVIDERS=$(find "$EXAMPLES_DIR" -name "*.tf" -print0 | \
-    xargs -0 grep -hE '^\s*(resource|data)\s+"[a-z]+_[a-z]' 2>/dev/null | \
-    sed -E 's/^[[:space:]]*(resource|data)[[:space:]]+"([a-z]+)_.*/\2/' | \
+    xargs -0 grep -hE '^\s*(resource|data)\s+"[a-z0-9]+_[a-z0-9]+' 2>/dev/null | \
+    sed -E 's/^[[:space:]]*(resource|data)[[:space:]]+"([a-z0-9]+)_.*/\2/' | \
     grep -v '^doit$' | \
     sort -u)
 
@@ -236,7 +239,7 @@ echo "================================"
 echo -e "Passed: ${GREEN}$PASSED${NC}"
 echo -e "Failed: ${RED}$FAILED${NC}"
 
-if [ -f "$PROVIDER_DIR/.validate_failed" ]; then
+if [ -s "$PROVIDER_DIR/.validate_failed" ]; then
     echo -e "\nFailed examples:"
     sed 's/^/  - /' "$PROVIDER_DIR/.validate_failed"
 fi
