@@ -1758,6 +1758,33 @@ type CreateAttributionRequestBody struct {
 	Name string `json:"name"`
 }
 
+// CreateDatahubDataset201Response defines model for CreateDatahubDataset201Response.
+type CreateDatahubDataset201Response struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
+// CreateDatahubDatasetRequestBody defines model for CreateDatahubDatasetRequestBody.
+type CreateDatahubDatasetRequestBody struct {
+	// Description An optional description for the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// Name The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words.
+	Name string `json:"name"`
+}
+
 // CreateLabelRequest Request body for creating a label.
 type CreateLabelRequest struct {
 	// Color The color of the label.
@@ -1868,6 +1895,22 @@ type DatahubEventsRequestBodyEventsItemMetricsItem struct {
 
 	// Value The value of the metric.
 	Value *float64 `json:"value,omitempty"`
+}
+
+// DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
+type DeleteDatahubDataset200Response struct {
+	Message *string `json:"message,omitempty"`
+}
+
+// DeleteDatahubDatasets200Response defines model for DeleteDatahubDatasets200Response.
+type DeleteDatahubDatasets200Response struct {
+	Message *string `json:"message,omitempty"`
+}
+
+// DeleteDatahubDatasetsRequestBody defines model for DeleteDatahubDatasetsRequestBody.
+type DeleteDatahubDatasetsRequestBody struct {
+	// Datasets List of dataset names to delete.
+	Datasets []string `json:"datasets"`
 }
 
 // DeleteDatahubEventsByFilter200Response defines model for DeleteDatahubEventsByFilter200Response.
@@ -2295,6 +2338,24 @@ type GetAttribution200Response struct {
 	Attribution *AttributionAPI `json:"Attribution,omitempty"`
 }
 
+// GetDatahubDataset200Response defines model for GetDatahubDataset200Response.
+type GetDatahubDataset200Response struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records,omitempty"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
 // GetInvoice200Response defines model for GetInvoice200Response.
 type GetInvoice200Response struct {
 	// BalanceAmount Invoice balance to be paid
@@ -2654,6 +2715,29 @@ type ListBudgets200Response struct {
 
 	// RowCount Budgets rows count
 	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// ListDatahubDatasets200Response defines model for ListDatahubDatasets200Response.
+type ListDatahubDatasets200Response struct {
+	Datasets *[]ListDatahubDatasets200ResponseDatasetsItem `json:"datasets,omitempty"`
+}
+
+// ListDatahubDatasets200ResponseDatasetsItem defines model for ListDatahubDatasets200ResponseDatasetsItem.
+type ListDatahubDatasets200ResponseDatasetsItem struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records,omitempty"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
 }
 
 // ListInvoices200Response defines model for ListInvoices200Response.
@@ -3179,6 +3263,33 @@ type UpdateAttributionRequestBody struct {
 	Formula *string `json:"formula,omitempty"`
 
 	// Name Attribution Name
+	Name *string `json:"name,omitempty"`
+}
+
+// UpdateDatahubDataset200Response defines model for UpdateDatahubDataset200Response.
+type UpdateDatahubDataset200Response struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
+// UpdateDatahubDatasetRequestBody defines model for UpdateDatahubDatasetRequestBody.
+type UpdateDatahubDatasetRequestBody struct {
+	// Description The new description for the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// Name Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed.
 	Name *string `json:"name,omitempty"`
 }
 
@@ -3820,6 +3931,15 @@ type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
 // DatahubEventsCSVFileMultipartRequestBody defines body for DatahubEventsCSVFile for multipart/form-data ContentType.
 type DatahubEventsCSVFileMultipartRequestBody = DatahubEventsCSVFileRequestBody
 
+// DeleteDatahubDatasetsJSONRequestBody defines body for DeleteDatahubDatasets for application/json ContentType.
+type DeleteDatahubDatasetsJSONRequestBody = DeleteDatahubDatasetsRequestBody
+
+// CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
+type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
+
+// UpdateDatahubDatasetJSONRequestBody defines body for UpdateDatahubDataset for application/json ContentType.
+type UpdateDatahubDatasetJSONRequestBody = UpdateDatahubDatasetRequestBody
+
 // DatahubEventsJSONRequestBody defines body for DatahubEvents for application/json ContentType.
 type DatahubEventsJSONRequestBody = DatahubEventsRequestBody
 
@@ -4192,6 +4312,30 @@ type ClientInterface interface {
 
 	// DatahubEventsCSVFileWithBody request with any body
 	DatahubEventsCSVFileWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteDatahubDatasetsWithBody request with any body
+	DeleteDatahubDatasetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	DeleteDatahubDatasets(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListDatahubDatasets request
+	ListDatahubDatasets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateDatahubDatasetWithBody request with any body
+	CreateDatahubDatasetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateDatahubDataset(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteDatahubDataset request
+	DeleteDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDatahubDataset request
+	GetDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateDatahubDatasetWithBody request with any body
+	UpdateDatahubDatasetWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateDatahubDataset(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DatahubEventsWithBody request with any body
 	DatahubEventsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5198,6 +5342,114 @@ func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEdito
 
 func (c *Client) DatahubEventsCSVFileWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDatahubEventsCSVFileRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteDatahubDatasetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatahubDatasetsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteDatahubDatasets(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatahubDatasetsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListDatahubDatasets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDatahubDatasetsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDatahubDatasetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDatahubDatasetRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDatahubDataset(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDatahubDatasetRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatahubDatasetRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDatahubDatasetRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateDatahubDatasetWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDatahubDatasetRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateDatahubDataset(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDatahubDatasetRequest(c.Server, name, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8857,6 +9109,228 @@ func NewDatahubEventsCSVFileRequestWithBody(server string, contentType string, b
 	return req, nil
 }
 
+// NewDeleteDatahubDatasetsRequest calls the generic DeleteDatahubDatasets builder with application/json body
+func NewDeleteDatahubDatasetsRequest(server string, body DeleteDatahubDatasetsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDeleteDatahubDatasetsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewDeleteDatahubDatasetsRequestWithBody generates requests for DeleteDatahubDatasets with any type of body
+func NewDeleteDatahubDatasetsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListDatahubDatasetsRequest generates requests for ListDatahubDatasets
+func NewListDatahubDatasetsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateDatahubDatasetRequest calls the generic CreateDatahubDataset builder with application/json body
+func NewCreateDatahubDatasetRequest(server string, body CreateDatahubDatasetJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateDatahubDatasetRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateDatahubDatasetRequestWithBody generates requests for CreateDatahubDataset with any type of body
+func NewCreateDatahubDatasetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteDatahubDatasetRequest generates requests for DeleteDatahubDataset
+func NewDeleteDatahubDatasetRequest(server string, name string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDatahubDatasetRequest generates requests for GetDatahubDataset
+func NewGetDatahubDatasetRequest(server string, name string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateDatahubDatasetRequest calls the generic UpdateDatahubDataset builder with application/json body
+func NewUpdateDatahubDatasetRequest(server string, name string, body UpdateDatahubDatasetJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateDatahubDatasetRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewUpdateDatahubDatasetRequestWithBody generates requests for UpdateDatahubDataset with any type of body
+func NewUpdateDatahubDatasetRequestWithBody(server string, name string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewDatahubEventsRequest calls the generic DatahubEvents builder with application/json body
 func NewDatahubEventsRequest(server string, body DatahubEventsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -9725,6 +10199,30 @@ type ClientWithResponsesInterface interface {
 
 	// DatahubEventsCSVFileWithBodyWithResponse request with any body
 	DatahubEventsCSVFileWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DatahubEventsCSVFileResp, error)
+
+	// DeleteDatahubDatasetsWithBodyWithResponse request with any body
+	DeleteDatahubDatasetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error)
+
+	DeleteDatahubDatasetsWithResponse(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error)
+
+	// ListDatahubDatasetsWithResponse request
+	ListDatahubDatasetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDatahubDatasetsResp, error)
+
+	// CreateDatahubDatasetWithBodyWithResponse request with any body
+	CreateDatahubDatasetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error)
+
+	CreateDatahubDatasetWithResponse(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error)
+
+	// DeleteDatahubDatasetWithResponse request
+	DeleteDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetResp, error)
+
+	// GetDatahubDatasetWithResponse request
+	GetDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetDatahubDatasetResp, error)
+
+	// UpdateDatahubDatasetWithBodyWithResponse request with any body
+	UpdateDatahubDatasetWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error)
+
+	UpdateDatahubDatasetWithResponse(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error)
 
 	// DatahubEventsWithBodyWithResponse request with any body
 	DatahubEventsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DatahubEventsResp, error)
@@ -11335,6 +11833,163 @@ func (r DatahubEventsCSVFileResp) StatusCode() int {
 	return 0
 }
 
+type DeleteDatahubDatasetsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteDatahubDatasets200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteDatahubDatasetsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteDatahubDatasetsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListDatahubDatasetsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListDatahubDatasets200Response
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDatahubDatasetsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDatahubDatasetsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *CreateDatahubDataset201Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateDatahubDatasetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteDatahubDataset200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteDatahubDatasetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetDatahubDataset200Response
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDatahubDatasetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UpdateDatahubDataset200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateDatahubDatasetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type DatahubEventsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12397,6 +13052,84 @@ func (c *ClientWithResponses) DatahubEventsCSVFileWithBodyWithResponse(ctx conte
 		return nil, err
 	}
 	return ParseDatahubEventsCSVFileResp(rsp)
+}
+
+// DeleteDatahubDatasetsWithBodyWithResponse request with arbitrary body returning *DeleteDatahubDatasetsResp
+func (c *ClientWithResponses) DeleteDatahubDatasetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error) {
+	rsp, err := c.DeleteDatahubDatasetsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDatahubDatasetsResp(rsp)
+}
+
+func (c *ClientWithResponses) DeleteDatahubDatasetsWithResponse(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error) {
+	rsp, err := c.DeleteDatahubDatasets(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDatahubDatasetsResp(rsp)
+}
+
+// ListDatahubDatasetsWithResponse request returning *ListDatahubDatasetsResp
+func (c *ClientWithResponses) ListDatahubDatasetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDatahubDatasetsResp, error) {
+	rsp, err := c.ListDatahubDatasets(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDatahubDatasetsResp(rsp)
+}
+
+// CreateDatahubDatasetWithBodyWithResponse request with arbitrary body returning *CreateDatahubDatasetResp
+func (c *ClientWithResponses) CreateDatahubDatasetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error) {
+	rsp, err := c.CreateDatahubDatasetWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDatahubDatasetResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateDatahubDatasetWithResponse(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error) {
+	rsp, err := c.CreateDatahubDataset(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDatahubDatasetResp(rsp)
+}
+
+// DeleteDatahubDatasetWithResponse request returning *DeleteDatahubDatasetResp
+func (c *ClientWithResponses) DeleteDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetResp, error) {
+	rsp, err := c.DeleteDatahubDataset(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDatahubDatasetResp(rsp)
+}
+
+// GetDatahubDatasetWithResponse request returning *GetDatahubDatasetResp
+func (c *ClientWithResponses) GetDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetDatahubDatasetResp, error) {
+	rsp, err := c.GetDatahubDataset(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDatahubDatasetResp(rsp)
+}
+
+// UpdateDatahubDatasetWithBodyWithResponse request with arbitrary body returning *UpdateDatahubDatasetResp
+func (c *ClientWithResponses) UpdateDatahubDatasetWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error) {
+	rsp, err := c.UpdateDatahubDatasetWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateDatahubDatasetResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateDatahubDatasetWithResponse(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error) {
+	rsp, err := c.UpdateDatahubDataset(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateDatahubDatasetResp(rsp)
 }
 
 // DatahubEventsWithBodyWithResponse request with arbitrary body returning *DatahubEventsResp
@@ -15758,6 +16491,337 @@ func ParseDatahubEventsCSVFileResp(rsp *http.Response) (*DatahubEventsCSVFileRes
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteDatahubDatasetsResp parses an HTTP response from a DeleteDatahubDatasetsWithResponse call
+func ParseDeleteDatahubDatasetsResp(rsp *http.Response) (*DeleteDatahubDatasetsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteDatahubDatasetsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteDatahubDatasets200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListDatahubDatasetsResp parses an HTTP response from a ListDatahubDatasetsWithResponse call
+func ParseListDatahubDatasetsResp(rsp *http.Response) (*ListDatahubDatasetsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDatahubDatasetsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListDatahubDatasets200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateDatahubDatasetResp parses an HTTP response from a CreateDatahubDatasetWithResponse call
+func ParseCreateDatahubDatasetResp(rsp *http.Response) (*CreateDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CreateDatahubDataset201Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteDatahubDatasetResp parses an HTTP response from a DeleteDatahubDatasetWithResponse call
+func ParseDeleteDatahubDatasetResp(rsp *http.Response) (*DeleteDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteDatahubDataset200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDatahubDatasetResp parses an HTTP response from a GetDatahubDatasetWithResponse call
+func ParseGetDatahubDatasetResp(rsp *http.Response) (*GetDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetDatahubDataset200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateDatahubDatasetResp parses an HTTP response from a UpdateDatahubDatasetWithResponse call
+func ParseUpdateDatahubDatasetResp(rsp *http.Response) (*UpdateDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UpdateDatahubDataset200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500

@@ -1917,6 +1917,181 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /datahub/v1/datasets:
+    get:
+      tags:
+        - DataHub
+      summary: List datasets
+      description: Returns a list of all DataHub datasets for the customer.
+      operationId: listDatahubDatasets
+      responses:
+        "200":
+          description: OK - List of datasets returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDatahubDatasets200Response'
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - DataHub
+      summary: Create dataset
+      description: Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+      operationId: createDatahubDataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatahubDatasetRequestBody'
+      responses:
+        "201":
+          description: Created - Dataset created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDatahubDataset201Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - DataHub
+      summary: Delete datasets
+      description: Deletes one or more DataHub datasets and all their associated data.
+      operationId: deleteDatahubDatasets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDatahubDatasetsRequestBody'
+      responses:
+        "200":
+          description: OK - Datasets deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteDatahubDatasets200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/datahub/v1/datasets/{name}":
+    get:
+      tags:
+        - DataHub
+      summary: Retrieve a dataset
+      description: Returns a specific DataHub dataset by name.
+      operationId: getDatahubDataset
+      parameters:
+        - name: name
+          in: path
+          description: The name of the dataset to retrieve.
+          required: true
+          schema:
+            type: string
+          example: "My Custom Dataset"
+      responses:
+        "200":
+          description: OK - Dataset returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDatahubDataset200Response'
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - DataHub
+      summary: Delete a dataset
+      description: Deletes a specific DataHub dataset.
+      operationId: deleteDatahubDataset
+      parameters:
+        - name: name
+          in: path
+          description: The name of the dataset to delete.
+          required: true
+          schema:
+            type: string
+          example: "My Custom Dataset"
+      responses:
+        "200":
+          description: OK - Dataset deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteDatahubDataset200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - DataHub
+      summary: Update dataset
+      description: |-
+        Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+        The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+        If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
+      operationId: updateDatahubDataset
+      parameters:
+        - name: name
+          in: path
+          description: The name of the dataset to update (immutable, used for identification only).
+          required: true
+          schema:
+            type: string
+          example: "My Custom Dataset"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDatahubDatasetRequestBody'
+      responses:
+        "200":
+          description: OK - Dataset updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDatahubDataset200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
   /billing/v1/invoices:
     get:
       tags:
@@ -4086,6 +4261,45 @@ components:
           type: string
           description: Name of the attribution
           example: An example attribution
+    CreateDatahubDataset201Response:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the dataset.
+          example: "My Custom Dataset"
+        description:
+          type: string
+          description: The description of the dataset.
+          example: "Dataset for tracking custom business metrics"
+        records:
+          type: integer
+          format: int64
+          description: The number of records in the dataset.
+          example: null
+          nullable: true
+        updatedBy:
+          type: string
+          description: The email of the user who last updated the dataset.
+          example: "user@example.com"
+        lastUpdated:
+          type: string
+          description: The timestamp of the last update.
+          example: "2024-03-10T23:00:00Z"
+    CreateDatahubDatasetRequestBody:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: "The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words."
+          example: "My Custom Dataset"
+          pattern: "^[a-zA-Z0-9_-]+( [a-zA-Z0-9_-]+)*$"
+        description:
+          type: string
+          description: An optional description for the dataset.
+          example: "Dataset for tracking custom business metrics"
     CreateLabelRequest:
       required:
         - name
@@ -4258,6 +4472,29 @@ components:
           type: string
           description: 'The type of the metric. If you choose "cost" or "usage", it will map to the basic "Cost" or "Usage" metric in Cloud Analytics reports. You can also use this field to define custom metric types, such as "working_hours", "ride", etc.'
           example: "cost"
+    DeleteDatahubDataset200Response:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Dataset deleted successfully"
+    DeleteDatahubDatasets200Response:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Datasets deleted successfully"
+    DeleteDatahubDatasetsRequestBody:
+      type: object
+      required:
+        - datasets
+      properties:
+        datasets:
+          type: array
+          description: List of dataset names to delete.
+          items:
+            type: string
+          example: ["My Custom Dataset", "Old Dataset"]
     DeleteDatahubEventsByFilter200Response:
       type: object
       properties:
@@ -4973,6 +5210,30 @@ components:
       properties:
         Attribution:
           $ref: "#/components/schemas/AttributionAPI"
+    GetDatahubDataset200Response:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the dataset.
+          example: "My Custom Dataset"
+        description:
+          type: string
+          description: The description of the dataset.
+          example: "Dataset for tracking custom business metrics"
+        records:
+          type: integer
+          format: int64
+          description: The number of records in the dataset.
+          example: 1500
+        updatedBy:
+          type: string
+          description: The email of the user who last updated the dataset.
+          example: "user@example.com"
+        lastUpdated:
+          type: string
+          description: The timestamp of the last update.
+          example: "2024-03-10T23:00:00Z"
     GetInvoice200Response:
       type: object
       properties:
@@ -5403,6 +5664,37 @@ components:
           type: integer
           description: Budgets rows count
           format: int64
+    ListDatahubDatasets200Response:
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListDatahubDatasets200ResponseDatasetsItem'
+    ListDatahubDatasets200ResponseDatasetsItem:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the dataset.
+          example: "My Custom Dataset"
+        description:
+          type: string
+          description: The description of the dataset.
+          example: "Dataset for tracking custom business metrics"
+        records:
+          type: integer
+          format: int64
+          description: The number of records in the dataset.
+          example: 1500
+        updatedBy:
+          type: string
+          description: The email of the user who last updated the dataset.
+          example: "user@example.com"
+        lastUpdated:
+          type: string
+          description: The timestamp of the last update.
+          example: "2024-03-10T23:00:00Z"
     ListInvoices200Response:
       type: object
       properties:
@@ -6128,6 +6420,43 @@ components:
         name:
           type: string
           description: Attribution Name
+    UpdateDatahubDataset200Response:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the dataset.
+          example: "My Custom Dataset"
+        description:
+          type: string
+          description: The description of the dataset.
+          example: "Updated description for the dataset"
+        records:
+          type: integer
+          format: int64
+          description: The number of records in the dataset.
+          example: 1500
+          nullable: true
+        updatedBy:
+          type: string
+          description: The email of the user who last updated the dataset.
+          example: "user@example.com"
+        lastUpdated:
+          type: string
+          description: The timestamp of the last update.
+          example: "2024-03-10T23:00:00Z"
+    UpdateDatahubDatasetRequestBody:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: "Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed."
+          example: "My Custom Dataset"
+        description:
+          type: string
+          description: The new description for the dataset.
+          example: "Updated description for the dataset"
     UpdateLabelRequest:
       type: object
       description: Request body for updating a label.

@@ -123,3 +123,12 @@ data_sources:
     read:
       path: /support/v1/metadata/products
       method: GET
+  # DataHub data sources
+  datahub_dataset:
+    read:
+      path: /datahub/v1/datasets/{name}
+      method: GET
+  datahub_datasets:
+    read:
+      path: /datahub/v1/datasets
+      method: GET
