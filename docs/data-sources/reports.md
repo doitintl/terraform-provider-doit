@@ -40,6 +40,14 @@ output "total_reports" {
 output "my_report_names" {
   value = [for r in data.doit_reports.my_reports.reports : r.report_name]
 }
+
+# Output reports with their labels
+output "reports_with_labels" {
+  value = [for r in data.doit_reports.all.reports : {
+    name   = r.report_name
+    labels = r.labels
+  }]
+}
 ```
 
 -> For details on auto and manual pagination, see the [Pagination Guide](../guides/pagination).
@@ -69,8 +77,17 @@ Read-Only:
 
 - `create_time` (Number) The creation time of the report, in milliseconds since the epoch.
 - `id` (String) Report ID.
+- `labels` (Attributes List) List of labels associated with the report. (see [below for nested schema](#nestedatt--reports--labels))
 - `owner` (String) Email address of the report owner.
 - `report_name` (String) The name of the report.
 - `type` (String)
 - `update_time` (Number) The time when this report was last updated, in milliseconds since the epoch.
 - `url_ui` (String) The URL of the report in DoiT console.
+
+<a id="nestedatt--reports--labels"></a>
+### Nested Schema for `reports.labels`
+
+Read-Only:
+
+- `id` (String) The unique identifier of the label.
+- `name` (String) The name of the label.

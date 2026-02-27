@@ -521,6 +521,12 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Report ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).",
 				MarkdownDescription: "Report ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).",
 			},
+			"labels": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "Array of label IDs assigned to the report",
+				MarkdownDescription: "Array of label IDs assigned to the report",
+			},
 			"name": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Report name.",
@@ -541,6 +547,7 @@ type ReportModel struct {
 	Config      ConfigValue  `tfsdk:"config"`
 	Description types.String `tfsdk:"description"`
 	Id          types.String `tfsdk:"id"`
+	Labels      types.List   `tfsdk:"labels"`
 	Name        types.String `tfsdk:"name"`
 	Type        types.String `tfsdk:"type"`
 }
