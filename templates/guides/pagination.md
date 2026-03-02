@@ -22,6 +22,7 @@ output "total_budgets" {
 ```
 
 With auto-pagination:
+
 - All pages are fetched transparently
 - `page_token` is set to `null` in the result (there's no "next page")
 - `row_count` reflects the total number of items
@@ -46,6 +47,7 @@ data "doit_invoices" "page2" {
 ```
 
 With manual pagination:
+
 - Only the requested number of results are fetched per call
 - `page_token` contains the token for the next page (or `null` if no more pages)
 - You can chain multiple data source declarations to iterate through pages
@@ -66,21 +68,21 @@ data "doit_cloud_incidents" "recent" {
 
 The following table shows which data sources support pagination:
 
-| Data Source | Auto-Pagination | Manual Pagination |
-|-------------|:-:|:-:|
-| `doit_alerts` | ✓ | ✓ |
-| `doit_allocations` | ✓ | ✓ |
-| `doit_annotations` | ✓ | ✓ |
-| `doit_anomalies` | ✓ | ✓ |
-| `doit_assets` | ✓ | ✓ |
-| `doit_budgets` | ✓ | ✓ |
-| `doit_cloud_incidents` | ✗ | ✓ |
-| `doit_commitments` | ✓ | ✓ |
-| `doit_dimensions` | ✓ | ✓ |
-| `doit_invoices` | ✓ | ✓ |
-| `doit_labels` | ✓ | ✓ |
-| `doit_reports` | ✓ | ✓ |
-| `doit_support_requests` | ✓ | ✓ |
+| Data Source             | Auto-Pagination | Manual Pagination |
+| ----------------------- | --------------- | ----------------- |
+| `doit_alerts`           | ✓               | ✓                 |
+| `doit_allocations`      | ✓               | ✓                 |
+| `doit_annotations`      | ✓               | ✓                 |
+| `doit_anomalies`        | ✓               | ✓                 |
+| `doit_assets`           | ✓               | ✓                 |
+| `doit_budgets`          | ✓               | ✓                 |
+| `doit_cloud_incidents`  | ✗               | ✓                 |
+| `doit_commitments`      | ✓               | ✓                 |
+| `doit_dimensions`       | ✓               | ✓                 |
+| `doit_invoices`         | ✓               | ✓                 |
+| `doit_labels`           | ✓               | ✓                 |
+| `doit_reports`          | ✓               | ✓                 |
+| `doit_support_requests` | ✓               | ✓                 |
 
 ## Filtering vs Pagination
 
