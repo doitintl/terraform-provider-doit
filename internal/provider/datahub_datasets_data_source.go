@@ -43,6 +43,8 @@ func (d *datahubDatasetsDataSource) Configure(_ context.Context, req datasource.
 
 func (d *datahubDatasetsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = datasource_datahub_datasets.DatahubDatasetsDataSourceSchema(ctx)
+	resp.Schema.Description = "Lists all DataHub datasets for the customer."
+	resp.Schema.MarkdownDescription = resp.Schema.Description
 }
 
 func (d *datahubDatasetsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

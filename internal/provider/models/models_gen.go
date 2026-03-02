@@ -3385,7 +3385,7 @@ type CreateDatahubDataset201Response struct {
 	Name *string `json:"name,omitempty"`
 
 	// Records The number of records in the dataset.
-	Records *int64 `json:"records"`
+	Records *int64 `json:"records,omitempty"`
 
 	// UpdatedBy The email of the user who last updated the dataset.
 	UpdatedBy *string `json:"updatedBy,omitempty"`
@@ -4909,7 +4909,7 @@ type UpdateDatahubDataset200Response struct {
 	Name *string `json:"name,omitempty"`
 
 	// Records The number of records in the dataset.
-	Records *int64 `json:"records"`
+	Records *int64 `json:"records,omitempty"`
 
 	// UpdatedBy The email of the user who last updated the dataset.
 	UpdatedBy *string `json:"updatedBy,omitempty"`
@@ -11001,7 +11001,7 @@ func NewDeleteDatahubDatasetRequest(server string, name string) (*http.Request, 
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -11035,7 +11035,7 @@ func NewGetDatahubDatasetRequest(server string, name string) (*http.Request, err
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -11080,7 +11080,7 @@ func NewUpdateDatahubDatasetRequestWithBody(server string, name string, contentT
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}

@@ -3,12 +3,12 @@
 page_title: "doit_datahub_datasets Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Ingest third-party cost, usage, and metric-based data for analysis.
+  Lists all DataHub datasets for the customer.
 ---
 
 # doit_datahub_datasets (Data Source)
 
-Ingest third-party cost, usage, and metric-based data for analysis.
+Lists all DataHub datasets for the customer.
 
 ## Example Usage
 

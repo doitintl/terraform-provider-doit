@@ -232,6 +232,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewProductsDataSource,
 		NewOrganizationsDataSource,
 		// DataHub data sources
+		NewDatahubDatasetDataSource,
 		NewDatahubDatasetsDataSource,
 	}
 }
