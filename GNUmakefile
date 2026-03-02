@@ -21,6 +21,10 @@ generate:
 docs:
 	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate
 
+# Validate provider documentation against the provider schema
+validate-docs:
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs validate
+
 fmt:
 	gofmt -s -w -e .
 
@@ -40,4 +44,4 @@ testacc-run:
 validate-examples:
 	./scripts/validate_examples.sh
 
-.PHONY: fmt lint test testacc testacc-run build install generate docs validate-examples
+.PHONY: fmt lint test testacc testacc-run build install generate docs validate-docs validate-examples
