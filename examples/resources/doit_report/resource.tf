@@ -68,6 +68,39 @@ resource "doit_report" "my_report" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Assigning labels to a report
+# ─────────────────────────────────────────────────────────────────────────────
+# Labels help categorize and filter reports in the DoiT console.
+# Create one or more labels, then reference their IDs in the report's `labels`
+# attribute.
+
+resource "doit_label" "cost_reports" {
+  name  = "cost-reports"
+  color = "blue"
+}
+
+resource "doit_report" "labeled_report" {
+  name        = "Labeled Cost Report"
+  description = "A report tagged with a label for easy filtering"
+  labels      = [doit_label.cost_reports.id]
+  config = {
+    metrics        = [{ type = "basic", value = "cost" }]
+    aggregation    = "total"
+    data_source    = "billing"
+    time_interval  = "month"
+    display_values = "actuals_only"
+    time_range = {
+      mode            = "last"
+      amount          = 3
+      include_current = true
+      unit            = "month"
+    }
+    layout   = "table"
+    currency = "USD"
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Discovering valid filter values using data sources
 # ─────────────────────────────────────────────────────────────────────────────
 # Users often need to know which values are accepted in report filter attributes.

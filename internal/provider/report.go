@@ -94,6 +94,15 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 	req.Name = plan.Name.ValueStringPointer()
 	req.Description = plan.Description.ValueStringPointer()
 
+	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
+		var labels []string
+		diags.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
+		req.Labels = &labels
+	}
+
 	config, d := toExternalConfig(ctx, plan.Config)
 	diags.Append(d...)
 	if diags.HasError() {
@@ -107,6 +116,15 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateReportJSONRequestBody, diags diag.Diagnostics) {
 	req.Name = plan.Name.ValueStringPointer()
 	req.Description = plan.Description.ValueStringPointer()
+
+	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
+		var labels []string
+		diags.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
+		req.Labels = &labels
+	}
 
 	config, d := toExternalConfig(ctx, plan.Config)
 	diags.Append(d...)
@@ -396,6 +414,17 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		state.Type = types.StringNull()
 	}
 
+	// Labels: user-configurable list — always return empty list instead of null
+	if resp.Labels != nil && len(*resp.Labels) > 0 {
+		var labelsDiags diag.Diagnostics
+		state.Labels, labelsDiags = types.ListValueFrom(ctx, types.StringType, *resp.Labels)
+		diags.Append(labelsDiags...)
+	} else {
+		var emptyLabelsDiags diag.Diagnostics
+		state.Labels, emptyLabelsDiags = types.ListValue(types.StringType, []attr.Value{})
+		diags.Append(emptyLabelsDiags...)
+	}
+
 	if resp.Config == nil {
 		state.Config = resource_report.NewConfigValueNull()
 		return diags
@@ -548,7 +577,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				diags.Append(d...)
 				m["values"] = values
 			} else {
-				m["values"] = types.ListNull(types.StringType)
+				var emptyDiags diag.Diagnostics
+				m["values"], emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+				diags.Append(emptyDiags...)
 			}
 			filterVal, d := resource_report.NewFiltersValue(resource_report.FiltersValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
@@ -672,7 +703,9 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				return diags
 			}
 		} else {
-			mfMap["values"] = types.ListNull(types.Float64Type)
+			var emptyDiags diag.Diagnostics
+			mfMap["values"], emptyDiags = types.ListValueFrom(ctx, types.Float64Type, []float64{})
+			diags.Append(emptyDiags...)
 		}
 		mfv, mfvDiags := resource_report.NewMetricFilterValue(resource_report.MetricFilterValue{}.AttributeTypes(ctx), mfMap)
 		diags.Append(mfvDiags...)

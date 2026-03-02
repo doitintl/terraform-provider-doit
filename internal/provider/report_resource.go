@@ -38,7 +38,6 @@ func (r *reportResource) Metadata(_ context.Context, req resource.MetadataReques
 func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = resource_report.ReportResourceSchema(ctx)
 }
-
 func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -62,6 +61,7 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 	// - Cannot be empty (API silently preserves existing metrics, causing state inconsistency)
 	return []resource.ConfigValidator{
 		reportMetricsLengthValidator{},
+		reportTimestampValidator{},
 	}
 }
 

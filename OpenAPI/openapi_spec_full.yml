@@ -1529,6 +1529,11 @@ paths:
                   example: Cost breakdown by service in the last 3 months
                 config:
                   $ref: "#/components/schemas/ExternalConfig"
+                labels:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of label IDs assigned to the report
       responses:
         "201":
           description: Created - The request succeeded.
@@ -2653,9 +2658,16 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Organization"
+                type: object
+                properties:
+                  organizations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Organization"
+                  rowCount:
+                    type: integer
+                    description: Organizations row count
+                    format: int64
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2668,7 +2680,7 @@ paths:
     get:
       tags:
         - Platforms
-      summary: List available platforms.
+      summary: List available platforms
       description: Returns a list of all the available platforms.
       operationId: listPlatforms
       responses:
@@ -2693,7 +2705,7 @@ paths:
     get:
       tags:
         - Products
-      summary: List available products.
+      summary: List available products
       description: Returns a list of all the available products of specific platforms.
       operationId: listProducts
       parameters:
@@ -5025,7 +5037,6 @@ components:
           type: string
           description: |-
             Type of the origin.
-            The only supported values at the moment: "attribution", "unallocated"
           example: "attribution"
           enum:
             - datetime
@@ -5084,6 +5095,11 @@ components:
             - managed
         config:
           $ref: "#/components/schemas/ExternalConfig"
+        labels:
+          type: array
+          items:
+            type: string
+          description: Array of label IDs assigned to the report
     ExternalSplit:
       type: object
       description: Specification of how to split costs.
@@ -5111,7 +5127,6 @@ components:
           type: string
           description: |-
             Type of the split.
-            The only supported value at the moment: "attribution_group"
           example: "attribution_group"
           enum:
             - datetime
@@ -5136,7 +5151,8 @@ components:
           type: string
           description: |-
             Type of the target.
-            The only supported value at the moment: "attribution"
+            If split type is "attribution_group", then target type must be "attribution".
+            Otherwise split types and target types must be the same.
           example: "attribution"
           enum:
             - datetime
@@ -5167,6 +5183,11 @@ components:
         name:
           type: string
           description: Report name
+        labels:
+          type: array
+          items:
+            type: string
+          description: Array of label IDs assigned to the report
       example:
         config:
           timeRange:
@@ -5519,6 +5540,11 @@ components:
         urlUI:
           type: string
           description: The URL of the report in DoiT console.
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelInfo"
+          description: List of labels associated with the report.
     ReportList:
       type: object
       description: List of reports.

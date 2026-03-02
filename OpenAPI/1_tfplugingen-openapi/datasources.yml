@@ -66,6 +66,10 @@ data_sources:
     read:
       path: /analytics/v1/budgets
       method: GET
+  organizations:
+    read:
+      path: /iam/v1/organizations
+      method: GET
   allocations:
     read:
       path: /analytics/v1/allocations

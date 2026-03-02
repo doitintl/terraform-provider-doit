@@ -65,3 +65,41 @@ func (v reportMetricsLengthValidator) ValidateResource(ctx context.Context, req 
 		)
 	}
 }
+
+// reportTimestampValidator validates that custom_time_range.from/to values are valid
+// RFC3339 timestamps at plan time. This is a ConfigValidator because attribute-level
+// validators do not fire on attributes inside SingleNestedAttribute with CustomType
+// (which the code generator adds to all nested objects).
+type reportTimestampValidator struct{}
+
+var _ resource.ConfigValidator = reportTimestampValidator{}
+
+func (v reportTimestampValidator) Description(_ context.Context) string {
+	return "Validates RFC3339 timestamps in custom_time_range and secondary_time_range.custom_time_range"
+}
+
+func (v reportTimestampValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates RFC3339 timestamps in `custom_time_range` and `secondary_time_range.custom_time_range`"
+}
+
+func (v reportTimestampValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	timestampPaths := []path.Path{
+		path.Root("config").AtName("custom_time_range").AtName("from"),
+		path.Root("config").AtName("custom_time_range").AtName("to"),
+		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("from"),
+		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("to"),
+	}
+
+	for _, p := range timestampPaths {
+		var val types.String
+		diags := req.Config.GetAttribute(ctx, p, &val)
+		resp.Diagnostics.Append(diags...)
+		if diags.HasError() {
+			continue
+		}
+		if val.IsNull() || val.IsUnknown() {
+			continue
+		}
+		validateRFC3339(val.ValueString(), p, &resp.Diagnostics)
+	}
+}

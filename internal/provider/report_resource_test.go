@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -547,69 +548,6 @@ resource "doit_report" "timezone_test" {
 `, i)
 }
 
-// TestAccReport_WithTargets tests reports with targets configuration.
-// Note: targets is a write-only field and not returned in state.
-// This causes drift on subsequent plans - see CMP-38157.
-func TestAccReport_WithTargets(t *testing.T) {
-	n := acctest.RandInt()
-	attrID := os.Getenv("TEST_ATTRIBUTION")
-	if attrID == "" {
-		t.Skip("TEST_ATTRIBUTION must be set for this test")
-	}
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccReportWithTargets(n, attrID),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("doit_report.targets", "id"),
-					resource.TestCheckResourceAttr("doit_report.targets", "config.layout", "table"),
-				),
-			},
-			// TODO(CMP-38157): Enable drift verification once API returns targets field.
-			// Currently skipped because targets is write-only and causes perpetual drift.
-			// {
-			// 	Config: testAccReportWithTargets(n, attrID),
-			// 	ConfigPlanChecks: resource.ConfigPlanChecks{
-			// 		PreApply: []plancheck.PlanCheck{
-			// 			plancheck.ExpectEmptyPlan(),
-			// 		},
-			// 	},
-			// },
-		},
-	})
-}
-
-func testAccReportWithTargets(i int, attrID string) string {
-	return fmt.Sprintf(`
-resource "doit_report" "targets" {
-    name = "test-targets-%d"
-    description = "Report with targets configuration"
-    config = {
-        metric = {
-          type  = "basic"
-          value = "cost"
-        }
-        aggregation   = "total"
-        time_interval = "month"
-        data_source    = "billing"
-        display_values = "actuals_only"
-        currency       = "USD"
-        layout         = "table"
-        targets = [
-            {
-                type = "attribution"
-                id   = "%s"
-            }
-        ]
-    }
-}
-`, i, attrID)
-}
-
 // TestAccReport_WithSplits tests reports with splits configuration.
 // Splits allow redistributing costs from one attribution to multiple targets.
 //
@@ -690,6 +628,102 @@ resource "doit_report" "splits" {
 `, i, attrGroupID, attrGroupID, attrID)
 }
 
+// TestAccReport_WithSplitTargets tests reports with populated splits[].targets.
+// This verifies that explicit targets within a split are correctly sent to the API,
+// returned in the config, and cause no drift on subsequent plans.
+// Uses a fixed-dimension split (cloud_provider) with custom mode to avoid
+// attribution-specific constraints around origin/target uniqueness.
+func TestAccReport_WithSplitTargets(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithSplitTargets(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.split_targets",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.split_targets",
+						tfjsonpath.New("config").AtMapKey("splits").AtSliceIndex(0).AtMapKey("targets"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectExact(map[string]knownvalue.Check{
+								"id":    knownvalue.StringExact("amazon-web-services"),
+								"type":  knownvalue.StringExact("fixed"),
+								"value": knownvalue.Float64Exact(1.0),
+							}),
+						})),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithSplitTargets(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSplitTargets(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "split_targets" {
+    name = "test-split-targets-%d"
+    description = "Report with populated split targets"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        group = [
+            {
+                id   = "cloud_provider"
+                type = "fixed"
+            }
+        ]
+        splits = [
+            {
+                id   = "cloud_provider"
+                type = "fixed"
+                mode = "custom"
+                include_origin = true
+                origin = {
+                    id   = "google-cloud"
+                    type = "fixed"
+                }
+                targets = [
+                    {
+                        id    = "amazon-web-services"
+                        type  = "fixed"
+                        value = 1.0
+                    }
+                ]
+            }
+        ]
+    }
+}
+`, i)
+}
+
 // TestAccReport_Disappears verifies that Terraform correctly handles
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
@@ -763,6 +797,17 @@ func TestAccReport_WithEmptyLists(t *testing.T) {
 						knownvalue.ListExact([]knownvalue.Check{})), // Empty list
 				},
 			},
+			// Step 2: Re-apply same config - verify no drift.
+			// If toExternalConfig returns null instead of [] for these lists,
+			// Terraform will see config ([]) ≠ state (null) and produce a non-empty plan.
+			{
+				Config: testAccReportWithEmptyLists(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -785,6 +830,118 @@ resource "doit_report" "this" {
     dimensions     = []
     filters        = []
     group          = []
+  }
+}
+`, i)
+}
+
+// TestAccReport_WithFilterEmptyValues tests that a filter with values = [] is handled
+// correctly. This exercises the report filter value handling logic where types.ListNull
+// was used for filter values when the API returned nil.
+func TestAccReport_WithFilterEmptyValues(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithFilterEmptyValues(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.filter_empty_values",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 2: Re-apply - verify no drift
+			{
+				Config: testAccReportWithFilterEmptyValues(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithFilterEmptyValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "filter_empty_values" {
+  name = "test-filter-empty-values-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+    filters = [
+      {
+        id      = "cloud_provider"
+        type    = "fixed"
+        inverse = false
+        values  = []
+        mode    = "is"
+      }
+    ]
+  }
+}
+`, i)
+}
+
+// TestAccReport_WithMetricFilterEmptyValues tests that a metric_filter with values = []
+// is rejected by the API. Unlike filter.values (which accepts []), the API requires
+// at least one value for metric_filter.
+// The code fix in report.go (returning empty list instead of null) is still correct
+// defensively for when the API returns nil on read, but users can't trigger the
+// inconsistent result bug from HCL because the API blocks it.
+func TestAccReport_WithMetricFilterEmptyValues(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithMetricFilterEmptyValues(n),
+				ExpectError: regexp.MustCompile(`invalid number of values`),
+			},
+		},
+	})
+}
+
+func testAccReportWithMetricFilterEmptyValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_filter_empty" {
+  name = "test-mf-empty-values-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    metric_filter = {
+      metric = {
+        type  = "basic"
+        value = "cost"
+      }
+      operator = "nb"
+      values   = []
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
   }
 }
 `, i)
@@ -1314,4 +1471,259 @@ resource "doit_report" "secondary_update" {
     }
 }
 `, i)
+}
+
+// TestAccReport_InvalidTimestamp verifies that invalid RFC3339 timestamps in
+// custom_time_range.from are caught at plan time by the reportTimestampValidator,
+// rather than waiting for API rejection at apply time.
+func TestAccReport_InvalidTimestamp(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportInvalidTimestamp(n),
+				ExpectError: regexp.MustCompile(`Invalid RFC3339 Timestamp`),
+			},
+		},
+	})
+}
+
+func testAccReportInvalidTimestamp(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "invalid_ts" {
+  name = "test-invalid-ts-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation   = "total"
+    time_interval = "month"
+    custom_time_range = {
+      from = "not-a-valid-timestamp"
+      to   = "2024-12-31T23:59:59Z"
+    }
+    time_range = {
+      mode = "custom"
+      unit = "day"
+    }
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i)
+}
+
+// TestAccReport_InvalidSecondaryTimestamp verifies that invalid RFC3339 timestamps
+// in secondary_time_range.custom_time_range.to are also caught at plan time.
+func TestAccReport_InvalidSecondaryTimestamp(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportInvalidSecondaryTimestamp(n),
+				ExpectError: regexp.MustCompile(`Invalid RFC3339 Timestamp`),
+			},
+		},
+	})
+}
+
+func testAccReportInvalidSecondaryTimestamp(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "invalid_sec_ts" {
+  name = "test-invalid-sec-ts-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation   = "total"
+    time_interval = "month"
+    custom_time_range = {
+      from = "2024-01-01T00:00:00Z"
+      to   = "2024-12-31T23:59:59Z"
+    }
+    time_range = {
+      mode = "custom"
+      unit = "day"
+    }
+    secondary_time_range = {
+      custom_time_range = {
+        from = "2023-01-01T00:00:00Z"
+        to   = "2023-31-12"
+      }
+    }
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i)
+}
+
+// TestAccReport_WithOmittedLabels tests that omitting the labels attribute
+// results in an empty list in state with no drift on re-apply.
+func TestAccReport_WithOmittedLabels(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithOmittedLabels(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("labels"),
+						knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithOmittedLabels(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithOmittedLabels(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+  name   = "test-omitted-labels-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i)
+}
+
+// TestAccReport_WithLabels tests that labels can be assigned to reports,
+// verified uniquely, updated, and removed (set to []).
+func TestAccReport_WithLabels(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report with one label
+			{
+				Config: testAccReportWithLabel(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("labels"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 2: Verify no drift on re-apply
+			{
+				Config: testAccReportWithLabel(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Remove labels (set to [])
+			{
+				Config: testAccReportWithNoLabels(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("labels"),
+						knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			// Step 4: Verify no drift after removing labels
+			{
+				Config: testAccReportWithNoLabels(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithLabel(i int) string {
+	return fmt.Sprintf(`
+resource "doit_label" "test" {
+  name  = "test-report-label-%d"
+  color = "blue"
+}
+
+resource "doit_report" "this" {
+  name   = "test-labels-%d"
+  labels = [doit_label.test.id]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i, i)
+}
+
+func testAccReportWithNoLabels(i int) string {
+	return fmt.Sprintf(`
+resource "doit_label" "test" {
+  name  = "test-report-label-%d"
+  color = "blue"
+}
+
+resource "doit_report" "this" {
+  name   = "test-labels-%d"
+  labels = []
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, i, i)
 }

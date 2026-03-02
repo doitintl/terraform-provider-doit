@@ -373,7 +373,9 @@ func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, 
 		}
 		state.Labels = labelsList
 	} else {
-		state.Labels = types.ListNull(types.StringType)
+		var emptyDiags diag.Diagnostics
+		state.Labels, emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(emptyDiags...)
 	}
 
 	// Map reports
@@ -386,7 +388,9 @@ func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, 
 		}
 		state.Reports = reportsList
 	} else {
-		state.Reports = types.ListNull(types.StringType)
+		var emptyDiags diag.Diagnostics
+		state.Reports, emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(emptyDiags...)
 	}
 
 	return diags

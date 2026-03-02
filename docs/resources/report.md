@@ -83,6 +83,39 @@ resource "doit_report" "my_report" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Assigning labels to a report
+# ─────────────────────────────────────────────────────────────────────────────
+# Labels help categorize and filter reports in the DoiT console.
+# Create one or more labels, then reference their IDs in the report's `labels`
+# attribute.
+
+resource "doit_label" "cost_reports" {
+  name  = "cost-reports"
+  color = "blue"
+}
+
+resource "doit_report" "labeled_report" {
+  name        = "Labeled Cost Report"
+  description = "A report tagged with a label for easy filtering"
+  labels      = [doit_label.cost_reports.id]
+  config = {
+    metrics        = [{ type = "basic", value = "cost" }]
+    aggregation    = "total"
+    data_source    = "billing"
+    time_interval  = "month"
+    display_values = "actuals_only"
+    time_range = {
+      mode            = "last"
+      amount          = 3
+      include_current = true
+      unit            = "month"
+    }
+    layout   = "table"
+    currency = "USD"
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Discovering valid filter values using data sources
 # ─────────────────────────────────────────────────────────────────────────────
 # Users often need to know which values are accepted in report filter attributes.
@@ -201,6 +234,7 @@ resource "doit_report" "cost_by_region" {
 
 - `config` (Attributes) Report configuration. (see [below for nested schema](#nestedatt--config))
 - `description` (String) Report description.
+- `labels` (List of String) Array of label IDs assigned to the report
 - `name` (String) Report name.
 
 ### Read-Only
@@ -405,7 +439,6 @@ Optional:
 - `origin` (Attributes) Origin info for cost splitting. (see [below for nested schema](#nestedatt--config--splits--origin))
 - `targets` (Attributes List) Targets for the split. (see [below for nested schema](#nestedatt--config--splits--targets))
 - `type` (String) Type of the split.
-The only supported value at the moment: "attribution_group"
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 
 <a id="nestedatt--config--splits--origin"></a>
@@ -415,7 +448,6 @@ Optional:
 
 - `id` (String) ID of the origin.
 - `type` (String) Type of the origin.
-The only supported values at the moment: "attribution", "unallocated"
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`, `unallocated`
 
 
@@ -426,7 +458,8 @@ Optional:
 
 - `id` (String) ID of the target.
 - `type` (String) Type of the target.
-The only supported value at the moment: "attribution"
+If split type is "attribution_group", then target type must be "attribution".
+Otherwise split types and target types must be the same.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
 - `value` (Number) Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
 

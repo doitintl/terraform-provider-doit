@@ -1784,6 +1784,9 @@ type CreateReportRequestBody struct {
 	// Description Report description.
 	Description *string `json:"description,omitempty"`
 
+	// Labels Array of label IDs assigned to the report
+	Labels *[]string `json:"labels,omitempty"`
+
 	// Name Report name.
 	Name *string `json:"name,omitempty"`
 }
@@ -2127,12 +2130,10 @@ type ExternalOrigin struct {
 	Id *string `json:"id,omitempty"`
 
 	// Type Type of the origin.
-	// The only supported values at the moment: "attribution", "unallocated"
 	Type *ExternalOriginType `json:"type,omitempty"`
 }
 
 // ExternalOriginType Type of the origin.
-// The only supported values at the moment: "attribution", "unallocated"
 type ExternalOriginType string
 
 // ExternalRenderer Type of visualization or output format.
@@ -2148,6 +2149,9 @@ type ExternalReport struct {
 
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
+
+	// Labels Array of label IDs assigned to the report
+	Labels *[]string `json:"labels,omitempty"`
 
 	// Name Report name.
 	Name string `json:"name"`
@@ -2175,7 +2179,6 @@ type ExternalSplit struct {
 	Targets *[]ExternalSplitTarget `json:"targets,omitempty"`
 
 	// Type Type of the split.
-	// The only supported value at the moment: "attribution_group"
 	Type *ExternalSplitType `json:"type,omitempty"`
 }
 
@@ -2183,7 +2186,6 @@ type ExternalSplit struct {
 type ExternalSplitMode string
 
 // ExternalSplitType Type of the split.
-// The only supported value at the moment: "attribution_group"
 type ExternalSplitType string
 
 // ExternalSplitTarget Target and value of a split definition.
@@ -2192,7 +2194,8 @@ type ExternalSplitTarget struct {
 	Id *string `json:"id,omitempty"`
 
 	// Type Type of the target.
-	// The only supported value at the moment: "attribution"
+	// If split type is "attribution_group", then target type must be "attribution".
+	// Otherwise split types and target types must be the same.
 	Type *ExternalSplitTargetType `json:"type,omitempty"`
 
 	// Value Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
@@ -2200,7 +2203,8 @@ type ExternalSplitTarget struct {
 }
 
 // ExternalSplitTargetType Type of the target.
-// The only supported value at the moment: "attribution"
+// If split type is "attribution_group", then target type must be "attribution".
+// Otherwise split types and target types must be the same.
 type ExternalSplitTargetType string
 
 // ExternalUpdateReport Partial report object used for updates.
@@ -2210,6 +2214,9 @@ type ExternalUpdateReport struct {
 
 	// Description Report description
 	Description *string `json:"description,omitempty"`
+
+	// Labels Array of label IDs assigned to the report
+	Labels *[]string `json:"labels,omitempty"`
 
 	// Name Report name
 	Name *string `json:"name,omitempty"`
@@ -2370,6 +2377,9 @@ type GetReport200Response struct {
 
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
+
+	// Labels List of labels associated with the report.
+	Labels *[]LabelInfo `json:"labels,omitempty"`
 
 	// Owner Email address of the report owner.
 	Owner *string `json:"owner,omitempty"`
@@ -2680,6 +2690,14 @@ type ListKnownIssues200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ListOrganizations200Response defines model for ListOrganizations200Response.
+type ListOrganizations200Response struct {
+	Organizations *[]Organization `json:"organizations,omitempty"`
+
+	// RowCount Organizations row count
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
 // ListPlatforms200Response defines model for ListPlatforms200Response.
 type ListPlatforms200Response struct {
 	Platforms *[]PlatformAPI `json:"platforms,omitempty"`
@@ -2770,6 +2788,9 @@ type Report struct {
 
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
+
+	// Labels List of labels associated with the report.
+	Labels *[]LabelInfo `json:"labels,omitempty"`
 
 	// Owner Email address of the report owner.
 	Owner *string `json:"owner,omitempty"`
@@ -11369,7 +11390,7 @@ func (r DeleteDatahubEventsByFilterResp) StatusCode() int {
 type ListOrganizationsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Organization
+	JSON200      *ListOrganizations200Response
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -15873,7 +15894,7 @@ func ParseListOrganizationsResp(rsp *http.Response) (*ListOrganizationsResp, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Organization
+		var dest ListOrganizations200Response
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

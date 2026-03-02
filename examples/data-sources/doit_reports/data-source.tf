@@ -26,3 +26,11 @@ output "total_reports" {
 output "my_report_names" {
   value = [for r in data.doit_reports.my_reports.reports : r.report_name]
 }
+
+# Output reports with their labels
+output "reports_with_labels" {
+  value = [for r in data.doit_reports.all.reports : {
+    name   = r.report_name
+    labels = r.labels
+  }]
+}

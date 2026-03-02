@@ -18,6 +18,8 @@ func TestAccUsersDataSource_Basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_users.test", "users.#"),
 					resource.TestCheckResourceAttrSet("data.doit_users.test", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_users.test", "users.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_users.test", "users.0.email"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan

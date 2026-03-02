@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
@@ -29,12 +31,19 @@ func (v rfc3339Validator) ValidateString(_ context.Context, req validator.String
 		return
 	}
 
-	_, err := time.Parse(time.RFC3339, req.ConfigValue.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			req.Path,
+	validateRFC3339(req.ConfigValue.ValueString(), req.Path, &resp.Diagnostics)
+}
+
+// validateRFC3339 checks that value is a valid RFC3339 timestamp and adds an
+// attribute error to diags if it is not. This is the single source of truth for
+// RFC3339 validation logic, used by both the attribute-level rfc3339Validator
+// and the resource-level reportTimestampValidator.
+func validateRFC3339(value string, attrPath path.Path, diags *diag.Diagnostics) {
+	if _, err := time.Parse(time.RFC3339, value); err != nil {
+		diags.AddAttributeError(
+			attrPath,
 			"Invalid RFC3339 Timestamp",
-			fmt.Sprintf("Value must be a valid RFC3339 timestamp (e.g., '2024-06-15T12:00:00Z'). Got: %s", req.ConfigValue.ValueString()),
+			fmt.Sprintf("Value must be a valid RFC3339 timestamp (e.g., '2024-06-15T12:00:00Z'). Got: %s", value),
 		)
 	}
 }
