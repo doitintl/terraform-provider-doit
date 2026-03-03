@@ -741,3 +741,41 @@ resource "doit_allocation" "nested" {
 }
 `, i, testProject(), i)
 }
+
+// TestAccAllocation_NestedAllocationRule_InvalidMode tests that using an unsupported
+// mode with type="allocation_rule" is rejected at plan time by the validator.
+func TestAccAllocation_NestedAllocationRule_InvalidMode(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationNestedRuleInvalidMode(n),
+				ExpectError: regexp.MustCompile(`Invalid Allocation Rule Component`),
+			},
+		},
+	})
+}
+
+func testAccAllocationNestedRuleInvalidMode(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "invalid_nested" {
+    name        = "test-invalid-nested-%d"
+    description = "nested allocation with invalid mode"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "allocation_rule"
+           mode   = "starts_with"
+           type   = "allocation_rule"
+           values = ["some-allocation-id"]
+         }
+       ]
+    }
+}
+`, i)
+}
