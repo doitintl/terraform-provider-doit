@@ -258,10 +258,9 @@ func (r *assetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 }
 
 // mapAssetToModel maps the API response to the Terraform resource model.
-// The GET /billing/v1/assets/{id} endpoint returns an AssetItem which does NOT include
-// the nested properties field. We set properties to null since it's only available
-// from the PATCH response and is not critical for managing the asset.
-func mapAssetToModel(asset *models.AssetItem, state *assetResourceModel) {
+// The GET /billing/v1/assets/{id} endpoint returns an AssetItemDetailed which
+// includes the properties field when the backend supports it.
+func mapAssetToModel(asset *models.AssetItemDetailed, state *assetResourceModel) {
 	state.Id = types.StringPointerValue(asset.Id)
 	state.Name = types.StringPointerValue(asset.Name)
 	state.Type = types.StringPointerValue(asset.Type)
@@ -269,7 +268,7 @@ func mapAssetToModel(asset *models.AssetItem, state *assetResourceModel) {
 	state.Quantity = types.Int64PointerValue(asset.Quantity)
 	state.CreateTime = types.Int64PointerValue(asset.CreateTime)
 
-	// The GET endpoint does not return properties, so we set it to null.
-	// Properties are only available from the PATCH response which returns a different schema.
+	// Properties are not yet returned by the backend GET endpoint.
+	// Once the upstream PR is merged and deployed, this can be populated.
 	state.Properties = resource_asset.NewPropertiesValueNull()
 }
