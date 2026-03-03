@@ -1502,6 +1502,53 @@
 			}
 		},
 		{
+			"name": "asset",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The unique id of an asset."
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when the asset was created, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "quantity",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Manage cloud resources or services in your cloud environment.",
+				"markdown_description": "Manage cloud resources or services in your cloud environment."
+			}
+		},
+		{
 			"name": "assets",
 			"schema": {
 				"attributes": [

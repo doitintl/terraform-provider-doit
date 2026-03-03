@@ -87,4 +87,6 @@ jobs:
           TEST_ANOMALY_ID: ${{ vars.TEST_ANOMALY_ID }}
           TEST_CLOUD_INCIDENT_ID: ${{ vars.TEST_CLOUD_INCIDENT_ID }}
           TEST_COMMITMENT_ID: ${{ vars.TEST_COMMITMENT_ID }}
+          TEST_ASSET_ID: ${{ vars.TEST_ASSET_ID }}
+          TEST_ASSET_ID_AWS: ${{ vars.TEST_ASSET_ID_AWS }}
         run: go test -v -timeout 120m ./...
