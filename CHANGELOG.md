@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### BREAKING CHANGES
+
+- **resource/doit_allocation**: The `type` attribute on allocation rule components now uses a dedicated enum. The values `attribution` and `attribution_group` are no longer accepted. A new value `allocation_rule` has been added, allowing components to reference existing allocation rules (nested allocations with max depth of 3).
+
+### ENHANCEMENTS
+
+- **resource/doit_allocation**: Allocation rule components now support `type = "allocation_rule"` to reference existing allocation rules by ID, enabling nested allocation rule composition.
+- **docs**: Improved documentation for allocation component fields (`key`, `mode`, `values`, `type`) with guidance on using the new `allocation_rule` type.
+
 ## v1.1.0 (2026-02-24)
 
 ### FEATURES

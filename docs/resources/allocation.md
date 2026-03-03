@@ -133,7 +133,7 @@ resource "doit_allocation" "gcp_compute" {
 
 ### Optional
 
-- `rule` (Attributes) Single allocation rule. (see [below for nested schema](#nestedatt--rule))
+- `rule` (Attributes) Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type. (see [below for nested schema](#nestedatt--rule))
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
 - `unallocated_costs` (String) Custom label for values that do not fit into allocation (required for group type allocation).
 
@@ -159,12 +159,12 @@ Required:
 
 Required:
 
-- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country".
-- `mode` (String) Filter mode to apply.
+- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+- `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Enumeration of supported dimension/filter types.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
-- `values` (List of String)
+- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`
+- `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
 
 Optional:
 
@@ -183,7 +183,7 @@ Possible values: `create`, `update`, `select`
 
 Optional:
 
-- `components` (Attributes List) List of allocation filter components (required for 'create' or 'update' action). (see [below for nested schema](#nestedatt--rules--components))
+- `components` (Attributes List) List of allocation filter components (required for 'create' or 'update' action). Can include components of type "allocation_rule" to reference existing allocation rules. (see [below for nested schema](#nestedatt--rules--components))
 - `description` (String) Description of the allocation rule.
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.)
 - `id` (String) ID of existing allocation (required for 'update' or 'select' action).
@@ -194,12 +194,12 @@ Optional:
 
 Required:
 
-- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country".
-- `mode` (String) Filter mode to apply.
+- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+- `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Enumeration of supported dimension/filter types.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
-- `values` (List of String)
+- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`
+- `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
 
 Optional:
 
