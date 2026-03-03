@@ -16,6 +16,8 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # export TEST_ANOMALY_ID="your-anomaly-id"
 # export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
 # export TEST_COMMITMENT_ID="your-commitment-id"
+# export TEST_ASSET_ID="your-asset-id"
+# export TEST_ASSET_ID_AWS="your-aws-asset-id"
 
 # DoiT employees only - uncomment the following line:
 # export DOIT_CUSTOMER_CONTEXT="$TEST_CUSTOMER_ID"

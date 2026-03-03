@@ -2314,6 +2314,36 @@ paths:
         "404":
           $ref: "#/components/responses/404"
   "/billing/v1/assets/{id}":
+    get:
+      tags:
+        - Assets
+      summary: Retrieve an asset
+      description: Returns the full details of an asset specified by the asset id.
+      operationId: getAsset
+      parameters:
+        - name: id
+          in: path
+          description: The unique id of an asset.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Asset details returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetItem"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
     patch:
       tags:
         - Assets

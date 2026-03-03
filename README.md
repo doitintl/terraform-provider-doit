@@ -69,11 +69,13 @@ direnv allow
 ```
 
 This will automatically set up:
+
 - Go 1.25
 - Terraform v1.13.3
 - golangci-lint v2.5.0
 
 To enable flakes if not already enabled, add to your `~/.config/nix/nix.conf`:
+
 ```
 experimental-features = nix-command flakes
 ```
@@ -120,27 +122,29 @@ Acceptance tests create real resources in a DoiT account and require proper conf
 
 ### Required Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `DOIT_API_TOKEN` | Your DoiT API token |
-| `DOIT_HOST` | The DoiT API host (must be set; for most users this is `https://api.doit.com`) |
-| `TEST_USER` | Email address for test budget collaborators/recipients |
-| `TEST_ATTRIBUTION` | Attribution ID for test budget scope |
-| `TEST_SLACK_CHAN` | Slack channel ID for notification tests |
-| `TEST_PROJECT` | Project ID for allocation rule tests |
-| `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient |
+| Variable           | Description                                                                    |
+| ------------------ | ------------------------------------------------------------------------------ |
+| `DOIT_API_TOKEN`   | Your DoiT API token                                                            |
+| `DOIT_HOST`        | The DoiT API host (must be set; for most users this is `https://api.doit.com`) |
+| `TEST_USER`        | Email address for test budget collaborators/recipients                         |
+| `TEST_ATTRIBUTION` | Attribution ID for test budget scope                                           |
+| `TEST_SLACK_CHAN`  | Slack channel ID for notification tests                                        |
+| `TEST_PROJECT`     | Project ID for allocation rule tests                                           |
+| `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient                                        |
 
 ### Optional Environment Variables
 
 These variables are used by specific data source tests that will be skipped if unset:
 
-| Variable | Description |
-|----------|-------------|
-| `TEST_ATTRIBUTION_GROUP` | Attribution group ID for report tests |
-| `TEST_INVOICE_ID` | Invoice ID for invoice data source tests |
-| `TEST_ANOMALY_ID` | Anomaly ID for anomaly data source tests |
+| Variable                 | Description                                            |
+| ------------------------ | ------------------------------------------------------ |
+| `TEST_ATTRIBUTION_GROUP` | Attribution group ID for report tests                  |
+| `TEST_INVOICE_ID`        | Invoice ID for invoice data source tests               |
+| `TEST_ANOMALY_ID`        | Anomaly ID for anomaly data source tests               |
 | `TEST_CLOUD_INCIDENT_ID` | Cloud incident ID for cloud incident data source tests |
-| `TEST_COMMITMENT_ID` | Commitment ID for commitment data source tests |
+| `TEST_COMMITMENT_ID`     | Commitment ID for commitment data source tests         |
+| `TEST_ASSET_ID`          | Asset ID for asset data source tests (G Suite)         |
+| `TEST_ASSET_ID_AWS`      | AWS asset ID for asset data source tests               |
 
 ### Running Tests
 
@@ -180,6 +184,8 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # export TEST_ANOMALY_ID="your-anomaly-id"
 # export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
 # export TEST_COMMITMENT_ID="your-commitment-id"
+# export TEST_ASSET_ID="your-asset-id"
+# export TEST_ASSET_ID_AWS="your-aws-asset-id"
 
 go test -v -timeout 120m ./...
 ```
@@ -188,4 +194,4 @@ go test -v -timeout 120m ./...
 > **DoiT employees only:** You must also set the `DOIT_CUSTOMER_CONTEXT` environment variable
 > to the same value as `TEST_CUSTOMER_ID` for certain tests to work correctly.
 
-*Note:* Acceptance tests create real resources and may incur costs.
+_Note:_ Acceptance tests create real resources and may incur costs.

@@ -37,6 +37,10 @@ data_sources:
     read:
       path: /core/v1/cloudincidents/{id}
       method: GET
+  asset:
+    read:
+      path: /billing/v1/assets/{id}
+      method: GET
   commitment:
     read:
       path: /analytics/v1/commitment-manager/{id}

@@ -4162,6 +4162,9 @@ type ClientInterface interface {
 	// IdOfAssets request
 	IdOfAssets(ctx context.Context, params *IdOfAssetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetAsset request
+	GetAsset(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// IdOfAssetWithBody request with any body
 	IdOfAssetWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5066,6 +5069,18 @@ func (c *Client) Validate(ctx context.Context, reqEditors ...RequestEditorFn) (*
 
 func (c *Client) IdOfAssets(ctx context.Context, params *IdOfAssetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIdOfAssetsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAsset(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAssetRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -8323,6 +8338,40 @@ func NewIdOfAssetsRequest(server string, params *IdOfAssetsParams) (*http.Reques
 	return req, nil
 }
 
+// NewGetAssetRequest generates requests for GetAsset
+func NewGetAssetRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/billing/v1/assets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewIdOfAssetRequest calls the generic IdOfAsset builder with application/json body
 func NewIdOfAssetRequest(server string, id string, body IdOfAssetJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -9694,6 +9743,9 @@ type ClientWithResponsesInterface interface {
 
 	// IdOfAssetsWithResponse request
 	IdOfAssetsWithResponse(ctx context.Context, params *IdOfAssetsParams, reqEditors ...RequestEditorFn) (*IdOfAssetsResp, error)
+
+	// GetAssetWithResponse request
+	GetAssetWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAssetResp, error)
 
 	// IdOfAssetWithBodyWithResponse request with any body
 	IdOfAssetWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfAssetResp, error)
@@ -11103,6 +11155,33 @@ func (r IdOfAssetsResp) StatusCode() int {
 	return 0
 }
 
+type GetAssetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AssetItem
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAssetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAssetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type IdOfAssetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12300,6 +12379,15 @@ func (c *ClientWithResponses) IdOfAssetsWithResponse(ctx context.Context, params
 		return nil, err
 	}
 	return ParseIdOfAssetsResp(rsp)
+}
+
+// GetAssetWithResponse request returning *GetAssetResp
+func (c *ClientWithResponses) GetAssetWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAssetResp, error) {
+	rsp, err := c.GetAsset(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAssetResp(rsp)
 }
 
 // IdOfAssetWithBodyWithResponse request with arbitrary body returning *IdOfAssetResp
@@ -15293,6 +15381,67 @@ func ParseIdOfAssetsResp(rsp *http.Response) (*IdOfAssetsResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAssetResp parses an HTTP response from a GetAssetWithResponse call
+func ParseGetAssetResp(rsp *http.Response) (*GetAssetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAssetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AssetItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
