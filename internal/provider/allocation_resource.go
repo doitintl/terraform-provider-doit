@@ -70,7 +70,29 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	if rules, ok := s.Attributes["rules"]; ok {
 		if listAttr, ok := rules.(schema.ListNestedAttribute); ok {
 			listAttr.Validators = append(listAttr.Validators, allocationRulesValidator{})
+
+			// Also inject components validator into rules[].components
+			if components, ok := listAttr.NestedObject.Attributes["components"]; ok {
+				if compListAttr, ok := components.(schema.ListNestedAttribute); ok {
+					compListAttr.Validators = append(compListAttr.Validators, allocationComponentsValidator{})
+					listAttr.NestedObject.Attributes["components"] = compListAttr
+				}
+			}
+
 			s.Attributes["rules"] = listAttr
+		}
+	}
+
+	// Inject components validator into rule.components
+	if rule, ok := s.Attributes["rule"]; ok {
+		if singleAttr, ok := rule.(schema.SingleNestedAttribute); ok {
+			if components, ok := singleAttr.Attributes["components"]; ok {
+				if compListAttr, ok := components.(schema.ListNestedAttribute); ok {
+					compListAttr.Validators = append(compListAttr.Validators, allocationComponentsValidator{})
+					singleAttr.Attributes["components"] = compListAttr
+				}
+			}
+			s.Attributes["rule"] = singleAttr
 		}
 	}
 

@@ -54,6 +54,20 @@ const (
 	AllocationDeleteValidationTypeSingle AllocationDeleteValidationType = "single"
 )
 
+// Defines values for AllocationDimensionsTypes.
+const (
+	AllocationDimensionsTypesAllocationRule AllocationDimensionsTypes = "allocation_rule"
+	AllocationDimensionsTypesDatetime       AllocationDimensionsTypes = "datetime"
+	AllocationDimensionsTypesFixed          AllocationDimensionsTypes = "fixed"
+	AllocationDimensionsTypesGke            AllocationDimensionsTypes = "gke"
+	AllocationDimensionsTypesGkeLabel       AllocationDimensionsTypes = "gke_label"
+	AllocationDimensionsTypesLabel          AllocationDimensionsTypes = "label"
+	AllocationDimensionsTypesOptional       AllocationDimensionsTypes = "optional"
+	AllocationDimensionsTypesProjectLabel   AllocationDimensionsTypes = "project_label"
+	AllocationDimensionsTypesSystemLabel    AllocationDimensionsTypes = "system_label"
+	AllocationDimensionsTypesTag            AllocationDimensionsTypes = "tag"
+)
+
 // Defines values for AllocationListItemAllocationType.
 const (
 	AllocationListItemAllocationTypeGroup  AllocationListItemAllocationType = "group"
@@ -731,12 +745,12 @@ const (
 
 // Defines values for ListCommitmentsParamsSortBy.
 const (
-	CreateTime ListCommitmentsParamsSortBy = "createTime"
-	EndDate    ListCommitmentsParamsSortBy = "endDate"
-	Name       ListCommitmentsParamsSortBy = "name"
-	Provider   ListCommitmentsParamsSortBy = "provider"
-	StartDate  ListCommitmentsParamsSortBy = "startDate"
-	UpdateTime ListCommitmentsParamsSortBy = "updateTime"
+	ListCommitmentsParamsSortByCreateTime ListCommitmentsParamsSortBy = "createTime"
+	ListCommitmentsParamsSortByEndDate    ListCommitmentsParamsSortBy = "endDate"
+	ListCommitmentsParamsSortByName       ListCommitmentsParamsSortBy = "name"
+	ListCommitmentsParamsSortByProvider   ListCommitmentsParamsSortBy = "provider"
+	ListCommitmentsParamsSortByStartDate  ListCommitmentsParamsSortBy = "startDate"
+	ListCommitmentsParamsSortByUpdateTime ListCommitmentsParamsSortBy = "updateTime"
 )
 
 // Defines values for ListCommitmentsParamsSortOrder.
@@ -918,7 +932,7 @@ type Allocation struct {
 	// Name Allocation name.
 	Name *string `json:"name,omitempty"`
 
-	// Rule Single allocation rule.
+	// Rule Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
 	Rule  *AllocationRule        `json:"rule"`
 	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
 
@@ -936,6 +950,8 @@ type Allocation struct {
 type AllocationAllocationType string
 
 // AllocationComponent A filter component used inside allocation rules.
+// When the type is "allocation_rule", the component references existing allocation rules (nested allocation rules).
+// A maximum nesting depth of 3 levels is supported, and circular references are not allowed.
 type AllocationComponent struct {
 	// IncludeNull Include null values.
 	IncludeNull *bool `json:"include_null,omitempty"`
@@ -943,18 +959,20 @@ type AllocationComponent struct {
 	// InverseSelection If true, all selected values will be excluded.
 	InverseSelection *bool `json:"inverse_selection,omitempty"`
 
-	// Key Key of an existing dimension. Examples: "billing_account_id", "country".
+	// Key Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
 	Key string `json:"key"`
 
-	// Mode Filter mode to apply.
+	// Mode Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 	Mode AllocationComponentMode `json:"mode"`
 
-	// Type Enumeration of supported dimension/filter types.
-	Type   DimensionsTypes `json:"type"`
-	Values []string        `json:"values"`
+	// Type Enumeration of supported dimension/filter types for allocation components.
+	Type AllocationDimensionsTypes `json:"type"`
+
+	// Values Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
+	Values []string `json:"values"`
 }
 
-// AllocationComponentMode Filter mode to apply.
+// AllocationComponentMode Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 type AllocationComponentMode string
 
 // AllocationDeleteValidation Details about why an allocation cannot be deleted.
@@ -974,6 +992,9 @@ type AllocationDeleteValidation struct {
 
 // AllocationDeleteValidationType Type of allocation.
 type AllocationDeleteValidationType string
+
+// AllocationDimensionsTypes Enumeration of supported dimension/filter types for allocation components.
+type AllocationDimensionsTypes string
 
 // AllocationListItem Summary information for an allocation.
 type AllocationListItem struct {
@@ -1008,7 +1029,7 @@ type AllocationListItem struct {
 // AllocationListItemAllocationType Composition type of allocation (single or group).
 type AllocationListItemAllocationType string
 
-// AllocationRule Single allocation rule.
+// AllocationRule Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
 type AllocationRule struct {
 	// Components List of allocation filter components.
 	Components []AllocationComponent `json:"components"`
@@ -1720,7 +1741,7 @@ type CreateAllocationRequest struct {
 	// Name Allocation name.
 	Name string `json:"name"`
 
-	// Rule Single allocation rule.
+	// Rule Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
 	Rule  *AllocationRule        `json:"rule"`
 	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
 
@@ -2411,12 +2432,12 @@ type Group struct {
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
-// GroupAllocationRule Allocation rule for a group type allocation.
+// GroupAllocationRule Allocation rule for a group type allocation. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
 type GroupAllocationRule struct {
 	// Action Action to perform with this rule.
 	Action GroupAllocationRuleAction `json:"action"`
 
-	// Components List of allocation filter components (required for 'create' or 'update' action).
+	// Components List of allocation filter components (required for 'create' or 'update' action). Can include components of type "allocation_rule" to reference existing allocation rules.
 	Components *[]AllocationComponent `json:"components,omitempty"`
 
 	// Description Description of the allocation rule.
@@ -3144,7 +3165,7 @@ type UpdateAllocationRequest struct {
 	// Name Allocation name
 	Name *string `json:"name"`
 
-	// Rule Single allocation rule.
+	// Rule Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
 	Rule  *AllocationRule        `json:"rule"`
 	Rules *[]GroupAllocationRule `json:"rules,omitempty"`
 

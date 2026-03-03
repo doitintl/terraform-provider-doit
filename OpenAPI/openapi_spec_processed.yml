@@ -2836,18 +2836,21 @@ components:
         - values
         - mode
       type: object
-      description: A filter component used inside allocation rules.
+      description: |-
+        A filter component used inside allocation rules.
+        When the type is "allocation_rule", the component references existing allocation rules (nested allocation rules).
+        A maximum nesting depth of 3 levels is supported, and circular references are not allowed.
       properties:
         key:
           type: string
-          description: 'Key of an existing dimension. Examples: "billing_account_id", "country".'
+          description: 'Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".'
         type:
-          $ref: "#/components/schemas/DimensionsTypes"
+          $ref: "#/components/schemas/AllocationDimensionsTypes"
         values:
           type: array
+          description: Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
           items:
             type: string
-            description: Values to filter on.
         inverse_selection:
           type: boolean
           description: If true, all selected values will be excluded.
@@ -2858,7 +2861,7 @@ components:
           default: false
         mode:
           type: string
-          description: Filter mode to apply.
+          description: Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
           enum:
             - is
             - starts_with
@@ -2888,6 +2891,20 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/ResourceReference"
+    AllocationDimensionsTypes:
+      description: Enumeration of supported dimension/filter types for allocation components.
+      type: string
+      enum:
+        - datetime
+        - fixed
+        - optional
+        - label
+        - tag
+        - project_label
+        - system_label
+        - allocation_rule
+        - gke
+        - gke_label
     AllocationListItem:
       type: object
       description: Summary information for an allocation.
@@ -2929,7 +2946,7 @@ components:
         - components
         - formula
       type: object
-      description: Single allocation rule.
+      description: Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
       nullable: true
       properties:
         components:
@@ -5114,7 +5131,7 @@ components:
         - action
       type: object
       nullable: true
-      description: Allocation rule for a group type allocation.
+      description: Allocation rule for a group type allocation. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
       properties:
         name:
           type: string
@@ -5134,7 +5151,7 @@ components:
           description: ID of existing allocation (required for 'update' or 'select' action).
         components:
           type: array
-          description: List of allocation filter components (required for 'create' or 'update' action).
+          description: List of allocation filter components (required for 'create' or 'update' action). Can include components of type "allocation_rule" to reference existing allocation rules.
           items:
             $ref: "#/components/schemas/AllocationComponent"
         formula:

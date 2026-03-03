@@ -46,7 +46,7 @@ output "allocation_description" {
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
 - `description` (String) Allocation description.
 - `name` (String) Allocation name.
-- `rule` (Attributes) Single allocation rule. (see [below for nested schema](#nestedatt--rule))
+- `rule` (Attributes) Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type. (see [below for nested schema](#nestedatt--rule))
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
 - `type` (String) Type of allocation (preset or custom).
 - `unallocated_costs` (String) Custom label for values that do not fit into allocation (required for group type allocation).
@@ -67,10 +67,10 @@ Read-Only:
 
 - `include_null` (Boolean) Include null values.
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
-- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country".
-- `mode` (String) Filter mode to apply.
-- `type` (String) Enumeration of supported dimension/filter types.
-- `values` (List of String)
+- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+- `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
+- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+- `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
 
 
 
@@ -80,7 +80,7 @@ Read-Only:
 Read-Only:
 
 - `action` (String) Action to perform with this rule.
-- `components` (Attributes List) List of allocation filter components (required for 'create' or 'update' action). (see [below for nested schema](#nestedatt--rules--components))
+- `components` (Attributes List) List of allocation filter components (required for 'create' or 'update' action). Can include components of type "allocation_rule" to reference existing allocation rules. (see [below for nested schema](#nestedatt--rules--components))
 - `description` (String) Description of the allocation rule.
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.)
 - `id` (String) ID of existing allocation (required for 'update' or 'select' action).
@@ -93,7 +93,7 @@ Read-Only:
 
 - `include_null` (Boolean) Include null values.
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
-- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country".
-- `mode` (String) Filter mode to apply.
-- `type` (String) Enumeration of supported dimension/filter types.
-- `values` (List of String)
+- `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+- `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
+- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+- `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.

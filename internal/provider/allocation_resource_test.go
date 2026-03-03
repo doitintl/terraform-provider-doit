@@ -653,3 +653,129 @@ resource "doit_allocation" "this" {
 }
 `, i)
 }
+
+// TestAccAllocation_NestedAllocationRule tests that an allocation can reference
+// another allocation using the "allocation_rule" dimension type. This creates
+// a base allocation, then a second allocation whose rule references the first.
+func TestAccAllocation_NestedAllocationRule(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationNestedRule(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.nested",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.nested",
+						tfjsonpath.New("allocation_type"),
+						knownvalue.StringExact("single")),
+				},
+			},
+			// Step 2: Re-apply - verify no drift
+			{
+				Config: testAccAllocationNestedRule(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			{
+				ResourceName:      "doit_allocation.nested",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"update_time", // Computed field that changes on each modification
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationNestedRule(i int) string {
+	return fmt.Sprintf(`
+# Base allocation that will be referenced by the nested allocation
+resource "doit_allocation" "base" {
+    name        = "test-base-%d"
+    description = "base allocation for nesting test"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+         }
+       ]
+    }
+}
+
+# Nested allocation that references the base allocation using allocation_rule type
+resource "doit_allocation" "nested" {
+    name        = "test-nested-%d"
+    description = "nested allocation referencing base"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "allocation_rule"
+           mode   = "is"
+           type   = "allocation_rule"
+           values = [doit_allocation.base.id]
+         }
+       ]
+    }
+}
+`, i, testProject(), i)
+}
+
+// TestAccAllocation_NestedAllocationRule_InvalidMode tests that using an unsupported
+// mode with type="allocation_rule" is rejected at plan time by the validator.
+func TestAccAllocation_NestedAllocationRule_InvalidMode(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationNestedRuleInvalidMode(n),
+				ExpectError: regexp.MustCompile(`Invalid Allocation Rule Component`),
+			},
+		},
+	})
+}
+
+func testAccAllocationNestedRuleInvalidMode(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "invalid_nested" {
+    name        = "test-invalid-nested-%d"
+    description = "nested allocation with invalid mode"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "allocation_rule"
+           mode   = "starts_with"
+           type   = "allocation_rule"
+           values = ["some-allocation-id"]
+         }
+       ]
+    }
+}
+`, i)
+}

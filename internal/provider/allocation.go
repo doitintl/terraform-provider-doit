@@ -58,7 +58,7 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 			InverseSelection: components[i].InverseSelection.ValueBoolPointer(),
 			Key:              components[i].Key.ValueString(),
 			Mode:             models.AllocationComponentMode(components[i].Mode.ValueString()),
-			Type:             models.DimensionsTypes(components[i].ComponentsType.ValueString()),
+			Type:             models.AllocationDimensionsTypes(components[i].ComponentsType.ValueString()),
 		}
 		d := components[i].Values.ElementsAs(ctx, &result[i].Values, true)
 		diags.Append(d...)

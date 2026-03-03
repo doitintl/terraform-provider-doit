@@ -65,22 +65,24 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
-									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
+									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
 								},
 								"mode": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Filter mode to apply.",
-									MarkdownDescription: "Filter mode to apply.",
+									Description:         "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.",
+									MarkdownDescription: "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.",
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Enumeration of supported dimension/filter types for allocation components.",
+									MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.",
 								},
 								"values": schema.ListAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
+									ElementType:         types.StringType,
+									Computed:            true,
+									Description:         "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
+									MarkdownDescription: "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
 								},
 							},
 							CustomType: ComponentsType{
@@ -105,8 +107,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Single allocation rule.",
-				MarkdownDescription: "Single allocation rule.",
+				Description:         "Single allocation rule. Components can reference other existing allocation rules by using the \"allocation_rule\" dimension type.",
+				MarkdownDescription: "Single allocation rule. Components can reference other existing allocation rules by using the \"allocation_rule\" dimension type.",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -131,22 +133,24 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"key": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
-										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
+										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
 									},
 									"mode": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Filter mode to apply.",
-										MarkdownDescription: "Filter mode to apply.",
+										Description:         "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.",
+										MarkdownDescription: "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.",
 									},
 									"type": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Enumeration of supported dimension/filter types.",
-										MarkdownDescription: "Enumeration of supported dimension/filter types.",
+										Description:         "Enumeration of supported dimension/filter types for allocation components.",
+										MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.",
 									},
 									"values": schema.ListAttribute{
-										ElementType: types.StringType,
-										Computed:    true,
+										ElementType:         types.StringType,
+										Computed:            true,
+										Description:         "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
+										MarkdownDescription: "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
 									},
 								},
 								CustomType: ComponentsType{
@@ -156,8 +160,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							Computed:            true,
-							Description:         "List of allocation filter components (required for 'create' or 'update' action).",
-							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action).",
+							Description:         "List of allocation filter components (required for 'create' or 'update' action). Can include components of type \"allocation_rule\" to reference existing allocation rules.",
+							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action). Can include components of type \"allocation_rule\" to reference existing allocation rules.",
 						},
 						"description": schema.StringAttribute{
 							Computed:            true,
