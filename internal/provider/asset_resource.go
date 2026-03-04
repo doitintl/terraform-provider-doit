@@ -66,7 +66,9 @@ func (r *assetResource) ImportState(ctx context.Context, req resource.ImportStat
 func (r *assetResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_asset.AssetResourceSchema(ctx)
 
-	// Override id to be Required (user must specify the asset to manage)
+	// Override id to be Required (user must specify the asset to manage).
+	// This is the only full override needed — import-only resources require
+	// the user to specify the identifier in their config.
 	s.Attributes["id"] = schema.StringAttribute{
 		Required:            true,
 		Description:         "The unique id of an asset.",
@@ -76,45 +78,25 @@ func (r *assetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		},
 	}
 
-	// Add UseStateForUnknown plan modifier for computed-only fields
-	s.Attributes["name"] = schema.StringAttribute{
-		Computed:            true,
-		Description:         "The name of the asset.",
-		MarkdownDescription: "The name of the asset.",
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.UseStateForUnknown(),
-		},
+	// Add UseStateForUnknown to computed-only fields so they don't show as
+	// "(known after apply)" when an update is triggered by a quantity change.
+	// We modify the generated attributes in-place to preserve their descriptions,
+	// types, validators, etc.
+	if attr, ok := s.Attributes["name"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["name"] = attr
 	}
-	s.Attributes["type"] = schema.StringAttribute{
-		Computed:            true,
-		Description:         "The type of the asset (e.g., g-suite, amazon-web-services).",
-		MarkdownDescription: "The type of the asset (e.g., g-suite, amazon-web-services).",
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.UseStateForUnknown(),
-		},
+	if attr, ok := s.Attributes["type"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["type"] = attr
 	}
-	s.Attributes["url"] = schema.StringAttribute{
-		Computed:            true,
-		Description:         "The URL of the asset in the DoiT Console.",
-		MarkdownDescription: "The URL of the asset in the DoiT Console.",
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.UseStateForUnknown(),
-		},
+	if attr, ok := s.Attributes["url"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["url"] = attr
 	}
-	s.Attributes["create_time"] = schema.Int64Attribute{
-		Computed:            true,
-		Description:         "The time when the asset was created, in milliseconds since the epoch.",
-		MarkdownDescription: "The time when the asset was created, in milliseconds since the epoch.",
-		PlanModifiers: []planmodifier.Int64{
-			int64planmodifier.UseStateForUnknown(),
-		},
-	}
-
-	// Add description to quantity
-	if qty, ok := s.Attributes["quantity"].(schema.Int64Attribute); ok {
-		qty.Description = "The number of licenses for the asset. Only applicable to certain asset types (e.g., G Suite)."
-		qty.MarkdownDescription = qty.Description
-		s.Attributes["quantity"] = qty
+	if attr, ok := s.Attributes["create_time"].(schema.Int64Attribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, int64planmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
 	}
 
 	s.Description = "Manages a DoiT asset (e.g., G Suite/Google Workspace licenses). " +
