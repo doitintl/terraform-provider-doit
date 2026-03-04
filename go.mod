@@ -1,6 +1,6 @@
 module github.com/doitintl/terraform-provider-doit
 
-go 1.25.7
+go 1.26.0
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3

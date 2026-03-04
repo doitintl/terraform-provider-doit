@@ -71,8 +71,7 @@ func (d *productsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	// Build query parameters from optional inputs
 	params := &models.ListProductsParams{}
 	if !data.Platform.IsNull() {
-		platformVal := data.Platform.ValueString()
-		params.Platform = &platformVal
+		params.Platform = new(data.Platform.ValueString())
 	}
 
 	apiResp, err := d.client.ListProductsWithResponse(ctx, params)

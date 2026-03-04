@@ -3,13 +3,15 @@
 #
 # Strategy:
 #   1. Build the provider binary locally.
-#   2. Scan all examples for third-party providers (non-doit) and pre-download
-#      them into a local filesystem mirror via `terraform providers mirror`.
-#   3. Configure Terraform with:
-#        - dev_overrides  → forces the locally-built doit provider (never downloaded)
-#        - filesystem_mirror → serves pre-mirrored third-party providers (no per-example downloads)
-#        - direct {} fallback → catches any provider not yet in the mirror
-#   4. For each example: terraform init -backend=false && terraform validate.
+#   2. Add the locally-built doit provider to a filesystem mirror so that
+#      terraform init resolves it locally (no registry contact needed).
+#   3. Scan all examples for third-party providers (non-doit) and pre-download
+#      them into the same filesystem mirror via `terraform providers mirror`.
+#   4. Configure Terraform with:
+#        - dev_overrides  → forces the locally-built doit provider for validate
+#        - filesystem_mirror → serves ALL providers for init (doit + third-party)
+#      No direct {} fallback — nothing ever contacts the registry during validation.
+#   5. For each example: terraform init -backend=false && terraform validate.
 
 set -e
 
@@ -43,7 +45,49 @@ cd "$PROVIDER_DIR"
 go build -o terraform-provider-doit .
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 2: Mirror third-party providers
+# Step 2: Add locally-built provider to filesystem mirror
+# ─────────────────────────────────────────────────────────────────────────────
+# Place the locally-built provider binary in the filesystem mirror using
+# Terraform's "packed" layout (matching `terraform providers mirror` output).
+# This ensures `terraform init` resolves doitintl/doit from the local mirror
+# instead of contacting the registry. dev_overrides will still override this
+# during validate/plan/apply with the actual local binary.
+OS_ARCH="$(go env GOOS)_$(go env GOARCH)"
+DOIT_VERSION="1.99.0"
+DOIT_MIRROR_DIR="$MIRROR_DIR/registry.terraform.io/doitintl/doit"
+mkdir -p "$DOIT_MIRROR_DIR"
+
+# Create the zip archive
+ZIP_NAME="terraform-provider-doit_${DOIT_VERSION}_${OS_ARCH}.zip"
+(cd "$PROVIDER_DIR" && zip -qj "$DOIT_MIRROR_DIR/$ZIP_NAME" terraform-provider-doit)
+
+# Create the zip hash for the version metadata
+ZIP_HASH=$(openssl dgst -sha256 -binary "$DOIT_MIRROR_DIR/$ZIP_NAME" | openssl base64)
+
+# Create index.json (lists available versions)
+cat > "$DOIT_MIRROR_DIR/index.json" << EOF
+{
+  "versions": {
+    "$DOIT_VERSION": {}
+  }
+}
+EOF
+
+# Create version.json (lists archives per platform)
+cat > "$DOIT_MIRROR_DIR/${DOIT_VERSION}.json" << EOF
+{
+  "archives": {
+    "$OS_ARCH": {
+      "hashes": ["h1:$ZIP_HASH"],
+      "url": "$ZIP_NAME"
+    }
+  }
+}
+EOF
+echo -e "${GREEN}✓${NC} Provider added to local mirror ($OS_ARCH)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 3: Mirror third-party providers
 # ─────────────────────────────────────────────────────────────────────────────
 # Collect all required_providers blocks across examples to find non-doit
 # providers. Also detect implicit providers from resource/data prefixes.
@@ -96,8 +140,6 @@ IMPLICIT_PROVIDERS=$(find "$EXAMPLES_DIR" -name "*.tf" -print0 | \
     echo '}'
 } > "$MIRROR_CONFIG_DIR/providers.tf"
 
-mkdir -p "$MIRROR_DIR"
-
 if [ "$THIRD_PARTY_FOUND" = true ]; then
     echo -e "${YELLOW}Mirroring third-party providers into local cache...${NC}"
     cat "$MIRROR_CONFIG_DIR/providers.tf" | sed 's/^/  /'
@@ -117,11 +159,13 @@ fi
 rm -rf "$MIRROR_CONFIG_DIR"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 3: Configure Terraform CLI
+# Step 4: Configure Terraform CLI
 # ─────────────────────────────────────────────────────────────────────────────
-# dev_overrides: the locally-built doit provider (never downloaded from registry)
-# filesystem_mirror: pre-mirrored third-party providers (downloaded once above)
-# direct: fallback for anything not in the mirror (should not be needed)
+# dev_overrides: forces the locally-built doit provider for validate/plan/apply
+# filesystem_mirror: serves ALL providers for init (doit + third-party)
+#
+# No direct {} fallback — validation never contacts the Terraform Registry.
+# All providers are resolved locally from the filesystem mirror.
 TFRC_FILE="$PROVIDER_DIR/.terraformrc-validate"
 cat > "$TFRC_FILE" << EOF
 provider_installation {
@@ -131,13 +175,12 @@ provider_installation {
   filesystem_mirror {
     path = "$MIRROR_DIR"
   }
-  direct {}
 }
 EOF
 export TF_CLI_CONFIG_FILE="$TFRC_FILE"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 4: Verify dev_overrides is working
+# Step 5: Verify dev_overrides is working
 # ─────────────────────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Verifying dev_overrides configuration...${NC}"
 VERIFY_DIR=$(mktemp -d)
@@ -169,7 +212,7 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 5: Validate each example
+# Step 6: Validate each example
 # ─────────────────────────────────────────────────────────────────────────────
 rm -f "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
 touch "$PROVIDER_DIR/.validate_passed" "$PROVIDER_DIR/.validate_failed"
@@ -203,8 +246,8 @@ EOF
 
     cd "$TEMP_DIR"
 
-    # Initialize (installs third-party providers from the filesystem mirror;
-    # doit provider is handled by dev_overrides and skipped by init).
+    # Initialize (resolves ALL providers from the filesystem mirror;
+    # doit provider is in the mirror AND overridden by dev_overrides).
     if ! INIT_OUTPUT=$(terraform init -backend=false 2>&1); then
         echo -e "${RED}✗${NC} $reldir (init failed)"
         echo "$INIT_OUTPUT" | grep -i error | head -5 | sed 's/^/  /'
@@ -214,7 +257,7 @@ EOF
         continue
     fi
 
-    # Validate
+    # Validate (dev_overrides ensures the locally-built doit provider is used)
     if VALIDATE_OUTPUT=$(terraform validate 2>&1); then
         echo -e "${GREEN}✓${NC} $reldir"
         echo "$reldir" >> "$PROVIDER_DIR/.validate_passed"

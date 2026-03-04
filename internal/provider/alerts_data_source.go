@@ -69,16 +69,13 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	// Build query parameters
 	params := &models.ListAlertsParams{}
 	if !data.Filter.IsNull() {
-		filter := data.Filter.ValueString()
-		params.Filter = &filter
+		params.Filter = new(data.Filter.ValueString())
 	}
 	if !data.SortBy.IsNull() {
-		sortBy := models.ListAlertsParamsSortBy(data.SortBy.ValueString())
-		params.SortBy = &sortBy
+		params.SortBy = new(models.ListAlertsParamsSortBy(data.SortBy.ValueString()))
 	}
 	if !data.SortOrder.IsNull() {
-		sortOrder := models.ListAlertsParamsSortOrder(data.SortOrder.ValueString())
-		params.SortOrder = &sortOrder
+		params.SortOrder = new(models.ListAlertsParamsSortOrder(data.SortOrder.ValueString()))
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
@@ -88,11 +85,9 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResultsVal := data.MaxResults.ValueString()
-		params.MaxResults = &maxResultsVal
+		params.MaxResults = new(data.MaxResults.ValueString())
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := d.client.ListAlertsWithResponse(ctx, params)
@@ -128,8 +123,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
 			apiResp, err := d.client.ListAlertsWithResponse(ctx, params)

@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"reflect"
 	"sort"
@@ -746,9 +747,7 @@ func resolveRefsWithVisited(v any, schemas map[string]any, visited map[string]bo
 				}
 				if schema, ok := schemas[name]; ok {
 					newVisited := make(map[string]bool, len(visited)+1)
-					for k, v := range visited {
-						newVisited[k] = v
-					}
+					maps.Copy(newVisited, visited)
 					newVisited[name] = true
 					return resolveRefsWithVisited(schema, schemas, newVisited)
 				}
