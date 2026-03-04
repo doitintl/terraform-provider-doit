@@ -105,9 +105,9 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 		if diags.HasError() {
 			return diags
 		}
-		rules := make([]models.GroupAllocationRule, len(planRules))
+		rules := make([]*models.GroupAllocationRule, len(planRules))
 		for i := range planRules {
-			rules[i] = models.GroupAllocationRule{
+			rules[i] = &models.GroupAllocationRule{
 				Name:        planRules[i].Name.ValueStringPointer(),
 				Formula:     planRules[i].Formula.ValueStringPointer(),
 				Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
@@ -280,7 +280,11 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		}
 
 		rules := make([]attr.Value, len(*resp.Rules))
-		for i, rule := range *resp.Rules {
+		for i, rulePtr := range *resp.Rules {
+			if rulePtr == nil {
+				continue
+			}
+			rule := *rulePtr
 			// Determine Action
 			var action string
 			if rule.Id != nil {
