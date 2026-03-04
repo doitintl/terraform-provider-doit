@@ -68,16 +68,13 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	// Build query parameters from optional inputs
 	params := &models.ListDimensionsParams{}
 	if !data.Filter.IsNull() {
-		filterVal := data.Filter.ValueString()
-		params.Filter = &filterVal
+		params.Filter = new(data.Filter.ValueString())
 	}
 	if !data.SortBy.IsNull() {
-		sortByVal := models.ListDimensionsParamsSortBy(data.SortBy.ValueString())
-		params.SortBy = &sortByVal
+		params.SortBy = new(models.ListDimensionsParamsSortBy(data.SortBy.ValueString()))
 	}
 	if !data.SortOrder.IsNull() {
-		sortOrderVal := models.ListDimensionsParamsSortOrder(data.SortOrder.ValueString())
-		params.SortOrder = &sortOrderVal
+		params.SortOrder = new(models.ListDimensionsParamsSortOrder(data.SortOrder.ValueString()))
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
@@ -87,11 +84,9 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResultsVal := data.MaxResults.ValueString()
-		params.MaxResults = &maxResultsVal
+		params.MaxResults = new(data.MaxResults.ValueString())
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := d.client.ListDimensionsWithResponse(ctx, params)
@@ -127,8 +122,7 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
 			apiResp, err := d.client.ListDimensionsWithResponse(ctx, params)

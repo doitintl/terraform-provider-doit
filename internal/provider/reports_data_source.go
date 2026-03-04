@@ -69,16 +69,13 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	// Build query parameters
 	params := &models.ListReportsParams{}
 	if !data.Filter.IsNull() {
-		filter := data.Filter.ValueString()
-		params.Filter = &filter
+		params.Filter = new(data.Filter.ValueString())
 	}
 	if !data.MinCreationTime.IsNull() {
-		minCreationTime := data.MinCreationTime.ValueString()
-		params.MinCreationTime = &minCreationTime
+		params.MinCreationTime = new(data.MinCreationTime.ValueString())
 	}
 	if !data.MaxCreationTime.IsNull() {
-		maxCreationTime := data.MaxCreationTime.ValueString()
-		params.MaxCreationTime = &maxCreationTime
+		params.MaxCreationTime = new(data.MaxCreationTime.ValueString())
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
@@ -88,11 +85,9 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResultsVal := data.MaxResults.ValueString()
-		params.MaxResults = &maxResultsVal
+		params.MaxResults = new(data.MaxResults.ValueString())
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := d.client.ListReportsWithResponse(ctx, params)
@@ -128,8 +123,7 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
 			apiResp, err := d.client.ListReportsWithResponse(ctx, params)

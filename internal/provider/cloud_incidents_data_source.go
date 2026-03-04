@@ -68,27 +68,22 @@ func (d *cloudIncidentsDataSource) Read(ctx context.Context, req datasource.Read
 	// Build query parameters
 	params := &models.ListKnownIssuesParams{}
 	if !data.Filter.IsNull() {
-		filter := data.Filter.ValueString()
-		params.Filter = &filter
+		params.Filter = new(data.Filter.ValueString())
 	}
 	if !data.MinCreationTime.IsNull() {
-		minCreationTime := data.MinCreationTime.ValueString()
-		params.MinCreationTime = &minCreationTime
+		params.MinCreationTime = new(data.MinCreationTime.ValueString())
 	}
 	if !data.MaxCreationTime.IsNull() {
-		maxCreationTime := data.MaxCreationTime.ValueString()
-		params.MaxCreationTime = &maxCreationTime
+		params.MaxCreationTime = new(data.MaxCreationTime.ValueString())
 	}
 
 	// Cloud incidents can have thousands of records, so we always use manual pagination
 	// (no auto-pagination) to avoid very long fetch times.
 	if !data.MaxResults.IsNull() {
-		maxResultsVal := data.MaxResults.ValueInt64()
-		params.MaxResults = &maxResultsVal
+		params.MaxResults = new(data.MaxResults.ValueInt64())
 	}
 	if !data.PageToken.IsNull() {
-		pageTokenVal := data.PageToken.ValueString()
-		params.PageToken = &pageTokenVal
+		params.PageToken = new(data.PageToken.ValueString())
 	}
 
 	apiResp, err := d.client.ListKnownIssuesWithResponse(ctx, params)

@@ -68,16 +68,13 @@ func (d *invoicesDataSource) Read(ctx context.Context, req datasource.ReadReques
 	// Build query parameters
 	params := &models.ListInvoicesParams{}
 	if !data.Filter.IsNull() {
-		filter := data.Filter.ValueString()
-		params.Filter = &filter
+		params.Filter = new(data.Filter.ValueString())
 	}
 	if !data.MinCreationTime.IsNull() {
-		minCreationTime := data.MinCreationTime.ValueInt64()
-		params.MinCreationTime = &minCreationTime
+		params.MinCreationTime = new(data.MinCreationTime.ValueInt64())
 	}
 	if !data.MaxCreationTime.IsNull() {
-		maxCreationTime := data.MaxCreationTime.ValueInt64()
-		params.MaxCreationTime = &maxCreationTime
+		params.MaxCreationTime = new(data.MaxCreationTime.ValueInt64())
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
@@ -87,11 +84,9 @@ func (d *invoicesDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResultsVal := data.MaxResults.ValueInt64()
-		params.MaxResults = &maxResultsVal
+		params.MaxResults = new(data.MaxResults.ValueInt64())
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := d.client.ListInvoicesWithResponse(ctx, params)
@@ -127,8 +122,7 @@ func (d *invoicesDataSource) Read(ctx context.Context, req datasource.ReadReques
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
 			apiResp, err := d.client.ListInvoicesWithResponse(ctx, params)
