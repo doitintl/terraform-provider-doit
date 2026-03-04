@@ -8,8 +8,10 @@
 #   3. Configure Terraform with:
 #        - dev_overrides  → forces the locally-built doit provider (never downloaded)
 #        - filesystem_mirror → serves pre-mirrored third-party providers (no per-example downloads)
-#      No direct {} fallback — validation never contacts the registry.
-#   4. For each example: terraform init -backend=false && terraform validate.
+#        - direct {} fallback → catches any third-party provider not yet in the mirror
+#   4. For each example:
+#        - If doit-only: skip init, go straight to validate (dev_overrides handles it)
+#        - If third-party providers: terraform init -backend=false first, then validate
 
 set -e
 
@@ -121,9 +123,11 @@ rm -rf "$MIRROR_CONFIG_DIR"
 # ─────────────────────────────────────────────────────────────────────────────
 # dev_overrides: the locally-built doit provider (never downloaded from registry)
 # filesystem_mirror: pre-mirrored third-party providers (downloaded once above)
-# No direct {} fallback: validation never contacts the Terraform Registry.
-# If a third-party provider is missing from the mirror, init fails immediately
-# with a clear error instead of a flaky network timeout.
+# direct: fallback for any third-party provider not yet in the mirror
+#
+# NOTE: terraform init is ONLY run for examples that use third-party providers.
+# For doit-only examples, we skip init entirely (dev_overrides handles it).
+# This avoids init trying (and failing) to download doitintl/doit from the registry.
 TFRC_FILE="$PROVIDER_DIR/.terraformrc-validate"
 cat > "$TFRC_FILE" << EOF
 provider_installation {
@@ -133,6 +137,7 @@ provider_installation {
   filesystem_mirror {
     path = "$MIRROR_DIR"
   }
+  direct {}
 }
 EOF
 export TF_CLI_CONFIG_FILE="$TFRC_FILE"
@@ -204,18 +209,34 @@ EOF
 
     cd "$TEMP_DIR"
 
-    # Initialize (installs third-party providers from the filesystem mirror;
-    # doit provider is handled by dev_overrides and skipped by init).
-    if ! INIT_OUTPUT=$(terraform init -backend=false 2>&1); then
-        echo -e "${RED}✗${NC} $reldir (init failed)"
-        echo "$INIT_OUTPUT" | grep -i error | head -5 | sed 's/^/  /'
-        echo "$reldir" >> "$PROVIDER_DIR/.validate_failed"
-        cd "$PROVIDER_DIR"
-        rm -rf "$TEMP_DIR"
-        continue
+    # Check if this example uses any non-doit providers.
+    # With dev_overrides, `terraform init` is not needed for doit-only examples
+    # (dev_overrides skips provider installation for validate/plan/apply).
+    # We only need init to install third-party providers from the filesystem mirror.
+    NEEDS_INIT=false
+    # Check for non-doit resource/data types (e.g. time_static → hashicorp/time)
+    if grep -qE '^\s*(resource|data)\s+"[a-z0-9]+_' "$TEMP_DIR"/*.tf 2>/dev/null; then
+        NON_DOIT_TYPES=$(grep -hE '^\s*(resource|data)\s+"[a-z0-9]+_' "$TEMP_DIR"/*.tf 2>/dev/null | \
+            sed -E 's/^[[:space:]]*(resource|data)[[:space:]]+"([a-z0-9]+)_.*/\2/' | \
+            grep -v '^doit$' | sort -u)
+        if [ -n "$NON_DOIT_TYPES" ]; then
+            NEEDS_INIT=true
+        fi
     fi
 
-    # Validate
+    if [ "$NEEDS_INIT" = true ]; then
+        # Initialize only to install third-party providers from the filesystem mirror.
+        if ! INIT_OUTPUT=$(terraform init -backend=false 2>&1); then
+            echo -e "${RED}✗${NC} $reldir (init failed)"
+            echo "$INIT_OUTPUT" | grep -i error | head -5 | sed 's/^/  /'
+            echo "$reldir" >> "$PROVIDER_DIR/.validate_failed"
+            cd "$PROVIDER_DIR"
+            rm -rf "$TEMP_DIR"
+            continue
+        fi
+    fi
+
+    # Validate (dev_overrides ensures the locally-built doit provider is used)
     if VALIDATE_OUTPUT=$(terraform validate 2>&1); then
         echo -e "${GREEN}✓${NC} $reldir"
         echo "$reldir" >> "$PROVIDER_DIR/.validate_passed"
