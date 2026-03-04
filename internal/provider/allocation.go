@@ -105,9 +105,9 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 		if diags.HasError() {
 			return diags
 		}
-		rules := make([]models.GroupAllocationRule, len(planRules))
+		rules := make([]*models.GroupAllocationRule, len(planRules))
 		for i := range planRules {
-			rules[i] = models.GroupAllocationRule{
+			rules[i] = &models.GroupAllocationRule{
 				Name:        planRules[i].Name.ValueStringPointer(),
 				Formula:     planRules[i].Formula.ValueStringPointer(),
 				Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
@@ -279,8 +279,14 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			}
 		}
 
-		rules := make([]attr.Value, len(*resp.Rules))
-		for i, rule := range *resp.Rules {
+		rules := make([]attr.Value, 0, len(*resp.Rules))
+		ruleIndex := 0
+		for _, rulePtr := range *resp.Rules {
+			if rulePtr == nil {
+				ruleIndex++
+				continue
+			}
+			rule := *rulePtr
 			// Determine Action
 			var action string
 			if rule.Id != nil {
@@ -288,8 +294,8 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 					action = a
 				}
 			}
-			if action == "" && i < len(existingActionsByIndex) {
-				action = existingActionsByIndex[i]
+			if action == "" && ruleIndex < len(existingActionsByIndex) {
+				action = existingActionsByIndex[ruleIndex]
 			}
 			if action == "" {
 				// Default to "select" if we can't determine the action (e.g. import)
@@ -342,12 +348,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 				m["components"], d = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
 				diags.Append(d...)
 			}
-			var d diag.Diagnostics
-			rules[i], d = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
+			ruleVal, d := resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
 			if diags.HasError() {
 				return
 			}
+			rules = append(rules, ruleVal)
+			ruleIndex++
 		}
 		var d diag.Diagnostics
 		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
