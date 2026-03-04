@@ -8,7 +8,7 @@
 #   3. Configure Terraform with:
 #        - dev_overrides  → forces the locally-built doit provider (never downloaded)
 #        - filesystem_mirror → serves pre-mirrored third-party providers (no per-example downloads)
-#        - direct {} fallback → catches any provider not yet in the mirror
+#      No direct {} fallback — validation never contacts the registry.
 #   4. For each example: terraform init -backend=false && terraform validate.
 
 set -e
@@ -121,7 +121,9 @@ rm -rf "$MIRROR_CONFIG_DIR"
 # ─────────────────────────────────────────────────────────────────────────────
 # dev_overrides: the locally-built doit provider (never downloaded from registry)
 # filesystem_mirror: pre-mirrored third-party providers (downloaded once above)
-# direct: fallback for anything not in the mirror (should not be needed)
+# No direct {} fallback: validation never contacts the Terraform Registry.
+# If a third-party provider is missing from the mirror, init fails immediately
+# with a clear error instead of a flaky network timeout.
 TFRC_FILE="$PROVIDER_DIR/.terraformrc-validate"
 cat > "$TFRC_FILE" << EOF
 provider_installation {
@@ -131,7 +133,6 @@ provider_installation {
   filesystem_mirror {
     path = "$MIRROR_DIR"
   }
-  direct {}
 }
 EOF
 export TF_CLI_CONFIG_FILE="$TFRC_FILE"
