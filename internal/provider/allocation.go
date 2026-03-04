@@ -279,9 +279,11 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 			}
 		}
 
-		rules := make([]attr.Value, len(*resp.Rules))
-		for i, rulePtr := range *resp.Rules {
+		rules := make([]attr.Value, 0, len(*resp.Rules))
+		ruleIndex := 0
+		for _, rulePtr := range *resp.Rules {
 			if rulePtr == nil {
+				ruleIndex++
 				continue
 			}
 			rule := *rulePtr
@@ -292,8 +294,8 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 					action = a
 				}
 			}
-			if action == "" && i < len(existingActionsByIndex) {
-				action = existingActionsByIndex[i]
+			if action == "" && ruleIndex < len(existingActionsByIndex) {
+				action = existingActionsByIndex[ruleIndex]
 			}
 			if action == "" {
 				// Default to "select" if we can't determine the action (e.g. import)
@@ -346,12 +348,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 				m["components"], d = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
 				diags.Append(d...)
 			}
-			var d diag.Diagnostics
-			rules[i], d = resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
+			ruleVal, d := resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
 			if diags.HasError() {
 				return
 			}
+			rules = append(rules, ruleVal)
+			ruleIndex++
 		}
 		var d diag.Diagnostics
 		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
