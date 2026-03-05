@@ -80,6 +80,8 @@ To enable flakes if not already enabled, add to your `~/.config/nix/nix.conf`:
 experimental-features = nix-command flakes
 ```
 
+> **Note:** If you use direnv but don't want the Nix flake environment, add `export DIRENV_SKIP_FLAKE=1` to your shell profile (e.g., `~/.zshrc`). This skips flake activation while still loading environment variables from `.envrc.local`.
+
 ## Building The Provider
 
 1. Clone the repository
