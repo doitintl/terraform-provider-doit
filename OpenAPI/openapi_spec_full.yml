@@ -1668,9 +1668,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/Report"
-                  - $ref: "#/components/schemas/RunReportResult"
+                $ref: "#/components/schemas/GetReportResponse"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -5557,6 +5555,79 @@ components:
           type: string
         platform:
           type: string
+    GetReportResponse:
+      type: object
+      description: Results returned when running a report; includes schema and rows.
+      properties:
+        id:
+          type: string
+          description: Report ID.
+        reportName:
+          type: string
+          description: The name of the report.
+        owner:
+          type: string
+          description: Email address of the report owner.
+        type:
+          type: string
+          enum:
+            - custom
+            - preset
+        createTime:
+          type: integer
+          description: The creation time of the report, in milliseconds since the epoch.
+          format: int64
+        updateTime:
+          type: integer
+          description: The time when this report was last updated, in milliseconds since
+            the epoch.
+          format: int64
+        urlUI:
+          type: string
+          description: The URL of the report in DoiT console.
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelInfo"
+          description: List of labels associated with the report.
+        result:
+          type: object
+          properties:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/SchemaField"
+            mlFeatures:
+              type: array
+              items:
+                type: string
+                enum:
+                  - increasing
+                  - decreasing
+                  - none
+                  - forecast
+            rows:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Value"
+            secondaryRows:
+              type: array
+              description: Secondary time range rows.
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Value"
+            forecastRows:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Value"
+            cacheHit:
+              type: boolean
+              description: If true, results were fetched from the cache.
     Report:
       type: object
       description: Report metadata and the console URL.
@@ -5760,8 +5831,12 @@ components:
         email:
           type: string
     Value:
-      description: The content of a single cell from a BigQuery result.
-      type: object
+      description: The content of a single cell from a BigQuery result. Can be a string, number, or null.
+      nullable: true
+      oneOf:
+        - type: string
+        - type: number
+        - type: integer
     AssetItem:
       type: object
       description: Detailed information about a single asset.

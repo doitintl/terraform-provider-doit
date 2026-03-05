@@ -1,36 +1,19 @@
 // Package provider implements the doit_report_result data source.
 //
-// This is a hand-written data source (not auto-generated) because the API
-// response contains dynamic types that cannot be represented in Terraform's
-// static type system:
+// This is a hand-written data source (not auto-generated) because the report
+// result contains dynamic types that cannot be represented in Terraform's
+// static type system. Specifically, report rows are [][]*Value where each
+// Value can be a string, number, or null — and Terraform does not support
+// list(list(dynamic)).
 //
-//   - The GET /analytics/v1/reports/{id} response uses allOf (not supported
-//     by the code generator).
-//   - Report rows contain Value objects with mixed types (strings, numbers,
-//     nulls) that vary per report.
-//   - Rows are nested as [][]Value (list of lists), and Terraform does not
-//     support list(list(dynamic)).
-//
-// Additionally, the generated Go type Value = map[string]interface{} does not
-// match the actual API response. The API returns Value cells as primitives
-// (strings, numbers, null), not as JSON objects. This means we cannot use the
-// typed GetReportWithResponse method — it fails with:
-//
-//	"json: cannot unmarshal string into Go struct field
-//	 RunReportResultResult.result.rows of type map[string]interface{}"
-//
-// Instead, we use the raw GetReport HTTP method and unmarshal the JSON body
-// ourselves into map[string]interface{}, then serialize the "result" field
-// as a JSON string. Users can parse it with jsondecode() in HCL.
-//
-// See also: Investigation in .test/Current Status of DCI API.md (2026-02-20).
+// The entire "result" field is serialized as a JSON string so that the
+// original types are preserved. Users parse it with jsondecode() in HCL.
 package provider
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -225,17 +208,10 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 		params.EndDate = &v
 	}
 
-	// We use the raw GetReport method instead of GetReportWithResponse because
-	// the generated Go type Value = map[string]interface{} does not match the
-	// actual API response. The API returns Value cells as primitives (strings,
-	// numbers, null), not as JSON objects. GetReportWithResponse internally
-	// tries to unmarshal into the typed struct and fails with:
-	//   "json: cannot unmarshal string into Go struct field
-	//    RunReportResultResult.result.rows of type map[string]interface{}"
-	//
-	// By using the raw HTTP response, we bypass the broken type parser and
-	// unmarshal the JSON ourselves into map[string]interface{}.
-	httpResp, err := d.client.GetReport(ctx, data.Id.ValueString(), params)
+	// Call the API. The GetReportResponse type is a flat struct (no allOf
+	// composition), and Value is a json.RawMessage union that correctly
+	// handles mixed-type cells (string, number, null).
+	reportResp, err := d.client.GetReportWithResponse(ctx, data.Id.ValueString(), params)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Report Results",
@@ -243,63 +219,44 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 		)
 		return
 	}
-	defer httpResp.Body.Close()
 
-	body, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Report Results",
-			fmt.Sprintf("Could not read response body for report ID %s: %v", data.Id.ValueString(), err),
-		)
-		return
-	}
-
-	if httpResp.StatusCode != 200 {
+	if reportResp.StatusCode() != 200 {
 		resp.Diagnostics.AddError(
 			"Error Reading Report Results",
 			fmt.Sprintf("Could not read results for report ID %s, status: %d, body: %s",
-				data.Id.ValueString(), httpResp.StatusCode, string(body)),
+				data.Id.ValueString(), reportResp.StatusCode(), string(reportResp.Body)),
 		)
 		return
 	}
 
-	// Parse the raw JSON body ourselves to correctly handle the mixed types
-	// in Value cells (strings, numbers, nulls).
-	var raw map[string]interface{}
-	if err := json.Unmarshal(body, &raw); err != nil {
+	if reportResp.JSON200 == nil {
 		resp.Diagnostics.AddError(
-			"Error Parsing Report Results",
-			fmt.Sprintf("Could not parse API response for report ID %s: %v", data.Id.ValueString(), err),
+			"Error Reading Report Results",
+			"Received empty response body for report ID "+data.Id.ValueString(),
 		)
 		return
 	}
 
-	// Extract report metadata
-	if reportName, ok := raw["reportName"].(string); ok {
-		data.ReportName = types.StringValue(reportName)
-	} else {
-		data.ReportName = types.StringNull()
-	}
+	report := reportResp.JSON200
 
-	// Extract result object and serialize it as JSON string
-	if result, ok := raw["result"].(map[string]interface{}); ok {
-		// Extract convenience attributes
-		if cacheHit, ok := result["cacheHit"].(bool); ok {
-			data.CacheHit = types.BoolValue(cacheHit)
-		} else {
-			data.CacheHit = types.BoolNull()
-		}
+	// Map metadata to typed attributes
+	data.ReportName = types.StringPointerValue(report.ReportName)
 
-		if rows, ok := result["rows"].([]interface{}); ok {
-			data.RowCount = types.Int64Value(int64(len(rows)))
+	// Map result to JSON string
+	if report.Result != nil {
+		// Extract convenience attributes from the result
+		data.CacheHit = types.BoolPointerValue(report.Result.CacheHit)
+
+		if report.Result.Rows != nil {
+			data.RowCount = types.Int64Value(int64(len(*report.Result.Rows)))
 		} else {
 			data.RowCount = types.Int64Value(0)
 		}
 
-		// Serialize the entire result object as JSON. This preserves the
-		// original types (strings stay strings, numbers stay numbers) from
-		// the API response. Users can parse with jsondecode() in HCL.
-		resultJSON, marshalErr := json.Marshal(result)
+		// Serialize the entire result object as JSON. The Value union type
+		// implements MarshalJSON via json.RawMessage, so strings stay strings
+		// and numbers stay numbers in the output.
+		resultJSON, marshalErr := json.Marshal(report.Result)
 		if marshalErr != nil {
 			resp.Diagnostics.AddError(
 				"Error Serializing Report Results",
