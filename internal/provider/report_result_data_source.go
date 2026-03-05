@@ -182,9 +182,9 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID or any query parameter is unknown, return early
 	// with all computed attributes set to unknown.
-	if data.Id.IsUnknown() {
+	if data.Id.IsUnknown() || data.TimeRange.IsUnknown() || data.StartDate.IsUnknown() || data.EndDate.IsUnknown() {
 		data.ResultJSON = types.StringUnknown()
 		data.ReportName = types.StringUnknown()
 		data.CacheHit = types.BoolUnknown()
@@ -196,16 +196,13 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 	// Build query parameters from optional time range overrides
 	params := &models.GetReportParams{}
 	if !data.TimeRange.IsNull() && !data.TimeRange.IsUnknown() {
-		v := data.TimeRange.ValueString()
-		params.TimeRange = &v
+		params.TimeRange = new(data.TimeRange.ValueString())
 	}
 	if !data.StartDate.IsNull() && !data.StartDate.IsUnknown() {
-		v := data.StartDate.ValueString()
-		params.StartDate = &v
+		params.StartDate = new(data.StartDate.ValueString())
 	}
 	if !data.EndDate.IsNull() && !data.EndDate.IsUnknown() {
-		v := data.EndDate.ValueString()
-		params.EndDate = &v
+		params.EndDate = new(data.EndDate.ValueString())
 	}
 
 	// Call the API. The GetReportResponse type is a flat struct (no allOf
