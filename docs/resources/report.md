@@ -51,7 +51,7 @@ resource "doit_report" "my_report" {
     ]
     time_range = {
       mode            = "last"
-      amount          = 12
+      amount          = 3
       include_current = true
       unit            = "month"
     }
