@@ -184,6 +184,65 @@ data "doit_report_result" "test" {
 `, name)
 }
 
+// TestAccReportResultDataSource_WithTimeRange verifies the time_range
+// ISO 8601 duration override parameter.
+func TestAccReportResultDataSource_WithTimeRange(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-rr-ds-tr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportResultDataSourceWithTimeRangeConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_result.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_result.test",
+						tfjsonpath.New("report_name"),
+						knownvalue.StringExact(rName)),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportResultDataSourceWithTimeRangeConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = %q
+    description = "test report for result data source with time range"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode           = "last"
+          amount         = 3
+          unit           = "month"
+          include_current = false
+        }
+    }
+}
+
+data "doit_report_result" "test" {
+    id         = doit_report.test.id
+    time_range = "P1M"
+}
+`, name)
+}
+
 func testAccReportResultDataSourceNotFoundConfig() string {
 	return `
 data "doit_report_result" "test" {
