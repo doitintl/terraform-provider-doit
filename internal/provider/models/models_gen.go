@@ -1121,18 +1121,42 @@ func (e GetKnownIssue200ResponseStatus) Valid() bool {
 	}
 }
 
-// Defines values for GetReport200ResponseType.
+// Defines values for GetReportResponseType.
 const (
-	GetReport200ResponseTypeCustom GetReport200ResponseType = "custom"
-	GetReport200ResponseTypePreset GetReport200ResponseType = "preset"
+	GetReportResponseTypeCustom GetReportResponseType = "custom"
+	GetReportResponseTypePreset GetReportResponseType = "preset"
 )
 
-// Valid indicates whether the value is a known member of the GetReport200ResponseType enum.
-func (e GetReport200ResponseType) Valid() bool {
+// Valid indicates whether the value is a known member of the GetReportResponseType enum.
+func (e GetReportResponseType) Valid() bool {
 	switch e {
-	case GetReport200ResponseTypeCustom:
+	case GetReportResponseTypeCustom:
 		return true
-	case GetReport200ResponseTypePreset:
+	case GetReportResponseTypePreset:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetReportResponseResultMlFeatures.
+const (
+	GetReportResponseResultMlFeaturesDecreasing GetReportResponseResultMlFeatures = "decreasing"
+	GetReportResponseResultMlFeaturesForecast   GetReportResponseResultMlFeatures = "forecast"
+	GetReportResponseResultMlFeaturesIncreasing GetReportResponseResultMlFeatures = "increasing"
+	GetReportResponseResultMlFeaturesNone       GetReportResponseResultMlFeatures = "none"
+)
+
+// Valid indicates whether the value is a known member of the GetReportResponseResultMlFeatures enum.
+func (e GetReportResponseResultMlFeatures) Valid() bool {
+	switch e {
+	case GetReportResponseResultMlFeaturesDecreasing:
+		return true
+	case GetReportResponseResultMlFeaturesForecast:
+		return true
+	case GetReportResponseResultMlFeaturesIncreasing:
+		return true
+	case GetReportResponseResultMlFeaturesNone:
 		return true
 	default:
 		return false
@@ -1444,22 +1468,22 @@ func (e ResourcePermissionsResponsePublic) Valid() bool {
 
 // Defines values for RunReportResultResultMlFeatures.
 const (
-	Decreasing RunReportResultResultMlFeatures = "decreasing"
-	Forecast   RunReportResultResultMlFeatures = "forecast"
-	Increasing RunReportResultResultMlFeatures = "increasing"
-	None       RunReportResultResultMlFeatures = "none"
+	RunReportResultResultMlFeaturesDecreasing RunReportResultResultMlFeatures = "decreasing"
+	RunReportResultResultMlFeaturesForecast   RunReportResultResultMlFeatures = "forecast"
+	RunReportResultResultMlFeaturesIncreasing RunReportResultResultMlFeatures = "increasing"
+	RunReportResultResultMlFeaturesNone       RunReportResultResultMlFeatures = "none"
 )
 
 // Valid indicates whether the value is a known member of the RunReportResultResultMlFeatures enum.
 func (e RunReportResultResultMlFeatures) Valid() bool {
 	switch e {
-	case Decreasing:
+	case RunReportResultResultMlFeaturesDecreasing:
 		return true
-	case Forecast:
+	case RunReportResultResultMlFeaturesForecast:
 		return true
-	case Increasing:
+	case RunReportResultResultMlFeaturesIncreasing:
 		return true
-	case None:
+	case RunReportResultResultMlFeaturesNone:
 		return true
 	default:
 		return false
@@ -3961,8 +3985,8 @@ type GetKnownIssue200ResponsePlatform string
 // GetKnownIssue200ResponseStatus The Status of the issue
 type GetKnownIssue200ResponseStatus string
 
-// GetReport200Response defines model for GetReport200Response.
-type GetReport200Response struct {
+// GetReportResponse Results returned when running a report; includes schema and rows.
+type GetReportResponse struct {
 	// CreateTime The creation time of the report, in milliseconds since the epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
@@ -3976,9 +4000,9 @@ type GetReport200Response struct {
 	Owner *string `json:"owner,omitempty"`
 
 	// ReportName The name of the report.
-	ReportName *string                   `json:"reportName,omitempty"`
-	Result     *RunReportResultResult    `json:"result,omitempty"`
-	Type       *GetReport200ResponseType `json:"type,omitempty"`
+	ReportName *string                  `json:"reportName,omitempty"`
+	Result     *GetReportResponseResult `json:"result,omitempty"`
+	Type       *GetReportResponseType   `json:"type,omitempty"`
 
 	// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
@@ -3987,8 +4011,24 @@ type GetReport200Response struct {
 	UrlUI *string `json:"urlUI,omitempty"`
 }
 
-// GetReport200ResponseType defines model for GetReport200Response.Type.
-type GetReport200ResponseType string
+// GetReportResponseType defines model for GetReportResponse.Type.
+type GetReportResponseType string
+
+// GetReportResponseResult defines model for GetReportResponseResult.
+type GetReportResponseResult struct {
+	// CacheHit If true, results were fetched from the cache.
+	CacheHit     *bool                                `json:"cacheHit,omitempty"`
+	ForecastRows *[][]*Value                          `json:"forecastRows,omitempty"`
+	MlFeatures   *[]GetReportResponseResultMlFeatures `json:"mlFeatures,omitempty"`
+	Rows         *[][]*Value                          `json:"rows,omitempty"`
+	Schema       *[]SchemaField                       `json:"schema,omitempty"`
+
+	// SecondaryRows Secondary time range rows.
+	SecondaryRows *[][]*Value `json:"secondaryRows,omitempty"`
+}
+
+// GetReportResponseResultMlFeatures defines model for GetReportResponseResult.MlFeatures.
+type GetReportResponseResultMlFeatures string
 
 // Group The dimension that defines a row in the report.
 type Group struct {
@@ -4486,13 +4526,13 @@ type RunReportResult struct {
 type RunReportResultResult struct {
 	// CacheHit If true, results were fetched from the cache.
 	CacheHit     *bool                              `json:"cacheHit,omitempty"`
-	ForecastRows *[][]Value                         `json:"forecastRows,omitempty"`
+	ForecastRows *[][]*Value                        `json:"forecastRows,omitempty"`
 	MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
-	Rows         *[][]Value                         `json:"rows,omitempty"`
+	Rows         *[][]*Value                        `json:"rows,omitempty"`
 	Schema       *[]SchemaField                     `json:"schema,omitempty"`
 
 	// SecondaryRows Secondary time range rows.
-	SecondaryRows *[][]Value `json:"secondaryRows,omitempty"`
+	SecondaryRows *[][]*Value `json:"secondaryRows,omitempty"`
 }
 
 // RunReportResultResultMlFeatures defines model for RunReportResultResult.MlFeatures.
@@ -4937,8 +4977,19 @@ type ValidateResponse struct {
 	Email  *string `json:"email,omitempty"`
 }
 
-// Value The content of a single cell from a BigQuery result.
-type Value = map[string]interface{}
+// Value The content of a single cell from a BigQuery result. Can be a string, number, or null.
+type Value struct {
+	union json.RawMessage
+}
+
+// Value0 defines model for .
+type Value0 = string
+
+// Value1 defines model for .
+type Value1 = float32
+
+// Value2 defines model for .
+type Value2 = int
 
 // MaxResults defines model for maxResults.
 type MaxResults = string
@@ -5487,6 +5538,94 @@ func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) MarshalJSON() ([
 }
 
 func (t *DatahubEventsRequestBodyEventsItemDimensionsItem_Value) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsValue0 returns the union data inside the Value as a Value0
+func (t Value) AsValue0() (Value0, error) {
+	var body Value0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromValue0 overwrites any union data inside the Value as the provided Value0
+func (t *Value) FromValue0(v Value0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeValue0 performs a merge with any union data inside the Value, using the provided Value0
+func (t *Value) MergeValue0(v Value0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsValue1 returns the union data inside the Value as a Value1
+func (t Value) AsValue1() (Value1, error) {
+	var body Value1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromValue1 overwrites any union data inside the Value as the provided Value1
+func (t *Value) FromValue1(v Value1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeValue1 performs a merge with any union data inside the Value, using the provided Value1
+func (t *Value) MergeValue1(v Value1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsValue2 returns the union data inside the Value as a Value2
+func (t Value) AsValue2() (Value2, error) {
+	var body Value2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromValue2 overwrites any union data inside the Value as the provided Value2
+func (t *Value) FromValue2(v Value2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeValue2 performs a merge with any union data inside the Value, using the provided Value2
+func (t *Value) MergeValue2(v Value2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Value) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Value) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -12566,7 +12705,7 @@ func (r DeleteReportResp) StatusCode() int {
 type GetReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GetReport200Response
+	JSON200      *GetReportResponse
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -16608,7 +16747,7 @@ func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetReport200Response
+		var dest GetReportResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
