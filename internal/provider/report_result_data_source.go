@@ -61,16 +61,14 @@ func (d *reportResultDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 	resp.Schema = schema.Schema{
 		Description: "Fetches the results of an existing Cloud Analytics report." +
 			"\n\nThe report is executed and the results are returned as a JSON string in" +
-			" `result_json`. Use Terraform's `jsondecode()` to parse the results." +
-			"\n\n**Note:** Report results are dynamic — they change over time as new" +
-			" billing data is ingested. Every `terraform plan` will re-execute the" +
+			" result_json. Use Terraform's jsondecode() to parse the results." +
+			"\n\nNote: Report results are dynamic — they change over time as new" +
+			" billing data is ingested. Every terraform plan will re-execute the" +
 			" report." +
-			"\n\nThe `result_json` field contains the full result object including:" +
-			"\n- `schema`: Column definitions (name and type)" +
-			"\n- `rows`: Data rows (each row is an array of values)" +
-			"\n- `forecastRows`: Forecast data rows (if applicable)" +
-			"\n- `secondaryRows`: Secondary time range rows (if applicable)" +
-			"\n- `cacheHit`: Whether results were served from cache",
+			"\n\nThe result_json field contains the full result object, including the" +
+			" schema (column definitions), rows (data), forecastRows (forecast data)," +
+			" secondaryRows (secondary time range data), and cacheHit (whether results" +
+			" were served from cache).",
 		MarkdownDescription: "Fetches the results of an existing Cloud Analytics report." +
 			"\n\nThe report is executed and the results are returned as a JSON string in" +
 			" `result_json`. Use Terraform's `jsondecode()` to parse the results." +

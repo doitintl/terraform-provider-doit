@@ -14,7 +14,7 @@ resource "local_file" "report_csv" {
   filename = "report.csv"
   content = join("\n", concat(
     [join(",", local.columns)],
-    [for row in local.result.rows : join(",", row)]
+    [for row in local.result.rows : join(",", [for cell in row : cell == null ? "" : tostring(cell)])]
   ))
 }
 
