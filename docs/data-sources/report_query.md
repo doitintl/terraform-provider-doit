@@ -6,8 +6,7 @@ description: |-
   Runs an ad-hoc Cloud Analytics query without persisting a report.
   The query is executed with the provided config and results are returned as a JSON string in result_json. Use Terraform's jsondecode() to parse.
   ~> Note: Query results are dynamic — they change over time as new billing data is ingested. Every terraform plan will re-execute the query.
-  The result_json field contains the full result object including:
-  schema: Column definitions (name and type)rows: Data rows (each row is an array of values)forecastRows: Forecast data rows (if applicable)secondaryRows: Secondary time range rows (if applicable)cacheHit: Whether results were served from cache
+  The result_json field contains the full result object, including the following keys: schema (column definitions, including name and type), rows (data rows, where each row is an array of values), forecastRows (forecast data rows, if applicable), secondaryRows (secondary time range rows, if applicable), and cacheHit (whether results were served from cache).
 ---
 
 # doit_report_query (Data Source)
@@ -18,12 +17,7 @@ The query is executed with the provided config and results are returned as a JSO
 
 ~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query.
 
-The `result_json` field contains the full result object including:
-- `schema`: Column definitions (name and type)
-- `rows`: Data rows (each row is an array of values)
-- `forecastRows`: Forecast data rows (if applicable)
-- `secondaryRows`: Secondary time range rows (if applicable)
-- `cacheHit`: Whether results were served from cache
+The `result_json` field contains the full result object, including the following keys: `schema` (column definitions, including name and type), `rows` (data rows, where each row is an array of values), `forecastRows` (forecast data rows, if applicable), `secondaryRows` (secondary time range rows, if applicable), and `cacheHit` (whether results were served from cache).
 
 ## Example Usage
 

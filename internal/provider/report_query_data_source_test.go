@@ -67,7 +67,7 @@ func TestAccReportQueryDataSource_InvalidConfig(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccReportQueryDataSourceInvalidConfig(),
-				ExpectError: regexp.MustCompile(`(400|invalid|error|Error)`),
+				ExpectError: regexp.MustCompile(`(?i)Could not execute report query|invalid|secondaryTimeRange`),
 			},
 		},
 	})

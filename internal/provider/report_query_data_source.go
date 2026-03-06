@@ -87,12 +87,11 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			" as a JSON string in `result_json`. Use Terraform's `jsondecode()` to parse." +
 			"\n\n~> **Note:** Query results are dynamic — they change over time as new" +
 			" billing data is ingested. Every `terraform plan` will re-execute the query." +
-			"\n\nThe `result_json` field contains the full result object including:" +
-			"\n- `schema`: Column definitions (name and type)" +
-			"\n- `rows`: Data rows (each row is an array of values)" +
-			"\n- `forecastRows`: Forecast data rows (if applicable)" +
-			"\n- `secondaryRows`: Secondary time range rows (if applicable)" +
-			"\n- `cacheHit`: Whether results were served from cache",
+			"\n\nThe `result_json` field contains the full result object, including the following" +
+			" keys: `schema` (column definitions, including name and type), `rows` (data" +
+			" rows, where each row is an array of values), `forecastRows` (forecast data" +
+			" rows, if applicable), `secondaryRows` (secondary time range rows, if" +
+			" applicable), and `cacheHit` (whether results were served from cache).",
 		Attributes: map[string]dsschema.Attribute{
 			// --- Input ---
 			"config": dsschema.SingleNestedAttribute{
@@ -155,7 +154,7 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// If the config contains any unknown values (e.g., during a plan where
 	// inputs depend on unresolved resources), we cannot make a complete API query.
-	// return all computed attributes as unknown.
+	// Return all computed attributes as unknown.
 	if !req.Config.Raw.IsFullyKnown() {
 		data.ResultJSON = types.StringUnknown()
 		data.CacheHit = types.BoolUnknown()
