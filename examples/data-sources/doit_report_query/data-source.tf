@@ -38,11 +38,16 @@ data "doit_report_query" "cost_by_provider" {
 # Parse the JSON result
 locals {
   query_result = jsondecode(data.doit_report_query.cost_by_provider.result_json)
+  columns      = [for s in local.query_result.schema : s.name]
 }
 
-# Output the rows
-output "cost_rows" {
-  value = local.query_result.rows
+# Write results to a CSV file
+resource "local_file" "query_csv" {
+  filename = "cost_by_provider.csv"
+  content = join("\n", concat(
+    [join(",", local.columns)],
+    [for row in local.query_result.rows : join(",", [for cell in row : cell == null ? "" : tostring(cell)])]
+  ))
 }
 
 output "row_count" {
