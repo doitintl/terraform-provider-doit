@@ -19,6 +19,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	rsschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -65,7 +66,11 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 	}
 
 	// Convert the resource config attribute to a data source config attribute.
-	dsConfigAttrs := convertResourceAttrsToDataSource(configAttr.Attributes)
+	dsConfigAttrs, convertDiags := convertResourceAttrsToDataSource(configAttr.Attributes)
+	resp.Diagnostics.Append(convertDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Schema = dsschema.Schema{
 		Description: "Runs an ad-hoc Cloud Analytics query without persisting a report." +
@@ -233,7 +238,8 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 //
 // The CustomType fields (e.g., ConfigType, MetricType) are framework-agnostic
 // and work identically in both resource and data source contexts.
-func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) map[string]dsschema.Attribute {
+func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[string]dsschema.Attribute, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	result := make(map[string]dsschema.Attribute, len(attrs))
 
 	for name, attr := range attrs {
@@ -295,8 +301,10 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) map[s
 				CustomType:          a.CustomType,
 			}
 		case rsschema.SingleNestedAttribute:
+			nestedAttrs, nestedDiags := convertResourceAttrsToDataSource(a.Attributes)
+			diags.Append(nestedDiags...)
 			result[name] = dsschema.SingleNestedAttribute{
-				Attributes:          convertResourceAttrsToDataSource(a.Attributes),
+				Attributes:          nestedAttrs,
 				CustomType:          a.CustomType,
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
@@ -307,9 +315,11 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) map[s
 				Validators:          a.Validators,
 			}
 		case rsschema.ListNestedAttribute:
+			nestedAttrs, nestedDiags := convertResourceAttrsToDataSource(a.NestedObject.Attributes)
+			diags.Append(nestedDiags...)
 			result[name] = dsschema.ListNestedAttribute{
 				NestedObject: dsschema.NestedAttributeObject{
-					Attributes: convertResourceAttrsToDataSource(a.NestedObject.Attributes),
+					Attributes: nestedAttrs,
 					CustomType: a.NestedObject.CustomType,
 					Validators: a.NestedObject.Validators,
 				},
@@ -323,9 +333,13 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) map[s
 				CustomType:          a.CustomType,
 			}
 		default:
-			panic(fmt.Sprintf("unhandled attribute type %T for attribute %q in convertResourceAttrsToDataSource", attr, name))
+			diags.AddError(
+				"Unsupported Attribute Type in Schema Converter",
+				fmt.Sprintf("Attribute %q has type %T which is not handled by convertResourceAttrsToDataSource. "+
+					"This is a provider bug — please report it to the provider developers.", name, attr),
+			)
 		}
 	}
 
-	return result
+	return result, diags
 }
