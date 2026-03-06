@@ -322,6 +322,8 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) map[s
 				Validators:          a.Validators,
 				CustomType:          a.CustomType,
 			}
+		default:
+			panic(fmt.Sprintf("unhandled attribute type %T for attribute %q in convertResourceAttrsToDataSource", attr, name))
 		}
 	}
 
