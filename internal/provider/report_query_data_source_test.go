@@ -140,3 +140,71 @@ data "doit_report_query" "test" {
 }
 `
 }
+
+// TestAccReportQueryDataSource_WithComputedInput verifies that the data source
+// correctly defers execution when config contains unknown values (computed from
+// another resource). During plan, the computed value is unknown and the query
+// should return unknown outputs. During apply, the value resolves and the query
+// executes successfully.
+func TestAccReportQueryDataSource_WithComputedInput(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceWithComputedInputConfig(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceWithComputedInputConfig() string {
+	return `
+# terraform_data provides a computed output that is unknown during plan.
+# We use it to inject "USD" as a computed value for the currency field.
+resource "terraform_data" "currency" {
+    input = "USD"
+}
+
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        currency       = terraform_data.currency.output
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        dimensions = [
+          {
+            id   = "year"
+            type = "datetime"
+          },
+          {
+            id   = "month"
+            type = "datetime"
+          }
+        ]
+    }
+}
+`
+}
