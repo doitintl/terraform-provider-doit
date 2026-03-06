@@ -214,6 +214,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewAccountTeamDataSource,
 		NewUsersDataSource,
 		NewReportResultDataSource,
+		NewReportQueryDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,

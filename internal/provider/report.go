@@ -140,23 +140,42 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	if config.IsNull() || config.IsUnknown() {
 		return nil, diags
 	}
-	aggregation := models.ExternalConfigAggregation(config.Aggregation.ValueString())
-	currency := models.Currency(config.Currency.ValueString())
-	displayValues := models.ExternalConfigDisplayValues(config.DisplayValues.ValueString())
-	includePromotionalCredits := config.IncludePromotionalCredits.ValueBool()
-	layout := models.ExternalRenderer(config.Layout.ValueString())
-	sortDimensions := models.ExternalConfigSortDimensions(config.SortDimensions.ValueString())
-	sortGroups := models.ExternalConfigSortGroups(config.SortGroups.ValueString())
-	timeInterval := models.ExternalConfigTimeInterval(config.TimeInterval.ValueString())
-	externalConfig = &models.ExternalConfig{
-		Aggregation:               &aggregation,
-		Currency:                  &currency,
-		DisplayValues:             &displayValues,
-		IncludePromotionalCredits: &includePromotionalCredits,
-		Layout:                    &layout,
-		SortDimensions:            &sortDimensions,
-		SortGroups:                &sortGroups,
-		TimeInterval:              &timeInterval,
+	externalConfig = &models.ExternalConfig{}
+
+	// All top-level scalar fields are guarded with null/unknown checks so this
+	// function works both in the resource context (where defaults populate
+	// these fields) and in the data source context (where they may be omitted).
+	if !config.Aggregation.IsNull() && !config.Aggregation.IsUnknown() {
+		aggregation := models.ExternalConfigAggregation(config.Aggregation.ValueString())
+		externalConfig.Aggregation = &aggregation
+	}
+	if !config.Currency.IsNull() && !config.Currency.IsUnknown() {
+		currency := models.Currency(config.Currency.ValueString())
+		externalConfig.Currency = &currency
+	}
+	if !config.DisplayValues.IsNull() && !config.DisplayValues.IsUnknown() {
+		displayValues := models.ExternalConfigDisplayValues(config.DisplayValues.ValueString())
+		externalConfig.DisplayValues = &displayValues
+	}
+	if !config.IncludePromotionalCredits.IsNull() && !config.IncludePromotionalCredits.IsUnknown() {
+		includePromotionalCredits := config.IncludePromotionalCredits.ValueBool()
+		externalConfig.IncludePromotionalCredits = &includePromotionalCredits
+	}
+	if !config.Layout.IsNull() && !config.Layout.IsUnknown() {
+		layout := models.ExternalRenderer(config.Layout.ValueString())
+		externalConfig.Layout = &layout
+	}
+	if !config.SortDimensions.IsNull() && !config.SortDimensions.IsUnknown() {
+		sortDimensions := models.ExternalConfigSortDimensions(config.SortDimensions.ValueString())
+		externalConfig.SortDimensions = &sortDimensions
+	}
+	if !config.SortGroups.IsNull() && !config.SortGroups.IsUnknown() {
+		sortGroups := models.ExternalConfigSortGroups(config.SortGroups.ValueString())
+		externalConfig.SortGroups = &sortGroups
+	}
+	if !config.TimeInterval.IsNull() && !config.TimeInterval.IsUnknown() {
+		timeInterval := models.ExternalConfigTimeInterval(config.TimeInterval.ValueString())
+		externalConfig.TimeInterval = &timeInterval
 	}
 
 	if !config.DataSource.IsNull() && !config.DataSource.IsUnknown() {
