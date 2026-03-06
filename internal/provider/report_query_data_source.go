@@ -153,9 +153,10 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// If config is unknown (shouldn't happen since it's required, but be safe),
+	// If the config contains any unknown values (e.g., during a plan where
+	// inputs depend on unresolved resources), we cannot make a complete API query.
 	// return all computed attributes as unknown.
-	if data.Config.IsUnknown() {
+	if !req.Config.Raw.IsFullyKnown() {
 		data.ResultJSON = types.StringUnknown()
 		data.CacheHit = types.BoolUnknown()
 		data.RowCount = types.Int64Unknown()
