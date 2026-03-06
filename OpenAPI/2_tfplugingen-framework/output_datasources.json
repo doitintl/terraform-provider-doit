@@ -1528,6 +1528,174 @@
 						}
 					},
 					{
+						"name": "properties",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "customer_domain",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "customer_id",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "reseller",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "subscription",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "billing_method",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "creation_time",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "id",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "plan",
+												"single_nested": {
+													"computed_optional_required": "computed",
+													"attributes": [
+														{
+															"name": "commitment_interval",
+															"single_nested": {
+																"computed_optional_required": "computed",
+																"attributes": [
+																	{
+																		"name": "end_time",
+																		"int64": {
+																			"computed_optional_required": "computed"
+																		}
+																	},
+																	{
+																		"name": "start_time",
+																		"int64": {
+																			"computed_optional_required": "computed"
+																		}
+																	}
+																],
+																"description": "Subscription-related metadata for an asset."
+															}
+														},
+														{
+															"name": "is_commitment_plan",
+															"bool": {
+																"computed_optional_required": "computed"
+															}
+														},
+														{
+															"name": "plan_name",
+															"string": {
+																"computed_optional_required": "computed"
+															}
+														}
+													],
+													"description": "Subscription-related metadata for an asset."
+												}
+											},
+											{
+												"name": "purchase_order_id",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "renewal_settings",
+												"single_nested": {
+													"computed_optional_required": "computed",
+													"attributes": [
+														{
+															"name": "renewal_type",
+															"string": {
+																"computed_optional_required": "computed"
+															}
+														}
+													],
+													"description": "Settings that control subscription renewal behavior."
+												}
+											},
+											{
+												"name": "resource_uiurl",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "seats",
+												"single_nested": {
+													"computed_optional_required": "computed",
+													"attributes": [
+														{
+															"name": "licensed_number_of_seats",
+															"int64": {
+																"computed_optional_required": "computed"
+															}
+														},
+														{
+															"name": "maximum_number_of_seats",
+															"int64": {
+																"computed_optional_required": "computed"
+															}
+														},
+														{
+															"name": "number_of_seats",
+															"int64": {
+																"computed_optional_required": "computed"
+															}
+														}
+													],
+													"description": "Licensing seat counts for a subscription or asset."
+												}
+											},
+											{
+												"name": "sku_id",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "sku_name",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "status",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											}
+										],
+										"description": "Subscription-related metadata for an asset."
+									}
+								}
+							],
+							"description": "Additional properties associated with an asset."
+						}
+					},
+					{
 						"name": "quantity",
 						"int64": {
 							"computed_optional_required": "computed"

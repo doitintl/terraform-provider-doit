@@ -2743,6 +2743,20 @@ type AssetItem struct {
 	Url        *string `json:"url,omitempty"`
 }
 
+// AssetItemDetailed Detailed information about a single asset, including properties.
+type AssetItemDetailed struct {
+	// CreateTime The time when the asset was created, in milliseconds since the epoch.
+	CreateTime *int64  `json:"createTime,omitempty"`
+	Id         *string `json:"id,omitempty"`
+	Name       *string `json:"name,omitempty"`
+
+	// Properties Additional properties associated with an asset.
+	Properties *AssetProperties `json:"properties,omitempty"`
+	Quantity   *int64           `json:"quantity,omitempty"`
+	Type       *string          `json:"type,omitempty"`
+	Url        *string          `json:"url,omitempty"`
+}
+
 // AssetProperties Additional properties associated with an asset.
 type AssetProperties struct {
 	CustomerDomain *string `json:"customerDomain,omitempty"`
@@ -12888,7 +12902,7 @@ func (r IdOfAssetsResp) StatusCode() int {
 type GetAssetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *AssetItem
+	JSON200      *AssetItemDetailed
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -17132,7 +17146,7 @@ func ParseGetAssetResp(rsp *http.Response) (*GetAssetResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest AssetItem
+		var dest AssetItemDetailed
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

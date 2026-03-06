@@ -2333,7 +2333,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AssetItem"
+                $ref: "#/components/schemas/AssetItemDetailed"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3122,6 +3122,27 @@ components:
           type: string
         url:
           type: string
+    AssetItemDetailed:
+      type: object
+      description: Detailed information about a single asset, including properties.
+      properties:
+        createTime:
+          type: integer
+          description: The time when the asset was created, in milliseconds since the epoch.
+          format: int64
+        id:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: integer
+          format: int64
+        type:
+          type: string
+        url:
+          type: string
+        properties:
+          $ref: "#/components/schemas/AssetProperties"
     AssetProperties:
       type: object
       description: Additional properties associated with an asset.
