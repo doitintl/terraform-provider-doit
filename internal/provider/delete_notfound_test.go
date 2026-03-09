@@ -857,7 +857,7 @@ func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 			if hasError != tt.expectError {
 				var diagDetails strings.Builder
 				for _, d := range deleteResp.Diagnostics {
-					diagDetails.WriteString(fmt.Sprintf("\n  - %s: %s", d.Summary(), d.Detail()))
+					fmt.Fprintf(&diagDetails, "\n  - %s: %s", d.Summary(), d.Detail())
 				}
 				t.Errorf("Delete() hasError = %v, expectError %v; diagnostics:%s",
 					hasError, tt.expectError, diagDetails.String())
