@@ -3178,6 +3178,47 @@
 			}
 		},
 		{
+			"name": "label_assignments",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Label ID"
+						}
+					},
+					{
+						"name": "assignments",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "object_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The ID of the object to assign/unassign."
+										}
+									},
+									{
+										"name": "object_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The type of the object."
+										}
+									}
+								]
+							},
+							"description": "Array of objects currently assigned to the label."
+						}
+					}
+				],
+				"description": "Create and manage labels to organize and categorize your cloud resources.",
+				"markdown_description": "Create and manage labels to organize and categorize your cloud resources."
+			}
+		},
+		{
 			"name": "labels",
 			"schema": {
 				"attributes": [

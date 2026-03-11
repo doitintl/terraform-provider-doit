@@ -754,6 +754,34 @@ paths:
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
   "/analytics/v1/labels/{id}/assignments":
+    get:
+      tags:
+        - Labels
+      summary: Get label assignments
+      description: Returns the list of objects currently assigned to the label specified by the ID.
+      operationId: getLabelAssignments
+      parameters:
+        - name: id
+          in: path
+          description: Label ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Label assignments returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelAssignmentsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
     post:
       tags:
         - Labels
@@ -4508,6 +4536,15 @@ components:
             - report
             - annotation
           description: The type of the object.
+    LabelAssignmentsResponse:
+      type: object
+      description: Response containing the list of objects assigned to a label.
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelAssignmentObject"
+          description: Array of objects currently assigned to the label.
     AttributionListItem:
       required:
         - name
