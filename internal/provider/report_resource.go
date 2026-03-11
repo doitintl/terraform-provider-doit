@@ -108,6 +108,14 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	if reportResp.JSON201.Id == nil {
+		resp.Diagnostics.AddError(
+			"Error creating report",
+			"Could not create report, response missing ID",
+		)
+		return
+	}
+
 	// Map the full response directly to state (no extra GET needed)
 	diags = r.populateState(ctx, &plan, reportResp.JSON201)
 	resp.Diagnostics.Append(diags...)
@@ -181,6 +189,14 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		resp.Diagnostics.AddError(
 			"Error updating report",
 			"Could not update report, empty response",
+		)
+		return
+	}
+
+	if reportResp.JSON200.Id == nil {
+		resp.Diagnostics.AddError(
+			"Error updating report",
+			"Could not update report, response missing ID",
 		)
 		return
 	}

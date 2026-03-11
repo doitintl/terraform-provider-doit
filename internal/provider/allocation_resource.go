@@ -157,6 +157,14 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	if allocationResp.JSON200.Id == nil {
+		resp.Diagnostics.AddError(
+			"Error creating allocation",
+			"Could not create allocation, response missing ID",
+		)
+		return
+	}
+
 	// Map the full response directly to state (no extra GET needed)
 	diags = r.mapAllocationToModel(ctx, allocationResp.JSON200, plan)
 	resp.Diagnostics.Append(diags...)
@@ -235,6 +243,14 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		resp.Diagnostics.AddError(
 			"Error updating allocation",
 			"Could not update allocation, empty response",
+		)
+		return
+	}
+
+	if updateResp.JSON200.Id == nil {
+		resp.Diagnostics.AddError(
+			"Error updating allocation",
+			"Could not update allocation, response missing ID",
 		)
 		return
 	}

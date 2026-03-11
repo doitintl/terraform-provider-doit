@@ -138,6 +138,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 }
 
 // populateState fetches the allocation from the API and populates the Terraform state.
+// This is used by Read and ImportState. Create and Update use mapAllocationToModel
+// directly with the API response instead.
 //
 // # 404 Handling Strategy
 //
@@ -149,29 +151,9 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 //     from state. On next plan, Terraform will propose recreating it.
 //     This is the standard Terraform pattern for "externally deleted" resources.
 //
-//   - allowNotFound=false (used by Create and Update):
-//     404 is unexpected and indicates an error. After a successful Create or
-//     Update API call, the resource MUST exist. A 404 here could indicate:
-//
-//   - A transient API issue (rare, but possible)
-//
-//   - An eventual consistency problem
-//
-//   - A bug in the provider or API
-//     In these cases, we return an error so the user knows something went wrong
-//     and can retry. This prevents silent resource orphaning.
-//
-// # Why This Matters
-//
-// Without this distinction, a transient 404 during Create would:
-//  1. Create the resource successfully (API returns 200 with ID)
-//  2. GET returns 404 (transient issue)
-//  3. populateState sets state.Id = null (no error!)
-//  4. Terraform "succeeds" but loses track of the resource
-//  5. Resource is orphaned - exists in API but not in Terraform state
-//
-// With allowNotFound=false for Create/Update, step 3 returns an error,
-// the user sees the failure, and can retry or investigate.
+//   - allowNotFound=false:
+//     404 is unexpected and indicates an error. This is kept as a safety measure
+//     but is not currently used since Create/Update no longer call populateState.
 func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel, allowNotFound bool) (diags diag.Diagnostics) {
 	// Get refreshed allocation value from DoiT using the ID from the state.
 	httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
