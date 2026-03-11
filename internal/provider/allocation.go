@@ -138,6 +138,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 }
 
 // populateState fetches the allocation from the API and populates the Terraform state.
+// This is used by Read and ImportState. Create and Update use mapAllocationToModel
+// directly with the API response instead.
 //
 // # 404 Handling Strategy
 //
@@ -149,32 +151,10 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 //     from state. On next plan, Terraform will propose recreating it.
 //     This is the standard Terraform pattern for "externally deleted" resources.
 //
-//   - allowNotFound=false (used by Create and Update):
-//     404 is unexpected and indicates an error. After a successful Create or
-//     Update API call, the resource MUST exist. A 404 here could indicate:
-//
-//   - A transient API issue (rare, but possible)
-//
-//   - An eventual consistency problem
-//
-//   - A bug in the provider or API
-//     In these cases, we return an error so the user knows something went wrong
-//     and can retry. This prevents silent resource orphaning.
-//
-// # Why This Matters
-//
-// Without this distinction, a transient 404 during Create would:
-//  1. Create the resource successfully (API returns 200 with ID)
-//  2. GET returns 404 (transient issue)
-//  3. populateState sets state.Id = null (no error!)
-//  4. Terraform "succeeds" but loses track of the resource
-//  5. Resource is orphaned - exists in API but not in Terraform state
-//
-// With allowNotFound=false for Create/Update, step 3 returns an error,
-// the user sees the failure, and can retry or investigate.
+//   - allowNotFound=false:
+//     404 is unexpected and indicates an error. This is kept as a safety measure
+//     but is not currently used since Create/Update no longer call populateState.
 func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel, allowNotFound bool) (diags diag.Diagnostics) {
-	var resp *models.Allocation
-
 	// Get refreshed allocation value from DoiT using the ID from the state.
 	httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
@@ -213,8 +193,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	resp = httpResp.JSON200
-	if resp == nil {
+	if httpResp.JSON200 == nil {
 		diags.AddError(
 			"Error Reading DoiT Allocation",
 			"Received empty response body for allocation ID "+state.Id.ValueString(),
@@ -222,6 +201,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
+	return r.mapAllocationToModel(ctx, httpResp.JSON200, state)
+}
+
+// mapAllocationToModel maps an Allocation API response to the Terraform resource model.
+// This is used by both populateState (for Read) and directly by Create/Update
+// when the API returns the full object in the response.
+func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *models.Allocation, state *allocationResourceModel) (diags diag.Diagnostics) {
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
 	state.Description = types.StringPointerValue(resp.Description)

@@ -529,20 +529,6 @@
 						}
 					},
 					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "ID of the new allocation."
-						}
-					},
-					{
-						"name": "type",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "Type of the new allocation."
-						}
-					},
-					{
 						"name": "allocation_type",
 						"string": {
 							"computed_optional_required": "computed",
@@ -561,6 +547,20 @@
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "The time when the allocation was created (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Allocation ID."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Type of allocation (preset or custom)."
 						}
 					},
 					{
@@ -2003,7 +2003,7 @@
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "ID of the new report."
+							"description": "Report ID."
 						}
 					},
 					{

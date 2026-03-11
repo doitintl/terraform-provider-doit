@@ -43,8 +43,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the new allocation.",
-				MarkdownDescription: "ID of the new allocation.",
+				Description:         "Allocation ID.",
+				MarkdownDescription: "Allocation ID.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
@@ -265,8 +265,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the new allocation.",
-				MarkdownDescription: "Type of the new allocation.",
+				Description:         "Type of allocation (preset or custom).",
+				MarkdownDescription: "Type of allocation (preset or custom).",
 			},
 			"unallocated_costs": schema.StringAttribute{
 				Optional:            true,

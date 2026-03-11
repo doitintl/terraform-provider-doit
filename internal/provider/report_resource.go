@@ -8,7 +8,6 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -101,18 +100,24 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	if reportResp.JSON201 == nil || reportResp.JSON201.Id == nil {
+	if reportResp.JSON201 == nil {
 		resp.Diagnostics.AddError(
 			"Error creating report",
-			"Could not create report, empty response or missing ID",
+			"Could not create report, empty response",
 		)
 		return
 	}
 
-	plan.Id = types.StringPointerValue(reportResp.JSON201.Id)
+	if reportResp.JSON201.Id == nil {
+		resp.Diagnostics.AddError(
+			"Error creating report",
+			"Could not create report, response missing ID",
+		)
+		return
+	}
 
-	// allowNotFound=false: After successful create, 404 is an error (resource should exist)
-	diags = r.populateStateFromAPI(ctx, plan.Id.ValueString(), &plan, false)
+	// Map the full response directly to state (no extra GET needed)
+	diags = r.populateState(ctx, &plan, reportResp.JSON201)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -180,8 +185,24 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// allowNotFound=false: After successful update, 404 is an error (resource should exist)
-	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &plan, false)
+	if reportResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error updating report",
+			"Could not update report, empty response",
+		)
+		return
+	}
+
+	if reportResp.JSON200.Id == nil {
+		resp.Diagnostics.AddError(
+			"Error updating report",
+			"Could not update report, response missing ID",
+		)
+		return
+	}
+
+	// Map the full response directly to state (no extra GET needed)
+	diags = r.populateState(ctx, &plan, reportResp.JSON200)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
