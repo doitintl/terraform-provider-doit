@@ -79,3 +79,16 @@ resources:
     delete:
       path: /analytics/v1/labels/{id}
       method: DELETE
+  datahub_dataset:
+    create:
+      path: /datahub/v1/datasets
+      method: POST
+    read:
+      path: /datahub/v1/datasets/{name}
+      method: GET
+    update:
+      path: /datahub/v1/datasets/{name}
+      method: PATCH
+    delete:
+      path: /datahub/v1/datasets/{name}
+      method: DELETE

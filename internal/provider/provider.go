@@ -247,5 +247,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewAllocationResource,
 		NewAnnotationResource,
 		NewLabelResource,
+		NewDatahubDatasetResource,
 	}
 }

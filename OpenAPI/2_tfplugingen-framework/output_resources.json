@@ -1029,6 +1029,65 @@
 			}
 		},
 		{
+			"name": "datahub_dataset",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An optional description for the dataset."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-zA-Z0-9_-]+( [a-zA-Z0-9_-]+)*$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "last_updated",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The timestamp of the last update."
+						}
+					},
+					{
+						"name": "records",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The number of records in the dataset."
+						}
+					},
+					{
+						"name": "updated_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The email of the user who last updated the dataset."
+						}
+					}
+				],
+				"description": "Ingest third-party cost, usage, and metric-based data for analysis.",
+				"markdown_description": "Ingest third-party cost, usage, and metric-based data for analysis."
+			}
+		},
+		{
 			"name": "label",
 			"schema": {
 				"attributes": [
