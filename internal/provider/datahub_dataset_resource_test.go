@@ -49,10 +49,11 @@ func TestAccDatahubDatasetResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "doit_datahub_dataset.test",
-				ImportState:       true,
-				ImportStateId:     rName,
-				ImportStateVerify: true,
+				ResourceName:                         "doit_datahub_dataset.test",
+				ImportState:                          true,
+				ImportStateId:                        rName,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "name",
 			},
 		},
 	})
