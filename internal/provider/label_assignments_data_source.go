@@ -56,7 +56,10 @@ func (d *labelAssignmentsDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
+	// If ID is unknown (depends on a resource not yet created), return early
+	// but set state to preserve the config model during planning.
 	if data.Id.IsUnknown() {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
