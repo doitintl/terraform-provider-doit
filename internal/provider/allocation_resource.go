@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type (
@@ -158,10 +157,8 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	plan.Id = types.StringPointerValue(allocationResp.JSON200.Id)
-
-	// allowNotFound=false: After successful create, 404 is an error (resource should exist)
-	diags = r.populateState(ctx, plan, false)
+	// Map the full response directly to state (no extra GET needed)
+	diags = r.mapAllocationToModel(ctx, allocationResp.JSON200, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -242,8 +239,8 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// allowNotFound=false: After successful update, 404 is an error (resource should exist)
-	diags = r.populateState(ctx, state, false)
+	// Map the full response directly to state (no extra GET needed)
+	diags = r.mapAllocationToModel(ctx, updateResp.JSON200, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

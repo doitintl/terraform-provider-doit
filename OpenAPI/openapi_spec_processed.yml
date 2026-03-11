@@ -293,7 +293,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -390,7 +390,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1422,7 +1422,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateReport201Response'
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1592,7 +1592,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateReport200Response'
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4372,12 +4372,6 @@ components:
             - rosePink
             - slateGrey
           description: The color of the label.
-    CreateReport201Response:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the new report.
     CreateReportRequestBody:
       type: object
       properties:
@@ -5925,19 +5919,6 @@ components:
     MetricType:
       type: string
       description: Identifier for metric type (e.g., basic, custom, extended).
-    NewAllocationResponse:
-      type: object
-      description: Response returned after creating a new allocation.
-      properties:
-        id:
-          type: string
-          description: ID of the new allocation.
-        type:
-          type: string
-          description: Type of the new allocation.
-          enum:
-            - single
-            - group
     ObjectType:
       type: string
       description: Generic object type identifier.
@@ -6598,12 +6579,6 @@ components:
             - slateGrey
           description: The color of the label.
           nullable: true
-    UpdateReport200Response:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the updated report.
     UpdateResourcePermissionRequestBody:
       type: object
       properties:

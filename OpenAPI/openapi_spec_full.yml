@@ -305,7 +305,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -402,7 +402,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1540,11 +1540,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: ID of the new report.
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1723,11 +1719,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: ID of the updated report.
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3799,19 +3791,6 @@ components:
             - ends_with
             - contains
             - regexp
-    NewAllocationResponse:
-      type: object
-      description: Response returned after creating a new allocation.
-      properties:
-        id:
-          type: string
-          description: ID of the new allocation.
-        type:
-          type: string
-          description: Type of the new allocation.
-          enum:
-            - single
-            - group
     CreateAllocationRequest:
       required:
         - name

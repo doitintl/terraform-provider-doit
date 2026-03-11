@@ -173,8 +173,6 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 // With allowNotFound=false for Create/Update, step 3 returns an error,
 // the user sees the failure, and can retry or investigate.
 func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel, allowNotFound bool) (diags diag.Diagnostics) {
-	var resp *models.Allocation
-
 	// Get refreshed allocation value from DoiT using the ID from the state.
 	httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
@@ -213,8 +211,7 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	resp = httpResp.JSON200
-	if resp == nil {
+	if httpResp.JSON200 == nil {
 		diags.AddError(
 			"Error Reading DoiT Allocation",
 			"Received empty response body for allocation ID "+state.Id.ValueString(),
@@ -222,6 +219,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
+	return r.mapAllocationToModel(ctx, httpResp.JSON200, state)
+}
+
+// mapAllocationToModel maps an Allocation API response to the Terraform resource model.
+// This is used by both populateState (for Read) and directly by Create/Update
+// when the API returns the full object in the response.
+func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *models.Allocation, state *allocationResourceModel) (diags diag.Diagnostics) {
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
 	state.Description = types.StringPointerValue(resp.Description)
