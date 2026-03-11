@@ -211,7 +211,7 @@ func (r *labelAssignmentsResource) Read(ctx context.Context, req resource.ReadRe
 	}
 
 	// Map API response to state
-	state.Assignments = r.apiAssignmentsToSet(ctx, assignResp.JSON200.Assignments, &resp.Diagnostics)
+	state.Assignments = r.apiAssignmentsToSet(assignResp.JSON200.Assignments, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -353,7 +353,7 @@ func (r *labelAssignmentsResource) extractAssignments(set types.Set, diags *diag
 }
 
 // apiAssignmentsToSet maps API assignments to a Terraform set value.
-func (r *labelAssignmentsResource) apiAssignmentsToSet(ctx context.Context, assignments *[]models.LabelAssignmentObject, diags *diag.Diagnostics) types.Set {
+func (r *labelAssignmentsResource) apiAssignmentsToSet(assignments *[]models.LabelAssignmentObject, diags *diag.Diagnostics) types.Set {
 	elemType := types.ObjectType{AttrTypes: assignmentAttrTypes()}
 
 	if assignments == nil || len(*assignments) == 0 {
