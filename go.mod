@@ -29,7 +29,7 @@ require (
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.9.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260107124852-d66a807e8752 // indirect
 	github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260114083008-7250fcf987de // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
