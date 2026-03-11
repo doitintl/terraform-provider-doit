@@ -202,6 +202,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewReportDataSource,
 		NewAnnotationDataSource,
 		NewLabelDataSource,
+		NewLabelAssignmentsDataSource,
 		NewAlertDataSource,
 		NewAnomalyDataSource,
 		NewInvoiceDataSource,
@@ -247,5 +248,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewAllocationResource,
 		NewAnnotationResource,
 		NewLabelResource,
+		NewLabelAssignmentsResource,
 	}
 }

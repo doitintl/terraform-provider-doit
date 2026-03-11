@@ -21,6 +21,10 @@ data_sources:
     read:
       path: /analytics/v1/labels/{id}
       method: GET
+  label_assignments:
+    read:
+      path: /analytics/v1/labels/{id}/assignments
+      method: GET
   alert:
     read:
       path: /analytics/v1/alerts/{id}

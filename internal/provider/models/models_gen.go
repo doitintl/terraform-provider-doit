@@ -4217,6 +4217,12 @@ type LabelAssignmentObject struct {
 // LabelAssignmentObjectObjectType The type of the object.
 type LabelAssignmentObjectObjectType string
 
+// LabelAssignmentsResponse Response containing the list of objects assigned to a label.
+type LabelAssignmentsResponse struct {
+	// Assignments Array of objects currently assigned to the label.
+	Assignments *[]LabelAssignmentObject `json:"assignments,omitempty"`
+}
+
 // LabelInfo Metadata for a label.
 type LabelInfo struct {
 	// Id The unique identifier of the label.
@@ -5926,6 +5932,9 @@ type ClientInterface interface {
 
 	UpdateLabel(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLabelAssignments request
+	GetLabelAssignments(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// AssignObjectsToLabelWithBody request with any body
 	AssignObjectsToLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -6709,6 +6718,18 @@ func (c *Client) UpdateLabelWithBody(ctx context.Context, id string, contentType
 
 func (c *Client) UpdateLabel(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateLabelRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLabelAssignments(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLabelAssignmentsRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -9580,6 +9601,40 @@ func NewUpdateLabelRequestWithBody(server string, id string, contentType string,
 	return req, nil
 }
 
+// NewGetLabelAssignmentsRequest generates requests for GetLabelAssignments
+func NewGetLabelAssignmentsRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels/%s/assignments", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewAssignObjectsToLabelRequest calls the generic AssignObjectsToLabel builder with application/json body
 func NewAssignObjectsToLabelRequest(server string, id string, body AssignObjectsToLabelJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -11862,6 +11917,9 @@ type ClientWithResponsesInterface interface {
 
 	UpdateLabelWithResponse(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLabelResp, error)
 
+	// GetLabelAssignmentsWithResponse request
+	GetLabelAssignmentsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelAssignmentsResp, error)
+
 	// AssignObjectsToLabelWithBodyWithResponse request with any body
 	AssignObjectsToLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error)
 
@@ -13024,6 +13082,32 @@ func (r UpdateLabelResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateLabelResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetLabelAssignmentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *LabelAssignmentsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLabelAssignmentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLabelAssignmentsResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -14582,6 +14666,15 @@ func (c *ClientWithResponses) UpdateLabelWithResponse(ctx context.Context, id st
 		return nil, err
 	}
 	return ParseUpdateLabelResp(rsp)
+}
+
+// GetLabelAssignmentsWithResponse request returning *GetLabelAssignmentsResp
+func (c *ClientWithResponses) GetLabelAssignmentsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelAssignmentsResp, error) {
+	rsp, err := c.GetLabelAssignments(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelAssignmentsResp(rsp)
 }
 
 // AssignObjectsToLabelWithBodyWithResponse request with arbitrary body returning *AssignObjectsToLabelResp
@@ -17129,6 +17222,60 @@ func ParseUpdateLabelResp(rsp *http.Response) (*UpdateLabelResp, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest LabelListItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetLabelAssignmentsResp parses an HTTP response from a GetLabelAssignmentsWithResponse call
+func ParseGetLabelAssignmentsResp(rsp *http.Response) (*GetLabelAssignmentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelAssignmentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LabelAssignmentsResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
