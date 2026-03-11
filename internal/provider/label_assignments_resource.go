@@ -357,7 +357,7 @@ func (r *labelAssignmentsResource) apiAssignmentsToSet(ctx context.Context, assi
 	elemType := types.ObjectType{AttrTypes: assignmentAttrTypes()}
 
 	if assignments == nil || len(*assignments) == 0 {
-		emptySet, d := types.SetValueFrom(ctx, elemType, []attr.Value{})
+		emptySet, d := types.SetValue(elemType, []attr.Value{})
 		diags.Append(d...)
 		return emptySet
 	}

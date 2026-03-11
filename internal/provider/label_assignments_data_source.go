@@ -57,8 +57,14 @@ func (d *labelAssignmentsDataSource) Read(ctx context.Context, req datasource.Re
 	}
 
 	// If ID is unknown (depends on a resource not yet created), return early
-	// but set state to preserve the config model during planning.
+	// but set computed list attributes to Unknown and preserve state during planning.
 	if data.Id.IsUnknown() {
+		elemType := datasource_label_assignments.AssignmentsType{
+			ObjectType: types.ObjectType{
+				AttrTypes: datasource_label_assignments.AssignmentsValue{}.AttributeTypes(ctx),
+			},
+		}
+		data.Assignments = types.ListUnknown(elemType)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
