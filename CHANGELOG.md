@@ -1,15 +1,44 @@
 # Changelog
 
-## Unreleased
+## v1.2.0 (2026-03-09)
 
 ### BREAKING CHANGES
 
 - **resource/doit_allocation**: The `type` attribute on allocation rule components now uses a dedicated enum. The values `attribution` and `attribution_group` are no longer accepted. A new value `allocation_rule` has been added, allowing components to reference existing allocation rules (nested allocations with max depth of 3).
 
+### FEATURES
+
+- **data-source/doit_report_result**: New data source to get a single report result by ID ([#113](https://github.com/doitintl/terraform-provider-doit/pull/113))
+- **data-source/doit_report_query**: New data source for ad-hoc Cloud Analytics queries without persisting a report ([#115](https://github.com/doitintl/terraform-provider-doit/pull/115))
+- **data-source/doit_asset**: New data source to get a single asset by ID ([#108](https://github.com/doitintl/terraform-provider-doit/pull/108))
+- **data-source/doit_organizations**: New data source to list organizations ([#97](https://github.com/doitintl/terraform-provider-doit/pull/97))
+- **resource/doit_report**: Added `labels` support to report resource and data sources ([#104](https://github.com/doitintl/terraform-provider-doit/pull/104))
+
 ### ENHANCEMENTS
 
 - **resource/doit_allocation**: Allocation rule components now support `type = "allocation_rule"` to reference existing allocation rules by ID, enabling nested allocation rule composition.
+- **resource/doit_report**: Added plan-time RFC3339 validation for report timestamps ([#101](https://github.com/doitintl/terraform-provider-doit/pull/101))
 - **docs**: Improved documentation for allocation component fields (`key`, `mode`, `values`, `type`) with guidance on using the new `allocation_rule` type.
+
+### BUG FIXES
+
+- **resource/doit_allocation, doit_annotation, doit_report**: Defensive empty list handling to prevent state inconsistencies ([#100](https://github.com/doitintl/terraform-provider-doit/pull/100))
+- **data-sources**: Fixed deterministic row count fallback for list data sources ([#98](https://github.com/doitintl/terraform-provider-doit/pull/98))
+- **docs**: Fixed pagination guide table rendering for Terraform Registry ([#106](https://github.com/doitintl/terraform-provider-doit/pull/106))
+- **test**: Cleaned up CMP-38157 report targets tests ([#103](https://github.com/doitintl/terraform-provider-doit/pull/103))
+- **ci**: Fixed `validate-examples` to use locally built provider via dev_overrides ([#102](https://github.com/doitintl/terraform-provider-doit/pull/102))
+
+### INTERNAL
+
+- Upgraded to Go 1.26 and adopted `new(expr)` syntax ([#111](https://github.com/doitintl/terraform-provider-doit/pull/111))
+- Upgraded oapi-codegen to v2.6.0 ([#112](https://github.com/doitintl/terraform-provider-doit/pull/112))
+- Synced upstream allocation API changes ([#110](https://github.com/doitintl/terraform-provider-doit/pull/110))
+- Made Nix flake activation optional in `.envrc` ([#114](https://github.com/doitintl/terraform-provider-doit/pull/114))
+- Added `validate-docs` step to CI workflow ([#107](https://github.com/doitintl/terraform-provider-doit/pull/107))
+- Updated report field descriptions from upstream API spec ([#96](https://github.com/doitintl/terraform-provider-doit/pull/96))
+- Bumped dependencies and corrected release date for v1.1.0 ([#95](https://github.com/doitintl/terraform-provider-doit/pull/95))
+- Upgraded CI workflow actions to latest versions (`setup-go` v6.3.0, `setup-terraform` v4.0.0, `golangci-lint` v2.11.2)
+- Fixed linter findings for `gosec` G704 and `staticcheck` QF1012
 
 ## v1.1.0 (2026-02-24)
 
