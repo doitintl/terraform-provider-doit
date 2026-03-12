@@ -81,8 +81,7 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 		Name: plan.Name.ValueString(),
 	}
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		apiReq.Description = new(string)
-		*apiReq.Description = plan.Description.ValueString()
+		apiReq.Description = new(plan.Description.ValueString())
 	}
 
 	createResp, err := r.client.CreateDatahubDatasetWithResponse(ctx, apiReq)
@@ -175,8 +174,7 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 
 	apiReq := models.UpdateDatahubDatasetRequestBody{}
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		apiReq.Description = new(string)
-		*apiReq.Description = plan.Description.ValueString()
+		apiReq.Description = new(plan.Description.ValueString())
 	}
 
 	updateResp, err := r.client.UpdateDatahubDatasetWithResponse(ctx, state.Name.ValueString(), apiReq)
