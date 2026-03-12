@@ -2,9 +2,9 @@ package provider_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
@@ -42,11 +42,9 @@ data "doit_datahub_datasets" "test" {}
 }
 
 // TestAccDatahubDatasetDataSource_Basic tests fetching a specific dataset by name.
+// Creates a dataset via the resource, then reads it back via the data source.
 func TestAccDatahubDatasetDataSource_Basic(t *testing.T) {
-	datasetName := os.Getenv("TEST_DATASET_NAME")
-	if datasetName == "" {
-		t.Skip("TEST_DATASET_NAME not set")
-	}
+	rName := acctest.RandomWithPrefix("tf-acc-ds")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -54,15 +52,15 @@ func TestAccDatahubDatasetDataSource_Basic(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDatahubDatasetDataSourceConfig(datasetName),
+				Config: testAccDatahubDatasetDataSourceConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "name", datasetName),
+					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "name", rName),
 					resource.TestCheckResourceAttrSet("data.doit_datahub_dataset.test", "last_updated"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
 			{
-				Config: testAccDatahubDatasetDataSourceConfig(datasetName),
+				Config: testAccDatahubDatasetDataSourceConfig(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -75,8 +73,13 @@ func TestAccDatahubDatasetDataSource_Basic(t *testing.T) {
 
 func testAccDatahubDatasetDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
+resource "doit_datahub_dataset" "dep" {
+  name        = %[1]q
+  description = "Created by acceptance test for data source verification"
+}
+
 data "doit_datahub_dataset" "test" {
-  name = %[1]q
+  name = doit_datahub_dataset.dep.name
 }
 `, name)
 }
