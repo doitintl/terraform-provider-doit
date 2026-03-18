@@ -239,7 +239,7 @@ func (r *assetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	// We simply remove the resource from Terraform state.
 	tflog.Warn(ctx, "doit_asset does not support deletion via the API. "+
 		"The asset has been removed from Terraform state but continues to exist in DoiT.",
-		map[string]interface{}{
+		map[string]any{
 			"id": state.Id.ValueString(),
 		},
 	)
