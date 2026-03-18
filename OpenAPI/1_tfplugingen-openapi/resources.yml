@@ -79,6 +79,19 @@ resources:
     delete:
       path: /analytics/v1/labels/{id}
       method: DELETE
+  asset:
+    create:
+      path: /billing/v1/assets/{id}
+      method: PATCH
+    read:
+      path: /billing/v1/assets/{id}
+      method: GET
+    update:
+      path: /billing/v1/assets/{id}
+      method: PATCH
+    delete:
+      path: /billing/v1/assets/{id}
+      method: DELETE
   datahub_dataset:
     create:
       path: /datahub/v1/datasets
