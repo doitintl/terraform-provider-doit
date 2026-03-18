@@ -824,3 +824,74 @@ resource "doit_alert" "test_recipient" {
 		},
 	})
 }
+
+// TestAccAlert_ScopesAliasTypes tests that using the "allocation_rule" alias type
+// in alert scopes is handled correctly. Note: As of now, the alert API only accepts
+// "attribution" (not the "allocation_rule" alias), so we test with "attribution".
+// The normalization code in the provider ensures that if the API is updated to accept
+// aliases in the future, or if the user imports a resource that was created with aliases,
+// the state will remain consistent.
+func TestAccAlert_ScopesAliasTypes(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertScopesAliasTypes(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Verify type and id are preserved in state
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type": knownvalue.StringExact("attribution"),
+								"id":   knownvalue.StringExact("attribution"),
+								"mode": knownvalue.StringExact("is"),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertScopesAliasTypes(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertScopesAliasTypes(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-alias-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type   = "attribution"
+        id     = "attribution"
+        mode   = "is"
+        values = ["%s"]
+      }
+    ]
+  }
+}
+`, i, testAttribution())
+}

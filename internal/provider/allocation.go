@@ -228,8 +228,19 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 			"formula": types.StringValue(resp.Rule.Formula),
 		}
 		if resp.Rule.Components != nil {
+			// Get existing component types from state for alias normalization
+			var existingTypes []string
+			if !state.Rule.IsNull() && !state.Rule.IsUnknown() &&
+				!state.Rule.Components.IsNull() && !state.Rule.Components.IsUnknown() {
+				var existingComponents []resource_allocation.ComponentsValue
+				if d := state.Rule.Components.ElementsAs(ctx, &existingComponents, false); !d.HasError() {
+					for _, ec := range existingComponents {
+						existingTypes = append(existingTypes, ec.ComponentsType.ValueString())
+					}
+				}
+			}
 			var d diag.Diagnostics
-			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components)
+			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components, existingTypes)
 			diags.Append(d...)
 			if diags.HasError() {
 				return
@@ -323,8 +334,26 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 				"name":        types.StringPointerValue(rule.Name),
 			}
 			if len(components) > 0 {
+				// Get existing component types from state for alias normalization
+				var existingTypes []string
+				if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
+					var stateRulesForComponents []resource_allocation.RulesValue
+					if d := state.Rules.ElementsAs(ctx, &stateRulesForComponents, false); !d.HasError() {
+						if ruleIndex < len(stateRulesForComponents) {
+							sr := stateRulesForComponents[ruleIndex]
+							if !sr.Components.IsNull() && !sr.Components.IsUnknown() {
+								var existingComps []resource_allocation.ComponentsValue
+								if cd := sr.Components.ElementsAs(ctx, &existingComps, false); !cd.HasError() {
+									for _, ec := range existingComps {
+										existingTypes = append(existingTypes, ec.ComponentsType.ValueString())
+									}
+								}
+							}
+						}
+					}
+				}
 				var d diag.Diagnostics
-				m["components"], d = toAllocationRuleComponentsListValue(ctx, components)
+				m["components"], d = toAllocationRuleComponentsListValue(ctx, components, existingTypes)
 				diags.Append(d...)
 				if diags.HasError() {
 					return
@@ -358,7 +387,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 	return
 }
 
-func toAllocationRuleComponentsListValue(ctx context.Context, components []models.AllocationComponent) (res basetypes.ListValue, diags diag.Diagnostics) {
+func toAllocationRuleComponentsListValue(ctx context.Context, components []models.AllocationComponent, existingTypes []string) (res basetypes.ListValue, diags diag.Diagnostics) {
 	// Handle empty slice: return an empty list without indexing stateComponents[0].
 	if len(components) == 0 {
 		res, diags = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
@@ -366,12 +395,17 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 	}
 	stateComponents := make([]attr.Value, len(components))
 	for i, component := range components {
+		// Normalize alias types to preserve user's configured value
+		compType := string(component.Type)
+		if i < len(existingTypes) {
+			compType = normalizeDimensionsType(compType, existingTypes[i])
+		}
 		m := map[string]attr.Value{
 			"include_null":      types.BoolPointerValue(component.IncludeNull),
 			"inverse_selection": types.BoolPointerValue(component.InverseSelection),
 			"key":               types.StringValue(component.Key),
 			"mode":              types.StringValue(string(component.Mode)),
-			"type":              types.StringValue(string(component.Type)),
+			"type":              types.StringValue(compType),
 		}
 		values := make([]attr.Value, len(component.Values))
 		for j := range component.Values {

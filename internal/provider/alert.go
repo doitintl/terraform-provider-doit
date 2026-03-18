@@ -207,7 +207,21 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 
 	// Convert config
 	if resp.Config != nil {
-		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config)
+		// Extract existing scope types/IDs from state for alias normalization.
+		// When called from Create/Update, state already contains the user's plan values
+		// (e.g. "allocation_rule"), while the API returns canonical names ("attribution").
+		var existingScopeTypes, existingScopeIDs []string
+		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+			!state.Config.Scopes.IsNull() && !state.Config.Scopes.IsUnknown() {
+			var existingScopes []resource_alert.ScopesValue
+			if d := state.Config.Scopes.ElementsAs(ctx, &existingScopes, false); !d.HasError() {
+				for _, es := range existingScopes {
+					existingScopeTypes = append(existingScopeTypes, es.ScopesType.ValueString())
+					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
+				}
+			}
+		}
+		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config, existingScopeTypes, existingScopeIDs)
 		diags.Append(configDiags...)
 		state.Config = configVal
 	}
@@ -216,7 +230,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 }
 
 // mapAlertConfigToModel maps the API AlertConfig to the Terraform ConfigValue.
-func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (resource_alert.ConfigValue, diag.Diagnostics) {
+func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string) (resource_alert.ConfigValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Build attributions list
@@ -249,11 +263,22 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig) (res
 				diags.Append(emptyDiags...)
 			}
 
+			scopeType := string(scope.Type)
+			scopeID := scope.Id
+			// Normalize alias types and IDs to preserve user's configured value.
+			// E.g. user configures "allocation_rule", API returns "attribution" — preserve user's value.
+			if i < len(existingScopeTypes) {
+				scopeType = normalizeDimensionsType(scopeType, existingScopeTypes[i])
+			}
+			if i < len(existingScopeIDs) {
+				scopeID = normalizeDimensionsType(scopeID, existingScopeIDs[i])
+			}
+
 			scopeAttrs := map[string]attr.Value{
-				"id":      types.StringValue(scope.Id),
+				"id":      types.StringValue(scopeID),
 				"inverse": types.BoolPointerValue(scope.Inverse),
 				"mode":    types.StringValue(string(scope.Mode)),
-				"type":    types.StringValue(string(scope.Type)),
+				"type":    types.StringValue(scopeType),
 				"values":  valuesVal,
 			}
 			var d diag.Diagnostics
