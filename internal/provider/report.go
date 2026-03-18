@@ -554,9 +554,25 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	// Nested List: Dimensions
 	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
 	if config.Dimensions != nil && len(*config.Dimensions) > 0 {
+		// Get existing dimension types from state for alias normalization
+		var existingDimTypes []string
+		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+			!state.Config.Dimensions.IsNull() && !state.Config.Dimensions.IsUnknown() {
+			var existingDims []resource_report.DimensionsValue
+			if d := state.Config.Dimensions.ElementsAs(ctx, &existingDims, false); !d.HasError() {
+				for _, ed := range existingDims {
+					existingDimTypes = append(existingDimTypes, ed.DimensionsType.ValueString())
+				}
+			}
+		}
+
 		dims := make([]attr.Value, len(*config.Dimensions))
 		for i, d := range *config.Dimensions {
 			dType := string(*d.Type)
+			// Normalize alias types to preserve user's configured value
+			if i < len(existingDimTypes) {
+				dType = normalizeDimensionsType(dType, existingDimTypes[i])
+			}
 			m := map[string]attr.Value{
 				"id":   types.StringPointerValue(d.Id),
 				"type": types.StringPointerValue(&dType),
@@ -580,11 +596,35 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	// Nested List: Filters
 	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
 	if config.Filters != nil && len(*config.Filters) > 0 {
+		// Get existing filter types and IDs from state for alias normalization
+		var existingFilterTypes []string
+		var existingFilterIDs []string
+		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+			!state.Config.Filters.IsNull() && !state.Config.Filters.IsUnknown() {
+			var existingFilters []resource_report.FiltersValue
+			if d := state.Config.Filters.ElementsAs(ctx, &existingFilters, false); !d.HasError() {
+				for _, ef := range existingFilters {
+					existingFilterTypes = append(existingFilterTypes, ef.FiltersType.ValueString())
+					existingFilterIDs = append(existingFilterIDs, ef.Id.ValueString())
+				}
+			}
+		}
+
 		filters := make([]attr.Value, len(*config.Filters))
 		for i, f := range *config.Filters {
 			fType := string(f.Type)
+			fID := f.Id
+			// Normalize alias types and IDs to preserve user's configured value.
+			// The filter ID can also be an alias (e.g. "allocation_rule" vs "attribution")
+			// when it references a dimension type directly.
+			if i < len(existingFilterTypes) {
+				fType = normalizeDimensionsType(fType, existingFilterTypes[i])
+			}
+			if i < len(existingFilterIDs) {
+				fID = normalizeDimensionsType(fID, existingFilterIDs[i])
+			}
 			m := map[string]attr.Value{
-				"id":      types.StringValue(f.Id),
+				"id":      types.StringValue(fID),
 				"inverse": types.BoolPointerValue(f.Inverse),
 				// filters type enum cast
 				"type": types.StringValue(fType),
@@ -618,11 +658,34 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	// Nested List: Group
 	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
 	if config.Group != nil && len(*config.Group) > 0 {
+		// Get existing group types and IDs from state for alias normalization
+		var existingGroupTypes []string
+		var existingGroupIDs []string
+		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+			!state.Config.Group.IsNull() && !state.Config.Group.IsUnknown() {
+			var existingGroups []resource_report.GroupValue
+			if d := state.Config.Group.ElementsAs(ctx, &existingGroups, false); !d.HasError() {
+				for _, eg := range existingGroups {
+					existingGroupTypes = append(existingGroupTypes, eg.GroupType.ValueString())
+					existingGroupIDs = append(existingGroupIDs, eg.Id.ValueString())
+				}
+			}
+		}
+
 		groups := make([]attr.Value, len(*config.Group))
 		for i, g := range *config.Group {
 			groupType := string(*g.Type)
+			groupID := g.Id
+			// Normalize alias types and IDs to preserve user's configured value
+			if i < len(existingGroupTypes) {
+				groupType = normalizeDimensionsType(groupType, existingGroupTypes[i])
+			}
+			if groupID != nil && i < len(existingGroupIDs) {
+				normalized := normalizeDimensionsType(*groupID, existingGroupIDs[i])
+				groupID = &normalized
+			}
 			m := map[string]attr.Value{
-				"id":   types.StringPointerValue(g.Id),
+				"id":   types.StringPointerValue(groupID),
 				"type": types.StringPointerValue(&groupType),
 			}
 			m["limit"] = resource_report.NewLimitValueNull()
