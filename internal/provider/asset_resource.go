@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type (
@@ -237,11 +236,10 @@ func (r *assetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	// No-op delete: the DoiT API does not support deleting assets.
 	// We simply remove the resource from Terraform state.
-	tflog.Warn(ctx, "doit_asset does not support deletion via the API. "+
-		"The asset has been removed from Terraform state but continues to exist in DoiT.",
-		map[string]any{
-			"id": state.Id.ValueString(),
-		},
+	resp.Diagnostics.AddWarning(
+		"Asset Not Deleted from DoiT API",
+		"doit_asset does not support deletion via the API. "+
+			"The asset has been removed from Terraform state but continues to exist in DoiT.",
 	)
 }
 
