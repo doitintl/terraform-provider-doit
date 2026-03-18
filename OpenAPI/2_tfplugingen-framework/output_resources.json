@@ -311,14 +311,14 @@
 													"name": "key",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\"."
+														"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\"."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Filter mode to apply.",
+														"description": "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.",
 														"validators": [
 															{
 																"custom": {
@@ -337,7 +337,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Enumeration of supported dimension/filter types.",
+														"description": "Enumeration of supported dimension/filter types for allocation components.",
 														"validators": [
 															{
 																"custom": {
@@ -346,7 +346,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
 																}
 															}
 														]
@@ -358,7 +358,8 @@
 														"computed_optional_required": "required",
 														"element_type": {
 															"string": {}
-														}
+														},
+														"description": "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules."
 													}
 												}
 											]
@@ -374,7 +375,7 @@
 									}
 								}
 							],
-							"description": "Single allocation rule."
+							"description": "Single allocation rule. Components can reference other existing allocation rules by using the \"allocation_rule\" dimension type."
 						}
 					},
 					{
@@ -432,14 +433,14 @@
 														"name": "key",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\"."
+															"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\"."
 														}
 													},
 													{
 														"name": "mode",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Filter mode to apply.",
+															"description": "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.",
 															"validators": [
 																{
 																	"custom": {
@@ -458,7 +459,7 @@
 														"name": "type",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Enumeration of supported dimension/filter types.",
+															"description": "Enumeration of supported dimension/filter types for allocation components.",
 															"validators": [
 																{
 																	"custom": {
@@ -467,7 +468,7 @@
 																				"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																			}
 																		],
-																		"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																		"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
 																	}
 																}
 															]
@@ -479,12 +480,13 @@
 															"computed_optional_required": "required",
 															"element_type": {
 																"string": {}
-															}
+															},
+															"description": "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules."
 														}
 													}
 												]
 											},
-											"description": "List of allocation filter components (required for 'create' or 'update' action)."
+											"description": "List of allocation filter components (required for 'create' or 'update' action). Can include components of type \"allocation_rule\" to reference existing allocation rules."
 										}
 									},
 									{
@@ -527,20 +529,6 @@
 						}
 					},
 					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "ID of the new allocation."
-						}
-					},
-					{
-						"name": "type",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "Type of the new allocation."
-						}
-					},
-					{
 						"name": "allocation_type",
 						"string": {
 							"computed_optional_required": "computed",
@@ -559,6 +547,20 @@
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "The time when the allocation was created (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Allocation ID."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Type of allocation (preset or custom)."
 						}
 					},
 					{
@@ -1242,6 +1244,65 @@
 			}
 		},
 		{
+			"name": "datahub_dataset",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An optional description for the dataset."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-zA-Z0-9_-]+( [a-zA-Z0-9_-]+)*$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "last_updated",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The timestamp of the last update."
+						}
+					},
+					{
+						"name": "records",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The number of records in the dataset."
+						}
+					},
+					{
+						"name": "updated_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The email of the user who last updated the dataset."
+						}
+					}
+				],
+				"description": "Ingest third-party cost, usage, and metric-based data for analysis.",
+				"markdown_description": "Ingest third-party cost, usage, and metric-based data for analysis."
+			}
+		},
+		{
 			"name": "label",
 			"schema": {
 				"attributes": [
@@ -1297,6 +1358,121 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "The time when the label was last updated."
+						}
+					}
+				],
+				"description": "Create and manage labels to organize and categorize your cloud resources.",
+				"markdown_description": "Create and manage labels to organize and categorize your cloud resources."
+			}
+		},
+		{
+			"name": "label_assignments",
+			"schema": {
+				"attributes": [
+					{
+						"name": "add",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "object_id",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The ID of the object to assign/unassign."
+										}
+									},
+									{
+										"name": "object_type",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The type of the object.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"alert\",\n\"allocation\",\n\"budget\",\n\"metric\",\n\"report\",\n\"annotation\",\n)"
+													}
+												}
+											]
+										}
+									}
+								]
+							},
+							"description": "Array of objects to assign to the label."
+						}
+					},
+					{
+						"name": "remove",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "object_id",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The ID of the object to assign/unassign."
+										}
+									},
+									{
+										"name": "object_type",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The type of the object.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"alert\",\n\"allocation\",\n\"budget\",\n\"metric\",\n\"report\",\n\"annotation\",\n)"
+													}
+												}
+											]
+										}
+									}
+								]
+							},
+							"description": "Array of objects to unassign from the label."
+						}
+					},
+					{
+						"name": "assignments",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "object_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The ID of the object to assign/unassign."
+										}
+									},
+									{
+										"name": "object_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The type of the object."
+										}
+									}
+								]
+							},
+							"description": "Array of objects currently assigned to the label."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Label ID"
 						}
 					}
 				],
@@ -2216,7 +2392,7 @@
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "ID of the new report."
+							"description": "Report ID."
 						}
 					},
 					{

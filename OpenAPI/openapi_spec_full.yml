@@ -305,7 +305,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -402,7 +402,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -754,6 +754,34 @@ paths:
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
   "/analytics/v1/labels/{id}/assignments":
+    get:
+      tags:
+        - Labels
+      summary: Get label assignments
+      description: Returns the list of objects currently assigned to the label specified by the ID.
+      operationId: getLabelAssignments
+      parameters:
+        - name: id
+          in: path
+          description: Label ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Label assignments returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelAssignmentsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
     post:
       tags:
         - Labels
@@ -1540,11 +1568,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: ID of the new report.
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1668,9 +1692,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/Report"
-                  - $ref: "#/components/schemas/RunReportResult"
+                $ref: "#/components/schemas/GetReportResponse"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1725,11 +1747,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: ID of the updated report.
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2242,6 +2260,315 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /datahub/v1/datasets:
+    get:
+      tags:
+        - DataHub
+      summary: List datasets
+      description: Returns a list of all DataHub datasets for the customer.
+      operationId: listDatahubDatasets
+      responses:
+        "200":
+          description: OK - List of datasets returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datasets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: The name of the dataset.
+                          example: "My Custom Dataset"
+                        description:
+                          type: string
+                          description: The description of the dataset.
+                          example: "Dataset for tracking custom business metrics"
+                        records:
+                          type: integer
+                          format: int64
+                          description: The number of records in the dataset.
+                          example: 1500
+                        updatedBy:
+                          type: string
+                          description: The email of the user who last updated the dataset.
+                          example: "user@example.com"
+                        lastUpdated:
+                          type: string
+                          description: The timestamp of the last update.
+                          example: "2024-03-10T23:00:00Z"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - DataHub
+      summary: Create dataset
+      description: Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+      operationId: createDatahubDataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: "The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words."
+                  example: "My Custom Dataset"
+                  pattern: "^[a-zA-Z0-9_-]+( [a-zA-Z0-9_-]+)*$"
+                description:
+                  type: string
+                  description: An optional description for the dataset.
+                  example: "Dataset for tracking custom business metrics"
+      responses:
+        "201":
+          description: Created - Dataset created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the dataset.
+                    example: "My Custom Dataset"
+                  description:
+                    type: string
+                    description: The description of the dataset.
+                    example: "Dataset for tracking custom business metrics"
+                  records:
+                    type: integer
+                    format: int64
+                    description: The number of records in the dataset.
+                    example: null
+                    nullable: true
+                  updatedBy:
+                    type: string
+                    description: The email of the user who last updated the dataset.
+                    example: "user@example.com"
+                  lastUpdated:
+                    type: string
+                    description: The timestamp of the last update.
+                    example: "2024-03-10T23:00:00Z"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - DataHub
+      summary: Delete datasets
+      description: Deletes one or more DataHub datasets and all their associated data.
+      operationId: deleteDatahubDatasets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - datasets
+              properties:
+                datasets:
+                  type: array
+                  description: List of dataset names to delete.
+                  items:
+                    type: string
+                  example: ["My Custom Dataset", "Old Dataset"]
+      responses:
+        "200":
+          description: OK - Datasets deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Datasets deleted successfully"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/datahub/v1/datasets/{name}":
+    get:
+      tags:
+        - DataHub
+      summary: Retrieve a dataset
+      description: Returns a specific DataHub dataset by name.
+      operationId: getDatahubDataset
+      parameters:
+        - name: name
+          in: path
+          description: The name of the dataset to retrieve.
+          required: true
+          schema:
+            type: string
+          example: "My Custom Dataset"
+      responses:
+        "200":
+          description: OK - Dataset returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the dataset.
+                    example: "My Custom Dataset"
+                  description:
+                    type: string
+                    description: The description of the dataset.
+                    example: "Dataset for tracking custom business metrics"
+                  records:
+                    type: integer
+                    format: int64
+                    description: The number of records in the dataset.
+                    example: 1500
+                  updatedBy:
+                    type: string
+                    description: The email of the user who last updated the dataset.
+                    example: "user@example.com"
+                  lastUpdated:
+                    type: string
+                    description: The timestamp of the last update.
+                    example: "2024-03-10T23:00:00Z"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - DataHub
+      summary: Delete a dataset
+      description: Deletes a specific DataHub dataset.
+      operationId: deleteDatahubDataset
+      parameters:
+        - name: name
+          in: path
+          description: The name of the dataset to delete.
+          required: true
+          schema:
+            type: string
+          example: "My Custom Dataset"
+      responses:
+        "200":
+          description: OK - Dataset deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Dataset deleted successfully"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - DataHub
+      summary: Update dataset
+      description: |-
+        Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+        The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+        If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
+      operationId: updateDatahubDataset
+      parameters:
+        - name: name
+          in: path
+          description: The name of the dataset to update (immutable, used for identification only).
+          required: true
+          schema:
+            type: string
+          example: "My Custom Dataset"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  description: "Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed."
+                  example: "My Custom Dataset"
+                description:
+                  type: string
+                  description: The new description for the dataset.
+                  example: "Updated description for the dataset"
+      responses:
+        "200":
+          description: OK - Dataset updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the dataset.
+                    example: "My Custom Dataset"
+                  description:
+                    type: string
+                    description: The description of the dataset.
+                    example: "Updated description for the dataset"
+                  records:
+                    type: integer
+                    format: int64
+                    description: The number of records in the dataset.
+                    example: 1500
+                    nullable: true
+                  updatedBy:
+                    type: string
+                    description: The email of the user who last updated the dataset.
+                    example: "user@example.com"
+                  lastUpdated:
+                    type: string
+                    description: The timestamp of the last update.
+                    example: "2024-03-10T23:00:00Z"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
   /billing/v1/invoices:
@@ -3460,18 +3787,21 @@ components:
         - values
         - mode
       type: object
-      description: A filter component used inside allocation rules.
+      description: |-
+        A filter component used inside allocation rules.
+        When the type is "allocation_rule", the component references existing allocation rules (nested allocation rules).
+        A maximum nesting depth of 3 levels is supported, and circular references are not allowed.
       properties:
         key:
           type: string
-          description: 'Key of an existing dimension. Examples: "billing_account_id", "country".'
+          description: 'Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".'
         type:
-          $ref: "#/components/schemas/DimensionsTypes"
+          $ref: "#/components/schemas/AllocationDimensionsTypes"
         values:
           type: array
+          description: Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
           items:
             type: string
-            description: Values to filter on.
         inverse_selection:
           type: boolean
           description: If true, all selected values will be excluded.
@@ -3482,26 +3812,13 @@ components:
           default: false
         mode:
           type: string
-          description: Filter mode to apply.
+          description: Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
           enum:
             - is
             - starts_with
             - ends_with
             - contains
             - regexp
-    NewAllocationResponse:
-      type: object
-      description: Response returned after creating a new allocation.
-      properties:
-        id:
-          type: string
-          description: ID of the new allocation.
-        type:
-          type: string
-          description: Type of the new allocation.
-          enum:
-            - single
-            - group
     CreateAllocationRequest:
       required:
         - name
@@ -3588,7 +3905,7 @@ components:
         - components
         - formula
       type: object
-      description: Single allocation rule.
+      description: Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
       nullable: true
       properties:
         components:
@@ -4198,6 +4515,15 @@ components:
             - report
             - annotation
           description: The type of the object.
+    LabelAssignmentsResponse:
+      type: object
+      description: Response containing the list of objects assigned to a label.
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelAssignmentObject"
+          description: Array of objects currently assigned to the label.
     AttributionListItem:
       required:
         - name
@@ -4719,6 +5045,20 @@ components:
         - system_label
         - attribution
         - attribution_group
+        - gke
+        - gke_label
+    AllocationDimensionsTypes:
+      description: Enumeration of supported dimension/filter types for allocation components.
+      type: string
+      enum:
+        - datetime
+        - fixed
+        - optional
+        - label
+        - tag
+        - project_label
+        - system_label
+        - allocation_rule
         - gke
         - gke_label
     DocumentRef:
@@ -5277,7 +5617,7 @@ components:
         - action
       type: object
       nullable: true
-      description: Allocation rule for a group type allocation.
+      description: Allocation rule for a group type allocation. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
       properties:
         name:
           type: string
@@ -5297,7 +5637,7 @@ components:
           description: ID of existing allocation (required for 'update' or 'select' action).
         components:
           type: array
-          description: List of allocation filter components (required for 'create' or 'update' action).
+          description: List of allocation filter components (required for 'create' or 'update' action). Can include components of type "allocation_rule" to reference existing allocation rules.
           items:
             $ref: "#/components/schemas/AllocationComponent"
         formula:
@@ -5540,6 +5880,79 @@ components:
           type: string
         platform:
           type: string
+    GetReportResponse:
+      type: object
+      description: Results returned when running a report; includes schema and rows.
+      properties:
+        id:
+          type: string
+          description: Report ID.
+        reportName:
+          type: string
+          description: The name of the report.
+        owner:
+          type: string
+          description: Email address of the report owner.
+        type:
+          type: string
+          enum:
+            - custom
+            - preset
+        createTime:
+          type: integer
+          description: The creation time of the report, in milliseconds since the epoch.
+          format: int64
+        updateTime:
+          type: integer
+          description: The time when this report was last updated, in milliseconds since
+            the epoch.
+          format: int64
+        urlUI:
+          type: string
+          description: The URL of the report in DoiT console.
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelInfo"
+          description: List of labels associated with the report.
+        result:
+          type: object
+          properties:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/SchemaField"
+            mlFeatures:
+              type: array
+              items:
+                type: string
+                enum:
+                  - increasing
+                  - decreasing
+                  - none
+                  - forecast
+            rows:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Value"
+            secondaryRows:
+              type: array
+              description: Secondary time range rows.
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Value"
+            forecastRows:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Value"
+            cacheHit:
+              type: boolean
+              description: If true, results were fetched from the cache.
     Report:
       type: object
       description: Report metadata and the console URL.
@@ -5743,8 +6156,12 @@ components:
         email:
           type: string
     Value:
-      description: The content of a single cell from a BigQuery result.
-      type: object
+      description: The content of a single cell from a BigQuery result. Can be a string, number, or null.
+      nullable: true
+      oneOf:
+        - type: string
+        - type: number
+        - type: integer
     AssetItem:
       type: object
       description: Detailed information about a single asset.

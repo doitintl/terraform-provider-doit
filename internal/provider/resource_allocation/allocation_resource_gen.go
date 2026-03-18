@@ -43,8 +43,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the new allocation.",
-				MarkdownDescription: "ID of the new allocation.",
+				Description:         "Allocation ID.",
+				MarkdownDescription: "Allocation ID.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
@@ -72,13 +72,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Required:            true,
-									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
-									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
+									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
-									Description:         "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
-									MarkdownDescription: "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									Description:         "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									MarkdownDescription: "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"is",
@@ -91,8 +91,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -102,16 +102,17 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 											"tag",
 											"project_label",
 											"system_label",
-											"attribution",
-											"attribution_group",
+											"allocation_rule",
 											"gke",
 											"gke_label",
 										),
 									},
 								},
 								"values": schema.ListAttribute{
-									ElementType: types.StringType,
-									Required:    true,
+									ElementType:         types.StringType,
+									Required:            true,
+									Description:         "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
+									MarkdownDescription: "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
 								},
 							},
 							CustomType: ComponentsType{
@@ -137,8 +138,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "Single allocation rule.",
-				MarkdownDescription: "Single allocation rule.",
+				Description:         "Single allocation rule. Components can reference other existing allocation rules by using the \"allocation_rule\" dimension type.",
+				MarkdownDescription: "Single allocation rule. Components can reference other existing allocation rules by using the \"allocation_rule\" dimension type.",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -174,13 +175,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"key": schema.StringAttribute{
 										Required:            true,
-										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
-										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\".",
+										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
+										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
 									},
 									"mode": schema.StringAttribute{
 										Required:            true,
-										Description:         "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
-										MarkdownDescription: "Filter mode to apply.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+										Description:         "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+										MarkdownDescription: "Filter mode to apply. When type is \"allocation_rule\", only \"is\" and \"contains\" modes are supported.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"is",
@@ -193,8 +194,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"type": schema.StringAttribute{
 										Required:            true,
-										Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-										MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+										Description:         "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+										MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"datetime",
@@ -204,16 +205,17 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 												"tag",
 												"project_label",
 												"system_label",
-												"attribution",
-												"attribution_group",
+												"allocation_rule",
 												"gke",
 												"gke_label",
 											),
 										},
 									},
 									"values": schema.ListAttribute{
-										ElementType: types.StringType,
-										Required:    true,
+										ElementType:         types.StringType,
+										Required:            true,
+										Description:         "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
+										MarkdownDescription: "Values to filter on. When type is \"allocation_rule\", the values are IDs of existing allocation rules.",
 									},
 								},
 								CustomType: ComponentsType{
@@ -224,8 +226,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 							},
 							Optional:            true,
 							Computed:            true,
-							Description:         "List of allocation filter components (required for 'create' or 'update' action).",
-							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action).",
+							Description:         "List of allocation filter components (required for 'create' or 'update' action). Can include components of type \"allocation_rule\" to reference existing allocation rules.",
+							MarkdownDescription: "List of allocation filter components (required for 'create' or 'update' action). Can include components of type \"allocation_rule\" to reference existing allocation rules.",
 						},
 						"description": schema.StringAttribute{
 							Optional:            true,
@@ -263,8 +265,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Type of the new allocation.",
-				MarkdownDescription: "Type of the new allocation.",
+				Description:         "Type of allocation (preset or custom).",
+				MarkdownDescription: "Type of allocation (preset or custom).",
 			},
 			"unallocated_costs": schema.StringAttribute{
 				Optional:            true,

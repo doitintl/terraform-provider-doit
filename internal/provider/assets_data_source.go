@@ -68,8 +68,7 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	// Build query parameters
 	params := &models.IdOfAssetsParams{}
 	if !data.Filter.IsNull() {
-		filter := data.Filter.ValueString()
-		params.Filter = &filter
+		params.Filter = new(data.Filter.ValueString())
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
@@ -79,11 +78,9 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResultsVal := data.MaxResults.ValueInt64()
-		params.MaxResults = &maxResultsVal
+		params.MaxResults = new(data.MaxResults.ValueInt64())
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := d.client.IdOfAssetsWithResponse(ctx, params)
@@ -119,8 +116,7 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
 			apiResp, err := d.client.IdOfAssetsWithResponse(ctx, params)

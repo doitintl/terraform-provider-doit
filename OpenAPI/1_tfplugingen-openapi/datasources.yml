@@ -21,6 +21,10 @@ data_sources:
     read:
       path: /analytics/v1/labels/{id}
       method: GET
+  label_assignments:
+    read:
+      path: /analytics/v1/labels/{id}/assignments
+      method: GET
   alert:
     read:
       path: /analytics/v1/alerts/{id}
@@ -126,4 +130,13 @@ data_sources:
   products:
     read:
       path: /support/v1/metadata/products
+      method: GET
+  # DataHub data sources
+  datahub_dataset:
+    read:
+      path: /datahub/v1/datasets/{name}
+      method: GET
+  datahub_datasets:
+    read:
+      path: /datahub/v1/datasets
       method: GET

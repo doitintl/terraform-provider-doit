@@ -52,7 +52,7 @@ Alternatively, you can also use the `DOIT_API_TOKEN` and `DOIT_CUSTOMER_CONTEXT`
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.25
+- [Go](https://golang.org/doc/install) >= 1.26
 
 ### Optional: Using Nix Flake
 
@@ -70,7 +70,7 @@ direnv allow
 
 This will automatically set up:
 
-- Go 1.25
+- Go 1.26
 - Terraform v1.13.3
 - golangci-lint v2.5.0
 
@@ -79,6 +79,8 @@ To enable flakes if not already enabled, add to your `~/.config/nix/nix.conf`:
 ```
 experimental-features = nix-command flakes
 ```
+
+> **Note:** If you use direnv but don't want the Nix flake environment, add `export DIRENV_SKIP_FLAKE=1` to your shell profile (e.g., `~/.zshrc`). This skips flake activation while still loading environment variables from `.envrc.local`.
 
 ## Building The Provider
 

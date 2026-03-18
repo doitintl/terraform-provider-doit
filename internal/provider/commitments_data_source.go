@@ -66,20 +66,17 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// Optional filter
 	if !data.Filter.IsNull() {
-		filterVal := data.Filter.ValueString()
-		params.Filter = &filterVal
+		params.Filter = new(data.Filter.ValueString())
 	}
 
 	// Optional sort_by
 	if !data.SortBy.IsNull() {
-		sortByVal := models.ListCommitmentsParamsSortBy(data.SortBy.ValueString())
-		params.SortBy = &sortByVal
+		params.SortBy = new(models.ListCommitmentsParamsSortBy(data.SortBy.ValueString()))
 	}
 
 	// Optional sort_order
 	if !data.SortOrder.IsNull() {
-		sortOrderVal := models.ListCommitmentsParamsSortOrder(data.SortOrder.ValueString())
-		params.SortOrder = &sortOrderVal
+		params.SortOrder = new(models.ListCommitmentsParamsSortOrder(data.SortOrder.ValueString()))
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
@@ -89,12 +86,10 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResultsVal := data.MaxResults.ValueString()
-		params.MaxResults = &maxResultsVal
+		params.MaxResults = new(data.MaxResults.ValueString())
 
 		if !data.PageToken.IsNull() {
-			pageTokenVal := data.PageToken.ValueString()
-			params.PageToken = &pageTokenVal
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := d.client.ListCommitmentsWithResponse(ctx, params)

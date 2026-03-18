@@ -877,8 +877,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ID of the new report.",
-				MarkdownDescription: "ID of the new report.",
+				Description:         "Report ID.",
+				MarkdownDescription: "Report ID.",
 			},
 			"labels": schema.ListAttribute{
 				ElementType:         types.StringType,
