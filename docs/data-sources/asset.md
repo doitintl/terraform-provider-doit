@@ -43,6 +43,70 @@ output "asset_url" {
 
 - `create_time` (Number) The time when the asset was created, in milliseconds since the epoch.
 - `name` (String)
+- `properties` (Attributes) Additional properties associated with an asset. (see [below for nested schema](#nestedatt--properties))
 - `quantity` (Number)
 - `type` (String)
 - `url` (String)
+
+<a id="nestedatt--properties"></a>
+### Nested Schema for `properties`
+
+Read-Only:
+
+- `customer_domain` (String)
+- `customer_id` (String)
+- `reseller` (String)
+- `subscription` (Attributes) Subscription-related metadata for an asset. (see [below for nested schema](#nestedatt--properties--subscription))
+
+<a id="nestedatt--properties--subscription"></a>
+### Nested Schema for `properties.subscription`
+
+Read-Only:
+
+- `billing_method` (String)
+- `creation_time` (Number)
+- `id` (String)
+- `plan` (Attributes) Subscription-related metadata for an asset. (see [below for nested schema](#nestedatt--properties--subscription--plan))
+- `purchase_order_id` (String)
+- `renewal_settings` (Attributes) Settings that control subscription renewal behavior. (see [below for nested schema](#nestedatt--properties--subscription--renewal_settings))
+- `resource_uiurl` (String)
+- `seats` (Attributes) Licensing seat counts for a subscription or asset. (see [below for nested schema](#nestedatt--properties--subscription--seats))
+- `sku_id` (String)
+- `sku_name` (String)
+- `status` (String)
+
+<a id="nestedatt--properties--subscription--plan"></a>
+### Nested Schema for `properties.subscription.plan`
+
+Read-Only:
+
+- `commitment_interval` (Attributes) Subscription-related metadata for an asset. (see [below for nested schema](#nestedatt--properties--subscription--plan--commitment_interval))
+- `is_commitment_plan` (Boolean)
+- `plan_name` (String)
+
+<a id="nestedatt--properties--subscription--plan--commitment_interval"></a>
+### Nested Schema for `properties.subscription.plan.commitment_interval`
+
+Read-Only:
+
+- `end_time` (Number)
+- `start_time` (Number)
+
+
+
+<a id="nestedatt--properties--subscription--renewal_settings"></a>
+### Nested Schema for `properties.subscription.renewal_settings`
+
+Read-Only:
+
+- `renewal_type` (String)
+
+
+<a id="nestedatt--properties--subscription--seats"></a>
+### Nested Schema for `properties.subscription.seats`
+
+Read-Only:
+
+- `licensed_number_of_seats` (Number)
+- `maximum_number_of_seats` (Number)
+- `number_of_seats` (Number)

@@ -13,9 +13,37 @@ Manages a DoiT asset (e.g., G Suite/Google Workspace licenses). This resource is
 ## Example Usage
 
 ```terraform
-# Import an existing G Suite asset to manage its license count
-resource "doit_asset" "gsuite_licenses" {
-  id       = "g-suite-534605520"
+# Step 1: Use the doit_assets data source to discover your asset IDs.
+# Apply this configuration first to find the asset you want to manage.
+data "doit_assets" "gsuite" {
+  filter = "type:g-suite"
+}
+
+output "gsuite_assets" {
+  value = [for a in data.doit_assets.gsuite.assets : {
+    id   = a.id
+    name = a.name
+    type = a.type
+  }]
+}
+
+# Step 2: Use the doit_asset data source to inspect a specific asset's
+# properties before importing it.
+data "doit_asset" "example" {
+  id = data.doit_assets.gsuite.assets[0].id
+}
+
+output "asset_details" {
+  value = data.doit_asset.example
+}
+
+# Step 3: Add the resource block and import the asset into Terraform state:
+#
+#   terraform import doit_asset.licenses <asset-id>
+#
+# Then run `terraform apply` to manage the asset's license quantity.
+resource "doit_asset" "licenses" {
+  id       = data.doit_assets.gsuite.assets[0].id
   quantity = 10
 }
 ```
@@ -29,15 +57,15 @@ resource "doit_asset" "gsuite_licenses" {
 
 ### Optional
 
-- `quantity` (Number) The number of licenses for the asset. Only applicable to certain asset types (e.g., G Suite).
+- `quantity` (Number)
 
 ### Read-Only
 
 - `create_time` (Number) The time when the asset was created, in milliseconds since the epoch.
-- `name` (String) The name of the asset.
+- `name` (String)
 - `properties` (Attributes) Additional properties associated with an asset. (see [below for nested schema](#nestedatt--properties))
-- `type` (String) The type of the asset (e.g., g-suite, amazon-web-services).
-- `url` (String) The URL of the asset in the DoiT Console.
+- `type` (String)
+- `url` (String)
 
 <a id="nestedatt--properties"></a>
 ### Nested Schema for `properties`
@@ -109,5 +137,6 @@ Import is supported using the following syntax:
 The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
-terraform import doit_asset.gsuite_licenses g-suite-534605520
+# Find the asset ID using the doit_assets data source, then import:
+terraform import doit_asset.licenses <asset-id>
 ```
