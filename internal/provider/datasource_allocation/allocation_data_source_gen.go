@@ -65,8 +65,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"key": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
-									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
+									Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".\nUse `GET /analytics/v1/dimensions` to retrieve all available dimensions.",
+									MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".\nUse `GET /analytics/v1/dimensions` to retrieve all available dimensions.",
 								},
 								"mode": schema.StringAttribute{
 									Computed:            true,
@@ -133,8 +133,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"key": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
-										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".",
+										Description:         "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".\nUse `GET /analytics/v1/dimensions` to retrieve all available dimensions.",
+										MarkdownDescription: "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".\nUse `GET /analytics/v1/dimensions` to retrieve all available dimensions.",
 									},
 									"mode": schema.StringAttribute{
 										Computed:            true,

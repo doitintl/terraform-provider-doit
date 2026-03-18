@@ -187,8 +187,8 @@ resource "doit_allocation" "dev_us" {
 - `allocation_type` (String) Composition type of allocation.
 - `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation.
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
-- `id` (String) ID of the new allocation.
-- `type` (String) Type of the new allocation.
+- `id` (String) Allocation ID.
+- `type` (String) Type of allocation (preset or custom).
 - `update_time` (Number) Last time the allocation was modified (in UNIX timestamp).
 
 <a id="nestedatt--rule"></a>
@@ -205,6 +205,7 @@ Required:
 Required:
 
 - `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
 - `type` (String) Enumeration of supported dimension/filter types for allocation components.
@@ -240,6 +241,7 @@ Optional:
 Required:
 
 - `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
 - `type` (String) Enumeration of supported dimension/filter types for allocation components.

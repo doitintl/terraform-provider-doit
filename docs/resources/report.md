@@ -239,7 +239,7 @@ resource "doit_report" "cost_by_region" {
 
 ### Read-Only
 
-- `id` (String) ID of the new report.
+- `id` (String) Report ID.
 - `type` (String) Report type.
 
 <a id="nestedatt--config"></a>
@@ -307,7 +307,10 @@ Optional:
 
 - `id` (String) The identifier of the dimension.
 - `type` (String) Enumeration of supported dimension/filter types.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
 
 
 <a id="nestedatt--config--filters"></a>
@@ -319,7 +322,10 @@ Required:
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
 - `type` (String) Enumeration of supported dimension/filter types.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
 
 Optional:
 
@@ -335,7 +341,10 @@ Optional:
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
 - `type` (String) Enumeration of supported dimension/filter types.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
@@ -355,7 +364,7 @@ Optional:
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 
@@ -368,7 +377,7 @@ Optional:
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 <a id="nestedatt--config--metric_filter"></a>
@@ -389,7 +398,7 @@ Optional:
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 
@@ -401,7 +410,7 @@ Optional:
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 <a id="nestedatt--config--secondary_time_range"></a>

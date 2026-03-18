@@ -52,8 +52,8 @@ the same filter results in “OR”.
 Read-Only:
 
 - `create_time` (Number) The time when the asset was created, in milliseconds since the epoch.
-- `id` (String)
-- `name` (String)
-- `quantity` (Number)
-- `type` (String)
-- `url` (String)
+- `id` (String) The unique identifier of the asset.
+- `name` (String) A human-readable label for the asset, typically combining the product name and domain or account ID.
+- `quantity` (Number) The number of licenses or seats currently assigned to this asset.
+- `type` (String) The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
+- `url` (String) A link to the asset details page in the DoiT console.

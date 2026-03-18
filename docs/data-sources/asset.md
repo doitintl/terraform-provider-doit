@@ -42,55 +42,55 @@ output "asset_url" {
 ### Read-Only
 
 - `create_time` (Number) The time when the asset was created, in milliseconds since the epoch.
-- `name` (String)
-- `properties` (Attributes) Additional properties associated with an asset. (see [below for nested schema](#nestedatt--properties))
-- `quantity` (Number)
-- `type` (String)
-- `url` (String)
+- `name` (String) A human-readable label for the asset, typically combining the product name and domain or account ID.
+- `properties` (Attributes) Additional properties associated with an asset, such as subscription and customer details. (see [below for nested schema](#nestedatt--properties))
+- `quantity` (Number) The number of licenses or seats currently assigned to this asset.
+- `type` (String) The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
+- `url` (String) A link to the asset details page in the DoiT console.
 
 <a id="nestedatt--properties"></a>
 ### Nested Schema for `properties`
 
 Read-Only:
 
-- `customer_domain` (String)
-- `customer_id` (String)
-- `reseller` (String)
-- `subscription` (Attributes) Subscription-related metadata for an asset. (see [below for nested schema](#nestedatt--properties--subscription))
+- `customer_domain` (String) The primary domain of the customer associated with this asset.
+- `customer_id` (String) The unique identifier of the customer in the reseller or partner portal.
+- `reseller` (String) The reseller domain through which this asset was provisioned.
+- `subscription` (Attributes) Subscription details for a G Suite or Office 365 asset. (see [below for nested schema](#nestedatt--properties--subscription))
 
 <a id="nestedatt--properties--subscription"></a>
 ### Nested Schema for `properties.subscription`
 
 Read-Only:
 
-- `billing_method` (String)
-- `creation_time` (Number)
-- `id` (String)
-- `plan` (Attributes) Subscription-related metadata for an asset. (see [below for nested schema](#nestedatt--properties--subscription--plan))
-- `purchase_order_id` (String)
-- `renewal_settings` (Attributes) Settings that control subscription renewal behavior. (see [below for nested schema](#nestedatt--properties--subscription--renewal_settings))
-- `resource_uiurl` (String)
-- `seats` (Attributes) Licensing seat counts for a subscription or asset. (see [below for nested schema](#nestedatt--properties--subscription--seats))
-- `sku_id` (String)
-- `sku_name` (String)
-- `status` (String)
+- `billing_method` (String) The billing method, e.g. ONLINE or OFFLINE.
+- `creation_time` (Number) The time when the subscription was created, in milliseconds since the epoch.
+- `id` (String) The unique identifier of the subscription.
+- `plan` (Attributes) Plan details for a subscription, indicating whether it is a commitment or flexible plan. (see [below for nested schema](#nestedatt--properties--subscription--plan))
+- `purchase_order_id` (String) The purchase order ID associated with this subscription, if any.
+- `renewal_settings` (Attributes) Settings that control subscription renewal behavior at the end of a commitment term. (see [below for nested schema](#nestedatt--properties--subscription--renewal_settings))
+- `resource_uiurl` (String) A URL to the subscription management page in the admin console.
+- `seats` (Attributes) Licensing seat counts for a subscription. (see [below for nested schema](#nestedatt--properties--subscription--seats))
+- `sku_id` (String) The unique SKU identifier for the subscribed product.
+- `sku_name` (String) A human-readable name for the subscribed product SKU.
+- `status` (String) The current status of the subscription, e.g. ACTIVE, SUSPENDED, or PENDING.
 
 <a id="nestedatt--properties--subscription--plan"></a>
 ### Nested Schema for `properties.subscription.plan`
 
 Read-Only:
 
-- `commitment_interval` (Attributes) Subscription-related metadata for an asset. (see [below for nested schema](#nestedatt--properties--subscription--plan--commitment_interval))
-- `is_commitment_plan` (Boolean)
-- `plan_name` (String)
+- `commitment_interval` (Attributes) The start and end dates of an annual commitment term. (see [below for nested schema](#nestedatt--properties--subscription--plan--commitment_interval))
+- `is_commitment_plan` (Boolean) Whether this subscription is on an annual commitment plan (true) or a flexible plan (false).
+- `plan_name` (String) The name of the plan, e.g. ANNUAL_MONTHLY_PAY, ANNUAL_YEARLY_PAY, FLEXIBLE, or TRIAL.
 
 <a id="nestedatt--properties--subscription--plan--commitment_interval"></a>
 ### Nested Schema for `properties.subscription.plan.commitment_interval`
 
 Read-Only:
 
-- `end_time` (Number)
-- `start_time` (Number)
+- `end_time` (Number) The end time of the commitment interval, in milliseconds since the epoch.
+- `start_time` (Number) The start time of the commitment interval, in milliseconds since the epoch.
 
 
 
@@ -99,7 +99,7 @@ Read-Only:
 
 Read-Only:
 
-- `renewal_type` (String)
+- `renewal_type` (String) The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL.
 
 
 <a id="nestedatt--properties--subscription--seats"></a>
@@ -107,6 +107,6 @@ Read-Only:
 
 Read-Only:
 
-- `licensed_number_of_seats` (Number)
-- `maximum_number_of_seats` (Number)
-- `number_of_seats` (Number)
+- `licensed_number_of_seats` (Number) The number of seats that are currently in use or assigned to users.
+- `maximum_number_of_seats` (Number) The maximum number of seats that can be used. Applies to flexible (non-commitment) plans.
+- `number_of_seats` (Number) The number of committed seats. Applies to annual commitment plans.

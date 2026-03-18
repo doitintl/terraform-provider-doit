@@ -68,6 +68,7 @@ Read-Only:
 - `include_null` (Boolean) Include null values.
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
 - `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 - `type` (String) Enumeration of supported dimension/filter types for allocation components.
 - `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
@@ -94,6 +95,7 @@ Read-Only:
 - `include_null` (Boolean) Include null values.
 - `inverse_selection` (Boolean) If true, all selected values will be excluded.
 - `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 - `type` (String) Enumeration of supported dimension/filter types for allocation components.
 - `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.

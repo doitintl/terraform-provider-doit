@@ -146,7 +146,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Enumeration of supported dimension/filter types.",
+														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 														"validators": [
 															{
 																"custom": {
@@ -155,7 +155,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
 																}
 															}
 														]
@@ -311,7 +311,7 @@
 													"name": "key",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\"."
+														"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".\nUse `GET /analytics/v1/dimensions` to retrieve all available dimensions."
 													}
 												},
 												{
@@ -433,7 +433,7 @@
 														"name": "key",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\"."
+															"description": "Key of an existing dimension. Examples: \"billing_account_id\", \"country\". When type is \"allocation_rule\", the key must be set to \"allocation_rule\".\nUse `GET /analytics/v1/dimensions` to retrieve all available dimensions."
 														}
 													},
 													{
@@ -646,14 +646,15 @@
 					{
 						"name": "quantity",
 						"int64": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "The number of licenses or seats currently assigned to this asset."
 						}
 					},
 					{
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The unique id of an asset."
+							"description": "The unique identifier of the asset."
 						}
 					},
 					{
@@ -664,19 +665,22 @@
 								{
 									"name": "customer_domain",
 									"string": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "The primary domain of the customer associated with this asset."
 									}
 								},
 								{
 									"name": "customer_id",
 									"string": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "The unique identifier of the customer in the reseller or partner portal."
 									}
 								},
 								{
 									"name": "reseller",
 									"string": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "The reseller domain through which this asset was provisioned."
 									}
 								},
 								{
@@ -687,19 +691,22 @@
 											{
 												"name": "billing_method",
 												"string": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "The billing method, e.g. ONLINE or OFFLINE."
 												}
 											},
 											{
 												"name": "creation_time",
 												"int64": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "The time when the subscription was created, in milliseconds since the epoch."
 												}
 											},
 											{
 												"name": "id",
 												"string": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "The unique identifier of the subscription."
 												}
 											},
 											{
@@ -715,39 +722,44 @@
 																	{
 																		"name": "end_time",
 																		"int64": {
-																			"computed_optional_required": "computed"
+																			"computed_optional_required": "computed",
+																			"description": "The end time of the commitment interval, in milliseconds since the epoch."
 																		}
 																	},
 																	{
 																		"name": "start_time",
 																		"int64": {
-																			"computed_optional_required": "computed"
+																			"computed_optional_required": "computed",
+																			"description": "The start time of the commitment interval, in milliseconds since the epoch."
 																		}
 																	}
 																],
-																"description": "Subscription-related metadata for an asset."
+																"description": "The start and end dates of an annual commitment term."
 															}
 														},
 														{
 															"name": "is_commitment_plan",
 															"bool": {
-																"computed_optional_required": "computed"
+																"computed_optional_required": "computed",
+																"description": "Whether this subscription is on an annual commitment plan (true) or a flexible plan (false)."
 															}
 														},
 														{
 															"name": "plan_name",
 															"string": {
-																"computed_optional_required": "computed"
+																"computed_optional_required": "computed",
+																"description": "The name of the plan, e.g. ANNUAL_MONTHLY_PAY, ANNUAL_YEARLY_PAY, FLEXIBLE, or TRIAL."
 															}
 														}
 													],
-													"description": "Subscription-related metadata for an asset."
+													"description": "Plan details for a subscription, indicating whether it is a commitment or flexible plan."
 												}
 											},
 											{
 												"name": "purchase_order_id",
 												"string": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "The purchase order ID associated with this subscription, if any."
 												}
 											},
 											{
@@ -758,17 +770,19 @@
 														{
 															"name": "renewal_type",
 															"string": {
-																"computed_optional_required": "computed"
+																"computed_optional_required": "computed",
+																"description": "The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL."
 															}
 														}
 													],
-													"description": "Settings that control subscription renewal behavior."
+													"description": "Settings that control subscription renewal behavior at the end of a commitment term."
 												}
 											},
 											{
 												"name": "resource_uiurl",
 												"string": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "A URL to the subscription management page in the admin console."
 												}
 											},
 											{
@@ -779,55 +793,62 @@
 														{
 															"name": "licensed_number_of_seats",
 															"int64": {
-																"computed_optional_required": "computed"
+																"computed_optional_required": "computed",
+																"description": "The number of seats that are currently in use or assigned to users."
 															}
 														},
 														{
 															"name": "maximum_number_of_seats",
 															"int64": {
-																"computed_optional_required": "computed"
+																"computed_optional_required": "computed",
+																"description": "The maximum number of seats that can be used. Applies to flexible (non-commitment) plans."
 															}
 														},
 														{
 															"name": "number_of_seats",
 															"int64": {
-																"computed_optional_required": "computed"
+																"computed_optional_required": "computed",
+																"description": "The number of committed seats. Applies to annual commitment plans."
 															}
 														}
 													],
-													"description": "Licensing seat counts for a subscription or asset."
+													"description": "Licensing seat counts for a subscription."
 												}
 											},
 											{
 												"name": "sku_id",
 												"string": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "The unique SKU identifier for the subscribed product."
 												}
 											},
 											{
 												"name": "sku_name",
 												"string": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "A human-readable name for the subscribed product SKU."
 												}
 											},
 											{
 												"name": "status",
 												"string": {
-													"computed_optional_required": "computed"
+													"computed_optional_required": "computed",
+													"description": "The current status of the subscription, e.g. ACTIVE, SUSPENDED, or PENDING."
 												}
 											}
 										],
-										"description": "Subscription-related metadata for an asset."
+										"description": "Subscription details for a G Suite or Office 365 asset."
 									}
 								}
 							],
-							"description": "Additional properties associated with an asset."
+							"description": "Additional properties associated with an asset, such as subscription and customer details."
 						}
 					},
 					{
 						"name": "type",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure."
 						}
 					},
 					{
@@ -840,13 +861,15 @@
 					{
 						"name": "name",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "A human-readable label for the asset, typically combining the product name and domain or account ID."
 						}
 					},
 					{
 						"name": "url",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "A link to the asset details page in the DoiT console."
 						}
 					}
 				],
@@ -1134,7 +1157,7 @@
 										"name": "type",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "Enumeration of supported dimension/filter types.",
+											"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 											"validators": [
 												{
 													"custom": {
@@ -1143,7 +1166,7 @@
 																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 															}
 														],
-														"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+														"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
 													}
 												}
 											]
@@ -1619,7 +1642,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "Enumeration of supported dimension/filter types.",
+														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 														"validators": [
 															{
 																"custom": {
@@ -1628,7 +1651,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
 																}
 															}
 														]
@@ -1701,7 +1724,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Enumeration of supported dimension/filter types.",
+														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 														"validators": [
 															{
 																"custom": {
@@ -1710,7 +1733,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
 																}
 															}
 														]
@@ -1777,7 +1800,7 @@
 																			"name": "value",
 																			"string": {
 																				"computed_optional_required": "computed_optional",
-																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 																			}
 																		}
 																	],
@@ -1818,7 +1841,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "Enumeration of supported dimension/filter types.",
+														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 														"validators": [
 															{
 																"custom": {
@@ -1827,7 +1850,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
 																}
 															}
 														]
@@ -1902,7 +1925,7 @@
 												"name": "value",
 												"string": {
 													"computed_optional_required": "computed_optional",
-													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 												}
 											}
 										],
@@ -1942,7 +1965,7 @@
 															"name": "value",
 															"string": {
 																"computed_optional_required": "computed_optional",
-																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 															}
 														}
 													],
@@ -2010,7 +2033,7 @@
 													"name": "value",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID."
+														"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 													}
 												}
 											]
