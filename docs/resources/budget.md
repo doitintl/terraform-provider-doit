@@ -208,7 +208,10 @@ Required:
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
 - `type` (String) Enumeration of supported dimension/filter types.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
 
 Optional:
 

@@ -25,55 +25,61 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The unique id of an asset.",
-				MarkdownDescription: "The unique id of an asset.",
+				Description:         "The unique identifier of the asset.",
+				MarkdownDescription: "The unique identifier of the asset.",
 			},
 			"name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "",
-				MarkdownDescription: "",
+				Description:         "A human-readable label for the asset, typically combining the product name and domain or account ID.",
+				MarkdownDescription: "A human-readable label for the asset, typically combining the product name and domain or account ID.",
 			},
 			"properties": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"customer_domain": schema.StringAttribute{
 						Computed:            true,
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         "The primary domain of the customer associated with this asset.",
+						MarkdownDescription: "The primary domain of the customer associated with this asset.",
 					},
 					"customer_id": schema.StringAttribute{
 						Computed:            true,
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         "The unique identifier of the customer in the reseller or partner portal.",
+						MarkdownDescription: "The unique identifier of the customer in the reseller or partner portal.",
 					},
 					"reseller": schema.StringAttribute{
 						Computed:            true,
-						Description:         "",
-						MarkdownDescription: "",
+						Description:         "The reseller domain through which this asset was provisioned.",
+						MarkdownDescription: "The reseller domain through which this asset was provisioned.",
 					},
 					"subscription": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"billing_method": schema.StringAttribute{
 								Computed:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "The billing method, e.g. ONLINE or OFFLINE.",
+								MarkdownDescription: "The billing method, e.g. ONLINE or OFFLINE.",
 							},
 							"creation_time": schema.Int64Attribute{
-								Computed: true,
+								Computed:            true,
+								Description:         "The time when the subscription was created, in milliseconds since the epoch.",
+								MarkdownDescription: "The time when the subscription was created, in milliseconds since the epoch.",
 							},
 							"id": schema.StringAttribute{
 								Computed:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "The unique identifier of the subscription.",
+								MarkdownDescription: "The unique identifier of the subscription.",
 							},
 							"plan": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"commitment_interval": schema.SingleNestedAttribute{
 										Attributes: map[string]schema.Attribute{
 											"end_time": schema.Int64Attribute{
-												Computed: true,
+												Computed:            true,
+												Description:         "The end time of the commitment interval, in milliseconds since the epoch.",
+												MarkdownDescription: "The end time of the commitment interval, in milliseconds since the epoch.",
 											},
 											"start_time": schema.Int64Attribute{
-												Computed: true,
+												Computed:            true,
+												Description:         "The start time of the commitment interval, in milliseconds since the epoch.",
+												MarkdownDescription: "The start time of the commitment interval, in milliseconds since the epoch.",
 											},
 										},
 										CustomType: CommitmentIntervalType{
@@ -82,16 +88,18 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 											},
 										},
 										Computed:            true,
-										Description:         "Subscription-related metadata for an asset.",
-										MarkdownDescription: "Subscription-related metadata for an asset.",
+										Description:         "The start and end dates of an annual commitment term.",
+										MarkdownDescription: "The start and end dates of an annual commitment term.",
 									},
 									"is_commitment_plan": schema.BoolAttribute{
-										Computed: true,
+										Computed:            true,
+										Description:         "Whether this subscription is on an annual commitment plan (true) or a flexible plan (false).",
+										MarkdownDescription: "Whether this subscription is on an annual commitment plan (true) or a flexible plan (false).",
 									},
 									"plan_name": schema.StringAttribute{
 										Computed:            true,
-										Description:         "",
-										MarkdownDescription: "",
+										Description:         "The name of the plan, e.g. ANNUAL_MONTHLY_PAY, ANNUAL_YEARLY_PAY, FLEXIBLE, or TRIAL.",
+										MarkdownDescription: "The name of the plan, e.g. ANNUAL_MONTHLY_PAY, ANNUAL_YEARLY_PAY, FLEXIBLE, or TRIAL.",
 									},
 								},
 								CustomType: PlanType{
@@ -100,20 +108,20 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Subscription-related metadata for an asset.",
-								MarkdownDescription: "Subscription-related metadata for an asset.",
+								Description:         "Plan details for a subscription, indicating whether it is a commitment or flexible plan.",
+								MarkdownDescription: "Plan details for a subscription, indicating whether it is a commitment or flexible plan.",
 							},
 							"purchase_order_id": schema.StringAttribute{
 								Computed:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "The purchase order ID associated with this subscription, if any.",
+								MarkdownDescription: "The purchase order ID associated with this subscription, if any.",
 							},
 							"renewal_settings": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"renewal_type": schema.StringAttribute{
 										Computed:            true,
-										Description:         "",
-										MarkdownDescription: "",
+										Description:         "The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL.",
+										MarkdownDescription: "The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL.",
 									},
 								},
 								CustomType: RenewalSettingsType{
@@ -122,24 +130,30 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Settings that control subscription renewal behavior.",
-								MarkdownDescription: "Settings that control subscription renewal behavior.",
+								Description:         "Settings that control subscription renewal behavior at the end of a commitment term.",
+								MarkdownDescription: "Settings that control subscription renewal behavior at the end of a commitment term.",
 							},
 							"resource_uiurl": schema.StringAttribute{
 								Computed:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "A URL to the subscription management page in the admin console.",
+								MarkdownDescription: "A URL to the subscription management page in the admin console.",
 							},
 							"seats": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"licensed_number_of_seats": schema.Int64Attribute{
-										Computed: true,
+										Computed:            true,
+										Description:         "The number of seats that are currently in use or assigned to users.",
+										MarkdownDescription: "The number of seats that are currently in use or assigned to users.",
 									},
 									"maximum_number_of_seats": schema.Int64Attribute{
-										Computed: true,
+										Computed:            true,
+										Description:         "The maximum number of seats that can be used. Applies to flexible (non-commitment) plans.",
+										MarkdownDescription: "The maximum number of seats that can be used. Applies to flexible (non-commitment) plans.",
 									},
 									"number_of_seats": schema.Int64Attribute{
-										Computed: true,
+										Computed:            true,
+										Description:         "The number of committed seats. Applies to annual commitment plans.",
+										MarkdownDescription: "The number of committed seats. Applies to annual commitment plans.",
 									},
 								},
 								CustomType: SeatsType{
@@ -148,23 +162,23 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Licensing seat counts for a subscription or asset.",
-								MarkdownDescription: "Licensing seat counts for a subscription or asset.",
+								Description:         "Licensing seat counts for a subscription.",
+								MarkdownDescription: "Licensing seat counts for a subscription.",
 							},
 							"sku_id": schema.StringAttribute{
 								Computed:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "The unique SKU identifier for the subscribed product.",
+								MarkdownDescription: "The unique SKU identifier for the subscribed product.",
 							},
 							"sku_name": schema.StringAttribute{
 								Computed:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "A human-readable name for the subscribed product SKU.",
+								MarkdownDescription: "A human-readable name for the subscribed product SKU.",
 							},
 							"status": schema.StringAttribute{
 								Computed:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Description:         "The current status of the subscription, e.g. ACTIVE, SUSPENDED, or PENDING.",
+								MarkdownDescription: "The current status of the subscription, e.g. ACTIVE, SUSPENDED, or PENDING.",
 							},
 						},
 						CustomType: SubscriptionType{
@@ -173,8 +187,8 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Subscription-related metadata for an asset.",
-						MarkdownDescription: "Subscription-related metadata for an asset.",
+						Description:         "Subscription details for a G Suite or Office 365 asset.",
+						MarkdownDescription: "Subscription details for a G Suite or Office 365 asset.",
 					},
 				},
 				CustomType: PropertiesType{
@@ -183,22 +197,24 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Additional properties associated with an asset.",
-				MarkdownDescription: "Additional properties associated with an asset.",
+				Description:         "Additional properties associated with an asset, such as subscription and customer details.",
+				MarkdownDescription: "Additional properties associated with an asset, such as subscription and customer details.",
 			},
 			"quantity": schema.Int64Attribute{
-				Optional: true,
-				Computed: true,
+				Optional:            true,
+				Computed:            true,
+				Description:         "The number of licenses or seats currently assigned to this asset.",
+				MarkdownDescription: "The number of licenses or seats currently assigned to this asset.",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "",
-				MarkdownDescription: "",
+				Description:         "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.",
+				MarkdownDescription: "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.",
 			},
 			"url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "",
-				MarkdownDescription: "",
+				Description:         "A link to the asset details page in the DoiT console.",
+				MarkdownDescription: "A link to the asset details page in the DoiT console.",
 			},
 		},
 		Description:         "Manage cloud resources or services in your cloud environment.",

@@ -526,6 +526,8 @@ func (e DatahubEventsRequestBodyEventsItemDimensionsItemType) Valid() bool {
 
 // Defines values for DimensionsTypes.
 const (
+	DimensionsTypesAllocation       DimensionsTypes = "allocation"
+	DimensionsTypesAllocationRule   DimensionsTypes = "allocation_rule"
 	DimensionsTypesAttribution      DimensionsTypes = "attribution"
 	DimensionsTypesAttributionGroup DimensionsTypes = "attribution_group"
 	DimensionsTypesDatetime         DimensionsTypes = "datetime"
@@ -542,6 +544,10 @@ const (
 // Valid indicates whether the value is a known member of the DimensionsTypes enum.
 func (e DimensionsTypes) Valid() bool {
 	switch e {
+	case DimensionsTypesAllocation:
+		return true
+	case DimensionsTypesAllocationRule:
+		return true
 	case DimensionsTypesAttribution:
 		return true
 	case DimensionsTypesAttributionGroup:
@@ -2536,6 +2542,7 @@ type AllocationComponent struct {
 	InverseSelection *bool `json:"inverse_selection,omitempty"`
 
 	// Key Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+	// Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 	Key string `json:"key"`
 
 	// Mode Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
@@ -2714,38 +2721,63 @@ type AnomalySKU struct {
 // AnomalySKUArray Array of SKU entries contributing to an anomaly.
 type AnomalySKUArray = []AnomalySKU
 
-// AssetItem Detailed information about a single asset.
+// AssetItem Summary information about a single asset.
 type AssetItem struct {
 	// CreateTime The time when the asset was created, in milliseconds since the epoch.
-	CreateTime *int64  `json:"createTime,omitempty"`
-	Id         *string `json:"id,omitempty"`
-	Name       *string `json:"name,omitempty"`
-	Quantity   *int64  `json:"quantity,omitempty"`
-	Type       *string `json:"type,omitempty"`
-	Url        *string `json:"url,omitempty"`
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Id The unique identifier of the asset.
+	Id *string `json:"id,omitempty"`
+
+	// Name A human-readable label for the asset, typically combining the product name and domain or account ID.
+	Name *string `json:"name,omitempty"`
+
+	// Quantity The number of licenses or seats currently assigned to this asset.
+	Quantity *int64 `json:"quantity,omitempty"`
+
+	// Type The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
+	Type *string `json:"type,omitempty"`
+
+	// Url A link to the asset details page in the DoiT console.
+	Url *string `json:"url,omitempty"`
 }
 
-// AssetItemDetailed Detailed information about a single asset, including properties.
+// AssetItemDetailed Detailed information about a single asset, including subscription properties.
 type AssetItemDetailed struct {
 	// CreateTime The time when the asset was created, in milliseconds since the epoch.
-	CreateTime *int64  `json:"createTime,omitempty"`
-	Id         *string `json:"id,omitempty"`
-	Name       *string `json:"name,omitempty"`
+	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Properties Additional properties associated with an asset.
+	// Id The unique identifier of the asset.
+	Id *string `json:"id,omitempty"`
+
+	// Name A human-readable label for the asset, typically combining the product name and domain or account ID.
+	Name *string `json:"name,omitempty"`
+
+	// Properties Additional properties associated with an asset, such as subscription and customer details.
 	Properties *AssetProperties `json:"properties,omitempty"`
-	Quantity   *int64           `json:"quantity,omitempty"`
-	Type       *string          `json:"type,omitempty"`
-	Url        *string          `json:"url,omitempty"`
+
+	// Quantity The number of licenses or seats currently assigned to this asset.
+	Quantity *int64 `json:"quantity,omitempty"`
+
+	// Type The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
+	Type *string `json:"type,omitempty"`
+
+	// Url A link to the asset details page in the DoiT console.
+	Url *string `json:"url,omitempty"`
 }
 
-// AssetProperties Additional properties associated with an asset.
+// AssetProperties Additional properties associated with an asset, such as subscription and customer details.
 type AssetProperties struct {
+	// CustomerDomain The primary domain of the customer associated with this asset.
 	CustomerDomain *string `json:"customerDomain,omitempty"`
-	CustomerID     *string `json:"customerID,omitempty"`
-	Reseller       *string `json:"reseller,omitempty"`
 
-	// Subscription Subscription-related metadata for an asset.
+	// CustomerID The unique identifier of the customer in the reseller or partner portal.
+	CustomerID *string `json:"customerID,omitempty"`
+
+	// Reseller The reseller domain through which this asset was provisioned.
+	Reseller *string `json:"reseller,omitempty"`
+
+	// Subscription Subscription details for a G Suite or Office 365 asset.
 	Subscription *Subscription `json:"subscription,omitempty"`
 }
 
@@ -2808,6 +2840,9 @@ type AttributionComponent struct {
 	Regexp *string `json:"regexp,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type   DimensionsTypes `json:"type"`
 	Values *[]string       `json:"values,omitempty"`
 }
@@ -3548,6 +3583,9 @@ type Dimension struct {
 	Id *string `json:"id,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3560,6 +3598,9 @@ type DimensionExternalAPIListItem struct {
 	Label *string `json:"label,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3569,6 +3610,9 @@ type DimensionsExternalAPIGetResponse struct {
 	Label *string `json:"label,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type   *DimensionsTypes       `json:"type,omitempty"`
 	Values *[]ExternalAPIGetValue `json:"values,omitempty"`
 }
@@ -3582,6 +3626,9 @@ type DimensionsExternalAPIListResponse struct {
 }
 
 // DimensionsTypes Enumeration of supported dimension/filter types.
+// "allocation" is an alias for "attribution_group".
+// "allocation_rule" is an alias for "attribution".
+// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 type DimensionsTypes string
 
 // DocumentRef Reference to a Firestore document.
@@ -3725,7 +3772,8 @@ type ExternalConfigCustomTimeRange struct {
 }
 
 // ExternalConfigFilter To include or exclude certain values.
-// When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
+// When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+// When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.
 type ExternalConfigFilter struct {
 	// Id The field to filter on
 	Id string `json:"id"`
@@ -3737,6 +3785,9 @@ type ExternalConfigFilter struct {
 	Mode ExternalConfigFilterMode `json:"mode"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type DimensionsTypes `json:"type"`
 
 	// Values Values to filter on.
@@ -3765,7 +3816,7 @@ type ExternalMetric struct {
 	Type *ExternalMetricType `json:"type,omitempty"`
 
 	// Value For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-	// If using custom metrics, the value must refer to an existing custom ID.
+	// If using custom metrics, the value must refer to an existing custom metric ID.
 	Value *string `json:"value,omitempty"`
 }
 
@@ -4090,6 +4141,9 @@ type Group struct {
 	Limit *Limit `json:"limit,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -4121,7 +4175,7 @@ type GroupAllocationRuleAction string
 type IdOfAsset200Response struct {
 	Id *string `json:"id,omitempty"`
 
-	// Properties Additional properties associated with an asset.
+	// Properties Additional properties associated with an asset, such as subscription and customer details.
 	Properties *AssetProperties `json:"properties,omitempty"`
 	Type       *string          `json:"type,omitempty"`
 }
@@ -4475,8 +4529,9 @@ type QueryRequestBody struct {
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
-// RenewalSettings Settings that control subscription renewal behavior.
+// RenewalSettings Settings that control subscription renewal behavior at the end of a commitment term.
 type RenewalSettings struct {
+	// RenewalType The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL.
 	RenewalType *string `json:"renewalType,omitempty"`
 }
 
@@ -4612,11 +4667,16 @@ type SchemaField struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// Seats Licensing seat counts for a subscription or asset.
+// Seats Licensing seat counts for a subscription.
 type Seats struct {
+	// LicensedNumberOfSeats The number of seats that are currently in use or assigned to users.
 	LicensedNumberOfSeats *int64 `json:"licensedNumberOfSeats,omitempty"`
-	MaximumNumberOfSeats  *int64 `json:"maximumNumberOfSeats,omitempty"`
-	NumberOfSeats         *int64 `json:"numberOfSeats,omitempty"`
+
+	// MaximumNumberOfSeats The maximum number of seats that can be used. Applies to flexible (non-commitment) plans.
+	MaximumNumberOfSeats *int64 `json:"maximumNumberOfSeats,omitempty"`
+
+	// NumberOfSeats The number of committed seats. Applies to annual commitment plans.
+	NumberOfSeats *int64 `json:"numberOfSeats,omitempty"`
 }
 
 // SlackChannel Information of a Slack channel for notifications.
@@ -4629,38 +4689,60 @@ type SlackChannel struct {
 	Workspace  *string `json:"workspace,omitempty"`
 }
 
-// Subscription Subscription-related metadata for an asset.
+// Subscription Subscription details for a G Suite or Office 365 asset.
 type Subscription struct {
+	// BillingMethod The billing method, e.g. ONLINE or OFFLINE.
 	BillingMethod *string `json:"billingMethod,omitempty"`
-	CreationTime  *int64  `json:"creationTime,omitempty"`
-	Id            *string `json:"id,omitempty"`
 
-	// Plan Subscription-related metadata for an asset.
-	Plan            *SubscriptionPlan `json:"plan,omitempty"`
-	PurchaseOrderID *string           `json:"purchaseOrderID,omitempty"`
+	// CreationTime The time when the subscription was created, in milliseconds since the epoch.
+	CreationTime *int64 `json:"creationTime,omitempty"`
 
-	// RenewalSettings Settings that control subscription renewal behavior.
+	// Id The unique identifier of the subscription.
+	Id *string `json:"id,omitempty"`
+
+	// Plan Plan details for a subscription, indicating whether it is a commitment or flexible plan.
+	Plan *SubscriptionPlan `json:"plan,omitempty"`
+
+	// PurchaseOrderID The purchase order ID associated with this subscription, if any.
+	PurchaseOrderID *string `json:"purchaseOrderID,omitempty"`
+
+	// RenewalSettings Settings that control subscription renewal behavior at the end of a commitment term.
 	RenewalSettings *RenewalSettings `json:"renewalSettings,omitempty"`
-	ResourceUIURL   *string          `json:"resourceUIURL,omitempty"`
 
-	// Seats Licensing seat counts for a subscription or asset.
-	Seats   *Seats  `json:"seats,omitempty"`
-	SkuID   *string `json:"skuID,omitempty"`
+	// ResourceUIURL A URL to the subscription management page in the admin console.
+	ResourceUIURL *string `json:"resourceUIURL,omitempty"`
+
+	// Seats Licensing seat counts for a subscription.
+	Seats *Seats `json:"seats,omitempty"`
+
+	// SkuID The unique SKU identifier for the subscribed product.
+	SkuID *string `json:"skuID,omitempty"`
+
+	// SkuName A human-readable name for the subscribed product SKU.
 	SkuName *string `json:"skuName,omitempty"`
-	Status  *string `json:"status,omitempty"`
+
+	// Status The current status of the subscription, e.g. ACTIVE, SUSPENDED, or PENDING.
+	Status *string `json:"status,omitempty"`
 }
 
-// SubscriptionPlan Subscription-related metadata for an asset.
+// SubscriptionPlan Plan details for a subscription, indicating whether it is a commitment or flexible plan.
 type SubscriptionPlan struct {
-	// CommitmentInterval Subscription-related metadata for an asset.
+	// CommitmentInterval The start and end dates of an annual commitment term.
 	CommitmentInterval *SubscriptionPlanCommitmentInterval `json:"commitmentInterval,omitempty"`
-	IsCommitmentPlan   *bool                               `json:"isCommitmentPlan,omitempty"`
-	PlanName           *string                             `json:"planName,omitempty"`
+
+	// IsCommitmentPlan Whether this subscription is on an annual commitment plan (true) or a flexible plan (false).
+	IsCommitmentPlan *bool `json:"isCommitmentPlan,omitempty"`
+
+	// PlanName The name of the plan, e.g. ANNUAL_MONTHLY_PAY, ANNUAL_YEARLY_PAY, FLEXIBLE, or TRIAL.
+	PlanName *string `json:"planName,omitempty"`
 }
 
-// SubscriptionPlanCommitmentInterval Subscription-related metadata for an asset.
+// SubscriptionPlanCommitmentInterval The start and end dates of an annual commitment term.
 type SubscriptionPlanCommitmentInterval struct {
-	EndTime   *int64 `json:"endTime,omitempty"`
+	// EndTime The end time of the commitment interval, in milliseconds since the epoch.
+	EndTime *int64 `json:"endTime,omitempty"`
+
+	// StartTime The start time of the commitment interval, in milliseconds since the epoch.
 	StartTime *int64 `json:"startTime,omitempty"`
 }
 
@@ -5366,10 +5448,10 @@ type GetReportParams struct {
 	TimeRange *string `form:"timeRange,omitempty" json:"timeRange,omitempty"`
 
 	// StartDate An optional parameter to override the report time settings. Must be provided together with `endDate`. Format: yyyy-mm-dd
-	StartDate *string `form:"startDate,omitempty" json:"startDate,omitempty"`
+	StartDate *openapi_types.Date `form:"startDate,omitempty" json:"startDate,omitempty"`
 
 	// EndDate An optional parameter to override the report time settings. Must be provided together with `startDate`. Format: yyyy-mm-dd
-	EndDate *string `form:"endDate,omitempty" json:"endDate,omitempty"`
+	EndDate *openapi_types.Date `form:"endDate,omitempty" json:"endDate,omitempty"`
 }
 
 // ListAnomaliesParams defines parameters for ListAnomalies.
@@ -9970,7 +10052,7 @@ func NewGetReportRequest(server string, id ReportId, params *GetReportParams) (*
 
 		if params.StartDate != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startDate", *params.StartDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startDate", *params.StartDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9986,7 +10068,7 @@ func NewGetReportRequest(server string, id ReportId, params *GetReportParams) (*
 
 		if params.EndDate != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endDate", *params.EndDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endDate", *params.EndDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err

@@ -91,8 +91,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 								},
 							},
 							CustomType: DimensionsType{
@@ -130,8 +130,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 								},
 								"values": schema.ListAttribute{
 									ElementType:         types.StringType,
@@ -169,8 +169,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 												},
 												"value": schema.StringAttribute{
 													Computed:            true,
-													Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-													MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+													Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+													MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 												},
 											},
 											CustomType: MetricType{
@@ -204,8 +204,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.",
+									Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 								},
 							},
 							CustomType: GroupType{
@@ -242,8 +242,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 							"value": schema.StringAttribute{
 								Computed:            true,
-								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 							},
 						},
 						CustomType: MetricType{
@@ -266,8 +266,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"value": schema.StringAttribute{
 										Computed:            true,
-										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 									},
 								},
 								CustomType: MetricType{
@@ -308,8 +308,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"value": schema.StringAttribute{
 									Computed:            true,
-									Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-									MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+									Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+									MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 								},
 							},
 							CustomType: MetricsType{

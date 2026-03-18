@@ -95,8 +95,8 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											"type": schema.StringAttribute{
 												Computed:            true,
-												Description:         "Enumeration of supported dimension/filter types.",
-												MarkdownDescription: "Enumeration of supported dimension/filter types.",
+												Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+												MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
 											},
 											"values": schema.ListAttribute{
 												ElementType:         types.StringType,

@@ -128,6 +128,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Alert"
+          links:
+            getAlert:
+              operationId: getAlert
+              parameters:
+                id: $response.body#/id
+            updateAlert:
+              operationId: updateAlert
+              parameters:
+                id: $response.body#/id
+            deleteAlert:
+              operationId: deleteAlert
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -159,6 +172,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Alert"
+          links:
+            updateAlert:
+              operationId: updateAlert
+              parameters:
+                id: $request.path.id
+            deleteAlert:
+              operationId: deleteAlert
+              parameters:
+                id: $request.path.id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -306,6 +328,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Allocation"
+          links:
+            getAllocation:
+              operationId: getAllocation
+              parameters:
+                id: $response.body#/id
+            updateAllocation:
+              operationId: updateAllocation
+              parameters:
+                id: $response.body#/id
+            deleteAllocation:
+              operationId: deleteAllocation
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -491,6 +526,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnnotationListItem"
+          links:
+            getAnnotation:
+              operationId: getAnnotation
+              parameters:
+                id: $response.body#/id
+            updateAnnotation:
+              operationId: updateAnnotation
+              parameters:
+                id: $response.body#/id
+            deleteAnnotation:
+              operationId: deleteAnnotation
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -522,6 +570,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnnotationListItem"
+          links:
+            updateAnnotation:
+              operationId: updateAnnotation
+              parameters:
+                id: $request.path.id
+            deleteAnnotation:
+              operationId: deleteAnnotation
+              parameters:
+                id: $request.path.id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -572,6 +629,8 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateAnnotationRequest"
+            example:
+              content: "Updated annotation content"
       responses:
         "200":
           description: OK - Annotation updated.
@@ -656,6 +715,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LabelListItem"
+          links:
+            getLabel:
+              operationId: getLabel
+              parameters:
+                id: $response.body#/id
+            updateLabel:
+              operationId: updateLabel
+              parameters:
+                id: $response.body#/id
+            deleteLabel:
+              operationId: deleteLabel
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -687,6 +759,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LabelListItem"
+          links:
+            updateLabel:
+              operationId: updateLabel
+              parameters:
+                id: $request.path.id
+            deleteLabel:
+              operationId: deleteLabel
+              parameters:
+                id: $request.path.id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1093,6 +1174,19 @@ paths:
             application/json:
               schema:
                 type: string
+          links:
+            getAttribution:
+              operationId: getAttribution
+              parameters:
+                id: $response.body
+            updateAttribution:
+              operationId: updateAttribution
+              parameters:
+                id: $response.body
+            deleteAttribution:
+              operationId: deleteAttribution
+              parameters:
+                id: $response.body
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1297,6 +1391,23 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/BudgetCreateUpdateRequest"
+            example:
+              name: schemathesis-stateful-budget
+              amount: 100
+              currency: USD
+              usePrevSpend: false
+              type: recurring
+              timeInterval: month
+              startPeriod: 1704067200000
+              scopes:
+                - id: cloud_provider
+                  type: fixed
+                  mode: is
+                  values:
+                    - amazon-web-services
+              collaborators:
+                - role: owner
+                  email: placeholder@example.com
       responses:
         "201":
           description: Created - New budget created.
@@ -1304,6 +1415,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BudgetAPI"
+          links:
+            getBudget:
+              operationId: getBudget
+              parameters:
+                id: $response.body#/id
+            updateBudget:
+              operationId: updateBudget
+              parameters:
+                id: $response.body#/id
+            deleteBudget:
+              operationId: deleteBudget
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1392,6 +1516,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BudgetAPI"
+          links:
+            deleteBudget:
+              operationId: deleteBudget
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1562,6 +1691,27 @@ paths:
                   items:
                     type: string
                   description: Array of label IDs assigned to the report
+            example:
+              name: schemathesis-stateful-report
+              description: Schemathesis stateful test report
+              config:
+                includeSubtotals: false
+                sortGroups: asc
+                sortDimensions: desc
+                metrics:
+                  - type: basic
+                    value: cost
+                timeRange:
+                  amount: 7
+                  includeCurrent: false
+                  mode: last
+                  unit: day
+                aggregation: total
+                dimensions:
+                  - id: service_description
+                    type: fixed
+                displayValues: actuals_only
+                timeInterval: day
       responses:
         "201":
           description: Created - The request succeeded.
@@ -1569,6 +1719,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExternalReport"
+          links:
+            getReport:
+              operationId: getReport
+              parameters:
+                id: $response.body#/id
+            updateReport:
+              operationId: updateReport
+              parameters:
+                id: $response.body#/id
+            deleteReport:
+              operationId: deleteReport
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1672,6 +1835,8 @@ paths:
             date and time elements that follow the [n].
           schema:
             type: string
+            pattern: "^P(\\d+Y)?(\\d+M)?(\\d+D)?$"
+            example: P7D
         - name: startDate
           in: query
           description: >-
@@ -1679,6 +1844,8 @@ paths:
             provided together with `endDate`. Format: yyyy-mm-dd
           schema:
             type: string
+            format: date
+            example: "2025-01-01"
         - name: endDate
           in: query
           description: >-
@@ -1686,6 +1853,8 @@ paths:
             provided together with `startDate`. Format: yyyy-mm-dd
           schema:
             type: string
+            format: date
+            example: "2025-01-31"
       responses:
         "200":
           description: OK - The request succeeded.
@@ -1714,6 +1883,9 @@ paths:
       responses:
         "200":
           description: OK - Report deleted.
+          links:
+            listReports:
+              operationId: listReports
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1748,6 +1920,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExternalReport"
+          links:
+            getReport:
+              operationId: getReport
+              parameters:
+                id: $response.body#/id
+            deleteReport:
+              operationId: deleteReport
+              parameters:
+                id: $response.body#/id
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2049,6 +2230,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AssetResponse"
+          links:
+            idOfAsset:
+              operationId: idOfAsset
+              parameters:
+                id: $response.body#/accountID
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3794,7 +3980,9 @@ components:
       properties:
         key:
           type: string
-          description: 'Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".'
+          description: |-
+            Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+            Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
         type:
           $ref: "#/components/schemas/AllocationDimensionsTypes"
         values:
@@ -5033,7 +5221,11 @@ components:
         type:
           $ref: "#/components/schemas/DimensionsTypes"
     DimensionsTypes:
-      description: Enumeration of supported dimension/filter types.
+      description: |-
+        Enumeration of supported dimension/filter types.
+        "allocation" is an alias for "attribution_group".
+        "allocation_rule" is an alias for "attribution".
+        "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
       type: string
       enum:
         - datetime
@@ -5045,6 +5237,8 @@ components:
         - system_label
         - attribution
         - attribution_group
+        - allocation
+        - allocation_rule
         - gke
         - gke_label
     AllocationDimensionsTypes:
@@ -5310,7 +5504,8 @@ components:
     ExternalConfigFilter:
       description: |-
         To include or exclude certain values.
-        When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
+        When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+        When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.
       type: object
       required:
         - id
@@ -5392,7 +5587,7 @@ components:
             For basic metrics, the value can be one of: ["cost", "usage",
             "savings"]
 
-            If using custom metrics, the value must refer to an existing custom ID.
+            If using custom metrics, the value must refer to an existing custom metric ID.
       example:
         type: basic
         value: cost
@@ -6164,7 +6359,7 @@ components:
         - type: integer
     AssetItem:
       type: object
-      description: Detailed information about a single asset.
+      description: Summary information about a single asset.
       properties:
         createTime:
           type: integer
@@ -6172,18 +6367,23 @@ components:
           format: int64
         id:
           type: string
+          description: The unique identifier of the asset.
         name:
           type: string
+          description: A human-readable label for the asset, typically combining the product name and domain or account ID.
         quantity:
           type: integer
+          description: The number of licenses or seats currently assigned to this asset.
           format: int64
         type:
           type: string
+          description: "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure."
         url:
           type: string
+          description: A link to the asset details page in the DoiT console.
     AssetItemDetailed:
       type: object
-      description: Detailed information about a single asset, including properties.
+      description: Detailed information about a single asset, including subscription properties.
       properties:
         createTime:
           type: integer
@@ -6191,94 +6391,118 @@ components:
           format: int64
         id:
           type: string
+          description: The unique identifier of the asset.
         name:
           type: string
+          description: A human-readable label for the asset, typically combining the product name and domain or account ID.
         quantity:
           type: integer
+          description: The number of licenses or seats currently assigned to this asset.
           format: int64
         type:
           type: string
+          description: "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure."
         url:
           type: string
+          description: A link to the asset details page in the DoiT console.
         properties:
           $ref: "#/components/schemas/AssetProperties"
     AssetProperties:
       type: object
-      description: Additional properties associated with an asset.
+      description: Additional properties associated with an asset, such as subscription and customer details.
       properties:
         customerDomain:
           type: string
+          description: The primary domain of the customer associated with this asset.
         customerID:
           type: string
+          description: The unique identifier of the customer in the reseller or partner portal.
         reseller:
           type: string
+          description: The reseller domain through which this asset was provisioned.
         subscription:
           $ref: "#/components/schemas/Subscription"
     RenewalSettings:
       type: object
-      description: Settings that control subscription renewal behavior.
+      description: Settings that control subscription renewal behavior at the end of a commitment term.
       properties:
         renewalType:
           type: string
+          description: "The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL."
     Seats:
       type: object
-      description: Licensing seat counts for a subscription or asset.
+      description: Licensing seat counts for a subscription.
       properties:
         licensedNumberOfSeats:
           type: integer
+          description: The number of seats that are currently in use or assigned to users.
           format: int64
         maximumNumberOfSeats:
           type: integer
+          description: The maximum number of seats that can be used. Applies to flexible (non-commitment) plans.
           format: int64
         numberOfSeats:
           type: integer
+          description: The number of committed seats. Applies to annual commitment plans.
           format: int64
     Subscription:
       type: object
-      description: Subscription-related metadata for an asset.
+      description: Subscription details for a G Suite or Office 365 asset.
       properties:
         billingMethod:
           type: string
+          description: "The billing method, e.g. ONLINE or OFFLINE."
         creationTime:
           type: integer
+          description: The time when the subscription was created, in milliseconds since the epoch.
           format: int64
         id:
           type: string
+          description: The unique identifier of the subscription.
         plan:
           $ref: "#/components/schemas/SubscriptionPlan"
         purchaseOrderID:
           type: string
+          description: The purchase order ID associated with this subscription, if any.
         renewalSettings:
           $ref: "#/components/schemas/RenewalSettings"
         resourceUIURL:
           type: string
+          description: A URL to the subscription management page in the admin console.
         seats:
           $ref: "#/components/schemas/Seats"
         skuID:
           type: string
+          description: The unique SKU identifier for the subscribed product.
         skuName:
           type: string
+          description: A human-readable name for the subscribed product SKU.
         status:
           type: string
+          description: "The current status of the subscription, e.g. ACTIVE, SUSPENDED, or PENDING."
     SubscriptionPlan:
       type: object
-      description: Subscription-related metadata for an asset.
+      description: Plan details for a subscription, indicating whether it is a commitment or flexible plan.
       properties:
         commitmentInterval:
           $ref: "#/components/schemas/SubscriptionPlanCommitmentInterval"
         isCommitmentPlan:
           type: boolean
+          description: Whether this subscription is on an annual commitment plan (true) or a flexible plan (false).
         planName:
           type: string
+          description: "The name of the plan, e.g. ANNUAL_MONTHLY_PAY, ANNUAL_YEARLY_PAY, FLEXIBLE, or TRIAL."
     SubscriptionPlanCommitmentInterval:
       type: object
-      description: Subscription-related metadata for an asset.
+      description: The start and end dates of an annual commitment term.
       properties:
         endTime:
           type: integer
+          description: The end time of the commitment interval, in milliseconds since the epoch.
           format: int64
         startTime:
           type: integer
+          description: The start time of the commitment interval, in milliseconds since the epoch.
           format: int64
     TicketCreateFormExtAPI:
       type: object
@@ -7243,7 +7467,7 @@ components:
         The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
       schema:
         type: string
-        default: "500"
+        default: "50"
     pageToken:
       name: pageToken
       in: query

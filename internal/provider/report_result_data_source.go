@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -22,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Compile-time interface checks.
@@ -100,6 +102,7 @@ func (d *reportResultDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 					// time_range is mutually exclusive with start_date/end_date
 					stringvalidator.ConflictsWith(path.MatchRoot("start_date")),
 					stringvalidator.ConflictsWith(path.MatchRoot("end_date")),
+					iso8601DurationValidator{},
 				},
 			},
 			"start_date": schema.StringAttribute{
@@ -111,6 +114,7 @@ func (d *reportResultDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				Validators: []validator.String{
 					// start_date requires end_date
 					stringvalidator.AlsoRequires(path.MatchRoot("end_date")),
+					dateValidator{},
 				},
 			},
 			"end_date": schema.StringAttribute{
@@ -122,6 +126,7 @@ func (d *reportResultDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				Validators: []validator.String{
 					// end_date requires start_date
 					stringvalidator.AlsoRequires(path.MatchRoot("start_date")),
+					dateValidator{},
 				},
 			},
 
@@ -197,10 +202,28 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 		params.TimeRange = new(data.TimeRange.ValueString())
 	}
 	if !data.StartDate.IsNull() && !data.StartDate.IsUnknown() {
-		params.StartDate = new(data.StartDate.ValueString())
+		startDate, err := time.Parse(time.DateOnly, data.StartDate.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid Start Date",
+				fmt.Sprintf("Could not parse start_date as yyyy-mm-dd: %s", err.Error()),
+			)
+			return
+		}
+		d := openapi_types.Date{Time: startDate}
+		params.StartDate = &d
 	}
 	if !data.EndDate.IsNull() && !data.EndDate.IsUnknown() {
-		params.EndDate = new(data.EndDate.ValueString())
+		endDate, err := time.Parse(time.DateOnly, data.EndDate.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid End Date",
+				fmt.Sprintf("Could not parse end_date as yyyy-mm-dd: %s", err.Error()),
+			)
+			return
+		}
+		d := openapi_types.Date{Time: endDate}
+		params.EndDate = &d
 	}
 
 	// Call the API. The GetReportResponse type is a flat struct (no allOf

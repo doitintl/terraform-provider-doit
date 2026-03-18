@@ -151,8 +151,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -164,6 +164,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"system_label",
 											"attribution",
 											"attribution_group",
+											"allocation",
+											"allocation_rule",
 											"gke",
 											"gke_label",
 										),
@@ -225,8 +227,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -238,6 +240,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"system_label",
 											"attribution",
 											"attribution_group",
+											"allocation",
+											"allocation_rule",
 											"gke",
 											"gke_label",
 										),
@@ -291,8 +295,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 												"value": schema.StringAttribute{
 													Optional:            true,
 													Computed:            true,
-													Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-													MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+													Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+													MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 												},
 											},
 											CustomType: MetricType{
@@ -338,8 +342,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`",
+									Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -351,6 +355,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"system_label",
 											"attribution",
 											"attribution_group",
+											"allocation",
+											"allocation_rule",
 											"gke",
 											"gke_label",
 										),
@@ -425,8 +431,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							"value": schema.StringAttribute{
 								Optional:            true,
 								Computed:            true,
-								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 							},
 						},
 						CustomType: MetricType{
@@ -459,8 +465,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									"value": schema.StringAttribute{
 										Optional:            true,
 										Computed:            true,
-										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 									},
 								},
 								CustomType: MetricType{
@@ -526,8 +532,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"value": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
-									MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom ID.",
+									Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+									MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 								},
 							},
 							CustomType: MetricsType{

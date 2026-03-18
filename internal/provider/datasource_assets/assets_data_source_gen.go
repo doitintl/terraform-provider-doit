@@ -27,19 +27,29 @@ func AssetsDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "The time when the asset was created, in milliseconds since the epoch.",
 						},
 						"id": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "The unique identifier of the asset.",
+							MarkdownDescription: "The unique identifier of the asset.",
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "A human-readable label for the asset, typically combining the product name and domain or account ID.",
+							MarkdownDescription: "A human-readable label for the asset, typically combining the product name and domain or account ID.",
 						},
 						"quantity": schema.Int64Attribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "The number of licenses or seats currently assigned to this asset.",
+							MarkdownDescription: "The number of licenses or seats currently assigned to this asset.",
 						},
 						"type": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.",
+							MarkdownDescription: "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.",
 						},
 						"url": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "A link to the asset details page in the DoiT console.",
+							MarkdownDescription: "A link to the asset details page in the DoiT console.",
 						},
 					},
 					CustomType: AssetsType{
