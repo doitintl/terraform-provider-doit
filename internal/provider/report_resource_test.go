@@ -213,9 +213,11 @@ func TestAccReport_AliasTypes(t *testing.T) {
 			{
 				Config: testAccReportAliasTypes(attrID, groupID),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify alias types are preserved in state
+					// Verify alias types and ids are preserved in state
 					resource.TestCheckResourceAttr("doit_report.alias_test", "config.filters.0.type", "allocation_rule"),
+					resource.TestCheckResourceAttr("doit_report.alias_test", "config.filters.0.id", "allocation_rule"),
 					resource.TestCheckResourceAttr("doit_report.alias_test", "config.group.0.type", "allocation"),
+					resource.TestCheckResourceAttr("doit_report.alias_test", "config.group.0.id", groupID),
 				),
 			},
 			// Verify no drift on re-apply - this is the critical test:

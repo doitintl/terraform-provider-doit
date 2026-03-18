@@ -1,7 +1,7 @@
 package provider
 
-// dimensionsTypeAliases maps the new alias names to their canonical (old) names
-// as returned by the API.
+// dimensionsTypeAliases is a bidirectional map between alias names and their
+// canonical counterparts as returned by the API.
 //
 // Background: CMP-36999 introduced "allocation" and "allocation_rule" as aliases
 // for "attribution_group" and "attribution" respectively. The API accepts both
