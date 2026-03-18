@@ -1391,24 +1391,6 @@ func (e MetricFilterText) Valid() bool {
 	}
 }
 
-// Defines values for NewAllocationResponseType.
-const (
-	NewAllocationResponseTypeGroup  NewAllocationResponseType = "group"
-	NewAllocationResponseTypeSingle NewAllocationResponseType = "single"
-)
-
-// Valid indicates whether the value is a known member of the NewAllocationResponseType enum.
-func (e NewAllocationResponseType) Valid() bool {
-	switch e {
-	case NewAllocationResponseTypeGroup:
-		return true
-	case NewAllocationResponseTypeSingle:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ReportType.
 const (
 	ReportTypeCustom ReportType = "custom"
@@ -3412,12 +3394,6 @@ type CreateLabelRequest struct {
 // CreateLabelRequestColor The color of the label.
 type CreateLabelRequestColor string
 
-// CreateReport201Response defines model for CreateReport201Response.
-type CreateReport201Response struct {
-	// Id ID of the new report.
-	Id *string `json:"id,omitempty"`
-}
-
 // CreateReportRequestBody defines model for CreateReportRequestBody.
 type CreateReportRequestBody struct {
 	// Config Report configuration.
@@ -4241,6 +4217,12 @@ type LabelAssignmentObject struct {
 // LabelAssignmentObjectObjectType The type of the object.
 type LabelAssignmentObjectObjectType string
 
+// LabelAssignmentsResponse Response containing the list of objects assigned to a label.
+type LabelAssignmentsResponse struct {
+	// Assignments Array of objects currently assigned to the label.
+	Assignments *[]LabelAssignmentObject `json:"assignments,omitempty"`
+}
+
 // LabelInfo Metadata for a label.
 type LabelInfo struct {
 	// Id The unique identifier of the label.
@@ -4447,18 +4429,6 @@ type MetricFilterText string
 
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string
-
-// NewAllocationResponse Response returned after creating a new allocation.
-type NewAllocationResponse struct {
-	// Id ID of the new allocation.
-	Id *string `json:"id,omitempty"`
-
-	// Type Type of the new allocation.
-	Type *NewAllocationResponseType `json:"type,omitempty"`
-}
-
-// NewAllocationResponseType Type of the new allocation.
-type NewAllocationResponseType string
 
 // ObjectType Generic object type identifier.
 type ObjectType = string
@@ -4935,12 +4905,6 @@ type UpdateLabelRequest struct {
 
 // UpdateLabelRequestColor The color of the label.
 type UpdateLabelRequestColor string
-
-// UpdateReport200Response defines model for UpdateReport200Response.
-type UpdateReport200Response struct {
-	// Id ID of the updated report.
-	Id *string `json:"id,omitempty"`
-}
 
 // UpdateResourcePermissionRequestBody defines model for UpdateResourcePermissionRequestBody.
 type UpdateResourcePermissionRequestBody struct {
@@ -5968,6 +5932,9 @@ type ClientInterface interface {
 
 	UpdateLabel(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLabelAssignments request
+	GetLabelAssignments(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// AssignObjectsToLabelWithBody request with any body
 	AssignObjectsToLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -6751,6 +6718,18 @@ func (c *Client) UpdateLabelWithBody(ctx context.Context, id string, contentType
 
 func (c *Client) UpdateLabel(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateLabelRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLabelAssignments(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLabelAssignmentsRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -9622,6 +9601,40 @@ func NewUpdateLabelRequestWithBody(server string, id string, contentType string,
 	return req, nil
 }
 
+// NewGetLabelAssignmentsRequest generates requests for GetLabelAssignments
+func NewGetLabelAssignmentsRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels/%s/assignments", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewAssignObjectsToLabelRequest calls the generic AssignObjectsToLabel builder with application/json body
 func NewAssignObjectsToLabelRequest(server string, id string, body AssignObjectsToLabelJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -11904,6 +11917,9 @@ type ClientWithResponsesInterface interface {
 
 	UpdateLabelWithResponse(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLabelResp, error)
 
+	// GetLabelAssignmentsWithResponse request
+	GetLabelAssignmentsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelAssignmentsResp, error)
+
 	// AssignObjectsToLabelWithBodyWithResponse request with any body
 	AssignObjectsToLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error)
 
@@ -12219,7 +12235,7 @@ func (r ListAllocationsResp) StatusCode() int {
 type CreateAllocationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *NewAllocationResponse
+	JSON200      *Allocation
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -12297,7 +12313,7 @@ func (r GetAllocationResp) StatusCode() int {
 type UpdateAllocationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *NewAllocationResponse
+	JSON200      *Allocation
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -13072,6 +13088,32 @@ func (r UpdateLabelResp) StatusCode() int {
 	return 0
 }
 
+type GetLabelAssignmentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *LabelAssignmentsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLabelAssignmentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLabelAssignmentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type AssignObjectsToLabelResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -13126,7 +13168,7 @@ func (r ListReportsResp) StatusCode() int {
 type CreateReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *CreateReport201Response
+	JSON201      *ExternalReport
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -13230,7 +13272,7 @@ func (r GetReportResp) StatusCode() int {
 type UpdateReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *UpdateReport200Response
+	JSON200      *ExternalReport
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -14626,6 +14668,15 @@ func (c *ClientWithResponses) UpdateLabelWithResponse(ctx context.Context, id st
 	return ParseUpdateLabelResp(rsp)
 }
 
+// GetLabelAssignmentsWithResponse request returning *GetLabelAssignmentsResp
+func (c *ClientWithResponses) GetLabelAssignmentsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelAssignmentsResp, error) {
+	rsp, err := c.GetLabelAssignments(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelAssignmentsResp(rsp)
+}
+
 // AssignObjectsToLabelWithBodyWithResponse request with arbitrary body returning *AssignObjectsToLabelResp
 func (c *ClientWithResponses) AssignObjectsToLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error) {
 	rsp, err := c.AssignObjectsToLabelWithBody(ctx, id, contentType, body, reqEditors...)
@@ -15456,7 +15507,7 @@ func ParseCreateAllocationResp(rsp *http.Response) (*CreateAllocationResp, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest NewAllocationResponse
+		var dest Allocation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15618,7 +15669,7 @@ func ParseUpdateAllocationResp(rsp *http.Response) (*UpdateAllocationResp, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest NewAllocationResponse
+		var dest Allocation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -17209,6 +17260,60 @@ func ParseUpdateLabelResp(rsp *http.Response) (*UpdateLabelResp, error) {
 	return response, nil
 }
 
+// ParseGetLabelAssignmentsResp parses an HTTP response from a GetLabelAssignmentsWithResponse call
+func ParseGetLabelAssignmentsResp(rsp *http.Response) (*GetLabelAssignmentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelAssignmentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LabelAssignmentsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseAssignObjectsToLabelResp parses an HTTP response from a AssignObjectsToLabelWithResponse call
 func ParseAssignObjectsToLabelResp(rsp *http.Response) (*AssignObjectsToLabelResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -17325,7 +17430,7 @@ func ParseCreateReportResp(rsp *http.Response) (*CreateReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest CreateReport201Response
+		var dest ExternalReport
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -17541,7 +17646,7 @@ func ParseUpdateReportResp(rsp *http.Response) (*UpdateReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest UpdateReport200Response
+		var dest ExternalReport
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

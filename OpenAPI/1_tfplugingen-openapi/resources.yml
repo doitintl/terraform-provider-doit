@@ -92,3 +92,10 @@ resources:
     delete:
       path: /datahub/v1/datasets/{name}
       method: DELETE
+  label_assignments:
+    create:
+      path: /analytics/v1/labels/{id}/assignments
+      method: POST
+    read:
+      path: /analytics/v1/labels/{id}/assignments
+      method: GET

@@ -529,20 +529,6 @@
 						}
 					},
 					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "ID of the new allocation."
-						}
-					},
-					{
-						"name": "type",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "Type of the new allocation."
-						}
-					},
-					{
 						"name": "allocation_type",
 						"string": {
 							"computed_optional_required": "computed",
@@ -561,6 +547,20 @@
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "The time when the allocation was created (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Allocation ID."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Type of allocation (preset or custom)."
 						}
 					},
 					{
@@ -1143,6 +1143,121 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "The time when the label was last updated."
+						}
+					}
+				],
+				"description": "Create and manage labels to organize and categorize your cloud resources.",
+				"markdown_description": "Create and manage labels to organize and categorize your cloud resources."
+			}
+		},
+		{
+			"name": "label_assignments",
+			"schema": {
+				"attributes": [
+					{
+						"name": "add",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "object_id",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The ID of the object to assign/unassign."
+										}
+									},
+									{
+										"name": "object_type",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The type of the object.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"alert\",\n\"allocation\",\n\"budget\",\n\"metric\",\n\"report\",\n\"annotation\",\n)"
+													}
+												}
+											]
+										}
+									}
+								]
+							},
+							"description": "Array of objects to assign to the label."
+						}
+					},
+					{
+						"name": "remove",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "object_id",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The ID of the object to assign/unassign."
+										}
+									},
+									{
+										"name": "object_type",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The type of the object.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"alert\",\n\"allocation\",\n\"budget\",\n\"metric\",\n\"report\",\n\"annotation\",\n)"
+													}
+												}
+											]
+										}
+									}
+								]
+							},
+							"description": "Array of objects to unassign from the label."
+						}
+					},
+					{
+						"name": "assignments",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "object_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The ID of the object to assign/unassign."
+										}
+									},
+									{
+										"name": "object_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The type of the object."
+										}
+									}
+								]
+							},
+							"description": "Array of objects currently assigned to the label."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Label ID"
 						}
 					}
 				],
@@ -2062,7 +2177,7 @@
 						"name": "id",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "ID of the new report."
+							"description": "Report ID."
 						}
 					},
 					{

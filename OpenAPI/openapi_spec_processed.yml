@@ -293,7 +293,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -390,7 +390,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewAllocationResponse"
+                $ref: "#/components/schemas/Allocation"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -731,6 +731,34 @@ paths:
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
   "/analytics/v1/labels/{id}/assignments":
+    get:
+      tags:
+        - Labels
+      summary: Get label assignments
+      description: Returns the list of objects currently assigned to the label specified by the ID.
+      operationId: getLabelAssignments
+      parameters:
+        - name: id
+          in: path
+          description: Label ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Label assignments returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelAssignmentsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
     post:
       tags:
         - Labels
@@ -1422,7 +1450,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateReport201Response'
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1592,7 +1620,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateReport200Response'
+                $ref: "#/components/schemas/ExternalReport"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4372,12 +4400,6 @@ components:
             - rosePink
             - slateGrey
           description: The color of the label.
-    CreateReport201Response:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the new report.
     CreateReportRequestBody:
       type: object
       properties:
@@ -5634,6 +5656,15 @@ components:
             - report
             - annotation
           description: The type of the object.
+    LabelAssignmentsResponse:
+      type: object
+      description: Response containing the list of objects assigned to a label.
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelAssignmentObject"
+          description: Array of objects currently assigned to the label.
     LabelInfo:
       required:
         - id
@@ -5925,19 +5956,6 @@ components:
     MetricType:
       type: string
       description: Identifier for metric type (e.g., basic, custom, extended).
-    NewAllocationResponse:
-      type: object
-      description: Response returned after creating a new allocation.
-      properties:
-        id:
-          type: string
-          description: ID of the new allocation.
-        type:
-          type: string
-          description: Type of the new allocation.
-          enum:
-            - single
-            - group
     ObjectType:
       type: string
       description: Generic object type identifier.
@@ -6598,12 +6616,6 @@ components:
             - slateGrey
           description: The color of the label.
           nullable: true
-    UpdateReport200Response:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the updated report.
     UpdateResourcePermissionRequestBody:
       type: object
       properties:
