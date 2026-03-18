@@ -26,6 +26,11 @@ func TestAccAssetDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_asset.test", "id", assetID),
 					resource.TestCheckResourceAttrSet("data.doit_asset.test", "type"),
 					resource.TestCheckResourceAttrSet("data.doit_asset.test", "quantity"),
+					// Verify properties are populated for G Suite assets
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "properties.customer_domain"),
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "properties.subscription.sku_name"),
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "properties.subscription.plan.plan_name"),
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "properties.subscription.seats.maximum_number_of_seats"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
