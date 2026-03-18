@@ -210,8 +210,7 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 			)
 			return
 		}
-		d := openapi_types.Date{Time: startDate}
-		params.StartDate = &d
+		params.StartDate = &openapi_types.Date{Time: startDate}
 	}
 	if !data.EndDate.IsNull() && !data.EndDate.IsUnknown() {
 		endDate, err := time.Parse(time.DateOnly, data.EndDate.ValueString())
@@ -222,8 +221,7 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 			)
 			return
 		}
-		d := openapi_types.Date{Time: endDate}
-		params.EndDate = &d
+		params.EndDate = &openapi_types.Date{Time: endDate}
 	}
 
 	// Call the API. The GetReportResponse type is a flat struct (no allOf

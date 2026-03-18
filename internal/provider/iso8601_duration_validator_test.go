@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_isValidISO8601DateDuration(t *testing.T) {
+func TestIsValidISO8601DateDuration(t *testing.T) {
 	tests := []struct {
 		input string
 		valid bool
