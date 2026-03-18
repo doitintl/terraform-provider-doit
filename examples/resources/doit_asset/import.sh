@@ -1,1 +1,2 @@
-terraform import doit_asset.gsuite_licenses g-suite-534605520
+# Find the asset ID using the doit_assets data source, then import:
+terraform import doit_asset.licenses <asset-id>

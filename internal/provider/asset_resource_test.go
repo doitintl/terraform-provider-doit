@@ -1,9 +1,11 @@
 package provider_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -107,12 +109,18 @@ func TestAccAssetResource_CreateErrors(t *testing.T) {
 }
 
 // TestAccAssetResource_UpdateQuantity tests updating the quantity field on a
-// G Suite asset after import.
+// G Suite asset after import. It fetches the current quantity from the API,
+// increments it by one, then restores the original value so subsequent test
+// runs aren't no-ops.
 func TestAccAssetResource_UpdateQuantity(t *testing.T) {
 	assetID := os.Getenv("TEST_ASSET_ID")
 	if assetID == "" {
 		t.Skip("TEST_ASSET_ID environment variable not set")
 	}
+
+	// Fetch current quantity from API so we don't hardcode values.
+	currentQty := testAccGetAssetQuantity(t, assetID)
+	updatedQty := currentQty + 1
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -128,22 +136,29 @@ func TestAccAssetResource_UpdateQuantity(t *testing.T) {
 				ImportStatePersist: true,
 				ImportStateVerify:  false,
 			},
-			// Update quantity
+			// Update quantity to current + 1
 			{
-				Config: testAccAssetResourceConfig(assetID, "quantity = 3"),
+				Config: testAccAssetResourceConfig(assetID, fmt.Sprintf("quantity = %d", updatedQty)),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_asset.test", "id", assetID),
-					resource.TestCheckResourceAttr("doit_asset.test", "quantity", "3"),
+					resource.TestCheckResourceAttr("doit_asset.test", "quantity", strconv.Itoa(updatedQty)),
 				),
 			},
 			// Drift verification after update
 			{
-				Config: testAccAssetResourceConfig(assetID, "quantity = 3"),
+				Config: testAccAssetResourceConfig(assetID, fmt.Sprintf("quantity = %d", updatedQty)),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
+			},
+			// Restore original quantity so subsequent test runs aren't no-ops
+			{
+				Config: testAccAssetResourceConfig(assetID, fmt.Sprintf("quantity = %d", currentQty)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_asset.test", "quantity", strconv.Itoa(currentQty)),
+				),
 			},
 		},
 	})
@@ -163,4 +178,22 @@ resource "doit_asset" "test" {
   id = %[1]q
 }
 `, id)
+}
+
+// testAccGetAssetQuantity fetches the current quantity of an asset from the API.
+func testAccGetAssetQuantity(t *testing.T, assetID string) int {
+	t.Helper()
+
+	client := getAPIClient(t)
+	resp, err := client.GetAssetWithResponse(context.Background(), assetID)
+	if err != nil {
+		t.Fatalf("Failed to get asset %s: %v", assetID, err)
+	}
+	if resp.StatusCode() != 200 {
+		t.Fatalf("Failed to get asset %s: status %d, body: %s", assetID, resp.StatusCode(), string(resp.Body))
+	}
+	if resp.JSON200.Quantity == nil {
+		t.Fatalf("Asset %s has no quantity field", assetID)
+	}
+	return int(*resp.JSON200.Quantity)
 }
