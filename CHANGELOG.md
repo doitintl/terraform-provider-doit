@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.0 (2026-03-09)
+## v1.2.0 (2026-03-19)
 
 ### BREAKING CHANGES
 
@@ -8,6 +8,11 @@
 
 ### FEATURES
 
+- **data-source/doit_label_assignments**: New data source to list label assignments ([#118](https://github.com/doitintl/terraform-provider-doit/pull/118))
+- **resource/doit_label_assignments**: New resource to manage label assignments ([#118](https://github.com/doitintl/terraform-provider-doit/pull/118))
+- **data-source/doit_datahub_datasets**: New data source to list DataHub datasets ([#105](https://github.com/doitintl/terraform-provider-doit/pull/105))
+- **resource/doit_datahub_dataset**: New resource to manage DataHub datasets ([#119](https://github.com/doitintl/terraform-provider-doit/pull/119))
+- **resource/doit_asset**: New import-only resource for cloud assets / manage Google Workspace licenses ([#109](https://github.com/doitintl/terraform-provider-doit/pull/109))
 - **data-source/doit_report_result**: New data source to get a single report result by ID ([#113](https://github.com/doitintl/terraform-provider-doit/pull/113))
 - **data-source/doit_report_query**: New data source for ad-hoc Cloud Analytics queries without persisting a report ([#115](https://github.com/doitintl/terraform-provider-doit/pull/115))
 - **data-source/doit_asset**: New data source to get a single asset by ID ([#108](https://github.com/doitintl/terraform-provider-doit/pull/108))
@@ -22,23 +27,26 @@
 
 ### BUG FIXES
 
+- **resource/doit_budget, doit_allocation, doit_report**: Fixed alias type handling in scopes and filters to prevent state drift ([#121](https://github.com/doitintl/terraform-provider-doit/pull/121))
 - **resource/doit_allocation, doit_annotation, doit_report**: Defensive empty list handling to prevent state inconsistencies ([#100](https://github.com/doitintl/terraform-provider-doit/pull/100))
 - **data-sources**: Fixed deterministic row count fallback for list data sources ([#98](https://github.com/doitintl/terraform-provider-doit/pull/98))
 - **docs**: Fixed pagination guide table rendering for Terraform Registry ([#106](https://github.com/doitintl/terraform-provider-doit/pull/106))
-- **test**: Cleaned up CMP-38157 report targets tests ([#103](https://github.com/doitintl/terraform-provider-doit/pull/103))
+- **docs**: Corrected budget example scope type from `attribution` to `allocation_rule` ([#122](https://github.com/doitintl/terraform-provider-doit/pull/122))
 - **ci**: Fixed `validate-examples` to use locally built provider via dev_overrides ([#102](https://github.com/doitintl/terraform-provider-doit/pull/102))
 
 ### INTERNAL
 
+- Updated OpenAPI spec and regenerated code ([#120](https://github.com/doitintl/terraform-provider-doit/pull/120))
+- **resource/doit_allocation, doit_report**: Use direct response mapping for create/update operations, eliminating an extra API call ([#117](https://github.com/doitintl/terraform-provider-doit/pull/117))
+- Synced upstream allocation API changes ([#110](https://github.com/doitintl/terraform-provider-doit/pull/110))
 - Upgraded to Go 1.26 and adopted `new(expr)` syntax ([#111](https://github.com/doitintl/terraform-provider-doit/pull/111))
 - Upgraded oapi-codegen to v2.6.0 ([#112](https://github.com/doitintl/terraform-provider-doit/pull/112))
-- Synced upstream allocation API changes ([#110](https://github.com/doitintl/terraform-provider-doit/pull/110))
+- Upgraded `terraform-plugin-framework` to v1.19.0 and `terraform-plugin-go` to v0.31.0
+- Upgraded CI workflow actions (`setup-go` v6.3.0, `setup-terraform` v4.0.0, `goreleaser-action` v7.0.0, `ghaction-import-gpg` v7.0.0, `golangci-lint` v2.11.3)
 - Made Nix flake activation optional in `.envrc` ([#114](https://github.com/doitintl/terraform-provider-doit/pull/114))
 - Added `validate-docs` step to CI workflow ([#107](https://github.com/doitintl/terraform-provider-doit/pull/107))
 - Updated report field descriptions from upstream API spec ([#96](https://github.com/doitintl/terraform-provider-doit/pull/96))
-- Bumped dependencies and corrected release date for v1.1.0 ([#95](https://github.com/doitintl/terraform-provider-doit/pull/95))
-- Upgraded CI workflow actions to latest versions (`setup-go` v6.3.0, `setup-terraform` v4.0.0, `golangci-lint` v2.11.2)
-- Fixed linter findings for `gosec` G704 and `staticcheck` QF1012
+- Bumped dependencies: `cloudflare/circl` v1.6.3, `google.golang.org/grpc` v1.79.3 ([#99](https://github.com/doitintl/terraform-provider-doit/pull/99), [#123](https://github.com/doitintl/terraform-provider-doit/pull/123))
 
 ## v1.1.0 (2026-02-24)
 
