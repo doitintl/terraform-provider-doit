@@ -43,8 +43,8 @@ resource "doit_budget" "this" {
   ]
   scopes = [
     {
-      type   = "attribution"
-      id     = "attribution"
+      type   = "allocation_rule"
+      id     = "allocation_rule"
       mode   = "is"
       values = ["ydDBFKVuz9kGlFDex8cN"]
     }
@@ -74,8 +74,8 @@ resource "doit_budget" "scoped_to_allocation" {
   # Scope the budget to the first allocation from the data source
   scopes = [
     {
-      type   = "attribution"
-      id     = "attribution"
+      type   = "allocation_rule"
+      id     = "allocation_rule"
       mode   = "is"
       values = [for a in data.doit_allocations.all.allocations : a.id]
     }
@@ -208,7 +208,10 @@ Required:
 - `mode` (String) Filter mode to apply
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
 - `type` (String) Enumeration of supported dimension/filter types.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `gke`, `gke_label`
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
 
 Optional:
 

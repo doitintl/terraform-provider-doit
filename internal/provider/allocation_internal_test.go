@@ -14,7 +14,7 @@ func TestToAllocationRuleComponentsListValue_EmptySlice(t *testing.T) {
 	ctx := context.Background()
 
 	// This must not panic
-	result, diags := toAllocationRuleComponentsListValue(ctx, []models.AllocationComponent{})
+	result, diags := toAllocationRuleComponentsListValue(ctx, []models.AllocationComponent{}, nil)
 
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)

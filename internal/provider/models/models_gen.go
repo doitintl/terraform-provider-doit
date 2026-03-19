@@ -526,6 +526,8 @@ func (e DatahubEventsRequestBodyEventsItemDimensionsItemType) Valid() bool {
 
 // Defines values for DimensionsTypes.
 const (
+	DimensionsTypesAllocation       DimensionsTypes = "allocation"
+	DimensionsTypesAllocationRule   DimensionsTypes = "allocation_rule"
 	DimensionsTypesAttribution      DimensionsTypes = "attribution"
 	DimensionsTypesAttributionGroup DimensionsTypes = "attribution_group"
 	DimensionsTypesDatetime         DimensionsTypes = "datetime"
@@ -542,6 +544,10 @@ const (
 // Valid indicates whether the value is a known member of the DimensionsTypes enum.
 func (e DimensionsTypes) Valid() bool {
 	switch e {
+	case DimensionsTypesAllocation:
+		return true
+	case DimensionsTypesAllocationRule:
+		return true
 	case DimensionsTypesAttribution:
 		return true
 	case DimensionsTypesAttributionGroup:
@@ -1385,24 +1391,6 @@ func (e MetricFilterText) Valid() bool {
 	case MetricFilterTextGt:
 		return true
 	case MetricFilterTextLt:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for NewAllocationResponseType.
-const (
-	NewAllocationResponseTypeGroup  NewAllocationResponseType = "group"
-	NewAllocationResponseTypeSingle NewAllocationResponseType = "single"
-)
-
-// Valid indicates whether the value is a known member of the NewAllocationResponseType enum.
-func (e NewAllocationResponseType) Valid() bool {
-	switch e {
-	case NewAllocationResponseTypeGroup:
-		return true
-	case NewAllocationResponseTypeSingle:
 		return true
 	default:
 		return false
@@ -2554,6 +2542,7 @@ type AllocationComponent struct {
 	InverseSelection *bool `json:"inverse_selection,omitempty"`
 
 	// Key Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
+	// Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 	Key string `json:"key"`
 
 	// Mode Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
@@ -2732,24 +2721,63 @@ type AnomalySKU struct {
 // AnomalySKUArray Array of SKU entries contributing to an anomaly.
 type AnomalySKUArray = []AnomalySKU
 
-// AssetItem Detailed information about a single asset.
+// AssetItem Summary information about a single asset.
 type AssetItem struct {
 	// CreateTime The time when the asset was created, in milliseconds since the epoch.
-	CreateTime *int64  `json:"createTime,omitempty"`
-	Id         *string `json:"id,omitempty"`
-	Name       *string `json:"name,omitempty"`
-	Quantity   *int64  `json:"quantity,omitempty"`
-	Type       *string `json:"type,omitempty"`
-	Url        *string `json:"url,omitempty"`
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Id The unique identifier of the asset.
+	Id *string `json:"id,omitempty"`
+
+	// Name A human-readable label for the asset, typically combining the product name and domain or account ID.
+	Name *string `json:"name,omitempty"`
+
+	// Quantity The number of licenses or seats currently assigned to this asset.
+	Quantity *int64 `json:"quantity,omitempty"`
+
+	// Type The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
+	Type *string `json:"type,omitempty"`
+
+	// Url A link to the asset details page in the DoiT console.
+	Url *string `json:"url,omitempty"`
 }
 
-// AssetProperties Additional properties associated with an asset.
-type AssetProperties struct {
-	CustomerDomain *string `json:"customerDomain,omitempty"`
-	CustomerID     *string `json:"customerID,omitempty"`
-	Reseller       *string `json:"reseller,omitempty"`
+// AssetItemDetailed Detailed information about a single asset, including subscription properties.
+type AssetItemDetailed struct {
+	// CreateTime The time when the asset was created, in milliseconds since the epoch.
+	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// Subscription Subscription-related metadata for an asset.
+	// Id The unique identifier of the asset.
+	Id *string `json:"id,omitempty"`
+
+	// Name A human-readable label for the asset, typically combining the product name and domain or account ID.
+	Name *string `json:"name,omitempty"`
+
+	// Properties Additional properties associated with an asset, such as subscription and customer details.
+	Properties *AssetProperties `json:"properties,omitempty"`
+
+	// Quantity The number of licenses or seats currently assigned to this asset.
+	Quantity *int64 `json:"quantity,omitempty"`
+
+	// Type The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
+	Type *string `json:"type,omitempty"`
+
+	// Url A link to the asset details page in the DoiT console.
+	Url *string `json:"url,omitempty"`
+}
+
+// AssetProperties Additional properties associated with an asset, such as subscription and customer details.
+type AssetProperties struct {
+	// CustomerDomain The primary domain of the customer associated with this asset.
+	CustomerDomain *string `json:"customerDomain,omitempty"`
+
+	// CustomerID The unique identifier of the customer in the reseller or partner portal.
+	CustomerID *string `json:"customerID,omitempty"`
+
+	// Reseller The reseller domain through which this asset was provisioned.
+	Reseller *string `json:"reseller,omitempty"`
+
+	// Subscription Subscription details for a G Suite or Office 365 asset.
 	Subscription *Subscription `json:"subscription,omitempty"`
 }
 
@@ -2812,6 +2840,9 @@ type AttributionComponent struct {
 	Regexp *string `json:"regexp,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type   DimensionsTypes `json:"type"`
 	Values *[]string       `json:"values,omitempty"`
 }
@@ -3373,6 +3404,33 @@ type CreateAttributionRequestBody struct {
 	Name string `json:"name"`
 }
 
+// CreateDatahubDataset201Response defines model for CreateDatahubDataset201Response.
+type CreateDatahubDataset201Response struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records,omitempty"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
+// CreateDatahubDatasetRequestBody defines model for CreateDatahubDatasetRequestBody.
+type CreateDatahubDatasetRequestBody struct {
+	// Description An optional description for the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// Name The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words.
+	Name string `json:"name"`
+}
+
 // CreateLabelRequest Request body for creating a label.
 type CreateLabelRequest struct {
 	// Color The color of the label.
@@ -3384,12 +3442,6 @@ type CreateLabelRequest struct {
 
 // CreateLabelRequestColor The color of the label.
 type CreateLabelRequestColor string
-
-// CreateReport201Response defines model for CreateReport201Response.
-type CreateReport201Response struct {
-	// Id ID of the new report.
-	Id *string `json:"id,omitempty"`
-}
 
 // CreateReportRequestBody defines model for CreateReportRequestBody.
 type CreateReportRequestBody struct {
@@ -3485,6 +3537,22 @@ type DatahubEventsRequestBodyEventsItemMetricsItem struct {
 	Value *float64 `json:"value,omitempty"`
 }
 
+// DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
+type DeleteDatahubDataset200Response struct {
+	Message *string `json:"message,omitempty"`
+}
+
+// DeleteDatahubDatasets200Response defines model for DeleteDatahubDatasets200Response.
+type DeleteDatahubDatasets200Response struct {
+	Message *string `json:"message,omitempty"`
+}
+
+// DeleteDatahubDatasetsRequestBody defines model for DeleteDatahubDatasetsRequestBody.
+type DeleteDatahubDatasetsRequestBody struct {
+	// Datasets List of dataset names to delete.
+	Datasets []string `json:"datasets"`
+}
+
 // DeleteDatahubEventsByFilter200Response defines model for DeleteDatahubEventsByFilter200Response.
 type DeleteDatahubEventsByFilter200Response struct {
 	Message *string `json:"message,omitempty"`
@@ -3515,6 +3583,9 @@ type Dimension struct {
 	Id *string `json:"id,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3527,6 +3598,9 @@ type DimensionExternalAPIListItem struct {
 	Label *string `json:"label,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3536,6 +3610,9 @@ type DimensionsExternalAPIGetResponse struct {
 	Label *string `json:"label,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type   *DimensionsTypes       `json:"type,omitempty"`
 	Values *[]ExternalAPIGetValue `json:"values,omitempty"`
 }
@@ -3549,6 +3626,9 @@ type DimensionsExternalAPIListResponse struct {
 }
 
 // DimensionsTypes Enumeration of supported dimension/filter types.
+// "allocation" is an alias for "attribution_group".
+// "allocation_rule" is an alias for "attribution".
+// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 type DimensionsTypes string
 
 // DocumentRef Reference to a Firestore document.
@@ -3692,7 +3772,8 @@ type ExternalConfigCustomTimeRange struct {
 }
 
 // ExternalConfigFilter To include or exclude certain values.
-// When using attributions as a filter, both the type and the ID must be "attribution", and the values array contains the attribution IDs.
+// When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+// When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.
 type ExternalConfigFilter struct {
 	// Id The field to filter on
 	Id string `json:"id"`
@@ -3704,6 +3785,9 @@ type ExternalConfigFilter struct {
 	Mode ExternalConfigFilterMode `json:"mode"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type DimensionsTypes `json:"type"`
 
 	// Values Values to filter on.
@@ -3732,7 +3816,7 @@ type ExternalMetric struct {
 	Type *ExternalMetricType `json:"type,omitempty"`
 
 	// Value For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-	// If using custom metrics, the value must refer to an existing custom ID.
+	// If using custom metrics, the value must refer to an existing custom metric ID.
 	Value *string `json:"value,omitempty"`
 }
 
@@ -3910,6 +3994,24 @@ type GetAttribution200Response struct {
 	Attribution *AttributionAPI `json:"Attribution,omitempty"`
 }
 
+// GetDatahubDataset200Response defines model for GetDatahubDataset200Response.
+type GetDatahubDataset200Response struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records,omitempty"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
 // GetInvoice200Response defines model for GetInvoice200Response.
 type GetInvoice200Response struct {
 	// BalanceAmount Invoice balance to be paid
@@ -4039,6 +4141,9 @@ type Group struct {
 	Limit *Limit `json:"limit,omitempty"`
 
 	// Type Enumeration of supported dimension/filter types.
+	// "allocation" is an alias for "attribution_group".
+	// "allocation_rule" is an alias for "attribution".
+	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -4070,7 +4175,7 @@ type GroupAllocationRuleAction string
 type IdOfAsset200Response struct {
 	Id *string `json:"id,omitempty"`
 
-	// Properties Additional properties associated with an asset.
+	// Properties Additional properties associated with an asset, such as subscription and customer details.
 	Properties *AssetProperties `json:"properties,omitempty"`
 	Type       *string          `json:"type,omitempty"`
 }
@@ -4180,6 +4285,12 @@ type LabelAssignmentObject struct {
 // LabelAssignmentObjectObjectType The type of the object.
 type LabelAssignmentObjectObjectType string
 
+// LabelAssignmentsResponse Response containing the list of objects assigned to a label.
+type LabelAssignmentsResponse struct {
+	// Assignments Array of objects currently assigned to the label.
+	Assignments *[]LabelAssignmentObject `json:"assignments,omitempty"`
+}
+
 // LabelInfo Metadata for a label.
 type LabelInfo struct {
 	// Id The unique identifier of the label.
@@ -4287,6 +4398,29 @@ type ListBudgets200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ListDatahubDatasets200Response defines model for ListDatahubDatasets200Response.
+type ListDatahubDatasets200Response struct {
+	Datasets *[]ListDatahubDatasets200ResponseDatasetsItem `json:"datasets,omitempty"`
+}
+
+// ListDatahubDatasets200ResponseDatasetsItem defines model for ListDatahubDatasets200ResponseDatasetsItem.
+type ListDatahubDatasets200ResponseDatasetsItem struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records,omitempty"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
 // ListInvoices200Response defines model for ListInvoices200Response.
 type ListInvoices200Response struct {
 	// Invoices Array of Invoices
@@ -4364,18 +4498,6 @@ type MetricFilterText string
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string
 
-// NewAllocationResponse Response returned after creating a new allocation.
-type NewAllocationResponse struct {
-	// Id ID of the new allocation.
-	Id *string `json:"id,omitempty"`
-
-	// Type Type of the new allocation.
-	Type *NewAllocationResponseType `json:"type,omitempty"`
-}
-
-// NewAllocationResponseType Type of the new allocation.
-type NewAllocationResponseType string
-
 // ObjectType Generic object type identifier.
 type ObjectType = string
 
@@ -4407,8 +4529,9 @@ type QueryRequestBody struct {
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
-// RenewalSettings Settings that control subscription renewal behavior.
+// RenewalSettings Settings that control subscription renewal behavior at the end of a commitment term.
 type RenewalSettings struct {
+	// RenewalType The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL.
 	RenewalType *string `json:"renewalType,omitempty"`
 }
 
@@ -4544,11 +4667,16 @@ type SchemaField struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// Seats Licensing seat counts for a subscription or asset.
+// Seats Licensing seat counts for a subscription.
 type Seats struct {
+	// LicensedNumberOfSeats The number of seats that are currently in use or assigned to users.
 	LicensedNumberOfSeats *int64 `json:"licensedNumberOfSeats,omitempty"`
-	MaximumNumberOfSeats  *int64 `json:"maximumNumberOfSeats,omitempty"`
-	NumberOfSeats         *int64 `json:"numberOfSeats,omitempty"`
+
+	// MaximumNumberOfSeats The maximum number of seats that can be used. Applies to flexible (non-commitment) plans.
+	MaximumNumberOfSeats *int64 `json:"maximumNumberOfSeats,omitempty"`
+
+	// NumberOfSeats The number of committed seats. Applies to annual commitment plans.
+	NumberOfSeats *int64 `json:"numberOfSeats,omitempty"`
 }
 
 // SlackChannel Information of a Slack channel for notifications.
@@ -4561,38 +4689,60 @@ type SlackChannel struct {
 	Workspace  *string `json:"workspace,omitempty"`
 }
 
-// Subscription Subscription-related metadata for an asset.
+// Subscription Subscription details for a G Suite or Office 365 asset.
 type Subscription struct {
+	// BillingMethod The billing method, e.g. ONLINE or OFFLINE.
 	BillingMethod *string `json:"billingMethod,omitempty"`
-	CreationTime  *int64  `json:"creationTime,omitempty"`
-	Id            *string `json:"id,omitempty"`
 
-	// Plan Subscription-related metadata for an asset.
-	Plan            *SubscriptionPlan `json:"plan,omitempty"`
-	PurchaseOrderID *string           `json:"purchaseOrderID,omitempty"`
+	// CreationTime The time when the subscription was created, in milliseconds since the epoch.
+	CreationTime *int64 `json:"creationTime,omitempty"`
 
-	// RenewalSettings Settings that control subscription renewal behavior.
+	// Id The unique identifier of the subscription.
+	Id *string `json:"id,omitempty"`
+
+	// Plan Plan details for a subscription, indicating whether it is a commitment or flexible plan.
+	Plan *SubscriptionPlan `json:"plan,omitempty"`
+
+	// PurchaseOrderID The purchase order ID associated with this subscription, if any.
+	PurchaseOrderID *string `json:"purchaseOrderID,omitempty"`
+
+	// RenewalSettings Settings that control subscription renewal behavior at the end of a commitment term.
 	RenewalSettings *RenewalSettings `json:"renewalSettings,omitempty"`
-	ResourceUIURL   *string          `json:"resourceUIURL,omitempty"`
 
-	// Seats Licensing seat counts for a subscription or asset.
-	Seats   *Seats  `json:"seats,omitempty"`
-	SkuID   *string `json:"skuID,omitempty"`
+	// ResourceUIURL A URL to the subscription management page in the admin console.
+	ResourceUIURL *string `json:"resourceUIURL,omitempty"`
+
+	// Seats Licensing seat counts for a subscription.
+	Seats *Seats `json:"seats,omitempty"`
+
+	// SkuID The unique SKU identifier for the subscribed product.
+	SkuID *string `json:"skuID,omitempty"`
+
+	// SkuName A human-readable name for the subscribed product SKU.
 	SkuName *string `json:"skuName,omitempty"`
-	Status  *string `json:"status,omitempty"`
+
+	// Status The current status of the subscription, e.g. ACTIVE, SUSPENDED, or PENDING.
+	Status *string `json:"status,omitempty"`
 }
 
-// SubscriptionPlan Subscription-related metadata for an asset.
+// SubscriptionPlan Plan details for a subscription, indicating whether it is a commitment or flexible plan.
 type SubscriptionPlan struct {
-	// CommitmentInterval Subscription-related metadata for an asset.
+	// CommitmentInterval The start and end dates of an annual commitment term.
 	CommitmentInterval *SubscriptionPlanCommitmentInterval `json:"commitmentInterval,omitempty"`
-	IsCommitmentPlan   *bool                               `json:"isCommitmentPlan,omitempty"`
-	PlanName           *string                             `json:"planName,omitempty"`
+
+	// IsCommitmentPlan Whether this subscription is on an annual commitment plan (true) or a flexible plan (false).
+	IsCommitmentPlan *bool `json:"isCommitmentPlan,omitempty"`
+
+	// PlanName The name of the plan, e.g. ANNUAL_MONTHLY_PAY, ANNUAL_YEARLY_PAY, FLEXIBLE, or TRIAL.
+	PlanName *string `json:"planName,omitempty"`
 }
 
-// SubscriptionPlanCommitmentInterval Subscription-related metadata for an asset.
+// SubscriptionPlanCommitmentInterval The start and end dates of an annual commitment term.
 type SubscriptionPlanCommitmentInterval struct {
-	EndTime   *int64 `json:"endTime,omitempty"`
+	// EndTime The end time of the commitment interval, in milliseconds since the epoch.
+	EndTime *int64 `json:"endTime,omitempty"`
+
+	// StartTime The start time of the commitment interval, in milliseconds since the epoch.
 	StartTime *int64 `json:"startTime,omitempty"`
 }
 
@@ -4813,6 +4963,33 @@ type UpdateAttributionRequestBody struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// UpdateDatahubDataset200Response defines model for UpdateDatahubDataset200Response.
+type UpdateDatahubDataset200Response struct {
+	// Description The description of the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// LastUpdated The timestamp of the last update.
+	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// Name The name of the dataset.
+	Name *string `json:"name,omitempty"`
+
+	// Records The number of records in the dataset.
+	Records *int64 `json:"records,omitempty"`
+
+	// UpdatedBy The email of the user who last updated the dataset.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
+// UpdateDatahubDatasetRequestBody defines model for UpdateDatahubDatasetRequestBody.
+type UpdateDatahubDatasetRequestBody struct {
+	// Description The new description for the dataset.
+	Description *string `json:"description,omitempty"`
+
+	// Name Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed.
+	Name *string `json:"name,omitempty"`
+}
+
 // UpdateLabelRequest Request body for updating a label.
 type UpdateLabelRequest struct {
 	// Color The color of the label.
@@ -4824,12 +5001,6 @@ type UpdateLabelRequest struct {
 
 // UpdateLabelRequestColor The color of the label.
 type UpdateLabelRequestColor string
-
-// UpdateReport200Response defines model for UpdateReport200Response.
-type UpdateReport200Response struct {
-	// Id ID of the updated report.
-	Id *string `json:"id,omitempty"`
-}
 
 // UpdateResourcePermissionRequestBody defines model for UpdateResourcePermissionRequestBody.
 type UpdateResourcePermissionRequestBody struct {
@@ -5277,10 +5448,10 @@ type GetReportParams struct {
 	TimeRange *string `form:"timeRange,omitempty" json:"timeRange,omitempty"`
 
 	// StartDate An optional parameter to override the report time settings. Must be provided together with `endDate`. Format: yyyy-mm-dd
-	StartDate *string `form:"startDate,omitempty" json:"startDate,omitempty"`
+	StartDate *openapi_types.Date `form:"startDate,omitempty" json:"startDate,omitempty"`
 
 	// EndDate An optional parameter to override the report time settings. Must be provided together with `startDate`. Format: yyyy-mm-dd
-	EndDate *string `form:"endDate,omitempty" json:"endDate,omitempty"`
+	EndDate *openapi_types.Date `form:"endDate,omitempty" json:"endDate,omitempty"`
 }
 
 // ListAnomaliesParams defines parameters for ListAnomalies.
@@ -5461,6 +5632,15 @@ type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
 
 // DatahubEventsCSVFileMultipartRequestBody defines body for DatahubEventsCSVFile for multipart/form-data ContentType.
 type DatahubEventsCSVFileMultipartRequestBody = DatahubEventsCSVFileRequestBody
+
+// DeleteDatahubDatasetsJSONRequestBody defines body for DeleteDatahubDatasets for application/json ContentType.
+type DeleteDatahubDatasetsJSONRequestBody = DeleteDatahubDatasetsRequestBody
+
+// CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
+type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
+
+// UpdateDatahubDatasetJSONRequestBody defines body for UpdateDatahubDataset for application/json ContentType.
+type UpdateDatahubDatasetJSONRequestBody = UpdateDatahubDatasetRequestBody
 
 // DatahubEventsJSONRequestBody defines body for DatahubEvents for application/json ContentType.
 type DatahubEventsJSONRequestBody = DatahubEventsRequestBody
@@ -5848,6 +6028,9 @@ type ClientInterface interface {
 
 	UpdateLabel(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLabelAssignments request
+	GetLabelAssignments(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// AssignObjectsToLabelWithBody request with any body
 	AssignObjectsToLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5925,6 +6108,30 @@ type ClientInterface interface {
 
 	// DatahubEventsCSVFileWithBody request with any body
 	DatahubEventsCSVFileWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteDatahubDatasetsWithBody request with any body
+	DeleteDatahubDatasetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	DeleteDatahubDatasets(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListDatahubDatasets request
+	ListDatahubDatasets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateDatahubDatasetWithBody request with any body
+	CreateDatahubDatasetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateDatahubDataset(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteDatahubDataset request
+	DeleteDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDatahubDataset request
+	GetDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateDatahubDatasetWithBody request with any body
+	UpdateDatahubDatasetWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateDatahubDataset(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DatahubEventsWithBody request with any body
 	DatahubEventsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6617,6 +6824,18 @@ func (c *Client) UpdateLabel(ctx context.Context, id string, body UpdateLabelJSO
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetLabelAssignments(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLabelAssignmentsRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) AssignObjectsToLabelWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAssignObjectsToLabelRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
@@ -6943,6 +7162,114 @@ func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEdito
 
 func (c *Client) DatahubEventsCSVFileWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDatahubEventsCSVFileRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteDatahubDatasetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatahubDatasetsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteDatahubDatasets(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatahubDatasetsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListDatahubDatasets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDatahubDatasetsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDatahubDatasetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDatahubDatasetRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDatahubDataset(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDatahubDatasetRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatahubDatasetRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDatahubDataset(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDatahubDatasetRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateDatahubDatasetWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDatahubDatasetRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateDatahubDataset(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDatahubDatasetRequest(c.Server, name, body)
 	if err != nil {
 		return nil, err
 	}
@@ -9370,6 +9697,40 @@ func NewUpdateLabelRequestWithBody(server string, id string, contentType string,
 	return req, nil
 }
 
+// NewGetLabelAssignmentsRequest generates requests for GetLabelAssignments
+func NewGetLabelAssignmentsRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/labels/%s/assignments", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewAssignObjectsToLabelRequest calls the generic AssignObjectsToLabel builder with application/json body
 func NewAssignObjectsToLabelRequest(server string, id string, body AssignObjectsToLabelJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -9691,7 +10052,7 @@ func NewGetReportRequest(server string, id ReportId, params *GetReportParams) (*
 
 		if params.StartDate != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startDate", *params.StartDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startDate", *params.StartDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9707,7 +10068,7 @@ func NewGetReportRequest(server string, id ReportId, params *GetReportParams) (*
 
 		if params.EndDate != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endDate", *params.EndDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endDate", *params.EndDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -10636,6 +10997,228 @@ func NewDatahubEventsCSVFileRequestWithBody(server string, contentType string, b
 	return req, nil
 }
 
+// NewDeleteDatahubDatasetsRequest calls the generic DeleteDatahubDatasets builder with application/json body
+func NewDeleteDatahubDatasetsRequest(server string, body DeleteDatahubDatasetsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDeleteDatahubDatasetsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewDeleteDatahubDatasetsRequestWithBody generates requests for DeleteDatahubDatasets with any type of body
+func NewDeleteDatahubDatasetsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListDatahubDatasetsRequest generates requests for ListDatahubDatasets
+func NewListDatahubDatasetsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateDatahubDatasetRequest calls the generic CreateDatahubDataset builder with application/json body
+func NewCreateDatahubDatasetRequest(server string, body CreateDatahubDatasetJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateDatahubDatasetRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateDatahubDatasetRequestWithBody generates requests for CreateDatahubDataset with any type of body
+func NewCreateDatahubDatasetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteDatahubDatasetRequest generates requests for DeleteDatahubDataset
+func NewDeleteDatahubDatasetRequest(server string, name string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDatahubDatasetRequest generates requests for GetDatahubDataset
+func NewGetDatahubDatasetRequest(server string, name string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateDatahubDatasetRequest calls the generic UpdateDatahubDataset builder with application/json body
+func NewUpdateDatahubDatasetRequest(server string, name string, body UpdateDatahubDatasetJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateDatahubDatasetRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewUpdateDatahubDatasetRequestWithBody generates requests for UpdateDatahubDataset with any type of body
+func NewUpdateDatahubDatasetRequestWithBody(server string, name string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/datahub/v1/datasets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewDatahubEventsRequest calls the generic DatahubEvents builder with application/json body
 func NewDatahubEventsRequest(server string, body DatahubEventsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -11430,6 +12013,9 @@ type ClientWithResponsesInterface interface {
 
 	UpdateLabelWithResponse(ctx context.Context, id string, body UpdateLabelJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLabelResp, error)
 
+	// GetLabelAssignmentsWithResponse request
+	GetLabelAssignmentsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelAssignmentsResp, error)
+
 	// AssignObjectsToLabelWithBodyWithResponse request with any body
 	AssignObjectsToLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error)
 
@@ -11507,6 +12093,30 @@ type ClientWithResponsesInterface interface {
 
 	// DatahubEventsCSVFileWithBodyWithResponse request with any body
 	DatahubEventsCSVFileWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DatahubEventsCSVFileResp, error)
+
+	// DeleteDatahubDatasetsWithBodyWithResponse request with any body
+	DeleteDatahubDatasetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error)
+
+	DeleteDatahubDatasetsWithResponse(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error)
+
+	// ListDatahubDatasetsWithResponse request
+	ListDatahubDatasetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDatahubDatasetsResp, error)
+
+	// CreateDatahubDatasetWithBodyWithResponse request with any body
+	CreateDatahubDatasetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error)
+
+	CreateDatahubDatasetWithResponse(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error)
+
+	// DeleteDatahubDatasetWithResponse request
+	DeleteDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetResp, error)
+
+	// GetDatahubDatasetWithResponse request
+	GetDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetDatahubDatasetResp, error)
+
+	// UpdateDatahubDatasetWithBodyWithResponse request with any body
+	UpdateDatahubDatasetWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error)
+
+	UpdateDatahubDatasetWithResponse(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error)
 
 	// DatahubEventsWithBodyWithResponse request with any body
 	DatahubEventsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DatahubEventsResp, error)
@@ -11721,7 +12331,7 @@ func (r ListAllocationsResp) StatusCode() int {
 type CreateAllocationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *NewAllocationResponse
+	JSON200      *Allocation
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -11799,7 +12409,7 @@ func (r GetAllocationResp) StatusCode() int {
 type UpdateAllocationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *NewAllocationResponse
+	JSON200      *Allocation
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -12574,6 +13184,32 @@ func (r UpdateLabelResp) StatusCode() int {
 	return 0
 }
 
+type GetLabelAssignmentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *LabelAssignmentsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLabelAssignmentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLabelAssignmentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type AssignObjectsToLabelResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12628,7 +13264,7 @@ func (r ListReportsResp) StatusCode() int {
 type CreateReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *CreateReport201Response
+	JSON201      *ExternalReport
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -12732,7 +13368,7 @@ func (r GetReportResp) StatusCode() int {
 type UpdateReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *UpdateReport200Response
+	JSON200      *ExternalReport
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -12888,7 +13524,7 @@ func (r IdOfAssetsResp) StatusCode() int {
 type GetAssetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *AssetItem
+	JSON200      *AssetItemDetailed
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -13138,6 +13774,163 @@ func (r DatahubEventsCSVFileResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DatahubEventsCSVFileResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteDatahubDatasetsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteDatahubDatasets200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteDatahubDatasetsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteDatahubDatasetsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListDatahubDatasetsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListDatahubDatasets200Response
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDatahubDatasetsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDatahubDatasetsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *CreateDatahubDataset201Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateDatahubDatasetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteDatahubDataset200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteDatahubDatasetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetDatahubDataset200Response
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDatahubDatasetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateDatahubDatasetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UpdateDatahubDataset200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateDatahubDatasetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateDatahubDatasetResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13971,6 +14764,15 @@ func (c *ClientWithResponses) UpdateLabelWithResponse(ctx context.Context, id st
 	return ParseUpdateLabelResp(rsp)
 }
 
+// GetLabelAssignmentsWithResponse request returning *GetLabelAssignmentsResp
+func (c *ClientWithResponses) GetLabelAssignmentsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetLabelAssignmentsResp, error) {
+	rsp, err := c.GetLabelAssignments(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelAssignmentsResp(rsp)
+}
+
 // AssignObjectsToLabelWithBodyWithResponse request with arbitrary body returning *AssignObjectsToLabelResp
 func (c *ClientWithResponses) AssignObjectsToLabelWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AssignObjectsToLabelResp, error) {
 	rsp, err := c.AssignObjectsToLabelWithBody(ctx, id, contentType, body, reqEditors...)
@@ -14215,6 +15017,84 @@ func (c *ClientWithResponses) DatahubEventsCSVFileWithBodyWithResponse(ctx conte
 		return nil, err
 	}
 	return ParseDatahubEventsCSVFileResp(rsp)
+}
+
+// DeleteDatahubDatasetsWithBodyWithResponse request with arbitrary body returning *DeleteDatahubDatasetsResp
+func (c *ClientWithResponses) DeleteDatahubDatasetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error) {
+	rsp, err := c.DeleteDatahubDatasetsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDatahubDatasetsResp(rsp)
+}
+
+func (c *ClientWithResponses) DeleteDatahubDatasetsWithResponse(ctx context.Context, body DeleteDatahubDatasetsJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetsResp, error) {
+	rsp, err := c.DeleteDatahubDatasets(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDatahubDatasetsResp(rsp)
+}
+
+// ListDatahubDatasetsWithResponse request returning *ListDatahubDatasetsResp
+func (c *ClientWithResponses) ListDatahubDatasetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDatahubDatasetsResp, error) {
+	rsp, err := c.ListDatahubDatasets(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDatahubDatasetsResp(rsp)
+}
+
+// CreateDatahubDatasetWithBodyWithResponse request with arbitrary body returning *CreateDatahubDatasetResp
+func (c *ClientWithResponses) CreateDatahubDatasetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error) {
+	rsp, err := c.CreateDatahubDatasetWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDatahubDatasetResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateDatahubDatasetWithResponse(ctx context.Context, body CreateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatahubDatasetResp, error) {
+	rsp, err := c.CreateDatahubDataset(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDatahubDatasetResp(rsp)
+}
+
+// DeleteDatahubDatasetWithResponse request returning *DeleteDatahubDatasetResp
+func (c *ClientWithResponses) DeleteDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteDatahubDatasetResp, error) {
+	rsp, err := c.DeleteDatahubDataset(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDatahubDatasetResp(rsp)
+}
+
+// GetDatahubDatasetWithResponse request returning *GetDatahubDatasetResp
+func (c *ClientWithResponses) GetDatahubDatasetWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*GetDatahubDatasetResp, error) {
+	rsp, err := c.GetDatahubDataset(ctx, name, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDatahubDatasetResp(rsp)
+}
+
+// UpdateDatahubDatasetWithBodyWithResponse request with arbitrary body returning *UpdateDatahubDatasetResp
+func (c *ClientWithResponses) UpdateDatahubDatasetWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error) {
+	rsp, err := c.UpdateDatahubDatasetWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateDatahubDatasetResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateDatahubDatasetWithResponse(ctx context.Context, name string, body UpdateDatahubDatasetJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatahubDatasetResp, error) {
+	rsp, err := c.UpdateDatahubDataset(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateDatahubDatasetResp(rsp)
 }
 
 // DatahubEventsWithBodyWithResponse request with arbitrary body returning *DatahubEventsResp
@@ -14723,7 +15603,7 @@ func ParseCreateAllocationResp(rsp *http.Response) (*CreateAllocationResp, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest NewAllocationResponse
+		var dest Allocation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14885,7 +15765,7 @@ func ParseUpdateAllocationResp(rsp *http.Response) (*UpdateAllocationResp, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest NewAllocationResponse
+		var dest Allocation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -16476,6 +17356,60 @@ func ParseUpdateLabelResp(rsp *http.Response) (*UpdateLabelResp, error) {
 	return response, nil
 }
 
+// ParseGetLabelAssignmentsResp parses an HTTP response from a GetLabelAssignmentsWithResponse call
+func ParseGetLabelAssignmentsResp(rsp *http.Response) (*GetLabelAssignmentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelAssignmentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LabelAssignmentsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseAssignObjectsToLabelResp parses an HTTP response from a AssignObjectsToLabelWithResponse call
 func ParseAssignObjectsToLabelResp(rsp *http.Response) (*AssignObjectsToLabelResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -16592,7 +17526,7 @@ func ParseCreateReportResp(rsp *http.Response) (*CreateReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest CreateReport201Response
+		var dest ExternalReport
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -16808,7 +17742,7 @@ func ParseUpdateReportResp(rsp *http.Response) (*UpdateReportResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest UpdateReport200Response
+		var dest ExternalReport
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -17132,7 +18066,7 @@ func ParseGetAssetResp(rsp *http.Response) (*GetAssetResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest AssetItem
+		var dest AssetItemDetailed
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -17637,6 +18571,337 @@ func ParseDatahubEventsCSVFileResp(rsp *http.Response) (*DatahubEventsCSVFileRes
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteDatahubDatasetsResp parses an HTTP response from a DeleteDatahubDatasetsWithResponse call
+func ParseDeleteDatahubDatasetsResp(rsp *http.Response) (*DeleteDatahubDatasetsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteDatahubDatasetsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteDatahubDatasets200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListDatahubDatasetsResp parses an HTTP response from a ListDatahubDatasetsWithResponse call
+func ParseListDatahubDatasetsResp(rsp *http.Response) (*ListDatahubDatasetsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDatahubDatasetsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListDatahubDatasets200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateDatahubDatasetResp parses an HTTP response from a CreateDatahubDatasetWithResponse call
+func ParseCreateDatahubDatasetResp(rsp *http.Response) (*CreateDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CreateDatahubDataset201Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteDatahubDatasetResp parses an HTTP response from a DeleteDatahubDatasetWithResponse call
+func ParseDeleteDatahubDatasetResp(rsp *http.Response) (*DeleteDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteDatahubDataset200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDatahubDatasetResp parses an HTTP response from a GetDatahubDatasetWithResponse call
+func ParseGetDatahubDatasetResp(rsp *http.Response) (*GetDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetDatahubDataset200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateDatahubDatasetResp parses an HTTP response from a UpdateDatahubDatasetWithResponse call
+func ParseUpdateDatahubDatasetResp(rsp *http.Response) (*UpdateDatahubDatasetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateDatahubDatasetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UpdateDatahubDataset200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500

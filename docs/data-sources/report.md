@@ -113,6 +113,9 @@ Read-Only:
 
 - `id` (String) The identifier of the dimension.
 - `type` (String) Enumeration of supported dimension/filter types.
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 
 
 <a id="nestedatt--config--filters"></a>
@@ -124,6 +127,9 @@ Read-Only:
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
 - `type` (String) Enumeration of supported dimension/filter types.
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 - `values` (List of String) Values to filter on.
 
 
@@ -135,6 +141,9 @@ Read-Only:
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
 - `type` (String) Enumeration of supported dimension/filter types.
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
@@ -152,7 +161,7 @@ Read-Only:
 
 - `type` (String) Type of metric to use.
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 
@@ -164,7 +173,7 @@ Read-Only:
 
 - `type` (String) Type of metric to use.
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 <a id="nestedatt--config--metric_filter"></a>
@@ -183,7 +192,7 @@ Read-Only:
 
 - `type` (String) Type of metric to use.
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 
@@ -194,7 +203,7 @@ Read-Only:
 
 - `type` (String) Type of metric to use.
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom ID.
+If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 <a id="nestedatt--config--secondary_time_range"></a>

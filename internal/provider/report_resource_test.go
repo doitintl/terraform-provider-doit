@@ -195,6 +195,88 @@ resource "doit_report" "this" {
 `, attrID, groupID)
 }
 
+// TestAccReport_AliasTypes verifies that using the new alias type names
+// ("allocation" for "attribution_group", "allocation_rule" for "attribution")
+// round-trips correctly without causing drift. The API returns canonical names
+// but our normalizer preserves the user's alias choice in state.
+func TestAccReport_AliasTypes(t *testing.T) {
+	attrID := os.Getenv("TEST_ATTRIBUTION")
+	groupID := os.Getenv("TEST_ATTRIBUTION_GROUP")
+	if attrID == "" || groupID == "" {
+		t.Skip("TEST_ATTRIBUTION and TEST_ATTRIBUTION_GROUP must be set for this test")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckFunc(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportAliasTypes(attrID, groupID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify alias types and ids are preserved in state
+					resource.TestCheckResourceAttr("doit_report.alias_test", "config.filters.0.type", "allocation_rule"),
+					resource.TestCheckResourceAttr("doit_report.alias_test", "config.filters.0.id", "allocation_rule"),
+					resource.TestCheckResourceAttr("doit_report.alias_test", "config.group.0.type", "allocation"),
+					resource.TestCheckResourceAttr("doit_report.alias_test", "config.group.0.id", groupID),
+				),
+			},
+			// Verify no drift on re-apply - this is the critical test:
+			// API returns "attribution"/"attribution_group" but normalizer
+			// preserves user's "allocation_rule"/"allocation".
+			{
+				Config: testAccReportAliasTypes(attrID, groupID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportAliasTypes(attrID, groupID string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "alias_test" {
+  name        = "test_report_alias_types"
+  description = "Test report using alias dimension types"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation   = "total"
+    time_interval = "month"
+    filters = [
+      {
+        inverse = false
+        id      = "allocation_rule"
+        type    = "allocation_rule"
+        values = [
+          "%s"
+        ]
+        mode = "is"
+      }
+    ]
+    group = [
+      {
+        id   = "%s"
+        type = "allocation"
+      },
+      {
+        id   = "cloud_provider"
+        type = "fixed"
+      }
+    ]
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+`, attrID, groupID)
+}
+
 func testAccReportMinimal(i int) string {
 	return fmt.Sprintf(`
 resource "doit_report" "this" {

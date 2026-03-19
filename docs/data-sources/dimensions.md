@@ -66,3 +66,6 @@ Read-Only:
 - `id` (String) The identifier of the dimension.
 - `label` (String) The label of the dimension.
 - `type` (String) Enumeration of supported dimension/filter types.
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.

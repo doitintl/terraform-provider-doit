@@ -917,3 +917,85 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i, testAttribution(), testUser())
 }
+
+// TestAccBudget_ScopesAliasTypes tests that using the "allocation_rule" alias type
+// (for "attribution") in budget scopes round-trips correctly without causing drift.
+// The API returns the canonical "attribution" name, but the normalizer preserves
+// the user's "allocation_rule" choice in state.
+func TestAccBudget_ScopesAliasTypes(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetScopesAliasTypes(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Verify alias type and id are preserved in state
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type": knownvalue.StringExact("allocation_rule"),
+								"id":   knownvalue.StringExact("allocation_rule"),
+								"mode": knownvalue.StringExact("is"),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply - critical test for alias normalization
+			{
+				Config: testAccBudgetScopesAliasTypes(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetScopesAliasTypes(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-alias-scopes-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
+  alerts = [
+    { percentage = 50 },
+    { percentage = 80 },
+    { percentage = 100 }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type          = "recurring"
+  start_period  = local.start_period
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}

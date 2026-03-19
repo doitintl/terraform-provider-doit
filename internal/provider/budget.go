@@ -335,6 +335,21 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 
 	// Convert scopes list
 	if len(resp.Scopes) > 0 {
+		// Extract existing scope types and IDs from state for alias normalization.
+		// When called from Create/Update, state already contains the user's plan values
+		// (e.g. "allocation_rule"), while the API returns canonical names ("attribution").
+		var existingScopeTypes []string
+		var existingScopeIDs []string
+		if !state.Scopes.IsNull() && !state.Scopes.IsUnknown() {
+			var existingScopes []resource_budget.ScopesValue
+			if d := state.Scopes.ElementsAs(ctx, &existingScopes, false); !d.HasError() {
+				for _, es := range existingScopes {
+					existingScopeTypes = append(existingScopeTypes, es.ScopesType.ValueString())
+					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
+				}
+			}
+		}
+
 		scopesList := make([]resource_budget.ScopesValue, len(resp.Scopes))
 		for i, scope := range resp.Scopes {
 			var valuesVal types.List
@@ -349,11 +364,22 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 				diags.Append(emptyDiags...)
 			}
 
+			scopeType := string(scope.Type)
+			scopeID := scope.Id
+			// Normalize alias types and IDs to preserve user's configured value.
+			// E.g. user configures "allocation_rule", API returns "attribution" — preserve user's value.
+			if i < len(existingScopeTypes) {
+				scopeType = normalizeDimensionsType(scopeType, existingScopeTypes[i])
+			}
+			if i < len(existingScopeIDs) {
+				scopeID = normalizeDimensionsType(scopeID, existingScopeIDs[i])
+			}
+
 			scopeAttrs := map[string]attr.Value{
-				"id":      types.StringValue(scope.Id),
+				"id":      types.StringValue(scopeID),
 				"inverse": types.BoolPointerValue(scope.Inverse),
 				"mode":    types.StringValue(string(scope.Mode)),
-				"type":    types.StringValue(string(scope.Type)),
+				"type":    types.StringValue(scopeType),
 				"values":  valuesVal,
 			}
 			var d diag.Diagnostics

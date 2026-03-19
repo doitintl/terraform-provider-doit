@@ -85,4 +85,7 @@ Read-Only:
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
 - `type` (String) Enumeration of supported dimension/filter types.
+"allocation" is an alias for "attribution_group".
+"allocation_rule" is an alias for "attribution".
+"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 - `values` (List of String) Values to filter on.
