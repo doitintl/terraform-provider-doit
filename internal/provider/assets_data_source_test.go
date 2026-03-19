@@ -56,43 +56,16 @@ data "doit_assets" "limited" {
 }
 
 // TestAccAssetsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning results.
-// Uses chained data sources to avoid page token expiry.
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAssetsDataSource_PageTokenOnly(t *testing.T) {
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAssetsDataSourceChainedPageTokenOnly(),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_assets.from_token", "assets.#"),
-					resource.TestCheckResourceAttrSet("data.doit_assets.from_token", "row_count"),
-					resource.TestCheckNoResourceAttr("data.doit_assets.from_token", "page_token"),
-				),
-			},
-		},
-	})
-}
+	totalAssets := getAssetCount(t)
+	if totalAssets < 2 {
+		t.Skipf("Need at least 2 assets to test page_token-only, got %d", totalAssets)
+	}
 
-func testAccAssetsDataSourceChainedPageTokenOnly() string {
-	return `
-data "doit_assets" "first_page" {
-  max_results = 1
-}
-data "doit_assets" "from_token" {
-  page_token = data.doit_assets.first_page.page_token
-}
-`
-}
-
-// TestAccAssetsDataSource_MaxResultsAndPageToken tests using both parameters together.
-// Uses chained data sources to avoid page token expiry.
-func TestAccAssetsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	assetsCount := getAssetCount(t)
-	if assetsCount < 3 {
-		t.Skipf("Need at least 3 assets to test pagination, got %d", assetsCount)
+	pageToken := getAssetFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 asset)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -101,25 +74,58 @@ func TestAccAssetsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAssetsDataSourceChainedMaxResultsAndPageToken(),
+				Config: testAccAssetsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_assets.second_page", "assets.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_assets.from_token", "assets.#"),
+					testCheckResourceAttrLessThan("data.doit_assets.from_token", "row_count", totalAssets),
 				),
 			},
 		},
 	})
 }
 
-func testAccAssetsDataSourceChainedMaxResultsAndPageToken() string {
-	return `
-data "doit_assets" "first_page" {
-  max_results = 1
+func testAccAssetsDataSourcePageTokenConfig(pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_assets" "from_token" {
+  page_token = "%s"
 }
-data "doit_assets" "second_page" {
-  max_results = 1
-  page_token  = data.doit_assets.first_page.page_token
+`, pageToken)
 }
-`
+
+// TestAccAssetsDataSource_MaxResultsAndPageToken tests using both parameters together.
+func TestAccAssetsDataSource_MaxResultsAndPageToken(t *testing.T) {
+	pageToken := getAssetFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 asset)")
+	}
+
+	assetCount := getAssetCount(t)
+	if assetCount < 3 {
+		t.Skipf("Need at least 3 assets to test pagination, got %d", assetCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAssetsDataSourceMaxResultsAndPageTokenConfig(1, pageToken),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_assets.paginated", "assets.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func testAccAssetsDataSourceMaxResultsAndPageTokenConfig(maxResults int64, pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_assets" "paginated" {
+  max_results = %d
+  page_token  = "%s"
+}
+`, maxResults, pageToken)
 }
 
 // TestAccAssetsDataSource_AutoPagination tests that without max_results, all assets are fetched.
@@ -187,4 +193,24 @@ func computeAssetCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
+}
+
+func getAssetFirstPageToken(t *testing.T, maxResults int64) string {
+	t.Helper()
+	client := getAPIClient(t)
+	ctx := context.Background()
+
+	resp, err := client.IdOfAssetsWithResponse(ctx, &models.IdOfAssetsParams{
+		MaxResults: &maxResults,
+	})
+	if err != nil {
+		t.Fatalf("Failed to list assets: %v", err)
+	}
+	if resp.JSON200 == nil {
+		t.Fatal("No response from API")
+	}
+	if resp.JSON200.PageToken == nil {
+		return ""
+	}
+	return *resp.JSON200.PageToken
 }

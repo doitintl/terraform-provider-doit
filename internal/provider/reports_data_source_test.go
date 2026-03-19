@@ -56,43 +56,20 @@ data "doit_reports" "limited" {
 }
 
 // TestAccReportsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning results.
-// Uses chained data sources to avoid page token expiry.
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccReportsDataSource_PageTokenOnly(t *testing.T) {
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccReportsDataSourceChainedPageTokenOnly(),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_reports.from_token", "reports.#"),
-					resource.TestCheckResourceAttrSet("data.doit_reports.from_token", "row_count"),
-					resource.TestCheckNoResourceAttr("data.doit_reports.from_token", "page_token"),
-				),
-			},
-		},
-	})
-}
+	// TODO(CMP-38591): The reports API ignores pageToken when maxResults is not set, returning all results.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: reports API ignores pageToken without maxResults (CMP-38591)")
 
-func testAccReportsDataSourceChainedPageTokenOnly() string {
-	return `
-data "doit_reports" "first_page" {
-  max_results = "1"
-}
-data "doit_reports" "from_token" {
-  page_token = data.doit_reports.first_page.page_token
-}
-`
-}
+	totalReports := getReportCount(t)
+	if totalReports < 2 {
+		t.Skipf("Need at least 2 reports to test page_token-only, got %d", totalReports)
+	}
 
-// TestAccReportsDataSource_MaxResultsAndPageToken tests using both parameters together.
-// Uses chained data sources to avoid page token expiry.
-func TestAccReportsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	reportsCount := getReportCount(t)
-	if reportsCount < 3 {
-		t.Skipf("Need at least 3 reports to test pagination, got %d", reportsCount)
+	pageToken := getReportFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 report)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -101,25 +78,58 @@ func TestAccReportsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccReportsDataSourceChainedMaxResultsAndPageToken(),
+				Config: testAccReportsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_reports.second_page", "reports.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_reports.from_token", "reports.#"),
+					testCheckResourceAttrLessThan("data.doit_reports.from_token", "row_count", totalReports),
 				),
 			},
 		},
 	})
 }
 
-func testAccReportsDataSourceChainedMaxResultsAndPageToken() string {
-	return `
-data "doit_reports" "first_page" {
-  max_results = "1"
+func testAccReportsDataSourcePageTokenConfig(pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_reports" "from_token" {
+  page_token = "%s"
 }
-data "doit_reports" "second_page" {
-  max_results = "1"
-  page_token  = data.doit_reports.first_page.page_token
+`, pageToken)
 }
-`
+
+// TestAccReportsDataSource_MaxResultsAndPageToken tests using both parameters together.
+func TestAccReportsDataSource_MaxResultsAndPageToken(t *testing.T) {
+	pageToken := getReportFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 report)")
+	}
+
+	reportCount := getReportCount(t)
+	if reportCount < 3 {
+		t.Skipf("Need at least 3 reports to test pagination, got %d", reportCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_reports.paginated", "reports.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_reports" "paginated" {
+  max_results = "%s"
+  page_token  = "%s"
+}
+`, maxResults, pageToken)
 }
 
 // TestAccReportsDataSource_AutoPagination tests that without max_results, all reports are fetched.
@@ -187,4 +197,25 @@ func computeReportCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
+}
+
+func getReportFirstPageToken(t *testing.T, maxResults int) string {
+	t.Helper()
+	client := getAPIClient(t)
+	ctx := context.Background()
+
+	maxResultsStr := fmt.Sprintf("%d", maxResults)
+	resp, err := client.ListReportsWithResponse(ctx, &models.ListReportsParams{
+		MaxResults: &maxResultsStr,
+	})
+	if err != nil {
+		t.Fatalf("Failed to list reports: %v", err)
+	}
+	if resp.JSON200 == nil {
+		t.Fatal("No response from API")
+	}
+	if resp.JSON200.PageToken == nil {
+		return ""
+	}
+	return *resp.JSON200.PageToken
 }

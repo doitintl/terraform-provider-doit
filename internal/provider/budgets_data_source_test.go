@@ -69,13 +69,21 @@ data "doit_budgets" "limited" {
 
 // TestAccBudgetsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
-// Uses chained data sources to avoid page token expiry.
 func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): API ignores pageToken when maxResults is not set.
-	t.Skip("Skipping: API ignores pageToken without maxResults (CMP-38591)")
+	// TODO(CMP-38591): The budgets API returns 500 when pageToken is sent without maxResults.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: budgets API returns 500 with pageToken without maxResults (CMP-38591)")
+
+	// We need at least 2 budgets: one before the token and one after.
 	totalBudgets := getBudgetCount(t)
 	if totalBudgets < 2 {
 		t.Skipf("Need at least 2 budgets to test page_token-only, got %d", totalBudgets)
+	}
+
+	// Fetch page_token after the first item
+	pageToken := getFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 budget)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -84,7 +92,7 @@ func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetsDataSourceChainedPageTokenOnly(),
+				Config: testAccBudgetsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify we got some budgets (starting from page 2)
 					resource.TestCheckResourceAttrSet("data.doit_budgets.from_token", "budgets.#"),
@@ -96,23 +104,22 @@ func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
 	})
 }
 
-func testAccBudgetsDataSourceChainedPageTokenOnly() string {
-	return `
-# First page: fetch 1 budget to get a page_token
-data "doit_budgets" "first_page" {
-  max_results = "1"
-}
-
-# Second request: use the page_token without max_results to auto-paginate the rest
+func testAccBudgetsDataSourcePageTokenConfig(pageToken string) string {
+	return fmt.Sprintf(`
 data "doit_budgets" "from_token" {
-  page_token = data.doit_budgets.first_page.page_token
+  page_token = "%s"
 }
-`
+`, pageToken)
 }
 
 // TestAccBudgetsDataSource_MaxResultsAndPageToken tests using both max_results and page_token together.
-// Uses chained data sources to avoid page token expiry.
 func TestAccBudgetsDataSource_MaxResultsAndPageToken(t *testing.T) {
+	// Fetch page_token via API client
+	pageToken := getFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 budget)")
+	}
+
 	// Check we have enough budgets to test with
 	budgetCount := getBudgetCount(t)
 	if budgetCount < 3 {
@@ -125,29 +132,23 @@ func TestAccBudgetsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetsDataSourceChainedMaxResultsAndPageToken(),
+				Config: testAccBudgetsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify we got exactly 1 budget from page 2
-					resource.TestCheckResourceAttr("data.doit_budgets.second_page", "budgets.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_budgets.paginated", "budgets.#", "1"),
 				),
 			},
 		},
 	})
 }
 
-func testAccBudgetsDataSourceChainedMaxResultsAndPageToken() string {
-	return `
-# First page: fetch 1 budget to get a page_token
-data "doit_budgets" "first_page" {
-  max_results = "1"
+func testAccBudgetsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_budgets" "paginated" {
+  max_results = "%s"
+  page_token  = "%s"
 }
-
-# Second page: fetch 1 more budget using the page_token
-data "doit_budgets" "second_page" {
-  max_results = "1"
-  page_token  = data.doit_budgets.first_page.page_token
-}
-`
+`, maxResults, pageToken)
 }
 
 // TestAccBudgetsDataSource_AutoPagination tests that without max_results, all budgets are fetched.
@@ -209,4 +210,25 @@ func computeBudgetCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
+}
+
+func getFirstPageToken(t *testing.T, maxResults int) string {
+	t.Helper()
+	client := getAPIClient(t)
+	ctx := context.Background()
+
+	maxResultsStr := fmt.Sprintf("%d", maxResults)
+	resp, err := client.ListBudgetsWithResponse(ctx, &models.ListBudgetsParams{
+		MaxResults: &maxResultsStr,
+	})
+	if err != nil {
+		t.Fatalf("Failed to list budgets: %v", err)
+	}
+	if resp.JSON200 == nil {
+		t.Fatal("No response from API")
+	}
+	if resp.JSON200.PageToken == nil {
+		return ""
+	}
+	return *resp.JSON200.PageToken
 }

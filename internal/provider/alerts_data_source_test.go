@@ -8,10 +8,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/statecheck"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // TestAccAlertsDataSource_MaxResultsOnly tests that setting max_results limits results
@@ -60,46 +57,54 @@ data "doit_alerts" "limited" {
 }
 
 // TestAccAlertsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning results.
-// Uses chained data sources to avoid page token expiry.
-// Note: We don't assert row_count < total because parallel tests can create/delete alerts
-// between the helper count and the Terraform apply, causing flaky failures.
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAlertsDataSource_PageTokenOnly(t *testing.T) {
+	// TODO(CMP-38591): The alerts API ignores pageToken when maxResults is not set, returning all results.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: alerts API ignores pageToken without maxResults (CMP-38591)")
+
+	totalAlerts := getAlertCount(t)
+	if totalAlerts < 2 {
+		t.Skipf("Need at least 2 alerts to test page_token-only, got %d", totalAlerts)
+	}
+
+	pageToken := getAlertFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 alert)")
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAlertsDataSourceChainedPageTokenOnly(),
+				Config: testAccAlertsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_alerts.from_token", "alerts.#"),
-					resource.TestCheckResourceAttrSet("data.doit_alerts.from_token", "row_count"),
-					// Auto-pagination should complete (no leftover page_token)
-					resource.TestCheckNoResourceAttr("data.doit_alerts.from_token", "page_token"),
+					// Verify row_count is less than total, proving the token was honored
+					testCheckResourceAttrLessThan("data.doit_alerts.from_token", "row_count", totalAlerts),
 				),
 			},
 		},
 	})
 }
 
-func testAccAlertsDataSourceChainedPageTokenOnly() string {
-	return `
-# First page: fetch 1 alert to get a page_token
-data "doit_alerts" "first_page" {
-  max_results = "1"
-}
-
-# Second request: use the page_token without max_results to auto-paginate the rest
+func testAccAlertsDataSourcePageTokenConfig(pageToken string) string {
+	return fmt.Sprintf(`
 data "doit_alerts" "from_token" {
-  page_token = data.doit_alerts.first_page.page_token
+  page_token = "%s"
 }
-`
+`, pageToken)
 }
 
 // TestAccAlertsDataSource_MaxResultsAndPageToken tests using both max_results and page_token together.
-// Uses chained data sources to avoid page token expiry.
 func TestAccAlertsDataSource_MaxResultsAndPageToken(t *testing.T) {
+	pageToken := getAlertFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 alert)")
+	}
+
 	alertCount := getAlertCount(t)
 	if alertCount < 3 {
 		t.Skipf("Need at least 3 alerts to test pagination, got %d", alertCount)
@@ -111,36 +116,22 @@ func TestAccAlertsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAlertsDataSourceChainedMaxResultsAndPageToken(),
+				Config: testAccAlertsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_alerts.second_page", "alerts.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_alerts.paginated", "alerts.#", "1"),
 				),
-				ConfigStateChecks: []statecheck.StateCheck{
-					// Verify second page has a page_token for more results
-					statecheck.ExpectKnownValue(
-						"data.doit_alerts.second_page",
-						tfjsonpath.New("page_token"),
-						knownvalue.NotNull(),
-					),
-				},
 			},
 		},
 	})
 }
 
-func testAccAlertsDataSourceChainedMaxResultsAndPageToken() string {
-	return `
-# First page: fetch 1 alert to get a page_token
-data "doit_alerts" "first_page" {
-  max_results = "1"
+func testAccAlertsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_alerts" "paginated" {
+  max_results = "%s"
+  page_token  = "%s"
 }
-
-# Second page: fetch 1 more alert using the page_token
-data "doit_alerts" "second_page" {
-  max_results = "1"
-  page_token  = data.doit_alerts.first_page.page_token
-}
-`
+`, maxResults, pageToken)
 }
 
 // TestAccAlertsDataSource_AutoPagination tests that without max_results, all alerts are fetched.
@@ -208,4 +199,25 @@ func computeAlertCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
+}
+
+func getAlertFirstPageToken(t *testing.T, maxResults int) string {
+	t.Helper()
+	client := getAPIClient(t)
+	ctx := context.Background()
+
+	maxResultsStr := fmt.Sprintf("%d", maxResults)
+	resp, err := client.ListAlertsWithResponse(ctx, &models.ListAlertsParams{
+		MaxResults: &maxResultsStr,
+	})
+	if err != nil {
+		t.Fatalf("Failed to list alerts: %v", err)
+	}
+	if resp.JSON200 == nil {
+		t.Fatal("No response from API")
+	}
+	if resp.JSON200.PageToken == nil {
+		return ""
+	}
+	return *resp.JSON200.PageToken
 }

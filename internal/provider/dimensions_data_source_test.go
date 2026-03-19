@@ -60,43 +60,20 @@ data "doit_dimensions" "limited" {
 }
 
 // TestAccDimensionsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning results.
-// Uses chained data sources to avoid page token expiry.
+// auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccDimensionsDataSource_PageTokenOnly(t *testing.T) {
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDimensionsDataSourceChainedPageTokenOnly(),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_dimensions.from_token", "dimensions.#"),
-					resource.TestCheckResourceAttrSet("data.doit_dimensions.from_token", "row_count"),
-					resource.TestCheckNoResourceAttr("data.doit_dimensions.from_token", "page_token"),
-				),
-			},
-		},
-	})
-}
+	// TODO(CMP-38591): The dimensions API ignores pageToken when maxResults is not set, returning all results.
+	// Remove this skip once the API supports page_token-only pagination.
+	t.Skip("Skipped: dimensions API ignores pageToken without maxResults (CMP-38591)")
 
-func testAccDimensionsDataSourceChainedPageTokenOnly() string {
-	return `
-data "doit_dimensions" "first_page" {
-  max_results = "1"
-}
-data "doit_dimensions" "from_token" {
-  page_token = data.doit_dimensions.first_page.page_token
-}
-`
-}
+	totalDimensions := getDimensionCount(t)
+	if totalDimensions < 2 {
+		t.Skipf("Need at least 2 dimensions to test page_token-only, got %d", totalDimensions)
+	}
 
-// TestAccDimensionsDataSource_MaxResultsAndPageToken tests using both parameters together.
-// Uses chained data sources to avoid page token expiry.
-func TestAccDimensionsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	dimensionsCount := getDimensionCount(t)
-	if dimensionsCount < 3 {
-		t.Skipf("Need at least 3 dimensions to test pagination, got %d", dimensionsCount)
+	pageToken := getDimensionFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 dimension)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -105,25 +82,58 @@ func TestAccDimensionsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDimensionsDataSourceChainedMaxResultsAndPageToken(),
+				Config: testAccDimensionsDataSourcePageTokenConfig(pageToken),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_dimensions.second_page", "dimensions.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.from_token", "dimensions.#"),
+					testCheckResourceAttrLessThan("data.doit_dimensions.from_token", "row_count", totalDimensions),
 				),
 			},
 		},
 	})
 }
 
-func testAccDimensionsDataSourceChainedMaxResultsAndPageToken() string {
-	return `
-data "doit_dimensions" "first_page" {
-  max_results = "1"
+func testAccDimensionsDataSourcePageTokenConfig(pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_dimensions" "from_token" {
+  page_token = "%s"
 }
-data "doit_dimensions" "second_page" {
-  max_results = "1"
-  page_token  = data.doit_dimensions.first_page.page_token
+`, pageToken)
 }
-`
+
+// TestAccDimensionsDataSource_MaxResultsAndPageToken tests using both parameters together.
+func TestAccDimensionsDataSource_MaxResultsAndPageToken(t *testing.T) {
+	pageToken := getDimensionFirstPageToken(t, 1)
+	if pageToken == "" {
+		t.Skip("No page_token returned (need more than 1 dimension)")
+	}
+
+	dimensionCount := getDimensionCount(t)
+	if dimensionCount < 3 {
+		t.Skipf("Need at least 3 dimensions to test pagination, got %d", dimensionCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDimensionsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_dimensions.paginated", "dimensions.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func testAccDimensionsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
+	return fmt.Sprintf(`
+data "doit_dimensions" "paginated" {
+  max_results = "%s"
+  page_token  = "%s"
+}
+`, maxResults, pageToken)
 }
 
 // TestAccDimensionsDataSource_AutoPagination tests that without max_results, all dimensions are fetched.
@@ -191,4 +201,25 @@ func computeDimensionCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
+}
+
+func getDimensionFirstPageToken(t *testing.T, maxResults int) string {
+	t.Helper()
+	client := getAPIClient(t)
+	ctx := context.Background()
+
+	maxResultsStr := fmt.Sprintf("%d", maxResults)
+	resp, err := client.ListDimensionsWithResponse(ctx, &models.ListDimensionsParams{
+		MaxResults: &maxResultsStr,
+	})
+	if err != nil {
+		t.Fatalf("Failed to list dimensions: %v", err)
+	}
+	if resp.JSON200 == nil {
+		t.Fatal("No response from API")
+	}
+	if resp.JSON200.PageToken == nil {
+		return ""
+	}
+	return *resp.JSON200.PageToken
 }
