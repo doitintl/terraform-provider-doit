@@ -13,10 +13,8 @@ import (
 
 // TestAccSupportRequestsDataSource_MaxResultsOnly tests that setting max_results limits results.
 func TestAccSupportRequestsDataSource_MaxResultsOnly(t *testing.T) {
-	// TODO(CMP-38591): The support requests API ignores maxResults entirely, returning all results
-	// regardless of the value. This is different from other APIs which honor maxResults but ignore
-	// pageToken without it. Remove this skip once the API supports maxResults.
-	t.Skip("Skipped: support requests API ignores maxResults entirely (CMP-38591)")
+	// TODO(CMP-38591): Support tickets API ignores both pageSize and maxResults.
+	t.Skip("Skipping: support tickets API ignores pageSize/maxResults (CMP-38591)")
 
 	ticketCount := getSupportRequestCount(t)
 	if ticketCount < 3 {
@@ -62,15 +60,13 @@ data "doit_support_requests" "limited" {
 
 // TestAccSupportRequestsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
+// Uses chained data sources to avoid page token expiry.
 func TestAccSupportRequestsDataSource_PageTokenOnly(t *testing.T) {
-	totalRequests := getSupportRequestCount(t)
-	if totalRequests < 2 {
-		t.Skipf("Need at least 2 support requests to test page_token-only, got %d", totalRequests)
-	}
-
-	pageToken := getSupportRequestFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 support request)")
+	// TODO(CMP-38591): Support tickets API ignores both pageSize and maxResults.
+	t.Skip("Skipping: support tickets API ignores pageSize/maxResults (CMP-38591)")
+	totalSupportRequests := getSupportRequestCount(t)
+	if totalSupportRequests < 2 {
+		t.Skipf("Need at least 2 support_requests to test page_token-only, got %d", totalSupportRequests)
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -79,34 +75,35 @@ func TestAccSupportRequestsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSupportRequestsDataSourcePageTokenConfig(pageToken),
+				Config: testAccSupportRequestsDataSourceChainedPageTokenOnly(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_support_requests.from_token", "tickets.#"),
-					testCheckResourceAttrLessThan("data.doit_support_requests.from_token", "row_count", totalRequests),
+					testCheckResourceAttrLessThan("data.doit_support_requests.from_token", "row_count", totalSupportRequests),
 				),
 			},
 		},
 	})
 }
 
-func testAccSupportRequestsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_support_requests" "from_token" {
-  page_token = "%s"
+func testAccSupportRequestsDataSourceChainedPageTokenOnly() string {
+	return `
+data "doit_support_requests" "first_page" {
+  max_results = 1
 }
-`, pageToken)
+data "doit_support_requests" "from_token" {
+  page_token = data.doit_support_requests.first_page.page_token
+}
+`
 }
 
 // TestAccSupportRequestsDataSource_MaxResultsAndPageToken tests using both parameters together.
+// Uses chained data sources to avoid page token expiry.
 func TestAccSupportRequestsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getSupportRequestFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 support request)")
-	}
-
-	ticketCount := getSupportRequestCount(t)
-	if ticketCount < 3 {
-		t.Skipf("Need at least 3 support requests to test pagination, got %d", ticketCount)
+	// TODO(CMP-38591): Support tickets API ignores both pageSize and maxResults.
+	t.Skip("Skipping: support tickets API ignores pageSize/maxResults (CMP-38591)")
+	supportRequestsCount := getSupportRequestCount(t)
+	if supportRequestsCount < 3 {
+		t.Skipf("Need at least 3 support requests to test pagination, got %d", supportRequestsCount)
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -115,22 +112,25 @@ func TestAccSupportRequestsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSupportRequestsDataSourceMaxResultsAndPageTokenConfig(1, pageToken),
+				Config: testAccSupportRequestsDataSourceChainedMaxResultsAndPageToken(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_support_requests.paginated", "tickets.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_support_requests.second_page", "tickets.#", "1"),
 				),
 			},
 		},
 	})
 }
 
-func testAccSupportRequestsDataSourceMaxResultsAndPageTokenConfig(maxResults int64, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_support_requests" "paginated" {
-  max_results = %d
-  page_token  = "%s"
+func testAccSupportRequestsDataSourceChainedMaxResultsAndPageToken() string {
+	return `
+data "doit_support_requests" "first_page" {
+  max_results = 1
 }
-`, maxResults, pageToken)
+data "doit_support_requests" "second_page" {
+  max_results = 1
+  page_token  = data.doit_support_requests.first_page.page_token
+}
+`
 }
 
 // TestAccSupportRequestsDataSource_AutoPagination tests that without max_results, all support requests are fetched.
@@ -198,24 +198,4 @@ func computeSupportRequestCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getSupportRequestFirstPageToken(t *testing.T, maxResults int64) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	resp, err := client.IdOfTicketsWithResponse(ctx, &models.IdOfTicketsParams{
-		MaxResults: &maxResults,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list support requests: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }

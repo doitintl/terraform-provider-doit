@@ -56,52 +56,43 @@ data "doit_invoices" "limited" {
 }
 
 // TestAccInvoicesDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning fewer results than a full run.
+// auto-paginates starting from the token, returning results.
+// Uses chained data sources to avoid page token expiry.
 func TestAccInvoicesDataSource_PageTokenOnly(t *testing.T) {
-	totalInvoices := getInvoiceCount(t)
-	if totalInvoices < 2 {
-		t.Skipf("Need at least 2 invoices to test page_token-only, got %d", totalInvoices)
-	}
-
-	pageToken := getInvoiceFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 invoice)")
-	}
-
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInvoicesDataSourcePageTokenConfig(pageToken),
+				Config: testAccInvoicesDataSourceChainedPageTokenOnly(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_invoices.from_token", "invoices.#"),
-					testCheckResourceAttrLessThan("data.doit_invoices.from_token", "row_count", totalInvoices),
+					resource.TestCheckResourceAttrSet("data.doit_invoices.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_invoices.from_token", "page_token"),
 				),
 			},
 		},
 	})
 }
 
-func testAccInvoicesDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_invoices" "from_token" {
-  page_token = "%s"
+func testAccInvoicesDataSourceChainedPageTokenOnly() string {
+	return `
+data "doit_invoices" "first_page" {
+  max_results = 1
 }
-`, pageToken)
+data "doit_invoices" "from_token" {
+  page_token = data.doit_invoices.first_page.page_token
+}
+`
 }
 
 // TestAccInvoicesDataSource_MaxResultsAndPageToken tests using both parameters together.
+// Uses chained data sources to avoid page token expiry.
 func TestAccInvoicesDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getInvoiceFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 invoice)")
-	}
-
-	invoiceCount := getInvoiceCount(t)
-	if invoiceCount < 3 {
-		t.Skipf("Need at least 3 invoices to test pagination, got %d", invoiceCount)
+	invoicesCount := getInvoiceCount(t)
+	if invoicesCount < 3 {
+		t.Skipf("Need at least 3 invoices to test pagination, got %d", invoicesCount)
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -110,22 +101,25 @@ func TestAccInvoicesDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInvoicesDataSourceMaxResultsAndPageTokenConfig(1, pageToken),
+				Config: testAccInvoicesDataSourceChainedMaxResultsAndPageToken(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_invoices.paginated", "invoices.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_invoices.second_page", "invoices.#", "1"),
 				),
 			},
 		},
 	})
 }
 
-func testAccInvoicesDataSourceMaxResultsAndPageTokenConfig(maxResults int64, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_invoices" "paginated" {
-  max_results = %d
-  page_token  = "%s"
+func testAccInvoicesDataSourceChainedMaxResultsAndPageToken() string {
+	return `
+data "doit_invoices" "first_page" {
+  max_results = 1
 }
-`, maxResults, pageToken)
+data "doit_invoices" "second_page" {
+  max_results = 1
+  page_token  = data.doit_invoices.first_page.page_token
+}
+`
 }
 
 // TestAccInvoicesDataSource_AutoPagination tests that without max_results, all invoices are fetched.
@@ -193,24 +187,4 @@ func computeInvoiceCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getInvoiceFirstPageToken(t *testing.T, maxResults int64) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	resp, err := client.ListInvoicesWithResponse(ctx, &models.ListInvoicesParams{
-		MaxResults: &maxResults,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list invoices: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }

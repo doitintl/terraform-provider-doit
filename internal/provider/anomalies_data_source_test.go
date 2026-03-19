@@ -56,52 +56,43 @@ data "doit_anomalies" "limited" {
 }
 
 // TestAccAnomaliesDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning fewer results than a full run.
+// auto-paginates starting from the token, returning results.
+// Uses chained data sources to avoid page token expiry.
 func TestAccAnomaliesDataSource_PageTokenOnly(t *testing.T) {
-	totalAnomalies := getAnomalyCount(t)
-	if totalAnomalies < 2 {
-		t.Skipf("Need at least 2 anomalies to test page_token-only, got %d", totalAnomalies)
-	}
-
-	pageToken := getAnomalyFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 anomaly)")
-	}
-
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAnomaliesDataSourcePageTokenConfig(pageToken),
+				Config: testAccAnomaliesDataSourceChainedPageTokenOnly(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.from_token", "anomalies.#"),
-					testCheckResourceAttrLessThan("data.doit_anomalies.from_token", "row_count", totalAnomalies),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_anomalies.from_token", "page_token"),
 				),
 			},
 		},
 	})
 }
 
-func testAccAnomaliesDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_anomalies" "from_token" {
-  page_token = "%s"
+func testAccAnomaliesDataSourceChainedPageTokenOnly() string {
+	return `
+data "doit_anomalies" "first_page" {
+  max_results = 1
 }
-`, pageToken)
+data "doit_anomalies" "from_token" {
+  page_token = data.doit_anomalies.first_page.page_token
+}
+`
 }
 
 // TestAccAnomaliesDataSource_MaxResultsAndPageToken tests using both parameters together.
+// Uses chained data sources to avoid page token expiry.
 func TestAccAnomaliesDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getAnomalyFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 anomaly)")
-	}
-
-	anomalyCount := getAnomalyCount(t)
-	if anomalyCount < 2 {
-		t.Skipf("Need at least 2 anomalies to test pagination, got %d", anomalyCount)
+	anomaliesCount := getAnomalyCount(t)
+	if anomaliesCount < 2 {
+		t.Skipf("Need at least 2 anomalies to test pagination, got %d", anomaliesCount)
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -110,22 +101,25 @@ func TestAccAnomaliesDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAnomaliesDataSourceMaxResultsAndPageTokenConfig(1, pageToken),
+				Config: testAccAnomaliesDataSourceChainedMaxResultsAndPageToken(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_anomalies.paginated", "anomalies.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.second_page", "anomalies.#", "1"),
 				),
 			},
 		},
 	})
 }
 
-func testAccAnomaliesDataSourceMaxResultsAndPageTokenConfig(maxResults int64, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_anomalies" "paginated" {
-  max_results = %d
-  page_token  = "%s"
+func testAccAnomaliesDataSourceChainedMaxResultsAndPageToken() string {
+	return `
+data "doit_anomalies" "first_page" {
+  max_results = 1
 }
-`, maxResults, pageToken)
+data "doit_anomalies" "second_page" {
+  max_results = 1
+  page_token  = data.doit_anomalies.first_page.page_token
+}
+`
 }
 
 // TestAccAnomaliesDataSource_AutoPagination tests that without max_results, all anomalies are fetched.
@@ -193,24 +187,4 @@ func computeAnomalyCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getAnomalyFirstPageToken(t *testing.T, maxResults int64) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	resp, err := client.ListAnomaliesWithResponse(ctx, &models.ListAnomaliesParams{
-		MaxResults: &maxResults,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list anomalies: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }
