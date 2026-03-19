@@ -173,10 +173,10 @@ resource "doit_budget" "my_budget" {
   name = "My Budget"
   scopes = [
     {
-      type   = "attribution"
-      id     = "attribution"
+      type   = "allocation_rule"
+      id     = "allocation_rule"
       mode   = "is"
-      values = ["your-attribution-id"]
+      values = ["your-allocation-rule-id"]
     }
   ]
   # ...
@@ -403,10 +403,10 @@ resource "doit_alert" "my_alert" {
   config = {
     scopes = [
       {
-        type   = "attribution"
-        id     = "attribution"
+        type   = "allocation_rule"
+        id     = "allocation_rule"
         mode   = "is"
-        values = ["attribution-id-1", "attribution-id-2"]
+        values = ["allocation-rule-id-1", "allocation-rule-id-2"]
       }
     ]
     # ...
