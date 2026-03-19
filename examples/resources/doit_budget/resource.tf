@@ -28,8 +28,8 @@ resource "doit_budget" "this" {
   ]
   scopes = [
     {
-      type   = "attribution"
-      id     = "attribution"
+      type   = "allocation_rule"
+      id     = "allocation_rule"
       mode   = "is"
       values = ["ydDBFKVuz9kGlFDex8cN"]
     }
@@ -59,8 +59,8 @@ resource "doit_budget" "scoped_to_allocation" {
   # Scope the budget to the first allocation from the data source
   scopes = [
     {
-      type   = "attribution"
-      id     = "attribution"
+      type   = "allocation_rule"
+      id     = "allocation_rule"
       mode   = "is"
       values = [for a in data.doit_allocations.all.allocations : a.id]
     }

@@ -1,12 +1,10 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
@@ -78,54 +76,31 @@ data "doit_cloud_incident" "test" {
 }
 
 // TestAccCloudIncidentsDataSource_Pagination tests manual pagination with page_token.
+// Uses chained data sources to avoid page token expiry.
 func TestAccCloudIncidentsDataSource_Pagination(t *testing.T) {
-	pageToken := getCloudIncidentFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 cloud incident)")
-	}
-
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCloudIncidentsDataSourcePaginationConfig(pageToken),
+				Config: testAccCloudIncidentsDataSourceChainedPagination(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_cloud_incidents.test", "incidents.#"),
+					resource.TestCheckResourceAttrSet("data.doit_cloud_incidents.second_page", "incidents.#"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCloudIncidentsDataSourcePaginationConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_cloud_incidents" "test" {
+func testAccCloudIncidentsDataSourceChainedPagination() string {
+	return `
+data "doit_cloud_incidents" "first_page" {
+  max_results = 1
+}
+data "doit_cloud_incidents" "second_page" {
   max_results = 5
-  page_token  = "%s"
+  page_token  = data.doit_cloud_incidents.first_page.page_token
 }
-`, pageToken)
-}
-
-// Helper functions
-
-func getCloudIncidentFirstPageToken(t *testing.T, maxResults int64) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	resp, err := client.ListKnownIssuesWithResponse(ctx, &models.ListKnownIssuesParams{
-		MaxResults: &maxResults,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list cloud incidents: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
+`
 }
