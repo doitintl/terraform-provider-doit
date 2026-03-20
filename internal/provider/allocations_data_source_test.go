@@ -57,19 +57,14 @@ data "doit_allocations" "limited" {
 
 // TestAccAllocationsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
+// Uses three chained data sources in one apply to avoid race conditions with parallel tests:
+//   - "all": fetches all allocations to get total count
+//   - "first_page": fetches 1 allocation + page_token
+//   - "from_token": auto-paginates from the token (should return fewer than all)
 func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): The allocations API ignores pageToken when maxResults is not set, returning all results.
-	// Remove this skip once the API supports page_token-only pagination.
-	t.Skip("Skipped: allocations API ignores pageToken without maxResults (CMP-38591)")
-
 	totalAllocations := getAllocationCount(t)
 	if totalAllocations < 2 {
 		t.Skipf("Need at least 2 allocations to test page_token-only, got %d", totalAllocations)
-	}
-
-	pageToken := getAllocationFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 allocation)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -78,31 +73,32 @@ func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_allocations" "all" {}
+data "doit_allocations" "first_page" {
+  max_results = "1"
+}
+data "doit_allocations" "from_token" {
+  page_token = data.doit_allocations.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_allocations.from_token", "allocations.#"),
-					testCheckResourceAttrLessThan("data.doit_allocations.from_token", "row_count", totalAllocations),
+					resource.TestCheckResourceAttr("data.doit_allocations.first_page", "allocations.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_allocations.first_page", "page_token"),
+					testCheckResourceAttrLessThanAttr(
+						"data.doit_allocations.from_token", "row_count",
+						"data.doit_allocations.all", "row_count",
+					),
+					resource.TestCheckNoResourceAttr("data.doit_allocations.from_token", "page_token"),
 				),
 			},
 		},
 	})
 }
 
-func testAccAllocationsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_allocations" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
-}
-
 // TestAccAllocationsDataSource_MaxResultsAndPageToken tests using both parameters together.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccAllocationsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getAllocationFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 allocation)")
-	}
-
 	allocationCount := getAllocationCount(t)
 	if allocationCount < 3 {
 		t.Skipf("Need at least 3 allocations to test pagination, got %d", allocationCount)
@@ -114,22 +110,23 @@ func TestAccAllocationsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Config: `
+data "doit_allocations" "first_page" {
+  max_results = "1"
+}
+data "doit_allocations" "paginated" {
+  max_results = "1"
+  page_token  = data.doit_allocations.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_allocations.first_page", "allocations.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_allocations.first_page", "page_token"),
 					resource.TestCheckResourceAttr("data.doit_allocations.paginated", "allocations.#", "1"),
 				),
 			},
 		},
 	})
-}
-
-func testAccAllocationsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_allocations" "paginated" {
-  max_results = "%s"
-  page_token  = "%s"
-}
-`, maxResults, pageToken)
 }
 
 // TestAccAllocationsDataSource_AutoPagination tests that without max_results, all allocations are fetched.
@@ -197,25 +194,4 @@ func computeAllocationCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getAllocationFirstPageToken(t *testing.T, maxResults int) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	maxResultsStr := fmt.Sprintf("%d", maxResults)
-	resp, err := client.ListAllocationsWithResponse(ctx, &models.ListAllocationsParams{
-		MaxResults: &maxResultsStr,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list allocations: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }
