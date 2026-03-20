@@ -4453,6 +4453,189 @@
 			}
 		},
 		{
+			"name": "support_request",
+			"schema": {
+				"attributes": [
+					{
+						"name": "ticket_id",
+						"int64": {
+							"computed_optional_required": "required",
+							"description": "The unique identifier of the support request."
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this ticket was created, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The body of the initial ticket message."
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Ticket ID."
+						}
+					},
+					{
+						"name": "is_public",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the ticket is public."
+						}
+					},
+					{
+						"name": "platform",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Platform of the ticket."
+						}
+					},
+					{
+						"name": "product",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Ticket product."
+						}
+					},
+					{
+						"name": "requester",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email address of the ticket requester."
+						}
+					},
+					{
+						"name": "severity",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Ticket severity."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Ticket status."
+						}
+					},
+					{
+						"name": "subject",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The subject of the ticket."
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this ticket was last updated, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "url_ui",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Link to the ticket in DoiT console."
+						}
+					}
+				],
+				"description": "Create and manage support tickets with DoiT.",
+				"markdown_description": "Create and manage support tickets with DoiT."
+			}
+		},
+		{
+			"name": "support_request_comments",
+			"schema": {
+				"attributes": [
+					{
+						"name": "ticket_id",
+						"int64": {
+							"computed_optional_required": "required",
+							"description": "The unique identifier of the support request."
+						}
+					},
+					{
+						"name": "comments",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "attachments",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "content_url",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "file_name",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "id",
+														"int64": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											},
+											"description": "File attachments on the comment."
+										}
+									},
+									{
+										"name": "author",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Email address of the comment author."
+										}
+									},
+									{
+										"name": "body",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The text content of the comment."
+										}
+									},
+									{
+										"name": "created",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "The time when this comment was created, in milliseconds since the epoch."
+										}
+									},
+									{
+										"name": "id",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Comment ID."
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Create and manage support tickets with DoiT.",
+				"markdown_description": "Create and manage support tickets with DoiT."
+			}
+		},
+		{
 			"name": "support_requests",
 			"schema": {
 				"attributes": [
