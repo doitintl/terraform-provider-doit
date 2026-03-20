@@ -53,8 +53,15 @@ func (ds *assetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Id.IsUnknown() {
+		state.Name = types.StringUnknown()
+		state.Type = types.StringUnknown()
+		state.Url = types.StringUnknown()
+		state.Quantity = types.Int64Unknown()
+		state.CreateTime = types.Int64Unknown()
+		state.Properties = datasource_asset.NewPropertiesValueUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}

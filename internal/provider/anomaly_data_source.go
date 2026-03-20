@@ -52,8 +52,23 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Id.IsUnknown() {
+		state.Acknowledged = types.BoolUnknown()
+		state.Attribution = types.StringUnknown()
+		state.BillingAccount = types.StringUnknown()
+		state.CostOfAnomaly = types.Float64Unknown()
+		state.EndTime = types.Int64Unknown()
+		state.Platform = types.StringUnknown()
+		state.ResourceData = types.ListUnknown(datasource_anomaly.ResourceDataValue{}.Type(ctx))
+		state.Scope = types.StringUnknown()
+		state.ServiceName = types.StringUnknown()
+		state.SeverityLevel = types.StringUnknown()
+		state.StartTime = types.Int64Unknown()
+		state.Status = types.StringUnknown()
+		state.TimeFrame = types.StringUnknown()
+		state.Top3skus = types.ListUnknown(datasource_anomaly.Top3skusValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}

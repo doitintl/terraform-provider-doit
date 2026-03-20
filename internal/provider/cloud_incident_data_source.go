@@ -51,8 +51,18 @@ func (ds *cloudIncidentDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Id.IsUnknown() {
+		state.CreateTime = types.Int64Unknown()
+		state.Description = types.StringUnknown()
+		state.Platform = types.StringUnknown()
+		state.Product = types.StringUnknown()
+		state.Status = types.StringUnknown()
+		state.Summary = types.StringUnknown()
+		state.Symptoms = types.StringUnknown()
+		state.Title = types.StringUnknown()
+		state.Workaround = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}

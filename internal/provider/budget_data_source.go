@@ -62,8 +62,32 @@ func (d *budgetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if data.Id.IsUnknown() {
+		data.Name = types.StringUnknown()
+		data.Description = types.StringUnknown()
+		data.Amount = types.Float64Unknown()
+		data.Currency = types.StringUnknown()
+		data.Type = types.StringUnknown()
+		data.TimeInterval = types.StringUnknown()
+		data.StartPeriod = types.Int64Unknown()
+		data.EndPeriod = types.Int64Unknown()
+		data.Metric = types.StringUnknown()
+		data.GrowthPerPeriod = types.Float64Unknown()
+		data.UsePrevSpend = types.BoolUnknown()
+		data.Public = types.StringUnknown()
+		data.CreateTime = types.Int64Unknown()
+		data.UpdateTime = types.Int64Unknown()
+		data.CurrentUtilization = types.Float64Unknown()
+		data.ForecastedUtilization = types.Float64Unknown()
+		data.Alerts = types.ListUnknown(datasource_budget.AlertsValue{}.Type(ctx))
+		data.Collaborators = types.ListUnknown(datasource_budget.CollaboratorsValue{}.Type(ctx))
+		data.Recipients = types.ListUnknown(types.StringType)
+		data.RecipientsSlackChannels = types.ListUnknown(datasource_budget.RecipientsSlackChannelsValue{}.Type(ctx))
+		data.Scope = types.ListUnknown(types.StringType)
+		data.Scopes = types.ListUnknown(datasource_budget.ScopesValue{}.Type(ctx))
+		data.SeasonalAmounts = types.ListUnknown(types.Float64Type)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}

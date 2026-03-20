@@ -62,8 +62,15 @@ func (d *annotationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if data.Id.IsUnknown() {
+		data.Content = types.StringUnknown()
+		data.Timestamp = types.StringUnknown()
+		data.CreateTime = types.StringUnknown()
+		data.UpdateTime = types.StringUnknown()
+		data.Reports = types.ListUnknown(types.StringType)
+		data.Labels = types.ListUnknown(datasource_annotation.LabelsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}

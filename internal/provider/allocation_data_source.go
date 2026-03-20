@@ -62,8 +62,19 @@ func (ds *allocationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if data.Id.IsUnknown() {
+		data.Name = types.StringUnknown()
+		data.Description = types.StringUnknown()
+		data.Type = types.StringUnknown()
+		data.AllocationType = types.StringUnknown()
+		data.AnomalyDetection = types.BoolUnknown()
+		data.CreateTime = types.Int64Unknown()
+		data.UpdateTime = types.Int64Unknown()
+		data.UnallocatedCosts = types.StringUnknown()
+		data.Rule = datasource_allocation.NewRuleValueUnknown()
+		data.Rules = types.ListUnknown(datasource_allocation.RulesValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}

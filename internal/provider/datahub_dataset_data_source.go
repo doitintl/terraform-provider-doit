@@ -53,8 +53,13 @@ func (ds *datahubDatasetDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 
-	// If name is unknown (depends on a resource not yet created), return early
+	// If name is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Name.IsUnknown() {
+		state.Description = types.StringUnknown()
+		state.Records = types.Int64Unknown()
+		state.UpdatedBy = types.StringUnknown()
+		state.LastUpdated = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}
