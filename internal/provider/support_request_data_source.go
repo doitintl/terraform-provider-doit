@@ -52,7 +52,20 @@ func (ds *supportRequestDataSource) Read(ctx context.Context, req datasource.Rea
 	}
 
 	// If ticket_id is unknown (depends on a resource not yet created), return early
+	// with all computed attributes set to unknown so consumers don't treat them as real values.
 	if state.TicketId.IsUnknown() {
+		state.Id = types.Int64Unknown()
+		state.CreateTime = types.Int64Unknown()
+		state.Description = types.StringUnknown()
+		state.IsPublic = types.BoolUnknown()
+		state.Product = types.StringUnknown()
+		state.Requester = types.StringUnknown()
+		state.Status = types.StringUnknown()
+		state.Subject = types.StringUnknown()
+		state.UpdateTime = types.Int64Unknown()
+		state.UrlUi = types.StringUnknown()
+		state.Platform = types.StringUnknown()
+		state.Severity = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}
