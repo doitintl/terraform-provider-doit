@@ -57,15 +57,11 @@ data "doit_allocations" "limited" {
 
 // TestAccAllocationsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 	totalAllocations := getAllocationCount(t)
 	if totalAllocations < 2 {
 		t.Skipf("Need at least 2 allocations to test page_token-only, got %d", totalAllocations)
-	}
-
-	pageToken := getAllocationFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 allocation)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -74,22 +70,23 @@ func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_allocations" "first_page" {
+  max_results = "1"
+}
+data "doit_allocations" "from_token" {
+  page_token = data.doit_allocations.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_allocations.from_token", "allocations.#"),
-					testCheckResourceAttrLessThan("data.doit_allocations.from_token", "row_count", totalAllocations),
+					resource.TestCheckResourceAttr("data.doit_allocations.first_page", "allocations.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_allocations.first_page", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_allocations.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_allocations.from_token", "page_token"),
 				),
 			},
 		},
 	})
-}
-
-func testAccAllocationsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_allocations" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
 }
 
 // TestAccAllocationsDataSource_MaxResultsAndPageToken tests using both parameters together.

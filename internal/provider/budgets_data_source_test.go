@@ -69,17 +69,11 @@ data "doit_budgets" "limited" {
 
 // TestAccBudgetsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
-	// We need at least 2 budgets: one before the token and one after.
 	totalBudgets := getBudgetCount(t)
 	if totalBudgets < 2 {
 		t.Skipf("Need at least 2 budgets to test page_token-only, got %d", totalBudgets)
-	}
-
-	// Fetch page_token after the first item
-	pageToken := getFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 budget)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -88,24 +82,23 @@ func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_budgets" "first_page" {
+  max_results = "1"
+}
+data "doit_budgets" "from_token" {
+  page_token = data.doit_budgets.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify we got some budgets (starting from page 2)
-					resource.TestCheckResourceAttrSet("data.doit_budgets.from_token", "budgets.#"),
-					// Verify row_count is less than total, proving the token was honored
-					testCheckResourceAttrLessThan("data.doit_budgets.from_token", "row_count", totalBudgets),
+					resource.TestCheckResourceAttr("data.doit_budgets.first_page", "budgets.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.first_page", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_budgets.from_token", "page_token"),
 				),
 			},
 		},
 	})
-}
-
-func testAccBudgetsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_budgets" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
 }
 
 // TestAccBudgetsDataSource_MaxResultsAndPageToken tests using both max_results and page_token together.

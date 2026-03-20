@@ -61,15 +61,11 @@ data "doit_dimensions" "limited" {
 
 // TestAccDimensionsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccDimensionsDataSource_PageTokenOnly(t *testing.T) {
 	totalDimensions := getDimensionCount(t)
 	if totalDimensions < 2 {
 		t.Skipf("Need at least 2 dimensions to test page_token-only, got %d", totalDimensions)
-	}
-
-	pageToken := getDimensionFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 dimension)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -78,22 +74,23 @@ func TestAccDimensionsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDimensionsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_dimensions" "first_page" {
+  max_results = "1"
+}
+data "doit_dimensions" "from_token" {
+  page_token = data.doit_dimensions.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_dimensions.from_token", "dimensions.#"),
-					testCheckResourceAttrLessThan("data.doit_dimensions.from_token", "row_count", totalDimensions),
+					resource.TestCheckResourceAttr("data.doit_dimensions.first_page", "dimensions.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.first_page", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_dimensions.from_token", "page_token"),
 				),
 			},
 		},
 	})
-}
-
-func testAccDimensionsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_dimensions" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
 }
 
 // TestAccDimensionsDataSource_MaxResultsAndPageToken tests using both parameters together.

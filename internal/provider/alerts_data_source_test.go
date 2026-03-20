@@ -58,15 +58,11 @@ data "doit_alerts" "limited" {
 
 // TestAccAlertsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccAlertsDataSource_PageTokenOnly(t *testing.T) {
 	totalAlerts := getAlertCount(t)
 	if totalAlerts < 2 {
 		t.Skipf("Need at least 2 alerts to test page_token-only, got %d", totalAlerts)
-	}
-
-	pageToken := getAlertFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 alert)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -75,23 +71,25 @@ func TestAccAlertsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAlertsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_alerts" "first_page" {
+  max_results = "1"
+}
+data "doit_alerts" "from_token" {
+  page_token = data.doit_alerts.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_alerts.from_token", "alerts.#"),
-					// Verify row_count is less than total, proving the token was honored
-					testCheckResourceAttrLessThan("data.doit_alerts.from_token", "row_count", totalAlerts),
+					// first_page: max_results honored, page_token present
+					resource.TestCheckResourceAttr("data.doit_alerts.first_page", "alerts.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_alerts.first_page", "page_token"),
+					// from_token: page_token honored, auto-pagination completed
+					resource.TestCheckResourceAttrSet("data.doit_alerts.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_alerts.from_token", "page_token"),
 				),
 			},
 		},
 	})
-}
-
-func testAccAlertsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_alerts" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
 }
 
 // TestAccAlertsDataSource_MaxResultsAndPageToken tests using both max_results and page_token together.

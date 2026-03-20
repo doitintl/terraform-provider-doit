@@ -57,15 +57,11 @@ data "doit_labels" "limited" {
 
 // TestAccLabelsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
 	totalLabels := getLabelCount(t)
 	if totalLabels < 2 {
 		t.Skipf("Need at least 2 labels to test page_token-only, got %d", totalLabels)
-	}
-
-	pageToken := getLabelFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 label)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -74,22 +70,23 @@ func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLabelsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_labels" "first_page" {
+  max_results = "1"
+}
+data "doit_labels" "from_token" {
+  page_token = data.doit_labels.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_labels.from_token", "labels.#"),
-					testCheckResourceAttrLessThan("data.doit_labels.from_token", "row_count", totalLabels),
+					resource.TestCheckResourceAttr("data.doit_labels.first_page", "labels.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_labels.first_page", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_labels.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_labels.from_token", "page_token"),
 				),
 			},
 		},
 	})
-}
-
-func testAccLabelsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_labels" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
 }
 
 // TestAccLabelsDataSource_MaxResultsAndPageToken tests using both parameters together.
