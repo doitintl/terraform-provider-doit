@@ -52,8 +52,18 @@ func (ds *invoiceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Id.IsUnknown() {
+		state.BalanceAmount = types.Float64Unknown()
+		state.Currency = types.StringUnknown()
+		state.DueDate = types.Int64Unknown()
+		state.InvoiceDate = types.Int64Unknown()
+		state.LineItems = types.ListUnknown(datasource_invoice.LineItemsValue{}.Type(ctx))
+		state.Platform = types.StringUnknown()
+		state.Status = types.StringUnknown()
+		state.TotalAmount = types.Float64Unknown()
+		state.Url = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}

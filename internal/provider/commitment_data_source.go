@@ -69,8 +69,19 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Id.IsUnknown() {
+		state.Name = types.StringUnknown()
+		state.Currency = types.StringUnknown()
+		state.CloudProvider = types.StringUnknown()
+		state.CreateTime = types.Int64Unknown()
+		state.UpdateTime = types.Int64Unknown()
+		state.TotalCommitmentValue = types.Float64Unknown()
+		state.TotalCurrentAttainment = types.Float64Unknown()
+		state.StartDate = types.StringUnknown()
+		state.EndDate = types.StringUnknown()
+		state.Periods = types.ListUnknown(datasource_commitment.PeriodsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}

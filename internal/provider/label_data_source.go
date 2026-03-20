@@ -60,8 +60,14 @@ func (d *labelDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	// If ID is unknown (depends on a resource not yet created), return early
+	// If ID is unknown (depends on a resource not yet created), set all computed
+	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if data.Id.IsUnknown() {
+		data.Name = types.StringUnknown()
+		data.Color = types.StringUnknown()
+		data.Type = types.StringUnknown()
+		data.CreateTime = types.StringUnknown()
+		data.UpdateTime = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
