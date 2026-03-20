@@ -57,7 +57,10 @@ data "doit_labels" "limited" {
 
 // TestAccLabelsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
-// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
+// Uses three chained data sources in one apply to avoid race conditions with parallel tests:
+//   - "all": fetches all labels to get total count
+//   - "first_page": fetches 1 label + page_token
+//   - "from_token": auto-paginates from the token (should return fewer than all)
 func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
 	totalLabels := getLabelCount(t)
 	if totalLabels < 2 {
@@ -71,6 +74,7 @@ func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
+data "doit_labels" "all" {}
 data "doit_labels" "first_page" {
   max_results = "1"
 }
@@ -81,7 +85,10 @@ data "doit_labels" "from_token" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_labels.first_page", "labels.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_labels.first_page", "page_token"),
-					resource.TestCheckResourceAttrSet("data.doit_labels.from_token", "row_count"),
+					testCheckResourceAttrLessThanAttr(
+						"data.doit_labels.from_token", "row_count",
+						"data.doit_labels.all", "row_count",
+					),
 					resource.TestCheckNoResourceAttr("data.doit_labels.from_token", "page_token"),
 				),
 			},

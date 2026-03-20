@@ -57,7 +57,10 @@ data "doit_annotations" "limited" {
 
 // TestAccAnnotationsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
-// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
+// Uses three chained data sources in one apply to avoid race conditions with parallel tests:
+//   - "all": fetches all annotations to get total count
+//   - "first_page": fetches 1 annotation + page_token
+//   - "from_token": auto-paginates from the token (should return fewer than all)
 func TestAccAnnotationsDataSource_PageTokenOnly(t *testing.T) {
 	totalAnnotations := getAnnotationCount(t)
 	if totalAnnotations < 2 {
@@ -71,6 +74,7 @@ func TestAccAnnotationsDataSource_PageTokenOnly(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
+data "doit_annotations" "all" {}
 data "doit_annotations" "first_page" {
   max_results = "1"
 }
@@ -81,7 +85,10 @@ data "doit_annotations" "from_token" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_annotations.first_page", "annotations.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_annotations.first_page", "page_token"),
-					resource.TestCheckResourceAttrSet("data.doit_annotations.from_token", "row_count"),
+					testCheckResourceAttrLessThanAttr(
+						"data.doit_annotations.from_token", "row_count",
+						"data.doit_annotations.all", "row_count",
+					),
 					resource.TestCheckNoResourceAttr("data.doit_annotations.from_token", "page_token"),
 				),
 			},

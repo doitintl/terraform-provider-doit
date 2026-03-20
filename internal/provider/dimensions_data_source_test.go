@@ -61,7 +61,10 @@ data "doit_dimensions" "limited" {
 
 // TestAccDimensionsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
-// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
+// Uses three chained data sources in one apply to avoid race conditions with parallel tests:
+//   - "all": fetches all dimensions to get total count
+//   - "first_page": fetches 1 dimension + page_token
+//   - "from_token": auto-paginates from the token (should return fewer than all)
 func TestAccDimensionsDataSource_PageTokenOnly(t *testing.T) {
 	totalDimensions := getDimensionCount(t)
 	if totalDimensions < 2 {
@@ -75,6 +78,7 @@ func TestAccDimensionsDataSource_PageTokenOnly(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
+data "doit_dimensions" "all" {}
 data "doit_dimensions" "first_page" {
   max_results = "1"
 }
@@ -85,7 +89,10 @@ data "doit_dimensions" "from_token" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_dimensions.first_page", "dimensions.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_dimensions.first_page", "page_token"),
-					resource.TestCheckResourceAttrSet("data.doit_dimensions.from_token", "row_count"),
+					testCheckResourceAttrLessThanAttr(
+						"data.doit_dimensions.from_token", "row_count",
+						"data.doit_dimensions.all", "row_count",
+					),
 					resource.TestCheckNoResourceAttr("data.doit_dimensions.from_token", "page_token"),
 				),
 			},

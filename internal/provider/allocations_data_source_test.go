@@ -57,7 +57,10 @@ data "doit_allocations" "limited" {
 
 // TestAccAllocationsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
-// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
+// Uses three chained data sources in one apply to avoid race conditions with parallel tests:
+//   - "all": fetches all allocations to get total count
+//   - "first_page": fetches 1 allocation + page_token
+//   - "from_token": auto-paginates from the token (should return fewer than all)
 func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 	totalAllocations := getAllocationCount(t)
 	if totalAllocations < 2 {
@@ -71,6 +74,7 @@ func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
+data "doit_allocations" "all" {}
 data "doit_allocations" "first_page" {
   max_results = "1"
 }
@@ -81,7 +85,10 @@ data "doit_allocations" "from_token" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_allocations.first_page", "allocations.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_allocations.first_page", "page_token"),
-					resource.TestCheckResourceAttrSet("data.doit_allocations.from_token", "row_count"),
+					testCheckResourceAttrLessThanAttr(
+						"data.doit_allocations.from_token", "row_count",
+						"data.doit_allocations.all", "row_count",
+					),
 					resource.TestCheckNoResourceAttr("data.doit_allocations.from_token", "page_token"),
 				),
 			},
