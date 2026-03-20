@@ -90,12 +90,8 @@ data "doit_annotations" "from_token" {
 }
 
 // TestAccAnnotationsDataSource_MaxResultsAndPageToken tests using both parameters together.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccAnnotationsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getAnnotationFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 annotation)")
-	}
-
 	annotationCount := getAnnotationCount(t)
 	if annotationCount < 3 {
 		t.Skipf("Need at least 3 annotations to test pagination, got %d", annotationCount)
@@ -107,22 +103,23 @@ func TestAccAnnotationsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAnnotationsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Config: `
+data "doit_annotations" "first_page" {
+  max_results = "1"
+}
+data "doit_annotations" "paginated" {
+  max_results = "1"
+  page_token  = data.doit_annotations.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_annotations.first_page", "annotations.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_annotations.first_page", "page_token"),
 					resource.TestCheckResourceAttr("data.doit_annotations.paginated", "annotations.#", "1"),
 				),
 			},
 		},
 	})
-}
-
-func testAccAnnotationsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_annotations" "paginated" {
-  max_results = "%s"
-  page_token  = "%s"
-}
-`, maxResults, pageToken)
 }
 
 // TestAccAnnotationsDataSource_AutoPagination tests that without max_results, all annotations are fetched.
@@ -190,25 +187,4 @@ func computeAnnotationCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getAnnotationFirstPageToken(t *testing.T, maxResults int) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	maxResultsStr := fmt.Sprintf("%d", maxResults)
-	resp, err := client.ListAnnotationsWithResponse(ctx, &models.ListAnnotationsParams{
-		MaxResults: &maxResultsStr,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list annotations: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }

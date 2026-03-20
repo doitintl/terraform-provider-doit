@@ -90,12 +90,8 @@ data "doit_reports" "from_token" {
 }
 
 // TestAccReportsDataSource_MaxResultsAndPageToken tests using both parameters together.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccReportsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getReportFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 report)")
-	}
-
 	reportCount := getReportCount(t)
 	if reportCount < 3 {
 		t.Skipf("Need at least 3 reports to test pagination, got %d", reportCount)
@@ -107,22 +103,23 @@ func TestAccReportsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccReportsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Config: `
+data "doit_reports" "first_page" {
+  max_results = "1"
+}
+data "doit_reports" "paginated" {
+  max_results = "1"
+  page_token  = data.doit_reports.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_reports.first_page", "reports.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_reports.first_page", "page_token"),
 					resource.TestCheckResourceAttr("data.doit_reports.paginated", "reports.#", "1"),
 				),
 			},
 		},
 	})
-}
-
-func testAccReportsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_reports" "paginated" {
-  max_results = "%s"
-  page_token  = "%s"
-}
-`, maxResults, pageToken)
 }
 
 // TestAccReportsDataSource_AutoPagination tests that without max_results, all reports are fetched.
@@ -190,25 +187,4 @@ func computeReportCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getReportFirstPageToken(t *testing.T, maxResults int) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	maxResultsStr := fmt.Sprintf("%d", maxResults)
-	resp, err := client.ListReportsWithResponse(ctx, &models.ListReportsParams{
-		MaxResults: &maxResultsStr,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list reports: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }

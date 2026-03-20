@@ -102,14 +102,8 @@ data "doit_budgets" "from_token" {
 }
 
 // TestAccBudgetsDataSource_MaxResultsAndPageToken tests using both max_results and page_token together.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccBudgetsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	// Fetch page_token via API client
-	pageToken := getFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 budget)")
-	}
-
-	// Check we have enough budgets to test with
 	budgetCount := getBudgetCount(t)
 	if budgetCount < 3 {
 		t.Skipf("Need at least 3 budgets to test pagination, got %d", budgetCount)
@@ -121,23 +115,23 @@ func TestAccBudgetsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Config: `
+data "doit_budgets" "first_page" {
+  max_results = "1"
+}
+data "doit_budgets" "paginated" {
+  max_results = "1"
+  page_token  = data.doit_budgets.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify we got exactly 1 budget from page 2
+					resource.TestCheckResourceAttr("data.doit_budgets.first_page", "budgets.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.first_page", "page_token"),
 					resource.TestCheckResourceAttr("data.doit_budgets.paginated", "budgets.#", "1"),
 				),
 			},
 		},
 	})
-}
-
-func testAccBudgetsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_budgets" "paginated" {
-  max_results = "%s"
-  page_token  = "%s"
-}
-`, maxResults, pageToken)
 }
 
 // TestAccBudgetsDataSource_AutoPagination tests that without max_results, all budgets are fetched.
@@ -199,25 +193,4 @@ func computeBudgetCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getFirstPageToken(t *testing.T, maxResults int) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	maxResultsStr := fmt.Sprintf("%d", maxResults)
-	resp, err := client.ListBudgetsWithResponse(ctx, &models.ListBudgetsParams{
-		MaxResults: &maxResultsStr,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list budgets: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }
