@@ -131,6 +131,15 @@ data_sources:
     read:
       path: /support/v1/metadata/products
       method: GET
+  # Support request data sources (single ticket + comments)
+  support_request:
+    read:
+      path: /support/v1/tickets/{ticketId}
+      method: GET
+  support_request_comments:
+    read:
+      path: /support/v1/tickets/{ticketId}/comments
+      method: GET
   # DataHub data sources
   datahub_dataset:
     read:

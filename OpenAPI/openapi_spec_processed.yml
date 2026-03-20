@@ -2849,6 +2849,106 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
+  /support/v1/tickets/{ticketId}:
+    get:
+      tags:
+        - Support Requests
+      summary: Get a request
+      description: Returns the details of a single support request by its ID.
+      operationId: idOfTicketGet
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK - Support request details returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetailExtAPI"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+  /support/v1/tickets/{ticketId}/comments:
+    get:
+      tags:
+        - Support Requests
+      summary: List request comments
+      description: |-
+        Returns all comments on a support request. For customers, only public
+        comments are returned. For DoiT employees, both public and private
+        comments are returned. All comments are returned in a single response
+        (no pagination).
+      operationId: idOfTicketCommentsList
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK - List of comments returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentsResponseExtAPI"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Support Requests
+      summary: Add a comment
+      description: |-
+        Adds a comment to an existing support request. For customers, comments
+        are always public. For DoiT employees, comments can be marked as
+        private (internal notes) by setting the `private` field to `true`.
+      operationId: idOfTicketCommentsPost
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+      responses:
+        "201":
+          description: Created - Comment added to the support request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentExtAPI"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   /iam/v1/users/invite:
     post:
       tags:
@@ -4325,6 +4425,47 @@ components:
         Path:
           type: string
           description: 'The full resource path of the collection: "projects/P/databases/D/documents..."'
+    CommentExtAPI:
+      type: object
+      description: A comment on a support ticket.
+      properties:
+        id:
+          type: integer
+          description: Comment ID.
+          format: int64
+        body:
+          type: string
+          description: The text content of the comment.
+        author:
+          type: string
+          description: Email address of the comment author.
+        created:
+          type: integer
+          description: The time when this comment was created, in milliseconds since the epoch.
+          format: int64
+        attachments:
+          type: array
+          description: File attachments on the comment.
+          items:
+            $ref: '#/components/schemas/CommentExtAPIAttachmentsItem'
+    CommentExtAPIAttachmentsItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        file_name:
+          type: string
+        content_url:
+          type: string
+    CommentsResponseExtAPI:
+      type: object
+      description: Response containing all comments on a support ticket.
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentExtAPI"
     CommitmentExternal:
       type: object
       description: A commitment contract.
@@ -4558,6 +4699,19 @@ components:
           type: string
           description: Name of the attribution
           example: An example attribution
+    CreateCommentRequest:
+      type: object
+      description: Request body for adding a comment to a support ticket.
+      required:
+        - body
+      properties:
+        body:
+          type: string
+          description: The text content of the comment. Must not be empty.
+        private:
+          type: boolean
+          description: If true, creates a private internal note. Only honored for DoiT employees; ignored for customers.
+          default: false
     CreateDatahubDataset201Response:
       type: object
       properties:
@@ -6511,6 +6665,59 @@ components:
           $ref: "#/components/schemas/TicketExtAPI"
       required:
         - ticket
+    TicketDetailExtAPI:
+      type: object
+      description: Detailed information about a single support ticket.
+      properties:
+        id:
+          type: integer
+          description: Ticket ID.
+          format: int64
+        subject:
+          type: string
+          description: The subject of the ticket.
+        description:
+          type: string
+          description: The body of the initial ticket message.
+        requester:
+          type: string
+          description: Email address of the ticket requester.
+        severity:
+          type: string
+          description: Ticket severity.
+          enum:
+            - low
+            - normal
+            - high
+            - urgent
+        platform:
+          type: string
+          description: Platform of the ticket.
+          enum:
+            - doit
+            - google_cloud_platform
+            - amazon_web_services
+            - microsoft_azure
+        product:
+          type: string
+          description: Ticket product.
+        status:
+          type: string
+          description: Ticket status.
+        createTime:
+          type: integer
+          description: The time when this ticket was created, in milliseconds since the epoch.
+          format: int64
+        updateTime:
+          type: integer
+          description: The time when this ticket was last updated, in milliseconds since the epoch.
+          format: int64
+        urlUI:
+          type: string
+          description: Link to the ticket in DoiT console.
+        is_public:
+          type: boolean
+          description: Whether the ticket is public.
     TicketExtAPI:
       type: object
       description: Payload to create a support ticket via API.

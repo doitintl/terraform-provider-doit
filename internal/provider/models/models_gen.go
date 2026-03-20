@@ -1478,6 +1478,54 @@ func (e RunReportResultResultMlFeatures) Valid() bool {
 	}
 }
 
+// Defines values for TicketDetailExtAPIPlatform.
+const (
+	TicketDetailExtAPIPlatformAmazonWebServices   TicketDetailExtAPIPlatform = "amazon_web_services"
+	TicketDetailExtAPIPlatformDoit                TicketDetailExtAPIPlatform = "doit"
+	TicketDetailExtAPIPlatformGoogleCloudPlatform TicketDetailExtAPIPlatform = "google_cloud_platform"
+	TicketDetailExtAPIPlatformMicrosoftAzure      TicketDetailExtAPIPlatform = "microsoft_azure"
+)
+
+// Valid indicates whether the value is a known member of the TicketDetailExtAPIPlatform enum.
+func (e TicketDetailExtAPIPlatform) Valid() bool {
+	switch e {
+	case TicketDetailExtAPIPlatformAmazonWebServices:
+		return true
+	case TicketDetailExtAPIPlatformDoit:
+		return true
+	case TicketDetailExtAPIPlatformGoogleCloudPlatform:
+		return true
+	case TicketDetailExtAPIPlatformMicrosoftAzure:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TicketDetailExtAPISeverity.
+const (
+	TicketDetailExtAPISeverityHigh   TicketDetailExtAPISeverity = "high"
+	TicketDetailExtAPISeverityLow    TicketDetailExtAPISeverity = "low"
+	TicketDetailExtAPISeverityNormal TicketDetailExtAPISeverity = "normal"
+	TicketDetailExtAPISeverityUrgent TicketDetailExtAPISeverity = "urgent"
+)
+
+// Valid indicates whether the value is a known member of the TicketDetailExtAPISeverity enum.
+func (e TicketDetailExtAPISeverity) Valid() bool {
+	switch e {
+	case TicketDetailExtAPISeverityHigh:
+		return true
+	case TicketDetailExtAPISeverityLow:
+		return true
+	case TicketDetailExtAPISeverityNormal:
+		return true
+	case TicketDetailExtAPISeverityUrgent:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TicketExtAPIPlatform.
 const (
 	TicketExtAPIPlatformAmazonWebServices   TicketExtAPIPlatform = "amazon_web_services"
@@ -1552,22 +1600,22 @@ func (e TicketListItemPlatform) Valid() bool {
 
 // Defines values for TicketResponseExtAPIPlatform.
 const (
-	TicketResponseExtAPIPlatformAmazonWebServices   TicketResponseExtAPIPlatform = "amazon_web_services"
-	TicketResponseExtAPIPlatformDoit                TicketResponseExtAPIPlatform = "doit"
-	TicketResponseExtAPIPlatformGoogleCloudPlatform TicketResponseExtAPIPlatform = "google_cloud_platform"
-	TicketResponseExtAPIPlatformMicrosoftAzure      TicketResponseExtAPIPlatform = "microsoft_azure"
+	AmazonWebServices   TicketResponseExtAPIPlatform = "amazon_web_services"
+	Doit                TicketResponseExtAPIPlatform = "doit"
+	GoogleCloudPlatform TicketResponseExtAPIPlatform = "google_cloud_platform"
+	MicrosoftAzure      TicketResponseExtAPIPlatform = "microsoft_azure"
 )
 
 // Valid indicates whether the value is a known member of the TicketResponseExtAPIPlatform enum.
 func (e TicketResponseExtAPIPlatform) Valid() bool {
 	switch e {
-	case TicketResponseExtAPIPlatformAmazonWebServices:
+	case AmazonWebServices:
 		return true
-	case TicketResponseExtAPIPlatformDoit:
+	case Doit:
 		return true
-	case TicketResponseExtAPIPlatformGoogleCloudPlatform:
+	case GoogleCloudPlatform:
 		return true
-	case TicketResponseExtAPIPlatformMicrosoftAzure:
+	case MicrosoftAzure:
 		return true
 	default:
 		return false
@@ -1576,22 +1624,22 @@ func (e TicketResponseExtAPIPlatform) Valid() bool {
 
 // Defines values for TicketResponseExtAPISeverity.
 const (
-	TicketResponseExtAPISeverityHigh   TicketResponseExtAPISeverity = "high"
-	TicketResponseExtAPISeverityLow    TicketResponseExtAPISeverity = "low"
-	TicketResponseExtAPISeverityNormal TicketResponseExtAPISeverity = "normal"
-	TicketResponseExtAPISeverityUrgent TicketResponseExtAPISeverity = "urgent"
+	High   TicketResponseExtAPISeverity = "high"
+	Low    TicketResponseExtAPISeverity = "low"
+	Normal TicketResponseExtAPISeverity = "normal"
+	Urgent TicketResponseExtAPISeverity = "urgent"
 )
 
 // Valid indicates whether the value is a known member of the TicketResponseExtAPISeverity enum.
 func (e TicketResponseExtAPISeverity) Valid() bool {
 	switch e {
-	case TicketResponseExtAPISeverityHigh:
+	case High:
 		return true
-	case TicketResponseExtAPISeverityLow:
+	case Low:
 		return true
-	case TicketResponseExtAPISeverityNormal:
+	case Normal:
 		return true
-	case TicketResponseExtAPISeverityUrgent:
+	case Urgent:
 		return true
 	default:
 		return false
@@ -3250,6 +3298,36 @@ type CollectionRef struct {
 	Path *string `json:"Path,omitempty"`
 }
 
+// CommentExtAPI A comment on a support ticket.
+type CommentExtAPI struct {
+	// Attachments File attachments on the comment.
+	Attachments *[]CommentExtAPIAttachmentsItem `json:"attachments,omitempty"`
+
+	// Author Email address of the comment author.
+	Author *string `json:"author,omitempty"`
+
+	// Body The text content of the comment.
+	Body *string `json:"body,omitempty"`
+
+	// Created The time when this comment was created, in milliseconds since the epoch.
+	Created *int64 `json:"created,omitempty"`
+
+	// Id Comment ID.
+	Id *int64 `json:"id,omitempty"`
+}
+
+// CommentExtAPIAttachmentsItem defines model for CommentExtAPIAttachmentsItem.
+type CommentExtAPIAttachmentsItem struct {
+	ContentUrl *string `json:"content_url,omitempty"`
+	FileName   *string `json:"file_name,omitempty"`
+	Id         *int64  `json:"id,omitempty"`
+}
+
+// CommentsResponseExtAPI Response containing all comments on a support ticket.
+type CommentsResponseExtAPI struct {
+	Comments *[]CommentExtAPI `json:"comments,omitempty"`
+}
+
 // CommitmentExternal A commitment contract.
 type CommitmentExternal struct {
 	// CloudProvider The cloud provider associated with the commitment.
@@ -3402,6 +3480,15 @@ type CreateAttributionRequestBody struct {
 
 	// Name Name of the attribution
 	Name string `json:"name"`
+}
+
+// CreateCommentRequest Request body for adding a comment to a support ticket.
+type CreateCommentRequest struct {
+	// Body The text content of the comment. Must not be empty.
+	Body string `json:"body"`
+
+	// Private If true, creates a private internal note. Only honored for DoiT employees; ignored for customers.
+	Private *bool `json:"private,omitempty"`
 }
 
 // CreateDatahubDataset201Response defines model for CreateDatahubDataset201Response.
@@ -4752,6 +4839,51 @@ type TicketCreateFormExtAPI struct {
 	Ticket TicketExtAPI `json:"ticket"`
 }
 
+// TicketDetailExtAPI Detailed information about a single support ticket.
+type TicketDetailExtAPI struct {
+	// CreateTime The time when this ticket was created, in milliseconds since the epoch.
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Description The body of the initial ticket message.
+	Description *string `json:"description,omitempty"`
+
+	// Id Ticket ID.
+	Id *int64 `json:"id,omitempty"`
+
+	// IsPublic Whether the ticket is public.
+	IsPublic *bool `json:"is_public,omitempty"`
+
+	// Platform Platform of the ticket.
+	Platform *TicketDetailExtAPIPlatform `json:"platform,omitempty"`
+
+	// Product Ticket product.
+	Product *string `json:"product,omitempty"`
+
+	// Requester Email address of the ticket requester.
+	Requester *string `json:"requester,omitempty"`
+
+	// Severity Ticket severity.
+	Severity *TicketDetailExtAPISeverity `json:"severity,omitempty"`
+
+	// Status Ticket status.
+	Status *string `json:"status,omitempty"`
+
+	// Subject The subject of the ticket.
+	Subject *string `json:"subject,omitempty"`
+
+	// UpdateTime The time when this ticket was last updated, in milliseconds since the epoch.
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+
+	// UrlUI Link to the ticket in DoiT console.
+	UrlUI *string `json:"urlUI,omitempty"`
+}
+
+// TicketDetailExtAPIPlatform Platform of the ticket.
+type TicketDetailExtAPIPlatform string
+
+// TicketDetailExtAPISeverity Ticket severity.
+type TicketDetailExtAPISeverity string
+
 // TicketExtAPI Payload to create a support ticket via API.
 type TicketExtAPI struct {
 	// Body The body of the ticket (can include html formatting).
@@ -5660,6 +5792,9 @@ type UpdateResourcePermissionJSONRequestBody = UpdateResourcePermissionRequestBo
 // IdOfTicketsPostJSONRequestBody defines body for IdOfTicketsPost for application/json ContentType.
 type IdOfTicketsPostJSONRequestBody = TicketCreateFormExtAPI
 
+// IdOfTicketCommentsPostJSONRequestBody defines body for IdOfTicketCommentsPost for application/json ContentType.
+type IdOfTicketCommentsPostJSONRequestBody = CreateCommentRequest
+
 // AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0 returns the union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value as a DatahubEventsRequestBodyEventsItemDimensionsItemValue0
 func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0() (DatahubEventsRequestBodyEventsItemDimensionsItemValue0, error) {
 	var body DatahubEventsRequestBodyEventsItemDimensionsItemValue0
@@ -6186,6 +6321,17 @@ type ClientInterface interface {
 	IdOfTicketsPostWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	IdOfTicketsPost(ctx context.Context, body IdOfTicketsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// IdOfTicketGet request
+	IdOfTicketGet(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// IdOfTicketCommentsList request
+	IdOfTicketCommentsList(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// IdOfTicketCommentsPostWithBody request with any body
+	IdOfTicketCommentsPostWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	IdOfTicketCommentsPost(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) ListAlerts(ctx context.Context, params *ListAlertsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -7510,6 +7656,54 @@ func (c *Client) IdOfTicketsPostWithBody(ctx context.Context, contentType string
 
 func (c *Client) IdOfTicketsPost(ctx context.Context, body IdOfTicketsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIdOfTicketsPostRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketGet(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketGetRequest(c.Server, ticketId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketCommentsList(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketCommentsListRequest(c.Server, ticketId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketCommentsPostWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketCommentsPostRequestWithBody(c.Server, ticketId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketCommentsPost(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketCommentsPostRequest(c.Server, ticketId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11825,6 +12019,121 @@ func NewIdOfTicketsPostRequestWithBody(server string, contentType string, body i
 	return req, nil
 }
 
+// NewIdOfTicketGetRequest generates requests for IdOfTicketGet
+func NewIdOfTicketGetRequest(server string, ticketId int64) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "ticketId", ticketId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/support/v1/tickets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewIdOfTicketCommentsListRequest generates requests for IdOfTicketCommentsList
+func NewIdOfTicketCommentsListRequest(server string, ticketId int64) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "ticketId", ticketId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/support/v1/tickets/%s/comments", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewIdOfTicketCommentsPostRequest calls the generic IdOfTicketCommentsPost builder with application/json body
+func NewIdOfTicketCommentsPostRequest(server string, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewIdOfTicketCommentsPostRequestWithBody(server, ticketId, "application/json", bodyReader)
+}
+
+// NewIdOfTicketCommentsPostRequestWithBody generates requests for IdOfTicketCommentsPost with any type of body
+func NewIdOfTicketCommentsPostRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "ticketId", ticketId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/support/v1/tickets/%s/comments", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -12171,6 +12480,17 @@ type ClientWithResponsesInterface interface {
 	IdOfTicketsPostWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketsPostResp, error)
 
 	IdOfTicketsPostWithResponse(ctx context.Context, body IdOfTicketsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketsPostResp, error)
+
+	// IdOfTicketGetWithResponse request
+	IdOfTicketGetWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketGetResp, error)
+
+	// IdOfTicketCommentsListWithResponse request
+	IdOfTicketCommentsListWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsListResp, error)
+
+	// IdOfTicketCommentsPostWithBodyWithResponse request with any body
+	IdOfTicketCommentsPostWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error)
+
+	IdOfTicketCommentsPostWithResponse(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error)
 }
 
 type ListAlertsResp struct {
@@ -14301,6 +14621,83 @@ func (r IdOfTicketsPostResp) StatusCode() int {
 	return 0
 }
 
+type IdOfTicketGetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TicketDetailExtAPI
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r IdOfTicketGetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r IdOfTicketGetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type IdOfTicketCommentsListResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CommentsResponseExtAPI
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r IdOfTicketCommentsListResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r IdOfTicketCommentsListResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type IdOfTicketCommentsPostResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *CommentExtAPI
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r IdOfTicketCommentsPostResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r IdOfTicketCommentsPostResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // ListAlertsWithResponse request returning *ListAlertsResp
 func (c *ClientWithResponses) ListAlertsWithResponse(ctx context.Context, params *ListAlertsParams, reqEditors ...RequestEditorFn) (*ListAlertsResp, error) {
 	rsp, err := c.ListAlerts(ctx, params, reqEditors...)
@@ -15269,6 +15666,41 @@ func (c *ClientWithResponses) IdOfTicketsPostWithResponse(ctx context.Context, b
 		return nil, err
 	}
 	return ParseIdOfTicketsPostResp(rsp)
+}
+
+// IdOfTicketGetWithResponse request returning *IdOfTicketGetResp
+func (c *ClientWithResponses) IdOfTicketGetWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketGetResp, error) {
+	rsp, err := c.IdOfTicketGet(ctx, ticketId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketGetResp(rsp)
+}
+
+// IdOfTicketCommentsListWithResponse request returning *IdOfTicketCommentsListResp
+func (c *ClientWithResponses) IdOfTicketCommentsListWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsListResp, error) {
+	rsp, err := c.IdOfTicketCommentsList(ctx, ticketId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketCommentsListResp(rsp)
+}
+
+// IdOfTicketCommentsPostWithBodyWithResponse request with arbitrary body returning *IdOfTicketCommentsPostResp
+func (c *ClientWithResponses) IdOfTicketCommentsPostWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error) {
+	rsp, err := c.IdOfTicketCommentsPostWithBody(ctx, ticketId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketCommentsPostResp(rsp)
+}
+
+func (c *ClientWithResponses) IdOfTicketCommentsPostWithResponse(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error) {
+	rsp, err := c.IdOfTicketCommentsPost(ctx, ticketId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketCommentsPostResp(rsp)
 }
 
 // ParseListAlertsResp parses an HTTP response from a ListAlertsWithResponse call
@@ -19633,6 +20065,161 @@ func ParseIdOfTicketsPostResp(rsp *http.Response) (*IdOfTicketsPostResp, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest TicketResponseExtAPI
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIdOfTicketGetResp parses an HTTP response from a IdOfTicketGetWithResponse call
+func ParseIdOfTicketGetResp(rsp *http.Response) (*IdOfTicketGetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &IdOfTicketGetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TicketDetailExtAPI
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIdOfTicketCommentsListResp parses an HTTP response from a IdOfTicketCommentsListWithResponse call
+func ParseIdOfTicketCommentsListResp(rsp *http.Response) (*IdOfTicketCommentsListResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &IdOfTicketCommentsListResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CommentsResponseExtAPI
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIdOfTicketCommentsPostResp parses an HTTP response from a IdOfTicketCommentsPostWithResponse call
+func ParseIdOfTicketCommentsPostResp(rsp *http.Response) (*IdOfTicketCommentsPostResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &IdOfTicketCommentsPostResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CommentExtAPI
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
