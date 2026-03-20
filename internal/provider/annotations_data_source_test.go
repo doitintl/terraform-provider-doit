@@ -58,10 +58,6 @@ data "doit_annotations" "limited" {
 // TestAccAnnotationsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAnnotationsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): The annotations API ignores pageToken when maxResults is not set, returning all results.
-	// Remove this skip once the API supports page_token-only pagination.
-	t.Skip("Skipped: annotations API ignores pageToken without maxResults (CMP-38591)")
-
 	totalAnnotations := getAnnotationCount(t)
 	if totalAnnotations < 2 {
 		t.Skipf("Need at least 2 annotations to test page_token-only, got %d", totalAnnotations)

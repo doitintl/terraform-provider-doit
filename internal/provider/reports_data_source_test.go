@@ -58,10 +58,6 @@ data "doit_reports" "limited" {
 // TestAccReportsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccReportsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): The reports API ignores pageToken when maxResults is not set, returning all results.
-	// Remove this skip once the API supports page_token-only pagination.
-	t.Skip("Skipped: reports API ignores pageToken without maxResults (CMP-38591)")
-
 	totalReports := getReportCount(t)
 	if totalReports < 2 {
 		t.Skipf("Need at least 2 reports to test page_token-only, got %d", totalReports)

@@ -62,10 +62,6 @@ data "doit_dimensions" "limited" {
 // TestAccDimensionsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccDimensionsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): The dimensions API ignores pageToken when maxResults is not set, returning all results.
-	// Remove this skip once the API supports page_token-only pagination.
-	t.Skip("Skipped: dimensions API ignores pageToken without maxResults (CMP-38591)")
-
 	totalDimensions := getDimensionCount(t)
 	if totalDimensions < 2 {
 		t.Skipf("Need at least 2 dimensions to test page_token-only, got %d", totalDimensions)

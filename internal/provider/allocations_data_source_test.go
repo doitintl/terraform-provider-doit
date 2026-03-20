@@ -58,10 +58,6 @@ data "doit_allocations" "limited" {
 // TestAccAllocationsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccAllocationsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): The allocations API ignores pageToken when maxResults is not set, returning all results.
-	// Remove this skip once the API supports page_token-only pagination.
-	t.Skip("Skipped: allocations API ignores pageToken without maxResults (CMP-38591)")
-
 	totalAllocations := getAllocationCount(t)
 	if totalAllocations < 2 {
 		t.Skipf("Need at least 2 allocations to test page_token-only, got %d", totalAllocations)
