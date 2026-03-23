@@ -68,22 +68,14 @@ data "doit_budgets" "limited" {
 }
 
 // TestAccBudgetsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning fewer results than a full run.
+// auto-paginates starting from the token, returning a different set of items.
+// Uses two chained data sources in one apply:
+//   - "first_page": fetches 1 budget + page_token
+//   - "from_token": auto-paginates from the token (should start at a different item)
 func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): The budgets API returns 500 when pageToken is sent without maxResults.
-	// Remove this skip once the API supports page_token-only pagination.
-	t.Skip("Skipped: budgets API returns 500 with pageToken without maxResults (CMP-38591)")
-
-	// We need at least 2 budgets: one before the token and one after.
 	totalBudgets := getBudgetCount(t)
 	if totalBudgets < 2 {
 		t.Skipf("Need at least 2 budgets to test page_token-only, got %d", totalBudgets)
-	}
-
-	// Fetch page_token after the first item
-	pageToken := getFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 budget)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -92,35 +84,32 @@ func TestAccBudgetsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_budgets" "first_page" {
+  max_results = "1"
+}
+data "doit_budgets" "from_token" {
+  page_token = data.doit_budgets.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify we got some budgets (starting from page 2)
-					resource.TestCheckResourceAttrSet("data.doit_budgets.from_token", "budgets.#"),
-					// Verify row_count is less than total, proving the token was honored
-					testCheckResourceAttrLessThan("data.doit_budgets.from_token", "row_count", totalBudgets),
+					resource.TestCheckResourceAttr("data.doit_budgets.first_page", "budgets.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.first_page", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_budgets.from_token", "page_token"),
+					// Verify page_token actually advanced to a different starting point
+					testCheckResourceAttrNotEqualAttr(
+						"data.doit_budgets.first_page", "budgets.0.id",
+						"data.doit_budgets.from_token", "budgets.0.id"),
 				),
 			},
 		},
 	})
 }
 
-func testAccBudgetsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_budgets" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
-}
-
 // TestAccBudgetsDataSource_MaxResultsAndPageToken tests using both max_results and page_token together.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccBudgetsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	// Fetch page_token via API client
-	pageToken := getFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 budget)")
-	}
-
-	// Check we have enough budgets to test with
 	budgetCount := getBudgetCount(t)
 	if budgetCount < 3 {
 		t.Skipf("Need at least 3 budgets to test pagination, got %d", budgetCount)
@@ -132,23 +121,27 @@ func TestAccBudgetsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBudgetsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Config: `
+data "doit_budgets" "first_page" {
+  max_results = "1"
+}
+data "doit_budgets" "paginated" {
+  max_results = "1"
+  page_token  = data.doit_budgets.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify we got exactly 1 budget from page 2
+					resource.TestCheckResourceAttr("data.doit_budgets.first_page", "budgets.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.first_page", "page_token"),
 					resource.TestCheckResourceAttr("data.doit_budgets.paginated", "budgets.#", "1"),
+					// Verify page_token actually advanced to a different page
+					testCheckResourceAttrNotEqualAttr(
+						"data.doit_budgets.first_page", "budgets.0.id",
+						"data.doit_budgets.paginated", "budgets.0.id"),
 				),
 			},
 		},
 	})
-}
-
-func testAccBudgetsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_budgets" "paginated" {
-  max_results = "%s"
-  page_token  = "%s"
-}
-`, maxResults, pageToken)
 }
 
 // TestAccBudgetsDataSource_AutoPagination tests that without max_results, all budgets are fetched.
@@ -210,25 +203,4 @@ func computeBudgetCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getFirstPageToken(t *testing.T, maxResults int) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	maxResultsStr := fmt.Sprintf("%d", maxResults)
-	resp, err := client.ListBudgetsWithResponse(ctx, &models.ListBudgetsParams{
-		MaxResults: &maxResultsStr,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list budgets: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }

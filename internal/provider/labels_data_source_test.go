@@ -56,20 +56,14 @@ data "doit_labels" "limited" {
 }
 
 // TestAccLabelsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning fewer results than a full run.
+// auto-paginates starting from the token, returning a different set of items.
+// Uses two chained data sources in one apply:
+//   - "first_page": fetches 1 label + page_token
+//   - "from_token": auto-paginates from the token (should start at a different item)
 func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
-	// TODO(CMP-38591): The labels API ignores pageToken when maxResults is not set, returning all results.
-	// Remove this skip once the API supports page_token-only pagination.
-	t.Skip("Skipped: labels API ignores pageToken without maxResults (CMP-38591)")
-
 	totalLabels := getLabelCount(t)
 	if totalLabels < 2 {
 		t.Skipf("Need at least 2 labels to test page_token-only, got %d", totalLabels)
-	}
-
-	pageToken := getLabelFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 label)")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -78,31 +72,32 @@ func TestAccLabelsDataSource_PageTokenOnly(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLabelsDataSourcePageTokenConfig(pageToken),
+				Config: `
+data "doit_labels" "first_page" {
+  max_results = "1"
+}
+data "doit_labels" "from_token" {
+  page_token = data.doit_labels.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_labels.from_token", "labels.#"),
-					testCheckResourceAttrLessThan("data.doit_labels.from_token", "row_count", totalLabels),
+					resource.TestCheckResourceAttr("data.doit_labels.first_page", "labels.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_labels.first_page", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_labels.from_token", "row_count"),
+					resource.TestCheckNoResourceAttr("data.doit_labels.from_token", "page_token"),
+					// Verify page_token actually advanced to a different starting point
+					testCheckResourceAttrNotEqualAttr(
+						"data.doit_labels.first_page", "labels.0.id",
+						"data.doit_labels.from_token", "labels.0.id"),
 				),
 			},
 		},
 	})
 }
 
-func testAccLabelsDataSourcePageTokenConfig(pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_labels" "from_token" {
-  page_token = "%s"
-}
-`, pageToken)
-}
-
 // TestAccLabelsDataSource_MaxResultsAndPageToken tests using both parameters together.
+// Uses two chained data sources in one apply to avoid race conditions with parallel tests.
 func TestAccLabelsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getLabelFirstPageToken(t, 1)
-	if pageToken == "" {
-		t.Skip("No page_token returned (need more than 1 label)")
-	}
-
 	labelCount := getLabelCount(t)
 	if labelCount < 3 {
 		t.Skipf("Need at least 3 labels to test pagination, got %d", labelCount)
@@ -114,22 +109,27 @@ func TestAccLabelsDataSource_MaxResultsAndPageToken(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccLabelsDataSourceMaxResultsAndPageTokenConfig("1", pageToken),
+				Config: `
+data "doit_labels" "first_page" {
+  max_results = "1"
+}
+data "doit_labels" "paginated" {
+  max_results = "1"
+  page_token  = data.doit_labels.first_page.page_token
+}
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_labels.first_page", "labels.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_labels.first_page", "page_token"),
 					resource.TestCheckResourceAttr("data.doit_labels.paginated", "labels.#", "1"),
+					// Verify page_token actually advanced to a different page
+					testCheckResourceAttrNotEqualAttr(
+						"data.doit_labels.first_page", "labels.0.id",
+						"data.doit_labels.paginated", "labels.0.id"),
 				),
 			},
 		},
 	})
-}
-
-func testAccLabelsDataSourceMaxResultsAndPageTokenConfig(maxResults, pageToken string) string {
-	return fmt.Sprintf(`
-data "doit_labels" "paginated" {
-  max_results = "%s"
-  page_token  = "%s"
-}
-`, maxResults, pageToken)
 }
 
 // TestAccLabelsDataSource_AutoPagination tests that without max_results, all labels are fetched.
@@ -197,25 +197,4 @@ func computeLabelCount(t *testing.T) int {
 		params.PageToken = resp.JSON200.PageToken
 	}
 	return total
-}
-
-func getLabelFirstPageToken(t *testing.T, maxResults int) string {
-	t.Helper()
-	client := getAPIClient(t)
-	ctx := context.Background()
-
-	maxResultsStr := fmt.Sprintf("%d", maxResults)
-	resp, err := client.ListLabelsWithResponse(ctx, &models.ListLabelsParams{
-		MaxResults: &maxResultsStr,
-	})
-	if err != nil {
-		t.Fatalf("Failed to list labels: %v", err)
-	}
-	if resp.JSON200 == nil {
-		t.Fatal("No response from API")
-	}
-	if resp.JSON200.PageToken == nil {
-		return ""
-	}
-	return *resp.JSON200.PageToken
 }

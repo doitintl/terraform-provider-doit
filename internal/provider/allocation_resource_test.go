@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -13,23 +14,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
+
+// testAllocPrefix is the namespace prefix for all test allocation names.
+// The sweep function deletes any allocation whose name starts with this prefix.
+const testAllocPrefix = "tfacc"
 
 func testProject() string {
 	return os.Getenv("TEST_PROJECT")
 }
 
 func TestAccAllocation(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationSingle(n),
+				Config: testAccAllocationSingle(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -41,7 +48,7 @@ func TestAccAllocation(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccAllocationSingleUpdate(n),
+				Config: testAccAllocationSingleUpdate(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -71,15 +78,16 @@ func TestAccAllocation(t *testing.T) {
 }
 
 func TestAccAllocation_Group(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationGroup(n),
+				Config: testAccAllocationGroup(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -110,7 +118,7 @@ func TestAccAllocation_Group(t *testing.T) {
 }
 
 func TestAccAllocation_Validation(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -118,7 +126,7 @@ func TestAccAllocation_Validation(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationValidation(n),
+				Config:      testAccAllocationValidation(rName),
 				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
 			},
 		},
@@ -126,15 +134,16 @@ func TestAccAllocation_Validation(t *testing.T) {
 }
 
 func TestAccAllocation_Group_Select(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationGroupSelect(n),
+				Config: testAccAllocationGroupSelect(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -155,7 +164,7 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 			// Tests that components handling for "select" rules doesn't cause
 			// an inconsistent result (user omits components, API may return null/empty).
 			{
-				Config: testAccAllocationGroupSelect(n),
+				Config: testAccAllocationGroupSelect(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -176,7 +185,7 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -184,7 +193,7 @@ func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationGroupMissingUnallocatedCosts(n),
+				Config:      testAccAllocationGroupMissingUnallocatedCosts(rName),
 				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
 			},
 		},
@@ -192,7 +201,7 @@ func TestAccAllocation_UnallocatedCosts_RequiredWithRules(t *testing.T) {
 }
 
 func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -200,17 +209,19 @@ func TestAccAllocation_UnallocatedCosts_ConflictsWithRule(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationSingleWithUnallocatedCosts(n),
+				Config:      testAccAllocationSingleWithUnallocatedCosts(rName),
 				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
 			},
 		},
 	})
 }
 
-func testAccAllocationSingle(i int) string {
+// --- Config generators ---
+
+func testAccAllocationSingle(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
-    name = "test-%d"
+    name = "%s"
 	description = "test allocation"
     rule = {
        formula = "A AND B"
@@ -230,13 +241,13 @@ resource "doit_allocation" "this" {
        ]
     }
 }
-`, i, testProject())
+`, rName, testProject())
 }
 
-func testAccAllocationSingleUpdate(i int) string {
+func testAccAllocationSingleUpdate(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
-    name = "test-%d"
+    name = "%s"
 	description = "test allocation updated"
     rule = {
        formula = "A AND B"
@@ -256,19 +267,19 @@ resource "doit_allocation" "this" {
        ]
     }
 }
-`, i, testProject())
+`, rName, testProject())
 }
 
-func testAccAllocationGroup(i int) string {
+func testAccAllocationGroup(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "group" {
-    name = "test-group-%d"
+    name = "%s-group"
 	description = "test allocation group"
-    unallocated_costs = "Other"
+    unallocated_costs = "%s-other"
     rules = [
         {
             action = "create"
-            name   = "JP Rule"
+            name   = "%s-jp-rule"
        formula = "A AND B"
        components = [
         {
@@ -287,7 +298,7 @@ resource "doit_allocation" "group" {
     },
            {
             action = "create"
-            name   = "US Rule"
+            name   = "%s-us-rule"
        formula = "A AND B"
        components = [
         {
@@ -306,13 +317,13 @@ resource "doit_allocation" "group" {
     }
     ]
 }
-`, i, testProject(), testProject())
+`, rName, rName, rName, testProject(), rName, testProject())
 }
 
-func testAccAllocationValidation(i int) string {
+func testAccAllocationValidation(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "validation" {
-    name = "test-validation-%d"
+    name = "%s-validation"
 	description = "test allocation validation"
     rule = {
        formula = "A"
@@ -340,13 +351,13 @@ resource "doit_allocation" "validation" {
         }
     ]
 }
-`, i)
+`, rName)
 }
 
-func testAccAllocationGroupSelect(i int) string {
+func testAccAllocationGroupSelect(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
-    name = "test-source-%d"
+    name = "%s-source"
 	description = "test allocation source"
     rule = {
        formula = "A"
@@ -362,9 +373,9 @@ resource "doit_allocation" "this" {
 }
 
 resource "doit_allocation" "group_select" {
-    name = "test-group-select-%d"
+    name = "%s-group-select"
 	description = "test allocation group select"
-    unallocated_costs = "Other"
+    unallocated_costs = "%s-other"
     rules = [
         {
             action = "select"
@@ -372,13 +383,13 @@ resource "doit_allocation" "group_select" {
         }
     ]
 }
-`, i, i)
+`, rName, rName, rName)
 }
 
-func testAccAllocationGroupMissingUnallocatedCosts(i int) string {
+func testAccAllocationGroupMissingUnallocatedCosts(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "group_missing_unallocated" {
-    name = "test-group-missing-%d"
+    name = "%s-group-missing"
 	description = "test allocation group missing unallocated_costs"
     rules = [
         {
@@ -395,13 +406,13 @@ resource "doit_allocation" "group_missing_unallocated" {
         }
     ]
 }
-`, i)
+`, rName)
 }
 
-func testAccAllocationSingleWithUnallocatedCosts(i int) string {
+func testAccAllocationSingleWithUnallocatedCosts(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "single_with_unallocated" {
-    name = "test-single-unallocated-%d"
+    name = "%s-single-unallocated"
 	description = "test allocation single with unallocated_costs"
     unallocated_costs = "Other"
     rule = {
@@ -416,13 +427,13 @@ resource "doit_allocation" "single_with_unallocated" {
        ]
     }
 }
-`, i)
+`, rName)
 }
 
 // TestAccAllocation_MissingNameInCreateAction tests that rules with action="create"
 // are rejected at plan time if they don't have a "name" field.
 func TestAccAllocation_MissingNameInCreateAction(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -430,17 +441,17 @@ func TestAccAllocation_MissingNameInCreateAction(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationGroupMissingName(n),
+				Config:      testAccAllocationGroupMissingName(rName),
 				ExpectError: regexp.MustCompile(`'name' is required when action is 'create'`),
 			},
 		},
 	})
 }
 
-func testAccAllocationGroupMissingName(i int) string {
+func testAccAllocationGroupMissingName(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "missing_name" {
-    name = "test-missing-name-%d"
+    name = "%s-missing-name"
 	description = "test allocation group missing name in rule"
     unallocated_costs = "Other"
     rules = [
@@ -458,20 +469,21 @@ resource "doit_allocation" "missing_name" {
         }
     ]
 }
-`, i)
+`, rName)
 }
 
 // TestAccAllocation_ComponentFlags tests the include_null and inverse_selection
 // boolean flags on allocation rule components.
 func TestAccAllocation_ComponentFlags(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationComponentFlags(n),
+				Config: testAccAllocationComponentFlags(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("doit_allocation.flags", "id"),
 					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.include_null", "true"),
@@ -480,7 +492,7 @@ func TestAccAllocation_ComponentFlags(t *testing.T) {
 			},
 			// Verify no drift on re-apply
 			{
-				Config: testAccAllocationComponentFlags(n),
+				Config: testAccAllocationComponentFlags(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -491,16 +503,16 @@ func TestAccAllocation_ComponentFlags(t *testing.T) {
 	})
 }
 
-func testAccAllocationComponentFlags(i int) string {
+func testAccAllocationComponentFlags(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "flags" {
-    name = "test-flags-%d"
+    name = "%s-flags"
     description = "Test allocation with component flags"
-    unallocated_costs = "Other"
+    unallocated_costs = "%s-other"
     rules = [
         {
             action = "create"
-            name   = "Flag Test Rule"
+            name   = "%s-flag-rule"
             formula = "A"
             components = [
                 {
@@ -515,24 +527,25 @@ resource "doit_allocation" "flags" {
         }
     ]
 }
-`, i)
+`, rName, rName, rName)
 }
 
 // TestAccAllocation_Disappears verifies that Terraform correctly handles
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
 func TestAccAllocation_Disappears(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 	var resourceId string
 
 	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			// Step 1: Create the resource and capture ID
 			{
-				Config: testAccAllocationSingle(n),
+				Config: testAccAllocationSingle(rName),
 				Check: resource.ComposeTestCheckFunc(
 					// Capture the resource ID for later deletion
 					resource.TestCheckResourceAttrWith("doit_allocation.this", "id", func(value string) error {
@@ -556,7 +569,7 @@ func TestAccAllocation_Disappears(t *testing.T) {
 						t.Fatalf("Expected 200, 204, or 404 from API, got %d: %s", resp.StatusCode(), string(resp.Body))
 					}
 				},
-				Config:             testAccAllocationSingle(n),
+				Config:             testAccAllocationSingle(rName),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
 			},
@@ -569,7 +582,7 @@ func TestAccAllocation_Disappears(t *testing.T) {
 // (returns empty list even when API returns nil), but the validator guides
 // users toward omitting the attribute instead, which is cleaner.
 func TestAccAllocation_ListAttributes_EmptyRules(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -577,28 +590,28 @@ func TestAccAllocation_ListAttributes_EmptyRules(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationWithEmptyRules(n),
+				Config:      testAccAllocationWithEmptyRules(rName),
 				ExpectError: regexp.MustCompile(`Invalid Rules Configuration|rules cannot be empty`),
 			},
 		},
 	})
 }
 
-func testAccAllocationWithEmptyRules(i int) string {
+func testAccAllocationWithEmptyRules(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
-    name        = "test-empty-rules-%d"
+    name        = "%s-empty-rules"
     description = "test allocation with empty rules"
     unallocated_costs = "Other"
     rules = []
 }
-`, i)
+`, rName)
 }
 
 // TestAccAllocation_ListAttributes_EmptyComponents tests that an empty components list
 // in a rule is rejected - the formula validation fails without valid components.
 func TestAccAllocation_ListAttributes_EmptyComponents(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -606,30 +619,30 @@ func TestAccAllocation_ListAttributes_EmptyComponents(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationWithEmptyComponents(n),
+				Config:      testAccAllocationWithEmptyComponents(rName),
 				ExpectError: regexp.MustCompile(`formula validation failed|components|required|empty`),
 			},
 		},
 	})
 }
 
-func testAccAllocationWithEmptyComponents(i int) string {
+func testAccAllocationWithEmptyComponents(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
-    name        = "test-empty-components-%d"
+    name        = "%s-empty-components"
     description = "test allocation with empty components"
     rule = {
        formula = "A"
        components = []
     }
 }
-`, i)
+`, rName)
 }
 
 // TestAccAllocation_ListAttributes_OmittedRulesAndRule tests that omitting both
 // rule and rules produces an error.
 func TestAccAllocation_ListAttributes_OmittedRulesAndRule(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -637,36 +650,37 @@ func TestAccAllocation_ListAttributes_OmittedRulesAndRule(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationWithOmittedRulesAndRule(n),
+				Config:      testAccAllocationWithOmittedRulesAndRule(rName),
 				ExpectError: regexp.MustCompile(`rule|required|expected`),
 			},
 		},
 	})
 }
 
-func testAccAllocationWithOmittedRulesAndRule(i int) string {
+func testAccAllocationWithOmittedRulesAndRule(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "this" {
-    name        = "test-no-rules-%d"
+    name        = "%s-no-rules"
     description = "test allocation with no rule or rules"
     # Both rule and rules omitted - should fail
 }
-`, i)
+`, rName)
 }
 
 // TestAccAllocation_NestedAllocationRule tests that an allocation can reference
 // another allocation using the "allocation_rule" dimension type. This creates
 // a base allocation, then a second allocation whose rule references the first.
 func TestAccAllocation_NestedAllocationRule(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAllocationNestedRule(n),
+				Config: testAccAllocationNestedRule(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -685,7 +699,7 @@ func TestAccAllocation_NestedAllocationRule(t *testing.T) {
 			},
 			// Step 2: Re-apply - verify no drift
 			{
-				Config: testAccAllocationNestedRule(n),
+				Config: testAccAllocationNestedRule(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -704,11 +718,11 @@ func TestAccAllocation_NestedAllocationRule(t *testing.T) {
 	})
 }
 
-func testAccAllocationNestedRule(i int) string {
+func testAccAllocationNestedRule(rName string) string {
 	return fmt.Sprintf(`
 # Base allocation that will be referenced by the nested allocation
 resource "doit_allocation" "base" {
-    name        = "test-base-%d"
+    name        = "%s-base"
     description = "base allocation for nesting test"
     rule = {
        formula = "A"
@@ -725,7 +739,7 @@ resource "doit_allocation" "base" {
 
 # Nested allocation that references the base allocation using allocation_rule type
 resource "doit_allocation" "nested" {
-    name        = "test-nested-%d"
+    name        = "%s-nested"
     description = "nested allocation referencing base"
     rule = {
        formula = "A"
@@ -739,13 +753,13 @@ resource "doit_allocation" "nested" {
        ]
     }
 }
-`, i, testProject(), i)
+`, rName, testProject(), rName)
 }
 
 // TestAccAllocation_NestedAllocationRule_InvalidMode tests that using an unsupported
 // mode with type="allocation_rule" is rejected at plan time by the validator.
 func TestAccAllocation_NestedAllocationRule_InvalidMode(t *testing.T) {
-	n := acctest.RandInt()
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -753,17 +767,43 @@ func TestAccAllocation_NestedAllocationRule_InvalidMode(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAllocationNestedRuleInvalidMode(n),
+				Config:      testAccAllocationNestedRuleInvalidMode(rName),
 				ExpectError: regexp.MustCompile(`Invalid Allocation Rule Component`),
 			},
 		},
 	})
 }
 
-func testAccAllocationNestedRuleInvalidMode(i int) string {
+// testAccCheckAllocationDestroy returns a CheckDestroy function that verifies
+// Terraform-managed allocations have been deleted. It does NOT sweep orphaned
+// allocations — that is handled once by TestMain after all tests complete,
+// to avoid deleting allocations that belong to other parallel tests.
+func testAccCheckAllocationDestroy(t *testing.T) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		client := getAPIClient(t)
+		ctx := context.Background()
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "doit_allocation" {
+				continue
+			}
+			resp, err := client.GetAllocationWithResponse(ctx, rs.Primary.ID)
+			if err != nil {
+				return fmt.Errorf("error checking allocation %s: %w", rs.Primary.ID, err)
+			}
+			if resp.StatusCode() != 404 {
+				return fmt.Errorf("allocation %s still exists (status %d)", rs.Primary.ID, resp.StatusCode())
+			}
+		}
+
+		return nil
+	}
+}
+
+func testAccAllocationNestedRuleInvalidMode(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "invalid_nested" {
-    name        = "test-invalid-nested-%d"
+    name        = "%s-invalid-nested"
     description = "nested allocation with invalid mode"
     rule = {
        formula = "A"
@@ -777,5 +817,5 @@ resource "doit_allocation" "invalid_nested" {
        ]
     }
 }
-`, i)
+`, rName)
 }
