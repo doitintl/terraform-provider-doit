@@ -3058,6 +3058,37 @@ type AttributionListItem struct {
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
+// AvaAskRequest defines model for AvaAskRequest.
+type AvaAskRequest struct {
+	// Question The question to ask Ava.
+	Question string `json:"question"`
+}
+
+// AvaAskSyncRequest defines model for AvaAskSyncRequest.
+type AvaAskSyncRequest struct {
+	// Question The question to ask Ava.
+	Question string `json:"question"`
+}
+
+// AvaFeedbackRequest defines model for AvaFeedbackRequest.
+type AvaFeedbackRequest struct {
+	// AnswerId The specific answer ID within the conversation.
+	AnswerId string `json:"answerId"`
+
+	// ConversationId The conversation ID the feedback relates to.
+	ConversationId string                     `json:"conversationId"`
+	Feedback       AvaFeedbackRequestFeedback `json:"feedback"`
+}
+
+// AvaFeedbackRequestFeedback defines model for AvaFeedbackRequestFeedback.
+type AvaFeedbackRequestFeedback struct {
+	// Positive Whether the feedback is positive or negative.
+	Positive bool `json:"positive"`
+
+	// Text Optional text providing additional feedback details.
+	Text *string `json:"text,omitempty"`
+}
+
 // BlockingResources Map of resources that block deletion operations.
 type BlockingResources struct {
 	// Alerts List of alerts using this resource.
@@ -3622,6 +3653,12 @@ type DatahubEventsRequestBodyEventsItemMetricsItem struct {
 
 	// Value The value of the metric.
 	Value *float64 `json:"value,omitempty"`
+}
+
+// DeleteAvaConversationRequestBody defines model for DeleteAvaConversationRequestBody.
+type DeleteAvaConversationRequestBody struct {
+	// ConversationId The ID of the conversation to delete.
+	ConversationId string `json:"conversationId"`
 }
 
 // DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
@@ -5756,6 +5793,18 @@ type QueryJSONRequestBody = QueryRequestBody
 // UpdateReportJSONRequestBody defines body for UpdateReport for application/json ContentType.
 type UpdateReportJSONRequestBody = ExternalUpdateReport
 
+// AskAvaStreamingJSONRequestBody defines body for AskAvaStreaming for application/json ContentType.
+type AskAvaStreamingJSONRequestBody = AvaAskRequest
+
+// AskAvaSyncJSONRequestBody defines body for AskAvaSync for application/json ContentType.
+type AskAvaSyncJSONRequestBody = AvaAskSyncRequest
+
+// DeleteAvaConversationJSONRequestBody defines body for DeleteAvaConversation for application/json ContentType.
+type DeleteAvaConversationJSONRequestBody = DeleteAvaConversationRequestBody
+
+// AvaFeedbackJSONRequestBody defines body for AvaFeedback for application/json ContentType.
+type AvaFeedbackJSONRequestBody = AvaFeedbackRequest
+
 // IdOfAssetJSONRequestBody defines body for IdOfAsset for application/json ContentType.
 type IdOfAssetJSONRequestBody = IdOfAssetRequestBody
 
@@ -6206,6 +6255,26 @@ type ClientInterface interface {
 
 	// Validate request
 	Validate(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AskAvaStreamingWithBody request with any body
+	AskAvaStreamingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AskAvaStreaming(ctx context.Context, body AskAvaStreamingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AskAvaSyncWithBody request with any body
+	AskAvaSyncWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AskAvaSync(ctx context.Context, body AskAvaSyncJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAvaConversationWithBody request with any body
+	DeleteAvaConversationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	DeleteAvaConversation(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AvaFeedbackWithBody request with any body
+	AvaFeedbackWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AvaFeedback(ctx context.Context, body AvaFeedbackJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// IdOfAssets request
 	IdOfAssets(ctx context.Context, params *IdOfAssetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7152,6 +7221,102 @@ func (c *Client) GetAnomaly(ctx context.Context, id string, reqEditors ...Reques
 
 func (c *Client) Validate(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewValidateRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AskAvaStreamingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAskAvaStreamingRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AskAvaStreaming(ctx context.Context, body AskAvaStreamingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAskAvaStreamingRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AskAvaSyncWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAskAvaSyncRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AskAvaSync(ctx context.Context, body AskAvaSyncJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAskAvaSyncRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAvaConversationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAvaConversationRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAvaConversation(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAvaConversationRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AvaFeedbackWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAvaFeedbackRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AvaFeedback(ctx context.Context, body AvaFeedbackJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAvaFeedbackRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10542,6 +10707,166 @@ func NewValidateRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewAskAvaStreamingRequest calls the generic AskAvaStreaming builder with application/json body
+func NewAskAvaStreamingRequest(server string, body AskAvaStreamingJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAskAvaStreamingRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAskAvaStreamingRequestWithBody generates requests for AskAvaStreaming with any type of body
+func NewAskAvaStreamingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ava/v1/ask")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAskAvaSyncRequest calls the generic AskAvaSync builder with application/json body
+func NewAskAvaSyncRequest(server string, body AskAvaSyncJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAskAvaSyncRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAskAvaSyncRequestWithBody generates requests for AskAvaSync with any type of body
+func NewAskAvaSyncRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ava/v1/askSync")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAvaConversationRequest calls the generic DeleteAvaConversation builder with application/json body
+func NewDeleteAvaConversationRequest(server string, body DeleteAvaConversationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDeleteAvaConversationRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewDeleteAvaConversationRequestWithBody generates requests for DeleteAvaConversation with any type of body
+func NewDeleteAvaConversationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ava/v1/deleteConversation")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAvaFeedbackRequest calls the generic AvaFeedback builder with application/json body
+func NewAvaFeedbackRequest(server string, body AvaFeedbackJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAvaFeedbackRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAvaFeedbackRequestWithBody generates requests for AvaFeedback with any type of body
+func NewAvaFeedbackRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ava/v1/feedback")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewIdOfAssetsRequest generates requests for IdOfAssets
 func NewIdOfAssetsRequest(server string, params *IdOfAssetsParams) (*http.Request, error) {
 	var err error
@@ -12366,6 +12691,26 @@ type ClientWithResponsesInterface interface {
 	// ValidateWithResponse request
 	ValidateWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ValidateResp, error)
 
+	// AskAvaStreamingWithBodyWithResponse request with any body
+	AskAvaStreamingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AskAvaStreamingResp, error)
+
+	AskAvaStreamingWithResponse(ctx context.Context, body AskAvaStreamingJSONRequestBody, reqEditors ...RequestEditorFn) (*AskAvaStreamingResp, error)
+
+	// AskAvaSyncWithBodyWithResponse request with any body
+	AskAvaSyncWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AskAvaSyncResp, error)
+
+	AskAvaSyncWithResponse(ctx context.Context, body AskAvaSyncJSONRequestBody, reqEditors ...RequestEditorFn) (*AskAvaSyncResp, error)
+
+	// DeleteAvaConversationWithBodyWithResponse request with any body
+	DeleteAvaConversationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error)
+
+	DeleteAvaConversationWithResponse(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error)
+
+	// AvaFeedbackWithBodyWithResponse request with any body
+	AvaFeedbackWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AvaFeedbackResp, error)
+
+	AvaFeedbackWithResponse(ctx context.Context, body AvaFeedbackJSONRequestBody, reqEditors ...RequestEditorFn) (*AvaFeedbackResp, error)
+
 	// IdOfAssetsWithResponse request
 	IdOfAssetsWithResponse(ctx context.Context, params *IdOfAssetsParams, reqEditors ...RequestEditorFn) (*IdOfAssetsResp, error)
 
@@ -13809,6 +14154,107 @@ func (r ValidateResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ValidateResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AskAvaStreamingResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r AskAvaStreamingResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AskAvaStreamingResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AskAvaSyncResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *string
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r AskAvaSyncResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AskAvaSyncResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAvaConversationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAvaConversationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAvaConversationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AvaFeedbackResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r AvaFeedbackResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AvaFeedbackResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15299,6 +15745,74 @@ func (c *ClientWithResponses) ValidateWithResponse(ctx context.Context, reqEdito
 		return nil, err
 	}
 	return ParseValidateResp(rsp)
+}
+
+// AskAvaStreamingWithBodyWithResponse request with arbitrary body returning *AskAvaStreamingResp
+func (c *ClientWithResponses) AskAvaStreamingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AskAvaStreamingResp, error) {
+	rsp, err := c.AskAvaStreamingWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAskAvaStreamingResp(rsp)
+}
+
+func (c *ClientWithResponses) AskAvaStreamingWithResponse(ctx context.Context, body AskAvaStreamingJSONRequestBody, reqEditors ...RequestEditorFn) (*AskAvaStreamingResp, error) {
+	rsp, err := c.AskAvaStreaming(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAskAvaStreamingResp(rsp)
+}
+
+// AskAvaSyncWithBodyWithResponse request with arbitrary body returning *AskAvaSyncResp
+func (c *ClientWithResponses) AskAvaSyncWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AskAvaSyncResp, error) {
+	rsp, err := c.AskAvaSyncWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAskAvaSyncResp(rsp)
+}
+
+func (c *ClientWithResponses) AskAvaSyncWithResponse(ctx context.Context, body AskAvaSyncJSONRequestBody, reqEditors ...RequestEditorFn) (*AskAvaSyncResp, error) {
+	rsp, err := c.AskAvaSync(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAskAvaSyncResp(rsp)
+}
+
+// DeleteAvaConversationWithBodyWithResponse request with arbitrary body returning *DeleteAvaConversationResp
+func (c *ClientWithResponses) DeleteAvaConversationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error) {
+	rsp, err := c.DeleteAvaConversationWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAvaConversationResp(rsp)
+}
+
+func (c *ClientWithResponses) DeleteAvaConversationWithResponse(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error) {
+	rsp, err := c.DeleteAvaConversation(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAvaConversationResp(rsp)
+}
+
+// AvaFeedbackWithBodyWithResponse request with arbitrary body returning *AvaFeedbackResp
+func (c *ClientWithResponses) AvaFeedbackWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AvaFeedbackResp, error) {
+	rsp, err := c.AvaFeedbackWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAvaFeedbackResp(rsp)
+}
+
+func (c *ClientWithResponses) AvaFeedbackWithResponse(ctx context.Context, body AvaFeedbackJSONRequestBody, reqEditors ...RequestEditorFn) (*AvaFeedbackResp, error) {
+	rsp, err := c.AvaFeedback(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAvaFeedbackResp(rsp)
 }
 
 // IdOfAssetsWithResponse request returning *IdOfAssetsResp
@@ -18423,6 +18937,201 @@ func ParseValidateResp(rsp *http.Response) (*ValidateResp, error) {
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAskAvaStreamingResp parses an HTTP response from a AskAvaStreamingWithResponse call
+func ParseAskAvaStreamingResp(rsp *http.Response) (*AskAvaStreamingResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AskAvaStreamingResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAskAvaSyncResp parses an HTTP response from a AskAvaSyncWithResponse call
+func ParseAskAvaSyncResp(rsp *http.Response) (*AskAvaSyncResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AskAvaSyncResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAvaConversationResp parses an HTTP response from a DeleteAvaConversationWithResponse call
+func ParseDeleteAvaConversationResp(rsp *http.Response) (*DeleteAvaConversationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAvaConversationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAvaFeedbackResp parses an HTTP response from a AvaFeedbackWithResponse call
+func ParseAvaFeedbackResp(rsp *http.Response) (*AvaFeedbackResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AvaFeedbackResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
