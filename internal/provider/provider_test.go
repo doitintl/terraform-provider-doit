@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider"
@@ -33,15 +32,17 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// sweepOrphanedAllocations deletes any allocations whose name starts with
-// the test prefix. This catches orphaned child rule allocations that the API
-// creates for group allocation rules but does not cascade-delete.
+// sweepOrphanedAllocations deletes all allocations owned by TEST_USER.
+// This catches both explicitly named test allocations (tfacc-*) and
+// auto-named child allocations ("Group 1") that the API creates for
+// group allocation rules but does not cascade-delete.
 func sweepOrphanedAllocations() {
 	host := os.Getenv("DOIT_HOST")
 	token := os.Getenv("DOIT_API_TOKEN")
 	customerCtx := os.Getenv("DOIT_CUSTOMER_CONTEXT")
+	testUser := os.Getenv("TEST_USER")
 
-	if host == "" || token == "" {
+	if host == "" || token == "" || testUser == "" {
 		return
 	}
 
@@ -56,9 +57,11 @@ func sweepOrphanedAllocations() {
 	}
 
 	ctx := context.Background()
-	sweepPrefix := testAllocPrefix + "-"
+	ownerFilter := fmt.Sprintf("owner:%s", testUser)
 	var toDelete []string
-	params := &models.ListAllocationsParams{}
+	params := &models.ListAllocationsParams{
+		Filter: &ownerFilter,
+	}
 
 	for {
 		resp, err := client.ListAllocationsWithResponse(ctx, params)
@@ -70,7 +73,7 @@ func sweepOrphanedAllocations() {
 			break
 		}
 		for _, a := range *resp.JSON200.Allocations {
-			if a.Name != nil && strings.HasPrefix(*a.Name, sweepPrefix) {
+			if a.Owner != nil && *a.Owner == testUser {
 				toDelete = append(toDelete, *a.Id)
 			}
 		}
