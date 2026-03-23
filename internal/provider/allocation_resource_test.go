@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
+
 	"testing"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -775,18 +774,15 @@ func TestAccAllocation_NestedAllocationRule_InvalidMode(t *testing.T) {
 	})
 }
 
-// testAccCheckAllocationDestroy returns a CheckDestroy function that:
-// 1. Verifies all Terraform-managed doit_allocation resources return 404
-// 2. Sweeps orphaned allocations whose names start with testAllocPrefix
-//
-// The sweep is needed because group allocations create child "single" allocations
-// for each rule, and the API does NOT cascade-delete them when the parent is deleted.
+// testAccCheckAllocationDestroy returns a CheckDestroy function that verifies
+// Terraform-managed allocations have been deleted. It does NOT sweep orphaned
+// allocations — that is handled once by TestMain after all tests complete,
+// to avoid deleting allocations that belong to other parallel tests.
 func testAccCheckAllocationDestroy(t *testing.T) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := getAPIClient(t)
 		ctx := context.Background()
 
-		// 1. Verify Terraform-managed allocations are deleted
 		for _, rs := range s.RootModule().Resources {
 			if rs.Type != "doit_allocation" {
 				continue
@@ -800,59 +796,7 @@ func testAccCheckAllocationDestroy(t *testing.T) resource.TestCheckFunc {
 			}
 		}
 
-		// 2. Sweep orphaned test allocations (child rule allocations from group tests)
-		sweepTestAllocations(t, client)
-
 		return nil
-	}
-}
-
-// sweepTestAllocations lists all allocations and deletes any whose name starts
-// with testAllocPrefix. This catches orphaned rule allocations that the API creates
-// for group allocation rules but does not cascade-delete.
-func sweepTestAllocations(t *testing.T, client *models.ClientWithResponses) {
-	t.Helper()
-	ctx := context.Background()
-
-	sweepPrefix := testAllocPrefix + "-"
-	var toDelete []string
-	params := &models.ListAllocationsParams{}
-
-	for {
-		resp, err := client.ListAllocationsWithResponse(ctx, params)
-		if err != nil {
-			t.Logf("Warning: failed to list allocations for sweep: %v", err)
-			return
-		}
-		if resp.JSON200 == nil || resp.JSON200.Allocations == nil {
-			break
-		}
-
-		for _, a := range *resp.JSON200.Allocations {
-			if a.Name != nil && strings.HasPrefix(*a.Name, sweepPrefix) {
-				toDelete = append(toDelete, *a.Id)
-			}
-		}
-
-		if resp.JSON200.PageToken == nil || *resp.JSON200.PageToken == "" {
-			break
-		}
-		params.PageToken = resp.JSON200.PageToken
-	}
-
-	for _, id := range toDelete {
-		resp, err := client.DeleteAllocationWithResponse(ctx, id)
-		if err != nil {
-			t.Logf("Warning: failed to delete orphaned allocation %s: %v", id, err)
-			continue
-		}
-		if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
-			t.Logf("Warning: unexpected status %d deleting orphaned allocation %s", resp.StatusCode(), id)
-		}
-	}
-
-	if len(toDelete) > 0 {
-		t.Logf("Swept %d orphaned test allocation(s)", len(toDelete))
 	}
 }
 

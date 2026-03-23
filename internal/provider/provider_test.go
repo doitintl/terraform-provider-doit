@@ -3,8 +3,10 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider"
@@ -16,6 +18,83 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
+
+// TestMain runs after all tests complete. It sweeps orphaned test allocations
+// whose names start with testAllocPrefix. This must happen here (not in
+// CheckDestroy) to avoid deleting allocations that belong to other parallel tests.
+func TestMain(m *testing.M) {
+	code := m.Run()
+
+	// Only sweep during acceptance tests
+	if os.Getenv("TF_ACC") != "" {
+		sweepOrphanedAllocations()
+	}
+
+	os.Exit(code)
+}
+
+// sweepOrphanedAllocations deletes any allocations whose name starts with
+// the test prefix. This catches orphaned child rule allocations that the API
+// creates for group allocation rules but does not cascade-delete.
+func sweepOrphanedAllocations() {
+	host := os.Getenv("DOIT_HOST")
+	token := os.Getenv("DOIT_API_TOKEN")
+	customerCtx := os.Getenv("DOIT_CUSTOMER_CONTEXT")
+
+	if host == "" || token == "" {
+		return
+	}
+
+	client, err := provider.NewClient(
+		context.Background(),
+		host, token, customerCtx,
+		"test", "dev",
+	)
+	if err != nil {
+		log.Printf("Warning: sweep failed to create API client: %v", err)
+		return
+	}
+
+	ctx := context.Background()
+	sweepPrefix := testAllocPrefix + "-"
+	var toDelete []string
+	params := &models.ListAllocationsParams{}
+
+	for {
+		resp, err := client.ListAllocationsWithResponse(ctx, params)
+		if err != nil {
+			log.Printf("Warning: sweep failed to list allocations: %v", err)
+			return
+		}
+		if resp.JSON200 == nil || resp.JSON200.Allocations == nil {
+			break
+		}
+		for _, a := range *resp.JSON200.Allocations {
+			if a.Name != nil && strings.HasPrefix(*a.Name, sweepPrefix) {
+				toDelete = append(toDelete, *a.Id)
+			}
+		}
+		if resp.JSON200.PageToken == nil || *resp.JSON200.PageToken == "" {
+			break
+		}
+		params.PageToken = resp.JSON200.PageToken
+	}
+
+	for _, id := range toDelete {
+		resp, err := client.DeleteAllocationWithResponse(ctx, id)
+		if err != nil {
+			log.Printf("Warning: sweep failed to delete allocation %s: %v", id, err)
+			continue
+		}
+		if resp.StatusCode() != 200 && resp.StatusCode() != 204 && resp.StatusCode() != 404 {
+			log.Printf("Warning: sweep unexpected status %d deleting allocation %s", resp.StatusCode(), id)
+		}
+	}
+
+	if len(toDelete) > 0 {
+		log.Printf("Swept %d orphaned test allocation(s)", len(toDelete))
+	}
+}
 
 var (
 	testAccProvidersProtoV6Factories = map[string]func() (tfprotov6.ProviderServer, error){
