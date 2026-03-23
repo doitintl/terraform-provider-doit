@@ -57,27 +57,23 @@ data "doit_alerts" "limited" {
 }
 
 // TestAccAlertsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
-// auto-paginates starting from the token, returning fewer results than a full run.
-// Uses three chained data sources in one apply to avoid race conditions with parallel tests:
-//   - "all": fetches all alerts to get total count
+// auto-paginates starting from the token, returning a different set of items.
+// Uses two chained data sources in one apply:
 //   - "first_page": fetches 1 alert + page_token
-//   - "from_token": auto-paginates from the token (should return fewer than all)
+//   - "from_token": auto-paginates from the token (should start at a different item)
 func TestAccAlertsDataSource_PageTokenOnly(t *testing.T) {
 	totalAlerts := getAlertCount(t)
 	if totalAlerts < 2 {
 		t.Skipf("Need at least 2 alerts to test page_token-only, got %d", totalAlerts)
 	}
 
-	// Non-parallel: the "less than" assertion requires a stable resource count
-	// during the apply. Parallel tests mutate counts and cause false failures.
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
 				Config: `
-data "doit_alerts" "all" {}
 data "doit_alerts" "first_page" {
   max_results = "1"
 }
@@ -86,15 +82,14 @@ data "doit_alerts" "from_token" {
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// first_page: max_results honored, page_token present
 					resource.TestCheckResourceAttr("data.doit_alerts.first_page", "alerts.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_alerts.first_page", "page_token"),
-					// from_token: page_token honored (fewer results than total), auto-pagination completed
-					testCheckResourceAttrLessThanAttr(
-						"data.doit_alerts.from_token", "row_count",
-						"data.doit_alerts.all", "row_count",
-					),
+					resource.TestCheckResourceAttrSet("data.doit_alerts.from_token", "row_count"),
 					resource.TestCheckNoResourceAttr("data.doit_alerts.from_token", "page_token"),
+					// Verify page_token actually advanced to a different starting point
+					testCheckResourceAttrNotEqualAttr(
+						"data.doit_alerts.first_page", "alerts.0.id",
+						"data.doit_alerts.from_token", "alerts.0.id"),
 				),
 			},
 		},

@@ -94,46 +94,6 @@ func testCheckResourceAttrLessThan(name, key string, threshold int) resource.Tes
 	}
 }
 
-// testCheckResourceAttrLessThanAttr returns a TestCheckFunc that verifies an
-// integer attribute on one resource is strictly less than an integer attribute
-// on another resource. This avoids race conditions from pre-fetching values
-// via Go helpers — both values are read from state at check time.
-func testCheckResourceAttrLessThanAttr(name, key, thresholdName, thresholdKey string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[name]
-		if !ok {
-			return fmt.Errorf("resource %s not found", name)
-		}
-		val, ok := rs.Primary.Attributes[key]
-		if !ok {
-			return fmt.Errorf("attribute %s not found on %s", key, name)
-		}
-		intVal, err := strconv.Atoi(val)
-		if err != nil {
-			return fmt.Errorf("attribute %s on %s is not an integer: %s", key, name, val)
-		}
-
-		thresholdRS, ok := s.RootModule().Resources[thresholdName]
-		if !ok {
-			return fmt.Errorf("threshold resource %s not found", thresholdName)
-		}
-		thresholdVal, ok := thresholdRS.Primary.Attributes[thresholdKey]
-		if !ok {
-			return fmt.Errorf("attribute %s not found on %s", thresholdKey, thresholdName)
-		}
-		threshold, err := strconv.Atoi(thresholdVal)
-		if err != nil {
-			return fmt.Errorf("attribute %s on %s is not an integer: %s", thresholdKey, thresholdName, thresholdVal)
-		}
-
-		if intVal >= threshold {
-			return fmt.Errorf("expected %s.%s (%d) to be less than %s.%s (%d)",
-				name, key, intVal, thresholdName, thresholdKey, threshold)
-		}
-		return nil
-	}
-}
-
 // testCheckResourceAttrNotEqualAttr returns a TestCheckFunc that verifies a
 // string attribute on one resource differs from a string attribute on another.
 // Used to prove that page_token actually advances to a different page.
