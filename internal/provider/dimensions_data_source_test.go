@@ -129,6 +129,10 @@ data "doit_dimensions" "paginated" {
 					resource.TestCheckResourceAttr("data.doit_dimensions.first_page", "dimensions.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_dimensions.first_page", "page_token"),
 					resource.TestCheckResourceAttr("data.doit_dimensions.paginated", "dimensions.#", "1"),
+					// Verify page_token actually advanced to a different page
+					testCheckResourceAttrNotEqualAttr(
+						"data.doit_dimensions.first_page", "dimensions.0.id",
+						"data.doit_dimensions.paginated", "dimensions.0.id"),
 				),
 			},
 		},

@@ -133,3 +133,34 @@ func testCheckResourceAttrLessThanAttr(name, key, thresholdName, thresholdKey st
 		return nil
 	}
 }
+
+// testCheckResourceAttrNotEqualAttr returns a TestCheckFunc that verifies a
+// string attribute on one resource differs from a string attribute on another.
+// Used to prove that page_token actually advances to a different page.
+func testCheckResourceAttrNotEqualAttr(name1, key1, name2, key2 string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs1, ok := s.RootModule().Resources[name1]
+		if !ok {
+			return fmt.Errorf("resource %s not found", name1)
+		}
+		val1, ok := rs1.Primary.Attributes[key1]
+		if !ok {
+			return fmt.Errorf("attribute %s not found on %s", key1, name1)
+		}
+
+		rs2, ok := s.RootModule().Resources[name2]
+		if !ok {
+			return fmt.Errorf("resource %s not found", name2)
+		}
+		val2, ok := rs2.Primary.Attributes[key2]
+		if !ok {
+			return fmt.Errorf("attribute %s not found on %s", key2, name2)
+		}
+
+		if val1 == val2 {
+			return fmt.Errorf("expected %s.%s (%s) to differ from %s.%s (%s)",
+				name1, key1, val1, name2, key2, val2)
+		}
+		return nil
+	}
+}
