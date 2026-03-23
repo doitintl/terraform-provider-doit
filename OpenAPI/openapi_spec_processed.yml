@@ -60,6 +60,8 @@ tags:
     description: Create and manage support tickets with DoiT.
   - name: Commitment Manager
     description: View and manage commitment contracts with DoiT.
+  - name: Ava
+    description: Interact with Ava, DoiT's AI-powered cloud assistant.
 paths:
   /analytics/v1/alerts:
     get:
@@ -3085,6 +3087,114 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  /ava/v1/ask:
+    post:
+      tags:
+        - Ava
+      summary: Ask Ava (streaming)
+      description: |-
+        Send a question to Ava and receive a streaming response via Server-Sent Events (SSE).
+        The response streams back events containing the answer text, conversation ID, and message metadata.
+      operationId: askAvaStreaming
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvaAskRequest"
+      responses:
+        "200":
+          description: OK - SSE stream of Ava response events.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /ava/v1/askSync:
+    post:
+      tags:
+        - Ava
+      summary: Ask Ava
+      description: |-
+        Send a question to Ava and receive a synchronous response.
+        Returns the full answer as a single string once generation is complete.
+      operationId: askAvaSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvaAskSyncRequest"
+      responses:
+        "200":
+          description: OK - Ava response returned.
+          content:
+            application/json:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /ava/v1/feedback:
+    post:
+      tags:
+        - Ava
+      summary: Submit feedback
+      description: Submit feedback on an Ava answer to help improve response quality.
+      operationId: avaFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvaFeedbackRequest"
+      responses:
+        "200":
+          description: OK - Feedback submitted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /ava/v1/deleteConversation:
+    delete:
+      tags:
+        - Ava
+      summary: Delete a conversation
+      description: Deletes an Ava conversation by its ID.
+      operationId: deleteAvaConversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAvaConversationRequestBody'
+      responses:
+        "200":
+          description: OK - Conversation deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
 components:
   schemas:
     AccountManagerListItem:
@@ -3973,6 +4083,48 @@ components:
           type: integer
           description: Last time the attribution was modified (in unix milliseconds).
           format: int64
+    AvaAskRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          description: The question to ask Ava.
+      required:
+        - question
+    AvaAskSyncRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          description: The question to ask Ava.
+      required:
+        - question
+    AvaFeedbackRequest:
+      type: object
+      properties:
+        conversationId:
+          type: string
+          description: The conversation ID the feedback relates to.
+        answerId:
+          type: string
+          description: The specific answer ID within the conversation.
+        feedback:
+          $ref: '#/components/schemas/AvaFeedbackRequestFeedback'
+      required:
+        - conversationId
+        - answerId
+        - feedback
+    AvaFeedbackRequestFeedback:
+      type: object
+      properties:
+        positive:
+          type: boolean
+          description: Whether the feedback is positive or negative.
+        text:
+          type: string
+          description: Optional text providing additional feedback details.
+      required:
+        - positive
     BlockingResources:
       type: object
       description: Map of resources that block deletion operations.
@@ -4917,6 +5069,14 @@ components:
           type: string
           description: 'The type of the metric. If you choose "cost" or "usage", it will map to the basic "Cost" or "Usage" metric in Cloud Analytics reports. You can also use this field to define custom metric types, such as "working_hours", "ride", etc.'
           example: "cost"
+    DeleteAvaConversationRequestBody:
+      type: object
+      properties:
+        conversationId:
+          type: string
+          description: The ID of the conversation to delete.
+      required:
+        - conversationId
     DeleteDatahubDataset200Response:
       type: object
       properties:
