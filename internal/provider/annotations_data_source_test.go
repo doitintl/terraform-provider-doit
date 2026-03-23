@@ -67,7 +67,9 @@ func TestAccAnnotationsDataSource_PageTokenOnly(t *testing.T) {
 		t.Skipf("Need at least 2 annotations to test page_token-only, got %d", totalAnnotations)
 	}
 
-	resource.ParallelTest(t, resource.TestCase{
+	// Non-parallel: the "less than" assertion requires a stable resource count
+	// during the apply. Parallel tests mutate counts and cause false failures.
+	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
