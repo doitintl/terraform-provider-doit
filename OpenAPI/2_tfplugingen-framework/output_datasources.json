@@ -146,6 +146,13 @@
 													}
 												},
 												{
+													"name": "include_null",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Include null value."
+													}
+												},
+												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed",
@@ -393,6 +400,13 @@
 																	"string": {
 																		"computed_optional_required": "computed",
 																		"description": "The field to filter on"
+																	}
+																},
+																{
+																	"name": "include_null",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Include null value."
 																	}
 																},
 																{
@@ -2050,6 +2064,13 @@
 										}
 									},
 									{
+										"name": "include_null",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Include null value."
+										}
+									},
+									{
 										"name": "inverse",
 										"bool": {
 											"computed_optional_required": "computed",
@@ -2278,6 +2299,13 @@
 														"string": {
 															"computed_optional_required": "computed",
 															"description": "The field to filter on"
+														}
+													},
+													{
+														"name": "include_null",
+														"bool": {
+															"computed_optional_required": "computed",
+															"description": "Include null value."
 														}
 													},
 													{
@@ -3791,6 +3819,13 @@
 													"string": {
 														"computed_optional_required": "computed",
 														"description": "The field to filter on"
+													}
+												},
+												{
+													"name": "include_null",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Include null value."
 													}
 												},
 												{

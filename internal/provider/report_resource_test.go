@@ -1809,3 +1809,75 @@ resource "doit_report" "this" {
 }
 `, i, i)
 }
+
+// TestAccReport_IncludeNull tests that the include_null property on report filters
+// round-trips correctly without causing drift.
+func TestAccReport_IncludeNull(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithIncludeNull(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("cloud_provider"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("google-cloud")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithIncludeNull(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithIncludeNull(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-include-null-%d"
+	description = "Report testing include_null filter property"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		filters = [
+		  {
+			id           = "cloud_provider"
+			type         = "fixed"
+			inverse      = false
+			include_null = true
+			values       = ["google-cloud"]
+			mode         = "is"
+		  }
+		]
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}

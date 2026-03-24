@@ -4505,6 +4505,8 @@ components:
       properties:
         include_null:
           type: boolean
+          description: Include null value.
+          default: false
         inverse_selection:
           type: boolean
           description: If true, all selected values will be excluded.
@@ -5745,6 +5747,10 @@ components:
           description: Values to filter on.
           items:
             type: string
+        includeNull:
+          type: boolean
+          description: Include null value.
+          default: false
       example:
         id: cloud_provider
         type: fixed

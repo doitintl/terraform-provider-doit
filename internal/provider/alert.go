@@ -126,10 +126,11 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 			filterMode := models.ExternalConfigFilterMode(scope.Mode.ValueString())
 
 			apiScopes[i] = models.ExternalConfigFilter{
-				Id:      scope.Id.ValueString(),
-				Inverse: scope.Inverse.ValueBoolPointer(),
-				Mode:    filterMode,
-				Type:    filterType,
+				Id:          scope.Id.ValueString(),
+				IncludeNull: scope.IncludeNull.ValueBoolPointer(),
+				Inverse:     scope.Inverse.ValueBoolPointer(),
+				Mode:        filterMode,
+				Type:        filterType,
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string
@@ -207,10 +208,12 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 
 	// Convert config
 	if resp.Config != nil {
-		// Extract existing scope types/IDs from state for alias normalization.
+		// Extract existing scope types/IDs/includeNull from state for alias normalization
+		// and preserving user-configured values the API does not echo back.
 		// When called from Create/Update, state already contains the user's plan values
 		// (e.g. "allocation_rule"), while the API returns canonical names ("attribution").
 		var existingScopeTypes, existingScopeIDs []string
+		var existingScopeIncludeNull []*bool
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Scopes.IsNull() && !state.Config.Scopes.IsUnknown() {
 			var existingScopes []resource_alert.ScopesValue
@@ -218,10 +221,11 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 				for _, es := range existingScopes {
 					existingScopeTypes = append(existingScopeTypes, es.ScopesType.ValueString())
 					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
+					existingScopeIncludeNull = append(existingScopeIncludeNull, es.IncludeNull.ValueBoolPointer())
 				}
 			}
 		}
-		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config, existingScopeTypes, existingScopeIDs)
+		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config, existingScopeTypes, existingScopeIDs, existingScopeIncludeNull)
 		diags.Append(configDiags...)
 		state.Config = configVal
 	}
@@ -230,7 +234,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 }
 
 // mapAlertConfigToModel maps the API AlertConfig to the Terraform ConfigValue.
-func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string) (resource_alert.ConfigValue, diag.Diagnostics) {
+func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string, existingScopeIncludeNull []*bool) (resource_alert.ConfigValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Build attributions list
@@ -274,12 +278,21 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 				scopeID = normalizeDimensionsType(scopeID, existingScopeIDs[i])
 			}
 
+			// When the API doesn't echo includeNull, preserve the plan/state value.
+			includeNullVal := types.BoolValue(false)
+			if scope.IncludeNull != nil {
+				includeNullVal = types.BoolValue(*scope.IncludeNull)
+			} else if i < len(existingScopeIncludeNull) && existingScopeIncludeNull[i] != nil {
+				includeNullVal = types.BoolValue(*existingScopeIncludeNull[i])
+			}
+
 			scopeAttrs := map[string]attr.Value{
-				"id":      types.StringValue(scopeID),
-				"inverse": types.BoolPointerValue(scope.Inverse),
-				"mode":    types.StringValue(string(scope.Mode)),
-				"type":    types.StringValue(scopeType),
-				"values":  valuesVal,
+				"id":           types.StringValue(scopeID),
+				"include_null": includeNullVal,
+				"inverse":      types.BoolPointerValue(scope.Inverse),
+				"mode":         types.StringValue(string(scope.Mode)),
+				"type":         types.StringValue(scopeType),
+				"values":       valuesVal,
 			}
 			var d diag.Diagnostics
 			scopesList[i], d = resource_alert.NewScopesValue(resource_alert.ScopesValue{}.AttributeTypes(ctx), scopeAttrs)

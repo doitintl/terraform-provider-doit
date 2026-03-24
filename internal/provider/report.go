@@ -236,9 +236,10 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 				inverse := f.Inverse.ValueBool()
 				filterType := models.DimensionsTypes(f.FiltersType.ValueString())
 				externalFilters[i] = models.ExternalConfigFilter{
-					Id:      f.Id.ValueString(),
-					Inverse: &inverse,
-					Type:    filterType,
+					Id:          f.Id.ValueString(),
+					IncludeNull: f.IncludeNull.ValueBoolPointer(),
+					Inverse:     &inverse,
+					Type:        filterType,
 				}
 				if !f.Values.IsNull() && !f.Values.IsUnknown() {
 					var values []string
@@ -596,9 +597,11 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	// Nested List: Filters
 	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
 	if config.Filters != nil && len(*config.Filters) > 0 {
-		// Get existing filter types and IDs from state for alias normalization
+		// Get existing filter types, IDs, and includeNull from state for alias normalization
+		// and preserving user-configured values the API does not echo back.
 		var existingFilterTypes []string
 		var existingFilterIDs []string
+		var existingFilterIncludeNull []*bool
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Filters.IsNull() && !state.Config.Filters.IsUnknown() {
 			var existingFilters []resource_report.FiltersValue
@@ -606,6 +609,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				for _, ef := range existingFilters {
 					existingFilterTypes = append(existingFilterTypes, ef.FiltersType.ValueString())
 					existingFilterIDs = append(existingFilterIDs, ef.Id.ValueString())
+					existingFilterIncludeNull = append(existingFilterIncludeNull, ef.IncludeNull.ValueBoolPointer())
 				}
 			}
 		}
@@ -623,9 +627,18 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			if i < len(existingFilterIDs) {
 				fID = normalizeDimensionsType(fID, existingFilterIDs[i])
 			}
+			// When the API doesn't echo includeNull, preserve the plan/state value.
+			includeNullVal := types.BoolValue(false)
+			if f.IncludeNull != nil {
+				includeNullVal = types.BoolValue(*f.IncludeNull)
+			} else if i < len(existingFilterIncludeNull) && existingFilterIncludeNull[i] != nil {
+				includeNullVal = types.BoolValue(*existingFilterIncludeNull[i])
+			}
+
 			m := map[string]attr.Value{
-				"id":      types.StringValue(fID),
-				"inverse": types.BoolPointerValue(f.Inverse),
+				"id":           types.StringValue(fID),
+				"include_null": includeNullVal,
+				"inverse":      types.BoolPointerValue(f.Inverse),
 				// filters type enum cast
 				"type": types.StringValue(fType),
 				"mode": types.StringValue(string(f.Mode)),

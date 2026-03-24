@@ -82,6 +82,7 @@ Read-Only:
 Read-Only:
 
 - `id` (String) The field to filter on
+- `include_null` (Boolean) Include null value.
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `mode` (String) Filter mode to apply
 - `type` (String) Enumeration of supported dimension/filter types.

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -122,6 +123,13 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 									Required:            true,
 									Description:         "The field to filter on",
 									MarkdownDescription: "The field to filter on",
+								},
+								"include_null": schema.BoolAttribute{
+									Optional:            true,
+									Computed:            true,
+									Description:         "Include null value.",
+									MarkdownDescription: "Include null value.",
+									Default:             booldefault.StaticBool(false),
 								},
 								"inverse": schema.BoolAttribute{
 									Optional:            true,
@@ -1574,6 +1582,24 @@ func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	includeNullAttribute, ok := attributes["include_null"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_null is missing from object`)
+
+		return nil, diags
+	}
+
+	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+	}
+
 	inverseAttribute, ok := attributes["inverse"]
 
 	if !ok {
@@ -1651,12 +1677,13 @@ func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	}
 
 	return ScopesValue{
-		Id:         idVal,
-		Inverse:    inverseVal,
-		Mode:       modeVal,
-		ScopesType: typeVal,
-		Values:     valuesVal,
-		state:      attr.ValueStateKnown,
+		Id:          idVal,
+		IncludeNull: includeNullVal,
+		Inverse:     inverseVal,
+		Mode:        modeVal,
+		ScopesType:  typeVal,
+		Values:      valuesVal,
+		state:       attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1741,6 +1768,24 @@ func NewScopesValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	includeNullAttribute, ok := attributes["include_null"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_null is missing from object`)
+
+		return NewScopesValueUnknown(), diags
+	}
+
+	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+	}
+
 	inverseAttribute, ok := attributes["inverse"]
 
 	if !ok {
@@ -1818,12 +1863,13 @@ func NewScopesValue(attributeTypes map[string]attr.Type, attributes map[string]a
 	}
 
 	return ScopesValue{
-		Id:         idVal,
-		Inverse:    inverseVal,
-		Mode:       modeVal,
-		ScopesType: typeVal,
-		Values:     valuesVal,
-		state:      attr.ValueStateKnown,
+		Id:          idVal,
+		IncludeNull: includeNullVal,
+		Inverse:     inverseVal,
+		Mode:        modeVal,
+		ScopesType:  typeVal,
+		Values:      valuesVal,
+		state:       attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1895,21 +1941,23 @@ func (t ScopesType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ScopesValue{}
 
 type ScopesValue struct {
-	Id         basetypes.StringValue `tfsdk:"id"`
-	Inverse    basetypes.BoolValue   `tfsdk:"inverse"`
-	Mode       basetypes.StringValue `tfsdk:"mode"`
-	ScopesType basetypes.StringValue `tfsdk:"type"`
-	Values     basetypes.ListValue   `tfsdk:"values"`
-	state      attr.ValueState
+	Id          basetypes.StringValue `tfsdk:"id"`
+	IncludeNull basetypes.BoolValue   `tfsdk:"include_null"`
+	Inverse     basetypes.BoolValue   `tfsdk:"inverse"`
+	Mode        basetypes.StringValue `tfsdk:"mode"`
+	ScopesType  basetypes.StringValue `tfsdk:"type"`
+	Values      basetypes.ListValue   `tfsdk:"values"`
+	state       attr.ValueState
 }
 
 func (v ScopesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["inverse"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1921,7 +1969,7 @@ func (v ScopesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -1930,6 +1978,14 @@ func (v ScopesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["id"] = val
+
+		val, err = v.IncludeNull.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["include_null"] = val
 
 		val, err = v.Inverse.ToTerraformValue(ctx)
 
@@ -2006,10 +2062,11 @@ func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"id":      basetypes.StringType{},
-			"inverse": basetypes.BoolType{},
-			"mode":    basetypes.StringType{},
-			"type":    basetypes.StringType{},
+			"id":           basetypes.StringType{},
+			"include_null": basetypes.BoolType{},
+			"inverse":      basetypes.BoolType{},
+			"mode":         basetypes.StringType{},
+			"type":         basetypes.StringType{},
 			"values": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -2017,10 +2074,11 @@ func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"id":      basetypes.StringType{},
-		"inverse": basetypes.BoolType{},
-		"mode":    basetypes.StringType{},
-		"type":    basetypes.StringType{},
+		"id":           basetypes.StringType{},
+		"include_null": basetypes.BoolType{},
+		"inverse":      basetypes.BoolType{},
+		"mode":         basetypes.StringType{},
+		"type":         basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -2037,11 +2095,12 @@ func (v ScopesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"id":      v.Id,
-			"inverse": v.Inverse,
-			"mode":    v.Mode,
-			"type":    v.ScopesType,
-			"values":  valuesVal,
+			"id":           v.Id,
+			"include_null": v.IncludeNull,
+			"inverse":      v.Inverse,
+			"mode":         v.Mode,
+			"type":         v.ScopesType,
+			"values":       valuesVal,
 		})
 
 	return objVal, diags
@@ -2063,6 +2122,10 @@ func (v ScopesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.IncludeNull.Equal(other.IncludeNull) {
 		return false
 	}
 
@@ -2095,10 +2158,11 @@ func (v ScopesValue) Type(ctx context.Context) attr.Type {
 
 func (v ScopesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":      basetypes.StringType{},
-		"inverse": basetypes.BoolType{},
-		"mode":    basetypes.StringType{},
-		"type":    basetypes.StringType{},
+		"id":           basetypes.StringType{},
+		"include_null": basetypes.BoolType{},
+		"inverse":      basetypes.BoolType{},
+		"mode":         basetypes.StringType{},
+		"type":         basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},
