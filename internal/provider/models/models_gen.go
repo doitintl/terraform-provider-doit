@@ -3655,12 +3655,6 @@ type DatahubEventsRequestBodyEventsItemMetricsItem struct {
 	Value *float64 `json:"value,omitempty"`
 }
 
-// DeleteAvaConversationRequestBody defines model for DeleteAvaConversationRequestBody.
-type DeleteAvaConversationRequestBody struct {
-	// ConversationId The ID of the conversation to delete.
-	ConversationId string `json:"conversationId"`
-}
-
 // DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
 type DeleteDatahubDataset200Response struct {
 	Message *string `json:"message,omitempty"`
@@ -5641,6 +5635,12 @@ type ListAnomaliesParams struct {
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 }
 
+// DeleteAvaConversationParams defines parameters for DeleteAvaConversation.
+type DeleteAvaConversationParams struct {
+	// ConversationId The ID of the conversation to delete.
+	ConversationId string `form:"conversationId" json:"conversationId"`
+}
+
 // IdOfAssetsParams defines parameters for IdOfAssets.
 type IdOfAssetsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -5798,9 +5798,6 @@ type AskAvaStreamingJSONRequestBody = AvaAskRequest
 
 // AskAvaSyncJSONRequestBody defines body for AskAvaSync for application/json ContentType.
 type AskAvaSyncJSONRequestBody = AvaAskSyncRequest
-
-// DeleteAvaConversationJSONRequestBody defines body for DeleteAvaConversation for application/json ContentType.
-type DeleteAvaConversationJSONRequestBody = DeleteAvaConversationRequestBody
 
 // AvaFeedbackJSONRequestBody defines body for AvaFeedback for application/json ContentType.
 type AvaFeedbackJSONRequestBody = AvaFeedbackRequest
@@ -6266,10 +6263,8 @@ type ClientInterface interface {
 
 	AskAvaSync(ctx context.Context, body AskAvaSyncJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteAvaConversationWithBody request with any body
-	DeleteAvaConversationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	DeleteAvaConversation(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteAvaConversation request
+	DeleteAvaConversation(ctx context.Context, params *DeleteAvaConversationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// AvaFeedbackWithBody request with any body
 	AvaFeedbackWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7279,20 +7274,8 @@ func (c *Client) AskAvaSync(ctx context.Context, body AskAvaSyncJSONRequestBody,
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteAvaConversationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteAvaConversationRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteAvaConversation(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteAvaConversationRequest(c.Server, body)
+func (c *Client) DeleteAvaConversation(ctx context.Context, params *DeleteAvaConversationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAvaConversationRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -10787,19 +10770,8 @@ func NewAskAvaSyncRequestWithBody(server string, contentType string, body io.Rea
 	return req, nil
 }
 
-// NewDeleteAvaConversationRequest calls the generic DeleteAvaConversation builder with application/json body
-func NewDeleteAvaConversationRequest(server string, body DeleteAvaConversationJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewDeleteAvaConversationRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewDeleteAvaConversationRequestWithBody generates requests for DeleteAvaConversation with any type of body
-func NewDeleteAvaConversationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewDeleteAvaConversationRequest generates requests for DeleteAvaConversation
+func NewDeleteAvaConversationRequest(server string, params *DeleteAvaConversationParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -10817,12 +10789,28 @@ func NewDeleteAvaConversationRequestWithBody(server string, contentType string, 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("DELETE", queryURL.String(), body)
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "conversationId", params.ConversationId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -12701,10 +12689,8 @@ type ClientWithResponsesInterface interface {
 
 	AskAvaSyncWithResponse(ctx context.Context, body AskAvaSyncJSONRequestBody, reqEditors ...RequestEditorFn) (*AskAvaSyncResp, error)
 
-	// DeleteAvaConversationWithBodyWithResponse request with any body
-	DeleteAvaConversationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error)
-
-	DeleteAvaConversationWithResponse(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error)
+	// DeleteAvaConversationWithResponse request
+	DeleteAvaConversationWithResponse(ctx context.Context, params *DeleteAvaConversationParams, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error)
 
 	// AvaFeedbackWithBodyWithResponse request with any body
 	AvaFeedbackWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AvaFeedbackResp, error)
@@ -15781,17 +15767,9 @@ func (c *ClientWithResponses) AskAvaSyncWithResponse(ctx context.Context, body A
 	return ParseAskAvaSyncResp(rsp)
 }
 
-// DeleteAvaConversationWithBodyWithResponse request with arbitrary body returning *DeleteAvaConversationResp
-func (c *ClientWithResponses) DeleteAvaConversationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error) {
-	rsp, err := c.DeleteAvaConversationWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteAvaConversationResp(rsp)
-}
-
-func (c *ClientWithResponses) DeleteAvaConversationWithResponse(ctx context.Context, body DeleteAvaConversationJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error) {
-	rsp, err := c.DeleteAvaConversation(ctx, body, reqEditors...)
+// DeleteAvaConversationWithResponse request returning *DeleteAvaConversationResp
+func (c *ClientWithResponses) DeleteAvaConversationWithResponse(ctx context.Context, params *DeleteAvaConversationParams, reqEditors ...RequestEditorFn) (*DeleteAvaConversationResp, error) {
+	rsp, err := c.DeleteAvaConversation(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

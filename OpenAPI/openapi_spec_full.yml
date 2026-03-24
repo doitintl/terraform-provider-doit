@@ -3793,18 +3793,13 @@ paths:
       summary: Delete a conversation
       description: Deletes an Ava conversation by its ID.
       operationId: deleteAvaConversation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                conversationId:
-                  type: string
-                  description: The ID of the conversation to delete.
-              required:
-                - conversationId
+      parameters:
+        - name: conversationId
+          in: query
+          description: The ID of the conversation to delete.
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK - Conversation deleted.
