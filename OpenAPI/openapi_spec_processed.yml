@@ -3178,12 +3178,13 @@ paths:
       summary: Delete a conversation
       description: Deletes an Ava conversation by its ID.
       operationId: deleteAvaConversation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteAvaConversationRequestBody'
+      parameters:
+        - name: conversationId
+          in: query
+          description: The ID of the conversation to delete.
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK - Conversation deleted.
@@ -5069,14 +5070,6 @@ components:
           type: string
           description: 'The type of the metric. If you choose "cost" or "usage", it will map to the basic "Cost" or "Usage" metric in Cloud Analytics reports. You can also use this field to define custom metric types, such as "working_hours", "ride", etc.'
           example: "cost"
-    DeleteAvaConversationRequestBody:
-      type: object
-      properties:
-        conversationId:
-          type: string
-          description: The ID of the conversation to delete.
-      required:
-        - conversationId
     DeleteDatahubDataset200Response:
       type: object
       properties:
