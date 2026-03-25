@@ -113,6 +113,11 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 					"filters": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
+								"case_insensitive": schema.BoolAttribute{
+									Computed:            true,
+									Description:         "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+									MarkdownDescription: "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+								},
 								"id": schema.StringAttribute{
 									Computed:            true,
 									Description:         "The field to filter on",
@@ -3421,6 +3426,24 @@ func (t FiltersType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 
 	attributes := in.Attributes()
 
+	caseInsensitiveAttribute, ok := attributes["case_insensitive"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`case_insensitive is missing from object`)
+
+		return nil, diags
+	}
+
+	caseInsensitiveVal, ok := caseInsensitiveAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`case_insensitive expected to be basetypes.BoolValue, was: %T`, caseInsensitiveAttribute))
+	}
+
 	idAttribute, ok := attributes["id"]
 
 	if !ok {
@@ -3534,13 +3557,14 @@ func (t FiltersType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 	}
 
 	return FiltersValue{
-		Id:          idVal,
-		IncludeNull: includeNullVal,
-		Inverse:     inverseVal,
-		Mode:        modeVal,
-		FiltersType: typeVal,
-		Values:      valuesVal,
-		state:       attr.ValueStateKnown,
+		CaseInsensitive: caseInsensitiveVal,
+		Id:              idVal,
+		IncludeNull:     includeNullVal,
+		Inverse:         inverseVal,
+		Mode:            modeVal,
+		FiltersType:     typeVal,
+		Values:          valuesVal,
+		state:           attr.ValueStateKnown,
 	}, diags
 }
 
@@ -3607,6 +3631,24 @@ func NewFiltersValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewFiltersValueUnknown(), diags
 	}
 
+	caseInsensitiveAttribute, ok := attributes["case_insensitive"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`case_insensitive is missing from object`)
+
+		return NewFiltersValueUnknown(), diags
+	}
+
+	caseInsensitiveVal, ok := caseInsensitiveAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`case_insensitive expected to be basetypes.BoolValue, was: %T`, caseInsensitiveAttribute))
+	}
+
 	idAttribute, ok := attributes["id"]
 
 	if !ok {
@@ -3720,13 +3762,14 @@ func NewFiltersValue(attributeTypes map[string]attr.Type, attributes map[string]
 	}
 
 	return FiltersValue{
-		Id:          idVal,
-		IncludeNull: includeNullVal,
-		Inverse:     inverseVal,
-		Mode:        modeVal,
-		FiltersType: typeVal,
-		Values:      valuesVal,
-		state:       attr.ValueStateKnown,
+		CaseInsensitive: caseInsensitiveVal,
+		Id:              idVal,
+		IncludeNull:     includeNullVal,
+		Inverse:         inverseVal,
+		Mode:            modeVal,
+		FiltersType:     typeVal,
+		Values:          valuesVal,
+		state:           attr.ValueStateKnown,
 	}, diags
 }
 
@@ -3798,21 +3841,23 @@ func (t FiltersType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = FiltersValue{}
 
 type FiltersValue struct {
-	Id          basetypes.StringValue `tfsdk:"id"`
-	IncludeNull basetypes.BoolValue   `tfsdk:"include_null"`
-	Inverse     basetypes.BoolValue   `tfsdk:"inverse"`
-	Mode        basetypes.StringValue `tfsdk:"mode"`
-	FiltersType basetypes.StringValue `tfsdk:"type"`
-	Values      basetypes.ListValue   `tfsdk:"values"`
-	state       attr.ValueState
+	CaseInsensitive basetypes.BoolValue   `tfsdk:"case_insensitive"`
+	Id              basetypes.StringValue `tfsdk:"id"`
+	IncludeNull     basetypes.BoolValue   `tfsdk:"include_null"`
+	Inverse         basetypes.BoolValue   `tfsdk:"inverse"`
+	Mode            basetypes.StringValue `tfsdk:"mode"`
+	FiltersType     basetypes.StringValue `tfsdk:"type"`
+	Values          basetypes.ListValue   `tfsdk:"values"`
+	state           attr.ValueState
 }
 
 func (v FiltersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 6)
+	attrTypes := make(map[string]tftypes.Type, 7)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["case_insensitive"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["inverse"] = basetypes.BoolType{}.TerraformType(ctx)
@@ -3826,7 +3871,15 @@ func (v FiltersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 6)
+		vals := make(map[string]tftypes.Value, 7)
+
+		val, err = v.CaseInsensitive.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["case_insensitive"] = val
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -3919,11 +3972,12 @@ func (v FiltersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"id":           basetypes.StringType{},
-			"include_null": basetypes.BoolType{},
-			"inverse":      basetypes.BoolType{},
-			"mode":         basetypes.StringType{},
-			"type":         basetypes.StringType{},
+			"case_insensitive": basetypes.BoolType{},
+			"id":               basetypes.StringType{},
+			"include_null":     basetypes.BoolType{},
+			"inverse":          basetypes.BoolType{},
+			"mode":             basetypes.StringType{},
+			"type":             basetypes.StringType{},
 			"values": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -3931,11 +3985,12 @@ func (v FiltersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"id":           basetypes.StringType{},
-		"include_null": basetypes.BoolType{},
-		"inverse":      basetypes.BoolType{},
-		"mode":         basetypes.StringType{},
-		"type":         basetypes.StringType{},
+		"case_insensitive": basetypes.BoolType{},
+		"id":               basetypes.StringType{},
+		"include_null":     basetypes.BoolType{},
+		"inverse":          basetypes.BoolType{},
+		"mode":             basetypes.StringType{},
+		"type":             basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -3952,12 +4007,13 @@ func (v FiltersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"id":           v.Id,
-			"include_null": v.IncludeNull,
-			"inverse":      v.Inverse,
-			"mode":         v.Mode,
-			"type":         v.FiltersType,
-			"values":       valuesVal,
+			"case_insensitive": v.CaseInsensitive,
+			"id":               v.Id,
+			"include_null":     v.IncludeNull,
+			"inverse":          v.Inverse,
+			"mode":             v.Mode,
+			"type":             v.FiltersType,
+			"values":           valuesVal,
 		})
 
 	return objVal, diags
@@ -3976,6 +4032,10 @@ func (v FiltersValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.CaseInsensitive.Equal(other.CaseInsensitive) {
+		return false
 	}
 
 	if !v.Id.Equal(other.Id) {
@@ -4015,11 +4075,12 @@ func (v FiltersValue) Type(ctx context.Context) attr.Type {
 
 func (v FiltersValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":           basetypes.StringType{},
-		"include_null": basetypes.BoolType{},
-		"inverse":      basetypes.BoolType{},
-		"mode":         basetypes.StringType{},
-		"type":         basetypes.StringType{},
+		"case_insensitive": basetypes.BoolType{},
+		"id":               basetypes.StringType{},
+		"include_null":     basetypes.BoolType{},
+		"inverse":          basetypes.BoolType{},
+		"mode":             basetypes.StringType{},
+		"type":             basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},

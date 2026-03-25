@@ -126,11 +126,12 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 			filterMode := models.ExternalConfigFilterMode(scope.Mode.ValueString())
 
 			apiScopes[i] = models.ExternalConfigFilter{
-				Id:          scope.Id.ValueString(),
-				IncludeNull: scope.IncludeNull.ValueBoolPointer(),
-				Inverse:     scope.Inverse.ValueBoolPointer(),
-				Mode:        filterMode,
-				Type:        filterType,
+				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
+				Id:              scope.Id.ValueString(),
+				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
+				Inverse:         scope.Inverse.ValueBoolPointer(),
+				Mode:            filterMode,
+				Type:            filterType,
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string
@@ -214,6 +215,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 		// (e.g. "allocation_rule"), while the API returns canonical names ("attribution").
 		var existingScopeTypes, existingScopeIDs []string
 		var existingScopeIncludeNull []*bool
+		var existingScopeCaseInsensitive []*bool
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Scopes.IsNull() && !state.Config.Scopes.IsUnknown() {
 			var existingScopes []resource_alert.ScopesValue
@@ -222,10 +224,11 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 					existingScopeTypes = append(existingScopeTypes, es.ScopesType.ValueString())
 					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
 					existingScopeIncludeNull = append(existingScopeIncludeNull, es.IncludeNull.ValueBoolPointer())
+					existingScopeCaseInsensitive = append(existingScopeCaseInsensitive, es.CaseInsensitive.ValueBoolPointer())
 				}
 			}
 		}
-		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config, existingScopeTypes, existingScopeIDs, existingScopeIncludeNull)
+		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config, existingScopeTypes, existingScopeIDs, existingScopeIncludeNull, existingScopeCaseInsensitive)
 		diags.Append(configDiags...)
 		state.Config = configVal
 	}
@@ -234,7 +237,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 }
 
 // mapAlertConfigToModel maps the API AlertConfig to the Terraform ConfigValue.
-func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string, existingScopeIncludeNull []*bool) (resource_alert.ConfigValue, diag.Diagnostics) {
+func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string, existingScopeIncludeNull []*bool, existingScopeCaseInsensitive []*bool) (resource_alert.ConfigValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Build attributions list
@@ -289,13 +292,23 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 				includeNullVal = types.BoolValue(*scope.IncludeNull)
 			}
 
+			// The API may not reliably echo caseInsensitive — always prefer the plan/state
+			// value when available.
+			caseInsensitiveVal := types.BoolValue(false)
+			if i < len(existingScopeCaseInsensitive) && existingScopeCaseInsensitive[i] != nil {
+				caseInsensitiveVal = types.BoolValue(*existingScopeCaseInsensitive[i])
+			} else if scope.CaseInsensitive != nil {
+				caseInsensitiveVal = types.BoolValue(*scope.CaseInsensitive)
+			}
+
 			scopeAttrs := map[string]attr.Value{
-				"id":           types.StringValue(scopeID),
-				"include_null": includeNullVal,
-				"inverse":      types.BoolPointerValue(scope.Inverse),
-				"mode":         types.StringValue(string(scope.Mode)),
-				"type":         types.StringValue(scopeType),
-				"values":       valuesVal,
+				"case_insensitive": caseInsensitiveVal,
+				"id":               types.StringValue(scopeID),
+				"include_null":     includeNullVal,
+				"inverse":          types.BoolPointerValue(scope.Inverse),
+				"mode":             types.StringValue(string(scope.Mode)),
+				"type":             types.StringValue(scopeType),
+				"values":           valuesVal,
 			}
 			var d diag.Diagnostics
 			scopesList[i], d = resource_alert.NewScopesValue(resource_alert.ScopesValue{}.AttributeTypes(ctx), scopeAttrs)

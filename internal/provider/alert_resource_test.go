@@ -964,3 +964,73 @@ resource "doit_alert" "this" {
 }
 `, i)
 }
+
+// TestAccAlert_CaseInsensitive tests that the case_insensitive property on alert scopes
+// round-trips correctly without causing drift. Uses mode="contains" with a lowercase
+// value to exercise the case-insensitive matching path.
+func TestAccAlert_CaseInsensitive(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertWithCaseInsensitive(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":             knownvalue.StringExact("fixed"),
+								"id":               knownvalue.StringExact("cloud_provider"),
+								"mode":             knownvalue.StringExact("contains"),
+								"case_insensitive": knownvalue.Bool(true),
+								"values":           knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("aws")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertWithCaseInsensitive(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertWithCaseInsensitive(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-case-insensitive-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type             = "fixed"
+        id               = "cloud_provider"
+        mode             = "contains"
+        case_insensitive = true
+        values           = ["aws"]
+      }
+    ]
+  }
+}
+`, i)
+}

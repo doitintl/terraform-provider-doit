@@ -56,6 +56,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 					"components": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
+								"case_insensitive": schema.BoolAttribute{
+									Optional:            true,
+									Computed:            true,
+									Description:         "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+									MarkdownDescription: "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+									Default:             booldefault.StaticBool(false),
+								},
 								"include_null": schema.BoolAttribute{
 									Optional:            true,
 									Computed:            true,
@@ -159,6 +166,13 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 						"components": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
+									"case_insensitive": schema.BoolAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+										MarkdownDescription: "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+										Default:             booldefault.StaticBool(false),
+									},
 									"include_null": schema.BoolAttribute{
 										Optional:            true,
 										Computed:            true,
@@ -715,6 +729,24 @@ func (t ComponentsType) ValueFromObject(ctx context.Context, in basetypes.Object
 
 	attributes := in.Attributes()
 
+	caseInsensitiveAttribute, ok := attributes["case_insensitive"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`case_insensitive is missing from object`)
+
+		return nil, diags
+	}
+
+	caseInsensitiveVal, ok := caseInsensitiveAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`case_insensitive expected to be basetypes.BoolValue, was: %T`, caseInsensitiveAttribute))
+	}
+
 	includeNullAttribute, ok := attributes["include_null"]
 
 	if !ok {
@@ -828,6 +860,7 @@ func (t ComponentsType) ValueFromObject(ctx context.Context, in basetypes.Object
 	}
 
 	return ComponentsValue{
+		CaseInsensitive:  caseInsensitiveVal,
 		IncludeNull:      includeNullVal,
 		InverseSelection: inverseSelectionVal,
 		Key:              keyVal,
@@ -901,6 +934,24 @@ func NewComponentsValue(attributeTypes map[string]attr.Type, attributes map[stri
 		return NewComponentsValueUnknown(), diags
 	}
 
+	caseInsensitiveAttribute, ok := attributes["case_insensitive"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`case_insensitive is missing from object`)
+
+		return NewComponentsValueUnknown(), diags
+	}
+
+	caseInsensitiveVal, ok := caseInsensitiveAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`case_insensitive expected to be basetypes.BoolValue, was: %T`, caseInsensitiveAttribute))
+	}
+
 	includeNullAttribute, ok := attributes["include_null"]
 
 	if !ok {
@@ -1014,6 +1065,7 @@ func NewComponentsValue(attributeTypes map[string]attr.Type, attributes map[stri
 	}
 
 	return ComponentsValue{
+		CaseInsensitive:  caseInsensitiveVal,
 		IncludeNull:      includeNullVal,
 		InverseSelection: inverseSelectionVal,
 		Key:              keyVal,
@@ -1092,6 +1144,7 @@ func (t ComponentsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ComponentsValue{}
 
 type ComponentsValue struct {
+	CaseInsensitive  basetypes.BoolValue   `tfsdk:"case_insensitive"`
 	IncludeNull      basetypes.BoolValue   `tfsdk:"include_null"`
 	InverseSelection basetypes.BoolValue   `tfsdk:"inverse_selection"`
 	Key              basetypes.StringValue `tfsdk:"key"`
@@ -1102,11 +1155,12 @@ type ComponentsValue struct {
 }
 
 func (v ComponentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 6)
+	attrTypes := make(map[string]tftypes.Type, 7)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["case_insensitive"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["inverse_selection"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1120,7 +1174,15 @@ func (v ComponentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 6)
+		vals := make(map[string]tftypes.Value, 7)
+
+		val, err = v.CaseInsensitive.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["case_insensitive"] = val
 
 		val, err = v.IncludeNull.ToTerraformValue(ctx)
 
@@ -1213,6 +1275,7 @@ func (v ComponentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
+			"case_insensitive":  basetypes.BoolType{},
 			"include_null":      basetypes.BoolType{},
 			"inverse_selection": basetypes.BoolType{},
 			"key":               basetypes.StringType{},
@@ -1225,6 +1288,7 @@ func (v ComponentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	}
 
 	attributeTypes := map[string]attr.Type{
+		"case_insensitive":  basetypes.BoolType{},
 		"include_null":      basetypes.BoolType{},
 		"inverse_selection": basetypes.BoolType{},
 		"key":               basetypes.StringType{},
@@ -1246,6 +1310,7 @@ func (v ComponentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"case_insensitive":  v.CaseInsensitive,
 			"include_null":      v.IncludeNull,
 			"inverse_selection": v.InverseSelection,
 			"key":               v.Key,
@@ -1270,6 +1335,10 @@ func (v ComponentsValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.CaseInsensitive.Equal(other.CaseInsensitive) {
+		return false
 	}
 
 	if !v.IncludeNull.Equal(other.IncludeNull) {
@@ -1309,6 +1378,7 @@ func (v ComponentsValue) Type(ctx context.Context) attr.Type {
 
 func (v ComponentsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"case_insensitive":  basetypes.BoolType{},
 		"include_null":      basetypes.BoolType{},
 		"inverse_selection": basetypes.BoolType{},
 		"key":               basetypes.StringType{},

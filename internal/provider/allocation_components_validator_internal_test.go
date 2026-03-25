@@ -22,6 +22,7 @@ func TestAllocationComponentsValidator(t *testing.T) {
 				"mode":              types.StringValue(mode),
 				"type":              types.StringValue(compType),
 				"values":            types.ListValueMust(types.StringType, []attr.Value{types.StringValue("some-id")}),
+				"case_insensitive":  types.BoolValue(false),
 				"include_null":      types.BoolValue(false),
 				"inverse_selection": types.BoolValue(false),
 			},

@@ -2583,6 +2583,9 @@ type AllocationAllocationType string
 // When the type is "allocation_rule", the component references existing allocation rules (nested allocation rules).
 // A maximum nesting depth of 3 levels is supported, and circular references are not allowed.
 type AllocationComponent struct {
+	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
+
 	// IncludeNull Include null values.
 	IncludeNull *bool `json:"include_null,omitempty"`
 
@@ -2876,6 +2879,9 @@ type AttributionAPI struct {
 
 // AttributionComponent A filter component of an attribution.
 type AttributionComponent struct {
+	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
+
 	// IncludeNull Include null value.
 	IncludeNull *bool `json:"include_null,omitempty"`
 
@@ -3909,6 +3915,9 @@ type ExternalConfigCustomTimeRange struct {
 // When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
 // When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.
 type ExternalConfigFilter struct {
+	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
+
 	// Id The field to filter on
 	Id string `json:"id"`
 

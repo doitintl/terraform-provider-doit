@@ -267,12 +267,13 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 			}
 
 			scopeAttrs := map[string]attr.Value{
-				"id":           types.StringValue(scope.Id),
-				"include_null": types.BoolPointerValue(scope.IncludeNull),
-				"inverse":      types.BoolPointerValue(scope.Inverse),
-				"mode":         types.StringValue(string(scope.Mode)),
-				"type":         types.StringValue(string(scope.Type)),
-				"values":       valuesVal,
+				"case_insensitive": types.BoolPointerValue(scope.CaseInsensitive),
+				"id":               types.StringValue(scope.Id),
+				"include_null":     types.BoolPointerValue(scope.IncludeNull),
+				"inverse":          types.BoolPointerValue(scope.Inverse),
+				"mode":             types.StringValue(string(scope.Mode)),
+				"type":             types.StringValue(string(scope.Type)),
+				"values":           valuesVal,
 			}
 			var d diag.Diagnostics
 			scopesList[i], d = datasource_budget.NewScopesValue(datasource_budget.ScopesValue{}.AttributeTypes(ctx), scopeAttrs)

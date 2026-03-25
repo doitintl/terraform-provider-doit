@@ -227,6 +227,7 @@ func (ds *allocationDataSource) mapComponentsToList(ctx context.Context, compone
 		}
 
 		componentMap := map[string]attr.Value{
+			"case_insensitive":  types.BoolPointerValue(component.CaseInsensitive),
 			"include_null":      types.BoolPointerValue(component.IncludeNull),
 			"inverse_selection": types.BoolPointerValue(component.InverseSelection),
 			"key":               types.StringValue(component.Key),

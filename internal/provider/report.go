@@ -235,10 +235,11 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			for i, f := range filters {
 				filterType := models.DimensionsTypes(f.FiltersType.ValueString())
 				externalFilters[i] = models.ExternalConfigFilter{
-					Id:          f.Id.ValueString(),
-					IncludeNull: f.IncludeNull.ValueBoolPointer(),
-					Inverse:     f.Inverse.ValueBoolPointer(),
-					Type:        filterType,
+					CaseInsensitive: f.CaseInsensitive.ValueBoolPointer(),
+					Id:              f.Id.ValueString(),
+					IncludeNull:     f.IncludeNull.ValueBoolPointer(),
+					Inverse:         f.Inverse.ValueBoolPointer(),
+					Type:            filterType,
 				}
 				if !f.Values.IsNull() && !f.Values.IsUnknown() {
 					var values []string
@@ -602,6 +603,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		var existingFilterIDs []string
 		var existingFilterIncludeNull []*bool
 		var existingFilterInverse []*bool
+		var existingFilterCaseInsensitive []*bool
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Filters.IsNull() && !state.Config.Filters.IsUnknown() {
 			var existingFilters []resource_report.FiltersValue
@@ -611,6 +613,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 					existingFilterIDs = append(existingFilterIDs, ef.Id.ValueString())
 					existingFilterIncludeNull = append(existingFilterIncludeNull, ef.IncludeNull.ValueBoolPointer())
 					existingFilterInverse = append(existingFilterInverse, ef.Inverse.ValueBoolPointer())
+					existingFilterCaseInsensitive = append(existingFilterCaseInsensitive, ef.CaseInsensitive.ValueBoolPointer())
 				}
 			}
 		}
@@ -647,10 +650,20 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				inverseVal = types.BoolPointerValue(nil)
 			}
 
+			// The API may not reliably echo caseInsensitive — always prefer the plan/state
+			// value when available.
+			caseInsensitiveVal := types.BoolValue(false)
+			if i < len(existingFilterCaseInsensitive) && existingFilterCaseInsensitive[i] != nil {
+				caseInsensitiveVal = types.BoolValue(*existingFilterCaseInsensitive[i])
+			} else if f.CaseInsensitive != nil {
+				caseInsensitiveVal = types.BoolValue(*f.CaseInsensitive)
+			}
+
 			m := map[string]attr.Value{
-				"id":           types.StringValue(fID),
-				"include_null": includeNullVal,
-				"inverse":      inverseVal,
+				"case_insensitive": caseInsensitiveVal,
+				"id":               types.StringValue(fID),
+				"include_null":     includeNullVal,
+				"inverse":          inverseVal,
 				// filters type enum cast
 				"type": types.StringValue(fType),
 				"mode": types.StringValue(string(f.Mode)),

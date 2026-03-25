@@ -3462,6 +3462,10 @@ components:
           type: boolean
           description: Include null values.
           default: false
+        caseInsensitive:
+          type: boolean
+          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+          default: false
         mode:
           type: string
           description: Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
@@ -3846,6 +3850,10 @@ components:
         inverse_selection:
           type: boolean
           description: If true, all selected values will be excluded.
+        caseInsensitive:
+          type: boolean
+          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+          default: false
         key:
           type: string
           description: 'Key of a dimension. Examples: "service_id", "cloud_provider", "sku_description"'
@@ -5505,6 +5513,10 @@ components:
         inverse:
           type: boolean
           description: Set to `true` to exclude the values.
+        caseInsensitive:
+          type: boolean
+          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+          default: false
         values:
           type: array
           description: Values to filter on.

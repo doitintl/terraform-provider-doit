@@ -1076,3 +1076,81 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i, testUser())
 }
+
+// TestAccBudget_CaseInsensitive tests that the case_insensitive property on budget scopes
+// round-trips correctly without causing drift. Uses mode="contains" with a lowercase
+// value to exercise the case-insensitive matching path.
+func TestAccBudget_CaseInsensitive(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetWithCaseInsensitive(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":             knownvalue.StringExact("fixed"),
+								"id":               knownvalue.StringExact("cloud_provider"),
+								"mode":             knownvalue.StringExact("contains"),
+								"case_insensitive": knownvalue.Bool(true),
+								"values":           knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("aws")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccBudgetWithCaseInsensitive(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithCaseInsensitive(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-case-insensitive-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type             = "fixed"
+      id               = "cloud_provider"
+      mode             = "contains"
+      case_insensitive = true
+      values           = ["aws"]
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type          = "recurring"
+  start_period  = local.start_period
+}
+`, budgetStartPeriod(), i, testUser())
+}

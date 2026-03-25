@@ -128,11 +128,12 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 			filterMode := models.ExternalConfigFilterMode(scope.Mode.ValueString())
 
 			reqScopes[i] = models.ExternalConfigFilter{
-				Id:          scope.Id.ValueString(),
-				IncludeNull: scope.IncludeNull.ValueBoolPointer(),
-				Inverse:     scope.Inverse.ValueBoolPointer(),
-				Mode:        filterMode,
-				Type:        filterType,
+				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
+				Id:              scope.Id.ValueString(),
+				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
+				Inverse:         scope.Inverse.ValueBoolPointer(),
+				Mode:            filterMode,
+				Type:            filterType,
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string
@@ -343,6 +344,7 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		var existingScopeTypes []string
 		var existingScopeIDs []string
 		var existingScopeIncludeNull []*bool
+		var existingScopeCaseInsensitive []*bool
 		if !state.Scopes.IsNull() && !state.Scopes.IsUnknown() {
 			var existingScopes []resource_budget.ScopesValue
 			if d := state.Scopes.ElementsAs(ctx, &existingScopes, false); !d.HasError() {
@@ -350,6 +352,7 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 					existingScopeTypes = append(existingScopeTypes, es.ScopesType.ValueString())
 					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
 					existingScopeIncludeNull = append(existingScopeIncludeNull, es.IncludeNull.ValueBoolPointer())
+					existingScopeCaseInsensitive = append(existingScopeCaseInsensitive, es.CaseInsensitive.ValueBoolPointer())
 				}
 			}
 		}
@@ -390,13 +393,23 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 				includeNullVal = types.BoolValue(*scope.IncludeNull)
 			}
 
+			// The API may not reliably echo caseInsensitive — always prefer the plan/state
+			// value when available.
+			caseInsensitiveVal := types.BoolValue(false)
+			if i < len(existingScopeCaseInsensitive) && existingScopeCaseInsensitive[i] != nil {
+				caseInsensitiveVal = types.BoolValue(*existingScopeCaseInsensitive[i])
+			} else if scope.CaseInsensitive != nil {
+				caseInsensitiveVal = types.BoolValue(*scope.CaseInsensitive)
+			}
+
 			scopeAttrs := map[string]attr.Value{
-				"id":           types.StringValue(scopeID),
-				"include_null": includeNullVal,
-				"inverse":      types.BoolPointerValue(scope.Inverse),
-				"mode":         types.StringValue(string(scope.Mode)),
-				"type":         types.StringValue(scopeType),
-				"values":       valuesVal,
+				"case_insensitive": caseInsensitiveVal,
+				"id":               types.StringValue(scopeID),
+				"include_null":     includeNullVal,
+				"inverse":          types.BoolPointerValue(scope.Inverse),
+				"mode":             types.StringValue(string(scope.Mode)),
+				"type":             types.StringValue(scopeType),
+				"values":           valuesVal,
 			}
 			var d diag.Diagnostics
 			scopesList[i], d = resource_budget.NewScopesValue(resource_budget.ScopesValue{}.AttributeTypes(ctx), scopeAttrs)
