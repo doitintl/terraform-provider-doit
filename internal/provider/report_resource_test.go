@@ -1881,3 +1881,84 @@ resource "doit_report" "this" {
 }
 `, i)
 }
+
+// TestAccReport_FilterWithoutInverse verifies that a filter config omitting
+// the optional `inverse` attribute creates successfully and produces no drift
+// on re-apply. The `inverse` field uses ValueBoolPointer() so it is sent as
+// nil (omitted via omitempty) when unset, matching alert/budget behaviour.
+func TestAccReport_FilterWithoutInverse(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportFilterWithoutInverse(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.no_inverse",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.no_inverse",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":   knownvalue.StringExact("fixed"),
+								"id":     knownvalue.StringExact("cloud_provider"),
+								"mode":   knownvalue.StringExact("is"),
+								"values": knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("google-cloud")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Re-apply the same config and assert an empty plan,
+			// confirming the omitted inverse field causes no state drift.
+			{
+				Config: testAccReportFilterWithoutInverse(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportFilterWithoutInverse(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "no_inverse" {
+    name = "test-no-inverse-%d"
+	description = "Report testing filter without inverse field set"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		filters = [
+		  {
+			id     = "cloud_provider"
+			type   = "fixed"
+			values = ["google-cloud"]
+			mode   = "is"
+		  }
+		]
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}

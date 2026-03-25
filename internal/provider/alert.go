@@ -278,12 +278,15 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 				scopeID = normalizeDimensionsType(scopeID, existingScopeIDs[i])
 			}
 
-			// When the API doesn't echo includeNull, preserve the plan/state value.
+			// The API does not reliably echo includeNull — it returns false as a default
+			// regardless of the value sent. Always prefer the plan/state value when available.
+			// The API response is only used as a fallback (e.g., during ImportState when there
+			// is no prior plan/state).
 			includeNullVal := types.BoolValue(false)
-			if scope.IncludeNull != nil {
-				includeNullVal = types.BoolValue(*scope.IncludeNull)
-			} else if i < len(existingScopeIncludeNull) && existingScopeIncludeNull[i] != nil {
+			if i < len(existingScopeIncludeNull) && existingScopeIncludeNull[i] != nil {
 				includeNullVal = types.BoolValue(*existingScopeIncludeNull[i])
+			} else if scope.IncludeNull != nil {
+				includeNullVal = types.BoolValue(*scope.IncludeNull)
 			}
 
 			scopeAttrs := map[string]attr.Value{
