@@ -1829,10 +1829,10 @@ func TestAccReport_IncludeNull(t *testing.T) {
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
 								"type":         knownvalue.StringExact("fixed"),
-								"id":           knownvalue.StringExact("cloud_provider"),
+								"id":           knownvalue.StringExact("country"),
 								"mode":         knownvalue.StringExact("is"),
 								"include_null": knownvalue.Bool(true),
-								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("google-cloud")}),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("BE")}),
 							}),
 						}),
 					),
@@ -1865,11 +1865,11 @@ resource "doit_report" "this" {
 		time_interval = "month"
 		filters = [
 		  {
-			id           = "cloud_provider"
+			id           = "country"
 			type         = "fixed"
 			inverse      = false
 			include_null = true
-			values       = ["google-cloud"]
+			values       = ["BE"]
 			mode         = "is"
 		  }
 		]
