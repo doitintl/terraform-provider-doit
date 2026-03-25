@@ -604,12 +604,13 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		var existingFilterInverse []*bool
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Filters.IsNull() && !state.Config.Filters.IsUnknown() {
-			for _, elem := range state.Config.Filters.Elements() {
-				if fv, ok := elem.(resource_report.FiltersValue); ok {
-					existingFilterTypes = append(existingFilterTypes, fv.FiltersType.ValueString())
-					existingFilterIDs = append(existingFilterIDs, fv.Id.ValueString())
-					existingFilterIncludeNull = append(existingFilterIncludeNull, fv.IncludeNull.ValueBoolPointer())
-					existingFilterInverse = append(existingFilterInverse, fv.Inverse.ValueBoolPointer())
+			var existingFilters []resource_report.FiltersValue
+			if d := state.Config.Filters.ElementsAs(ctx, &existingFilters, false); !d.HasError() {
+				for _, ef := range existingFilters {
+					existingFilterTypes = append(existingFilterTypes, ef.FiltersType.ValueString())
+					existingFilterIDs = append(existingFilterIDs, ef.Id.ValueString())
+					existingFilterIncludeNull = append(existingFilterIncludeNull, ef.IncludeNull.ValueBoolPointer())
+					existingFilterInverse = append(existingFilterInverse, ef.Inverse.ValueBoolPointer())
 				}
 			}
 		}
@@ -643,7 +644,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			} else if i < len(existingFilterInverse) {
 				inverseVal = types.BoolPointerValue(existingFilterInverse[i])
 			} else {
-				inverseVal = types.BoolPointerValue(f.Inverse)
+				inverseVal = types.BoolPointerValue(nil)
 			}
 
 			m := map[string]attr.Value{
