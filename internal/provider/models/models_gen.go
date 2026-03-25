@@ -2876,6 +2876,7 @@ type AttributionAPI struct {
 
 // AttributionComponent A filter component of an attribution.
 type AttributionComponent struct {
+	// IncludeNull Include null value.
 	IncludeNull *bool `json:"include_null,omitempty"`
 
 	// InverseSelection If true, all selected values will be excluded.
@@ -3895,6 +3896,9 @@ type ExternalConfigCustomTimeRange struct {
 type ExternalConfigFilter struct {
 	// Id The field to filter on
 	Id string `json:"id"`
+
+	// IncludeNull Include null value.
+	IncludeNull *bool `json:"includeNull,omitempty"`
 
 	// Inverse Set to `true` to exclude the values.
 	Inverse *bool `json:"inverse,omitempty"`

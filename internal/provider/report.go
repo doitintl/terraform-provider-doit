@@ -233,12 +233,12 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalFilters := make([]models.ExternalConfigFilter, len(filters))
 			for i, f := range filters {
-				inverse := f.Inverse.ValueBool()
 				filterType := models.DimensionsTypes(f.FiltersType.ValueString())
 				externalFilters[i] = models.ExternalConfigFilter{
-					Id:      f.Id.ValueString(),
-					Inverse: &inverse,
-					Type:    filterType,
+					Id:          f.Id.ValueString(),
+					IncludeNull: f.IncludeNull.ValueBoolPointer(),
+					Inverse:     f.Inverse.ValueBoolPointer(),
+					Type:        filterType,
 				}
 				if !f.Values.IsNull() && !f.Values.IsUnknown() {
 					var values []string
@@ -596,9 +596,12 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	// Nested List: Filters
 	// Note: For user-configurable lists, API treats empty list and nil as equivalent.
 	if config.Filters != nil && len(*config.Filters) > 0 {
-		// Get existing filter types and IDs from state for alias normalization
+		// Get existing filter types, IDs, includeNull, and inverse from state for alias
+		// normalization and preserving user-configured values the API does not echo back.
 		var existingFilterTypes []string
 		var existingFilterIDs []string
+		var existingFilterIncludeNull []*bool
+		var existingFilterInverse []*bool
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Filters.IsNull() && !state.Config.Filters.IsUnknown() {
 			var existingFilters []resource_report.FiltersValue
@@ -606,10 +609,11 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				for _, ef := range existingFilters {
 					existingFilterTypes = append(existingFilterTypes, ef.FiltersType.ValueString())
 					existingFilterIDs = append(existingFilterIDs, ef.Id.ValueString())
+					existingFilterIncludeNull = append(existingFilterIncludeNull, ef.IncludeNull.ValueBoolPointer())
+					existingFilterInverse = append(existingFilterInverse, ef.Inverse.ValueBoolPointer())
 				}
 			}
 		}
-
 		filters := make([]attr.Value, len(*config.Filters))
 		for i, f := range *config.Filters {
 			fType := string(f.Type)
@@ -623,9 +627,30 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			if i < len(existingFilterIDs) {
 				fID = normalizeDimensionsType(fID, existingFilterIDs[i])
 			}
+			// The API does not reliably echo includeNull — it returns false as a default
+			// regardless of the value sent. Always prefer the plan/state value when available.
+			// The API response is only used as a fallback (e.g., during ImportState when there
+			// is no prior plan/state).
+			includeNullVal := types.BoolValue(false)
+			if i < len(existingFilterIncludeNull) && existingFilterIncludeNull[i] != nil {
+				includeNullVal = types.BoolValue(*existingFilterIncludeNull[i])
+			} else if f.IncludeNull != nil {
+				includeNullVal = types.BoolValue(*f.IncludeNull)
+			}
+			// When the API doesn't echo inverse, preserve the plan/state value.
+			var inverseVal attr.Value
+			if f.Inverse != nil {
+				inverseVal = types.BoolPointerValue(f.Inverse)
+			} else if i < len(existingFilterInverse) {
+				inverseVal = types.BoolPointerValue(existingFilterInverse[i])
+			} else {
+				inverseVal = types.BoolPointerValue(nil)
+			}
+
 			m := map[string]attr.Value{
-				"id":      types.StringValue(fID),
-				"inverse": types.BoolPointerValue(f.Inverse),
+				"id":           types.StringValue(fID),
+				"include_null": includeNullVal,
+				"inverse":      inverseVal,
 				// filters type enum cast
 				"type": types.StringValue(fType),
 				"mode": types.StringValue(string(f.Mode)),

@@ -999,3 +999,80 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i, testAttribution(), testUser())
 }
+
+// TestAccBudget_IncludeNull tests that the include_null property on budget scopes
+// round-trips correctly without causing drift.
+func TestAccBudget_IncludeNull(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetWithIncludeNull(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("cloud_provider"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("amazon-web-services")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccBudgetWithIncludeNull(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithIncludeNull(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-include-null-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type         = "fixed"
+      id           = "cloud_provider"
+      mode         = "is"
+      include_null = true
+      values       = ["amazon-web-services"]
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type          = "recurring"
+  start_period  = local.start_period
+}
+`, budgetStartPeriod(), i, testUser())
+}

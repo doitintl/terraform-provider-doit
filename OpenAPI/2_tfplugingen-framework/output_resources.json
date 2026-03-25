@@ -117,6 +117,16 @@
 													}
 												},
 												{
+													"name": "include_null",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": false
+														},
+														"description": "Include null value."
+													}
+												},
+												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed_optional",
@@ -1128,6 +1138,16 @@
 										}
 									},
 									{
+										"name": "include_null",
+										"bool": {
+											"computed_optional_required": "computed_optional",
+											"default": {
+												"static": false
+											},
+											"description": "Include null value."
+										}
+									},
+									{
 										"name": "inverse",
 										"bool": {
 											"computed_optional_required": "computed_optional",
@@ -1692,6 +1712,16 @@
 													"string": {
 														"computed_optional_required": "required",
 														"description": "The field to filter on"
+													}
+												},
+												{
+													"name": "include_null",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": false
+														},
+														"description": "Include null value."
 													}
 												},
 												{

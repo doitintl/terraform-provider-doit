@@ -128,10 +128,11 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 			filterMode := models.ExternalConfigFilterMode(scope.Mode.ValueString())
 
 			reqScopes[i] = models.ExternalConfigFilter{
-				Id:      scope.Id.ValueString(),
-				Inverse: scope.Inverse.ValueBoolPointer(),
-				Mode:    filterMode,
-				Type:    filterType,
+				Id:          scope.Id.ValueString(),
+				IncludeNull: scope.IncludeNull.ValueBoolPointer(),
+				Inverse:     scope.Inverse.ValueBoolPointer(),
+				Mode:        filterMode,
+				Type:        filterType,
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string
@@ -335,17 +336,20 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 
 	// Convert scopes list
 	if len(resp.Scopes) > 0 {
-		// Extract existing scope types and IDs from state for alias normalization.
+		// Extract existing scope types, IDs, and includeNull from state for alias normalization
+		// and preserving user-configured values the API does not echo back.
 		// When called from Create/Update, state already contains the user's plan values
 		// (e.g. "allocation_rule"), while the API returns canonical names ("attribution").
 		var existingScopeTypes []string
 		var existingScopeIDs []string
+		var existingScopeIncludeNull []*bool
 		if !state.Scopes.IsNull() && !state.Scopes.IsUnknown() {
 			var existingScopes []resource_budget.ScopesValue
 			if d := state.Scopes.ElementsAs(ctx, &existingScopes, false); !d.HasError() {
 				for _, es := range existingScopes {
 					existingScopeTypes = append(existingScopeTypes, es.ScopesType.ValueString())
 					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
+					existingScopeIncludeNull = append(existingScopeIncludeNull, es.IncludeNull.ValueBoolPointer())
 				}
 			}
 		}
@@ -375,12 +379,24 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 				scopeID = normalizeDimensionsType(scopeID, existingScopeIDs[i])
 			}
 
+			// The API does not reliably echo includeNull — it returns false as a default
+			// regardless of the value sent. Always prefer the plan/state value when available.
+			// The API response is only used as a fallback (e.g., during ImportState when there
+			// is no prior plan/state).
+			includeNullVal := types.BoolValue(false)
+			if i < len(existingScopeIncludeNull) && existingScopeIncludeNull[i] != nil {
+				includeNullVal = types.BoolValue(*existingScopeIncludeNull[i])
+			} else if scope.IncludeNull != nil {
+				includeNullVal = types.BoolValue(*scope.IncludeNull)
+			}
+
 			scopeAttrs := map[string]attr.Value{
-				"id":      types.StringValue(scopeID),
-				"inverse": types.BoolPointerValue(scope.Inverse),
-				"mode":    types.StringValue(string(scope.Mode)),
-				"type":    types.StringValue(scopeType),
-				"values":  valuesVal,
+				"id":           types.StringValue(scopeID),
+				"include_null": includeNullVal,
+				"inverse":      types.BoolPointerValue(scope.Inverse),
+				"mode":         types.StringValue(string(scope.Mode)),
+				"type":         types.StringValue(scopeType),
+				"values":       valuesVal,
 			}
 			var d diag.Diagnostics
 			scopesList[i], d = resource_budget.NewScopesValue(resource_budget.ScopesValue{}.AttributeTypes(ctx), scopeAttrs)

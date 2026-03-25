@@ -205,6 +205,13 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									Description:         "The field to filter on",
 									MarkdownDescription: "The field to filter on",
 								},
+								"include_null": schema.BoolAttribute{
+									Optional:            true,
+									Computed:            true,
+									Description:         "Include null value.",
+									MarkdownDescription: "Include null value.",
+									Default:             booldefault.StaticBool(false),
+								},
 								"inverse": schema.BoolAttribute{
 									Optional:            true,
 									Computed:            true,
@@ -3801,6 +3808,24 @@ func (t FiltersType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	includeNullAttribute, ok := attributes["include_null"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_null is missing from object`)
+
+		return nil, diags
+	}
+
+	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+	}
+
 	inverseAttribute, ok := attributes["inverse"]
 
 	if !ok {
@@ -3879,6 +3904,7 @@ func (t FiltersType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 
 	return FiltersValue{
 		Id:          idVal,
+		IncludeNull: includeNullVal,
 		Inverse:     inverseVal,
 		Mode:        modeVal,
 		FiltersType: typeVal,
@@ -3968,6 +3994,24 @@ func NewFiltersValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	includeNullAttribute, ok := attributes["include_null"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_null is missing from object`)
+
+		return NewFiltersValueUnknown(), diags
+	}
+
+	includeNullVal, ok := includeNullAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
+	}
+
 	inverseAttribute, ok := attributes["inverse"]
 
 	if !ok {
@@ -4046,6 +4090,7 @@ func NewFiltersValue(attributeTypes map[string]attr.Type, attributes map[string]
 
 	return FiltersValue{
 		Id:          idVal,
+		IncludeNull: includeNullVal,
 		Inverse:     inverseVal,
 		Mode:        modeVal,
 		FiltersType: typeVal,
@@ -4123,6 +4168,7 @@ var _ basetypes.ObjectValuable = FiltersValue{}
 
 type FiltersValue struct {
 	Id          basetypes.StringValue `tfsdk:"id"`
+	IncludeNull basetypes.BoolValue   `tfsdk:"include_null"`
 	Inverse     basetypes.BoolValue   `tfsdk:"inverse"`
 	Mode        basetypes.StringValue `tfsdk:"mode"`
 	FiltersType basetypes.StringValue `tfsdk:"type"`
@@ -4131,12 +4177,13 @@ type FiltersValue struct {
 }
 
 func (v FiltersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["inverse"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
@@ -4148,7 +4195,7 @@ func (v FiltersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -4157,6 +4204,14 @@ func (v FiltersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["id"] = val
+
+		val, err = v.IncludeNull.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["include_null"] = val
 
 		val, err = v.Inverse.ToTerraformValue(ctx)
 
@@ -4233,10 +4288,11 @@ func (v FiltersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"id":      basetypes.StringType{},
-			"inverse": basetypes.BoolType{},
-			"mode":    basetypes.StringType{},
-			"type":    basetypes.StringType{},
+			"id":           basetypes.StringType{},
+			"include_null": basetypes.BoolType{},
+			"inverse":      basetypes.BoolType{},
+			"mode":         basetypes.StringType{},
+			"type":         basetypes.StringType{},
 			"values": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -4244,10 +4300,11 @@ func (v FiltersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"id":      basetypes.StringType{},
-		"inverse": basetypes.BoolType{},
-		"mode":    basetypes.StringType{},
-		"type":    basetypes.StringType{},
+		"id":           basetypes.StringType{},
+		"include_null": basetypes.BoolType{},
+		"inverse":      basetypes.BoolType{},
+		"mode":         basetypes.StringType{},
+		"type":         basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -4264,11 +4321,12 @@ func (v FiltersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"id":      v.Id,
-			"inverse": v.Inverse,
-			"mode":    v.Mode,
-			"type":    v.FiltersType,
-			"values":  valuesVal,
+			"id":           v.Id,
+			"include_null": v.IncludeNull,
+			"inverse":      v.Inverse,
+			"mode":         v.Mode,
+			"type":         v.FiltersType,
+			"values":       valuesVal,
 		})
 
 	return objVal, diags
@@ -4290,6 +4348,10 @@ func (v FiltersValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.IncludeNull.Equal(other.IncludeNull) {
 		return false
 	}
 
@@ -4322,10 +4384,11 @@ func (v FiltersValue) Type(ctx context.Context) attr.Type {
 
 func (v FiltersValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":      basetypes.StringType{},
-		"inverse": basetypes.BoolType{},
-		"mode":    basetypes.StringType{},
-		"type":    basetypes.StringType{},
+		"id":           basetypes.StringType{},
+		"include_null": basetypes.BoolType{},
+		"inverse":      basetypes.BoolType{},
+		"mode":         basetypes.StringType{},
+		"type":         basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},

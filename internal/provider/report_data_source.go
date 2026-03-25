@@ -253,10 +253,11 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		for i, f := range *config.Filters {
 			fType := string(f.Type)
 			m := map[string]attr.Value{
-				"id":      types.StringValue(f.Id),
-				"inverse": types.BoolPointerValue(f.Inverse),
-				"type":    types.StringValue(fType),
-				"mode":    types.StringValue(string(f.Mode)),
+				"id":           types.StringValue(f.Id),
+				"include_null": types.BoolPointerValue(f.IncludeNull),
+				"inverse":      types.BoolPointerValue(f.Inverse),
+				"type":         types.StringValue(fType),
+				"mode":         types.StringValue(string(f.Mode)),
 			}
 
 			if f.Values != nil {

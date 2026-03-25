@@ -280,11 +280,12 @@ func mapBudgetScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter)
 		val, diags := datasource_budgets.NewScopesValue(
 			datasource_budgets.ScopesValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
-				"id":      types.StringValue(s.Id),
-				"inverse": types.BoolPointerValue(s.Inverse),
-				"mode":    types.StringValue(string(s.Mode)),
-				"type":    types.StringValue(string(s.Type)),
-				"values":  valuesList,
+				"id":           types.StringValue(s.Id),
+				"include_null": types.BoolPointerValue(s.IncludeNull),
+				"inverse":      types.BoolPointerValue(s.Inverse),
+				"mode":         types.StringValue(string(s.Mode)),
+				"type":         types.StringValue(string(s.Type)),
+				"values":       valuesList,
 			},
 		)
 		if diags.HasError() {
