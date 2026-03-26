@@ -1846,6 +1846,29 @@
 			}
 		},
 		{
+			"name": "ava",
+			"schema": {
+				"attributes": [
+					{
+						"name": "answer",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The Ava response text."
+						}
+					},
+					{
+						"name": "conversation_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint."
+						}
+					}
+				],
+				"description": "Interact with Ava, DoiT's AI-powered cloud assistant.",
+				"markdown_description": "Interact with Ava, DoiT's AI-powered cloud assistant."
+			}
+		},
+		{
 			"name": "budget",
 			"schema": {
 				"attributes": [
