@@ -3124,7 +3124,8 @@ paths:
       summary: Ask Ava
       description: |-
         Send a question to Ava and receive a synchronous response.
-        Returns the full answer as a single string once generation is complete.
+        Set `ephemeral` to `true` to skip conversation persistence (recommended for programmatic consumers).
+        When `ephemeral` is `false` (default), the response includes a `conversationId` that can be used with the delete endpoint.
       operationId: askAvaSync
       requestBody:
         required: true
@@ -3138,7 +3139,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                $ref: "#/components/schemas/AvaAskSyncResponse"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4100,8 +4101,26 @@ components:
         question:
           type: string
           description: The question to ask Ava.
+        conversationId:
+          type: string
+          description: Optional ID of an existing conversation to continue.
+        ephemeral:
+          type: boolean
+          default: false
+          description: When true, the conversation is not persisted. Recommended for programmatic consumers (Terraform, MCP, CI pipelines).
       required:
         - question
+    AvaAskSyncResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: The Ava response text.
+        conversationId:
+          type: string
+          description: The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
+      required:
+        - answer
     AvaFeedbackRequest:
       type: object
       properties:

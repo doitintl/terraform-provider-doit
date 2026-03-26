@@ -3067,8 +3067,23 @@ type AvaAskRequest struct {
 
 // AvaAskSyncRequest defines model for AvaAskSyncRequest.
 type AvaAskSyncRequest struct {
+	// ConversationId Optional ID of an existing conversation to continue.
+	ConversationId *string `json:"conversationId,omitempty"`
+
+	// Ephemeral When true, the conversation is not persisted. Recommended for programmatic consumers (Terraform, MCP, CI pipelines).
+	Ephemeral *bool `json:"ephemeral,omitempty"`
+
 	// Question The question to ask Ava.
 	Question string `json:"question"`
+}
+
+// AvaAskSyncResponse defines model for AvaAskSyncResponse.
+type AvaAskSyncResponse struct {
+	// Answer The Ava response text.
+	Answer string `json:"answer"`
+
+	// ConversationId The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
+	ConversationId *string `json:"conversationId,omitempty"`
 }
 
 // AvaFeedbackRequest defines model for AvaFeedbackRequest.
@@ -14178,7 +14193,7 @@ func (r AskAvaStreamingResp) StatusCode() int {
 type AskAvaSyncResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *string
+	JSON200      *AvaAskSyncResponse
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -18987,7 +19002,7 @@ func ParseAskAvaSyncResp(rsp *http.Response) (*AskAvaSyncResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest string
+		var dest AvaAskSyncResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

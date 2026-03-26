@@ -149,3 +149,8 @@ data_sources:
     read:
       path: /datahub/v1/datasets
       method: GET
+  # AI assistant data source
+  ava:
+    read:
+      path: /ava/v1/askSync
+      method: POST
