@@ -87,6 +87,15 @@ func (d *avaDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		return
 	}
 
+	// If question is unknown (e.g., depends on a resource being created),
+	// return unknown for all computed attributes instead of making an API call.
+	if data.Question.IsUnknown() {
+		data.Id = types.StringUnknown()
+		data.Answer = types.StringUnknown()
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	question := data.Question.ValueString()
 
 	// Always use ephemeral mode to avoid creating persistent conversations
@@ -113,7 +122,7 @@ func (d *avaDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 
 	// Set a deterministic ID based on the question hash
 	hash := sha256.Sum256([]byte(question))
-	data.Id = types.StringValue(fmt.Sprintf("%x", hash[:8]))
+	data.Id = types.StringValue(fmt.Sprintf("%x", hash))
 	data.Answer = types.StringValue(apiResp.JSON200.Answer)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
