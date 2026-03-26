@@ -1025,10 +1025,10 @@ func TestAccBudget_IncludeNull(t *testing.T) {
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
 								"type":         knownvalue.StringExact("fixed"),
-								"id":           knownvalue.StringExact("cloud_provider"),
+								"id":           knownvalue.StringExact("service_description"),
 								"mode":         knownvalue.StringExact("is"),
 								"include_null": knownvalue.Bool(true),
-								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("amazon-web-services")}),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("Compute Engine")}),
 							}),
 						}),
 					),
@@ -1059,10 +1059,10 @@ resource "doit_budget" "this" {
   scopes = [
     {
       type         = "fixed"
-      id           = "cloud_provider"
+      id           = "service_description"
       mode         = "is"
       include_null = true
-      values       = ["amazon-web-services"]
+      values       = ["Compute Engine"]
     }
   ]
   collaborators = [

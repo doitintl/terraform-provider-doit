@@ -230,17 +230,20 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 		if resp.Rule.Components != nil {
 			// Get existing component types from state for alias normalization
 			var existingTypes []string
+			var existingIncludeNull, existingInverseSelection []*bool
 			if !state.Rule.IsNull() && !state.Rule.IsUnknown() &&
 				!state.Rule.Components.IsNull() && !state.Rule.Components.IsUnknown() {
 				var existingComponents []resource_allocation.ComponentsValue
 				if d := state.Rule.Components.ElementsAs(ctx, &existingComponents, false); !d.HasError() {
 					for _, ec := range existingComponents {
 						existingTypes = append(existingTypes, ec.ComponentsType.ValueString())
+						existingIncludeNull = append(existingIncludeNull, ec.IncludeNull.ValueBoolPointer())
+						existingInverseSelection = append(existingInverseSelection, ec.InverseSelection.ValueBoolPointer())
 					}
 				}
 			}
 			var d diag.Diagnostics
-			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components, existingTypes)
+			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components, existingTypes, existingIncludeNull, existingInverseSelection)
 			diags.Append(d...)
 			if diags.HasError() {
 				return
@@ -334,8 +337,9 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 				"name":        types.StringPointerValue(rule.Name),
 			}
 			if len(components) > 0 {
-				// Get existing component types from state for alias normalization
+				// Get existing component types, include_null, and inverse_selection from state
 				var existingTypes []string
+				var existingIncludeNull, existingInverseSelection []*bool
 				if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
 					var stateRulesForComponents []resource_allocation.RulesValue
 					if d := state.Rules.ElementsAs(ctx, &stateRulesForComponents, false); !d.HasError() {
@@ -346,6 +350,8 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 								if cd := sr.Components.ElementsAs(ctx, &existingComps, false); !cd.HasError() {
 									for _, ec := range existingComps {
 										existingTypes = append(existingTypes, ec.ComponentsType.ValueString())
+										existingIncludeNull = append(existingIncludeNull, ec.IncludeNull.ValueBoolPointer())
+										existingInverseSelection = append(existingInverseSelection, ec.InverseSelection.ValueBoolPointer())
 									}
 								}
 							}
@@ -353,7 +359,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 					}
 				}
 				var d diag.Diagnostics
-				m["components"], d = toAllocationRuleComponentsListValue(ctx, components, existingTypes)
+				m["components"], d = toAllocationRuleComponentsListValue(ctx, components, existingTypes, existingIncludeNull, existingInverseSelection)
 				diags.Append(d...)
 				if diags.HasError() {
 					return
@@ -387,7 +393,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 	return
 }
 
-func toAllocationRuleComponentsListValue(ctx context.Context, components []models.AllocationComponent, existingTypes []string) (res basetypes.ListValue, diags diag.Diagnostics) {
+func toAllocationRuleComponentsListValue(ctx context.Context, components []models.AllocationComponent, existingTypes []string, existingIncludeNull, existingInverseSelection []*bool) (res basetypes.ListValue, diags diag.Diagnostics) {
 	// Handle empty slice: return an empty list without indexing stateComponents[0].
 	if len(components) == 0 {
 		res, diags = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
@@ -400,9 +406,28 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		if i < len(existingTypes) {
 			compType = normalizeDimensionsType(compType, existingTypes[i])
 		}
+
+		// The API does not reliably echo include_null / inverse_selection — it may
+		// return nil regardless of the value sent. Always prefer the plan/state value
+		// when available. The API response is only used as a fallback (e.g., during
+		// ImportState when there is no prior plan/state).
+		includeNullVal := types.BoolValue(false)
+		if i < len(existingIncludeNull) && existingIncludeNull[i] != nil {
+			includeNullVal = types.BoolValue(*existingIncludeNull[i])
+		} else if component.IncludeNull != nil {
+			includeNullVal = types.BoolValue(*component.IncludeNull)
+		}
+
+		inverseSelectionVal := types.BoolValue(false)
+		if i < len(existingInverseSelection) && existingInverseSelection[i] != nil {
+			inverseSelectionVal = types.BoolValue(*existingInverseSelection[i])
+		} else if component.InverseSelection != nil {
+			inverseSelectionVal = types.BoolValue(*component.InverseSelection)
+		}
+
 		m := map[string]attr.Value{
-			"include_null":      types.BoolPointerValue(component.IncludeNull),
-			"inverse_selection": types.BoolPointerValue(component.InverseSelection),
+			"include_null":      includeNullVal,
+			"inverse_selection": inverseSelectionVal,
 			"key":               types.StringValue(component.Key),
 			"mode":              types.StringValue(string(component.Mode)),
 			"type":              types.StringValue(compType),
