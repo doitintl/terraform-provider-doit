@@ -1143,17 +1143,17 @@ paths:
                       type: fixed
                       values:
                         - amazon-web-services
-                      inverse_selection: false
+                      inverse: false
                       regexp:
-                      include_null: false
+                      includeNull: false
                     - key: cost_type
                       type: fixed
                       values:
                         - Fee
                         - RIFee
-                      inverse_selection: false
+                      inverse: false
                       regexp:
-                      include_null: false
+                      includeNull: false
                   items:
                     $ref: "#/components/schemas/AttributionComponent"
                 description:
@@ -4202,11 +4202,16 @@ components:
           description: Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
           items:
             type: string
+        inverse:
+          type: boolean
+          description: If true, all selected values will be excluded.
+          default: false
         inverse_selection:
           type: boolean
           description: If true, all selected values will be excluded.
           default: false
-        include_null:
+          deprecated: true
+        includeNull:
           type: boolean
           description: Include null values.
           default: false
@@ -4508,11 +4513,11 @@ components:
       type: object
       description: A filter component of an attribution.
       properties:
-        include_null:
+        includeNull:
           type: boolean
           description: Include null value.
           default: false
-        inverse_selection:
+        inverse:
           type: boolean
           description: If true, all selected values will be excluded.
         caseInsensitive:

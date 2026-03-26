@@ -63,10 +63,16 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 									Description:         "Include null values.",
 									MarkdownDescription: "Include null values.",
 								},
+								"inverse": schema.BoolAttribute{
+									Computed:            true,
+									Description:         "If true, all selected values will be excluded.",
+									MarkdownDescription: "If true, all selected values will be excluded.",
+								},
 								"inverse_selection": schema.BoolAttribute{
 									Computed:            true,
 									Description:         "If true, all selected values will be excluded.",
 									MarkdownDescription: "If true, all selected values will be excluded.",
+									DeprecationMessage:  "This attribute is deprecated.",
 								},
 								"key": schema.StringAttribute{
 									Computed:            true,
@@ -136,10 +142,16 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "Include null values.",
 										MarkdownDescription: "Include null values.",
 									},
+									"inverse": schema.BoolAttribute{
+										Computed:            true,
+										Description:         "If true, all selected values will be excluded.",
+										MarkdownDescription: "If true, all selected values will be excluded.",
+									},
 									"inverse_selection": schema.BoolAttribute{
 										Computed:            true,
 										Description:         "If true, all selected values will be excluded.",
 										MarkdownDescription: "If true, all selected values will be excluded.",
+										DeprecationMessage:  "This attribute is deprecated.",
 									},
 									"key": schema.StringAttribute{
 										Computed:            true,
@@ -689,6 +701,24 @@ func (t ComponentsType) ValueFromObject(ctx context.Context, in basetypes.Object
 			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
 	}
 
+	inverseAttribute, ok := attributes["inverse"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`inverse is missing from object`)
+
+		return nil, diags
+	}
+
+	inverseVal, ok := inverseAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`inverse expected to be basetypes.BoolValue, was: %T`, inverseAttribute))
+	}
+
 	inverseSelectionAttribute, ok := attributes["inverse_selection"]
 
 	if !ok {
@@ -786,6 +816,7 @@ func (t ComponentsType) ValueFromObject(ctx context.Context, in basetypes.Object
 	return ComponentsValue{
 		CaseInsensitive:  caseInsensitiveVal,
 		IncludeNull:      includeNullVal,
+		Inverse:          inverseVal,
 		InverseSelection: inverseSelectionVal,
 		Key:              keyVal,
 		Mode:             modeVal,
@@ -894,6 +925,24 @@ func NewComponentsValue(attributeTypes map[string]attr.Type, attributes map[stri
 			fmt.Sprintf(`include_null expected to be basetypes.BoolValue, was: %T`, includeNullAttribute))
 	}
 
+	inverseAttribute, ok := attributes["inverse"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`inverse is missing from object`)
+
+		return NewComponentsValueUnknown(), diags
+	}
+
+	inverseVal, ok := inverseAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`inverse expected to be basetypes.BoolValue, was: %T`, inverseAttribute))
+	}
+
 	inverseSelectionAttribute, ok := attributes["inverse_selection"]
 
 	if !ok {
@@ -991,6 +1040,7 @@ func NewComponentsValue(attributeTypes map[string]attr.Type, attributes map[stri
 	return ComponentsValue{
 		CaseInsensitive:  caseInsensitiveVal,
 		IncludeNull:      includeNullVal,
+		Inverse:          inverseVal,
 		InverseSelection: inverseSelectionVal,
 		Key:              keyVal,
 		Mode:             modeVal,
@@ -1070,6 +1120,7 @@ var _ basetypes.ObjectValuable = ComponentsValue{}
 type ComponentsValue struct {
 	CaseInsensitive  basetypes.BoolValue   `tfsdk:"case_insensitive"`
 	IncludeNull      basetypes.BoolValue   `tfsdk:"include_null"`
+	Inverse          basetypes.BoolValue   `tfsdk:"inverse"`
 	InverseSelection basetypes.BoolValue   `tfsdk:"inverse_selection"`
 	Key              basetypes.StringValue `tfsdk:"key"`
 	Mode             basetypes.StringValue `tfsdk:"mode"`
@@ -1079,13 +1130,14 @@ type ComponentsValue struct {
 }
 
 func (v ComponentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 7)
+	attrTypes := make(map[string]tftypes.Type, 8)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["case_insensitive"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["include_null"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["inverse"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["inverse_selection"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["key"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1098,7 +1150,7 @@ func (v ComponentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 7)
+		vals := make(map[string]tftypes.Value, 8)
 
 		val, err = v.CaseInsensitive.ToTerraformValue(ctx)
 
@@ -1115,6 +1167,14 @@ func (v ComponentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 		}
 
 		vals["include_null"] = val
+
+		val, err = v.Inverse.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["inverse"] = val
 
 		val, err = v.InverseSelection.ToTerraformValue(ctx)
 
@@ -1201,6 +1261,7 @@ func (v ComponentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		return types.ObjectUnknown(map[string]attr.Type{
 			"case_insensitive":  basetypes.BoolType{},
 			"include_null":      basetypes.BoolType{},
+			"inverse":           basetypes.BoolType{},
 			"inverse_selection": basetypes.BoolType{},
 			"key":               basetypes.StringType{},
 			"mode":              basetypes.StringType{},
@@ -1214,6 +1275,7 @@ func (v ComponentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	attributeTypes := map[string]attr.Type{
 		"case_insensitive":  basetypes.BoolType{},
 		"include_null":      basetypes.BoolType{},
+		"inverse":           basetypes.BoolType{},
 		"inverse_selection": basetypes.BoolType{},
 		"key":               basetypes.StringType{},
 		"mode":              basetypes.StringType{},
@@ -1236,6 +1298,7 @@ func (v ComponentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		map[string]attr.Value{
 			"case_insensitive":  v.CaseInsensitive,
 			"include_null":      v.IncludeNull,
+			"inverse":           v.Inverse,
 			"inverse_selection": v.InverseSelection,
 			"key":               v.Key,
 			"mode":              v.Mode,
@@ -1266,6 +1329,10 @@ func (v ComponentsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.IncludeNull.Equal(other.IncludeNull) {
+		return false
+	}
+
+	if !v.Inverse.Equal(other.Inverse) {
 		return false
 	}
 
@@ -1304,6 +1371,7 @@ func (v ComponentsValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 	return map[string]attr.Type{
 		"case_insensitive":  basetypes.BoolType{},
 		"include_null":      basetypes.BoolType{},
+		"inverse":           basetypes.BoolType{},
 		"inverse_selection": basetypes.BoolType{},
 		"key":               basetypes.StringType{},
 		"mode":              basetypes.StringType{},

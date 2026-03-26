@@ -610,9 +610,17 @@
 													}
 												},
 												{
+													"name": "inverse",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "If true, all selected values will be excluded."
+													}
+												},
+												{
 													"name": "inverse_selection",
 													"bool": {
 														"computed_optional_required": "computed",
+														"deprecation_message": "This attribute is deprecated.",
 														"description": "If true, all selected values will be excluded."
 													}
 												},
@@ -697,9 +705,17 @@
 														}
 													},
 													{
+														"name": "inverse",
+														"bool": {
+															"computed_optional_required": "computed",
+															"description": "If true, all selected values will be excluded."
+														}
+													},
+													{
 														"name": "inverse_selection",
 														"bool": {
 															"computed_optional_required": "computed",
+															"deprecation_message": "This attribute is deprecated.",
 															"description": "If true, all selected values will be excluded."
 														}
 													},
