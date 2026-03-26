@@ -260,12 +260,12 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 	}
 
 	if resp.Rules != nil && len(*resp.Rules) > 0 {
-		// Map to store existing actions
+		// Parse state rules once for reuse (actions, component types, include_null, inverse_selection)
+		var stateRules []resource_allocation.RulesValue
 		existingActionsByID := make(map[string]string)
 		existingActionsByIndex := make([]string, 0)
 
 		if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
-			var stateRules []resource_allocation.RulesValue
 			// We try to extract existing rules to preserve the "action" field which is not returned by the API.
 			// If this fails, we proceed without existing actions.
 			if d := state.Rules.ElementsAs(ctx, &stateRules, false); !d.HasError() {
@@ -337,23 +337,19 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 				"name":        types.StringPointerValue(rule.Name),
 			}
 			if len(components) > 0 {
-				// Get existing component types, include_null, and inverse_selection from state
+				// Get existing component types, include_null, and inverse_selection from state.
+				// We reuse stateRules (parsed once before the loop) instead of re-parsing state.Rules on each iteration.
 				var existingTypes []string
 				var existingIncludeNull, existingInverseSelection []*bool
-				if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
-					var stateRulesForComponents []resource_allocation.RulesValue
-					if d := state.Rules.ElementsAs(ctx, &stateRulesForComponents, false); !d.HasError() {
-						if ruleIndex < len(stateRulesForComponents) {
-							sr := stateRulesForComponents[ruleIndex]
-							if !sr.Components.IsNull() && !sr.Components.IsUnknown() {
-								var existingComps []resource_allocation.ComponentsValue
-								if cd := sr.Components.ElementsAs(ctx, &existingComps, false); !cd.HasError() {
-									for _, ec := range existingComps {
-										existingTypes = append(existingTypes, ec.ComponentsType.ValueString())
-										existingIncludeNull = append(existingIncludeNull, ec.IncludeNull.ValueBoolPointer())
-										existingInverseSelection = append(existingInverseSelection, ec.InverseSelection.ValueBoolPointer())
-									}
-								}
+				if ruleIndex < len(stateRules) {
+					sr := stateRules[ruleIndex]
+					if !sr.Components.IsNull() && !sr.Components.IsUnknown() {
+						var existingComps []resource_allocation.ComponentsValue
+						if cd := sr.Components.ElementsAs(ctx, &existingComps, false); !cd.HasError() {
+							for _, ec := range existingComps {
+								existingTypes = append(existingTypes, ec.ComponentsType.ValueString())
+								existingIncludeNull = append(existingIncludeNull, ec.IncludeNull.ValueBoolPointer())
+								existingInverseSelection = append(existingInverseSelection, ec.InverseSelection.ValueBoolPointer())
 							}
 						}
 					}
