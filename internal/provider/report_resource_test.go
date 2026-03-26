@@ -1882,6 +1882,171 @@ resource "doit_report" "this" {
 `, i)
 }
 
+// TestAccReport_FilterValuesPreservedOnUpdate verifies that filter values survive
+// a report update that modifies an unrelated field (labels). This reproduces the
+// scenario where the API's ToFilter() normalization dropped filter values during
+// an update, causing "element 0 has vanished" errors.
+// See: https://github.com/doitintl/df-dci-automations/actions/runs/23549764622
+func TestAccReport_FilterValuesPreservedOnUpdate(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a report with filters and no labels
+			{
+				Config: testAccReportFilterValuesStep1(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.filter_update",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.filter_update",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("service_description"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("Compute Engine")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Verify no drift before update
+			{
+				Config: testAccReportFilterValuesStep1(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Update by adding a label — filter values must survive
+			{
+				Config: testAccReportFilterValuesStep2(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.filter_update",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Verify labels were added
+					statecheck.ExpectKnownValue(
+						"doit_report.filter_update",
+						tfjsonpath.New("labels"),
+						knownvalue.ListSizeExact(1)),
+					// Verify filter values survived the update
+					statecheck.ExpectKnownValue(
+						"doit_report.filter_update",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("service_description"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("Compute Engine")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 4: Verify no drift after update
+			{
+				Config: testAccReportFilterValuesStep2(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// Step 1: Report with filter, no labels.
+func testAccReportFilterValuesStep1(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "filter_update" {
+    name = "test-filter-update-%d"
+    description = "Report testing filter values survive update"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        filters = [
+          {
+            id           = "service_description"
+            type         = "fixed"
+            include_null = true
+            values       = ["Compute Engine"]
+            mode         = "is"
+          }
+        ]
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// Step 2: Same report but with a label added (triggers update).
+func testAccReportFilterValuesStep2(i int) string {
+	return fmt.Sprintf(`
+resource "doit_label" "filter_test" {
+  name  = "test-filter-update-label-%d"
+  color = "blue"
+}
+
+resource "doit_report" "filter_update" {
+    name = "test-filter-update-%d"
+    description = "Report testing filter values survive update"
+    labels = [doit_label.filter_test.id]
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        filters = [
+          {
+            id           = "service_description"
+            type         = "fixed"
+            include_null = true
+            values       = ["Compute Engine"]
+            mode         = "is"
+          }
+        ]
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i, i)
+}
+
 // TestAccReport_FilterWithoutInverse verifies that a filter config omitting
 // the optional `inverse` attribute creates successfully and produces no drift
 // on re-apply. The `inverse` field uses ValueBoolPointer() so it is sent as
