@@ -587,6 +587,63 @@ resource "doit_allocation" "ci" {
 `, rName, rName, rName)
 }
 
+// TestAccAllocation_InverseField tests the new "inverse" attribute on allocation
+// rule components. This is separate from TestAccAllocation_ComponentFlags which
+// tests the legacy "inverse_selection" attribute for backward compatibility.
+func TestAccAllocation_InverseField(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationInverseField(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_allocation.inverse", "id"),
+					resource.TestCheckResourceAttr("doit_allocation.inverse", "rules.0.components.0.inverse", "true"),
+				),
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAllocationInverseField(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationInverseField(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "inverse" {
+    name = "%s-inverse"
+    description = "Test allocation with inverse field"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action = "create"
+            name   = "%s-inverse-rule"
+            formula = "A"
+            components = [
+                {
+                    key     = "country"
+                    mode    = "is"
+                    type    = "fixed"
+                    values  = ["JP"]
+                    inverse = true
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName)
+}
+
 // TestAccAllocation_Disappears verifies that Terraform correctly handles
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.
