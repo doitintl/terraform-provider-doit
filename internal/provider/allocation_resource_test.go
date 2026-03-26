@@ -530,6 +530,63 @@ resource "doit_allocation" "flags" {
 `, rName, rName, rName)
 }
 
+// TestAccAllocation_CaseInsensitive tests the case_insensitive flag on
+// allocation rule components. Requires mode=contains|starts_with|ends_with.
+func TestAccAllocation_CaseInsensitive(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationCaseInsensitive(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_allocation.ci", "id"),
+					resource.TestCheckResourceAttr("doit_allocation.ci", "rules.0.components.0.case_insensitive", "true"),
+					resource.TestCheckResourceAttr("doit_allocation.ci", "rules.0.components.0.mode", "contains"),
+				),
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAllocationCaseInsensitive(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationCaseInsensitive(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "ci" {
+    name = "%s-ci"
+    description = "Test allocation with case-insensitive filter"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action = "create"
+            name   = "%s-ci-rule"
+            formula = "A"
+            components = [
+                {
+                    key              = "country"
+                    mode             = "contains"
+                    type             = "fixed"
+                    values           = ["jp"]
+                    case_insensitive = true
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName)
+}
+
 // TestAccAllocation_Disappears verifies that Terraform correctly handles
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.

@@ -1979,6 +1979,48 @@ func TestAccReport_FilterValuesPreservedOnUpdate(t *testing.T) {
 	})
 }
 
+// TestAccReport_CaseInsensitive tests that the case_insensitive property on report filters
+// round-trips correctly without causing drift. Uses mode="contains" with a lowercase
+// value to exercise the case-insensitive matching path.
+func TestAccReport_CaseInsensitive(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithCaseInsensitive(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":             knownvalue.StringExact("fixed"),
+								"id":               knownvalue.StringExact("country"),
+								"mode":             knownvalue.StringExact("contains"),
+								"case_insensitive": knownvalue.Bool(true),
+								"values":           knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("be")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportWithCaseInsensitive(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 // Step 1: Report with filter, no labels.
 func testAccReportFilterValuesStep1(i int) string {
 	return fmt.Sprintf(`
@@ -2045,6 +2087,37 @@ resource "doit_report" "filter_update" {
     }
 }
 `, i, i)
+}
+
+func testAccReportWithCaseInsensitive(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-case-insensitive-%d"
+	description = "Report testing case_insensitive filter property"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		filters = [
+		  {
+			id               = "country"
+			type             = "fixed"
+			inverse          = false
+			case_insensitive = true
+			values           = ["be"]
+			mode             = "contains"
+		  }
+		]
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
 }
 
 // TestAccReport_FilterWithoutInverse verifies that a filter config omitting

@@ -272,12 +272,13 @@ func (ds *alertDataSource) mapScopeToModel(ctx context.Context, scope *models.Ex
 	scopeVal, d := datasource_alert.NewScopesValue(
 		datasource_alert.ScopesValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"id":           types.StringValue(scope.Id),
-			"include_null": types.BoolPointerValue(scope.IncludeNull),
-			"type":         types.StringValue(string(scope.Type)),
-			"mode":         mode,
-			"inverse":      inverse,
-			"values":       values,
+			"case_insensitive": types.BoolPointerValue(scope.CaseInsensitive),
+			"id":               types.StringValue(scope.Id),
+			"include_null":     types.BoolPointerValue(scope.IncludeNull),
+			"type":             types.StringValue(string(scope.Type)),
+			"mode":             mode,
+			"inverse":          inverse,
+			"values":           values,
 		},
 	)
 	diags.Append(d...)

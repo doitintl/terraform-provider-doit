@@ -110,6 +110,16 @@
 										"nested_object": {
 											"attributes": [
 												{
+													"name": "case_insensitive",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": false
+														},
+														"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+													}
+												},
+												{
 													"name": "id",
 													"string": {
 														"computed_optional_required": "required",
@@ -298,6 +308,16 @@
 										"nested_object": {
 											"attributes": [
 												{
+													"name": "case_insensitive",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": false
+														},
+														"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+													}
+												},
+												{
 													"name": "include_null",
 													"bool": {
 														"computed_optional_required": "computed_optional",
@@ -419,6 +439,16 @@
 											"computed_optional_required": "computed_optional",
 											"nested_object": {
 												"attributes": [
+													{
+														"name": "case_insensitive",
+														"bool": {
+															"computed_optional_required": "computed_optional",
+															"default": {
+																"static": false
+															},
+															"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+														}
+													},
 													{
 														"name": "include_null",
 														"bool": {
@@ -1131,6 +1161,16 @@
 							"nested_object": {
 								"attributes": [
 									{
+										"name": "case_insensitive",
+										"bool": {
+											"computed_optional_required": "computed_optional",
+											"default": {
+												"static": false
+											},
+											"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+										}
+									},
+									{
 										"name": "id",
 										"string": {
 											"computed_optional_required": "required",
@@ -1707,6 +1747,16 @@
 										"computed_optional_required": "computed_optional",
 										"nested_object": {
 											"attributes": [
+												{
+													"name": "case_insensitive",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": false
+														},
+														"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+													}
+												},
 												{
 													"name": "id",
 													"string": {
