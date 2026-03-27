@@ -116,12 +116,15 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
+	// Populate state from API response (resolves Optional+Computed unknowns),
+	// then overlay known plan values to preserve the user's exact configuration.
+	originalPlan := plan
 	diags = r.populateState(ctx, &plan, reportResp.JSON201)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	overlayPlanOnState(&originalPlan.ReportModel, &plan.ReportModel)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -201,14 +204,36 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
+	// Same approach as Create: populate from API, then overlay known plan values.
+	originalPlan := plan
 	diags = r.populateState(ctx, &plan, reportResp.JSON200)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	overlayPlanOnState(&originalPlan.ReportModel, &plan.ReportModel)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+}
+
+// overlayPlanOnState preserves the user's known plan values in the state after
+// populateState has resolved all unknowns from the API response. For each
+// top-level Optional field, if the user set it (Known), the plan value is kept;
+// otherwise the API-resolved value from populateState is retained.
+//
+// Config is not overlaid because it contains deeply nested Optional+Computed
+// sub-fields that may be Unknown. populateState handles Config internally with
+// its own preservation logic for timestamps, aliases, and non-echoed booleans.
+func overlayPlanOnState(plan *resource_report.ReportModel, state *resource_report.ReportModel) {
+	if !plan.Name.IsUnknown() && !plan.Name.IsNull() {
+		state.Name = plan.Name
+	}
+	if !plan.Description.IsUnknown() {
+		state.Description = plan.Description
+	}
+	if !plan.Labels.IsUnknown() {
+		state.Labels = plan.Labels
+	}
 }
 
 func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
