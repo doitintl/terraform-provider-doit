@@ -329,6 +329,7 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
+- `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
 - `include_null` (Boolean) Include null value.
 - `inverse` (Boolean) Set to `true` to exclude the values.
 - `values` (List of String) Values to filter on.

@@ -108,6 +108,7 @@ Read-Only:
 
 Read-Only:
 
+- `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
 - `id` (String) The field to filter on
 - `include_null` (Boolean) Include null value.
 - `inverse` (Boolean) Set to `true` to exclude the values.

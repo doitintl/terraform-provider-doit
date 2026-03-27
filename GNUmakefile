@@ -21,8 +21,14 @@ generate:
 docs:
 	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate
 
-# Validate provider documentation against the provider schema
+# Validate provider documentation is up-to-date and structurally valid
 validate-docs:
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate
+	@if [ -n "$$(git diff --name-only docs/)" ]; then \
+		echo "ERROR: Docs are out of date. Run 'make docs' and commit the changes."; \
+		git diff --stat docs/; \
+		exit 1; \
+	fi
 	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs validate
 
 fmt:
