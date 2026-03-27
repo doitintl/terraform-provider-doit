@@ -2587,9 +2587,13 @@ type AllocationComponent struct {
 	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
 
 	// IncludeNull Include null values.
-	IncludeNull *bool `json:"include_null,omitempty"`
+	IncludeNull *bool `json:"includeNull,omitempty"`
+
+	// Inverse If true, all selected values will be excluded.
+	Inverse *bool `json:"inverse,omitempty"`
 
 	// InverseSelection If true, all selected values will be excluded.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	InverseSelection *bool `json:"inverse_selection,omitempty"`
 
 	// Key Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
@@ -2883,10 +2887,10 @@ type AttributionComponent struct {
 	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
 
 	// IncludeNull Include null value.
-	IncludeNull *bool `json:"include_null,omitempty"`
+	IncludeNull *bool `json:"includeNull,omitempty"`
 
-	// InverseSelection If true, all selected values will be excluded.
-	InverseSelection *bool `json:"inverse_selection,omitempty"`
+	// Inverse If true, all selected values will be excluded.
+	Inverse *bool `json:"inverse,omitempty"`
 
 	// Key Key of a dimension. Examples: "service_id", "cloud_provider", "sku_description"
 	Key string `json:"key"`

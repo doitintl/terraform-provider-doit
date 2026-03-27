@@ -56,6 +56,7 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 		result[i] = models.AllocationComponent{
 			CaseInsensitive:  components[i].CaseInsensitive.ValueBoolPointer(),
 			IncludeNull:      components[i].IncludeNull.ValueBoolPointer(),
+			Inverse:          components[i].Inverse.ValueBoolPointer(),
 			InverseSelection: components[i].InverseSelection.ValueBoolPointer(),
 			Key:              components[i].Key.ValueString(),
 			Mode:             models.AllocationComponentMode(components[i].Mode.ValueString()),
@@ -423,9 +424,17 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 			inverseSelectionVal = types.BoolValue(*component.InverseSelection)
 		}
 
+		inverseVal := types.BoolValue(false)
+		if i < len(existingComponents) {
+			inverseVal = types.BoolValue(existingComponents[i].Inverse.ValueBool())
+		} else if component.Inverse != nil {
+			inverseVal = types.BoolValue(*component.Inverse)
+		}
+
 		m := map[string]attr.Value{
 			"case_insensitive":  caseInsensitiveVal,
 			"include_null":      includeNullVal,
+			"inverse":           inverseVal,
 			"inverse_selection": inverseSelectionVal,
 			"key":               types.StringValue(component.Key),
 			"mode":              types.StringValue(string(component.Mode)),
