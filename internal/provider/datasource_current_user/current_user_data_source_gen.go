@@ -13,10 +13,14 @@ func CurrentUserDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"domain": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "",
+				MarkdownDescription: "",
 			},
 			"email": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "",
+				MarkdownDescription: "",
 			},
 		},
 		Description:         "User authentication.",

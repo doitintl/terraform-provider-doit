@@ -47,13 +47,19 @@ func InvoiceDataSourceSchema(ctx context.Context) schema.Schema {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"currency": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"description": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"details": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"price": schema.Float64Attribute{
 							Computed: true,
@@ -62,7 +68,9 @@ func InvoiceDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"type": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 					},
 					CustomType: LineItemsType{

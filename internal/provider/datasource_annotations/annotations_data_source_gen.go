@@ -113,8 +113,8 @@ func AnnotationsDataSourceSchema(ctx context.Context) schema.Schema {
 			"sort_by": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "A field by which the results will be sorted.",
-				MarkdownDescription: "A field by which the results will be sorted.",
+				Description:         "A field by which the results will be sorted.\nPossible values: `id`, `content`, `timestamp`, `timeCreated`, `timeModified`",
+				MarkdownDescription: "A field by which the results will be sorted.\nPossible values: `id`, `content`, `timestamp`, `timeCreated`, `timeModified`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"id",
@@ -128,8 +128,8 @@ func AnnotationsDataSourceSchema(ctx context.Context) schema.Schema {
 			"sort_order": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Sort order can be ascending or descending.",
-				MarkdownDescription: "Sort order can be ascending or descending.",
+				Description:         "Sort order can be ascending or descending.\nPossible values: `asc`, `desc`",
+				MarkdownDescription: "Sort order can be ascending or descending.\nPossible values: `asc`, `desc`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"asc",

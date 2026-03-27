@@ -43,13 +43,17 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"budget_name": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"create_time": schema.Int64Attribute{
 							Computed: true,
 						},
 						"currency": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"current_utilization": schema.Float64Attribute{
 							Computed: true,
@@ -61,10 +65,14 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"id": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"owner": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"scope": schema.ListAttribute{
 							ElementType:         types.StringType,
@@ -127,13 +135,17 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"time_interval": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"update_time": schema.Int64Attribute{
 							Computed: true,
 						},
 						"url": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 					},
 					CustomType: BudgetsType{

@@ -40,7 +40,9 @@ Valid fields: **content**, **timestamp**, **labels**.
 - `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
+Possible values: `id`, `content`, `timestamp`, `timeCreated`, `timeModified`
 - `sort_order` (String) Sort order can be ascending or descending.
+Possible values: `asc`, `desc`
 
 ### Read-Only
 

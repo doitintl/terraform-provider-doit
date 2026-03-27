@@ -96,7 +96,9 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "The name of the report.",
 						},
 						"type": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"update_time": schema.Int64Attribute{
 							Computed:            true,

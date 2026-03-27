@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.3.0 (2026-03-27)
+
+### FEATURES
+
+- **data-source/doit_support_request**: New data source to get a single support request by ID ([#124](https://github.com/doitintl/terraform-provider-doit/pull/124))
+- **data-source/doit_support_request_comments**: New data source to list comments on a support request ([#124](https://github.com/doitintl/terraform-provider-doit/pull/124))
+- **data-source/doit_ava**: New data source for Ava AI assistant queries ([#135](https://github.com/doitintl/terraform-provider-doit/pull/135))
+- **resource/doit_allocation**: Added `inverse` and `include_null` filter support for allocation components ([#136](https://github.com/doitintl/terraform-provider-doit/pull/136))
+- **resource/doit_alert, doit_budget, doit_report**: Added `include_null` filter support for `ExternalConfigFilter` scopes ([#130](https://github.com/doitintl/terraform-provider-doit/pull/130))
+- **resource/doit_alert, doit_budget, doit_report**: Added `case_insensitive` filter support ([#132](https://github.com/doitintl/terraform-provider-doit/pull/132))
+
+### DEPRECATIONS
+
+- **resource/doit_allocation**: The `inverse_selection` attribute on allocation rule components is deprecated and will be removed in a future release. Use `inverse` instead ([#136](https://github.com/doitintl/terraform-provider-doit/pull/136)).
+
+### BUG FIXES
+
+- **data-sources**: Set computed attributes to unknown when inputs are unknown, preventing premature evaluation errors ([#125](https://github.com/doitintl/terraform-provider-doit/pull/125))
+- **resource/doit_allocation**: Added resilience for `include_null` field not echoed by API, preventing state inconsistencies ([#133](https://github.com/doitintl/terraform-provider-doit/pull/133))
+
+### INTERNAL
+
+- Synced upstream OpenAPI spec changes: removed deprecated attributions ([#139](https://github.com/doitintl/terraform-provider-doit/pull/139)), added Ava endpoints ([#127](https://github.com/doitintl/terraform-provider-doit/pull/127), [#129](https://github.com/doitintl/terraform-provider-doit/pull/129))
+- Fixed `validate-docs` CI to check for stale documentation ([#141](https://github.com/doitintl/terraform-provider-doit/pull/141))
+- Fixed pagination test race conditions and unskipped tests ([#126](https://github.com/doitintl/terraform-provider-doit/pull/126))
+- Added report filter values preserved on update test ([#134](https://github.com/doitintl/terraform-provider-doit/pull/134))
+- Bumped `github.com/buger/jsonparser` from 1.1.1 to 1.1.2 ([#131](https://github.com/doitintl/terraform-provider-doit/pull/131))
+- Upgraded golangci-lint from v2.11.3 to v2.11.4
+- Bumped Go dependencies: `fatih/color`, `oapi-codegen/runtime`, `genproto`
+
 ## v1.2.0 (2026-03-19)
 
 ### BREAKING CHANGES
