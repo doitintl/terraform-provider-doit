@@ -405,7 +405,9 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "Indicate whether to include the origin.",
 								},
 								"mode": schema.StringAttribute{
-									Computed: true,
+									Computed:            true,
+									Description:         "",
+									MarkdownDescription: "",
 								},
 								"origin": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{

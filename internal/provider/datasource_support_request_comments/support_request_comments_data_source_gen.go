@@ -25,10 +25,14 @@ func SupportRequestCommentsDataSourceSchema(ctx context.Context) schema.Schema {
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"content_url": schema.StringAttribute{
-										Computed: true,
+										Computed:            true,
+										Description:         "",
+										MarkdownDescription: "",
 									},
 									"file_name": schema.StringAttribute{
-										Computed: true,
+										Computed:            true,
+										Description:         "",
+										MarkdownDescription: "",
 									},
 									"id": schema.Int64Attribute{
 										Computed: true,

@@ -19,20 +19,28 @@ func ProductsDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"platform": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:            true,
+				Computed:            true,
+				Description:         "",
+				MarkdownDescription: "",
 			},
 			"products": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"display_name": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"id": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"platform": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 					},
 					CustomType: ProductsType{

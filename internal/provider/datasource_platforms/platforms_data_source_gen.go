@@ -22,10 +22,14 @@ func PlatformsDataSourceSchema(ctx context.Context) schema.Schema {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"display_name": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 						"id": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "",
+							MarkdownDescription: "",
 						},
 					},
 					CustomType: PlatformsType{
