@@ -18,10 +18,6 @@ tags:
     description: Create and manage labels to organize and categorize your cloud resources.
   - name: Allocations
     description: Define how costs are distributed across your organization.
-  - name: Attribution Groups
-    description: Deprecated. Use Allocations instead.
-  - name: Attributions
-    description: Deprecated. Use Allocations instead.
   - name: Budgets
     description: Track actual cloud spend against planned spend.
   - name: Dimensions
@@ -896,426 +892,6 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
-  /analytics/v1/attributiongroups:
-    get:
-      deprecated: true
-      tags:
-        - Attribution Groups
-      summary: List attribution groups
-      description: >-
-        Returns a list of attribution groups that your account has access to.
-
-        Attribution groups are listed in reverse chronological order by default.
-      operationId: listAttributionGroups
-      parameters:
-        - $ref: "#/components/parameters/maxResults"
-        - $ref: "#/components/parameters/pageToken"
-        - name: sortBy
-          in: query
-          description: A field by which the results will be sorted.
-          schema:
-            type: string
-            enum:
-              - name
-              - owner
-              - description
-              - type
-              - createTime
-              - updateTime
-        - $ref: "#/components/parameters/sortOrder"
-      responses:
-        "200":
-          description: >-
-            OK - The request succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AttributionGroupsListExternal"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-    post:
-      deprecated: true
-      tags:
-        - Attribution Groups
-      summary: Create an attribution group
-      description: Creates a new attribution group.
-      operationId: createAttributionGroup
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AttributionGroupRequest"
-      responses:
-        "201":
-          description: >-
-            Created - The request succeeded. Id of the created attribution group
-          content: {}
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-      x-codegen-request-body-name: Body
-  "/analytics/v1/attributiongroups/{id}":
-    get:
-      deprecated: true
-      tags:
-        - Attribution Groups
-      summary: Retrieve an attribution group
-      description: Returns a specific attribution group by id.
-      operationId: getAttributionGroup
-      parameters:
-        - name: id
-          in: path
-          description: Attribution group ID
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: >-
-            OK - Attribution group returned.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AttributionGroupGetExternal"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-        "500":
-          $ref: "#/components/responses/500"
-    delete:
-      deprecated: true
-      tags:
-        - Attribution Groups
-      summary: Delete an attribution group
-      description: Deletes the specified attribution group. The operation will fail if there are resources depending on this attribution group.
-      operationId: deleteAttributionGroup
-      parameters:
-        - name: id
-          in: path
-          description: Id identifying the attribution group
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: >-
-            OK - Attribution group deleted.
-          content: {}
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-        "409":
-          description: Conflict - The attribution group cannot be deleted because it is being used by other resources.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AttributionGroupDeleteValidation"
-    patch:
-      deprecated: true
-      tags:
-        - Attribution Groups
-      summary: Update an attribution group
-      description: Updates the specified attribution group.
-      operationId: updateAttributionGroup
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AttributionGroupUpdateRequest"
-      responses:
-        "200":
-          description: >-
-            OK - Attribution group updated.
-          content: {}
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-      x-codegen-request-body-name: Body
-  /analytics/v1/attributions:
-    get:
-      deprecated: true
-      tags:
-        - Attributions
-      summary: List attributions
-      description: |-
-        Returns a list of the attributions that your account has access to.
-
-        Attributions are listed in reverse chronological order by default.
-      operationId: listAttributions
-      parameters:
-        - $ref: "#/components/parameters/maxResults"
-        - $ref: "#/components/parameters/pageToken"
-        - name: filter
-          in: query
-          description: |-
-            An expression for filtering the results.
-            Valid fields: **type**, **owner**, **name**.
-          example: type:custom
-          schema:
-            type: string
-        - name: sortBy
-          in: query
-          description: The field by which the results are sorted.
-          schema:
-            type: string
-            enum:
-              - name
-              - owner
-              - description
-              - type
-              - createTime
-              - updateTime
-        - $ref: "#/components/parameters/sortOrder"
-      responses:
-        "200":
-          description: >-
-            OK - The request succeeded.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  Attributions:
-                    $ref: "#/components/schemas/AttributionListItem"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-    post:
-      deprecated: true
-      tags:
-        - Attributions
-      summary: Create an attribution
-      description: Creates a new attribution.
-      operationId: createAttribution
-      requestBody:
-        content:
-          application/json:
-            schema:
-              required:
-                - components
-                - name
-              type: object
-              properties:
-                components:
-                  type: array
-                  description: List of Attribution filters
-                  example:
-                    - key: cloud_provider
-                      type: fixed
-                      values:
-                        - amazon-web-services
-                      inverse: false
-                      regexp:
-                      includeNull: false
-                    - key: cost_type
-                      type: fixed
-                      values:
-                        - Fee
-                        - RIFee
-                      inverse: false
-                      regexp:
-                      includeNull: false
-                  items:
-                    $ref: "#/components/schemas/AttributionComponent"
-                description:
-                  type: string
-                  description: Description of the attribution
-                  example: This is an example attribution
-                formula:
-                  type: string
-                  description: Attribution formula (A is the first component, B is the second one, and so on.)
-                  example: A AND B
-                name:
-                  type: string
-                  description: Name of the attribution
-                  example: An example attribution
-      responses:
-        "201":
-          description: >-
-            Created - Id of the new attribution returned.
-          content:
-            application/json:
-              schema:
-                type: string
-          links:
-            getAttribution:
-              operationId: getAttribution
-              parameters:
-                id: $response.body
-            updateAttribution:
-              operationId: updateAttribution
-              parameters:
-                id: $response.body
-            deleteAttribution:
-              operationId: deleteAttribution
-              parameters:
-                id: $response.body
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-      x-codegen-request-body-name: Body
-  "/analytics/v1/attributions/{id}":
-    get:
-      deprecated: true
-      tags:
-        - Attributions
-      summary: Retrieve an attribution
-      description: Returns an attribution by its attribution id
-      operationId: getAttribution
-      parameters:
-        - name: id
-          in: path
-          description: The identifier of an attribution.
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK. - The attribution returned.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  Attribution:
-                    $ref: "#/components/schemas/AttributionAPI"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-        "500":
-          $ref: "#/components/responses/500"
-    delete:
-      deprecated: true
-      tags:
-        - Attributions
-      summary: Delete an attribution
-      description: Deletes the specified attribution. The operation will fail if there are resources depending on this attribution.
-      operationId: deleteAttribution
-      parameters:
-        - name: id
-          in: path
-          description: Attribution ID.
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK - Attribution deleted.
-          content: {}
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-        "409":
-          description: Conflict - The attribution cannot be deleted because it is being used by other resources.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AttributionDeleteValidation"
-    patch:
-      deprecated: true
-      tags:
-        - Attributions
-      summary: Update an attribution
-      description: Updates the specified attribution.
-      operationId: updateAttribution
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                components:
-                  type: array
-                  description: List of Attribution filters
-                  items:
-                    $ref: "#/components/schemas/AttributionComponent"
-                description:
-                  type: string
-                  description: Description of the attribution
-                formula:
-                  type: string
-                  description: Attribution formula (A is the first component, B is the second one, C is the third, and so on.)
-                name:
-                  type: string
-                  description: Attribution Name
-      responses:
-        "200":
-          description: OK - Attribution updated.
-          content:
-            application/json:
-              schema:
-                type: object
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-      x-codegen-request-body-name: Body
   /analytics/v1/budgets:
     get:
       tags:
@@ -1973,7 +1549,7 @@ paths:
       summary: Get resource permissions (beta)
       description: |-
         Returns the permissions associated with the specified Cloud Analytics resource.
-        Supports Attributions, Attributions Groups, Alerts, Budgets, and Reports.
+        Supports Allocations, Alerts, Budgets, and Reports.
       operationId: getResourcePermission
       parameters:
         - $ref: "#/components/parameters/resourceType"
@@ -2001,7 +1577,7 @@ paths:
       summary: Update resource permissions (beta)
       description: |-
         Updates the permissions associated with the specified Cloud Analytics resource.
-        Supports Attributions, Attributions Groups, Alerts, Budgets, and Reports.
+        Supports Allocations, Alerts, Budgets, and Reports.
       operationId: updateResourcePermission
       parameters:
         - $ref: "#/components/parameters/resourceType"
@@ -4465,233 +4041,6 @@ components:
       properties:
         accountID:
           type: string
-    AttributionAPI:
-      required:
-        - name
-      type: object
-      description: Definition and metadata of an attribution.
-      properties:
-        anomalyDetection:
-          type: boolean
-          description: Indicates if the attribution has an active anomaly detection.
-        components:
-          type: array
-          description: List of Attribution filters
-          items:
-            $ref: "#/components/schemas/AttributionComponent"
-        createTime:
-          type: integer
-          description: Creation time of this Attribution (in unix milliseconds)
-          format: int64
-        description:
-          type: string
-          description: Attribution description
-          default: ""
-        formula:
-          type: string
-          description: Attribution formula (A is the first component, B is the second component, C is the third component, etc.)
-        id:
-          type: string
-          description: |-
-            attribution ID, identifying the attribution
-            in:path
-        name:
-          type: string
-          description: Attribution Name
-          default: ""
-        type:
-          type: string
-          description: Type of Attribution can be either "preset" or "custom"
-        updateTime:
-          type: integer
-          description: Last time somebody modified this Attribution (in unix milliseconds)
-          format: int64
-    AttributionComponent:
-      required:
-        - key
-        - type
-      type: object
-      description: A filter component of an attribution.
-      properties:
-        includeNull:
-          type: boolean
-          description: Include null value.
-          default: false
-        inverse:
-          type: boolean
-          description: If true, all selected values will be excluded.
-        caseInsensitive:
-          type: boolean
-          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
-          default: false
-        key:
-          type: string
-          description: 'Key of a dimension. Examples: "service_id", "cloud_provider", "sku_description"'
-          example: "service_id"
-        regexp:
-          type: string
-          description: Filter the dimension values using a regular expression.
-        type:
-          $ref: "#/components/schemas/DimensionsTypes"
-        values:
-          type: array
-          items:
-            type: string
-            description: 'Value of the dimension. Examples: "152E-C115-5142", "google-cloud", "team-a"'
-            example: "google-cloud"
-    AttributionGroupGetExternal:
-      type: object
-      description: Attribution group returned by the API.
-      properties:
-        attributions:
-          type: array
-          description: Array of attributions in this attribution group.
-          items:
-            $ref: "#/components/schemas/AttributionGroupAttributionItem"
-        cloud:
-          type: array
-          items:
-            type: string
-        customer:
-          $ref: "#/components/schemas/DocumentRef"
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        organization:
-          $ref: "#/components/schemas/DocumentRef"
-        timeCreated:
-          type: string
-          format: date-time
-        timeModified:
-          type: string
-          format: date-time
-        type:
-          $ref: "#/components/schemas/ObjectType"
-    AttributionGroupAttributionItem:
-      type: object
-      description: Summary information about an attribution within an attribution group.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the attribution.
-        name:
-          type: string
-          description: The name of the attribution.
-        owner:
-          type: string
-          description: The email of the attribution owner.
-        description:
-          type: string
-          description: The description of the attribution.
-        type:
-          type: string
-          description: Type of attribution can be either preset or custom.
-        createTime:
-          type: integer
-          format: int64
-          description: The timestamp when the attribution was created.
-        updateTime:
-          type: integer
-          format: int64
-          description: The timestamp when the attribution was last updated.
-    AttributionGroupRequest:
-      required:
-        - attributions
-        - name
-      type: object
-      description: Request body for creating an attribution group.
-      properties:
-        attributions:
-          type: array
-          description: List of the attributions that are part of the attribution group.
-          items:
-            type: string
-        description:
-          type: string
-          description: Description of the attribution group.
-          default: description
-        name:
-          type: string
-          description: Name of the attribution group.
-          default: attribution group
-        nullFallback:
-          type: string
-          description: Custom label for values that do not fit into attributions.
-          default: "Unallocated"
-    AttributionGroupUpdateRequest:
-      required:
-        - attributions
-        - name
-      type: object
-      description: Request body for updating an attribution group.
-      properties:
-        attributions:
-          type: array
-          description: List of the attributions that are part of the attribution group.
-          items:
-            type: string
-        description:
-          type: string
-          description: Description of the attribution group.
-          default: description
-        name:
-          type: string
-          description: Name of the attribution group.
-          default: attribution group
-        nullFallback:
-          type: string
-          description: Custom label for values that do not fit into attributions.
-          default: "Unallocated"
-    AttributionGroupsListExternal:
-      type: object
-      description: List of attribution groups.
-      properties:
-        attributionGroups:
-          type: array
-          description: Array of AttributionGroup.
-          items:
-            $ref: "#/components/schemas/AttributionGroupListItem"
-        pageToken:
-          type: string
-          description: Page token, returned by a previous call, to request the next page of results.
-        rowCount:
-          type: integer
-          description: AttributionGroup rows count.
-          format: int64
-    AttributionGroupListItem:
-      type: object
-      description: Summary information about an attribution group.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the attribution group.
-        name:
-          type: string
-          description: The name of the attribution group.
-        owner:
-          type: string
-          description: The email of the attribution group owner.
-        description:
-          type: string
-          description: The description of the attribution group.
-        type:
-          type: string
-          description: The type of the attribution group.
-          enum:
-            - custom
-            - preset
-            - managed
-        createTime:
-          type: integer
-          format: int64
-          description: The timestamp when the attribution group was created (Unix milliseconds).
-        updateTime:
-          type: integer
-          format: int64
-          description: The timestamp when the attribution group was last updated (Unix milliseconds).
     LabelInfo:
       required:
         - id
@@ -4939,39 +4288,6 @@ components:
           items:
             $ref: "#/components/schemas/LabelAssignmentObject"
           description: Array of objects currently assigned to the label.
-    AttributionListItem:
-      required:
-        - name
-      type: object
-      description: Summary information for an attribution.
-      properties:
-        createTime:
-          type: integer
-          description: Creation time of the attribution (in unix milliseconds).
-          format: int64
-        description:
-          type: string
-          description: Attribution description.
-          default: ""
-        id:
-          type: string
-          description: |-
-            attribution ID, identifying the attribution
-            in:path
-        name:
-          type: string
-          description: Attribution Name.
-        owner:
-          type: string
-          description: Attribution owner.
-          default: ""
-        type:
-          type: string
-          description: Type of attribution can be either preset or custom.
-        updateTime:
-          type: integer
-          description: Last time the attribution was modified (in unix milliseconds).
-          format: int64
     Budget:
       required:
         - currency
@@ -7047,48 +6363,6 @@ components:
         budgets:
           - id: "budget-id"
             name: "Example Budget"
-
-    AttributionGroupDeleteValidation:
-      type: object
-      description: Validation result when deleting an attribution group.
-      properties:
-        id:
-          type: string
-          description: ID of the attribution group that could not be deleted.
-        error:
-          type: string
-          description: Error message explaining why the deletion failed.
-          nullable: true
-        resources:
-          $ref: "#/components/schemas/BlockingResources"
-      example:
-        id: "attribution-group-id"
-        error: null
-        resources:
-          budgets:
-            - id: "budget-id"
-              name: "Example Budget"
-
-    AttributionDeleteValidation:
-      type: object
-      description: Validation result when deleting an attribution.
-      properties:
-        id:
-          type: string
-          description: ID of the attribution that could not be deleted.
-        error:
-          type: string
-          description: Error message explaining why the deletion failed.
-          nullable: true
-        resources:
-          $ref: "#/components/schemas/BlockingResources"
-      example:
-        id: "attribution-id"
-        error: null
-        resources:
-          budgets:
-            - id: "budget-id"
-              name: "Example Budget"
     Role:
       type: object
       description: Definition and permissions assigned to a role.
@@ -7513,18 +6787,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/AssetResponse"
-    attributionCreate:
-      description: Id of the created attribution
-      content:
-        application/json:
-          schema:
-            type: string
-    attributionDelete:
-      description: Deletes the attribution specified by the attributionId value
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/AttributionListItem"
     budgetDelete:
       description: Deletes the budget specified by the budgetId value
       content:
@@ -7549,14 +6811,8 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Alert"
-    createAttributionGroupSuccess:
-      description: Id of the created attribution group
-      content: {}
     deleteAlertSuccessResponse:
       description: Delete Alert
-      content: {}
-    deleteAttributionGroupSuccess:
-      description: Deletes the attribution group specified by the id value
       content: {}
     getAlertSuccessResponse:
       description: Get Alert by the specified Id
@@ -7564,12 +6820,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Alert"
-    getAttributionGroupSuccess:
-      description: Gets the attribution group specified by the id value
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/AttributionGroupGetExternal"
     internalServerError:
       description: Error InternalServerError
       content:
@@ -7597,12 +6847,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ExternalAlertList"
-    listAttributionGroupsSuccessResponse:
-      description: Lists attribution groups available for the user
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/AttributionGroupsListExternal"
     listPlatformsSuccess:
       description: Lists platforms available to the user
       content:
@@ -7658,24 +6902,6 @@ components:
                 type: integer
                 description: Assets rows count
                 format: int64
-    successRespWithAttribution:
-      description: Gets the attribution specified by the attributionId value
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              Attribution:
-                $ref: "#/components/schemas/AttributionAPI"
-    successRespWithAttributions:
-      description: Lists attributions available for the user
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              Attributions:
-                $ref: "#/components/schemas/AttributionListItem"
     successRespWithBudget:
       description: Returns budget details based on budgetId
       content:
@@ -7848,9 +7074,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Alert"
-    updateAttributionGroupSuccess:
-      description: ""
-      content: {}
     validateUserSuccess:
       description: Returns the domain and email of the API user.
       content:
@@ -7897,8 +7120,6 @@ components:
         type: string
         enum:
           - alerts
-          - attributions
-          - attributiongroups
           - budgets
           - reports
           - allocations
