@@ -367,29 +367,15 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 			// by comparing the API response against the prior state.
 			// See: https://doitintl.atlassian.net/browse/CMP-38116
 			apiIncludeNull := scope.IncludeNull != nil && *scope.IncludeNull
-			apiValueSet := make(map[string]bool)
-			var mergedValues []string
+			var apiValues []string
 			if scope.Values != nil {
-				for _, v := range *scope.Values {
-					apiValueSet[v] = true
-					mergedValues = append(mergedValues, v)
-				}
+				apiValues = *scope.Values
 			}
+			mergedValues := apiValues
 			if i < len(existingScopeValues) && !existingScopeValues[i].IsNull() && !existingScopeValues[i].IsUnknown() {
 				var stateVals []string
 				if d := existingScopeValues[i].ElementsAs(ctx, &stateVals, false); !d.HasError() {
-					for _, sv := range stateVals {
-						if !apiValueSet[sv] {
-							if apiIncludeNull && isNAFallback(sv) {
-								// Sentinel was stripped by API normalization — restore it.
-								mergedValues = append(mergedValues, sv)
-							} else if len(mergedValues) == 0 {
-								// API returned nothing at all — fall back to full state list.
-								mergedValues = stateVals
-								break
-							}
-						}
-					}
+					mergedValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
 				}
 			}
 			var valuesVal types.List

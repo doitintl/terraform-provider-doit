@@ -23,6 +23,53 @@ func isNAFallback(v string) bool {
 	return strings.HasPrefix(v, "[") && strings.HasSuffix(v, " N/A]")
 }
 
+// mergeSentinelValues merges API-returned values with the prior state to restore
+// any NullFallback sentinels that the API strips during normalization.
+//
+// apiValues are the values returned by the API for a single filter/scope.
+// stateVals are the values from the prior Terraform state for the same filter/scope.
+// apiIncludeNull is the include_null flag returned by the API.
+//
+// Algorithm:
+//  1. Start with apiValues as the result.
+//  2. For each stateVal not present in apiValues:
+//     - If apiIncludeNull=true and it is a sentinel: collect for restoration.
+//     - Otherwise: flag that a non-sentinel value disappeared.
+//  3. If a non-sentinel disappeared AND the API returned nothing: fall back to
+//     the full state list (legacy behaviour for filters the API wiped entirely).
+//  4. Otherwise: append collected sentinels to the API result.
+//
+// This ordering-independent approach avoids a bug where a sentinel appearing
+// before a non-sentinel in stateVals would cause the non-sentinel to be silently
+// dropped because the "len(merged)==0" fallback check was no longer true by then.
+func mergeSentinelValues(apiValues []string, stateVals []string, apiIncludeNull bool) []string {
+	apiValueSet := make(map[string]bool, len(apiValues))
+	for _, v := range apiValues {
+		apiValueSet[v] = true
+	}
+	merged := append([]string(nil), apiValues...) // copy
+
+	var sentinelsToRestore []string
+	hasLostNonSentinel := false
+	for _, sv := range stateVals {
+		if !apiValueSet[sv] {
+			if apiIncludeNull && isNAFallback(sv) {
+				sentinelsToRestore = append(sentinelsToRestore, sv)
+			} else {
+				hasLostNonSentinel = true
+			}
+		}
+	}
+
+	if hasLostNonSentinel && len(merged) == 0 {
+		// API returned nothing at all and a non-sentinel value is missing:
+		// fall back to preserving the full state list (legacy behaviour).
+		return stateVals
+	}
+	// Restore any sentinels stripped by API normalization.
+	return append(merged, sentinelsToRestore...)
+}
+
 // populateStateFromAPI fetches the report from the API and populates the Terraform state.
 //
 // # 404 Handling Strategy
@@ -700,32 +747,16 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			//   • values genuinely cleared by user in UI → keep empty (includeNull stays false)
 			// See: https://doitintl.atlassian.net/browse/CMP-38116
 			apiIncludeNull := f.IncludeNull != nil && *f.IncludeNull
-			// Build a set of values the API actually returned.
-			apiValueSet := make(map[string]bool)
-			var mergedValues []string
+			var apiValues []string
 			if f.Values != nil {
-				for _, v := range *f.Values {
-					apiValueSet[v] = true
-					mergedValues = append(mergedValues, v)
-				}
+				apiValues = *f.Values
 			}
+			mergedValues := apiValues
 			// Scan state values and restore any NullFallback sentinels the API stripped.
 			if i < len(existingFilterValues) && !existingFilterValues[i].IsNull() && !existingFilterValues[i].IsUnknown() {
 				var stateVals []string
 				if d := existingFilterValues[i].ElementsAs(ctx, &stateVals, false); !d.HasError() {
-					for _, sv := range stateVals {
-						if !apiValueSet[sv] {
-							if apiIncludeNull && isNAFallback(sv) {
-								// Sentinel was stripped by API normalization — restore it.
-								mergedValues = append(mergedValues, sv)
-							} else if len(mergedValues) == 0 {
-								// API returned nothing at all and this is a non-sentinel value:
-								// fall back to preserving the full state list (legacy behaviour).
-								mergedValues = stateVals
-								break
-							}
-						}
-					}
+					mergedValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
 				}
 			}
 			if len(mergedValues) > 0 {
