@@ -11,6 +11,42 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// warnNASentinels appends a Warning diagnostic for every string inside valueLists
+// that matches the legacy NullFallback sentinel pattern (e.g. "[Service N/A]").
+//
+// basePath is the path to the list attribute that holds the filter/scope blocks
+// (e.g. path.Root("config").AtName("filters") for reports).
+// Each element of valueLists corresponds to one filter/scope block at index i;
+// the attribute path reported in the diagnostic is basePath[i].values.
+//
+// This is a path-agnostic helper shared by all resource validators.
+func warnNASentinels(ctx context.Context, basePath path.Path, valueLists []types.List, diags *diag.Diagnostics) {
+	for i, vl := range valueLists {
+		if vl.IsNull() || vl.IsUnknown() {
+			continue
+		}
+		var vals []string
+		if d := vl.ElementsAs(ctx, &vals, false); d.HasError() {
+			diags.Append(d...)
+			continue
+		}
+		for _, val := range vals {
+			if isNAFallback(val) {
+				diags.AddAttributeWarning(
+					basePath.AtListIndex(i).AtName("values"),
+					"Deprecated Filter Value Syntax",
+					fmt.Sprintf(
+						"%q uses the legacy NullFallback sentinel syntax. "+
+							"Use `include_null = true` on the filter block instead — it is semantically "+
+							"equivalent and avoids unexpected behaviour when running `terraform import`.",
+						val,
+					),
+				)
+			}
+		}
+	}
+}
+
 // reportMetricsLengthValidator validates that metrics list has 1-4 items when specified.
 // The API supports up to 4 metrics per report.
 type reportMetricsLengthValidator struct{}
@@ -124,8 +160,11 @@ func (v reportFilterNAValidator) MarkdownDescription(_ context.Context) string {
 }
 
 func (v reportFilterNAValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	const filtersPath = "filters"
+	basePath := path.Root("config").AtName(filtersPath)
+
 	var filters types.List
-	diags := req.Config.GetAttribute(ctx, path.Root("config").AtName("filters"), &filters)
+	diags := req.Config.GetAttribute(ctx, basePath, &filters)
 	resp.Diagnostics.Append(diags...)
 	if diags.HasError() || filters.IsNull() || filters.IsUnknown() {
 		return
@@ -145,28 +184,9 @@ func (v reportFilterNAValidator) ValidateResource(ctx context.Context, req resou
 // the legacy NullFallback sentinel pattern (e.g. "[Service N/A]").
 // It is a package-level function so it can be unit-tested independently of tfsdk.Config.
 func warnNAFilterValues(ctx context.Context, filterVals []resource_report.FiltersValue, diags *diag.Diagnostics) {
+	valueLists := make([]types.List, len(filterVals))
 	for i, f := range filterVals {
-		if f.Values.IsNull() || f.Values.IsUnknown() {
-			continue
-		}
-		var vals []string
-		if d := f.Values.ElementsAs(ctx, &vals, false); d.HasError() {
-			diags.Append(d...)
-			continue
-		}
-		for _, val := range vals {
-			if isNAFallback(val) {
-				diags.AddAttributeWarning(
-					path.Root("config").AtName("filters").AtListIndex(i).AtName("values"),
-					"Deprecated Filter Value Syntax",
-					fmt.Sprintf(
-						"%q uses the legacy NullFallback sentinel syntax. "+
-							"Use `include_null = true` on the filter block instead — it is semantically "+
-							"equivalent and avoids unexpected behaviour when running `terraform import`.",
-						val,
-					),
-				)
-			}
-		}
+		valueLists[i] = f.Values
 	}
+	warnNASentinels(ctx, path.Root("config").AtName("filters"), valueLists, diags)
 }

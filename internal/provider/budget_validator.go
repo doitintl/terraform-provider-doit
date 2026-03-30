@@ -433,3 +433,43 @@ func (v budgetCollaboratorsOwnerValidator) ValidateResource(ctx context.Context,
 		)
 	}
 }
+
+// budgetScopeNAValidator warns when legacy NullFallback sentinel values such as
+// "[Service N/A]" are found in scopes[*].values. Users should use
+// include_null = true on the scope block instead.
+type budgetScopeNAValidator struct{}
+
+var _ resource.ConfigValidator = budgetScopeNAValidator{}
+
+func (v budgetScopeNAValidator) Description(_ context.Context) string {
+	return "Warns when legacy NullFallback sentinel values (e.g. [Service N/A]) are used in scope values"
+}
+
+func (v budgetScopeNAValidator) MarkdownDescription(_ context.Context) string {
+	return "Warns when legacy NullFallback sentinel values (e.g. `[Service N/A]`) are used in " +
+		"`scopes[*].values`. Use `include_null = true` on the scope block instead."
+}
+
+func (v budgetScopeNAValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	basePath := path.Root("scopes")
+
+	var scopes types.List
+	diags := req.Config.GetAttribute(ctx, basePath, &scopes)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() || scopes.IsNull() || scopes.IsUnknown() {
+		return
+	}
+
+	var scopeVals []resource_budget.ScopesValue
+	diags = scopes.ElementsAs(ctx, &scopeVals, false)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+
+	valueLists := make([]types.List, len(scopeVals))
+	for i, s := range scopeVals {
+		valueLists[i] = s.Values
+	}
+	warnNASentinels(ctx, basePath, valueLists, &resp.Diagnostics)
+}
