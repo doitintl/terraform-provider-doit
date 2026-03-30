@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.3.2 (Unreleased)
+
+### BUG FIXES
+
+- **resource/doit_alert, doit_budget**: Preserve scope `values` from prior state when the API strips legacy `[... N/A]` sentinel strings (e.g. `"[Service N/A]"`) and replaces them with `include_null: true`. Previously only `doit_report` had this protection (v1.3.1); now all three resources that share `ExternalConfigFilter` scopes are covered.
+
+### DEPRECATIONS
+
+- **resource/doit_report**: Added a plan-time warning when a filter `values` list contains legacy `[... N/A]` sentinel strings. Users should migrate to the native `include_null = true` attribute. The sentinel strings remain fully functional and will continue to be preserved by the provider.
+
+### INTERNAL
+
+- Extended acceptance test coverage for `doit_alert` and `doit_budget` to match the `doit_report` test matrix: pure-NA sentinel round-trip, mixed sentinel + real values, `include_null = true` with a non-empty `values` list, and `include_null = true` with an empty `values` list (the last case is skipped for alert/report pending upstream API fix).
+- Added `TestAccReport_IncludeNullOnlyNoValues` to complete the report test matrix (skipped pending upstream API fix).
+
 ## v1.3.1 (2026-03-30)
 
 ### BUG FIXES

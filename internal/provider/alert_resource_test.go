@@ -1034,3 +1034,324 @@ resource "doit_alert" "this" {
 }
 `, i)
 }
+
+// TestAccAlert_ScopeIncludeNull tests that a scope with include_null = true
+// and a real value round-trips correctly without drift.
+// This is the alert equivalent of TestAccReport_IncludeNull.
+// It exercises the state-first includeNullVal logic: the API may not reliably
+// echo include_null back, so the provider must preserve the user's value.
+func TestAccAlert_ScopeIncludeNull(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertScopeIncludeNull(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("service_description"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("Compute Engine")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertScopeIncludeNull(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertScopeIncludeNull(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-include-null-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type         = "fixed"
+        id           = "service_description"
+        mode         = "is"
+        include_null = true
+        values       = ["Compute Engine"]
+      }
+    ]
+  }
+}
+`, i)
+}
+
+// TestAccAlert_IncludeNullOnlyNoValues tests that a scope with include_null = true
+// and NO values is accepted by the API and round-trips without drift.
+//
+// This is the "pure include_null" pattern that PR #51575 (fix(analytics): allow
+// include_null and empty values public-api) enables on the API side. Until that PR
+// lands, this test will FAIL with an API validation error because the current
+// validation rejects a scope that has neither values nor regexp.
+//
+// Once the API fix is deployed, this test should pass with no provider-side changes
+// required — the provider already sends include_null correctly. If it does not pass,
+// a restoration fix similar to report.go's isNAFallback logic will be needed in
+// alert.go's mapAlertConfigToModel.
+func TestAccAlert_IncludeNullOnlyNoValues(t *testing.T) {
+	// Skip until PR #51575 (fix(analytics): allow include_null and empty values public-api)
+	// is deployed for the alert API. The API currently rejects scopes with include_null=true
+	// and no values (400: config.scopes - Invalid value).
+	// Once deployed, remove this skip — no provider-side changes needed.
+	t.Skip("alert API does not yet support include_null=true with empty values (pending PR #51575)")
+
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertIncludeNullOnlyNoValues(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("service_description"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								// values must be empty — no sentinel needed
+								"values": knownvalue.ListExact([]knownvalue.Check{}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertIncludeNullOnlyNoValues(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertIncludeNullOnlyNoValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-include-null-only-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type         = "fixed"
+        id           = "service_description"
+        mode         = "is"
+        include_null = true
+        values       = []
+      }
+    ]
+  }
+}
+`, i)
+}
+
+// TestAccAlert_ScopeWithNAValue tests that a scope configured with the legacy
+// NullFallback sentinel value (e.g. "[Service N/A]") round-trips correctly —
+// i.e. after apply the state still contains "[Service N/A]" and no drift is
+// reported on a subsequent plan.
+//
+// This is the alert equivalent of TestAccReport_FilterValuesMixedWithNA.
+// It is expected to FAIL until alert.go gains the same sentinel-restoration
+// logic that report.go already has (isNAFallback + populateState restoration).
+//
+// The failure mode is "Provider produced inconsistent result after apply":
+// the provider sends "[Service N/A]" → the API strips it and sets include_null=true
+// → on read the provider gets back include_null=true + values=[] → state becomes
+// values=[] which mismatches the configured "[Service N/A]".
+func TestAccAlert_ScopeWithNAValue(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertWithNAValue(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":   knownvalue.StringExact("fixed"),
+								"id":     knownvalue.StringExact("service_description"),
+								"mode":   knownvalue.StringExact("is"),
+								"values": knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("[Service N/A]")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccAlertWithNAValue(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertWithNAValue(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-na-value-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type   = "fixed"
+        id     = "service_description"
+        mode   = "is"
+        values = ["[Service N/A]"]
+      }
+    ]
+  }
+}
+`, i)
+}
+
+// TestAccAlert_ScopeWithMixedNAValue reproduces the scenario where a scope
+// contains BOTH a real value AND a legacy "[... N/A]" sentinel, e.g.:
+//
+//	values = ["Compute Engine", "[Service N/A]"]
+//
+// The API strips the sentinel and returns values=["Compute Engine"] + include_null=true.
+// Unlike the pure-NA case (where the API returns values=[] and the blunt all-NA
+// fallback fires), here apiHasValues=true so the current fallback does NOT restore
+// the sentinel, causing perpetual drift.
+// This test is the alert equivalent of TestAccReport_FilterValuesMixedWithNA.
+// It is expected to FAIL until alert.go gains the smarter include_null-based
+// sentinel detection (same fix needed as report.go).
+// See: https://doitintl.atlassian.net/browse/CMP-38116
+func TestAccAlert_ScopeWithMixedNAValue(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with both a real value and a sentinel.
+			// The provider must restore "[Service N/A]" after the API strips it,
+			// so state contains both values as the user configured.
+			{
+				Config: testAccAlertWithMixedNAValue(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type": knownvalue.StringExact("fixed"),
+								"id":   knownvalue.StringExact("service_description"),
+								"mode": knownvalue.StringExact("is"),
+								// Both the real value and the sentinel must be present in state.
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("Compute Engine"),
+									knownvalue.StringExact("[Service N/A]"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Verify no drift on re-apply — critical regression guard.
+			{
+				Config: testAccAlertWithMixedNAValue(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertWithMixedNAValue(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-mixed-na-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type   = "fixed"
+        id     = "service_description"
+        mode   = "is"
+        values = ["Compute Engine", "[Service N/A]"]
+      }
+    ]
+  }
+}
+`, i)
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -12,6 +13,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+// isNAFallback reports whether v is a NullFallback sentinel of the form "[... N/A]"
+// as defined in the Cloud Analytics metadata keymap (metadata_keymap.go).
+// The API (null_fallback.go StripNullFallback) silently removes these sentinels from
+// filter values and converts them to includeNull=true. We use this check to restore
+// them on read, preserving round-trip fidelity without importing the internal keymap.
+func isNAFallback(v string) bool {
+	return strings.HasPrefix(v, "[") && strings.HasSuffix(v, " N/A]")
+}
 
 // populateStateFromAPI fetches the report from the API and populates the Terraform state.
 //
@@ -632,10 +642,11 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 			if i < len(existingFilterIDs) {
 				fID = normalizeDimensionsType(fID, existingFilterIDs[i])
 			}
-			// The API does not reliably echo includeNull — it returns false as a default
-			// regardless of the value sent. Always prefer the plan/state value when available.
-			// The API response is only used as a fallback (e.g., during ImportState when there
-			// is no prior plan/state).
+			// Prefer the plan/state value for includeNull when available, falling back to the
+			// API response. The API does echo includeNull correctly (e.g. it returns true when
+			// a NullFallback sentinel was stripped — see the sentinel restoration logic below),
+			// but keeping state-first ensures round-trip stability if the field is ever
+			// omitted from a response.
 			includeNullVal := types.BoolValue(false)
 			if i < len(existingFilterIncludeNull) && existingFilterIncludeNull[i] != nil {
 				includeNullVal = types.BoolValue(*existingFilterIncludeNull[i])
@@ -671,21 +682,56 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				"mode": types.StringValue(string(f.Mode)),
 			}
 
-			// The API may not reliably echo filter values — it silently strips
-			// legacy "[... N/A]" values and returns an empty array instead.
-			// For example, sending values=["[Customer N/A]"] returns values=[]
-			// plus includeNull=true. We must preserve the plan/state values
-			// when the API returns nil OR an empty slice to prevent
-			// "element N has vanished" errors.
+			// The API silently strips legacy "[... N/A]" NullFallback sentinels from filter
+			// values and converts them to includeNull=true instead. This happens for both
+			// pure-NA filters (values=[] + includeNull=true) and mixed filters where real
+			// values remain (values=["AA"] + includeNull=true when "[X N/A]" was stripped).
+			//
+			// Strategy:
+			//   1. Start with what the API returned.
+			//   2. For each value that was in the prior state but is now missing from the API
+			//      response, check if it is a NullFallback sentinel and includeNull flipped true.
+			//      If so, the API stripped it — restore it to prevent drift.
+			//   3. If the API returned nothing AND state had non-sentinel values, preserve them
+			//      unchanged (handles other non-echoed fields that aren't NullFallback-related).
+			//
+			// This correctly distinguishes:
+			//   • values stripped by API normalization  → restore sentinel
+			//   • values genuinely cleared by user in UI → keep empty (includeNull stays false)
 			// See: https://doitintl.atlassian.net/browse/CMP-38116
-			apiHasValues := f.Values != nil && len(*f.Values) > 0
-			if apiHasValues {
-				values, d := types.ListValueFrom(ctx, types.StringType, *f.Values)
+			apiIncludeNull := f.IncludeNull != nil && *f.IncludeNull
+			// Build a set of values the API actually returned.
+			apiValueSet := make(map[string]bool)
+			var mergedValues []string
+			if f.Values != nil {
+				for _, v := range *f.Values {
+					apiValueSet[v] = true
+					mergedValues = append(mergedValues, v)
+				}
+			}
+			// Scan state values and restore any NullFallback sentinels the API stripped.
+			if i < len(existingFilterValues) && !existingFilterValues[i].IsNull() && !existingFilterValues[i].IsUnknown() {
+				var stateVals []string
+				if d := existingFilterValues[i].ElementsAs(ctx, &stateVals, false); !d.HasError() {
+					for _, sv := range stateVals {
+						if !apiValueSet[sv] {
+							if apiIncludeNull && isNAFallback(sv) {
+								// Sentinel was stripped by API normalization — restore it.
+								mergedValues = append(mergedValues, sv)
+							} else if len(mergedValues) == 0 {
+								// API returned nothing at all and this is a non-sentinel value:
+								// fall back to preserving the full state list (legacy behaviour).
+								mergedValues = stateVals
+								break
+							}
+						}
+					}
+				}
+			}
+			if len(mergedValues) > 0 {
+				values, d := types.ListValueFrom(ctx, types.StringType, mergedValues)
 				diags.Append(d...)
 				m["values"] = values
-			} else if i < len(existingFilterValues) && !existingFilterValues[i].IsNull() && !existingFilterValues[i].IsUnknown() {
-				// API returned nil or empty values — preserve the plan/state values
-				m["values"] = existingFilterValues[i]
 			} else {
 				var emptyDiags diag.Diagnostics
 				m["values"], emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})

@@ -216,6 +216,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 		var existingScopeTypes, existingScopeIDs []string
 		var existingScopeIncludeNull []*bool
 		var existingScopeCaseInsensitive []*bool
+		var existingScopeValues []types.List
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Scopes.IsNull() && !state.Config.Scopes.IsUnknown() {
 			var existingScopes []resource_alert.ScopesValue
@@ -225,10 +226,11 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
 					existingScopeIncludeNull = append(existingScopeIncludeNull, es.IncludeNull.ValueBoolPointer())
 					existingScopeCaseInsensitive = append(existingScopeCaseInsensitive, es.CaseInsensitive.ValueBoolPointer())
+					existingScopeValues = append(existingScopeValues, es.Values)
 				}
 			}
 		}
-		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config, existingScopeTypes, existingScopeIDs, existingScopeIncludeNull, existingScopeCaseInsensitive)
+		configVal, configDiags := mapAlertConfigToModel(ctx, resp.Config, existingScopeTypes, existingScopeIDs, existingScopeIncludeNull, existingScopeCaseInsensitive, existingScopeValues)
 		diags.Append(configDiags...)
 		state.Config = configVal
 	}
@@ -237,7 +239,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 }
 
 // mapAlertConfigToModel maps the API AlertConfig to the Terraform ConfigValue.
-func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string, existingScopeIncludeNull []*bool, existingScopeCaseInsensitive []*bool) (resource_alert.ConfigValue, diag.Diagnostics) {
+func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string, existingScopeIncludeNull []*bool, existingScopeCaseInsensitive []*bool, existingScopeValues []types.List) (resource_alert.ConfigValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Build attributions list
@@ -258,13 +260,43 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 	if config.Scopes != nil {
 		scopesList := make([]resource_alert.ScopesValue, len(*config.Scopes))
 		for i, scope := range *config.Scopes {
-			var valuesVal types.List
+			// Sentinel-restoration logic (mirrors report.go):
+			// The API strips legacy "[... N/A]" NullFallback sentinels from scope values
+			// and converts them to includeNull=true. We restore any stripped sentinels
+			// by comparing the API response against the prior state.
+			// See: https://doitintl.atlassian.net/browse/CMP-38116
+			apiIncludeNull := scope.IncludeNull != nil && *scope.IncludeNull
+			apiValueSet := make(map[string]bool)
+			var mergedValues []string
 			if scope.Values != nil {
+				for _, v := range *scope.Values {
+					apiValueSet[v] = true
+					mergedValues = append(mergedValues, v)
+				}
+			}
+			if i < len(existingScopeValues) && !existingScopeValues[i].IsNull() && !existingScopeValues[i].IsUnknown() {
+				var stateVals []string
+				if d := existingScopeValues[i].ElementsAs(ctx, &stateVals, false); !d.HasError() {
+					for _, sv := range stateVals {
+						if !apiValueSet[sv] {
+							if apiIncludeNull && isNAFallback(sv) {
+								// Sentinel was stripped by API normalization — restore it.
+								mergedValues = append(mergedValues, sv)
+							} else if len(mergedValues) == 0 {
+								// API returned nothing at all — fall back to full state list.
+								mergedValues = stateVals
+								break
+							}
+						}
+					}
+				}
+			}
+			var valuesVal types.List
+			if len(mergedValues) > 0 {
 				var listDiags diag.Diagnostics
-				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, *scope.Values)
+				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, mergedValues)
 				diags.Append(listDiags...)
 			} else {
-				// Return empty list for nil to avoid inconsistent result if user sets []
 				var emptyDiags diag.Diagnostics
 				valuesVal, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
 				diags.Append(emptyDiags...)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -101,5 +103,70 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 			continue
 		}
 		validateRFC3339(val.ValueString(), p, &resp.Diagnostics)
+	}
+}
+
+// reportFilterNAValidator warns when legacy NullFallback sentinel values such as
+// "[Service N/A]" are found in config.filters[*].values. Users should use
+// include_null = true on the filter block instead, which is semantically equivalent
+// and avoids unexpected behaviour during `terraform import`.
+type reportFilterNAValidator struct{}
+
+var _ resource.ConfigValidator = reportFilterNAValidator{}
+
+func (v reportFilterNAValidator) Description(_ context.Context) string {
+	return "Warns when legacy NullFallback sentinel values (e.g. [Service N/A]) are used in filter values"
+}
+
+func (v reportFilterNAValidator) MarkdownDescription(_ context.Context) string {
+	return "Warns when legacy NullFallback sentinel values (e.g. `[Service N/A]`) are used in " +
+		"`config.filters[*].values`. Use `include_null = true` on the filter block instead."
+}
+
+func (v reportFilterNAValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var filters types.List
+	diags := req.Config.GetAttribute(ctx, path.Root("config").AtName("filters"), &filters)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() || filters.IsNull() || filters.IsUnknown() {
+		return
+	}
+
+	var filterVals []resource_report.FiltersValue
+	diags = filters.ElementsAs(ctx, &filterVals, false)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+
+	warnNAFilterValues(ctx, filterVals, &resp.Diagnostics)
+}
+
+// warnNAFilterValues appends a Warning diagnostic for every filter value that matches
+// the legacy NullFallback sentinel pattern (e.g. "[Service N/A]").
+// It is a package-level function so it can be unit-tested independently of tfsdk.Config.
+func warnNAFilterValues(ctx context.Context, filterVals []resource_report.FiltersValue, diags *diag.Diagnostics) {
+	for i, f := range filterVals {
+		if f.Values.IsNull() || f.Values.IsUnknown() {
+			continue
+		}
+		var vals []string
+		if d := f.Values.ElementsAs(ctx, &vals, false); d.HasError() {
+			diags.Append(d...)
+			continue
+		}
+		for _, val := range vals {
+			if isNAFallback(val) {
+				diags.AddAttributeWarning(
+					path.Root("config").AtName("filters").AtListIndex(i).AtName("values"),
+					"Deprecated Filter Value Syntax",
+					fmt.Sprintf(
+						"%q uses the legacy NullFallback sentinel syntax. "+
+							"Use `include_null = true` on the filter block instead — it is semantically "+
+							"equivalent and avoids unexpected behaviour when running `terraform import`.",
+						val,
+					),
+				)
+			}
+		}
 	}
 }
