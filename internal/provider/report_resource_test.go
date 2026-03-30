@@ -2200,3 +2200,82 @@ resource "doit_report" "no_inverse" {
 }
 `, i)
 }
+
+// TestAccReport_FilterValuesNAStripped reproduces the exact bug where using legacy
+// "[... N/A]" filter values causes "Provider produced inconsistent result" errors.
+// The DoIT API silently strips these values and converts them to includeNull: true.
+// For example, sending values=["[Customer N/A]"] returns values=[] + includeNull=true.
+// Without the defensive fix, the provider sees the values vanish and crashes.
+// See: https://github.com/doitintl/df-dci-automations/actions/runs/23655331590
+// See: https://doitintl.atlassian.net/browse/CMP-38116
+func TestAccReport_FilterValuesNAStripped(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with [Customer N/A] — the API will strip this value
+			// and return values=[] + includeNull=true. The provider must preserve
+			// the user's configured values to avoid "element 0 has vanished".
+			{
+				Config: testAccReportFilterNAStrippedConfig(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.filter_na_stripped",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("[Customer N/A]"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Verify no drift on re-plan — this is the critical check.
+			// Without the fix, the provider would return values=[] from the API
+			// response, causing Terraform to detect drift every time.
+			{
+				Config: testAccReportFilterNAStrippedConfig(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportFilterNAStrippedConfig(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "filter_na_stripped" {
+    name = "test-filter-na-stripped-%d"
+    description = "Reproduces API stripping N/A filter values"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        filters = [
+          {
+            id      = "csp_primary_domain"
+            type    = "fixed"
+            inverse = true
+            values  = ["[Customer N/A]"]
+            mode    = "is"
+          }
+        ]
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}

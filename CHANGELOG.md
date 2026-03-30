@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### BUG FIXES
+
+- **resource/doit_report**: Preserve filter `values` from prior state when the API returns an empty array, preventing `"element N has vanished"` errors caused by the API silently normalizing legacy `[... N/A]` filter strings (e.g. `"[Customer N/A]"`) into `includeNull: true`. ([CMP-38116](https://doitintl.atlassian.net/browse/CMP-38116))
+
 ## v1.3.0 (2026-03-27)
 
 ### FEATURES

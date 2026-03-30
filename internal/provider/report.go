@@ -604,6 +604,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 		var existingFilterIncludeNull []*bool
 		var existingFilterInverse []*bool
 		var existingFilterCaseInsensitive []*bool
+		var existingFilterValues []types.List
 		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
 			!state.Config.Filters.IsNull() && !state.Config.Filters.IsUnknown() {
 			var existingFilters []resource_report.FiltersValue
@@ -614,6 +615,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 					existingFilterIncludeNull = append(existingFilterIncludeNull, ef.IncludeNull.ValueBoolPointer())
 					existingFilterInverse = append(existingFilterInverse, ef.Inverse.ValueBoolPointer())
 					existingFilterCaseInsensitive = append(existingFilterCaseInsensitive, ef.CaseInsensitive.ValueBoolPointer())
+					existingFilterValues = append(existingFilterValues, ef.Values)
 				}
 			}
 		}
@@ -669,10 +671,21 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 				"mode": types.StringValue(string(f.Mode)),
 			}
 
-			if f.Values != nil {
+			// The API may not reliably echo filter values — it silently strips
+			// legacy "[... N/A]" values and returns an empty array instead.
+			// For example, sending values=["[Customer N/A]"] returns values=[]
+			// plus includeNull=true. We must preserve the plan/state values
+			// when the API returns nil OR an empty slice to prevent
+			// "element N has vanished" errors.
+			// See: https://doitintl.atlassian.net/browse/CMP-38116
+			apiHasValues := f.Values != nil && len(*f.Values) > 0
+			if apiHasValues {
 				values, d := types.ListValueFrom(ctx, types.StringType, *f.Values)
 				diags.Append(d...)
 				m["values"] = values
+			} else if i < len(existingFilterValues) && !existingFilterValues[i].IsNull() && !existingFilterValues[i].IsUnknown() {
+				// API returned nil or empty values — preserve the plan/state values
+				m["values"] = existingFilterValues[i]
 			} else {
 				var emptyDiags diag.Diagnostics
 				m["values"], emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})
