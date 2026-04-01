@@ -1120,12 +1120,6 @@ resource "doit_alert" "this" {
 // a restoration fix similar to report.go's isNAFallback logic will be needed in
 // alert.go's mapAlertConfigToModel.
 func TestAccAlert_IncludeNullOnlyNoValues(t *testing.T) {
-	// Skip until PR #51575 (fix(analytics): allow include_null and empty values public-api)
-	// is deployed for the alert API. The API currently rejects scopes with include_null=true
-	// and no values (400: config.scopes - Invalid value).
-	// Once deployed, remove this skip — no provider-side changes needed.
-	t.Skip("alert API does not yet support include_null=true with empty values (pending PR #51575)")
-
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
