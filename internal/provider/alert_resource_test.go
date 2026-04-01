@@ -1193,13 +1193,17 @@ resource "doit_alert" "this" {
 // reported on a subsequent plan.
 //
 // This is the alert equivalent of TestAccReport_FilterValuesMixedWithNA.
-// It is expected to FAIL until alert.go gains the same sentinel-restoration
-// logic that report.go already has (isNAFallback + populateState restoration).
 //
-// The failure mode is "Provider produced inconsistent result after apply":
-// the provider sends "[Service N/A]" → the API strips it and sets include_null=true
-// → on read the provider gets back include_null=true + values=[] → state becomes
-// values=[] which mismatches the configured "[Service N/A]".
+// With the sentinel-restoration logic in alert.go (mirroring isNAFallback +
+// populateState in report.go), this test is expected to PASS and now serves
+// as a regression guard to ensure "[Service N/A]" is preserved in state and
+// does not produce drift.
+//
+// The failure mode (if the restoration logic regresses) is
+// "Provider produced inconsistent result after apply": the provider sends
+// "[Service N/A]" → the API strips it and sets include_null=true → on read the
+// provider gets back include_null=true + values=[] → state becomes values=[],
+// which mismatches the configured "[Service N/A]".
 func TestAccAlert_ScopeWithNAValue(t *testing.T) {
 	n := acctest.RandInt()
 

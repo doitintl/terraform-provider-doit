@@ -2250,16 +2250,16 @@ func TestAccReport_FilterValuesNAStripped(t *testing.T) {
 	})
 }
 
-// TestAccReport_FilterValuesMixedWithNA reproduces the scenario where a filter
+// TestAccReport_FilterValuesMixedWithNA covers the scenario where a filter
 // contains BOTH a real value AND a legacy "[... N/A]" sentinel, e.g.:
 //
 //	values = ["Compute Engine", "[Service N/A]"]
 //
 // The API strips the sentinel and returns values=["Compute Engine"] + includeNull=true.
 // Unlike the pure-NA case (where the API returns values=[] and the blunt fallback fires),
-// here apiHasValues=true so the current workaround does NOT preserve the sentinel.
-// This test documents the known gap and will serve as the regression guard once
-// the smarter include_null-based sentinel detection is implemented.
+// here apiHasValues=true, and the provider must use include_null-based detection to
+// restore the "[Service N/A]" sentinel so that state continues to match configuration
+// and no perpetual drift is introduced.
 // See: https://doitintl.atlassian.net/browse/CMP-38116
 func TestAccReport_FilterValuesMixedWithNA(t *testing.T) {
 	n := acctest.RandInt()
@@ -2379,11 +2379,6 @@ resource "doit_report" "filter_na_stripped" {
 // Once the API fix is deployed, remove the t.Skip — no provider-side changes needed,
 // as the provider already sends include_null correctly.
 func TestAccReport_IncludeNullOnlyNoValues(t *testing.T) {
-	// Skip until PR #51575 (fix(analytics): allow include_null and empty values public-api)
-	// is deployed for the report API. The API currently rejects filters with include_null=true
-	// and no values (400: config.filters - Invalid value).
-	// Once deployed, remove this skip — no provider-side changes needed.
-	t.Skip("report API does not yet support include_null=true with empty values (pending PR #51575)")
 
 	n := acctest.RandInt()
 

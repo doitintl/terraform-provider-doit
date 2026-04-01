@@ -34,10 +34,10 @@ func warnNASentinels(ctx context.Context, basePath path.Path, valueLists []types
 			if isNAFallback(val) {
 				diags.AddAttributeWarning(
 					basePath.AtListIndex(i).AtName("values"),
-					"Deprecated Filter Value Syntax",
+					"Deprecated Value Syntax",
 					fmt.Sprintf(
 						"%q uses the legacy NullFallback sentinel syntax. "+
-							"Use `include_null = true` on the filter block instead — it is semantically "+
+							"Use `include_null = true` on this block instead — it is semantically "+
 							"equivalent and avoids unexpected behaviour when running `terraform import`.",
 						val,
 					),

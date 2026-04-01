@@ -1241,13 +1241,16 @@ resource "doit_budget" "this" {
 // reported on a subsequent plan.
 //
 // This is the budget equivalent of TestAccReport_FilterValuesNAStripped.
-// It is expected to FAIL until budget.go gains the same sentinel-restoration
-// logic that report.go already has (isNAFallback + populateState restoration).
 //
-// The failure mode is "Provider produced inconsistent result after apply":
-// the provider sends "[Service N/A]" → the API strips it and sets include_null=true
-// → on read the provider gets back include_null=true + values=[] → state becomes
-// values=[] which mismatches the configured "[Service N/A]".
+// budget.go now has the same sentinel-restoration logic that report.go has
+// (isNAFallback + populateState restoration), so this test is expected to pass
+// and serves as a regression guard for that behavior.
+//
+// The failure mode (if the restoration logic regresses) is
+// "Provider produced inconsistent result after apply": the provider sends
+// "[Service N/A]" → the API strips it and sets include_null=true → on read the
+// provider gets back include_null=true + values=[] → state becomes values=[],
+// which mismatches the configured "[Service N/A]".
 // See: https://doitintl.atlassian.net/browse/CMP-38116
 func TestAccBudget_ScopeWithNAValue(t *testing.T) {
 	n := acctest.RandInt()
@@ -1418,15 +1421,14 @@ resource "doit_budget" "this" {
 // TestAccBudget_IncludeNullOnlyNoValues tests that a scope with include_null = true
 // and NO values is accepted by the API and round-trips without drift.
 //
-// This is the "pure include_null" pattern that PR #51575 (fix(analytics): allow
-// include_null and empty values public-api) enables on the API side. Until that PR
-// lands, this test will FAIL with an API validation error because the current
-// validation rejects a scope that has neither values nor regexp.
+// PR #51575 (fix(analytics): allow include_null and empty values public-api) is
+// deployed and the budget API accepts this configuration. This test verifies the
+// full round-trip: the provider sends include_null=true with an empty values list,
+// the API stores it, and the provider reads it back without drift.
 //
-// Once the API fix is deployed, this test should pass with no provider-side changes
-// required — the provider already sends include_null correctly. If it does not pass,
-// a restoration fix similar to report.go's isNAFallback logic will be needed in
-// budget.go's populateState.
+// If this test fails with a provider inconsistency error, check that budget.go
+// correctly maps a nil/empty API values list to an empty Terraform list (not null)
+// when include_null=true is set in the scope.
 func TestAccBudget_IncludeNullOnlyNoValues(t *testing.T) {
 	n := acctest.RandInt()
 

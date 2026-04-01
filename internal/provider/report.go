@@ -31,43 +31,58 @@ func isNAFallback(v string) bool {
 // apiIncludeNull is the include_null flag returned by the API.
 //
 // Algorithm:
-//  1. Start with apiValues as the result.
-//  2. For each stateVal not present in apiValues:
-//     - If apiIncludeNull=true and it is a sentinel: collect for restoration.
+//  1. Build a set of apiValues for O(1) lookup.
+//  2. Walk stateVals in order (preserving prior-state ordering):
+//     - If the value is in apiValues: keep it and mark it as placed.
+//     - Else if apiIncludeNull=true and it is a sentinel: restore it in-place.
 //     - Otherwise: flag that a non-sentinel value disappeared.
-//  3. If a non-sentinel disappeared AND the API returned nothing: fall back to
+//  3. If a non-sentinel disappeared AND API returned nothing: fall back to
 //     the full state list (legacy behaviour for filters the API wiped entirely).
-//  4. Otherwise: append collected sentinels to the API result.
+//  4. Append any apiValues not already placed (genuinely new values from the API),
+//     in their API-returned order.
 //
-// This ordering-independent approach avoids a bug where a sentinel appearing
-// before a non-sentinel in stateVals would cause the non-sentinel to be silently
-// dropped because the "len(merged)==0" fallback check was no longer true by then.
+// Walking stateVals first (step 2) ensures sentinels are placed at their original
+// indices, preventing order-sensitive drift in Terraform ListAttributes.
 func mergeSentinelValues(apiValues []string, stateVals []string, apiIncludeNull bool) []string {
 	apiValueSet := make(map[string]bool, len(apiValues))
 	for _, v := range apiValues {
 		apiValueSet[v] = true
 	}
-	merged := append([]string(nil), apiValues...) // copy
 
-	var sentinelsToRestore []string
+	// Walk prior state in order: keep API-present values and restore stripped sentinels.
+	result := make([]string, 0, len(stateVals)+len(apiValues))
+	usedAPIValues := make(map[string]bool, len(apiValues))
 	hasLostNonSentinel := false
+
 	for _, sv := range stateVals {
-		if !apiValueSet[sv] {
-			if apiIncludeNull && isNAFallback(sv) {
-				sentinelsToRestore = append(sentinelsToRestore, sv)
-			} else {
-				hasLostNonSentinel = true
-			}
+		if apiValueSet[sv] {
+			// Value still returned by API: keep it at its original position.
+			result = append(result, sv)
+			usedAPIValues[sv] = true
+		} else if apiIncludeNull && isNAFallback(sv) {
+			// Sentinel was stripped by API normalization: restore it in-place.
+			result = append(result, sv)
+		} else {
+			// A non-sentinel value disappeared according to the API.
+			hasLostNonSentinel = true
 		}
 	}
 
-	if hasLostNonSentinel && len(merged) == 0 {
-		// API returned nothing at all and a non-sentinel value is missing:
+	if hasLostNonSentinel && len(apiValues) == 0 {
+		// API returned nothing at all and a non-sentinel is missing:
 		// fall back to preserving the full state list (legacy behaviour).
 		return stateVals
 	}
-	// Restore any sentinels stripped by API normalization.
-	return append(merged, sentinelsToRestore...)
+
+	// Append any API values not already placed (genuinely new entries),
+	// preserving the API's ordering for these new entries.
+	for _, v := range apiValues {
+		if !usedAPIValues[v] {
+			result = append(result, v)
+		}
+	}
+
+	return result
 }
 
 // populateStateFromAPI fetches the report from the API and populates the Terraform state.

@@ -104,9 +104,10 @@ func TestMergeSentinelValues(t *testing.T) {
 			stateVals:      []string{"[Service N/A]", "Cloud Run"},
 			apiIncludeNull: true,
 			// API returned BigQuery. Cloud Run disappeared (non-sentinel, lost).
-			// len(merged) > 0 so full fallback does NOT trigger.
-			// Sentinel [Service N/A] is restored; Cloud Run is gone.
-			want: []string{"BigQuery", "[Service N/A]"},
+			// len(apiValues) > 0 so full fallback does NOT trigger.
+			// Sentinel [Service N/A] is restored at its original state position (index 0);
+			// Cloud Run is gone; BigQuery (new from API) is appended at the end.
+			want: []string{"[Service N/A]", "BigQuery"},
 		},
 		// ------------------------------------------------------------------ //
 		// Values already in API response are not duplicated.
