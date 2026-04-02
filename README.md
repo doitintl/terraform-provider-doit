@@ -6,9 +6,7 @@
 [![Go](https://img.shields.io/github/go-mod/go-version/doitintl/terraform-provider-doit)](https://go.dev/)
 [![License](https://img.shields.io/github/license/doitintl/terraform-provider-doit)](LICENSE)
 
-This Terraform provider allows you to manage DoiT Cloud Intelligence resources using the [DoiT API](https://developer.doit.com/reference/welcome).
-
-This provider is being actively developed. It aims to provide full coverage of the compatible public API endpoints in the [DoiT API reference](https://developer.doit.com/reference). Version 1.0.0 is considered the first stable release.
+This Terraform provider allows you to manage DoiT Cloud Intelligence resources using the [DoiT API](https://developer.doit.com/reference). The provider is being actively developed and aims to provide full coverage of the compatible public API endpoints. Version 1.0.0 is considered the first stable release.
 
 ## Upgrading to v1.0.0
 
