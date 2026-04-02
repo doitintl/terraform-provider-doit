@@ -3440,6 +3440,9 @@ components:
         question:
           type: string
           description: The question to ask Ava.
+        conversationId:
+          type: string
+          description: Optional ID of an existing conversation to continue.
       required:
         - question
     AvaAskSyncRequest:
@@ -3466,6 +3469,9 @@ components:
         conversationId:
           type: string
           description: The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
+        answerId:
+          type: string
+          description: The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
       required:
         - answer
     AvaFeedbackRequest:

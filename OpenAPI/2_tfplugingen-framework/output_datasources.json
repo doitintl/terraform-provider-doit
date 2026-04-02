@@ -1901,6 +1901,13 @@
 						}
 					},
 					{
+						"name": "answer_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint."
+						}
+					},
+					{
 						"name": "conversation_id",
 						"string": {
 							"computed_optional_required": "computed",
