@@ -3195,6 +3195,302 @@
 			}
 		},
 		{
+			"name": "insights",
+			"schema": {
+				"attributes": [
+					{
+						"name": "search_term",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "display_status",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "category",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "provider",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The cloud provider associated with the resource."
+						}
+					},
+					{
+						"name": "source",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "the source that generated insights"
+						}
+					},
+					{
+						"name": "priority",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "tag",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "easy_win",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "cloud_flows",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "page",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(0)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "page_size",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(0, 100)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "pagination",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "has_next_page",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "True if there are more results to fetch."
+									}
+								}
+							],
+							"description": "Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time."
+						}
+					},
+					{
+						"name": "results",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "categories",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											}
+										}
+									},
+									{
+										"name": "cloud_flow_template_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "detailed_description_mdx",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "display_status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The display status of the insight."
+										}
+									},
+									{
+										"name": "easy_win_description",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "key",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "last_status_change",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "last_changed_at",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "user_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.\n"
+													}
+												}
+											],
+											"description": "If set, this object contains the last status change made by a user for this insight"
+										}
+									},
+									{
+										"name": "last_updated",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud provider associated with the resource."
+										}
+									},
+									{
+										"name": "report_url",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "short_description",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "source",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The source that generated the insight."
+										}
+									},
+									{
+										"name": "summary",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "operational_risks",
+													"number": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "performance_risks",
+													"number": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "potential_daily_savings",
+													"number": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "reliability_risks",
+													"number": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "security_risks",
+													"number": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "sustainability_risks",
+													"number": {
+														"computed_optional_required": "computed"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "primary purpose, initially, is to provide security certification information, eg. ISO etc."
+										}
+									},
+									{
+										"name": "title",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Insights API",
+				"markdown_description": "Insights API"
+			}
+		},
+		{
 			"name": "invoice",
 			"schema": {
 				"attributes": [

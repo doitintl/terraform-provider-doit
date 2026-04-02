@@ -149,6 +149,11 @@ data_sources:
     read:
       path: /datahub/v1/datasets
       method: GET
+  # Insights data sources
+  insights:
+    read:
+      path: /insights/v1/results
+      method: GET
   # AI assistant data source
   ava:
     read:

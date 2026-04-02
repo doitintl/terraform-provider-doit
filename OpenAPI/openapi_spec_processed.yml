@@ -58,6 +58,8 @@ tags:
     description: View and manage commitment contracts with DoiT.
   - name: Ava
     description: Interact with Ava, DoiT's AI-powered cloud assistant.
+  - name: Insights
+    description: Insights API
 paths:
   /analytics/v1/alerts:
     get:
@@ -2831,6 +2833,219 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /insights/v1/results:
+    get:
+      tags:
+        - Insights
+      summary: Get Insight Results containing aggregate summary of results
+      operationId: getInsightResults
+      parameters:
+        - in: query
+          name: searchTerm
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: displayStatus
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["actionable", "acknowledged", "in progress", "optimized", "dismissed"]
+          required: false
+        - in: query
+          name: category
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["FinOps", "OperationalExcellence", "PerformanceEfficiency", "Reliability", "Security", "Sustainability"]
+          required: false
+        - in: query
+          name: provider
+          schema:
+            $ref: "#/components/schemas/Provider"
+          required: false
+        - in: query
+          name: source
+          description: the source that generated insights
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Source"
+          required: false
+        - in: query
+          name: priority
+          schema:
+            type: array
+            items:
+              type: string
+              enum: ["Low", "Medium", "High"]
+          required: false
+        - in: query
+          name: tag
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+        - in: query
+          name: easyWin
+          schema:
+            type: boolean
+          required: false
+        - in: query
+          name: cloudFlows
+          schema:
+            type: boolean
+          required: false
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+          required: false
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+          required: false
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultsBody"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Insights
+      summary: Post Insight Results
+      operationId: postInsightResults
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResultsBody"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResultsError"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Insights
+      summary: Delete Insight Results
+      operationId: deleteInsightResults
+      parameters:
+        - in: query
+          name: insightKey
+          schema:
+            type: string
+          required: true
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /insights/v1/results/source/{sourceID}/insight/{insightKey}/status:
+    put:
+      tags:
+        - Insights
+      summary: Update Insight Status
+      operationId: updateInsightStatus
+      parameters:
+        - in: path
+          name: sourceID
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: insightKey
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusRequest"
+      responses:
+        "204":
+          description: Status updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results:
+    get:
+      tags:
+        - Insights
+      summary: Get Insight Resource Results
+      operationId: getInsightResourceResults
+      parameters:
+        - in: path
+          name: sourceID
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: insightKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResults"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
 components:
   schemas:
     AccountManagerListItem:
@@ -3897,6 +4112,9 @@ components:
           format: int64
         url:
           type: string
+    Category:
+      type: string
+      enum: ["FinOps", "Operational excellence", "Performance efficiency", "Reliability", "Security", "Sustainability"]
     CloudIncidentListItem:
       type: object
       description: Summary information for a cloud incident.
@@ -4187,6 +4405,9 @@ components:
           items:
             type: string
           description: List of label IDs to associate with the annotation. Labels must already exist.
+    CreateCategory:
+      type: string
+      enum: ["FinOps", "Security"]
     CreateCommentRequest:
       type: object
       description: Request body for adding a comment to a support ticket.
@@ -4282,6 +4503,13 @@ components:
           items:
             type: string
           description: Array of label IDs assigned to the report
+    CreateResultsBody:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/InsightRequest"
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -4308,6 +4536,42 @@ components:
         - AED
         - THB
         - COP
+    DailySavingsClusterAgentResourceResult:
+      allOf:
+        - $ref: "#/components/schemas/ResourceResult"
+        - type: object
+          required:
+            - resultType
+          properties:
+            resultType:
+              type: string
+              enum: ["potential_daily_savings_with_cluster_agent"]
+            result:
+              $ref: "#/components/schemas/PotentialDailySavingsWithClusterAgentResult"
+    DailySavingsRecommendationResourceResult:
+      allOf:
+        - $ref: "#/components/schemas/ResourceResult"
+        - type: object
+          required:
+            - resultType
+          properties:
+            resultType:
+              type: string
+              enum: ["potential_daily_savings_with_recommendation"]
+            result:
+              $ref: "#/components/schemas/PotentialDailySavingsWithRecommendationResult"
+    DailySavingsResourceResult:
+      allOf:
+        - $ref: "#/components/schemas/ResourceResult"
+        - type: object
+          required:
+            - resultType
+          properties:
+            resultType:
+              type: string
+              enum: ["potential_daily_savings"]
+            result:
+              $ref: "#/components/schemas/PotentialDailySavingsResult"
     DatahubEvents201Response:
       type: object
       properties:
@@ -4542,6 +4806,29 @@ components:
         - allocation_rule
         - gke
         - gke_label
+    DismissalDetails:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum:
+            - "not relevant"
+            - "not enough information"
+            - "not worth the effort"
+            - "inaccurate optimization opportunities"
+        comment:
+          type: string
+    DisplayStatus:
+      type: string
+      enum:
+        - "actionable"
+        - "acknowledged"
+        - "optimized"
+        - "dismissed"
+        - "in progress"
+        - "upgrade needed"
+        - "permissions needed"
+      description: The display status of the insight.
     DocumentRef:
       description: Reference to a Firestore document.
       type: object
@@ -5415,6 +5702,93 @@ components:
           type: integer
           description: Assets rows count
           format: int64
+    InsightRequest:
+      type: object
+      required: [key, title, shortDescription, provider, categories, resourceResults]
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        shortDescription:
+          type: string
+        detailedDescriptionMdx:
+          type: string
+        provider:
+          $ref: "#/components/schemas/Provider"
+        categories:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/CreateCategory"
+        tags:
+          description: primary purpose, initially, is to provide security certification information, eg. ISO etc.
+          type: array
+          items:
+            type: string
+        reportUrl:
+          type: string
+        cloudFlowTemplateId:
+          type: string
+        easyWinDescription:
+          type: string
+        resourceResults:
+          $ref: "#/components/schemas/ResourceResults"
+    InsightResponse:
+      type: object
+      properties:
+        source:
+          $ref: "#/components/schemas/Source"
+        key:
+          type: string
+        title:
+          type: string
+        shortDescription:
+          type: string
+        detailedDescriptionMdx:
+          type: string
+        displayStatus:
+          $ref: "#/components/schemas/DisplayStatus"
+        provider:
+          $ref: "#/components/schemas/Provider"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/Category"
+        summary:
+          $ref: "#/components/schemas/InsightSummary"
+        lastStatusChange:
+          $ref: "#/components/schemas/LastInsightStatusChange"
+        lastUpdated:
+          type: string
+          format: date-time
+        tags:
+          description: primary purpose, initially, is to provide security certification information, eg. ISO etc.
+          type: array
+          items:
+            type: string
+        reportUrl:
+          type: string
+        cloudFlowTemplateId:
+          type: string
+        easyWinDescription:
+          type: string
+    InsightSummary:
+      type: object
+      properties:
+        operationalRisks:
+          type: number
+        performanceRisks:
+          type: number
+        potentialDailySavings:
+          type: number
+        reliabilityRisks:
+          type: number
+        securityRisks:
+          type: number
+        sustainabilityRisks:
+          type: number
     InviteResponse:
       type: object
       description: Response returned after creating a user invitation.
@@ -5510,6 +5884,13 @@ components:
         - looker
         - navigator
         - solve
+    IssueStatus:
+      type: string
+      enum:
+        - open
+        - in_progress
+        - resolved
+        - ignored
     LabelAssignmentObject:
       required:
         - objectId
@@ -5609,6 +5990,22 @@ components:
           type: string
           format: date-time
           description: The time when the label was last updated.
+    LastInsightStatusChange:
+      description: If set, this object contains the last status change made by a user for this insight
+      type: object
+      properties:
+        userId:
+          description: >
+            the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.
+
+          type: string
+          example: /users/0Rkrkeq5P0XLe8QFHKq2
+        lastChangedAt:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - lastChangedAt
     Limit:
       type: object
       description: |-
@@ -5838,6 +6235,15 @@ components:
         name:
           type: string
           description: The name of the organization
+    Pagination:
+      type: object
+      description: Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+      required:
+        - hasNextPage
+      properties:
+        hasNextPage:
+          type: boolean
+          description: True if there are more results to fetch.
     PlatformAPI:
       type: object
       description: Platform metadata used by product listing endpoints.
@@ -5846,6 +6252,42 @@ components:
           type: string
         id:
           type: string
+    PotentialDailySavingsResult:
+      type: object
+      properties:
+        value:
+          type: number
+          description: the daily saving amount for this result
+      required:
+        - value
+    PotentialDailySavingsWithClusterAgentResult:
+      type: object
+      properties:
+        value:
+          type: number
+          description: the daily saving amount for this result
+        agentInstalled:
+          type: boolean
+          description: true if the agent is installed
+      required:
+        - value
+        - agentInstalled
+    PotentialDailySavingsWithRecommendationResult:
+      type: object
+      properties:
+        value:
+          type: number
+          description: the daily saving amount for this result
+        current:
+          type: string
+          description: the current state (i.e. current instance type)
+        recommendation:
+          type: string
+          description: the recommended state (i.e. recommended instance type)
+      required:
+        - value
+        - current
+        - recommendation
     ProductAPI:
       type: object
       description: Platform/product metadata used by product listing endpoints.
@@ -5856,6 +6298,10 @@ components:
           type: string
         platform:
           type: string
+    Provider:
+      type: string
+      example: aws
+      description: The cloud provider associated with the resource.
     QueryRequestBody:
       type: object
       properties:
@@ -5977,6 +6423,113 @@ components:
         owner:
           type: string
           description: Resource owner (only present if requester doesn't have access)
+    ResourceResult:
+      type: object
+      required:
+        - resourceId
+        - resultType
+        - account
+        - provider
+      properties:
+        resourceId:
+          type: string
+        resourceType:
+          description: What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
+          type: string
+          example: instance, disk, cache
+        provider:
+          $ref: "#/components/schemas/Provider"
+        account:
+          type: string
+        location:
+          type: string
+          description: represents the region/zone of the resource in AWS, or equivalent for other providers
+          example: eu-west-2
+        resolved:
+          type: boolean
+        severity:
+          type: string
+          enum: ["critical", "high", "medium", "low"]
+        externalId:
+          type: string
+          description: the external ID of the resource in the provider's system for the resource
+        externalUrl:
+          type: string
+          description: the URL to the resource-level issue in the provider's system
+        metadata:
+          type: object
+          description: contains any additional information for the resource results
+        enhancement:
+          $ref: "#/components/schemas/ResourceResultEnhancement"
+        resultType:
+          type: string
+          enum: ["security_risk", "potential_daily_savings", "potential_daily_savings_with_recommendation", "potential_daily_savings_with_cluster_agent"]
+          description: The discriminator property that determines the schema of the 'result' field.
+      discriminator:
+        propertyName: resultType
+        mapping:
+          security_risk: "#/components/schemas/SecurityRiskResourceResult"
+          potential_daily_savings: "#/components/schemas/DailySavingsResourceResult"
+          potential_daily_savings_with_recommendation: "#/components/schemas/DailySavingsRecommendationResourceResult"
+          potential_daily_savings_with_cluster_agent: "#/components/schemas/DailySavingsClusterAgentResourceResult"
+    ResourceResultEnhancement:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+        priority:
+          $ref: '#/components/schemas/ResourceResultEnhancementPriority'
+        lastUpdatedBy: {type: string}
+        lastUpdatedAt: {type: string, format: date-time}
+    ResourceResultEnhancementPriority:
+      type: object
+      properties:
+        value: {type: string}
+        priorityScore: {type: number}
+    ResourceResults:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/SecurityRiskResourceResult"
+          - $ref: "#/components/schemas/DailySavingsResourceResult"
+          - $ref: "#/components/schemas/DailySavingsRecommendationResourceResult"
+          - $ref: "#/components/schemas/DailySavingsClusterAgentResourceResult"
+    ResultsBody:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/InsightResponse"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    ResultsError:
+      type: object
+      properties:
+        insightKey:
+          type: string
+        error:
+          type: string
+        code:
+          type: integer
+    RisksBreakdownValue:
+      type: object
+      properties:
+        critical:
+          type: integer
+        high:
+          type: integer
+        medium:
+          type: integer
+        low:
+          type: integer
+      required:
+        - critical
+        - high
+        - medium
+        - low
     Role:
       type: object
       description: Definition and permissions assigned to a role.
@@ -6066,6 +6619,18 @@ components:
           type: integer
           description: The number of committed seats. Applies to annual commitment plans.
           format: int64
+    SecurityRiskResourceResult:
+      allOf:
+        - $ref: "#/components/schemas/ResourceResult"
+        - type: object
+          required:
+            - resultType
+          properties:
+            resultType:
+              type: string
+              enum: ["security_risk"]
+            result:
+              $ref: "#/components/schemas/RisksBreakdownValue"
     SlackChannel:
       type: object
       description: Information of a Slack channel for notifications.
@@ -6082,6 +6647,10 @@ components:
           type: string
         workspace:
           type: string
+    Source:
+      type: string
+      description: The source that generated the insight.
+      example: aws-trusted-advisor, aws-cost-optimization-hub, aws-security-hub, azure-advisor, custom, gcp-recommender
     Subscription:
       type: object
       description: Subscription details for a G Suite or Office 365 asset.
@@ -6551,6 +7120,15 @@ components:
             - editor
             - viewer
           nullable: true
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/DisplayStatus"
+        dismissalDetails:
+          $ref: "#/components/schemas/DismissalDetails"
     UpdateUserRequest:
       type: object
       description: Fields allowed when updating an existing user.
