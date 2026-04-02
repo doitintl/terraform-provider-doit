@@ -1329,15 +1329,15 @@ resource "doit_budget" "this" {
 `, budgetStartPeriod(), i, testUser())
 }
 
-// TestAccBudget_ScopeWithMixedNAValue reproduces the scenario where a scope
-// contains BOTH a real value AND a legacy "[... N/A]" sentinel, e.g.:
-//
-//	values = ["Compute Engine", "[Service N/A]"]
+// TestAccBudget_ScopeWithMixedNAValue verifies that a scope containing BOTH a real
+// value AND a legacy "[... N/A]" sentinel (e.g. values = ["Compute Engine", "[Service N/A]"])
+// round-trips without drift after the sentinel-restoration fix in this PR.
 //
 // The API strips the sentinel and returns values=["Compute Engine"] + include_null=true.
-// Unlike the pure-NA case the blunt "all-NA" fallback does not fire, so the
-// sentinel is not restored and perpetual drift results.
-// This test is the budget equivalent of TestAccReport_FilterValuesMixedWithNA.
+// mergeSentinelValues (called from budget.go's populateState) detects the discrepancy
+// and restores the sentinel in-place, so state continues to match configuration.
+// This test is the budget equivalent of TestAccReport_FilterValuesMixedWithNA and
+// serves as a regression guard.
 // See: https://doitintl.atlassian.net/browse/CMP-38116
 func TestAccBudget_ScopeWithMixedNAValue(t *testing.T) {
 	n := acctest.RandInt()

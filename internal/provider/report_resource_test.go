@@ -2371,13 +2371,14 @@ resource "doit_report" "filter_na_stripped" {
 // TestAccReport_IncludeNullOnlyNoValues tests that a filter with include_null = true
 // and NO values is accepted by the API and round-trips without drift.
 //
-// This is the "pure include_null" pattern that PR #51575 (fix(analytics): allow
-// include_null and empty values public-api) enables on the API side. Until that PR
-// lands for the report API, this test will FAIL with an API validation error because
-// the current validation rejects a filter that has neither values nor regexp.
+// PR #51575 (fix(analytics): allow include_null and empty values public-api) is
+// deployed and the report API accepts this configuration. This test verifies the
+// full round-trip: the provider sends include_null=true with an empty values list,
+// the API stores it, and the provider reads it back without drift.
 //
-// Once the API fix is deployed, remove the t.Skip — no provider-side changes needed,
-// as the provider already sends include_null correctly.
+// If this test fails with a provider inconsistency error, check that report.go
+// correctly maps a nil/empty API values list to an empty Terraform list (not null)
+// when includeNull=true is set in the filter.
 func TestAccReport_IncludeNullOnlyNoValues(t *testing.T) {
 
 	n := acctest.RandInt()

@@ -1110,15 +1110,14 @@ resource "doit_alert" "this" {
 // TestAccAlert_IncludeNullOnlyNoValues tests that a scope with include_null = true
 // and NO values is accepted by the API and round-trips without drift.
 //
-// This is the "pure include_null" pattern that PR #51575 (fix(analytics): allow
-// include_null and empty values public-api) enables on the API side. Until that PR
-// lands, this test will FAIL with an API validation error because the current
-// validation rejects a scope that has neither values nor regexp.
+// PR #51575 (fix(analytics): allow include_null and empty values public-api) is
+// deployed and the alert API accepts this configuration. This test verifies the
+// full round-trip: the provider sends include_null=true with an empty values list,
+// the API stores it, and the provider reads it back without drift.
 //
-// Once the API fix is deployed, this test should pass with no provider-side changes
-// required — the provider already sends include_null correctly. If it does not pass,
-// a restoration fix similar to report.go's isNAFallback logic will be needed in
-// alert.go's mapAlertConfigToModel.
+// If this test fails with a provider inconsistency error, check that alert.go
+// correctly maps a nil/empty API values list to an empty Terraform list (not null)
+// when include_null=true is set in the scope.
 func TestAccAlert_IncludeNullOnlyNoValues(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -1279,8 +1278,9 @@ resource "doit_alert" "this" {
 // fallback fires), here apiHasValues=true so the current fallback does NOT restore
 // the sentinel, causing perpetual drift.
 // This test is the alert equivalent of TestAccReport_FilterValuesMixedWithNA.
-// It is expected to FAIL until alert.go gains the smarter include_null-based
-// sentinel detection (same fix needed as report.go).
+// The smarter include_null-based sentinel detection (mergeSentinelValues, called
+// from alert.go's populateState) is now implemented in this PR. This test serves
+// as a regression guard to ensure the mixed-sentinel restoration continues to work.
 // See: https://doitintl.atlassian.net/browse/CMP-38116
 func TestAccAlert_ScopeWithMixedNAValue(t *testing.T) {
 	n := acctest.RandInt()

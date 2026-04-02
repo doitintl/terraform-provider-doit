@@ -119,6 +119,22 @@ func TestMergeSentinelValues(t *testing.T) {
 			apiIncludeNull: true,
 			want:           []string{"Cloud Run", "[Service N/A]"},
 		},
+		// ------------------------------------------------------------------ //
+		// hasLostNonSentinel must NOT fire for sentinels when apiIncludeNull=false.
+		// Previously the else branch set hasLostNonSentinel=true for any unmatched
+		// stateVal, including sentinels, incorrectly triggering full-state fallback.
+		// ------------------------------------------------------------------ //
+		{
+			name:      "sentinel in state + apiIncludeNull=false: sentinel dropped, no full fallback",
+			apiValues: []string{"Cloud Run"},
+			// State has a sentinel that the API stripped (include_null normalized to false).
+			// The sentinel should be silently dropped — NOT trigger the hasLostNonSentinel
+			// full-state fallback, which would incorrectly overwrite the state.
+			stateVals:      []string{"Cloud Run", "[Service N/A]"},
+			apiIncludeNull: false,
+			// The sentinel is dropped (apiIncludeNull=false), "Cloud Run" is kept.
+			want: []string{"Cloud Run"},
+		},
 	}
 
 	for _, tt := range tests {

@@ -62,8 +62,10 @@ func mergeSentinelValues(apiValues []string, stateVals []string, apiIncludeNull 
 		} else if apiIncludeNull && isNAFallback(sv) {
 			// Sentinel was stripped by API normalization: restore it in-place.
 			result = append(result, sv)
-		} else {
+		} else if !isNAFallback(sv) {
 			// A non-sentinel value disappeared according to the API.
+			// (A sentinel that was not restored — because apiIncludeNull=false —
+			// is intentionally dropped and does NOT trigger the full-state fallback.)
 			hasLostNonSentinel = true
 		}
 	}
