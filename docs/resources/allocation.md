@@ -214,7 +214,7 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+- `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.
 - `include_null` (Boolean) Include null values.
 - `inverse` (Boolean) If true, all selected values will be excluded.
 - `inverse_selection` (Boolean, Deprecated) If true, all selected values will be excluded.
@@ -252,7 +252,7 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+- `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.
 - `include_null` (Boolean) Include null values.
 - `inverse` (Boolean) If true, all selected values will be excluded.
 - `inverse_selection` (Boolean, Deprecated) If true, all selected values will be excluded.

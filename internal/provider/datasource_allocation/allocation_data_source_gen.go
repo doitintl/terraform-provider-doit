@@ -55,8 +55,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 							Attributes: map[string]schema.Attribute{
 								"case_insensitive": schema.BoolAttribute{
 									Computed:            true,
-									Description:         "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
-									MarkdownDescription: "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+									Description:         "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.",
+									MarkdownDescription: "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.",
 								},
 								"include_null": schema.BoolAttribute{
 									Computed:            true,
@@ -134,8 +134,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 								Attributes: map[string]schema.Attribute{
 									"case_insensitive": schema.BoolAttribute{
 										Computed:            true,
-										Description:         "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
-										MarkdownDescription: "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.",
+										Description:         "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.",
+										MarkdownDescription: "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.",
 									},
 									"include_null": schema.BoolAttribute{
 										Computed:            true,

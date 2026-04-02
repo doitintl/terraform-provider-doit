@@ -314,7 +314,7 @@
 														"default": {
 															"static": false
 														},
-														"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+														"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise."
 													}
 												},
 												{
@@ -457,7 +457,7 @@
 															"default": {
 																"static": false
 															},
-															"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+															"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise."
 														}
 													},
 													{

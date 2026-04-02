@@ -599,7 +599,7 @@
 													"name": "case_insensitive",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+														"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise."
 													}
 												},
 												{
@@ -694,7 +694,7 @@
 														"name": "case_insensitive",
 														"bool": {
 															"computed_optional_required": "computed",
-															"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise."
+															"description": "If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise."
 														}
 													},
 													{
