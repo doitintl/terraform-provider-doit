@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.3.2 (Unreleased)
+## v1.3.2 (2026-04-02)
 
 ### BUG FIXES
 
@@ -12,8 +12,10 @@
 
 ### INTERNAL
 
-- Extended acceptance test coverage for `doit_alert` and `doit_budget` to match the `doit_report` test matrix: pure-NA sentinel round-trip, mixed sentinel + real values, `include_null = true` with a non-empty `values` list, and `include_null = true` with an empty `values` list (the last case is skipped for alert/report pending upstream API fix).
-- Added `TestAccReport_IncludeNullOnlyNoValues` to complete the report test matrix (skipped pending upstream API fix).
+- Extended acceptance test coverage for `doit_alert` and `doit_budget` to match the `doit_report` test matrix: pure-NA sentinel round-trip, mixed sentinel + real values, `include_null = true` with a non-empty `values` list, and `include_null = true` with an empty `values` list.
+- Added `TestAccReport_IncludeNullOnlyNoValues` to complete the report test matrix.
+- Synced Ava API spec: `AvaAskSyncResponse` now includes `answer_id` and `conversation_id` fields in the generated models (both are always `null` in ephemeral mode used by this provider, so the `doit_ava` data source schema is unchanged) ([#146](https://github.com/doitintl/terraform-provider-doit/pull/146)).
+- Cleaned up unused components from OpenAPI spec and updated `case_insensitive` filter description ([#145](https://github.com/doitintl/terraform-provider-doit/pull/145)).
 
 ## v1.3.1 (2026-03-30)
 
