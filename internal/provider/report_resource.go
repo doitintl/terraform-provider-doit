@@ -55,12 +55,13 @@ func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
-	// Validate metrics list requirements:
-	// - Must have 1-4 metrics if specified (API limitation)
-	// - Cannot be empty (API silently preserves existing metrics, causing state inconsistency)
 	return []resource.ConfigValidator{
+		// Must have 1-4 metrics if specified; empty list causes state inconsistency.
 		reportMetricsLengthValidator{},
+		// custom_time_range.from/to must be valid RFC3339 timestamps.
 		reportTimestampValidator{},
+		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
+		reportFilterNAValidator{},
 	}
 }
 

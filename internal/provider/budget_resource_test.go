@@ -1154,3 +1154,353 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i, testUser())
 }
+
+// TestAccBudget_ScopeIncludeNull tests that a scope with include_null = true
+// and a real value round-trips correctly without drift.
+// This is the budget equivalent of TestAccReport_IncludeNull.
+// It exercises the state-first includeNullVal logic: the API may not reliably
+// echo include_null back, so the provider must preserve the user's value.
+func TestAccBudget_ScopeIncludeNull(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetScopeIncludeNull(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("service_description"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								"values":       knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("Compute Engine")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccBudgetScopeIncludeNull(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetScopeIncludeNull(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-scope-include-null-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type         = "fixed"
+      id           = "service_description"
+      mode         = "is"
+      include_null = true
+      values       = ["Compute Engine"]
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type         = "recurring"
+  start_period = local.start_period
+}
+`, budgetStartPeriod(), i, testUser())
+}
+
+// TestAccBudget_ScopeWithNAValue tests that a scope configured with the legacy
+// NullFallback sentinel value (e.g. "[Service N/A]") round-trips correctly —
+// i.e. after apply the state still contains "[Service N/A]" and no drift is
+// reported on a subsequent plan.
+//
+// This is the budget equivalent of TestAccReport_FilterValuesNAStripped.
+//
+// budget.go now has the same sentinel-restoration logic that report.go has
+// (isNAFallback + populateState restoration), so this test is expected to pass
+// and serves as a regression guard for that behavior.
+//
+// The failure mode (if the restoration logic regresses) is
+// "Provider produced inconsistent result after apply": the provider sends
+// "[Service N/A]" → the API strips it and sets include_null=true → on read the
+// provider gets back include_null=true + values=[] → state becomes values=[],
+// which mismatches the configured "[Service N/A]".
+// See: https://doitintl.atlassian.net/browse/CMP-38116
+func TestAccBudget_ScopeWithNAValue(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with "[Service N/A]". The API strips this sentinel
+			// and returns values=[] + include_null=true. The provider must
+			// restore the sentinel in state so it matches the plan exactly.
+			{
+				Config: testAccBudgetWithNAValue(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type": knownvalue.StringExact("fixed"),
+								"id":   knownvalue.StringExact("service_description"),
+								"mode": knownvalue.StringExact("is"),
+								// The sentinel must be present — not stripped.
+								"values": knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("[Service N/A]")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Verify no drift on re-apply — critical regression guard.
+			{
+				Config: testAccBudgetWithNAValue(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithNAValue(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-scope-na-value-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type   = "fixed"
+      id     = "service_description"
+      mode   = "is"
+      values = ["[Service N/A]"]
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type         = "recurring"
+  start_period = local.start_period
+}
+`, budgetStartPeriod(), i, testUser())
+}
+
+// TestAccBudget_ScopeWithMixedNAValue verifies that a scope containing BOTH a real
+// value AND a legacy "[... N/A]" sentinel (e.g. values = ["Compute Engine", "[Service N/A]"])
+// round-trips without drift after the sentinel-restoration fix in this PR.
+//
+// The API strips the sentinel and returns values=["Compute Engine"] + include_null=true.
+// mergeSentinelValues (called from budget.go's populateState) detects the discrepancy
+// and restores the sentinel in-place, so state continues to match configuration.
+// This test is the budget equivalent of TestAccReport_FilterValuesMixedWithNA and
+// serves as a regression guard.
+// See: https://doitintl.atlassian.net/browse/CMP-38116
+func TestAccBudget_ScopeWithMixedNAValue(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with both a real value and a sentinel.
+			// The provider must restore the sentinel after the API strips it,
+			// so state contains both values as configured.
+			{
+				Config: testAccBudgetWithMixedNAValue(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"id":   knownvalue.StringExact("service_description"),
+								"mode": knownvalue.StringExact("is"),
+								// Both the real value and the sentinel must be present.
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("Compute Engine"),
+									knownvalue.StringExact("[Service N/A]"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: No drift on re-apply.
+			{
+				Config: testAccBudgetWithMixedNAValue(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithMixedNAValue(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-scope-mixed-na-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type   = "fixed"
+      id     = "service_description"
+      mode   = "is"
+      values = ["Compute Engine", "[Service N/A]"]
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type         = "recurring"
+  start_period = local.start_period
+}
+`, budgetStartPeriod(), i, testUser())
+}
+
+// TestAccBudget_IncludeNullOnlyNoValues tests that a scope with include_null = true
+// and NO values is accepted by the API and round-trips without drift.
+//
+// PR #51575 (fix(analytics): allow include_null and empty values public-api) is
+// deployed and the budget API accepts this configuration. This test verifies the
+// full round-trip: the provider sends include_null=true with an empty values list,
+// the API stores it, and the provider reads it back without drift.
+//
+// If this test fails with a provider inconsistency error, check that budget.go
+// correctly maps a nil/empty API values list to an empty Terraform list (not null)
+// when include_null=true is set in the scope.
+func TestAccBudget_IncludeNullOnlyNoValues(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetIncludeNullOnlyNoValues(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("service_description"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								// values must be empty — no sentinel needed
+								"values": knownvalue.ListExact([]knownvalue.Check{}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccBudgetIncludeNullOnlyNoValues(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetIncludeNullOnlyNoValues(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-budget-include-null-only-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type         = "fixed"
+      id           = "service_description"
+      mode         = "is"
+      include_null = true
+      values       = []
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type         = "recurring"
+  start_period = local.start_period
+}
+`, budgetStartPeriod(), i, testUser())
+}

@@ -230,9 +230,12 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 			"formula": types.StringValue(resp.Rule.Formula),
 		}
 		if resp.Rule.Components != nil {
-			// Get existing component values from state for alias normalization and state preservation.
-			// The API does not reliably echo include_null / inverse_selection, so we preserve
-			// those from state. case_insensitive IS echoed and uses direct API mapping.
+			// Preserve existing component values from state for alias-type normalization.
+			// Note: includeNull, inverse, and caseInsensitive ARE reliably echoed by the
+			// API. inverseSelection is a deprecated field superseded by inverse — the API
+			// accepts it on write but never returns it (the value is visible via inverse
+			// instead). We preserve all four from state as a defensive baseline, which
+			// also handles ImportState gracefully (falls back to API value).
 			var existingComponents []resource_allocation.ComponentsValue
 			if !state.Rule.IsNull() && !state.Rule.IsUnknown() &&
 				!state.Rule.Components.IsNull() && !state.Rule.Components.IsUnknown() {
@@ -397,12 +400,13 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 			compType = normalizeDimensionsType(compType, existingComponents[i].ComponentsType.ValueString())
 		}
 
-		// The API does not reliably echo include_null / inverse_selection — it may
-		// return false regardless of the value sent. Always prefer the plan/state value
-		// when available. The API response is only used as a fallback (e.g., during
-		// ImportState when there is no prior plan/state).
-		// The API may not reliably echo case_insensitive — always prefer the plan/state
-		// value when available.
+		// Note on field echo behavior (verified via API probe):
+		// - includeNull, inverse, caseInsensitive: echoed correctly by the API.
+		// - inverseSelection: DEPRECATED (superseded by inverse). The API accepts it
+		//   on write but never echoes it back; the equivalent value is visible in
+		//   inverse instead. We preserve all four from state so that:
+		//   a) deprecated inverseSelection round-trips without drift for existing configs, and
+		//   b) ImportState (no prior state) falls back cleanly to the API value.
 		caseInsensitiveVal := types.BoolValue(false)
 		if i < len(existingComponents) {
 			caseInsensitiveVal = types.BoolValue(existingComponents[i].CaseInsensitive.ValueBool())

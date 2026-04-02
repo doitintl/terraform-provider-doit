@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_alert"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -47,4 +48,44 @@ func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req reso
 				"If you want to use the default (creator), omit the recipients attribute entirely.",
 		)
 	}
+}
+
+// alertScopeNAValidator warns when legacy NullFallback sentinel values such as
+// "[Service N/A]" are found in config.scopes[*].values. Users should use
+// include_null = true on the scope block instead.
+type alertScopeNAValidator struct{}
+
+var _ resource.ConfigValidator = alertScopeNAValidator{}
+
+func (v alertScopeNAValidator) Description(_ context.Context) string {
+	return "Warns when legacy NullFallback sentinel values (e.g. [Service N/A]) are used in scope values"
+}
+
+func (v alertScopeNAValidator) MarkdownDescription(_ context.Context) string {
+	return "Warns when legacy NullFallback sentinel values (e.g. `[Service N/A]`) are used in " +
+		"`config.scopes[*].values`. Use `include_null = true` on the scope block instead."
+}
+
+func (v alertScopeNAValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	basePath := path.Root("config").AtName("scopes")
+
+	var scopes types.List
+	diags := req.Config.GetAttribute(ctx, basePath, &scopes)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() || scopes.IsNull() || scopes.IsUnknown() {
+		return
+	}
+
+	var scopeVals []resource_alert.ScopesValue
+	diags = scopes.ElementsAs(ctx, &scopeVals, false)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+
+	valueLists := make([]types.List, len(scopeVals))
+	for i, s := range scopeVals {
+		valueLists[i] = s.Values
+	}
+	warnNASentinels(ctx, basePath, valueLists, &resp.Diagnostics)
 }

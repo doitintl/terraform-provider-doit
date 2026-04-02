@@ -66,6 +66,8 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		alertRecipientsValidator{},
+		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
+		alertScopeNAValidator{},
 	}
 }
 

@@ -2250,6 +2250,94 @@ func TestAccReport_FilterValuesNAStripped(t *testing.T) {
 	})
 }
 
+// TestAccReport_FilterValuesMixedWithNA covers the scenario where a filter
+// contains BOTH a real value AND a legacy "[... N/A]" sentinel, e.g.:
+//
+//	values = ["Compute Engine", "[Service N/A]"]
+//
+// The API strips the sentinel and returns values=["Compute Engine"] + includeNull=true.
+// Unlike the pure-NA case (where the API returns values=[] and the blunt fallback fires),
+// here apiHasValues=true, and the provider must use include_null-based detection to
+// restore the "[Service N/A]" sentinel so that state continues to match configuration
+// and no perpetual drift is introduced.
+// See: https://doitintl.atlassian.net/browse/CMP-38116
+func TestAccReport_FilterValuesMixedWithNA(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with ["Compute Engine", "[Service N/A]"].
+			// The API will return values=["Compute Engine"] + includeNull=true.
+			// The provider must restore the "[Service N/A]" sentinel so that
+			// the state matches the plan exactly.
+			{
+				Config: testAccReportFilterMixedNAConfig(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.filter_mixed_na",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"id":   knownvalue.StringExact("service_description"),
+								"mode": knownvalue.StringExact("is"),
+								// Both the real value and the sentinel must be present in state.
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("Compute Engine"),
+									knownvalue.StringExact("[Service N/A]"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Verify no drift on re-plan.
+			// Without the smarter fix, the provider returns values=["Compute Engine"]
+			// (API response, without the sentinel), causing perpetual drift.
+			{
+				Config: testAccReportFilterMixedNAConfig(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportFilterMixedNAConfig(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "filter_mixed_na" {
+    name = "test-filter-mixed-na-%d"
+    description = "Reproduces API-stripping of N/A sentinel when mixed with real values"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        filters = [
+          {
+            id      = "service_description"
+            type    = "fixed"
+            inverse = false
+            values  = ["Compute Engine", "[Service N/A]"]
+            mode    = "is"
+          }
+        ]
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
 func testAccReportFilterNAStrippedConfig(i int) string {
 	return fmt.Sprintf(`
 resource "doit_report" "filter_na_stripped" {
@@ -2269,6 +2357,89 @@ resource "doit_report" "filter_na_stripped" {
             inverse = true
             values  = ["[Customer N/A]"]
             mode    = "is"
+          }
+        ]
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_IncludeNullOnlyNoValues tests that a filter with include_null = true
+// and NO values is accepted by the API and round-trips without drift.
+//
+// PR #51575 (fix(analytics): allow include_null and empty values public-api) is
+// deployed and the report API accepts this configuration. This test verifies the
+// full round-trip: the provider sends include_null=true with an empty values list,
+// the API stores it, and the provider reads it back without drift.
+//
+// If this test fails with a provider inconsistency error, check that report.go
+// correctly maps a nil/empty API values list to an empty Terraform list (not null)
+// when includeNull=true is set in the filter.
+func TestAccReport_IncludeNullOnlyNoValues(t *testing.T) {
+
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportIncludeNullOnlyNoValues(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":         knownvalue.StringExact("fixed"),
+								"id":           knownvalue.StringExact("service_description"),
+								"mode":         knownvalue.StringExact("is"),
+								"include_null": knownvalue.Bool(true),
+								// values must be empty — no sentinel needed
+								"values": knownvalue.ListExact([]knownvalue.Check{}),
+							}),
+						}),
+					),
+				},
+			},
+			// Verify no drift on re-apply
+			{
+				Config: testAccReportIncludeNullOnlyNoValues(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportIncludeNullOnlyNoValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name        = "test-report-include-null-only-%d"
+    description = "Report testing include_null=true with no values (pending PR #51575)"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        filters = [
+          {
+            id           = "service_description"
+            type         = "fixed"
+            inverse      = false
+            include_null = true
+            values       = []
+            mode         = "is"
           }
         ]
         data_source    = "billing"

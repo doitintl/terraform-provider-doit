@@ -345,6 +345,7 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		var existingScopeIDs []string
 		var existingScopeIncludeNull []*bool
 		var existingScopeCaseInsensitive []*bool
+		var existingScopeValues []types.List
 		if !state.Scopes.IsNull() && !state.Scopes.IsUnknown() {
 			var existingScopes []resource_budget.ScopesValue
 			if d := state.Scopes.ElementsAs(ctx, &existingScopes, false); !d.HasError() {
@@ -353,19 +354,36 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 					existingScopeIDs = append(existingScopeIDs, es.Id.ValueString())
 					existingScopeIncludeNull = append(existingScopeIncludeNull, es.IncludeNull.ValueBoolPointer())
 					existingScopeCaseInsensitive = append(existingScopeCaseInsensitive, es.CaseInsensitive.ValueBoolPointer())
+					existingScopeValues = append(existingScopeValues, es.Values)
 				}
 			}
 		}
 
 		scopesList := make([]resource_budget.ScopesValue, len(resp.Scopes))
 		for i, scope := range resp.Scopes {
-			var valuesVal types.List
+			// Sentinel-restoration logic (mirrors report.go):
+			// The API strips legacy "[... N/A]" NullFallback sentinels from scope values
+			// and converts them to includeNull=true. We restore any stripped sentinels
+			// by comparing the API response against the prior state.
+			// See: https://doitintl.atlassian.net/browse/CMP-38116
+			apiIncludeNull := scope.IncludeNull != nil && *scope.IncludeNull
+			var apiValues []string
 			if scope.Values != nil {
+				apiValues = *scope.Values
+			}
+			mergedValues := apiValues
+			if i < len(existingScopeValues) && !existingScopeValues[i].IsNull() && !existingScopeValues[i].IsUnknown() {
+				var stateVals []string
+				if d := existingScopeValues[i].ElementsAs(ctx, &stateVals, false); !d.HasError() {
+					mergedValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
+				}
+			}
+			var valuesVal types.List
+			if len(mergedValues) > 0 {
 				var listDiags diag.Diagnostics
-				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, *scope.Values)
+				valuesVal, listDiags = types.ListValueFrom(ctx, types.StringType, mergedValues)
 				diags.Append(listDiags...)
 			} else {
-				// Return empty list for nil to avoid inconsistent result if user sets []
 				var emptyDiags diag.Diagnostics
 				valuesVal, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
 				diags.Append(emptyDiags...)
