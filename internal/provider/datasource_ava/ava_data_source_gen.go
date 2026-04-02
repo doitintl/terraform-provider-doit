@@ -17,6 +17,11 @@ func AvaDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The Ava response text.",
 				MarkdownDescription: "The Ava response text.",
 			},
+			"answer_id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.",
+				MarkdownDescription: "The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.",
+			},
 			"conversation_id": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.",
@@ -30,5 +35,6 @@ func AvaDataSourceSchema(ctx context.Context) schema.Schema {
 
 type AvaModel struct {
 	Answer         types.String `tfsdk:"answer"`
+	AnswerId       types.String `tfsdk:"answer_id"`
 	ConversationId types.String `tfsdk:"conversation_id"`
 }

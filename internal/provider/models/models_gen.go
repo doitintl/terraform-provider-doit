@@ -2717,6 +2717,9 @@ type AssignObjectsToLabelRequest struct {
 
 // AvaAskRequest defines model for AvaAskRequest.
 type AvaAskRequest struct {
+	// ConversationId Optional ID of an existing conversation to continue.
+	ConversationId *string `json:"conversationId,omitempty"`
+
 	// Question The question to ask Ava.
 	Question string `json:"question"`
 }
@@ -2737,6 +2740,9 @@ type AvaAskSyncRequest struct {
 type AvaAskSyncResponse struct {
 	// Answer The Ava response text.
 	Answer string `json:"answer"`
+
+	// AnswerId The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
+	AnswerId *string `json:"answerId,omitempty"`
 
 	// ConversationId The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
 	ConversationId *string `json:"conversationId,omitempty"`
