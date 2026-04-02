@@ -10,7 +10,7 @@ data "doit_insights" "actionable_finops" {
 
 # List insights filtered by cloud provider
 data "doit_insights" "gcp_insights" {
-  cloud_provider = ["gcp"]
+  provider = "gcp"
 }
 
 # Output the number of insights found

@@ -96,13 +96,9 @@ func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		params.Category = &catVals
 	}
 
-	if !data.CloudProvider.IsNull() && !data.CloudProvider.IsUnknown() {
-		var providers []string
-		resp.Diagnostics.Append(data.CloudProvider.ElementsAs(ctx, &providers, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		params.CloudProvider = &providers
+	if !data.Provider.IsNull() && !data.Provider.IsUnknown() {
+		p := data.Provider.ValueString()
+		params.Provider = &p
 	}
 
 	if !data.Source.IsNull() && !data.Source.IsUnknown() {
@@ -220,8 +216,8 @@ func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if data.Category.IsUnknown() {
 		data.Category = types.ListNull(types.StringType)
 	}
-	if data.CloudProvider.IsUnknown() {
-		data.CloudProvider = types.ListNull(types.StringType)
+	if data.Provider.IsUnknown() {
+		data.Provider = types.StringNull()
 	}
 	if data.Source.IsUnknown() {
 		data.Source = types.ListNull(types.StringType)

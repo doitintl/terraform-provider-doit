@@ -3427,11 +3427,9 @@ paths:
                 ]
           required: false
         - in: query
-          name: cloud_provider
+          name: provider
           schema:
-            type: array
-            items:
-              $ref: "#/components/schemas/Provider"
+            $ref: "#/components/schemas/Provider"
           required: false
         - in: query
           name: source
@@ -3915,7 +3913,7 @@ components:
           type: integer
     Provider:
       type: string
-      example: ["aws", "gcp", "azure", "snowflake", "wiz"]
+      example: aws
       description: The cloud provider associated with the resource.
     Source:
       type: string

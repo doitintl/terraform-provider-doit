@@ -29,11 +29,6 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 				Optional: true,
 				Computed: true,
 			},
-			"cloud_provider": schema.ListAttribute{
-				ElementType: types.StringType,
-				Optional:    true,
-				Computed:    true,
-			},
 			"display_status": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
@@ -78,6 +73,12 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 				ElementType: types.StringType,
 				Optional:    true,
 				Computed:    true,
+			},
+			"provider": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The cloud provider associated with the resource.",
+				MarkdownDescription: "The cloud provider associated with the resource.",
 			},
 			"results": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -233,13 +234,13 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 type InsightsModel struct {
 	Category      types.List      `tfsdk:"category"`
 	CloudFlows    types.Bool      `tfsdk:"cloud_flows"`
-	CloudProvider types.List      `tfsdk:"cloud_provider"`
 	DisplayStatus types.List      `tfsdk:"display_status"`
 	EasyWin       types.Bool      `tfsdk:"easy_win"`
 	Page          types.Int64     `tfsdk:"page"`
 	PageSize      types.Int64     `tfsdk:"page_size"`
 	Pagination    PaginationValue `tfsdk:"pagination"`
 	Priority      types.List      `tfsdk:"priority"`
+	Provider      types.String    `tfsdk:"provider"`
 	Results       types.List      `tfsdk:"results"`
 	SearchTerm    types.String    `tfsdk:"search_term"`
 	Source        types.List      `tfsdk:"source"`

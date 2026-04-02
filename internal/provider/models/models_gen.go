@@ -6011,7 +6011,7 @@ type GetInsightResultsParams struct {
 	SearchTerm    *string                                 `form:"searchTerm,omitempty" json:"searchTerm,omitempty"`
 	DisplayStatus *[]GetInsightResultsParamsDisplayStatus `form:"displayStatus,omitempty" json:"displayStatus,omitempty"`
 	Category      *[]GetInsightResultsParamsCategory      `form:"category,omitempty" json:"category,omitempty"`
-	CloudProvider *[]Provider                             `form:"cloud_provider,omitempty" json:"cloud_provider,omitempty"`
+	Provider      *Provider                               `form:"provider,omitempty" json:"provider,omitempty"`
 
 	// Source the source that generated insights
 	Source     *[]Source                          `form:"source,omitempty" json:"source,omitempty"`
@@ -11933,9 +11933,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.CloudProvider != nil {
+		if params.Provider != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cloud_provider", *params.CloudProvider, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "provider", *params.Provider, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err

@@ -3223,12 +3223,10 @@
 						}
 					},
 					{
-						"name": "cloud_provider",
-						"list": {
+						"name": "provider",
+						"string": {
 							"computed_optional_required": "computed_optional",
-							"element_type": {
-								"string": {}
-							}
+							"description": "The cloud provider associated with the resource."
 						}
 					},
 					{
