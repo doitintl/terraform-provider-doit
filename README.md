@@ -8,9 +8,7 @@
 
 This Terraform provider allows you to manage DoiT Cloud Intelligence resources using the [DoiT API](https://developer.doit.com/reference/welcome).
 
-While the provider does not yet support all available API endpoints, version 1.0.0 marks the first stable release.
-
-Future releases will add support for additional resources and data sources.
+This provider is being actively developed. It aims to provide full coverage of the compatible public API endpoints at https://developer.doit.com/reference. Version 1.0.0 is considered the first stable release.
 
 ## Upgrading to v1.0.0
 
