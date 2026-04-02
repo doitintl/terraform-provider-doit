@@ -2448,7 +2448,7 @@ type AllocationAllocationType string
 // When the type is "allocation_rule", the component references existing allocation rules (nested allocation rules).
 // A maximum nesting depth of 3 levels is supported, and circular references are not allowed.
 type AllocationComponent struct {
-	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.
 	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
 
 	// IncludeNull Include null values.
