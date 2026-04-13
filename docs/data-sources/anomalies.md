@@ -103,7 +103,7 @@ Read-Only:
 - `acknowledged` (Boolean) Has the anomaly been acknowledged
 - `attribution` (String) Attribution ID.
 - `billing_account` (String) Billing account ID.
-- `cost_of_anomaly` (Number) Cost of the anomaly over and above the expected normal cost.
+- `cost_of_anomaly` (Number) Excess cost over and above the expected normal cost.
 - `end_time` (Number) End of the anomaly.
 - `id` (String)
 - `platform` (String) Cloud Provider name.

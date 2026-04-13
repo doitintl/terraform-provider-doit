@@ -1265,7 +1265,7 @@
 										"name": "cost_of_anomaly",
 										"float64": {
 											"computed_optional_required": "computed",
-											"description": "Cost of the anomaly over and above the expected normal cost."
+											"description": "Excess cost over and above the expected normal cost."
 										}
 									},
 									{

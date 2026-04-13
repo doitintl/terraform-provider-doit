@@ -3276,7 +3276,7 @@ components:
           description: Billing account ID.
         costOfAnomaly:
           type: number
-          description: Cost of the anomaly over and above the expected normal cost.
+          description: Excess cost over and above the expected normal cost.
           format: double
         id:
           type: string
@@ -6810,7 +6810,7 @@ components:
                 description: Billing account ID
               costOfAnomaly:
                 type: number
-                description: Cost of the anomaly over and above the expected normal cost
+                description: Excess cost over and above the expected normal cost
                 format: double
               platform:
                 type: string
