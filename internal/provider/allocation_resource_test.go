@@ -47,6 +47,15 @@ func TestAccAllocation(t *testing.T) {
 					},
 				},
 			},
+			// Drift detection: re-apply same config, expect no changes.
+			{
+				Config: testAccAllocationSingle(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 			{
 				Config: testAccAllocationSingleUpdate(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -102,6 +111,15 @@ func TestAccAllocation_Group(t *testing.T) {
 						"doit_allocation.group",
 						tfjsonpath.New("allocation_type"),
 						knownvalue.StringExact("group")),
+				},
+			},
+			// Drift detection: re-apply same config, expect no changes.
+			{
+				Config: testAccAllocationGroup(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 			{
