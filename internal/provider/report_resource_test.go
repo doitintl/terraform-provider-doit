@@ -36,6 +36,15 @@ func TestAccReport(t *testing.T) {
 					},
 				},
 			},
+			// Drift detection: re-apply same config, expect no changes.
+			{
+				Config: testAccReport(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 			{
 				Config: testAccReportUpdate(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -2446,6 +2455,77 @@ resource "doit_report" "this" {
         display_values = "actuals_only"
         currency       = "USD"
         layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_DriftDetection_CustomerPattern tests for drift using the
+// customer's exact pattern from ticket 300568: uses metrics (plural list)
+// instead of metric (singular), and does NOT set custom_time_range, metric,
+// or secondary_time_range. These are the attributes the customer had to add
+// ignore_changes blocks for.
+func TestAccReport_DriftDetection_CustomerPattern(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportCustomerPattern(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.drift_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+			},
+			// Drift detection: re-apply same config, expect no changes.
+			// This catches drift from API-computed fields like custom_time_range,
+			// metric (singular), and secondary_time_range being returned by the
+			// API even when the user didn't set them.
+			{
+				Config: testAccReportCustomerPattern(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportCustomerPattern(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "drift_test" {
+    name        = "test-drift-customer-pattern-%d"
+    description = "Mirrors customer pattern: uses metrics (plural) and omits optional computed fields"
+    config = {
+        # Uses metrics (plural list) — NOT metric (singular)
+        metrics = [{
+            type  = "extended"
+            value = "amortized_cost"
+        }]
+        include_promotional_credits = false
+        advanced_analysis = {
+            trending_up   = false
+            trending_down = false
+            not_trending  = false
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        # Intentionally NOT setting: custom_time_range, metric, secondary_time_range
+        # These are the attributes the customer had to add ignore_changes for
+        data_source    = "billing"
+        display_values = "actuals_only"
+        layout         = "table"
+        currency       = "USD"
     }
 }
 `, i)

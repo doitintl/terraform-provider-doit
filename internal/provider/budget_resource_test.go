@@ -53,6 +53,15 @@ func TestAccBudget(t *testing.T) {
 						knownvalue.StringExact("recurring")),
 				},
 			},
+			// Drift detection: re-apply same config, expect no changes.
+			{
+				Config: testAccBudget(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 			// Test Budget Update (In-place)
 			{
 				Config: testAccBudgetUpdate(n),
@@ -305,6 +314,15 @@ func TestAccBudget_Scopes(t *testing.T) {
 						},
 						),
 					),
+				},
+			},
+			// Drift detection: re-apply same config, expect no changes.
+			{
+				Config: testAccBudgetScopes(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},
@@ -1503,4 +1521,87 @@ resource "doit_budget" "this" {
   start_period = local.start_period
 }
 `, budgetStartPeriod(), i, testUser())
+}
+
+// TestAccBudget_DriftDetection_CustomerPattern tests for drift using the
+// customer's exact pattern from ticket 300568: uses metric, growth_per_period,
+// recipients_slack_channels=[], and a fixed cloud_provider scope.
+// These are the attributes the customer had to add ignore_changes for.
+func TestAccBudget_DriftDetection_CustomerPattern(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetCustomerPattern(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction("doit_budget.drift_test", plancheck.ResourceActionCreate),
+					},
+				},
+			},
+			// Drift detection: re-apply same config, expect no changes.
+			// This catches drift from attributes exercised here: amount,
+			// recipients_slack_channels, scopes, and alerts[].percentage.
+			{
+				Config: testAccBudgetCustomerPattern(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetCustomerPattern(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "drift_test" {
+  name              = "test-drift-customer-%d"
+  currency          = "USD"
+  type              = "recurring"
+  amount            = 100
+  time_interval     = "month"
+  growth_per_period = 1
+  metric            = "amortized_cost"
+  start_period      = local.start_period
+  recipients = [
+    "%s"
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 },
+    { "percentage" : 120 }
+  ]
+  use_prev_spend = false
+  # Customer sets this to empty list — potential drift source
+  recipients_slack_channels = []
+  scopes = [
+    {
+      type   = "fixed"
+      id     = "cloud_provider"
+      mode   = "is"
+      values = ["amazon-web-services"]
+    }
+  ]
+}
+`, budgetStartPeriod(), i, testUser(), testUser())
 }
