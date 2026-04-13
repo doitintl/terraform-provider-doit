@@ -51,7 +51,8 @@ func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceM
 		plan.AllocationType = types.StringNull()
 	}
 
-	// Optional+Computed fields at top level: resolve unknowns to null.
+	// Optional+Computed fields at top level: resolve unknowns using the API
+	// response where available, falling back to null.
 	if plan.Rules.IsUnknown() {
 		plan.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
 	}
@@ -59,7 +60,7 @@ func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceM
 		plan.Rule = resource_allocation.NewRuleValueNull()
 	}
 	if plan.UnallocatedCosts.IsUnknown() {
-		plan.UnallocatedCosts = types.StringNull()
+		plan.UnallocatedCosts = types.StringPointerValue(apiResp.UnallocatedCosts)
 	}
 
 	// Resolve unknowns inside rules[] elements.
@@ -70,25 +71,41 @@ func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceM
 		if d := plan.Rules.ElementsAs(ctx, &planRules, false); !d.HasError() {
 			changed := false
 			for i := range planRules {
+				// For each unknown Optional+Computed field, overlay the API
+				// response value (which may contain a generated default like
+				// formula="A") instead of null. This prevents perpetual drift
+				// where Read returns the API default but state has null.
+				apiRule := safeGetGroupRule(apiResp, i)
 				if planRules[i].Description.IsUnknown() {
-					planRules[i].Description = types.StringNull()
+					if apiRule != nil {
+						planRules[i].Description = types.StringPointerValue(apiRule.Description)
+					} else {
+						planRules[i].Description = types.StringNull()
+					}
 					changed = true
 				}
 				if planRules[i].Id.IsUnknown() {
-					// Overlay ID from API response for "create" actions (API assigns it).
-					if apiResp.Rules != nil && i < len(*apiResp.Rules) && (*apiResp.Rules)[i] != nil && (*apiResp.Rules)[i].Id != nil {
-						planRules[i].Id = types.StringValue(*(*apiResp.Rules)[i].Id)
+					if apiRule != nil {
+						planRules[i].Id = types.StringPointerValue(apiRule.Id)
 					} else {
 						planRules[i].Id = types.StringNull()
 					}
 					changed = true
 				}
 				if planRules[i].Formula.IsUnknown() {
-					planRules[i].Formula = types.StringNull()
+					if apiRule != nil {
+						planRules[i].Formula = types.StringPointerValue(apiRule.Formula)
+					} else {
+						planRules[i].Formula = types.StringNull()
+					}
 					changed = true
 				}
 				if planRules[i].Name.IsUnknown() {
-					planRules[i].Name = types.StringNull()
+					if apiRule != nil {
+						planRules[i].Name = types.StringPointerValue(apiRule.Name)
+					} else {
+						planRules[i].Name = types.StringNull()
+					}
 					changed = true
 				}
 				if planRules[i].Components.IsUnknown() {
@@ -116,16 +133,33 @@ func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceM
 		}
 	}
 
-	// Resolve unknowns inside single rule's components.
-	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() &&
-		!plan.Rule.Components.IsNull() && !plan.Rule.Components.IsUnknown() {
-		resolved, compDiags := resolveComponentUnknowns(ctx, &plan.Rule.Components)
-		diags.Append(compDiags...)
-		if resolved {
-			// Rebuild the Rule value with updated components.
+	// Resolve unknowns inside single rule (formula and components).
+	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() {
+		changed := false
+		formula := plan.Rule.Formula
+		if formula.IsUnknown() {
+			if apiResp.Rule != nil {
+				formula = types.StringValue(apiResp.Rule.Formula)
+			} else {
+				formula = types.StringNull()
+			}
+			changed = true
+		}
+
+		components := plan.Rule.Components
+		if !components.IsNull() && !components.IsUnknown() {
+			resolved, compDiags := resolveComponentUnknowns(ctx, &components)
+			diags.Append(compDiags...)
+			if resolved {
+				changed = true
+			}
+		}
+
+		if changed {
+			// Rebuild the Rule value with updated components and formula.
 			m := map[string]attr.Value{
-				"formula":    plan.Rule.Formula,
-				"components": plan.Rule.Components,
+				"formula":    formula,
+				"components": components,
 			}
 			var ruleDiags diag.Diagnostics
 			plan.Rule, ruleDiags = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
@@ -134,6 +168,15 @@ func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceM
 	}
 
 	return diags
+}
+
+// safeGetGroupRule returns the API response's group rule at index i, or nil if
+// the index is out of bounds or the rules slice is nil.
+func safeGetGroupRule(apiResp *models.Allocation, i int) *models.GroupAllocationRule {
+	if apiResp.Rules == nil || i >= len(*apiResp.Rules) {
+		return nil
+	}
+	return (*apiResp.Rules)[i]
 }
 
 // resolveComponentUnknowns resolves unknown Optional+Computed fields inside
