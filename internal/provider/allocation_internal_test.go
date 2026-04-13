@@ -37,13 +37,15 @@ func TestToAllocationRuleComponentsListValue_EmptySlice(t *testing.T) {
 // Single-rule allocation sends "rules": [] on update → API 500
 // ---------------------------------------------------------------------------
 
-// TestFillAllocationCommon_SingleRule_NoEmptyRules proves that for a single-rule
-// allocation, fillAllocationCommon produces an API request with "rules": [] when
-// the state has Rules set to an empty list (which mapAllocationToModel does for
-// single allocations when the API returns no group rules).
+// TestFillAllocationCommon_SingleRule_NoEmptyRules guards against a regression
+// where fillAllocationCommon would serialize an empty Rules list as "rules": []
+// in the API request for single-rule allocations.
 //
-// The API team confirmed: "rules": [] must not exist for single allocations.
-// It should be null (omitted from JSON).
+// Pre-fix behavior: mapAllocationToModel set Rules to an empty list for single
+// allocations, and fillAllocationCommon blindly forwarded it, producing
+// "rules": [] which the API rejects with a 500 error.
+//
+// Post-fix behavior: fillAllocationCommon omits req.Rules when len == 0.
 func TestFillAllocationCommon_SingleRule_NoEmptyRules(t *testing.T) {
 	ctx := context.Background()
 
@@ -98,7 +100,7 @@ func TestFillAllocationCommon_SingleRule_NoEmptyRules(t *testing.T) {
 	plan.Name = types.StringValue("test-single-alloc")
 	plan.Description = types.StringValue("test")
 	plan.Rule = ruleVal
-	plan.Rules = emptyRules // BUG: empty list, should be null for single allocations
+	plan.Rules = emptyRules // Simulate pre-fix state: empty list instead of null for single allocations
 	plan.UnallocatedCosts = types.StringNull()
 	plan.AllocationType = types.StringValue("single")
 	plan.Type = types.StringNull()
