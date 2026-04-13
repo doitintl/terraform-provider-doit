@@ -951,3 +951,269 @@ resource "doit_allocation" "invalid_nested" {
 }
 `, rName)
 }
+
+// TestAccAllocation_SentinelRestore tests that a single allocation with a
+// NullFallback sentinel value (e.g. "[Label N/A]") in component values
+// round-trips correctly — after apply the state still contains "[Label N/A]"
+// and no "inconsistent result" error is produced.
+//
+// This reproduces the exact failure from ticket 300568: the customer's config
+// has include_null=true and values=["[... N/A]"]. The API strips the sentinel
+// and returns values=[] + include_null=true. If the provider writes the API
+// response directly to state, Terraform sees a list-length mismatch (plan had
+// 1 element, state has 0) and crashes with "inconsistent result".
+//
+// The fix (plan-first state pattern) preserves the plan values in state after
+// Create/Update, so the sentinel stays in state regardless of what the API returns.
+func TestAccAllocation_SentinelRestore(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with "[Label N/A]" sentinel. Must not crash
+			// with "inconsistent result".
+			{
+				Config: testAccAllocationSentinelOnly(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.sentinel",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.sentinel",
+						tfjsonpath.New("rule").AtMapKey("components"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"include_null": knownvalue.Bool(true),
+								// The sentinel must be preserved in state.
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("[Service N/A]"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Re-apply — verify no drift.
+			{
+				Config: testAccAllocationSentinelOnly(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationSentinelOnly(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "sentinel" {
+    name        = "%s-sentinel"
+    description = "test allocation with sentinel value"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key          = "service_description"
+           mode         = "is"
+           type         = "fixed"
+           include_null = true
+           values       = ["[Service N/A]"]
+         }
+       ]
+    }
+}
+`, rName)
+}
+
+// TestAccAllocation_SentinelMixed tests that a single allocation with BOTH a
+// NullFallback sentinel AND real values round-trips without "inconsistent result".
+//
+// This mirrors the customer's invalid-application config from ticket 300568:
+//
+//	values = setunion(local.approved_applications, ["[... N/A]", "none"])
+//
+// The API strips the sentinel from the values list and sets include_null=true.
+// On the current code, the provider writes the API response (which has N-1 values)
+// to state. Terraform then sees each value shifted by one index:
+//
+//	was cty.StringVal("[Label N/A]"), but now cty.StringVal("real-value")
+//
+// and crashes with "inconsistent result" for every index.
+func TestAccAllocation_SentinelMixed(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationSentinelMixed(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.sentinel_mixed",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.sentinel_mixed",
+						tfjsonpath.New("rule").AtMapKey("components"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"include_null": knownvalue.Bool(true),
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									// Both must be preserved in state.
+									knownvalue.StringExact("[Service N/A]"),
+									knownvalue.StringExact("AmazonCloudWatch"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Re-apply — verify no drift.
+			{
+				Config: testAccAllocationSentinelMixed(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationSentinelMixed(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "sentinel_mixed" {
+    name        = "%s-sentinel-mixed"
+    description = "test allocation with sentinel and real values"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key          = "service_description"
+           mode         = "is"
+           type         = "fixed"
+           include_null = true
+           values       = ["[Service N/A]", "AmazonCloudWatch"]
+         }
+       ]
+    }
+}
+`, rName)
+}
+
+// TestAccAllocation_ValueNormalization tests that a single allocation with a
+// service_description value that the API normalizes does not crash with
+// "inconsistent result".
+//
+// This reproduces the exact failure from ticket 300568 on the "unallocated"
+// allocation: the customer's config has:
+//
+//	values = ["Amazon Elastic Container Service for Kubernetes (EKS)"]
+//
+// but the API normalizes this to:
+//
+//	values = ["Amazon Elastic Container Service for Kubernetes"]
+//
+// (stripping the "(EKS)" suffix).
+//
+// Before the fix (plan-first state pattern), the provider would crash with
+// "Provider produced inconsistent result" because it wrote the API's normalized
+// value to state, causing a string mismatch.
+//
+// After the fix:
+//   - Create succeeds without crash (plan values preserved in state)
+//   - Read detects the normalized value as drift, causing a non-empty plan
+//   - Step 2 verifies the drift is properly surfaced (not a crash)
+//   - Step 3 uses the canonical name → no more drift
+func TestAccAllocation_ValueNormalization(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with the non-canonical name.
+			// The plan-first pattern prevents "inconsistent result" crash.
+			// The API normalizes the value, so the post-apply refresh will
+			// write the canonical name to state, causing expected drift.
+			{
+				Config:             testAccAllocationValueNormalization(rName),
+				ExpectNonEmptyPlan: true, // Expected: Read returns API's canonical name → drift.
+			},
+			// Step 2: Switch to the API's canonical name.
+			// State already has the canonical name from step 1's refresh,
+			// so this should produce no drift.
+			{
+				Config: testAccAllocationValueNormalizationCanonical(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationValueNormalization(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "norm" {
+    name        = "%s-value-norm"
+    description = "test allocation with API-normalized service name"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "service_description"
+           mode   = "is"
+           type   = "fixed"
+           values = ["Amazon Elastic Container Service for Kubernetes (EKS)"]
+         }
+       ]
+    }
+}
+`, rName)
+}
+
+func testAccAllocationValueNormalizationCanonical(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "norm" {
+    name        = "%s-value-norm"
+    description = "test allocation with API-normalized service name"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "service_description"
+           mode   = "is"
+           type   = "fixed"
+           values = ["Amazon Elastic Container Service for Kubernetes"]
+         }
+       ]
+    }
+}
+`, rName)
+}
