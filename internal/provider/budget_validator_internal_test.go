@@ -5,6 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -193,5 +197,42 @@ func TestValidateBudgetEndPeriod(t *testing.T) {
 				t.Errorf("ValidateInt64() error = %v, expectedError %v", resp.Diagnostics.HasError(), tt.expectedError)
 			}
 		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestBudgetScopeNAValidator — unknown element handling
+// ---------------------------------------------------------------------------
+
+// TestBudgetScopeNAValidator_UnknownElement reproduces the "Value Conversion
+// Error" crash when a budget scope's values list contains an unknown element
+// from a cross-resource reference (e.g. values = [doit_allocation.xxx.id]).
+func TestBudgetScopeNAValidator_UnknownElement(t *testing.T) {
+	ctx := context.Background()
+
+	scopeVal, sDiags := resource_budget.NewScopesValue(
+		resource_budget.ScopesValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"case_insensitive": types.BoolValue(false),
+			"id":               types.StringValue("allocation_rule"),
+			"include_null":     types.BoolValue(false),
+			"inverse":          types.BoolNull(),
+			"mode":             types.StringValue("is"),
+			"type":             types.StringValue("allocation_rule"),
+			"values": types.ListValueMust(types.StringType, []attr.Value{
+				types.StringUnknown(), // simulates doit_allocation.xxx.id during plan
+			}),
+		},
+	)
+	if sDiags.HasError() {
+		t.Fatalf("NewScopesValue: %v", sDiags)
+	}
+
+	valueLists := []types.List{scopeVal.Values}
+	var diags diag.Diagnostics
+	warnNASentinels(ctx, path.Root("scopes"), valueLists, &diags)
+
+	if diags.HasError() {
+		t.Fatalf("warnNASentinels crashed with budget scope unknown element: %v", diags)
 	}
 }
