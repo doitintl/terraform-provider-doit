@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // warnNASentinels appends a Warning diagnostic for every string inside valueLists
@@ -20,32 +21,26 @@ import (
 // the attribute path reported in the diagnostic is basePath[i].values.
 //
 // This is a path-agnostic helper shared by all resource validators.
+//
+// We use []basetypes.StringValue as the ElementsAs target instead of []string
+// so that unknown and null elements (e.g. cross-resource references like
+// doit_allocation.xxx.id during plan) are represented natively rather than
+// causing a "Value Conversion Error" crash.
 func warnNASentinels(ctx context.Context, basePath path.Path, valueLists []types.List, diags *diag.Diagnostics) {
 	for i, vl := range valueLists {
 		if vl.IsNull() || vl.IsUnknown() {
 			continue
 		}
-		// Skip validation when any element is unknown. This happens during
-		// plan when values contain cross-resource references (e.g.
-		// doit_allocation.xxx.id) and the referenced resource has planned
-		// changes. ElementsAs to []string cannot represent unknown values.
-		hasUnknown := false
-		for _, elem := range vl.Elements() {
-			if elem.IsUnknown() {
-				hasUnknown = true
-				break
-			}
-		}
-		if hasUnknown {
-			continue
-		}
-		var vals []string
+		var vals []basetypes.StringValue
 		if d := vl.ElementsAs(ctx, &vals, false); d.HasError() {
 			diags.Append(d...)
 			continue
 		}
 		for _, val := range vals {
-			if isNAFallback(val) {
+			if val.IsUnknown() || val.IsNull() {
+				continue
+			}
+			if isNAFallback(val.ValueString()) {
 				diags.AddAttributeWarning(
 					basePath.AtListIndex(i).AtName("values"),
 					"Deprecated Value Syntax",
@@ -53,7 +48,7 @@ func warnNASentinels(ctx context.Context, basePath path.Path, valueLists []types
 						"%q uses the legacy NullFallback sentinel syntax. "+
 							"Use `include_null = true` on this block instead — it is semantically "+
 							"equivalent and avoids unexpected behaviour when running `terraform import`.",
-						val,
+						val.ValueString(),
 					),
 				)
 			}
