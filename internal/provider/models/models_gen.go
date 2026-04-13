@@ -2583,7 +2583,7 @@ type AnomalyItem struct {
 	// BillingAccount Billing account ID.
 	BillingAccount string `json:"billingAccount"`
 
-	// CostOfAnomaly Cost of the anomaly over and above the expected normal cost.
+	// CostOfAnomaly Excess cost over and above the expected normal cost.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
 	// EndTime End of the anomaly.

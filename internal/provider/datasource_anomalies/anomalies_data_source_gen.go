@@ -38,8 +38,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"cost_of_anomaly": schema.Float64Attribute{
 							Computed:            true,
-							Description:         "Cost of the anomaly over and above the expected normal cost.",
-							MarkdownDescription: "Cost of the anomaly over and above the expected normal cost.",
+							Description:         "Excess cost over and above the expected normal cost.",
+							MarkdownDescription: "Excess cost over and above the expected normal cost.",
 						},
 						"end_time": schema.Int64Attribute{
 							Computed:            true,
