@@ -99,7 +99,10 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 		}
 	}
 
-	// Populate Group Rules if present
+	// Populate Group Rules if present.
+	// Only send rules when the list is non-null, non-unknown, AND non-empty.
+	// For single-rule allocations, Rules should be null (omitted from request).
+	// Sending "rules": [] causes a 500 error from the API.
 	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
 		var planRules []resource_allocation.RulesValue
 		d := plan.Rules.ElementsAs(ctx, &planRules, false)
@@ -107,34 +110,36 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 		if diags.HasError() {
 			return diags
 		}
-		rules := make([]*models.GroupAllocationRule, len(planRules))
-		for i := range planRules {
-			rules[i] = &models.GroupAllocationRule{
-				Name:        planRules[i].Name.ValueStringPointer(),
-				Formula:     planRules[i].Formula.ValueStringPointer(),
-				Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
-				Id:          planRules[i].Id.ValueStringPointer(),
-				Description: planRules[i].Description.ValueStringPointer(),
-			}
+		if len(planRules) > 0 {
+			rules := make([]*models.GroupAllocationRule, len(planRules))
+			for i := range planRules {
+				rules[i] = &models.GroupAllocationRule{
+					Name:        planRules[i].Name.ValueStringPointer(),
+					Formula:     planRules[i].Formula.ValueStringPointer(),
+					Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
+					Id:          planRules[i].Id.ValueStringPointer(),
+					Description: planRules[i].Description.ValueStringPointer(),
+				}
 
-			// Don't send components if selecting existing allocation (action "select")
-			// But for "create" or "update" action, components are required/allowed.
-			if !planRules[i].Components.IsNull() && planRules[i].Action.ValueString() != "select" {
-				var ruleComponents []resource_allocation.ComponentsValue
-				d := planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
-				diags.Append(d...)
-				if diags.HasError() {
-					return diags
+				// Don't send components if selecting existing allocation (action "select")
+				// But for "create" or "update" action, components are required/allowed.
+				if !planRules[i].Components.IsNull() && planRules[i].Action.ValueString() != "select" {
+					var ruleComponents []resource_allocation.ComponentsValue
+					d := planRules[i].Components.ElementsAs(ctx, &ruleComponents, true)
+					diags.Append(d...)
+					if diags.HasError() {
+						return diags
+					}
+					createComponents, d := convertComponentsToModels(ctx, ruleComponents)
+					diags.Append(d...)
+					if diags.HasError() {
+						return diags
+					}
+					rules[i].Components = &createComponents
 				}
-				createComponents, d := convertComponentsToModels(ctx, ruleComponents)
-				diags.Append(d...)
-				if diags.HasError() {
-					return diags
-				}
-				rules[i].Components = &createComponents
 			}
+			req.Rules = &rules
 		}
-		req.Rules = &rules
 	}
 	return diags
 }
@@ -376,8 +381,14 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 		if diags.HasError() {
 			return
 		}
+	} else if resp.Rule != nil {
+		// Single-rule allocation: the API returns rules=nil because this isn't a
+		// group allocation. Keep state.Rules null so it's omitted from subsequent
+		// update requests. Sending "rules": [] to the API causes a 500 error.
+		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
 	} else {
-		// API returned nil or empty slice - return empty list to avoid inconsistent result if user sets [].
+		// API returned nil or empty slice for a group allocation (no rules left) -
+		// return empty list to avoid inconsistent result if user sets [].
 		// Pattern B: Normalize to empty list for user-configurable attributes.
 		emptyRules, d := types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), []resource_allocation.RulesValue{})
 		diags.Append(d...)

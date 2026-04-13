@@ -25,6 +25,20 @@ func warnNASentinels(ctx context.Context, basePath path.Path, valueLists []types
 		if vl.IsNull() || vl.IsUnknown() {
 			continue
 		}
+		// Skip validation when any element is unknown. This happens during
+		// plan when values contain cross-resource references (e.g.
+		// doit_allocation.xxx.id) and the referenced resource has planned
+		// changes. ElementsAs to []string cannot represent unknown values.
+		hasUnknown := false
+		for _, elem := range vl.Elements() {
+			if elem.IsUnknown() {
+				hasUnknown = true
+				break
+			}
+		}
+		if hasUnknown {
+			continue
+		}
 		var vals []string
 		if d := vl.ElementsAs(ctx, &vals, false); d.HasError() {
 			diags.Append(d...)
