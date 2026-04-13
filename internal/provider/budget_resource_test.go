@@ -1525,7 +1525,7 @@ resource "doit_budget" "this" {
 
 // TestAccBudget_DriftDetection_CustomerPattern tests for drift using the
 // customer's exact pattern from ticket 300568: uses metric, growth_per_period,
-// recipients_slack_channels=[], and scopes with attribution type.
+// recipients_slack_channels=[], and a fixed cloud_provider scope.
 // These are the attributes the customer had to add ignore_changes for.
 func TestAccBudget_DriftDetection_CustomerPattern(t *testing.T) {
 	n := acctest.RandInt()
@@ -1546,12 +1546,13 @@ func TestAccBudget_DriftDetection_CustomerPattern(t *testing.T) {
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction("doit_budget.drift_test", plancheck.ResourceActionCreate),
 					},
 				},
 			},
 			// Drift detection: re-apply same config, expect no changes.
-			// This catches drift from: amount, seasonal_amounts, scope (deprecated),
-			// alerts[].forecasted_date, alerts[].triggered
+			// This catches drift from attributes exercised here: amount,
+			// recipients_slack_channels, scopes, and alerts[].percentage.
 			{
 				Config: testAccBudgetCustomerPattern(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
