@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const budgetSchemaVersion = 1
@@ -134,9 +133,12 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Map response directly to state
-	plan.Id = types.StringPointerValue(budgetResp.JSON201.Id)
-	resp.Diagnostics.Append(mapBudgetToModel(ctx, budgetResp.JSON201, &plan)...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	// This prevents "Provider produced inconsistent result" errors caused by the
+	// API normalizing user-provided values (stripping sentinels, renaming types).
+	// Read and ImportState still use mapBudgetToModel for the full API response.
+	resp.Diagnostics.Append(overlayBudgetComputedFields(ctx, budgetResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -221,9 +223,9 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
+	// Plan-first state pattern: preserve user's plan values, overlay computed fields only.
 	plan.Id = state.Id
-	diags = mapBudgetToModel(ctx, updateResp.JSON200, &plan)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(overlayBudgetComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
