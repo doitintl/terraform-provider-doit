@@ -952,6 +952,106 @@ resource "doit_allocation" "invalid_nested" {
 `, rName)
 }
 
+// TestAccAllocation_InverseMigration tests migrating from the deprecated
+// "inverse_selection" attribute to the new "inverse" attribute in an Update.
+//
+// This reproduces the exact failure from ticket 300568: the customer changed
+// from inverse_selection=true to inverse=true and got:
+//
+//	.rule.components[N].inverse: was cty.True, but now cty.False
+//	.rule.components[N].inverse_selection: was cty.False, but now cty.True
+//
+// Root cause: the API internally maps "inverse" back to "inverse_selection",
+// so the response always has inverse_selection=true, inverse=false. On v1.3.3,
+// mapAllocationToModel wrote the swapped API values to state, causing
+// an inconsistency with the plan. The plan-first pattern prevents this.
+//
+// Verified: FAILS on main (v1.3.3), PASSES on this branch.
+func TestAccAllocation_InverseMigration(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with the legacy inverse_selection = true.
+			{
+				Config: testAccAllocationInverseSelectionLegacy(rName),
+			},
+			// Step 2: Migrate to inverse = true (remove inverse_selection).
+			// On v1.3.3, this crashes with "inconsistent result" because
+			// the API maps inverse back to inverse_selection.
+			{
+				Config: testAccAllocationInverseMigrated(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.inv_migrate",
+						tfjsonpath.New("rule").AtMapKey("components"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"inverse": knownvalue.Bool(true),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 3: Re-apply — verify no drift.
+			{
+				Config: testAccAllocationInverseMigrated(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationInverseSelectionLegacy(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "inv_migrate" {
+    name        = "%s-inv-migrate"
+    description = "test allocation with inverse_selection migration"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key               = "service_description"
+           mode              = "is"
+           type              = "fixed"
+           values            = ["AmazonCloudWatch"]
+           inverse_selection = true
+         }
+       ]
+    }
+}
+`, rName)
+}
+
+func testAccAllocationInverseMigrated(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "inv_migrate" {
+    name        = "%s-inv-migrate"
+    description = "test allocation with inverse_selection migration"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key     = "service_description"
+           mode    = "is"
+           type    = "fixed"
+           values  = ["AmazonCloudWatch"]
+           inverse = true
+         }
+       ]
+    }
+}
+`, rName)
+}
+
 // TestAccAllocation_SentinelRestore tests that a single allocation with a
 // NullFallback sentinel value (e.g. "[Label N/A]") in component values
 // round-trips correctly — after apply the state still contains "[Label N/A]"
