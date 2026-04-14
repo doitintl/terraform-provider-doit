@@ -1286,3 +1286,679 @@ resource "doit_allocation" "norm" {
 }
 `, rName)
 }
+
+// ---------------------------------------------------------------------------
+// Coverage Audit Gap Tests (added to close all blind spots)
+// ---------------------------------------------------------------------------
+
+// TestAccAllocation_GroupUpdate tests updating a group allocation: changing rule
+// names, values, and components. This exercises the plan-first state pattern for
+// group allocations during Update, including action preservation and rule ID matching.
+func TestAccAllocation_GroupUpdate(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a group allocation with two rules.
+			{
+				Config: testAccAllocationGroup(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("allocation_type"),
+						knownvalue.StringExact("group")),
+				},
+			},
+			// Step 2: Update — change country value from "US" to "DE" in the second rule.
+			{
+				Config: testAccAllocationGroupUpdated(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 3: Drift check — re-apply, expect no changes.
+			{
+				Config: testAccAllocationGroupUpdated(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupUpdated(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name = "%s-group"
+	description = "test allocation group updated"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action = "create"
+            name   = "%s-jp-rule"
+       formula = "A AND B"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         },
+         {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+          }
+       ]
+    },
+           {
+            action = "create"
+            name   = "%s-de-rule"
+       formula = "A AND B"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["DE"]
+         },
+         {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+          }
+       ]
+    }
+    ]
+}
+`, rName, rName, rName, testProject(), rName, testProject())
+}
+
+// TestAccAllocation_GroupOmittedDefaults tests creating a group allocation where
+// the Optional+Computed field "description" is omitted from the config.
+// The provider must correctly resolve the unknown to the API default to avoid
+// perpetual drift.
+func TestAccAllocation_GroupOmittedDefaults(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with description omitted from the rule.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "defaults" {
+    name = "%s-defaults"
+    description = "test omitted defaults"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-rule"
+            formula = "A"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName),
+			},
+			// Step 2: Drift check — verify no drift from the API's defaults.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "defaults" {
+    name = "%s-defaults"
+    description = "test omitted defaults"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-rule"
+            formula = "A"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_SingleMinimal tests creating a single allocation with the
+// absolute minimum required fields, exercising the overlay code's handling of
+// all Optional+Computed fields defaulting to unknown.
+func TestAccAllocation_SingleMinimal(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with only required fields, omitting all optional booleans.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "minimal" {
+    name = "%s-minimal"
+    description = "test minimal config"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.minimal",
+						tfjsonpath.New("rule").AtMapKey("components"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"case_insensitive":  knownvalue.Bool(false),
+								"include_null":      knownvalue.Bool(false),
+								"inverse":           knownvalue.Bool(false),
+								"inverse_selection": knownvalue.Bool(false),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "minimal" {
+    name = "%s-minimal"
+    description = "test minimal config"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_DimensionsTypeAlias tests that the DimensionsType alias
+// normalization preserves the user's configured type when the API returns
+// the canonical equivalent. The alias pair tested: allocation_rule ↔ attribution.
+func TestAccAllocation_DimensionsTypeAlias(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a single-rule allocation with type "allocation_rule".
+			// The API returns the canonical "attribution" in responses.
+			// The normalizer should preserve "allocation_rule" in state.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "alias_src" {
+    name = "%s-alias-src"
+    description = "source allocation for alias test"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+
+resource "doit_allocation" "alias_test" {
+    name = "%s-alias"
+    description = "test dimensions type alias"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "allocation_rule"
+           mode   = "is"
+           type   = "allocation_rule"
+           values = [doit_allocation.alias_src.id]
+         }
+       ]
+    }
+}
+`, rName, rName),
+			},
+			// Step 2: Drift check — verify the alias type is preserved.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "alias_src" {
+    name = "%s-alias-src"
+    description = "source allocation for alias test"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+
+resource "doit_allocation" "alias_test" {
+    name = "%s-alias"
+    description = "test dimensions type alias"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "allocation_rule"
+           mode   = "is"
+           type   = "allocation_rule"
+           values = [doit_allocation.alias_src.id]
+         }
+       ]
+    }
+}
+`, rName, rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_AddRemoveComponents tests adding and removing components
+// to an existing allocation during an update. This exercises the index-based
+// state matching in the Read path (sentinel merge, boolean flag preservation).
+func TestAccAllocation_AddRemoveComponents(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with 1 component.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "comp_change" {
+    name = "%s-comp-change"
+    description = "test add/remove components"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+`, rName),
+			},
+			// Step 2: Update to 2 components — add project_id.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "comp_change" {
+    name = "%s-comp-change"
+    description = "test add/remove components"
+    rule = {
+       formula = "A AND B"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         },
+        {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+         }
+       ]
+    }
+}
+`, rName, testProject()),
+			},
+			// Step 3: Drift check after adding component.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "comp_change" {
+    name = "%s-comp-change"
+    description = "test add/remove components"
+    rule = {
+       formula = "A AND B"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         },
+        {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+         }
+       ]
+    }
+}
+`, rName, testProject()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Back to 1 component — remove project_id.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "comp_change" {
+    name = "%s-comp-change"
+    description = "test add/remove components"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+`, rName),
+			},
+			// Step 5: Drift check after removing component.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "comp_change" {
+    name = "%s-comp-change"
+    description = "test add/remove components"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_MultipleValues tests creating a component with multiple
+// values in the values list. This exercises the values list mapping more
+// thoroughly than single-value tests.
+func TestAccAllocation_MultipleValues(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "multi_val" {
+    name = "%s-multi-val"
+    description = "test multiple values"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP", "US", "DE", "FR"]
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.multi_val",
+						tfjsonpath.New("rule").AtMapKey("components"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("JP"),
+									knownvalue.StringExact("US"),
+									knownvalue.StringExact("DE"),
+									knownvalue.StringExact("FR"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Drift check.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "multi_val" {
+    name = "%s-multi-val"
+    description = "test multiple values"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP", "US", "DE", "FR"]
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_IncludeNullEmptyValues tests creating a component with
+// include_null=true and an empty values list. This verifies the base case
+// for null-inclusion without sentinel values.
+func TestAccAllocation_IncludeNullEmptyValues(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "incl_null" {
+    name = "%s-incl-null"
+    description = "test include_null with empty values"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key          = "service_description"
+           mode         = "is"
+           type         = "fixed"
+           values       = []
+           include_null = true
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.incl_null",
+						tfjsonpath.New("rule").AtMapKey("components"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"include_null": knownvalue.Bool(true),
+								"values":       knownvalue.ListExact([]knownvalue.Check{}),
+							}),
+						}),
+					),
+				},
+			},
+			// Drift check.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "incl_null" {
+    name = "%s-incl-null"
+    description = "test include_null with empty values"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key          = "service_description"
+           mode         = "is"
+           type         = "fixed"
+           values       = []
+           include_null = true
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_GroupImportActionPreservation tests that importing a group
+// allocation correctly handles the "action" field which is not returned by the API.
+// After import, re-applying the same config should produce no drift.
+func TestAccAllocation_GroupImportActionPreservation(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a group allocation.
+			{
+				Config: testAccAllocationGroup(rName),
+			},
+			// Step 2: Import and verify state matches (rules ignored due to action).
+			{
+				ResourceName:      "doit_allocation.group",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"update_time", // Computed field
+					"rules",       // API doesn't return the 'action' field
+				},
+			},
+			// Step 3: After import, re-apply original config. This verifies
+			// that the imported state doesn't cause unnecessary updates.
+			{
+				Config: testAccAllocationGroup(rName),
+			},
+			// Step 4: Drift check after re-apply.
+			{
+				Config: testAccAllocationGroup(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
