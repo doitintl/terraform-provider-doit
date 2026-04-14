@@ -75,6 +75,46 @@ func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	resp.Schema = s
 }
 
+// overlayAnnotationComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create/Update.
+//
+// Phase 1 (Resolve): Build a fully-resolved state from the API response using
+// mapAnnotationToModel — the same mapping function used by Read.
+//
+// Phase 2 (Overlay): Walk the plan field-by-field. Known values are preserved.
+// Unknown values are replaced with the resolved counterpart.
+func overlayAnnotationComputedFields(ctx context.Context, apiResp *models.AnnotationListItem, plan *annotationResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Phase 1: Build fully-resolved state from API response.
+	resolved := *plan
+	diags.Append(mapAnnotationToModel(ctx, apiResp, &resolved)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	// Phase 2: Overlay known plan values on top of resolved state.
+
+	// ── Computed-only fields: always from resolved ──
+	plan.Id = resolved.Id
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
+
+	// ── Content, Timestamp: Required — never touch ──
+
+	// ── Labels: Optional+Computed list ──
+	if plan.Labels.IsUnknown() {
+		plan.Labels = resolved.Labels
+	}
+
+	// ── Reports: Optional+Computed list ──
+	if plan.Reports.IsUnknown() {
+		plan.Reports = resolved.Reports
+	}
+
+	return diags
+}
+
 func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan annotationResourceModel
 
@@ -148,9 +188,9 @@ func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Map response to state
-	diags := mapAnnotationToModel(ctx, annotationResp.JSON201, &plan)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	resp.Diagnostics.Append(overlayAnnotationComputedFields(ctx, annotationResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -294,9 +334,10 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Map response to state
-	diags := mapAnnotationToModel(ctx, updateResp.JSON200, &plan)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	plan.Id = state.Id
+	resp.Diagnostics.Append(overlayAnnotationComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
