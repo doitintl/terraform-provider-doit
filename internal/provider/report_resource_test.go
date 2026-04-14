@@ -134,6 +134,16 @@ func TestAccReport_OmittedOptionalComputed(t *testing.T) {
 			"doit_report.this",
 			tfjsonpath.New("config").AtMapKey("splits"),
 			knownvalue.ListSizeExact(0)),
+		// dimensions and metrics are API-defaulted — assert they are known (not null)
+		// without asserting exact size since the API populates defaults when omitted.
+		statecheck.ExpectKnownValue(
+			"doit_report.this",
+			tfjsonpath.New("config").AtMapKey("dimensions"),
+			knownvalue.NotNull()),
+		statecheck.ExpectKnownValue(
+			"doit_report.this",
+			tfjsonpath.New("config").AtMapKey("metrics"),
+			knownvalue.NotNull()),
 	}
 
 	resource.ParallelTest(t, resource.TestCase{

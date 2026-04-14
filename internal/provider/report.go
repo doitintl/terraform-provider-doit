@@ -187,8 +187,8 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 	if plan.Splits.IsUnknown() {
 		plan.Splits = resolved.Splits
 	} else if !plan.Splits.IsNull() {
-		diags.Append(overlayListElements(ctx, &resolved.Splits, &plan.Splits, func(r, p *resource_report.SplitsValue) {
-			diags.Append(overlaySplit(ctx, r, p)...)
+		diags.Append(overlayListElements(ctx, &resolved.Splits, &plan.Splits, func(r, p *resource_report.SplitsValue) diag.Diagnostics {
+			return overlaySplit(ctx, r, p)
 		})...)
 	}
 
@@ -286,11 +286,21 @@ func isUnknownOverlayElement[T any](v T) bool {
 	return false
 }
 
+// isNullOverlayElement checks whether a list element is Null as a whole.
+func isNullOverlayElement[T any](v T) bool {
+	if nullable, ok := any(v).(interface{ IsNull() bool }); ok {
+		return nullable.IsNull()
+	}
+	return false
+}
+
 // overlayListElements is a generic helper that walks two lists element-by-element,
 // invoking the overlay function for each matching index. If a plan element is
 // Unknown as a whole, it is replaced with the corresponding resolved element.
-// Diagnostics from element decoding and list rebuilding are returned to the caller.
-func overlayListElements[T any](ctx context.Context, resolved, plan *types.List, overlayFn func(*T, *T)) diag.Diagnostics {
+// If a resolved element is Null/Unknown, the overlay is skipped for that element.
+// Diagnostics from element decoding, overlay functions, and list rebuilding are
+// returned to the caller.
+func overlayListElements[T any](ctx context.Context, resolved, plan *types.List, overlayFn func(*T, *T) diag.Diagnostics) diag.Diagnostics {
 	var diags diag.Diagnostics
 	var planElems []T
 	var resolvedElems []T
@@ -310,12 +320,19 @@ func overlayListElements[T any](ctx context.Context, resolved, plan *types.List,
 		if i >= len(resolvedElems) {
 			continue
 		}
-		// If the entire element is Unknown, replace it wholesale.
+		// If the plan element is Unknown as a whole, replace it with the resolved value.
 		if isUnknownOverlayElement(planElems[i]) {
 			planElems[i] = resolvedElems[i]
 			continue
 		}
-		overlayFn(&resolvedElems[i], &planElems[i])
+		// If the resolved element is Null/Unknown (API didn't return it), skip
+		// the subfield overlay — the plan element keeps its values as-is.
+		// This guards all list element helpers uniformly without requiring
+		// individual null checks in each helper.
+		if isNullOverlayElement(resolvedElems[i]) || isUnknownOverlayElement(resolvedElems[i]) {
+			continue
+		}
+		diags.Append(overlayFn(&resolvedElems[i], &planElems[i])...)
 	}
 
 	// Rebuild the list with overlaid elements.
@@ -327,16 +344,17 @@ func overlayListElements[T any](ctx context.Context, resolved, plan *types.List,
 	return diags
 }
 
-func overlayDimension(resolved, plan *resource_report.DimensionsValue) {
+func overlayDimension(resolved, plan *resource_report.DimensionsValue) diag.Diagnostics {
 	if plan.Id.IsUnknown() {
 		plan.Id = resolved.Id
 	}
 	if plan.DimensionsType.IsUnknown() {
 		plan.DimensionsType = resolved.DimensionsType
 	}
+	return nil
 }
 
-func overlayFilter(resolved, plan *resource_report.FiltersValue) {
+func overlayFilter(resolved, plan *resource_report.FiltersValue) diag.Diagnostics {
 	if plan.CaseInsensitive.IsUnknown() {
 		plan.CaseInsensitive = resolved.CaseInsensitive
 	}
@@ -358,9 +376,10 @@ func overlayFilter(resolved, plan *resource_report.FiltersValue) {
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}
+	return nil
 }
 
-func overlayGroup(resolved, plan *resource_report.GroupValue) {
+func overlayGroup(resolved, plan *resource_report.GroupValue) diag.Diagnostics {
 	if plan.Id.IsUnknown() {
 		plan.Id = resolved.Id
 	}
@@ -372,6 +391,7 @@ func overlayGroup(resolved, plan *resource_report.GroupValue) {
 	} else if !plan.Limit.IsNull() {
 		overlayLimit(&resolved.Limit, &plan.Limit)
 	}
+	return nil
 }
 
 func overlayLimit(resolved, plan *resource_report.LimitValue) {
@@ -388,13 +408,14 @@ func overlayLimit(resolved, plan *resource_report.LimitValue) {
 	}
 }
 
-func overlayMetricsElement(resolved, plan *resource_report.MetricsValue) {
+func overlayMetricsElement(resolved, plan *resource_report.MetricsValue) diag.Diagnostics {
 	if plan.MetricsType.IsUnknown() {
 		plan.MetricsType = resolved.MetricsType
 	}
 	if plan.Value.IsUnknown() {
 		plan.Value = resolved.Value
 	}
+	return nil
 }
 
 func overlaySplit(ctx context.Context, resolved, plan *resource_report.SplitsValue) diag.Diagnostics {
@@ -424,7 +445,7 @@ func overlaySplit(ctx context.Context, resolved, plan *resource_report.SplitsVal
 	return diags
 }
 
-func overlayTarget(resolved, plan *resource_report.TargetsValue) {
+func overlayTarget(resolved, plan *resource_report.TargetsValue) diag.Diagnostics {
 	if plan.Id.IsUnknown() {
 		plan.Id = resolved.Id
 	}
@@ -434,6 +455,7 @@ func overlayTarget(resolved, plan *resource_report.TargetsValue) {
 	if plan.Value.IsUnknown() {
 		plan.Value = resolved.Value
 	}
+	return nil
 }
 
 func overlayOrigin(resolved, plan *resource_report.OriginValue) {
