@@ -34,9 +34,8 @@ import (
 // normalizing user-provided values (e.g. stripping [Service N/A] sentinels,
 // renaming "Amazon Elastic Container Service for Kubernetes (EKS)" to
 // "Amazon Elastic Container Service for Kubernetes").
-func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
+func overlayComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
-	ctx := context.Background()
 
 	// Computed-only fields: always set from API response.
 	plan.Id = types.StringPointerValue(apiResp.Id)
@@ -68,7 +67,9 @@ func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceM
 	// When the user doesn't set them, they arrive as unknown.
 	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
 		var planRules []resource_allocation.RulesValue
-		if d := plan.Rules.ElementsAs(ctx, &planRules, false); !d.HasError() {
+		elementsDiags := plan.Rules.ElementsAs(ctx, &planRules, false)
+		diags.Append(elementsDiags...)
+		if !elementsDiags.HasError() {
 			changed := false
 			for i := range planRules {
 				// For each unknown Optional+Computed field, overlay the API
@@ -109,11 +110,7 @@ func overlayComputedFields(apiResp *models.Allocation, plan *allocationResourceM
 					changed = true
 				}
 				if planRules[i].Components.IsUnknown() {
-					emptyComps, compDiags := types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
-					diags.Append(compDiags...)
-					if !compDiags.HasError() {
-						planRules[i].Components = emptyComps
-					}
+					planRules[i].Components = types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx))
 					changed = true
 				}
 				// Also resolve unknowns inside components.
@@ -662,9 +659,12 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		apiValues := component.Values
 		if i < len(existingComponents) {
 			var stateVals []string
-			if d := existingComponents[i].Values.ElementsAs(ctx, &stateVals, false); !d.HasError() {
-				apiValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
+			stateValsDiags := existingComponents[i].Values.ElementsAs(ctx, &stateVals, false)
+			diags.Append(stateValsDiags...)
+			if diags.HasError() {
+				return
 			}
+			apiValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
 		}
 		values := make([]attr.Value, len(apiValues))
 		for j := range apiValues {
