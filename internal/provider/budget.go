@@ -199,10 +199,32 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 		}
 	}
 	if plan.RecipientsSlackChannels.IsUnknown() {
-		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
-		emptyChannels, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []resource_budget.RecipientsSlackChannelsValue{})
-		diags.Append(d...)
-		plan.RecipientsSlackChannels = emptyChannels
+		// API may auto-populate Slack channels — resolve from API response when present.
+		if apiResp.RecipientsSlackChannels != nil && len(*apiResp.RecipientsSlackChannels) > 0 {
+			channelsList := make([]resource_budget.RecipientsSlackChannelsValue, len(*apiResp.RecipientsSlackChannels))
+			for i, channel := range *apiResp.RecipientsSlackChannels {
+				channelAttrs := map[string]attr.Value{
+					"customer_id": types.StringPointerValue(channel.CustomerId),
+					"id":          types.StringPointerValue(channel.Id),
+					"name":        types.StringPointerValue(channel.Name),
+					"shared":      types.BoolPointerValue(channel.Shared),
+					"type":        types.StringPointerValue(channel.Type),
+					"workspace":   types.StringPointerValue(channel.Workspace),
+				}
+				var d diag.Diagnostics
+				channelsList[i], d = resource_budget.NewRecipientsSlackChannelsValue(
+					resource_budget.RecipientsSlackChannelsValue{}.AttributeTypes(ctx), channelAttrs)
+				diags.Append(d...)
+			}
+			channelsListValue, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), channelsList)
+			diags.Append(d...)
+			plan.RecipientsSlackChannels = channelsListValue
+		} else {
+			// Resolve to empty list (not null) to match mapBudgetToModel Read path.
+			emptyChannels, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []resource_budget.RecipientsSlackChannelsValue{})
+			diags.Append(d...)
+			plan.RecipientsSlackChannels = emptyChannels
+		}
 	}
 	if plan.Scope.IsUnknown() {
 		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
@@ -226,7 +248,11 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	// ── Resolve unknowns inside scopes[] elements ──
 	// Scopes have Optional+Computed boolean fields (inverse, include_null, case_insensitive)
 	// and an Optional+Computed list field (values) that arrive as Unknown when the user
-	// omits them. We must resolve these to known values (defaulting to false/empty).
+	// omits them. Resolve from API response to match mapBudgetToModel Read path.
+	var apiScopes []models.ExternalConfigFilter
+	if len(apiResp.Scopes) > 0 {
+		apiScopes = apiResp.Scopes
+	}
 	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
 		var planScopes []resource_budget.ScopesValue
 		scopesDiags := plan.Scopes.ElementsAs(ctx, &planScopes, false)
@@ -235,15 +261,27 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 			changed := false
 			for i := range planScopes {
 				if planScopes[i].Inverse.IsUnknown() {
-					planScopes[i].Inverse = types.BoolValue(false)
+					if i < len(apiScopes) {
+						planScopes[i].Inverse = types.BoolPointerValue(apiScopes[i].Inverse)
+					} else {
+						planScopes[i].Inverse = types.BoolValue(false)
+					}
 					changed = true
 				}
 				if planScopes[i].IncludeNull.IsUnknown() {
-					planScopes[i].IncludeNull = types.BoolValue(false)
+					if i < len(apiScopes) {
+						planScopes[i].IncludeNull = types.BoolPointerValue(apiScopes[i].IncludeNull)
+					} else {
+						planScopes[i].IncludeNull = types.BoolValue(false)
+					}
 					changed = true
 				}
 				if planScopes[i].CaseInsensitive.IsUnknown() {
-					planScopes[i].CaseInsensitive = types.BoolValue(false)
+					if i < len(apiScopes) {
+						planScopes[i].CaseInsensitive = types.BoolPointerValue(apiScopes[i].CaseInsensitive)
+					} else {
+						planScopes[i].CaseInsensitive = types.BoolValue(false)
+					}
 					changed = true
 				}
 				if planScopes[i].Values.IsUnknown() {
@@ -300,6 +338,11 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	}
 
 	// ── Resolve unknowns inside recipients_slack_channels[] elements ──
+	// Resolve computed subfields from API response by index matching.
+	var apiChannels []models.SlackChannel
+	if apiResp.RecipientsSlackChannels != nil {
+		apiChannels = *apiResp.RecipientsSlackChannels
+	}
 	if !plan.RecipientsSlackChannels.IsNull() && !plan.RecipientsSlackChannels.IsUnknown() {
 		var planChannels []resource_budget.RecipientsSlackChannelsValue
 		channelsDiags := plan.RecipientsSlackChannels.ElementsAs(ctx, &planChannels, false)
@@ -307,28 +350,58 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 		if !channelsDiags.HasError() {
 			changed := false
 			for i := range planChannels {
+				// Find matching API channel by index (order is preserved by API).
+				var apiCh *models.SlackChannel
+				if i < len(apiChannels) {
+					apiCh = &apiChannels[i]
+				}
+
 				if planChannels[i].CustomerId.IsUnknown() {
-					planChannels[i].CustomerId = types.StringNull()
+					if apiCh != nil {
+						planChannels[i].CustomerId = types.StringPointerValue(apiCh.CustomerId)
+					} else {
+						planChannels[i].CustomerId = types.StringNull()
+					}
 					changed = true
 				}
 				if planChannels[i].Id.IsUnknown() {
-					planChannels[i].Id = types.StringNull()
+					if apiCh != nil {
+						planChannels[i].Id = types.StringPointerValue(apiCh.Id)
+					} else {
+						planChannels[i].Id = types.StringNull()
+					}
 					changed = true
 				}
 				if planChannels[i].Name.IsUnknown() {
-					planChannels[i].Name = types.StringNull()
+					if apiCh != nil {
+						planChannels[i].Name = types.StringPointerValue(apiCh.Name)
+					} else {
+						planChannels[i].Name = types.StringNull()
+					}
 					changed = true
 				}
 				if planChannels[i].Shared.IsUnknown() {
-					planChannels[i].Shared = types.BoolValue(false)
+					if apiCh != nil {
+						planChannels[i].Shared = types.BoolPointerValue(apiCh.Shared)
+					} else {
+						planChannels[i].Shared = types.BoolValue(false)
+					}
 					changed = true
 				}
 				if planChannels[i].RecipientsSlackChannelsType.IsUnknown() {
-					planChannels[i].RecipientsSlackChannelsType = types.StringNull()
+					if apiCh != nil {
+						planChannels[i].RecipientsSlackChannelsType = types.StringPointerValue(apiCh.Type)
+					} else {
+						planChannels[i].RecipientsSlackChannelsType = types.StringNull()
+					}
 					changed = true
 				}
 				if planChannels[i].Workspace.IsUnknown() {
-					planChannels[i].Workspace = types.StringNull()
+					if apiCh != nil {
+						planChannels[i].Workspace = types.StringPointerValue(apiCh.Workspace)
+					} else {
+						planChannels[i].Workspace = types.StringNull()
+					}
 					changed = true
 				}
 			}
