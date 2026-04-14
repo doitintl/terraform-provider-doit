@@ -8,6 +8,7 @@ import (
 )
 
 func TestAccSupportRequestCommentsDataSource_Basic(t *testing.T) {
+	t.Skip("Skipped: support requests API returns 400 'Failed to get tickets'")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
