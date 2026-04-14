@@ -282,6 +282,24 @@ func TestAccBudget_Import(t *testing.T) {
 func TestAccBudget_Scopes(t *testing.T) {
 	n := acctest.RandInt()
 
+	// Verify omitted scope booleans resolve correctly from API response.
+	// These booleans are Optional+Computed and arrive as Unknown when the user
+	// omits them. The overlay resolves them from apiResp.Scopes[i].
+	scopeBoolChecks := []statecheck.StateCheck{
+		statecheck.ExpectKnownValue(
+			"doit_budget.this",
+			tfjsonpath.New("scopes").AtSliceIndex(0).AtMapKey("inverse"),
+			knownvalue.Bool(false)),
+		statecheck.ExpectKnownValue(
+			"doit_budget.this",
+			tfjsonpath.New("scopes").AtSliceIndex(0).AtMapKey("include_null"),
+			knownvalue.Bool(false)),
+		statecheck.ExpectKnownValue(
+			"doit_budget.this",
+			tfjsonpath.New("scopes").AtSliceIndex(0).AtMapKey("case_insensitive"),
+			knownvalue.Bool(false)),
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
@@ -300,7 +318,7 @@ func TestAccBudget_Scopes(t *testing.T) {
 						plancheck.ExpectNonEmptyPlan(),
 					},
 				},
-				ConfigStateChecks: []statecheck.StateCheck{
+				ConfigStateChecks: append([]statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_budget.this",
 						tfjsonpath.New("scopes"),
@@ -314,9 +332,10 @@ func TestAccBudget_Scopes(t *testing.T) {
 						},
 						),
 					),
-				},
+				}, scopeBoolChecks...),
 			},
 			// Drift detection: re-apply same config, expect no changes.
+			// Verifies overlay and Read path agree on boolean resolution.
 			{
 				Config: testAccBudgetScopes(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -324,6 +343,7 @@ func TestAccBudget_Scopes(t *testing.T) {
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
+				ConfigStateChecks: scopeBoolChecks,
 			},
 		},
 	})
