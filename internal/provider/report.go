@@ -14,6 +14,459 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// overlayReportComputedFields preserves all user-configured values from the Terraform
+// plan and selectively resolves only Unknown (Optional+Computed) fields from the API response.
+//
+// Strategy: Two-phase approach
+//  1. Use populateState to build a fully-resolved state from the API response.
+//     This resolves all Optional+Computed fields that the user omitted (Unknown).
+//  2. Walk the plan and overlay all Known values on top of the resolved state.
+//     This ensures user-configured values are preserved exactly as specified,
+//     immune to API normalization (sentinel stripping, alias renaming, timestamp
+//     reformatting, etc.).
+//
+// This eliminates the entire class of "Provider produced inconsistent result" errors
+// for Create/Update operations. Sentinel restoration, alias normalization, and timestamp
+// preservation in populateState are harmless here — they only affect Unknown values
+// that the user didn't configure, where the API's normalized form is acceptable.
+//
+// Used by: Create, Update
+// NOT used by: Read, ImportState (which use populateState / populateStateFromAPI directly).
+func (r *reportResource) overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalReport, plan *reportResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Phase 1: Build fully-resolved state from API response.
+	// This gives us known values for every Optional+Computed field the user omitted.
+	var resolved reportResourceModel
+	diags.Append(r.populateState(ctx, &resolved, apiResp)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	// Phase 2: Overlay known plan values on top of resolved state.
+	// ── Top-level fields ──
+
+	// id: always from API (Computed-only)
+	plan.Id = resolved.Id
+
+	// type: use plan if known, otherwise resolved
+	if plan.Type.IsUnknown() {
+		plan.Type = resolved.Type
+	}
+
+	// name: use plan if known, otherwise resolved
+	if plan.Name.IsUnknown() {
+		plan.Name = resolved.Name
+	}
+
+	// description: use plan if known, otherwise resolved
+	if plan.Description.IsUnknown() {
+		plan.Description = resolved.Description
+	}
+
+	// labels: use plan if known, otherwise resolved
+	if plan.Labels.IsUnknown() {
+		plan.Labels = resolved.Labels
+	}
+
+	// ── Config block ──
+	// Walk each field: if the plan value is Known, keep it (user's source of truth).
+	// If Unknown, use the API-resolved value.
+	if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
+		diags.Append(overlayConfigFields(ctx, &resolved.Config, &plan.Config)...)
+	} else if plan.Config.IsUnknown() {
+		plan.Config = resolved.Config
+	}
+
+	return diags
+}
+
+// overlayConfigFields walks every field in the config block and replaces
+// Unknown plan values with API-resolved values. Known plan values are preserved.
+// For nested objects and list elements, it also walks into subfields.
+func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigValue, plan *resource_report.ConfigValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// ── Scalar fields ──
+	if plan.Aggregation.IsUnknown() {
+		plan.Aggregation = resolved.Aggregation
+	}
+	if plan.Currency.IsUnknown() {
+		plan.Currency = resolved.Currency
+	}
+	if plan.DataSource.IsUnknown() {
+		plan.DataSource = resolved.DataSource
+	}
+	if plan.DisplayValues.IsUnknown() {
+		plan.DisplayValues = resolved.DisplayValues
+	}
+	if plan.IncludePromotionalCredits.IsUnknown() {
+		plan.IncludePromotionalCredits = resolved.IncludePromotionalCredits
+	}
+	if plan.IncludeSubtotals.IsUnknown() {
+		plan.IncludeSubtotals = resolved.IncludeSubtotals
+	}
+	if plan.Layout.IsUnknown() {
+		plan.Layout = resolved.Layout
+	}
+	if plan.SortDimensions.IsUnknown() {
+		plan.SortDimensions = resolved.SortDimensions
+	}
+	if plan.SortGroups.IsUnknown() {
+		plan.SortGroups = resolved.SortGroups
+	}
+	if plan.TimeInterval.IsUnknown() {
+		plan.TimeInterval = resolved.TimeInterval
+	}
+
+	// ── Nested objects: resolve entire object when Unknown, or walk subfields ──
+	if plan.AdvancedAnalysis.IsUnknown() {
+		plan.AdvancedAnalysis = resolved.AdvancedAnalysis
+	} else if !plan.AdvancedAnalysis.IsNull() {
+		overlayAdvancedAnalysis(&resolved.AdvancedAnalysis, &plan.AdvancedAnalysis)
+	}
+
+	if plan.CustomTimeRange.IsUnknown() {
+		plan.CustomTimeRange = resolved.CustomTimeRange
+	} else if !plan.CustomTimeRange.IsNull() {
+		overlayCustomTimeRange(&resolved.CustomTimeRange, &plan.CustomTimeRange)
+	}
+
+	if plan.Metric.IsUnknown() {
+		plan.Metric = resolved.Metric
+	} else if !plan.Metric.IsNull() {
+		overlayMetric(&resolved.Metric, &plan.Metric)
+	}
+
+	if plan.MetricFilter.IsUnknown() {
+		plan.MetricFilter = resolved.MetricFilter
+	} else if !plan.MetricFilter.IsNull() {
+		overlayMetricFilter(&resolved.MetricFilter, &plan.MetricFilter)
+	}
+
+	if plan.TimeRange.IsUnknown() {
+		plan.TimeRange = resolved.TimeRange
+	} else if !plan.TimeRange.IsNull() {
+		overlayTimeRange(&resolved.TimeRange, &plan.TimeRange)
+	}
+
+	if plan.SecondaryTimeRange.IsUnknown() {
+		plan.SecondaryTimeRange = resolved.SecondaryTimeRange
+	} else if !plan.SecondaryTimeRange.IsNull() {
+		overlaySecondaryTimeRange(&resolved.SecondaryTimeRange, &plan.SecondaryTimeRange)
+	}
+
+	// ── List fields: use resolved when plan is Unknown ──
+	// When known, the list elements are user-configured, so we keep them.
+	// Subfield unknowns inside list elements (filters, splits, group) are
+	// resolved element-by-element.
+	if plan.Dimensions.IsUnknown() {
+		plan.Dimensions = resolved.Dimensions
+	} else if !plan.Dimensions.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Dimensions, &plan.Dimensions, overlayDimension)...)
+	}
+
+	if plan.Filters.IsUnknown() {
+		plan.Filters = resolved.Filters
+	} else if !plan.Filters.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Filters, &plan.Filters, overlayFilter)...)
+	}
+
+	if plan.Group.IsUnknown() {
+		plan.Group = resolved.Group
+	} else if !plan.Group.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Group, &plan.Group, overlayGroup)...)
+	}
+
+	if plan.Metrics.IsUnknown() {
+		plan.Metrics = resolved.Metrics
+	} else if !plan.Metrics.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Metrics, &plan.Metrics, overlayMetricsElement)...)
+	}
+
+	if plan.Splits.IsUnknown() {
+		plan.Splits = resolved.Splits
+	} else if !plan.Splits.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Splits, &plan.Splits, func(r, p *resource_report.SplitsValue) diag.Diagnostics {
+			return overlaySplit(ctx, r, p)
+		})...)
+	}
+
+	return diags
+}
+
+// ── Nested object overlay helpers ──
+
+func overlayAdvancedAnalysis(resolved, plan *resource_report.AdvancedAnalysisValue) {
+	if plan.Forecast.IsUnknown() {
+		plan.Forecast = resolved.Forecast
+	}
+	if plan.NotTrending.IsUnknown() {
+		plan.NotTrending = resolved.NotTrending
+	}
+	if plan.TrendingDown.IsUnknown() {
+		plan.TrendingDown = resolved.TrendingDown
+	}
+	if plan.TrendingUp.IsUnknown() {
+		plan.TrendingUp = resolved.TrendingUp
+	}
+}
+
+func overlayCustomTimeRange(resolved, plan *resource_report.CustomTimeRangeValue) {
+	if plan.From.IsUnknown() {
+		plan.From = resolved.From
+	}
+	if plan.To.IsUnknown() {
+		plan.To = resolved.To
+	}
+}
+
+func overlayMetric(resolved, plan *resource_report.MetricValue) {
+	if plan.MetricType.IsUnknown() {
+		plan.MetricType = resolved.MetricType
+	}
+	if plan.Value.IsUnknown() {
+		plan.Value = resolved.Value
+	}
+}
+
+func overlayMetricFilter(resolved, plan *resource_report.MetricFilterValue) {
+	if plan.Operator.IsUnknown() {
+		plan.Operator = resolved.Operator
+	}
+	if plan.Values.IsUnknown() {
+		plan.Values = resolved.Values
+	}
+	if plan.Metric.IsUnknown() {
+		plan.Metric = resolved.Metric
+	} else if !plan.Metric.IsNull() {
+		overlayMetric(&resolved.Metric, &plan.Metric)
+	}
+}
+
+func overlayTimeRange(resolved, plan *resource_report.TimeRangeValue) {
+	if plan.Amount.IsUnknown() {
+		plan.Amount = resolved.Amount
+	}
+	if plan.IncludeCurrent.IsUnknown() {
+		plan.IncludeCurrent = resolved.IncludeCurrent
+	}
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+	if plan.Unit.IsUnknown() {
+		plan.Unit = resolved.Unit
+	}
+}
+
+func overlaySecondaryTimeRange(resolved, plan *resource_report.SecondaryTimeRangeValue) {
+	if plan.Amount.IsUnknown() {
+		plan.Amount = resolved.Amount
+	}
+	if plan.IncludeCurrent.IsUnknown() {
+		plan.IncludeCurrent = resolved.IncludeCurrent
+	}
+	if plan.Unit.IsUnknown() {
+		plan.Unit = resolved.Unit
+	}
+	if plan.CustomTimeRange.IsUnknown() {
+		plan.CustomTimeRange = resolved.CustomTimeRange
+	} else if !plan.CustomTimeRange.IsNull() {
+		overlayCustomTimeRange(&resolved.CustomTimeRange, &plan.CustomTimeRange)
+	}
+}
+
+// ── List element overlay helpers ──
+
+// isUnknownOverlayElement checks whether a list element is Unknown as a whole.
+func isUnknownOverlayElement[T any](v T) bool {
+	if unknownable, ok := any(v).(interface{ IsUnknown() bool }); ok {
+		return unknownable.IsUnknown()
+	}
+	return false
+}
+
+// isNullOverlayElement checks whether a list element is Null as a whole.
+func isNullOverlayElement[T any](v T) bool {
+	if nullable, ok := any(v).(interface{ IsNull() bool }); ok {
+		return nullable.IsNull()
+	}
+	return false
+}
+
+// overlayListElements is a generic helper that walks two lists element-by-element,
+// invoking the overlay function for each matching index. If a plan element is
+// Unknown as a whole, it is replaced with the corresponding resolved element.
+// If a resolved element is Null/Unknown, the overlay is skipped for that element.
+// Diagnostics from element decoding, overlay functions, and list rebuilding are
+// returned to the caller.
+func overlayListElements[T any](ctx context.Context, resolved, plan *types.List, overlayFn func(*T, *T) diag.Diagnostics) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var planElems []T
+	var resolvedElems []T
+
+	planDiags := plan.ElementsAs(ctx, &planElems, true)
+	diags.Append(planDiags...)
+	if planDiags.HasError() {
+		return diags
+	}
+	resolvedDiags := resolved.ElementsAs(ctx, &resolvedElems, true)
+	diags.Append(resolvedDiags...)
+	if resolvedDiags.HasError() {
+		return diags
+	}
+
+	for i := range planElems {
+		if i >= len(resolvedElems) {
+			continue
+		}
+		// If the plan element is Unknown as a whole, replace it with the resolved value.
+		if isUnknownOverlayElement(planElems[i]) {
+			planElems[i] = resolvedElems[i]
+			continue
+		}
+		// If the resolved element is Null/Unknown (API didn't return it), skip
+		// the subfield overlay — the plan element keeps its values as-is.
+		// This guards all list element helpers uniformly without requiring
+		// individual null checks in each helper.
+		if isNullOverlayElement(resolvedElems[i]) || isUnknownOverlayElement(resolvedElems[i]) {
+			continue
+		}
+		diags.Append(overlayFn(&resolvedElems[i], &planElems[i])...)
+	}
+
+	// Rebuild the list with overlaid elements.
+	newList, rebuildDiags := types.ListValueFrom(ctx, plan.ElementType(ctx), planElems)
+	diags.Append(rebuildDiags...)
+	if !rebuildDiags.HasError() {
+		*plan = newList
+	}
+	return diags
+}
+
+func overlayDimension(resolved, plan *resource_report.DimensionsValue) diag.Diagnostics {
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.DimensionsType.IsUnknown() {
+		plan.DimensionsType = resolved.DimensionsType
+	}
+	return nil
+}
+
+func overlayFilter(resolved, plan *resource_report.FiltersValue) diag.Diagnostics {
+	if plan.CaseInsensitive.IsUnknown() {
+		plan.CaseInsensitive = resolved.CaseInsensitive
+	}
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.IncludeNull.IsUnknown() {
+		plan.IncludeNull = resolved.IncludeNull
+	}
+	if plan.Inverse.IsUnknown() {
+		plan.Inverse = resolved.Inverse
+	}
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+	if plan.FiltersType.IsUnknown() {
+		plan.FiltersType = resolved.FiltersType
+	}
+	if plan.Values.IsUnknown() {
+		plan.Values = resolved.Values
+	}
+	return nil
+}
+
+func overlayGroup(resolved, plan *resource_report.GroupValue) diag.Diagnostics {
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.GroupType.IsUnknown() {
+		plan.GroupType = resolved.GroupType
+	}
+	if plan.Limit.IsUnknown() {
+		plan.Limit = resolved.Limit
+	} else if !plan.Limit.IsNull() {
+		overlayLimit(&resolved.Limit, &plan.Limit)
+	}
+	return nil
+}
+
+func overlayLimit(resolved, plan *resource_report.LimitValue) {
+	if plan.Sort.IsUnknown() {
+		plan.Sort = resolved.Sort
+	}
+	if plan.Value.IsUnknown() {
+		plan.Value = resolved.Value
+	}
+	if plan.Metric.IsUnknown() {
+		plan.Metric = resolved.Metric
+	} else if !plan.Metric.IsNull() {
+		overlayMetric(&resolved.Metric, &plan.Metric)
+	}
+}
+
+func overlayMetricsElement(resolved, plan *resource_report.MetricsValue) diag.Diagnostics {
+	if plan.MetricsType.IsUnknown() {
+		plan.MetricsType = resolved.MetricsType
+	}
+	if plan.Value.IsUnknown() {
+		plan.Value = resolved.Value
+	}
+	return nil
+}
+
+func overlaySplit(ctx context.Context, resolved, plan *resource_report.SplitsValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.IncludeOrigin.IsUnknown() {
+		plan.IncludeOrigin = resolved.IncludeOrigin
+	}
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+	if plan.SplitsType.IsUnknown() {
+		plan.SplitsType = resolved.SplitsType
+	}
+	if plan.Origin.IsUnknown() {
+		plan.Origin = resolved.Origin
+	} else if !plan.Origin.IsNull() {
+		overlayOrigin(&resolved.Origin, &plan.Origin)
+	}
+	if plan.Targets.IsUnknown() {
+		plan.Targets = resolved.Targets
+	} else if !plan.Targets.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Targets, &plan.Targets, overlayTarget)...)
+	}
+	return diags
+}
+
+func overlayTarget(resolved, plan *resource_report.TargetsValue) diag.Diagnostics {
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.TargetsType.IsUnknown() {
+		plan.TargetsType = resolved.TargetsType
+	}
+	if plan.Value.IsUnknown() {
+		plan.Value = resolved.Value
+	}
+	return nil
+}
+
+func overlayOrigin(resolved, plan *resource_report.OriginValue) {
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.OriginType.IsUnknown() {
+		plan.OriginType = resolved.OriginType
+	}
+}
+
 // isNAFallback reports whether v is a NullFallback sentinel of the form "[... N/A]"
 // as defined in the Cloud Analytics metadata keymap (metadata_keymap.go).
 // The API (null_fallback.go StripNullFallback) silently removes these sentinels from
