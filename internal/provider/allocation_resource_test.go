@@ -952,21 +952,14 @@ resource "doit_allocation" "invalid_nested" {
 `, rName)
 }
 
-// TestAccAllocation_InverseMigration tests migrating from the deprecated
-// "inverse_selection" attribute to the new "inverse" attribute in an Update.
+// TestAccAllocation_InverseMigration tests that migrating a single allocation
+// from the deprecated "inverse_selection" attribute to the new "inverse"
+// attribute does not produce "inconsistent result" errors.
 //
-// This reproduces the exact failure from ticket 300568: the customer changed
-// from inverse_selection=true to inverse=true and got:
-//
-//	.rule.components[N].inverse: was cty.True, but now cty.False
-//	.rule.components[N].inverse_selection: was cty.False, but now cty.True
-//
-// Root cause: the API internally maps "inverse" back to "inverse_selection",
-// so the response always has inverse_selection=true, inverse=false. On v1.3.3,
-// mapAllocationToModel wrote the swapped API values to state, causing
-// an inconsistency with the plan. The plan-first pattern prevents this.
-//
-// Verified: FAILS on main (v1.3.3), PASSES on this branch.
+// The API internally maps "inverse" back to "inverse_selection" in the response,
+// so the response always has inverse_selection=true and inverse=false. The
+// provider must preserve the user's planned values in state rather than
+// writing the API's swapped values.
 func TestAccAllocation_InverseMigration(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
@@ -1057,14 +1050,9 @@ resource "doit_allocation" "inv_migrate" {
 // round-trips correctly — after apply the state still contains "[Label N/A]"
 // and no "inconsistent result" error is produced.
 //
-// This reproduces the exact failure from ticket 300568: the customer's config
-// has include_null=true and values=["[... N/A]"]. The API strips the sentinel
-// and returns values=[] + include_null=true. If the provider writes the API
-// response directly to state, Terraform sees a list-length mismatch (plan had
-// 1 element, state has 0) and crashes with "inconsistent result".
-//
-// The fix (plan-first state pattern) preserves the plan values in state after
-// Create/Update, so the sentinel stays in state regardless of what the API returns.
+// The API strips NullFallback sentinels from the values list and returns
+// values=[] with include_null=true. The provider must preserve the user's
+// planned values in state to avoid a list-length mismatch.
 func TestAccAllocation_SentinelRestore(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
@@ -1140,17 +1128,10 @@ resource "doit_allocation" "sentinel" {
 // TestAccAllocation_SentinelMixed tests that a single allocation with BOTH a
 // NullFallback sentinel AND real values round-trips without "inconsistent result".
 //
-// This mirrors the customer's invalid-application config from ticket 300568:
-//
-//	values = setunion(local.approved_applications, ["[... N/A]", "none"])
-//
 // The API strips the sentinel from the values list and sets include_null=true.
-// On the current code, the provider writes the API response (which has N-1 values)
-// to state. Terraform then sees each value shifted by one index:
-//
-//	was cty.StringVal("[Label N/A]"), but now cty.StringVal("real-value")
-//
-// and crashes with "inconsistent result" for every index.
+// If the provider writes the API response (which has N-1 values) to state,
+// Terraform sees each value shifted by one index and crashes. The provider
+// must preserve the user's planned values in state.
 func TestAccAllocation_SentinelMixed(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
@@ -1226,26 +1207,14 @@ resource "doit_allocation" "sentinel_mixed" {
 // service_description value that the API normalizes does not crash with
 // "inconsistent result".
 //
-// This reproduces the exact failure from ticket 300568 on the "unallocated"
-// allocation: the customer's config has:
+// The API normalizes some service names (e.g. stripping the "(EKS)" suffix from
+// "Amazon Elastic Container Service for Kubernetes (EKS)"). The provider must
+// preserve the user's planned values in state after Create/Update. The Read path
+// then detects the normalized value as drift and surfaces it in the next plan.
 //
-//	values = ["Amazon Elastic Container Service for Kubernetes (EKS)"]
-//
-// but the API normalizes this to:
-//
-//	values = ["Amazon Elastic Container Service for Kubernetes"]
-//
-// (stripping the "(EKS)" suffix).
-//
-// Before the fix (plan-first state pattern), the provider would crash with
-// "Provider produced inconsistent result" because it wrote the API's normalized
-// value to state, causing a string mismatch.
-//
-// After the fix:
-//   - Create succeeds without crash (plan values preserved in state)
-//   - Read detects the normalized value as drift, causing a non-empty plan
-//   - Step 2 verifies the drift is properly surfaced (not a crash)
-//   - Step 3 uses the canonical name → no more drift
+// Asserts:
+//   - Step 1: Create succeeds without crash; drift is detected (non-empty plan)
+//   - Step 2: Using the canonical name produces an empty plan (no drift)
 func TestAccAllocation_ValueNormalization(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
