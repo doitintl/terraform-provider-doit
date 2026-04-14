@@ -117,8 +117,9 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.populateState(ctx, &plan, reportResp.JSON201)
+	// Plan-first: preserve user's plan values, only overlay computed fields (id, type, labels).
+	// This eliminates all API normalization drift (sentinel stripping, alias renaming, etc.)
+	diags = r.overlayReportComputedFields(ctx, reportResp.JSON201, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -202,8 +203,9 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.populateState(ctx, &plan, reportResp.JSON200)
+	// Plan-first: preserve user's plan values, only overlay computed fields (id, type, labels).
+	// This eliminates all API normalization drift (sentinel stripping, alias renaming, etc.)
+	diags = r.overlayReportComputedFields(ctx, reportResp.JSON200, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
