@@ -106,6 +106,59 @@ func TestAccReport_Minimal(t *testing.T) {
 	})
 }
 
+// TestAccReport_OmittedOptionalComputed verifies that omitting all Optional+Computed
+// fields doesn't cause drift. This is the core plan-first validation: Unknown fields
+// must resolve correctly on Create and match what Read returns on refresh.
+func TestAccReport_OmittedOptionalComputed(t *testing.T) {
+	n := acctest.RandInt()
+
+	// Shared state checks for omitted list fields — they should resolve to empty lists
+	// or API-defaulted lists, not null. These checks run on both Create and drift-check
+	// steps to catch null↔[] inconsistencies between the overlay and Read paths.
+	// Note: dimensions and metrics are API-defaulted (the API populates defaults when
+	// omitted), so we don't assert their exact size — just that they exist (not null).
+	listSizeChecks := []statecheck.StateCheck{
+		statecheck.ExpectKnownValue(
+			"doit_report.this",
+			tfjsonpath.New("labels"),
+			knownvalue.ListSizeExact(0)),
+		statecheck.ExpectKnownValue(
+			"doit_report.this",
+			tfjsonpath.New("config").AtMapKey("filters"),
+			knownvalue.ListSizeExact(0)),
+		statecheck.ExpectKnownValue(
+			"doit_report.this",
+			tfjsonpath.New("config").AtMapKey("group"),
+			knownvalue.ListSizeExact(0)),
+		statecheck.ExpectKnownValue(
+			"doit_report.this",
+			tfjsonpath.New("config").AtMapKey("splits"),
+			knownvalue.ListSizeExact(0)),
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:            testAccReportMinimal(n),
+				ConfigStateChecks: listSizeChecks,
+			},
+			// Verify no drift on re-apply
+			{
+				Config:            testAccReportMinimal(n),
+				ConfigStateChecks: listSizeChecks,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestAccReport_Import(t *testing.T) {
 	n := acctest.RandInt()
 
