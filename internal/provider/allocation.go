@@ -71,8 +71,11 @@ func (r *allocationResource) overlayComputedFields(ctx context.Context, apiResp 
 		plan.Rule = resolved.Rule
 	} else if !plan.Rule.IsNull() {
 		if plan.Rule.Formula.IsUnknown() {
-			plan.Rule = resolved.Rule
-		} else if !plan.Rule.Components.IsNull() && !plan.Rule.Components.IsUnknown() {
+			plan.Rule.Formula = resolved.Rule.Formula
+		}
+		if plan.Rule.Components.IsUnknown() {
+			plan.Rule.Components = resolved.Rule.Components
+		} else if !plan.Rule.Components.IsNull() {
 			diags.Append(overlayListElements(ctx, &resolved.Rule.Components, &plan.Rule.Components, overlayAllocationComponent)...)
 		}
 	}
