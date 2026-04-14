@@ -188,8 +188,9 @@ func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Plan-first state pattern: keep all user-configured values from the plan
-	// exactly as-is, and only overlay Computed-only fields from the API response.
+	// Plan-first state pattern: keep user-configured values from the plan
+	// as-is, and overlay API response values for Computed fields plus any
+	// Optional+Computed fields (labels, reports) that are still unknown.
 	resp.Diagnostics.Append(overlayAnnotationComputedFields(ctx, annotationResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -334,9 +335,9 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Plan-first state pattern: keep all user-configured values from the plan
-	// exactly as-is, and only overlay Computed-only fields from the API response.
-	plan.Id = state.Id
+	// Plan-first state pattern: keep user-configured values from the plan
+	// as-is, and overlay API response values for Computed fields plus any
+	// Optional+Computed fields (labels, reports) that are still unknown.
 	resp.Diagnostics.Append(overlayAnnotationComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
