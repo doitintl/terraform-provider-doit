@@ -199,16 +199,28 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 		}
 	}
 	if plan.RecipientsSlackChannels.IsUnknown() {
-		plan.RecipientsSlackChannels = types.ListNull(resource_budget.RecipientsSlackChannelsValue{}.Type(ctx))
+		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
+		emptyChannels, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []resource_budget.RecipientsSlackChannelsValue{})
+		diags.Append(d...)
+		plan.RecipientsSlackChannels = emptyChannels
 	}
 	if plan.Scope.IsUnknown() {
-		plan.Scope = types.ListNull(types.StringType)
+		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
+		var emptyDiags diag.Diagnostics
+		plan.Scope, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
+		diags.Append(emptyDiags...)
 	}
 	if plan.Scopes.IsUnknown() {
-		plan.Scopes = types.ListNull(resource_budget.ScopesValue{}.Type(ctx))
+		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
+		emptyScopes, d := types.ListValueFrom(ctx, resource_budget.ScopesValue{}.Type(ctx), []resource_budget.ScopesValue{})
+		diags.Append(d...)
+		plan.Scopes = emptyScopes
 	}
 	if plan.SeasonalAmounts.IsUnknown() {
-		plan.SeasonalAmounts = types.ListNull(types.Float64Type)
+		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
+		var emptyDiags diag.Diagnostics
+		plan.SeasonalAmounts, emptyDiags = types.ListValue(types.Float64Type, []attr.Value{})
+		diags.Append(emptyDiags...)
 	}
 
 	// ── Resolve unknowns inside scopes[] elements ──
