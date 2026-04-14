@@ -73,7 +73,7 @@ func (r *reportResource) overlayReportComputedFields(ctx context.Context, apiRes
 	// Walk each field: if the plan value is Known, keep it (user's source of truth).
 	// If Unknown, use the API-resolved value.
 	if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
-		overlayConfigFields(ctx, &resolved.Config, &plan.Config)
+		diags.Append(overlayConfigFields(ctx, &resolved.Config, &plan.Config)...)
 	} else if plan.Config.IsUnknown() {
 		plan.Config = resolved.Config
 	}
@@ -84,7 +84,9 @@ func (r *reportResource) overlayReportComputedFields(ctx context.Context, apiRes
 // overlayConfigFields walks every field in the config block and replaces
 // Unknown plan values with API-resolved values. Known plan values are preserved.
 // For nested objects and list elements, it also walks into subfields.
-func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigValue, plan *resource_report.ConfigValue) {
+func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigValue, plan *resource_report.ConfigValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	// ── Scalar fields ──
 	if plan.Aggregation.IsUnknown() {
 		plan.Aggregation = resolved.Aggregation
@@ -161,32 +163,36 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 	if plan.Dimensions.IsUnknown() {
 		plan.Dimensions = resolved.Dimensions
 	} else if !plan.Dimensions.IsNull() {
-		overlayListElements(ctx, &resolved.Dimensions, &plan.Dimensions, overlayDimension)
+		diags.Append(overlayListElements(ctx, &resolved.Dimensions, &plan.Dimensions, overlayDimension)...)
 	}
 
 	if plan.Filters.IsUnknown() {
 		plan.Filters = resolved.Filters
 	} else if !plan.Filters.IsNull() {
-		overlayListElements(ctx, &resolved.Filters, &plan.Filters, overlayFilter)
+		diags.Append(overlayListElements(ctx, &resolved.Filters, &plan.Filters, overlayFilter)...)
 	}
 
 	if plan.Group.IsUnknown() {
 		plan.Group = resolved.Group
 	} else if !plan.Group.IsNull() {
-		overlayListElements(ctx, &resolved.Group, &plan.Group, overlayGroup)
+		diags.Append(overlayListElements(ctx, &resolved.Group, &plan.Group, overlayGroup)...)
 	}
 
 	if plan.Metrics.IsUnknown() {
 		plan.Metrics = resolved.Metrics
 	} else if !plan.Metrics.IsNull() {
-		overlayListElements(ctx, &resolved.Metrics, &plan.Metrics, overlayMetricsElement)
+		diags.Append(overlayListElements(ctx, &resolved.Metrics, &plan.Metrics, overlayMetricsElement)...)
 	}
 
 	if plan.Splits.IsUnknown() {
 		plan.Splits = resolved.Splits
 	} else if !plan.Splits.IsNull() {
-		overlayListElements(ctx, &resolved.Splits, &plan.Splits, overlaySplit)
+		diags.Append(overlayListElements(ctx, &resolved.Splits, &plan.Splits, func(r, p *resource_report.SplitsValue) {
+			diags.Append(overlaySplit(ctx, r, p)...)
+		})...)
 	}
+
+	return diags
 }
 
 // ── Nested object overlay helpers ──
@@ -272,27 +278,53 @@ func overlaySecondaryTimeRange(resolved, plan *resource_report.SecondaryTimeRang
 
 // ── List element overlay helpers ──
 
+// isUnknownOverlayElement checks whether a list element is Unknown as a whole.
+func isUnknownOverlayElement[T any](v T) bool {
+	if unknownable, ok := any(v).(interface{ IsUnknown() bool }); ok {
+		return unknownable.IsUnknown()
+	}
+	return false
+}
+
 // overlayListElements is a generic helper that walks two lists element-by-element,
-// invoking the overlay function for each matching index.
-func overlayListElements[T any](ctx context.Context, resolved, plan *types.List, overlayFn func(*T, *T)) {
+// invoking the overlay function for each matching index. If a plan element is
+// Unknown as a whole, it is replaced with the corresponding resolved element.
+// Diagnostics from element decoding and list rebuilding are returned to the caller.
+func overlayListElements[T any](ctx context.Context, resolved, plan *types.List, overlayFn func(*T, *T)) diag.Diagnostics {
+	var diags diag.Diagnostics
 	var planElems []T
 	var resolvedElems []T
-	if d := plan.ElementsAs(ctx, &planElems, false); d.HasError() {
-		return
+
+	planDiags := plan.ElementsAs(ctx, &planElems, true)
+	diags.Append(planDiags...)
+	if planDiags.HasError() {
+		return diags
 	}
-	if d := resolved.ElementsAs(ctx, &resolvedElems, false); d.HasError() {
-		return
+	resolvedDiags := resolved.ElementsAs(ctx, &resolvedElems, true)
+	diags.Append(resolvedDiags...)
+	if resolvedDiags.HasError() {
+		return diags
 	}
+
 	for i := range planElems {
-		if i < len(resolvedElems) {
-			overlayFn(&resolvedElems[i], &planElems[i])
+		if i >= len(resolvedElems) {
+			continue
 		}
+		// If the entire element is Unknown, replace it wholesale.
+		if isUnknownOverlayElement(planElems[i]) {
+			planElems[i] = resolvedElems[i]
+			continue
+		}
+		overlayFn(&resolvedElems[i], &planElems[i])
 	}
+
 	// Rebuild the list with overlaid elements.
-	newList, d := types.ListValueFrom(ctx, plan.ElementType(ctx), planElems)
-	if !d.HasError() {
+	newList, rebuildDiags := types.ListValueFrom(ctx, plan.ElementType(ctx), planElems)
+	diags.Append(rebuildDiags...)
+	if !rebuildDiags.HasError() {
 		*plan = newList
 	}
+	return diags
 }
 
 func overlayDimension(resolved, plan *resource_report.DimensionsValue) {
@@ -365,7 +397,8 @@ func overlayMetricsElement(resolved, plan *resource_report.MetricsValue) {
 	}
 }
 
-func overlaySplit(resolved, plan *resource_report.SplitsValue) {
+func overlaySplit(ctx context.Context, resolved, plan *resource_report.SplitsValue) diag.Diagnostics {
+	var diags diag.Diagnostics
 	if plan.Id.IsUnknown() {
 		plan.Id = resolved.Id
 	}
@@ -385,6 +418,21 @@ func overlaySplit(resolved, plan *resource_report.SplitsValue) {
 	}
 	if plan.Targets.IsUnknown() {
 		plan.Targets = resolved.Targets
+	} else if !plan.Targets.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Targets, &plan.Targets, overlayTarget)...)
+	}
+	return diags
+}
+
+func overlayTarget(resolved, plan *resource_report.TargetsValue) {
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.TargetsType.IsUnknown() {
+		plan.TargetsType = resolved.TargetsType
+	}
+	if plan.Value.IsUnknown() {
+		plan.Value = resolved.Value
 	}
 }
 

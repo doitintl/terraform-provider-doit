@@ -117,8 +117,10 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Plan-first: preserve user's plan values, only overlay computed fields (id, type, labels).
-	// This eliminates all API normalization drift (sentinel stripping, alias renaming, etc.)
+	// Plan-first: preserve the user's explicit plan values, while resolving Unknown
+	// fields from the API response (id, type, labels, name, description, and nested
+	// config fields). This avoids API normalization drift (sentinel stripping, alias
+	// renaming, etc.) for all user-configured values.
 	diags = r.overlayReportComputedFields(ctx, reportResp.JSON201, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -203,8 +205,10 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Plan-first: preserve user's plan values, only overlay computed fields (id, type, labels).
-	// This eliminates all API normalization drift (sentinel stripping, alias renaming, etc.)
+	// Plan-first: preserve the user's explicit plan values, while resolving Unknown
+	// fields from the API response (id, type, labels, name, description, and nested
+	// config fields). This avoids API normalization drift (sentinel stripping, alias
+	// renaming, etc.) for all user-configured values.
 	diags = r.overlayReportComputedFields(ctx, reportResp.JSON200, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
