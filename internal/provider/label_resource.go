@@ -214,7 +214,6 @@ func (r *labelResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	// Plan-first state pattern: overlay Computed-only fields from API response.
-	plan.Id = state.Id
 	overlayLabelComputedFields(updateResp.JSON200, &plan)
 
 	// Save updated data into Terraform state

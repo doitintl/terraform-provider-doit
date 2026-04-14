@@ -173,7 +173,7 @@ func overlayAssetComputedFields(ctx context.Context, apiResp *models.AssetItemDe
 	}
 
 	// Phase 2: Overlay.
-	// Id: Required (user-specified for import-only) — never touch.
+	// Id: Computed-only, but safely preserved from the plan's prior state.
 	// Quantity: Optional+Computed — resolve when Unknown.
 	if plan.Quantity.IsUnknown() {
 		plan.Quantity = resolved.Quantity
