@@ -248,7 +248,8 @@ func (r *assetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// Plan-first state pattern: overlay Computed-only fields from API response.
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (quantity) from the API when unknown.
 	resp.Diagnostics.Append(overlayAssetComputedFields(ctx, assetResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return

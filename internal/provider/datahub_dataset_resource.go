@@ -129,7 +129,8 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	// Plan-first state pattern: overlay Computed-only fields from API response.
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (description) from the API when unknown.
 	overlayDatahubDatasetComputedFields(createResp.JSON201.Name, createResp.JSON201.Description, createResp.JSON201.Records, createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -223,7 +224,8 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	// Plan-first state pattern: overlay Computed-only fields from API response.
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (description) from the API when unknown.
 	overlayDatahubDatasetComputedFields(updateResp.JSON200.Name, updateResp.JSON200.Description, updateResp.JSON200.Records, updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
