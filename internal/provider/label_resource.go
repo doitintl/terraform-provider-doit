@@ -103,8 +103,8 @@ func (r *labelResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	// Map response to state
-	mapLabelToModel(labelResp.JSON201, &plan)
+	// Plan-first state pattern: overlay Computed-only fields from API response.
+	overlayLabelComputedFields(labelResp.JSON201, &plan)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -213,8 +213,9 @@ func (r *labelResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// Map response to state
-	mapLabelToModel(updateResp.JSON200, &plan)
+	// Plan-first state pattern: overlay Computed-only fields from API response.
+	plan.Id = state.Id
+	overlayLabelComputedFields(updateResp.JSON200, &plan)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)

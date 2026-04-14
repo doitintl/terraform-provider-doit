@@ -72,6 +72,15 @@ func TestAccLabel(t *testing.T) {
 						knownvalue.StringExact("mint")),
 				},
 			},
+			// Step 3: Drift check — re-apply same updated config, expect no changes.
+			{
+				Config: testAccLabelUpdate(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -91,6 +100,15 @@ func TestAccLabel_Import(t *testing.T) {
 				ResourceName:      "doit_label.this",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			// Step 3: Drift check — re-apply config after import, expect no changes.
+			{
+				Config: testAccLabel(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
