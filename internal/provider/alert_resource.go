@@ -192,6 +192,14 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	// Plan-first state pattern: keep all user-configured values from the plan
 	// exactly as-is, and only overlay Computed-only fields from the API response.
+	if updateResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Alert",
+			"Received empty response body",
+		)
+		return
+	}
+
 	plan.Id = state.Id
 	resp.Diagnostics.Append(overlayAlertComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
