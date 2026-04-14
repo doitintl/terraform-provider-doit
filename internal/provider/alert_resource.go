@@ -8,7 +8,6 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_alert"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure the implementation satisfies expected interfaces.
@@ -113,9 +112,9 @@ func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	// Map response directly to state (API returns complete object)
-	plan.Id = types.StringPointerValue(alertResp.JSON201.Id)
-	resp.Diagnostics.Append(mapAlertToModel(ctx, alertResp.JSON201, &plan)...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	resp.Diagnostics.Append(overlayAlertComputedFields(ctx, alertResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -191,17 +190,10 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// Map response directly to state (API returns complete object)
-	if updateResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Updating Alert",
-			"Received empty response body",
-		)
-		return
-	}
-
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
 	plan.Id = state.Id
-	resp.Diagnostics.Append(mapAlertToModel(ctx, updateResp.JSON200, &plan)...)
+	resp.Diagnostics.Append(overlayAlertComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
