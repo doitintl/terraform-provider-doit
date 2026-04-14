@@ -10,6 +10,126 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// overlayAlertComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create/Update.
+//
+// Phase 1 (Resolve): Build a fully-resolved state from the API response using
+// mapAlertToModel — the same mapping function used by Read/ImportState. This
+// guarantees consistency between Create/Update and Read paths.
+//
+// Phase 2 (Overlay): Walk the plan field-by-field. Known (user-configured)
+// values are preserved as-is. Unknown (user-omitted) values are replaced with
+// the resolved counterpart. Computed-only fields always come from resolved.
+//
+// Used by: Create, Update
+// NOT used by: Read, ImportState (which use populateState / mapAlertToModel directly).
+func overlayAlertComputedFields(ctx context.Context, apiResp *models.Alert, plan *alertResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Phase 1: Build fully-resolved state from API response.
+	resolved := *plan
+	diags.Append(mapAlertToModel(ctx, apiResp, &resolved)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	// Phase 2: Overlay known plan values on top of resolved state.
+
+	// ── Computed-only fields: always from resolved ──
+	plan.Id = resolved.Id
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
+	plan.LastAlerted = resolved.LastAlerted
+
+	// ── Name: Required — never touch ──
+
+	// ── Recipients: Optional+Computed list ──
+	if plan.Recipients.IsUnknown() {
+		plan.Recipients = resolved.Recipients
+	}
+
+	// ── Config: Required nested object — overlay subfields individually ──
+	if plan.Config.IsUnknown() {
+		plan.Config = resolved.Config
+	} else if !plan.Config.IsNull() {
+		diags.Append(overlayAlertConfig(ctx, &resolved.Config, &plan.Config)...)
+	}
+
+	return diags
+}
+
+// overlayAlertConfig overlays Known config subfields from the plan,
+// replacing only Unknown values with the resolved counterpart.
+func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.ConfigValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// ── Optional+Computed scalar fields: only when Unknown ──
+	if plan.Attributions.IsUnknown() {
+		plan.Attributions = resolved.Attributions
+	}
+	if plan.Condition.IsUnknown() {
+		plan.Condition = resolved.Condition
+	}
+	if plan.Currency.IsUnknown() {
+		plan.Currency = resolved.Currency
+	}
+	if plan.DataSource.IsUnknown() {
+		plan.DataSource = resolved.DataSource
+	}
+	if plan.EvaluateForEach.IsUnknown() {
+		plan.EvaluateForEach = resolved.EvaluateForEach
+	}
+	if plan.Operator.IsUnknown() {
+		plan.Operator = resolved.Operator
+	}
+	if plan.TimeInterval.IsUnknown() {
+		plan.TimeInterval = resolved.TimeInterval
+	}
+
+	// ── Metric: Required nested — subfields are both Required, never Unknown ──
+	// Defensive: overlay if Unknown.
+	if plan.Metric.IsUnknown() {
+		plan.Metric = resolved.Metric
+	}
+
+	// ── Value: Required float64 — never Unknown ──
+
+	// ── Scopes: Optional+Computed list ──
+	if plan.Scopes.IsUnknown() {
+		plan.Scopes = resolved.Scopes
+	} else if !plan.Scopes.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Scopes, &plan.Scopes, overlayAlertScope)...)
+	}
+
+	return diags
+}
+
+// overlayAlertScope resolves Unknown subfields in alert scope elements.
+func overlayAlertScope(_ context.Context, resolved, plan *resource_alert.ScopesValue) diag.Diagnostics {
+	if plan.CaseInsensitive.IsUnknown() {
+		plan.CaseInsensitive = resolved.CaseInsensitive
+	}
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.IncludeNull.IsUnknown() {
+		plan.IncludeNull = resolved.IncludeNull
+	}
+	if plan.Inverse.IsUnknown() {
+		plan.Inverse = resolved.Inverse
+	}
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+	if plan.ScopesType.IsUnknown() {
+		plan.ScopesType = resolved.ScopesType
+	}
+	if plan.Values.IsUnknown() {
+		plan.Values = resolved.Values
+	}
+	return nil
+}
+
 // toAlertRequest converts the Terraform model to the API AlertRequest.
 // This is used for create operations.
 func (plan *alertResourceModel) toAlertRequest(ctx context.Context) (req models.AlertRequest, diags diag.Diagnostics) {
