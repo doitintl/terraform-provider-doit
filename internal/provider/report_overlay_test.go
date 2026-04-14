@@ -256,7 +256,7 @@ func TestOverlayListElements_NullResolvedElement(t *testing.T) {
 
 	// Track whether overlayFn was called — it should NOT be for a null resolved element.
 	called := false
-	overlayDiags := overlayListElements(ctx, &resolvedList, &planList, func(resolved, plan *resource_report.FiltersValue) diag.Diagnostics {
+	overlayDiags := overlayListElements(ctx, &resolvedList, &planList, func(_ context.Context, resolved, plan *resource_report.FiltersValue) diag.Diagnostics {
 		called = true
 		return nil
 	})
