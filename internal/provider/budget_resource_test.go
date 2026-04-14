@@ -1609,8 +1609,29 @@ resource "doit_budget" "drift_test" {
 // TestAccBudget_OmittedOptionalComputed tests that omitting Optional+Computed scalar
 // fields does not cause drift. The plan-first overlay must resolve these unknowns
 // from the API response (or null) and the Read path must agree.
+//
+// Critically, this also verifies that omitted list fields (recipients_slack_channels,
+// scopes, seasonal_amounts) resolve to empty lists [] — not null — matching the
+// Read path (mapBudgetToModel). A null↔[] mismatch would cause state churn.
 func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 	n := acctest.RandInt()
+
+	// State checks that verify omitted list fields are empty lists, not null.
+	// This directly catches the null↔[] flip between Create/Update and Read.
+	omittedListChecks := []statecheck.StateCheck{
+		statecheck.ExpectKnownValue(
+			"doit_budget.omitted_test",
+			tfjsonpath.New("recipients_slack_channels"),
+			knownvalue.ListSizeExact(0)),
+		statecheck.ExpectKnownValue(
+			"doit_budget.omitted_test",
+			tfjsonpath.New("scopes"),
+			knownvalue.ListSizeExact(0)),
+		statecheck.ExpectKnownValue(
+			"doit_budget.omitted_test",
+			tfjsonpath.New("seasonal_amounts"),
+			knownvalue.ListSizeExact(0)),
+	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
@@ -1623,7 +1644,8 @@ func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Create a minimal budget omitting description, growth_per_period, metric, public
+			// Create a minimal budget omitting description, growth_per_period, metric, public,
+			// and all optional list fields (recipients_slack_channels, scopes, seasonal_amounts).
 			{
 				Config: testAccBudgetMinimalOmitted(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -1632,8 +1654,12 @@ func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 						plancheck.ExpectResourceAction("doit_budget.omitted_test", plancheck.ResourceActionCreate),
 					},
 				},
+				// Verify after create: omitted lists are [] not null
+				ConfigStateChecks: omittedListChecks,
 			},
-			// Drift check: re-apply same config, expect no changes
+			// Drift check: re-apply same config, expect no changes.
+			// After Read refreshes state from API, lists must still be [] — proving
+			// the overlay and Read path agree on the empty-list representation.
 			{
 				Config: testAccBudgetMinimalOmitted(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -1641,6 +1667,7 @@ func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
+				ConfigStateChecks: omittedListChecks,
 			},
 		},
 	})
