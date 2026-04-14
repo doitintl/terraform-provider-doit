@@ -1795,3 +1795,257 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i, testAttribution(), testUser(), testUser())
 }
+
+// TestAccBudget_UsePrevSpend tests use_prev_spend = true where the API computes
+// the amount from previous spend. Verifies the overlay correctly preserves the
+// user's use_prev_spend = true and doesn't drift on the API-computed amount.
+func TestAccBudget_UsePrevSpend(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Create with use_prev_spend = true
+			{
+				Config: testAccBudgetUsePrevSpend(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("use_prev_spend"),
+						knownvalue.Bool(true)),
+				},
+			},
+			// Drift check
+			{
+				Config: testAccBudgetUsePrevSpend(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetUsePrevSpend(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name           = "test-prevspend-%d"
+  currency       = "USD"
+  time_interval  = "month"
+  type           = "recurring"
+  start_period   = local.start_period
+  use_prev_spend = true
+  scope          = ["%s"]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+  recipients = ["%s"]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser())
+}
+
+// TestAccBudget_FixedToRecurring tests converting a fixed budget to recurring.
+// The end_period field goes from set→omitted, and the overlay must correctly
+// handle this transition without drift.
+func TestAccBudget_FixedToRecurring(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create as fixed budget
+			{
+				Config: testAccBudgetFixedForConversion(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("type"),
+						knownvalue.StringExact("fixed")),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("end_period"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Step 2: Convert to recurring (end_period disappears)
+			{
+				Config: testAccBudgetRecurringFromFixed(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("type"),
+						knownvalue.StringExact("recurring")),
+				},
+			},
+			// Step 3: Drift check
+			{
+				Config: testAccBudgetRecurringFromFixed(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetFixedForConversion(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name         = "test-fix2rec-%d"
+  amount       = 500
+  currency     = "USD"
+  type         = "fixed"
+  start_period = local.start_period
+  end_period   = local.start_period + (30 * 24 * 60 * 60 * 1000)
+  scope        = ["%s"]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}
+
+func testAccBudgetRecurringFromFixed(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-fix2rec-%d"
+  amount        = 500
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+  recipients = ["%s"]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser())
+}
+
+// TestAccBudget_PublicField tests the public sharing access level field.
+// Verifies the value is preserved by the overlay and survives Read refresh.
+func TestAccBudget_PublicField(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Create with public = "viewer"
+			{
+				Config: testAccBudgetPublicField(n, "viewer"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("viewer")),
+				},
+			},
+			// Drift check
+			{
+				Config: testAccBudgetPublicField(n, "viewer"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Update to public = "editor"
+			{
+				Config: testAccBudgetPublicField(n, "editor"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("editor")),
+				},
+			},
+			// Drift check after update
+			{
+				Config: testAccBudgetPublicField(n, "editor"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetPublicField(i int, public string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-public-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  use_prev_spend = false
+  public        = "%s"
+  scope         = ["%s"]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+  recipients = ["%s"]
+}
+`, budgetStartPeriod(), i, public, testAttribution(), testUser(), testUser())
+}
