@@ -15,200 +15,136 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// overlayComputedFields sets only the Computed-only fields from the API response
-// onto the plan model. This implements the plan-first state pattern recommended
-// by HashiCorp (https://developer.hashicorp.com/terraform/plugin/framework/resources/create):
+// overlayComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create/Update.
 //
-// All user-configured values (name, description, rule, rules, unallocated_costs)
-// stay exactly as the user wrote them in the plan. Only server-assigned values
-// that the user cannot configure are overlaid from the API response:
+// Phase 1 (Resolve): Build a fully-resolved state from the API response using
+// mapAllocationToModel — the same mapping function used by Read/ImportState.
+// This guarantees consistency between Create/Update and Read paths.
 //
-//   - id: assigned by the API on creation
-//   - allocation_type: computed from whether rule or rules was provided
-//   - anomaly_detection: server-managed flag
-//   - create_time: set by the API on creation
-//   - update_time: set by the API on every modification
-//   - type: computed by the API (preset vs custom)
+// Phase 2 (Overlay): Walk the plan field-by-field. Known (user-configured)
+// values are preserved as-is. Unknown (user-omitted) values are replaced with
+// the resolved counterpart. Computed-only fields always come from resolved.
 //
 // This prevents "Provider produced inconsistent result" errors caused by the API
 // normalizing user-provided values (e.g. stripping [Service N/A] sentinels,
 // renaming "Amazon Elastic Container Service for Kubernetes (EKS)" to
 // "Amazon Elastic Container Service for Kubernetes").
-func overlayComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
+//
+// Used by: Create, Update
+// NOT used by: Read, ImportState (which use populateState / mapAllocationToModel directly).
+func (r *allocationResource) overlayComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// Computed-only fields: always set from API response.
-	plan.Id = types.StringPointerValue(apiResp.Id)
-	plan.CreateTime = types.Int64PointerValue(apiResp.CreateTime)
-	plan.UpdateTime = types.Int64PointerValue(apiResp.UpdateTime)
-	plan.AnomalyDetection = types.BoolPointerValue(apiResp.AnomalyDetection)
-	plan.Type = types.StringPointerValue(apiResp.Type)
-
-	if apiResp.AllocationType != nil {
-		plan.AllocationType = types.StringValue(string(*apiResp.AllocationType))
-	} else {
-		plan.AllocationType = types.StringNull()
+	// Phase 1: Build fully-resolved state from API response.
+	// Copy the plan so that mapAllocationToModel's sentinel restoration and alias
+	// normalization can compare against user-configured values in the existing state.
+	resolved := *plan
+	diags.Append(r.mapAllocationToModel(ctx, apiResp, &resolved)...)
+	if diags.HasError() {
+		return diags
 	}
 
-	// Optional+Computed fields at top level: resolve unknowns using the API
-	// response where available, falling back to null.
-	if plan.Rules.IsUnknown() {
-		plan.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
+	// Phase 2: Overlay known plan values on top of resolved state.
+
+	// ── Computed-only fields: always from resolved ──
+	plan.Id = resolved.Id
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
+	plan.AnomalyDetection = resolved.AnomalyDetection
+	plan.Type = resolved.Type
+	plan.AllocationType = resolved.AllocationType
+
+	// ── Optional+Computed scalar fields: only when Unknown ──
+	if plan.Description.IsUnknown() {
+		plan.Description = resolved.Description
 	}
-	if plan.Rule.IsUnknown() {
-		plan.Rule = resource_allocation.NewRuleValueNull()
+	if plan.Name.IsUnknown() {
+		plan.Name = resolved.Name
 	}
 	if plan.UnallocatedCosts.IsUnknown() {
-		plan.UnallocatedCosts = types.StringPointerValue(apiResp.UnallocatedCosts)
+		plan.UnallocatedCosts = resolved.UnallocatedCosts
 	}
 
-	// Resolve unknowns inside rules[] elements.
-	// Fields like 'description', 'id' inside each rule are Optional+Computed.
-	// When the user doesn't set them, they arrive as unknown.
-	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
-		var planRules []resource_allocation.RulesValue
-		elementsDiags := plan.Rules.ElementsAs(ctx, &planRules, false)
-		diags.Append(elementsDiags...)
-		if !elementsDiags.HasError() {
-			changed := false
-			for i := range planRules {
-				// For each unknown Optional+Computed field, overlay the API
-				// response value (which may contain a generated default like
-				// formula="A") instead of null. This prevents perpetual drift
-				// where Read returns the API default but state has null.
-				apiRule := safeGetGroupRule(apiResp, i)
-				if planRules[i].Description.IsUnknown() {
-					if apiRule != nil {
-						planRules[i].Description = types.StringPointerValue(apiRule.Description)
-					} else {
-						planRules[i].Description = types.StringNull()
-					}
-					changed = true
-				}
-				if planRules[i].Id.IsUnknown() {
-					if apiRule != nil {
-						planRules[i].Id = types.StringPointerValue(apiRule.Id)
-					} else {
-						planRules[i].Id = types.StringNull()
-					}
-					changed = true
-				}
-				if planRules[i].Formula.IsUnknown() {
-					if apiRule != nil {
-						planRules[i].Formula = types.StringPointerValue(apiRule.Formula)
-					} else {
-						planRules[i].Formula = types.StringNull()
-					}
-					changed = true
-				}
-				if planRules[i].Name.IsUnknown() {
-					if apiRule != nil {
-						planRules[i].Name = types.StringPointerValue(apiRule.Name)
-					} else {
-						planRules[i].Name = types.StringNull()
-					}
-					changed = true
-				}
-				if planRules[i].Components.IsUnknown() {
-					planRules[i].Components = types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx))
-					changed = true
-				}
-				// Also resolve unknowns inside components.
-				if !planRules[i].Components.IsNull() && !planRules[i].Components.IsUnknown() {
-					resolved, compDiags := resolveComponentUnknowns(ctx, &planRules[i].Components)
-					diags.Append(compDiags...)
-					if resolved {
-						changed = true
-					}
-				}
-			}
-			if changed {
-				var rulesDiags diag.Diagnostics
-				plan.Rules, rulesDiags = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), planRules)
-				diags.Append(rulesDiags...)
-			}
+	// ── Rule (single nested object): use resolved when Unknown, overlay subfields when Known ──
+	if plan.Rule.IsUnknown() {
+		plan.Rule = resolved.Rule
+	} else if !plan.Rule.IsNull() {
+		if plan.Rule.Formula.IsUnknown() {
+			plan.Rule.Formula = resolved.Rule.Formula
+		}
+		if plan.Rule.Components.IsUnknown() {
+			plan.Rule.Components = resolved.Rule.Components
+		} else if !plan.Rule.Components.IsNull() {
+			diags.Append(overlayListElements(ctx, &resolved.Rule.Components, &plan.Rule.Components, overlayAllocationComponent)...)
 		}
 	}
 
-	// Resolve unknowns inside single rule (formula and components).
-	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() {
-		changed := false
-		formula := plan.Rule.Formula
-		if formula.IsUnknown() {
-			if apiResp.Rule != nil {
-				formula = types.StringValue(apiResp.Rule.Formula)
-			} else {
-				formula = types.StringNull()
-			}
-			changed = true
-		}
-
-		components := plan.Rule.Components
-		if !components.IsNull() && !components.IsUnknown() {
-			resolved, compDiags := resolveComponentUnknowns(ctx, &components)
-			diags.Append(compDiags...)
-			if resolved {
-				changed = true
-			}
-		}
-
-		if changed {
-			// Rebuild the Rule value with updated components and formula.
-			m := map[string]attr.Value{
-				"formula":    formula,
-				"components": components,
-			}
-			var ruleDiags diag.Diagnostics
-			plan.Rule, ruleDiags = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
-			diags.Append(ruleDiags...)
-		}
+	// ── Rules (list): resolve whole list when Unknown, overlay elements when Known ──
+	if plan.Rules.IsUnknown() {
+		plan.Rules = resolved.Rules
+	} else if !plan.Rules.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Rules, &plan.Rules, overlayAllocationRule)...)
 	}
 
 	return diags
 }
 
-// safeGetGroupRule returns the API response's group rule at index i, or nil if
-// the index is out of bounds or the rules slice is nil.
-func safeGetGroupRule(apiResp *models.Allocation, i int) *models.GroupAllocationRule {
-	if apiResp.Rules == nil || i >= len(*apiResp.Rules) {
-		return nil
+// ── Allocation list element overlay helpers ──
+// Each helper resolves Unknown subfields from the resolved element.
+// Known values are never touched — the user's plan is the source of truth.
+
+func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
+	if plan.Action.IsUnknown() {
+		plan.Action = resolved.Action
 	}
-	return (*apiResp.Rules)[i]
+	if plan.Description.IsUnknown() {
+		plan.Description = resolved.Description
+	}
+	if plan.Formula.IsUnknown() {
+		plan.Formula = resolved.Formula
+	}
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.Name.IsUnknown() {
+		plan.Name = resolved.Name
+	}
+	// Components: overlay subfields when the list is Known
+	if plan.Components.IsUnknown() {
+		plan.Components = resolved.Components
+	} else if !plan.Components.IsNull() {
+		return overlayListElements(ctx, &resolved.Components, &plan.Components, overlayAllocationComponent)
+	}
+	return nil
 }
 
-// resolveComponentUnknowns resolves unknown Optional+Computed fields inside
-// component elements (case_insensitive, include_null, inverse, inverse_selection).
-// Returns true if any fields were changed.
-func resolveComponentUnknowns(ctx context.Context, components *basetypes.ListValue) (bool, diag.Diagnostics) {
-	var comps []resource_allocation.ComponentsValue
-	if d := components.ElementsAs(ctx, &comps, false); d.HasError() {
-		return false, d
+func overlayAllocationComponent(_ context.Context, resolved, plan *resource_allocation.ComponentsValue) diag.Diagnostics {
+	if plan.CaseInsensitive.IsUnknown() {
+		plan.CaseInsensitive = resolved.CaseInsensitive
 	}
-	changed := false
-	for i := range comps {
-		if comps[i].CaseInsensitive.IsUnknown() {
-			comps[i].CaseInsensitive = types.BoolValue(false)
-			changed = true
-		}
-		if comps[i].IncludeNull.IsUnknown() {
-			comps[i].IncludeNull = types.BoolValue(false)
-			changed = true
-		}
-		if comps[i].Inverse.IsUnknown() {
-			comps[i].Inverse = types.BoolValue(false)
-			changed = true
-		}
-		if comps[i].InverseSelection.IsUnknown() {
-			comps[i].InverseSelection = types.BoolValue(false)
-			changed = true
-		}
+	if plan.IncludeNull.IsUnknown() {
+		plan.IncludeNull = resolved.IncludeNull
 	}
-	if changed {
-		var listDiags diag.Diagnostics
-		*components, listDiags = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), comps)
-		return changed, listDiags
+	if plan.Inverse.IsUnknown() {
+		plan.Inverse = resolved.Inverse
 	}
-	return changed, nil
+	if plan.InverseSelection.IsUnknown() {
+		plan.InverseSelection = resolved.InverseSelection
+	}
+	if plan.ComponentsType.IsUnknown() {
+		plan.ComponentsType = resolved.ComponentsType
+	}
+	if plan.Key.IsUnknown() {
+		plan.Key = resolved.Key
+	}
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+	if plan.Values.IsUnknown() {
+		plan.Values = resolved.Values
+	}
+	return nil
 }
 
 func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req models.CreateAllocationRequest, diags diag.Diagnostics) {

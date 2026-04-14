@@ -172,7 +172,7 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	// This prevents "Provider produced inconsistent result" errors caused by the
 	// API normalizing user-provided values (stripping sentinels, renaming services).
 	// Read and ImportState still use mapAllocationToModel for the full API response.
-	resp.Diagnostics.Append(overlayComputedFields(ctx, allocationResp.JSON200, plan)...)
+	resp.Diagnostics.Append(r.overlayComputedFields(ctx, allocationResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -271,7 +271,7 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Plan-first state pattern: keep all user-configured values from the plan
 	// exactly as-is, and only overlay Computed-only fields from the API response.
-	resp.Diagnostics.Append(overlayComputedFields(ctx, updateResp.JSON200, plan)...)
+	resp.Diagnostics.Append(r.overlayComputedFields(ctx, updateResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

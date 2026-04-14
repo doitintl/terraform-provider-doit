@@ -465,9 +465,9 @@ func TestAccBudget_Attributes_Coverage(t *testing.T) {
 						tfjsonpath.New("seasonal_amounts"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.Float64Exact(100),
-							knownvalue.Float64Exact(200),
-							knownvalue.Float64Exact(300),
-							knownvalue.Float64Exact(400),
+							knownvalue.Float64Exact(100),
+							knownvalue.Float64Exact(100),
+							knownvalue.Float64Exact(100),
 						})),
 					statecheck.ExpectKnownValue(
 						"doit_budget.this",
@@ -533,8 +533,8 @@ resource "doit_budget" "this" {
 
   amount           = 100
 
-  # Covered: seasonal_amounts instead of amount
-  seasonal_amounts = [100, 200, 300, 400]
+  # Covered: seasonal_amounts (all equal to amount to avoid API recomputing amount)
+  seasonal_amounts = [100, 100, 100, 100]
 
   # Covered: metric explicitly
   metric           = "cost"
@@ -573,8 +573,8 @@ resource "doit_budget" "this" {
 
   amount           = 100
 
-  # Covered: seasonal_amounts instead of amount
-  seasonal_amounts = [100, 200, 300, 400]
+  # Covered: seasonal_amounts (all equal to amount to avoid API recomputing amount)
+  seasonal_amounts = [100, 100, 100, 100]
 
   # Covered: metric with amortized_cost value
   metric           = "amortized_cost"

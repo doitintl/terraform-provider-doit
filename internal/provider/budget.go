@@ -11,409 +11,193 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// overlayBudgetComputedFields preserves all user-configured values from the Terraform
-// plan and selectively overlays only server-assigned Computed fields from the API response.
+// overlayBudgetComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create/Update.
 //
-// Computed-only fields (always from API):
-//   - id, create_time, update_time, current_utilization, forecasted_utilization
-//   - alerts[].forecasted_date, alerts[].triggered
+// Phase 1 (Resolve): Build a fully-resolved state from the API response using
+// mapBudgetToModel — the same mapping function used by Read/ImportState. This
+// guarantees consistency between Create/Update and Read paths.
 //
-// Optional+Computed fields: only resolved from the API when IsUnknown() (user omitted them).
-// Known values are never touched — the user's plan is the source of truth.
+// Phase 2 (Overlay): Walk the plan field-by-field. Known (user-configured)
+// values are preserved as-is. Unknown (user-omitted) values are replaced with
+// the resolved counterpart. Computed-only fields always come from resolved.
 //
 // This prevents "Provider produced inconsistent result" errors caused by the API
 // normalizing user-provided values (e.g. stripping [Service N/A] sentinels,
 // renaming alias types like allocation_rule → attribution).
+//
+// Used by: Create, Update
+// NOT used by: Read, ImportState (which use populateState / mapBudgetToModel directly).
 func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI, plan *budgetResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// ── Computed-only fields: ALWAYS set from API response ──
-	plan.Id = types.StringPointerValue(apiResp.Id)
-	plan.CreateTime = types.Int64PointerValue(apiResp.CreateTime)
-	plan.UpdateTime = types.Int64PointerValue(apiResp.UpdateTime)
-	plan.CurrentUtilization = types.Float64PointerValue(apiResp.CurrentUtilization)
-	plan.ForecastedUtilization = types.Float64PointerValue(apiResp.ForecastedUtilization)
-
-	// ── Alerts: mixed Computed + user-configurable ──
-	// The user sets percentage; the API computes forecasted_date and triggered.
-	// We preserve the user's percentages and overlay the computed sub-fields.
-	if !plan.Alerts.IsNull() && !plan.Alerts.IsUnknown() {
-		var planAlerts []resource_budget.AlertsValue
-		alertsDiags := plan.Alerts.ElementsAs(ctx, &planAlerts, false)
-		diags.Append(alertsDiags...)
-		if !alertsDiags.HasError() && len(planAlerts) > 0 {
-			changed := false
-			for i := range planAlerts {
-				// Overlay computed sub-fields from the API response.
-				var apiAlert *models.ExternalBudgetAlert
-				if apiResp.Alerts != nil && i < len(*apiResp.Alerts) {
-					apiAlert = &(*apiResp.Alerts)[i]
-				}
-
-				// forecasted_date and triggered are Computed-only: always overlay.
-				forecastedDate := types.Int64Null()
-				triggered := types.BoolNull()
-				if apiAlert != nil {
-					forecastedDate = types.Int64PointerValue(apiAlert.ForecastedDate)
-					triggered = types.BoolPointerValue(apiAlert.Triggered)
-				}
-
-				// percentage is Optional+Computed: resolve only when unknown.
-				percentage := planAlerts[i].Percentage
-				if percentage.IsUnknown() {
-					if apiAlert != nil {
-						percentage = types.Float64PointerValue(apiAlert.Percentage)
-					} else {
-						percentage = types.Float64Null()
-					}
-				}
-
-				// Rebuild the alert value with preserved percentage + overlaid computed fields.
-				alertAttrs := map[string]attr.Value{
-					"forecasted_date": forecastedDate,
-					"percentage":      percentage,
-					"triggered":       triggered,
-				}
-				var d diag.Diagnostics
-				planAlerts[i], d = resource_budget.NewAlertsValue(resource_budget.AlertsValue{}.AttributeTypes(ctx), alertAttrs)
-				diags.Append(d...)
-				changed = true
-			}
-			if changed {
-				alertsListValue, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), planAlerts)
-				diags.Append(d...)
-				plan.Alerts = alertsListValue
-			}
-		}
-	} else if plan.Alerts.IsUnknown() {
-		// User omitted alerts entirely — resolve from API response since the
-		// API provides default alerts.
-		if apiResp.Alerts != nil && len(*apiResp.Alerts) > 0 {
-			alertsList := make([]resource_budget.AlertsValue, len(*apiResp.Alerts))
-			for i, alert := range *apiResp.Alerts {
-				alertAttrs := map[string]attr.Value{
-					"forecasted_date": types.Int64PointerValue(alert.ForecastedDate),
-					"percentage":      types.Float64PointerValue(alert.Percentage),
-					"triggered":       types.BoolPointerValue(alert.Triggered),
-				}
-				var d diag.Diagnostics
-				alertsList[i], d = resource_budget.NewAlertsValue(resource_budget.AlertsValue{}.AttributeTypes(ctx), alertAttrs)
-				diags.Append(d...)
-			}
-			alertsListValue, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), alertsList)
-			diags.Append(d...)
-			plan.Alerts = alertsListValue
-		} else {
-			emptyAlerts, d := types.ListValueFrom(ctx, resource_budget.AlertsValue{}.Type(ctx), []resource_budget.AlertsValue{})
-			diags.Append(d...)
-			plan.Alerts = emptyAlerts
-		}
+	// Phase 1: Build fully-resolved state from API response.
+	// Copy the plan so that mapBudgetToModel's sentinel restoration and alias
+	// normalization can compare against user-configured values in the existing state.
+	resolved := *plan
+	diags.Append(mapBudgetToModel(ctx, apiResp, &resolved)...)
+	if diags.HasError() {
+		return diags
 	}
 
-	// ── Optional+Computed scalar fields: resolve only when unknown ──
+	// Phase 2: Overlay known plan values on top of resolved state.
 
+	// ── Computed-only fields: always from resolved ──
+	plan.Id = resolved.Id
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
+	plan.CurrentUtilization = resolved.CurrentUtilization
+	plan.ForecastedUtilization = resolved.ForecastedUtilization
+
+	// ── Optional+Computed scalar fields: only when Unknown ──
 	if plan.Amount.IsUnknown() {
-		plan.Amount = types.Float64PointerValue(apiResp.Amount)
+		plan.Amount = resolved.Amount
 	}
 	if plan.Currency.IsUnknown() {
-		plan.Currency = types.StringValue(string(apiResp.Currency))
+		plan.Currency = resolved.Currency
 	}
 	if plan.Description.IsUnknown() {
-		plan.Description = types.StringPointerValue(apiResp.Description)
+		plan.Description = resolved.Description
 	}
 	if plan.EndPeriod.IsUnknown() {
-		if apiResp.EndPeriod != nil && *apiResp.EndPeriod > 0 {
-			plan.EndPeriod = types.Int64PointerValue(apiResp.EndPeriod)
-		} else {
-			plan.EndPeriod = types.Int64Null()
-		}
+		plan.EndPeriod = resolved.EndPeriod
 	}
 	if plan.GrowthPerPeriod.IsUnknown() {
-		plan.GrowthPerPeriod = types.Float64PointerValue(apiResp.GrowthPerPeriod)
+		plan.GrowthPerPeriod = resolved.GrowthPerPeriod
 	}
 	if plan.Metric.IsUnknown() {
-		plan.Metric = types.StringPointerValue(apiResp.Metric)
+		plan.Metric = resolved.Metric
 	}
 	if plan.Name.IsUnknown() {
-		plan.Name = types.StringValue(apiResp.Name)
+		plan.Name = resolved.Name
 	}
 	if plan.Public.IsUnknown() {
-		if apiResp.Public != nil && *apiResp.Public != "" {
-			plan.Public = types.StringValue(string(*apiResp.Public))
-		} else {
-			plan.Public = types.StringNull()
-		}
+		plan.Public = resolved.Public
 	}
 	if plan.StartPeriod.IsUnknown() {
-		plan.StartPeriod = types.Int64Value(apiResp.StartPeriod)
+		plan.StartPeriod = resolved.StartPeriod
 	}
 	if plan.TimeInterval.IsUnknown() {
-		plan.TimeInterval = types.StringValue(apiResp.TimeInterval)
+		plan.TimeInterval = resolved.TimeInterval
 	}
 	if plan.Type.IsUnknown() {
-		plan.Type = types.StringValue(apiResp.Type)
+		plan.Type = resolved.Type
 	}
 	if plan.UsePrevSpend.IsUnknown() {
-		plan.UsePrevSpend = types.BoolPointerValue(apiResp.UsePrevSpend)
+		plan.UsePrevSpend = resolved.UsePrevSpend
 	}
 
-	// ── Optional+Computed list fields: resolve only when unknown ──
-	// Known lists (including []) are never touched.
-	// Lists where the API auto-populates defaults (e.g. collaborators adds creator
-	// as owner, recipients may be auto-set) must resolve from the API response
-	// to capture those defaults. Lists where the API returns null/empty when
-	// omitted can safely resolve to null.
+	// ── List fields: resolve whole list when Unknown, overlay elements when Known ──
+
+	if plan.Alerts.IsUnknown() {
+		plan.Alerts = resolved.Alerts
+	} else if !plan.Alerts.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Alerts, &plan.Alerts, overlayBudgetAlert)...)
+	}
 
 	if plan.Collaborators.IsUnknown() {
-		// API auto-adds creator as owner — resolve from API response.
-		if apiResp.Collaborators != nil && len(*apiResp.Collaborators) > 0 {
-			collabsList := make([]resource_budget.CollaboratorsValue, len(*apiResp.Collaborators))
-			for i, collab := range *apiResp.Collaborators {
-				collabAttrs := map[string]attr.Value{
-					"email": types.StringPointerValue(collab.Email),
-					"role":  types.StringPointerValue((*string)(collab.Role)),
-				}
-				var d diag.Diagnostics
-				collabsList[i], d = resource_budget.NewCollaboratorsValue(resource_budget.CollaboratorsValue{}.AttributeTypes(ctx), collabAttrs)
-				diags.Append(d...)
-			}
-			collabsListValue, d := types.ListValueFrom(ctx, resource_budget.CollaboratorsValue{}.Type(ctx), collabsList)
-			diags.Append(d...)
-			plan.Collaborators = collabsListValue
-		} else {
-			emptyCollabs, d := types.ListValueFrom(ctx, resource_budget.CollaboratorsValue{}.Type(ctx), []resource_budget.CollaboratorsValue{})
-			diags.Append(d...)
-			plan.Collaborators = emptyCollabs
-		}
+		plan.Collaborators = resolved.Collaborators
+	} else if !plan.Collaborators.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Collaborators, &plan.Collaborators, overlayBudgetCollaborator)...)
 	}
+
 	if plan.Recipients.IsUnknown() {
-		// API may auto-populate recipients — resolve from API response.
-		if apiResp.Recipients != nil {
-			recipientsList, d := types.ListValueFrom(ctx, types.StringType, *apiResp.Recipients)
-			diags.Append(d...)
-			plan.Recipients = recipientsList
-		} else {
-			var emptyDiags diag.Diagnostics
-			plan.Recipients, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
-			diags.Append(emptyDiags...)
-		}
+		plan.Recipients = resolved.Recipients
 	}
+
 	if plan.RecipientsSlackChannels.IsUnknown() {
-		// API may auto-populate Slack channels — resolve from API response when present.
-		if apiResp.RecipientsSlackChannels != nil && len(*apiResp.RecipientsSlackChannels) > 0 {
-			channelsList := make([]resource_budget.RecipientsSlackChannelsValue, len(*apiResp.RecipientsSlackChannels))
-			for i, channel := range *apiResp.RecipientsSlackChannels {
-				channelAttrs := map[string]attr.Value{
-					"customer_id": types.StringPointerValue(channel.CustomerId),
-					"id":          types.StringPointerValue(channel.Id),
-					"name":        types.StringPointerValue(channel.Name),
-					"shared":      types.BoolPointerValue(channel.Shared),
-					"type":        types.StringPointerValue(channel.Type),
-					"workspace":   types.StringPointerValue(channel.Workspace),
-				}
-				var d diag.Diagnostics
-				channelsList[i], d = resource_budget.NewRecipientsSlackChannelsValue(
-					resource_budget.RecipientsSlackChannelsValue{}.AttributeTypes(ctx), channelAttrs)
-				diags.Append(d...)
-			}
-			channelsListValue, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), channelsList)
-			diags.Append(d...)
-			plan.RecipientsSlackChannels = channelsListValue
-		} else {
-			// Resolve to empty list (not null) to match mapBudgetToModel Read path.
-			emptyChannels, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []resource_budget.RecipientsSlackChannelsValue{})
-			diags.Append(d...)
-			plan.RecipientsSlackChannels = emptyChannels
-		}
+		plan.RecipientsSlackChannels = resolved.RecipientsSlackChannels
+	} else if !plan.RecipientsSlackChannels.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.RecipientsSlackChannels, &plan.RecipientsSlackChannels, overlayBudgetSlackChannel)...)
 	}
+
 	if plan.Scope.IsUnknown() {
-		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
-		var emptyDiags diag.Diagnostics
-		plan.Scope, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
-		diags.Append(emptyDiags...)
+		plan.Scope = resolved.Scope
 	}
+
 	if plan.Scopes.IsUnknown() {
-		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
-		emptyScopes, d := types.ListValueFrom(ctx, resource_budget.ScopesValue{}.Type(ctx), []resource_budget.ScopesValue{})
-		diags.Append(d...)
-		plan.Scopes = emptyScopes
+		plan.Scopes = resolved.Scopes
+	} else if !plan.Scopes.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Scopes, &plan.Scopes, overlayBudgetScope)...)
 	}
+
 	if plan.SeasonalAmounts.IsUnknown() {
-		// Resolve to empty list (not null) to match mapBudgetToModel Read path.
-		var emptyDiags diag.Diagnostics
-		plan.SeasonalAmounts, emptyDiags = types.ListValue(types.Float64Type, []attr.Value{})
-		diags.Append(emptyDiags...)
-	}
-
-	// ── Resolve unknowns inside scopes[] elements ──
-	// Scopes have Optional+Computed boolean fields (inverse, include_null, case_insensitive)
-	// and an Optional+Computed list field (values) that arrive as Unknown when the user
-	// omits them. Resolve from API response to match mapBudgetToModel Read path.
-	var apiScopes []models.ExternalConfigFilter
-	if len(apiResp.Scopes) > 0 {
-		apiScopes = apiResp.Scopes
-	}
-	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
-		var planScopes []resource_budget.ScopesValue
-		scopesDiags := plan.Scopes.ElementsAs(ctx, &planScopes, false)
-		diags.Append(scopesDiags...)
-		if !scopesDiags.HasError() {
-			changed := false
-			for i := range planScopes {
-				if planScopes[i].Inverse.IsUnknown() {
-					if i < len(apiScopes) {
-						planScopes[i].Inverse = types.BoolPointerValue(apiScopes[i].Inverse)
-					} else {
-						planScopes[i].Inverse = types.BoolValue(false)
-					}
-					changed = true
-				}
-				if planScopes[i].IncludeNull.IsUnknown() {
-					if i < len(apiScopes) {
-						planScopes[i].IncludeNull = types.BoolPointerValue(apiScopes[i].IncludeNull)
-					} else {
-						planScopes[i].IncludeNull = types.BoolValue(false)
-					}
-					changed = true
-				}
-				if planScopes[i].CaseInsensitive.IsUnknown() {
-					if i < len(apiScopes) {
-						planScopes[i].CaseInsensitive = types.BoolPointerValue(apiScopes[i].CaseInsensitive)
-					} else {
-						planScopes[i].CaseInsensitive = types.BoolValue(false)
-					}
-					changed = true
-				}
-				if planScopes[i].Values.IsUnknown() {
-					var emptyDiags diag.Diagnostics
-					planScopes[i].Values, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
-					diags.Append(emptyDiags...)
-					changed = true
-				}
-				if planScopes[i].Id.IsUnknown() {
-					planScopes[i].Id = types.StringNull()
-					changed = true
-				}
-				if planScopes[i].Mode.IsUnknown() {
-					planScopes[i].Mode = types.StringNull()
-					changed = true
-				}
-				if planScopes[i].ScopesType.IsUnknown() {
-					planScopes[i].ScopesType = types.StringNull()
-					changed = true
-				}
-			}
-			if changed {
-				// Rebuild the scopes list — framework treats list elements as immutable.
-				scopesListValue, d := types.ListValueFrom(ctx, resource_budget.ScopesValue{}.Type(ctx), planScopes)
-				diags.Append(d...)
-				plan.Scopes = scopesListValue
-			}
-		}
-	}
-
-	// ── Resolve unknowns inside collaborators[] elements ──
-	if !plan.Collaborators.IsNull() && !plan.Collaborators.IsUnknown() {
-		var planCollabs []resource_budget.CollaboratorsValue
-		collabsDiags := plan.Collaborators.ElementsAs(ctx, &planCollabs, false)
-		diags.Append(collabsDiags...)
-		if !collabsDiags.HasError() {
-			changed := false
-			for i := range planCollabs {
-				if planCollabs[i].Email.IsUnknown() {
-					planCollabs[i].Email = types.StringNull()
-					changed = true
-				}
-				if planCollabs[i].Role.IsUnknown() {
-					planCollabs[i].Role = types.StringNull()
-					changed = true
-				}
-			}
-			if changed {
-				collabsListValue, d := types.ListValueFrom(ctx, resource_budget.CollaboratorsValue{}.Type(ctx), planCollabs)
-				diags.Append(d...)
-				plan.Collaborators = collabsListValue
-			}
-		}
-	}
-
-	// ── Resolve unknowns inside recipients_slack_channels[] elements ──
-	// Resolve computed subfields from API response by index matching.
-	var apiChannels []models.SlackChannel
-	if apiResp.RecipientsSlackChannels != nil {
-		apiChannels = *apiResp.RecipientsSlackChannels
-	}
-	if !plan.RecipientsSlackChannels.IsNull() && !plan.RecipientsSlackChannels.IsUnknown() {
-		var planChannels []resource_budget.RecipientsSlackChannelsValue
-		channelsDiags := plan.RecipientsSlackChannels.ElementsAs(ctx, &planChannels, false)
-		diags.Append(channelsDiags...)
-		if !channelsDiags.HasError() {
-			changed := false
-			for i := range planChannels {
-				// Find matching API channel by index (order is preserved by API).
-				var apiCh *models.SlackChannel
-				if i < len(apiChannels) {
-					apiCh = &apiChannels[i]
-				}
-
-				if planChannels[i].CustomerId.IsUnknown() {
-					if apiCh != nil {
-						planChannels[i].CustomerId = types.StringPointerValue(apiCh.CustomerId)
-					} else {
-						planChannels[i].CustomerId = types.StringNull()
-					}
-					changed = true
-				}
-				if planChannels[i].Id.IsUnknown() {
-					if apiCh != nil {
-						planChannels[i].Id = types.StringPointerValue(apiCh.Id)
-					} else {
-						planChannels[i].Id = types.StringNull()
-					}
-					changed = true
-				}
-				if planChannels[i].Name.IsUnknown() {
-					if apiCh != nil {
-						planChannels[i].Name = types.StringPointerValue(apiCh.Name)
-					} else {
-						planChannels[i].Name = types.StringNull()
-					}
-					changed = true
-				}
-				if planChannels[i].Shared.IsUnknown() {
-					if apiCh != nil {
-						planChannels[i].Shared = types.BoolPointerValue(apiCh.Shared)
-					} else {
-						planChannels[i].Shared = types.BoolValue(false)
-					}
-					changed = true
-				}
-				if planChannels[i].RecipientsSlackChannelsType.IsUnknown() {
-					if apiCh != nil {
-						planChannels[i].RecipientsSlackChannelsType = types.StringPointerValue(apiCh.Type)
-					} else {
-						planChannels[i].RecipientsSlackChannelsType = types.StringNull()
-					}
-					changed = true
-				}
-				if planChannels[i].Workspace.IsUnknown() {
-					if apiCh != nil {
-						planChannels[i].Workspace = types.StringPointerValue(apiCh.Workspace)
-					} else {
-						planChannels[i].Workspace = types.StringNull()
-					}
-					changed = true
-				}
-			}
-			if changed {
-				channelsListValue, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), planChannels)
-				diags.Append(d...)
-				plan.RecipientsSlackChannels = channelsListValue
-			}
-		}
+		plan.SeasonalAmounts = resolved.SeasonalAmounts
 	}
 
 	return diags
+}
+
+// ── Budget list element overlay helpers ──
+// Each helper resolves Unknown subfields from the resolved element.
+// Known values are never touched — the user's plan is the source of truth.
+
+func overlayBudgetAlert(_ context.Context, resolved, plan *resource_budget.AlertsValue) diag.Diagnostics {
+	// percentage: Optional+Computed — resolve only when Unknown.
+	if plan.Percentage.IsUnknown() {
+		plan.Percentage = resolved.Percentage
+	}
+	// forecasted_date and triggered: Computed-only — always from resolved.
+	plan.ForecastedDate = resolved.ForecastedDate
+	plan.Triggered = resolved.Triggered
+	return nil
+}
+
+func overlayBudgetCollaborator(_ context.Context, resolved, plan *resource_budget.CollaboratorsValue) diag.Diagnostics {
+	if plan.Email.IsUnknown() {
+		plan.Email = resolved.Email
+	}
+	if plan.Role.IsUnknown() {
+		plan.Role = resolved.Role
+	}
+	return nil
+}
+
+func overlayBudgetSlackChannel(_ context.Context, resolved, plan *resource_budget.RecipientsSlackChannelsValue) diag.Diagnostics {
+	if plan.CustomerId.IsUnknown() {
+		plan.CustomerId = resolved.CustomerId
+	}
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.Name.IsUnknown() {
+		plan.Name = resolved.Name
+	}
+	if plan.Shared.IsUnknown() {
+		plan.Shared = resolved.Shared
+	}
+	if plan.RecipientsSlackChannelsType.IsUnknown() {
+		plan.RecipientsSlackChannelsType = resolved.RecipientsSlackChannelsType
+	}
+	if plan.Workspace.IsUnknown() {
+		plan.Workspace = resolved.Workspace
+	}
+	return nil
+}
+
+func overlayBudgetScope(_ context.Context, resolved, plan *resource_budget.ScopesValue) diag.Diagnostics {
+	if plan.CaseInsensitive.IsUnknown() {
+		plan.CaseInsensitive = resolved.CaseInsensitive
+	}
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.IncludeNull.IsUnknown() {
+		plan.IncludeNull = resolved.IncludeNull
+	}
+	if plan.Inverse.IsUnknown() {
+		plan.Inverse = resolved.Inverse
+	}
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+	if plan.ScopesType.IsUnknown() {
+		plan.ScopesType = resolved.ScopesType
+	}
+	if plan.Values.IsUnknown() {
+		plan.Values = resolved.Values
+	}
+	return nil
 }
 
 // toUpdateRequest converts the Terraform model to the API BudgetCreateUpdateRequest.
