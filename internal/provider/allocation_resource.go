@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -165,9 +167,12 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.mapAllocationToModel(ctx, allocationResp.JSON200, plan)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	// This prevents "Provider produced inconsistent result" errors caused by the
+	// API normalizing user-provided values (stripping sentinels, renaming services).
+	// Read and ImportState still use mapAllocationToModel for the full API response.
+	resp.Diagnostics.Append(overlayComputedFields(ctx, allocationResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -214,15 +219,24 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	state := new(allocationResourceModel)
-	diags = req.State.Get(ctx, state)
+	// We need the allocation ID from state for the API call.
+	var stateId types.String
+	diags = req.State.GetAttribute(ctx, path.Root("id"), &stateId)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	if stateId.IsNull() || stateId.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Error updating allocation",
+			"Could not update allocation because the resource ID in state is null or unknown.",
+		)
+		return
+	}
+
 	// Update the allocation
-	updateResp, err := r.client.UpdateAllocationWithResponse(ctx, state.Id.ValueString(), allocation)
+	updateResp, err := r.client.UpdateAllocationWithResponse(ctx, stateId.ValueString(), allocation)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating allocation",
@@ -255,14 +269,14 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.mapAllocationToModel(ctx, updateResp.JSON200, state)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	resp.Diagnostics.Append(overlayComputedFields(ctx, updateResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

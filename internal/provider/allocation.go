@@ -15,6 +15,202 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
+// overlayComputedFields sets only the Computed-only fields from the API response
+// onto the plan model. This implements the plan-first state pattern recommended
+// by HashiCorp (https://developer.hashicorp.com/terraform/plugin/framework/resources/create):
+//
+// All user-configured values (name, description, rule, rules, unallocated_costs)
+// stay exactly as the user wrote them in the plan. Only server-assigned values
+// that the user cannot configure are overlaid from the API response:
+//
+//   - id: assigned by the API on creation
+//   - allocation_type: computed from whether rule or rules was provided
+//   - anomaly_detection: server-managed flag
+//   - create_time: set by the API on creation
+//   - update_time: set by the API on every modification
+//   - type: computed by the API (preset vs custom)
+//
+// This prevents "Provider produced inconsistent result" errors caused by the API
+// normalizing user-provided values (e.g. stripping [Service N/A] sentinels,
+// renaming "Amazon Elastic Container Service for Kubernetes (EKS)" to
+// "Amazon Elastic Container Service for Kubernetes").
+func overlayComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Computed-only fields: always set from API response.
+	plan.Id = types.StringPointerValue(apiResp.Id)
+	plan.CreateTime = types.Int64PointerValue(apiResp.CreateTime)
+	plan.UpdateTime = types.Int64PointerValue(apiResp.UpdateTime)
+	plan.AnomalyDetection = types.BoolPointerValue(apiResp.AnomalyDetection)
+	plan.Type = types.StringPointerValue(apiResp.Type)
+
+	if apiResp.AllocationType != nil {
+		plan.AllocationType = types.StringValue(string(*apiResp.AllocationType))
+	} else {
+		plan.AllocationType = types.StringNull()
+	}
+
+	// Optional+Computed fields at top level: resolve unknowns using the API
+	// response where available, falling back to null.
+	if plan.Rules.IsUnknown() {
+		plan.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
+	}
+	if plan.Rule.IsUnknown() {
+		plan.Rule = resource_allocation.NewRuleValueNull()
+	}
+	if plan.UnallocatedCosts.IsUnknown() {
+		plan.UnallocatedCosts = types.StringPointerValue(apiResp.UnallocatedCosts)
+	}
+
+	// Resolve unknowns inside rules[] elements.
+	// Fields like 'description', 'id' inside each rule are Optional+Computed.
+	// When the user doesn't set them, they arrive as unknown.
+	if !plan.Rules.IsNull() && !plan.Rules.IsUnknown() {
+		var planRules []resource_allocation.RulesValue
+		elementsDiags := plan.Rules.ElementsAs(ctx, &planRules, false)
+		diags.Append(elementsDiags...)
+		if !elementsDiags.HasError() {
+			changed := false
+			for i := range planRules {
+				// For each unknown Optional+Computed field, overlay the API
+				// response value (which may contain a generated default like
+				// formula="A") instead of null. This prevents perpetual drift
+				// where Read returns the API default but state has null.
+				apiRule := safeGetGroupRule(apiResp, i)
+				if planRules[i].Description.IsUnknown() {
+					if apiRule != nil {
+						planRules[i].Description = types.StringPointerValue(apiRule.Description)
+					} else {
+						planRules[i].Description = types.StringNull()
+					}
+					changed = true
+				}
+				if planRules[i].Id.IsUnknown() {
+					if apiRule != nil {
+						planRules[i].Id = types.StringPointerValue(apiRule.Id)
+					} else {
+						planRules[i].Id = types.StringNull()
+					}
+					changed = true
+				}
+				if planRules[i].Formula.IsUnknown() {
+					if apiRule != nil {
+						planRules[i].Formula = types.StringPointerValue(apiRule.Formula)
+					} else {
+						planRules[i].Formula = types.StringNull()
+					}
+					changed = true
+				}
+				if planRules[i].Name.IsUnknown() {
+					if apiRule != nil {
+						planRules[i].Name = types.StringPointerValue(apiRule.Name)
+					} else {
+						planRules[i].Name = types.StringNull()
+					}
+					changed = true
+				}
+				if planRules[i].Components.IsUnknown() {
+					planRules[i].Components = types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx))
+					changed = true
+				}
+				// Also resolve unknowns inside components.
+				if !planRules[i].Components.IsNull() && !planRules[i].Components.IsUnknown() {
+					resolved, compDiags := resolveComponentUnknowns(ctx, &planRules[i].Components)
+					diags.Append(compDiags...)
+					if resolved {
+						changed = true
+					}
+				}
+			}
+			if changed {
+				var rulesDiags diag.Diagnostics
+				plan.Rules, rulesDiags = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), planRules)
+				diags.Append(rulesDiags...)
+			}
+		}
+	}
+
+	// Resolve unknowns inside single rule (formula and components).
+	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() {
+		changed := false
+		formula := plan.Rule.Formula
+		if formula.IsUnknown() {
+			if apiResp.Rule != nil {
+				formula = types.StringValue(apiResp.Rule.Formula)
+			} else {
+				formula = types.StringNull()
+			}
+			changed = true
+		}
+
+		components := plan.Rule.Components
+		if !components.IsNull() && !components.IsUnknown() {
+			resolved, compDiags := resolveComponentUnknowns(ctx, &components)
+			diags.Append(compDiags...)
+			if resolved {
+				changed = true
+			}
+		}
+
+		if changed {
+			// Rebuild the Rule value with updated components and formula.
+			m := map[string]attr.Value{
+				"formula":    formula,
+				"components": components,
+			}
+			var ruleDiags diag.Diagnostics
+			plan.Rule, ruleDiags = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
+			diags.Append(ruleDiags...)
+		}
+	}
+
+	return diags
+}
+
+// safeGetGroupRule returns the API response's group rule at index i, or nil if
+// the index is out of bounds or the rules slice is nil.
+func safeGetGroupRule(apiResp *models.Allocation, i int) *models.GroupAllocationRule {
+	if apiResp.Rules == nil || i >= len(*apiResp.Rules) {
+		return nil
+	}
+	return (*apiResp.Rules)[i]
+}
+
+// resolveComponentUnknowns resolves unknown Optional+Computed fields inside
+// component elements (case_insensitive, include_null, inverse, inverse_selection).
+// Returns true if any fields were changed.
+func resolveComponentUnknowns(ctx context.Context, components *basetypes.ListValue) (bool, diag.Diagnostics) {
+	var comps []resource_allocation.ComponentsValue
+	if d := components.ElementsAs(ctx, &comps, false); d.HasError() {
+		return false, d
+	}
+	changed := false
+	for i := range comps {
+		if comps[i].CaseInsensitive.IsUnknown() {
+			comps[i].CaseInsensitive = types.BoolValue(false)
+			changed = true
+		}
+		if comps[i].IncludeNull.IsUnknown() {
+			comps[i].IncludeNull = types.BoolValue(false)
+			changed = true
+		}
+		if comps[i].Inverse.IsUnknown() {
+			comps[i].Inverse = types.BoolValue(false)
+			changed = true
+		}
+		if comps[i].InverseSelection.IsUnknown() {
+			comps[i].InverseSelection = types.BoolValue(false)
+			changed = true
+		}
+	}
+	if changed {
+		var listDiags diag.Diagnostics
+		*components, listDiags = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), comps)
+		return changed, listDiags
+	}
+	return changed, nil
+}
+
 func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req models.CreateAllocationRequest, diags diag.Diagnostics) {
 	// Create request uses value types for Description/Name, Update uses pointers.
 	// We use the common helper to generate the complex Rule/Rules structures (which are shared types)
@@ -455,9 +651,24 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 			"mode":              types.StringValue(string(component.Mode)),
 			"type":              types.StringValue(compType),
 		}
-		values := make([]attr.Value, len(component.Values))
-		for j := range component.Values {
-			values[j] = types.StringValue(component.Values[j])
+		// Merge API values with prior state to restore any NullFallback sentinels
+		// that the API strips during normalization. This is needed for the Read path
+		// to prevent perpetual plan drift when the user's config contains sentinels.
+		// The Create/Update path uses plan-first state and doesn't need this.
+		apiIncludeNull := component.IncludeNull != nil && *component.IncludeNull
+		apiValues := component.Values
+		if i < len(existingComponents) {
+			var stateVals []string
+			stateValsDiags := existingComponents[i].Values.ElementsAs(ctx, &stateVals, false)
+			diags.Append(stateValsDiags...)
+			if diags.HasError() {
+				return
+			}
+			apiValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
+		}
+		values := make([]attr.Value, len(apiValues))
+		for j := range apiValues {
+			values[j] = types.StringValue(apiValues[j])
 		}
 		var d diag.Diagnostics
 		m["values"], d = types.ListValue(types.StringType, values)
