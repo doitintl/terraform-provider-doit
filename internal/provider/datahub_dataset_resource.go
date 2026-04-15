@@ -69,6 +69,26 @@ func (r *datahubDatasetResource) Schema(ctx context.Context, _ resource.SchemaRe
 	}
 }
 
+// overlayDatahubDatasetComputedFields uses the two-phase overlay pattern to
+// reconcile the Terraform plan with the API response after Create/Update.
+func overlayDatahubDatasetComputedFields(name, description *string, records *int64, updatedBy, lastUpdated *string, plan *datahubDatasetResourceModel) {
+	// Phase 1: Build fully-resolved state from API response.
+	resolved := *plan
+	mapDatahubDatasetToModel(name, description, records, updatedBy, lastUpdated, &resolved)
+
+	// Phase 2: Overlay.
+	// Name: Required — never touch.
+	// Records, UpdatedBy, LastUpdated: Computed-only — always from resolved.
+	plan.Records = resolved.Records
+	plan.UpdatedBy = resolved.UpdatedBy
+	plan.LastUpdated = resolved.LastUpdated
+
+	// Description: Optional+Computed — resolve when Unknown.
+	if plan.Description.IsUnknown() {
+		plan.Description = resolved.Description
+	}
+}
+
 func (r *datahubDatasetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan datahubDatasetResourceModel
 
@@ -109,7 +129,9 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	mapDatahubDatasetToModel(createResp.JSON201.Name, createResp.JSON201.Description, createResp.JSON201.Records, createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (description) from the API when unknown.
+	overlayDatahubDatasetComputedFields(createResp.JSON201.Name, createResp.JSON201.Description, createResp.JSON201.Records, createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -202,7 +224,9 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	mapDatahubDatasetToModel(updateResp.JSON200.Name, updateResp.JSON200.Description, updateResp.JSON200.Records, updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (description) from the API when unknown.
+	overlayDatahubDatasetComputedFields(updateResp.JSON200.Name, updateResp.JSON200.Description, updateResp.JSON200.Records, updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }

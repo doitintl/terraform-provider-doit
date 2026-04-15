@@ -159,6 +159,36 @@ func (r *assetResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// overlayAssetComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Update.
+//
+// Asset is import-only (no Create). Only quantity is user-configurable;
+// all other fields are Computed-only.
+func overlayAssetComputedFields(ctx context.Context, apiResp *models.AssetItemDetailed, plan *assetResourceModel) diag.Diagnostics {
+	// Phase 1: Build fully-resolved state from API response.
+	resolved := *plan
+	diags := mapAssetToModel(ctx, apiResp, &resolved)
+	if diags.HasError() {
+		return diags
+	}
+
+	// Phase 2: Overlay.
+	// Id: Computed-only, but safely preserved from the plan's prior state.
+	// Quantity: Optional+Computed — resolve when Unknown.
+	if plan.Quantity.IsUnknown() {
+		plan.Quantity = resolved.Quantity
+	}
+
+	// All other fields are Computed-only — always from resolved.
+	plan.Name = resolved.Name
+	plan.Type = resolved.Type
+	plan.Url = resolved.Url
+	plan.CreateTime = resolved.CreateTime
+	plan.Properties = resolved.Properties
+
+	return diags
+}
+
 func (r *assetResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan assetResourceModel
 
@@ -218,7 +248,9 @@ func (r *assetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	resp.Diagnostics.Append(mapAssetToModel(ctx, assetResp.JSON200, &plan)...)
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (quantity) from the API when unknown.
+	resp.Diagnostics.Append(overlayAssetComputedFields(ctx, assetResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
