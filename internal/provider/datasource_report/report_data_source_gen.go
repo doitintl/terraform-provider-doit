@@ -189,8 +189,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 												},
 											},
 											Computed:            true,
-											Description:         "Deprecated: Use 'metrics' instead.",
-											MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+											Description:         "Metric selector used in reports and filters.",
+											MarkdownDescription: "Metric selector used in reports and filters.",
 										},
 										"sort": schema.StringAttribute{
 											Computed:            true,
@@ -286,8 +286,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Deprecated: Use 'metrics' instead.",
-								MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+								Description:         "Metric selector used in reports and filters.",
+								MarkdownDescription: "Metric selector used in reports and filters.",
 							},
 							"operator": schema.StringAttribute{
 								Computed:            true,
@@ -405,9 +405,7 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "Indicate whether to include the origin.",
 								},
 								"mode": schema.StringAttribute{
-									Computed:            true,
-									Description:         "",
-									MarkdownDescription: "",
+									Computed: true,
 								},
 								"origin": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
