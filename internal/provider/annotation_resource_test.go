@@ -67,6 +67,15 @@ func TestAccAnnotation(t *testing.T) {
 						knownvalue.StringExact(fmt.Sprintf("Updated annotation content %d", n))),
 				},
 			},
+			// Step 3: Drift check — re-apply same updated config, expect no changes.
+			{
+				Config: testAccAnnotationUpdate(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -87,6 +96,15 @@ func TestAccAnnotation_Import(t *testing.T) {
 				ResourceName:      "doit_annotation.this",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			// Step 3: Drift check — re-apply config after import, expect no changes.
+			{
+				Config: testAccAnnotation(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
