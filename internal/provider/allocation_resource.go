@@ -13,6 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 type (
@@ -95,6 +98,29 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 			}
 			s.Attributes["rule"] = singleAttr
 		}
+	}
+
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.Int64Attribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, int64planmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
+	}
+	if attr, ok := s.Attributes["allocation_type"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["allocation_type"] = attr
+	}
+	if attr, ok := s.Attributes["anomaly_detection"].(schema.BoolAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, boolplanmodifier.UseStateForUnknown())
+		s.Attributes["anomaly_detection"] = attr
+	}
+	if attr, ok := s.Attributes["type"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["type"] = attr
 	}
 
 	resp.Schema = s
