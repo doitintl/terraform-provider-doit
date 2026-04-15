@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 const budgetSchemaVersion = 1
@@ -74,6 +76,17 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			int64Attr.Validators = append(int64Attr.Validators, budgetEndPeriodValidator{})
 			s.Attributes["end_period"] = int64Attr
 		}
+	}
+
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.Int64Attribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, int64planmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
 	}
 
 	resp.Schema = s

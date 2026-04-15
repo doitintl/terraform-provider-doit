@@ -8,6 +8,9 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_alert"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 // Ensure the implementation satisfies expected interfaces.
@@ -59,7 +62,20 @@ func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStat
 }
 
 func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_alert.AlertResourceSchema(ctx)
+	s := resource_alert.AlertResourceSchema(ctx)
+
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.Int64Attribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, int64planmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
+	}
+
+	resp.Schema = s
 }
 
 func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {

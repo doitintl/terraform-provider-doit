@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -70,6 +71,17 @@ func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaReques
 			strAttr.Validators = append(strAttr.Validators, rfc3339Validator{})
 			s.Attributes["timestamp"] = strAttr
 		}
+	}
+
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
 	}
 
 	resp.Schema = s
