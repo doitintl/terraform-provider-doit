@@ -71,10 +71,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 					"data_source": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "",
-						MarkdownDescription: "",
+						Optional: true,
+						Computed: true,
 					},
 					"evaluate_for_each": schema.StringAttribute{
 						Optional:            true,
@@ -90,9 +88,7 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 								MarkdownDescription: "Identifier for metric type (e.g., basic, custom, extended).",
 							},
 							"value": schema.StringAttribute{
-								Required:            true,
-								Description:         "",
-								MarkdownDescription: "",
+								Required: true,
 							},
 						},
 						CustomType: MetricType{

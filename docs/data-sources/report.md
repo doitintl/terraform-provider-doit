@@ -152,7 +152,7 @@ Read-Only:
 
 Read-Only:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--group--limit--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--group--limit--metric))
 - `sort` (String) Sort order for ranking results.
 - `value` (Number) The number of items to show
 
@@ -183,7 +183,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 
 Read-Only:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
 - `operator` (String) Comparison operator for filtering metric values.
 - `values` (List of Number)
 

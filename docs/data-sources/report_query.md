@@ -203,7 +203,7 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--group--limit--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--group--limit--metric))
 - `sort` (String) Sort order for ranking results.
 Possible values: `a_to_z`, `asc`, `desc`
 - `value` (Number) The number of items to show
@@ -237,7 +237,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 
 Optional:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
 - `operator` (String) Comparison operator for filtering metric values.
 Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)

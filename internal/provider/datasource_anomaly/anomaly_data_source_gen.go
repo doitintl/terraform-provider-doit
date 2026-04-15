@@ -65,14 +65,10 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "For anomalies related to AWS S3",
 						},
 						"resource_id": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"sku_description": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 					},
 					CustomType: ResourceDataType{
@@ -106,9 +102,7 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Usage start time of the anomaly",
 			},
 			"status": schema.StringAttribute{
-				Computed:            true,
-				Description:         "",
-				MarkdownDescription: "",
+				Computed: true,
 			},
 			"time_frame": schema.StringAttribute{
 				Computed:            true,
@@ -122,9 +116,7 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"name": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 					},
 					CustomType: Top3skusType{
