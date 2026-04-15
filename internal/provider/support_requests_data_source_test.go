@@ -98,7 +98,6 @@ data "doit_support_requests" "from_token" {
 
 // TestAccSupportRequestsDataSource_MaxResultsAndPageToken tests using both parameters together.
 func TestAccSupportRequestsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	t.Skip("Skipped: support requests API returns 400 'Failed to get tickets'")
 	pageToken := getSupportRequestFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 support request)")
@@ -135,7 +134,6 @@ data "doit_support_requests" "paginated" {
 
 // TestAccSupportRequestsDataSource_AutoPagination tests that without max_results, all support requests are fetched.
 func TestAccSupportRequestsDataSource_AutoPagination(t *testing.T) {
-	t.Skip("Skipped: support requests API returns 400 'Failed to get tickets'")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
