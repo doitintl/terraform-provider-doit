@@ -43,7 +43,7 @@ testacc:
 # Run a specific acceptance test
 # Usage: make testacc-run TEST=TestAccBudget
 testacc-run:
-	@test -f .envrc.local && . ./.envrc.local; TF_ACC=1 go test -v -timeout 120m ./internal/provider/... -run $(TEST)
+	@test -f .envrc.local && . ./.envrc.local; TF_ACC=1 go test -v -timeout 120m ./internal/provider/... -run '$(TEST)'
 
 # Validate all examples against the provider schema
 validate-examples:
