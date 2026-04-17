@@ -1203,19 +1203,14 @@ resource "doit_allocation" "sentinel_mixed" {
 `, rName)
 }
 
-// TestAccAllocation_ValueNormalization tests that a single allocation with a
-// long service_description value creates successfully and produces no drift.
-//
-// Historical context: The API previously silently stripped known suffixes (e.g.
-// "(EKS)" from "Amazon Elastic Container Service for Kubernetes (EKS)"). As of
-// April 2026, the API now rejects such values with a 400 error and instructs
-// users to use the canonical name. This test verifies the canonical name works
-// without drift.
+// TestAccAllocation_CanonicalServiceName tests that a single allocation with a
+// long canonical service_description value creates successfully and produces no
+// drift on re-apply.
 //
 // Asserts:
 //   - Step 1: Create with canonical name succeeds
 //   - Step 2: Re-apply produces empty plan (no drift)
-func TestAccAllocation_ValueNormalization(t *testing.T) {
+func TestAccAllocation_CanonicalServiceName(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -1226,11 +1221,11 @@ func TestAccAllocation_ValueNormalization(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create with the canonical service name.
 			{
-				Config: testAccAllocationValueNormalizationCanonical(rName),
+				Config: testAccAllocationCanonicalServiceName(rName),
 			},
 			// Step 2: Verify no drift on re-apply.
 			{
-				Config: testAccAllocationValueNormalizationCanonical(rName),
+				Config: testAccAllocationCanonicalServiceName(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -1241,7 +1236,33 @@ func TestAccAllocation_ValueNormalization(t *testing.T) {
 	})
 }
 
-func testAccAllocationValueNormalizationCanonical(rName string) string {
+// TestAccAllocation_SuffixedValueRejected verifies that the API rejects filter
+// values with known suffixes (e.g. "(EKS)") with a 400 error.
+//
+// Historical context: The API previously silently stripped known suffixes. As of
+// April 2026, it now returns a 400 error instructing the user to use the
+// canonical name. This test ensures we detect if the API behavior changes again.
+//
+// Asserts:
+//   - Step 1: Create with suffixed value fails with expected error message
+func TestAccAllocation_SuffixedValueRejected(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationSuffixedServiceName(rName),
+				ExpectError: regexp.MustCompile(`invalid filter value`),
+			},
+		},
+	})
+}
+
+func testAccAllocationCanonicalServiceName(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "norm" {
     name        = "%s-value-norm"
@@ -1254,6 +1275,26 @@ resource "doit_allocation" "norm" {
            mode   = "is"
            type   = "fixed"
            values = ["Amazon Elastic Container Service for Kubernetes"]
+         }
+       ]
+    }
+}
+`, rName)
+}
+
+func testAccAllocationSuffixedServiceName(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "norm" {
+    name        = "%s-value-norm"
+    description = "test allocation with suffixed service name"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "service_description"
+           mode   = "is"
+           type   = "fixed"
+           values = ["Amazon Elastic Container Service for Kubernetes (EKS)"]
          }
        ]
     }
