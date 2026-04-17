@@ -117,7 +117,7 @@ func TestFillAllocationCommon_SingleRule_NoEmptyRules(t *testing.T) {
 		t.Fatalf("json.Marshal: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(body, &parsed); err != nil {
 		t.Fatalf("json.Unmarshal: %v", err)
 	}
