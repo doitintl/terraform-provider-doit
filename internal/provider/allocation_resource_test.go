@@ -1203,19 +1203,14 @@ resource "doit_allocation" "sentinel_mixed" {
 `, rName)
 }
 
-// TestAccAllocation_ValueNormalization tests that a single allocation with a
-// service_description value that the API normalizes does not crash with
-// "inconsistent result".
-//
-// The API normalizes some service names (e.g. stripping the "(EKS)" suffix from
-// "Amazon Elastic Container Service for Kubernetes (EKS)"). The provider must
-// preserve the user's planned values in state after Create/Update. The Read path
-// then detects the normalized value as drift and surfaces it in the next plan.
+// TestAccAllocation_CanonicalServiceName tests that a single allocation with a
+// long canonical service_description value creates successfully and produces no
+// drift on re-apply.
 //
 // Asserts:
-//   - Step 1: Create succeeds without crash; drift is detected (non-empty plan)
-//   - Step 2: Using the canonical name produces an empty plan (no drift)
-func TestAccAllocation_ValueNormalization(t *testing.T) {
+//   - Step 1: Create with canonical name succeeds
+//   - Step 2: Re-apply produces empty plan (no drift)
+func TestAccAllocation_CanonicalServiceName(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -1224,19 +1219,13 @@ func TestAccAllocation_ValueNormalization(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: Create with the non-canonical name.
-			// The plan-first pattern prevents "inconsistent result" crash.
-			// The API normalizes the value, so the post-apply refresh will
-			// write the canonical name to state, causing expected drift.
+			// Step 1: Create with the canonical service name.
 			{
-				Config:             testAccAllocationValueNormalization(rName),
-				ExpectNonEmptyPlan: true, // Expected: Read returns API's canonical name → drift.
+				Config: testAccAllocationCanonicalServiceName(rName),
 			},
-			// Step 2: Switch to the API's canonical name.
-			// State already has the canonical name from step 1's refresh,
-			// so this should produce no drift.
+			// Step 2: Verify no drift on re-apply.
 			{
-				Config: testAccAllocationValueNormalizationCanonical(rName),
+				Config: testAccAllocationCanonicalServiceName(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -1247,31 +1236,37 @@ func TestAccAllocation_ValueNormalization(t *testing.T) {
 	})
 }
 
-func testAccAllocationValueNormalization(rName string) string {
-	return fmt.Sprintf(`
-resource "doit_allocation" "norm" {
-    name        = "%s-value-norm"
-    description = "test allocation with API-normalized service name"
-    rule = {
-       formula = "A"
-       components = [
-        {
-           key    = "service_description"
-           mode   = "is"
-           type   = "fixed"
-           values = ["Amazon Elastic Container Service for Kubernetes (EKS)"]
-         }
-       ]
-    }
-}
-`, rName)
+// TestAccAllocation_SuffixedValueRejected verifies that the API rejects filter
+// values with known suffixes (e.g. "(EKS)") with a 400 error.
+//
+// Historical context: The API previously silently stripped known suffixes. As of
+// April 2026, it now returns a 400 error instructing the user to use the
+// canonical name. This test ensures we detect if the API behavior changes again.
+//
+// Asserts:
+//   - Step 1: Create with suffixed value fails with expected error message
+func TestAccAllocation_SuffixedValueRejected(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationSuffixedServiceName(rName),
+				ExpectError: regexp.MustCompile(`invalid filter value`),
+			},
+		},
+	})
 }
 
-func testAccAllocationValueNormalizationCanonical(rName string) string {
+func testAccAllocationCanonicalServiceName(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "norm" {
     name        = "%s-value-norm"
-    description = "test allocation with API-normalized service name"
+    description = "test allocation with canonical service name"
     rule = {
        formula = "A"
        components = [
@@ -1280,6 +1275,26 @@ resource "doit_allocation" "norm" {
            mode   = "is"
            type   = "fixed"
            values = ["Amazon Elastic Container Service for Kubernetes"]
+         }
+       ]
+    }
+}
+`, rName)
+}
+
+func testAccAllocationSuffixedServiceName(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "norm" {
+    name        = "%s-value-norm"
+    description = "test allocation with suffixed service name"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "service_description"
+           mode   = "is"
+           type   = "fixed"
+           values = ["Amazon Elastic Container Service for Kubernetes (EKS)"]
          }
        ]
     }

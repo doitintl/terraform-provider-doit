@@ -1771,7 +1771,7 @@ resource "doit_budget" "this" {
   start_period      = local.start_period
   use_prev_spend    = false
   description       = "A test budget with optional fields"
-  growth_per_period = 5
+  growth_per_period = 0
   metric            = "cost"
   scope             = ["%s"]
   collaborators = [
