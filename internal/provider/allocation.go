@@ -28,8 +28,7 @@ import (
 //
 // This prevents "Provider produced inconsistent result" errors caused by the API
 // normalizing user-provided values (e.g. stripping [Service N/A] sentinels,
-// renaming "Amazon Elastic Container Service for Kubernetes (EKS)" to
-// "Amazon Elastic Container Service for Kubernetes").
+// renaming type aliases like "allocation_rule" to "attribution").
 //
 // Used by: Create, Update
 // NOT used by: Read, ImportState (which use populateState / mapAllocationToModel directly).
