@@ -217,6 +217,9 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewUsersDataSource,
 		NewReportResultDataSource,
 		NewReportQueryDataSource,
+		NewSupportRequestDataSource,
+		NewDatahubDatasetDataSource,
+		NewAvaDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
@@ -230,16 +233,12 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCommitmentsDataSource,
 		NewAssetsDataSource,
 		NewSupportRequestsDataSource,
-		NewSupportRequestDataSource,
 		NewSupportRequestCommentsDataSource,
 		NewPlatformsDataSource,
 		NewProductsDataSource,
 		NewOrganizationsDataSource,
-		// DataHub data sources
-		NewDatahubDatasetDataSource,
 		NewDatahubDatasetsDataSource,
-		// AI assistant data source
-		NewAvaDataSource,
+		NewCloudDiagramsDataSource,
 	}
 }
 

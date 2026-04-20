@@ -2474,6 +2474,40 @@
 			}
 		},
 		{
+			"name": "cloud_diagrams",
+			"schema": {
+				"attributes": [
+					{
+						"name": "cloud_diagrams",
+						"set_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "diagram_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to the diagram viewer."
+										}
+									},
+									{
+										"name": "image_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to the diagram image."
+										}
+									}
+								]
+							},
+							"description": "List of diagram URLs matching the criteria."
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_incident",
 			"schema": {
 				"attributes": [
