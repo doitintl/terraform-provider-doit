@@ -88,9 +88,10 @@ func (d *cloudDiagramsDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	// If resources is unknown (e.g., depends on a resource being created),
-	// return unknown for all computed attributes instead of making an API call.
-	if data.Resources.IsUnknown() {
+	// If the config contains any unknown values (e.g., a list element like
+	// [some_resource.id] during plan), we cannot make a complete API query.
+	// Return all computed attributes as unknown.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Id = types.StringUnknown()
 		data.CloudDiagrams = types.SetUnknown(datasource_cloud_diagrams.CloudDiagramsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -124,6 +125,14 @@ func (d *cloudDiagramsDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
+	if apiResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error Finding Cloud Diagrams",
+			fmt.Sprintf("Cloud Diagrams API returned status 200 but response body could not be parsed: %s", string(apiResp.Body)),
+		)
+		return
+	}
+
 	// Set a deterministic ID based on sorted resource IDs.
 	sorted := make([]string, len(resourceIDs))
 	copy(sorted, resourceIDs)
@@ -132,38 +141,28 @@ func (d *cloudDiagramsDataSource) Read(ctx context.Context, req datasource.ReadR
 	data.Id = types.StringValue(fmt.Sprintf("%x", hash))
 
 	// Map API response to Terraform state.
-	if apiResp.JSON200 != nil && len(*apiResp.JSON200) > 0 {
-		diagramVals := make([]datasource_cloud_diagrams.CloudDiagramsValue, 0, len(*apiResp.JSON200))
-		for _, item := range *apiResp.JSON200 {
-			diagVal, diags := datasource_cloud_diagrams.NewCloudDiagramsValue(
-				datasource_cloud_diagrams.CloudDiagramsValue{}.AttributeTypes(ctx),
-				map[string]attr.Value{
-					"diagram_url": types.StringValue(item.DiagramUrl),
-					"image_url":   types.StringValue(item.ImageUrl),
-				},
-			)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			diagramVals = append(diagramVals, diagVal)
-		}
-
-		diagramsSet, diags := types.SetValueFrom(ctx, datasource_cloud_diagrams.CloudDiagramsValue{}.Type(ctx), diagramVals)
+	diagramVals := make([]datasource_cloud_diagrams.CloudDiagramsValue, 0, len(*apiResp.JSON200))
+	for _, item := range *apiResp.JSON200 {
+		diagVal, diags := datasource_cloud_diagrams.NewCloudDiagramsValue(
+			datasource_cloud_diagrams.CloudDiagramsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"diagram_url": types.StringValue(item.DiagramUrl),
+				"image_url":   types.StringValue(item.ImageUrl),
+			},
+		)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		data.CloudDiagrams = diagramsSet
-	} else {
-		// Return empty set when no diagrams found.
-		emptySet, diags := types.SetValueFrom(ctx, datasource_cloud_diagrams.CloudDiagramsValue{}.Type(ctx), []datasource_cloud_diagrams.CloudDiagramsValue{})
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		data.CloudDiagrams = emptySet
+		diagramVals = append(diagramVals, diagVal)
 	}
+
+	diagramsSet, diags := types.SetValueFrom(ctx, datasource_cloud_diagrams.CloudDiagramsValue{}.Type(ctx), diagramVals)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	data.CloudDiagrams = diagramsSet
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
