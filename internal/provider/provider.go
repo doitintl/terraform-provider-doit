@@ -212,7 +212,7 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		resp.Diagnostics.AddAttributeError(
 			path.Root("request_timeout"),
 			"Invalid Request Timeout",
-			fmt.Sprintf("request_timeout must be a positive duration, got %q. Use Go duration format, e.g. \"30s\", \"2m\", \"1h\".", requestTimeout),
+			fmt.Sprintf("request_timeout must be a positive duration, got %q. Use Go duration format, e.g. \"30s\", \"2m\", \"1h\".", requestTimeout.String()),
 		)
 	}
 

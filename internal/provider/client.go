@@ -229,12 +229,14 @@ func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVe
 	if err != nil {
 		return nil, err
 	}
-	// Validate the API token. Use a bounded context so that provider
-	// initialization fails fast if the API is unreachable, rather than
-	// hanging for the framework's default context deadline (~20 min).
+	// Validate the API token with a bounded context derived from
+	// requestTimeout so initialization does not hang indefinitely.
 	validateCtx, validateCancel := context.WithTimeout(ctx, requestTimeout)
 	defer validateCancel()
-	_, err = client.Validate(validateCtx)
+	validateResp, err := client.Validate(validateCtx)
+	if validateResp != nil && validateResp.Body != nil {
+		validateResp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -86,7 +86,7 @@ The **operation timeout is the outer boundary**. Retries continue until the oper
 
 | Layer | Controls | Example |
 | ----- | -------- | ------- |
-| **Operation timeout** (outer) | Total time for the Terraform operation, including all retries | `timeouts { create = "10m" }` |
+| **Operation timeout** (outer) | Total time for the Terraform operation, including all retries | `timeouts = { create = "10m" }` |
 | **Request timeout** (inner) | Time for a single HTTP request to the API | `request_timeout = "120s"` |
 
 Within a single operation (e.g., `create`), the flow is:
@@ -96,7 +96,7 @@ Within a single operation (e.g., `create`), the flow is:
 3. **Request 2**: A retry is attempted. This cycle repeats.
 4. **Deadline**: Once the operation timeout (e.g., 10m) is reached, all remaining retries are cancelled and Terraform reports the error.
 
-~> **Important:** Ensure that your operation timeout is larger than your `request_timeout`. If `request_timeout` is larger than the operation timeout, a single slow request could consume the entire operation budget with no room for retries. For example, `request_timeout = "300s"` with `timeouts { create = "2m" }` means the first request could take up to 2 minutes before being cancelled by the operation timeout — leaving zero time for retries.
+~> **Important:** Ensure that your operation timeout is larger than your `request_timeout`. If `request_timeout` is larger than the operation timeout, a single slow request could consume the entire operation budget with no room for retries. For example, `request_timeout = "300s"` with `timeouts = { create = "2m" }` means the first request could take up to 2 minutes before being cancelled by the operation timeout — leaving zero time for retries.
 
 ## Troubleshooting
 
