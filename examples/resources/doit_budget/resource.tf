@@ -108,3 +108,38 @@ resource "doit_budget" "with_collaborators" {
   # Notify all users when thresholds are reached
   recipients = [for u in data.doit_users.all.users : u.email]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Using doit_dimension (singular) to discover valid scope values
+# ─────────────────────────────────────────────────────────────────────────────
+# While doit_dimensions (plural) helps look up dimension types,
+# doit_dimension (singular) retrieves the *values* for a specific dimension.
+# This lets you dynamically populate scope values instead of hardcoding them.
+
+# Look up valid cloud_provider values from the API
+data "doit_dimension" "cloud_provider" {
+  type = "fixed"
+  id   = "cloud_provider"
+}
+
+resource "doit_budget" "dynamic_scope" {
+  name          = "Dynamic Cloud Budget"
+  currency      = "USD"
+  type          = "recurring"
+  amount        = 50000
+  time_interval = "month"
+  start_period  = time_static.now.unix * 1000
+  alerts = [
+    { percentage = 80 },
+    { percentage = 100 }
+  ]
+  # Scope values discovered dynamically from the API
+  scopes = [
+    {
+      id     = "cloud_provider"
+      type   = "fixed"
+      mode   = "is"
+      values = [for v in data.doit_dimension.cloud_provider.values : v.value]
+    }
+  ]
+}

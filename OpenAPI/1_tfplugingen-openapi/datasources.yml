@@ -49,6 +49,10 @@ data_sources:
     read:
       path: /analytics/v1/commitment-manager/{id}
       method: GET
+  dimension:
+    read:
+      path: /analytics/v1/dimension
+      method: GET
   dimensions:
     read:
       path: /analytics/v1/dimensions
