@@ -3089,6 +3089,69 @@
 			}
 		},
 		{
+			"name": "dimension",
+			"schema": {
+				"attributes": [
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Dimension type",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Dimension id"
+						}
+					},
+					{
+						"name": "label",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "values",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "cloud",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "value",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "View available dimensions for analysis.",
+				"markdown_description": "View available dimensions for analysis."
+			}
+		},
+		{
 			"name": "dimensions",
 			"schema": {
 				"attributes": [
