@@ -158,3 +158,8 @@ data_sources:
     read:
       path: /ava/v1/askSync
       method: POST
+  # Cloud Diagrams data source
+  cloud_diagrams:
+    read:
+      path: /clouddiagrams/v1/scheme/find
+      method: POST
