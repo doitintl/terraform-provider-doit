@@ -92,11 +92,14 @@ func (d *dimensionDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	dimension := apiResp.JSON200
 
-	// Map scalar fields
+	// Map scalar fields — preserve user's configured type when the API
+	// returns a canonical alias (e.g. user sends "allocation", API returns
+	// "attribution_group"). Without this, re-reads would cause perpetual drift.
+	userType := state.Type.ValueString()
 	state.Id = types.StringPointerValue(dimension.Id)
 	state.Label = types.StringPointerValue(dimension.Label)
 	if dimension.Type != nil {
-		state.Type = types.StringValue(string(*dimension.Type))
+		state.Type = types.StringValue(normalizeDimensionsType(string(*dimension.Type), userType))
 	}
 
 	// Map values list
