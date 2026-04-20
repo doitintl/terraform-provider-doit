@@ -41,7 +41,7 @@ terraform {
 }
 
 provider "doit" {
-  # Recommended: use DOIT_API_TOKEN environment variable instead of hardcoding
+  # Set DOIT_API_TOKEN in your environment before running terraform apply
 }
 ```
 
@@ -162,7 +162,7 @@ This provides Go, Terraform, and golangci-lint at the pinned versions. To skip f
 
 ### Acceptance Tests
 
-Acceptance tests create real resources in a DoiT account. Use the Makefile targets:
+Acceptance tests create real resources in a DoiT account. Use the following make targets:
 
 ```shell
 # Run all acceptance tests
@@ -179,8 +179,9 @@ Copy the example file and fill in your values:
 ```shell
 cp .envrc.example .envrc.local
 # Edit .envrc.local with your values
-direnv allow
 ```
+
+The `make testacc` targets automatically source `.envrc.local`. If you use [direnv](https://direnv.net/), you can also run `direnv allow` to load the variables into your interactive shell.
 
 | Variable           | Description                                               |
 | ------------------ | --------------------------------------------------------- |
