@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_allocations"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,6 +26,7 @@ type allocationsDataSource struct {
 
 type allocationsDataSourceModel struct {
 	datasource_allocations.AllocationsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *allocationsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -31,7 +34,11 @@ func (d *allocationsDataSource) Metadata(ctx context.Context, req datasource.Met
 }
 
 func (d *allocationsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_allocations.AllocationsDataSourceSchema(ctx)
+	s := datasource_allocations.AllocationsDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (d *allocationsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -58,6 +65,14 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If any filter/pagination input is unknown, return unknown list
 	if data.Filter.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {

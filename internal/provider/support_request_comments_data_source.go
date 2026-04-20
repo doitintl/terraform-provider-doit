@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	ds "github.com/doitintl/terraform-provider-doit/internal/provider/datasource_support_request_comments"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -22,6 +24,11 @@ func NewSupportRequestCommentsDataSource() datasource.DataSource {
 
 type supportRequestCommentsDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type supportRequestCommentsDataSourceModel struct {
+	ds.SupportRequestCommentsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *supportRequestCommentsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -44,15 +51,27 @@ func (d *supportRequestCommentsDataSource) Configure(_ context.Context, req data
 }
 
 func (d *supportRequestCommentsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = ds.SupportRequestCommentsDataSourceSchema(ctx)
+	s := ds.SupportRequestCommentsDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (d *supportRequestCommentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data ds.SupportRequestCommentsModel
+	var data supportRequestCommentsDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ticket_id is unknown (depends on a resource not yet created), return early
 	// with unknown comments list to prevent incorrect data usage.

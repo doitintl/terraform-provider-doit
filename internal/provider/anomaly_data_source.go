@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_anomaly"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -20,6 +22,11 @@ func NewAnomalyDataSource() datasource.DataSource {
 
 type anomalyDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type anomalyDataSourceModel struct {
+	datasource_anomaly.AnomalyModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (ds *anomalyDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,38 +49,50 @@ func (ds *anomalyDataSource) Configure(_ context.Context, req datasource.Configu
 }
 
 func (ds *anomalyDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_anomaly.AnomalyDataSourceSchema(ctx)
+	s := datasource_anomaly.AnomalyDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state datasource_anomaly.AnomalyModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
+	var data anomalyDataSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	// If ID is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.
-	if state.Id.IsUnknown() {
-		state.Acknowledged = types.BoolUnknown()
-		state.Attribution = types.StringUnknown()
-		state.BillingAccount = types.StringUnknown()
-		state.CostOfAnomaly = types.Float64Unknown()
-		state.EndTime = types.Int64Unknown()
-		state.Platform = types.StringUnknown()
-		state.ResourceData = types.ListUnknown(datasource_anomaly.ResourceDataValue{}.Type(ctx))
-		state.Scope = types.StringUnknown()
-		state.ServiceName = types.StringUnknown()
-		state.SeverityLevel = types.StringUnknown()
-		state.StartTime = types.Int64Unknown()
-		state.Status = types.StringUnknown()
-		state.TimeFrame = types.StringUnknown()
-		state.Top3skus = types.ListUnknown(datasource_anomaly.Top3skusValue{}.Type(ctx))
-		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	if data.Id.IsUnknown() {
+		data.Acknowledged = types.BoolUnknown()
+		data.Attribution = types.StringUnknown()
+		data.BillingAccount = types.StringUnknown()
+		data.CostOfAnomaly = types.Float64Unknown()
+		data.EndTime = types.Int64Unknown()
+		data.Platform = types.StringUnknown()
+		data.ResourceData = types.ListUnknown(datasource_anomaly.ResourceDataValue{}.Type(ctx))
+		data.Scope = types.StringUnknown()
+		data.ServiceName = types.StringUnknown()
+		data.SeverityLevel = types.StringUnknown()
+		data.StartTime = types.Int64Unknown()
+		data.Status = types.StringUnknown()
+		data.TimeFrame = types.StringUnknown()
+		data.Top3skus = types.ListUnknown(datasource_anomaly.Top3skusValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
-	id := state.Id.ValueString()
+	id := data.Id.ValueString()
 	anomalyResp, err := ds.client.GetAnomalyWithResponse(ctx, id)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading anomaly", err.Error())
@@ -94,30 +113,30 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	anomaly := anomalyResp.JSON200
 
 	// Map fields - the API returns an anonymous struct
-	state.Id = types.StringValue(id) // ID is not in the response, use the requested ID
-	state.Acknowledged = types.BoolPointerValue(anomaly.Acknowledged)
-	state.Attribution = types.StringValue(anomaly.Attribution)
-	state.BillingAccount = types.StringValue(anomaly.BillingAccount)
-	state.CostOfAnomaly = types.Float64Value(anomaly.CostOfAnomaly)
-	state.Scope = types.StringValue(anomaly.Scope)
-	state.ServiceName = types.StringValue(anomaly.ServiceName)
-	state.StartTime = types.Int64Value(anomaly.StartTime)
-	state.Platform = types.StringValue(anomaly.Platform)
-	state.SeverityLevel = types.StringValue(anomaly.SeverityLevel)
-	state.TimeFrame = types.StringValue(anomaly.TimeFrame)
+	data.Id = types.StringValue(id) // ID is not in the response, use the requested ID
+	data.Acknowledged = types.BoolPointerValue(anomaly.Acknowledged)
+	data.Attribution = types.StringValue(anomaly.Attribution)
+	data.BillingAccount = types.StringValue(anomaly.BillingAccount)
+	data.CostOfAnomaly = types.Float64Value(anomaly.CostOfAnomaly)
+	data.Scope = types.StringValue(anomaly.Scope)
+	data.ServiceName = types.StringValue(anomaly.ServiceName)
+	data.StartTime = types.Int64Value(anomaly.StartTime)
+	data.Platform = types.StringValue(anomaly.Platform)
+	data.SeverityLevel = types.StringValue(anomaly.SeverityLevel)
+	data.TimeFrame = types.StringValue(anomaly.TimeFrame)
 
 	// EndTime is *int in the API
 	if anomaly.EndTime != nil {
-		state.EndTime = types.Int64Value(int64(*anomaly.EndTime))
+		data.EndTime = types.Int64Value(int64(*anomaly.EndTime))
 	} else {
-		state.EndTime = types.Int64Null()
+		data.EndTime = types.Int64Null()
 	}
 
 	// Status is a pointer
 	if anomaly.Status != nil {
-		state.Status = types.StringValue(string(*anomaly.Status))
+		data.Status = types.StringValue(string(*anomaly.Status))
 	} else {
-		state.Status = types.StringNull()
+		data.Status = types.StringNull()
 	}
 
 	// Map resource_data
@@ -138,11 +157,11 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 		resourceDataList, d := types.ListValueFrom(ctx, datasource_anomaly.ResourceDataValue{}.Type(ctx), resourceDataVals)
 		resp.Diagnostics.Append(d...)
-		state.ResourceData = resourceDataList
+		data.ResourceData = resourceDataList
 	} else {
 		emptyList, d := types.ListValueFrom(ctx, datasource_anomaly.ResourceDataValue{}.Type(ctx), []datasource_anomaly.ResourceDataValue{})
 		resp.Diagnostics.Append(d...)
-		state.ResourceData = emptyList
+		data.ResourceData = emptyList
 	}
 
 	// Map top3skus
@@ -161,12 +180,12 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 		top3List, d := types.ListValueFrom(ctx, datasource_anomaly.Top3skusValue{}.Type(ctx), top3Vals)
 		resp.Diagnostics.Append(d...)
-		state.Top3skus = top3List
+		data.Top3skus = top3List
 	} else {
 		emptyList, d := types.ListValueFrom(ctx, datasource_anomaly.Top3skusValue{}.Type(ctx), []datasource_anomaly.Top3skusValue{})
 		resp.Diagnostics.Append(d...)
-		state.Top3skus = emptyList
+		data.Top3skus = emptyList
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

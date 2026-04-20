@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,9 +26,10 @@ type avaDataSource struct {
 }
 
 type avaDataSourceModel struct {
-	Id       types.String `tfsdk:"id"`
-	Question types.String `tfsdk:"question"`
-	Answer   types.String `tfsdk:"answer"`
+	Id       types.String   `tfsdk:"id"`
+	Question types.String   `tfsdk:"question"`
+	Answer   types.String   `tfsdk:"answer"`
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *avaDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -58,6 +61,7 @@ func (d *avaDataSource) Schema(ctx context.Context, req datasource.SchemaRequest
 				Description:         "The Ava response text.",
 				MarkdownDescription: "The Ava response text.",
 			},
+			"timeouts": timeouts.Attributes(ctx),
 		},
 	}
 }
@@ -86,6 +90,14 @@ func (d *avaDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If question is unknown (e.g., depends on a resource being created),
 	// return unknown for all computed attributes instead of making an API call.

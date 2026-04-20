@@ -7,6 +7,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_annotation"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -21,6 +22,7 @@ type (
 	}
 	annotationResourceModel struct {
 		resource_annotation.AnnotationModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -84,6 +86,13 @@ func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["create_time"] = attr
 	}
 
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
 	resp.Schema = s
 }
 
@@ -135,6 +144,14 @@ func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, createDiags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(createDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	// Parse timestamp
 	timestamp, err := time.Parse(time.RFC3339, plan.Timestamp.ValueString())
@@ -221,6 +238,14 @@ func (r *annotationResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
+	readTimeout, readDiags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(readDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	// Get refreshed annotation value from API
 	annotationResp, err := r.client.GetAnnotationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
@@ -273,6 +298,14 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(updateDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	// Get the ID from the state
 	var state annotationResourceModel
@@ -367,6 +400,14 @@ func (r *annotationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, deleteDiags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(deleteDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	// Delete annotation via API
 	deleteResp, err := r.client.DeleteAnnotationWithResponse(ctx, state.Id.ValueString())

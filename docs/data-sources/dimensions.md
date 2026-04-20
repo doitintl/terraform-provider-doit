@@ -54,11 +54,20 @@ The fields eligible for filtering are: type, label, key.
 Possible values: `type`, `label`, `key`, `timestamp`
 - `sort_order` (String) Sort order can be ascending or descending.
 Possible values: `asc`, `desc`
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `dimensions` (Attributes List) Array of dimensions. (see [below for nested schema](#nestedatt--dimensions))
 - `row_count` (Number)
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--dimensions"></a>
 ### Nested Schema for `dimensions`

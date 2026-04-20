@@ -14,9 +14,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -44,9 +46,10 @@ type reportQueryDataSourceModel struct {
 	Config resource_report.ConfigValue `tfsdk:"config"`
 
 	// Outputs
-	ResultJSON types.String `tfsdk:"result_json"`
-	CacheHit   types.Bool   `tfsdk:"cache_hit"`
-	RowCount   types.Int64  `tfsdk:"row_count"`
+	ResultJSON types.String   `tfsdk:"result_json"`
+	CacheHit   types.Bool     `tfsdk:"cache_hit"`
+	RowCount   types.Int64    `tfsdk:"row_count"`
+	Timeouts   timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *reportQueryDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -122,6 +125,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 				MarkdownDescription: "The number of data rows in the result.",
 				Computed:            true,
 			},
+			"timeouts": timeouts.Attributes(ctx),
 		},
 	}
 }
@@ -151,6 +155,14 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If the config contains any unknown values (e.g., during a plan where
 	// inputs depend on unresolved resources), we cannot make a complete API query.

@@ -39,6 +39,10 @@ output "asset_url" {
 
 - `id` (String) The unique id of an asset.
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `create_time` (Number) The time when the asset was created, in milliseconds since the epoch.
@@ -47,6 +51,14 @@ output "asset_url" {
 - `quantity` (Number) The number of licenses or seats currently assigned to this asset.
 - `type` (String) The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
 - `url` (String) A link to the asset details page in the DoiT console.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--properties"></a>
 ### Nested Schema for `properties`

@@ -43,9 +43,20 @@ output "dataset_last_updated" {
 
 - `name` (String) The name of the dataset to retrieve.
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `description` (String) The description of the dataset.
 - `last_updated` (String) The timestamp of the last update.
 - `records` (Number) The number of records in the dataset.
 - `updated_by` (String) The email of the user who last updated the dataset.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).

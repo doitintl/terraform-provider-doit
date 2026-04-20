@@ -7,6 +7,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_commitment"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -26,17 +27,18 @@ type commitmentDataSource struct {
 
 // commitmentDataSourceModel extends the generated model for custom field mapping.
 type commitmentDataSourceModel struct {
-	CreateTime             types.Int64   `tfsdk:"create_time"`
-	Currency               types.String  `tfsdk:"currency"`
-	EndDate                types.String  `tfsdk:"end_date"`
-	Id                     types.String  `tfsdk:"id"`
-	Name                   types.String  `tfsdk:"name"`
-	Periods                types.List    `tfsdk:"periods"`
-	CloudProvider          types.String  `tfsdk:"cloud_provider"`
-	StartDate              types.String  `tfsdk:"start_date"`
-	TotalCommitmentValue   types.Float64 `tfsdk:"total_commitment_value"`
-	TotalCurrentAttainment types.Float64 `tfsdk:"total_current_attainment"`
-	UpdateTime             types.Int64   `tfsdk:"update_time"`
+	CreateTime             types.Int64    `tfsdk:"create_time"`
+	Currency               types.String   `tfsdk:"currency"`
+	EndDate                types.String   `tfsdk:"end_date"`
+	Id                     types.String   `tfsdk:"id"`
+	Name                   types.String   `tfsdk:"name"`
+	Periods                types.List     `tfsdk:"periods"`
+	CloudProvider          types.String   `tfsdk:"cloud_provider"`
+	StartDate              types.String   `tfsdk:"start_date"`
+	TotalCommitmentValue   types.Float64  `tfsdk:"total_commitment_value"`
+	TotalCurrentAttainment types.Float64  `tfsdk:"total_current_attainment"`
+	UpdateTime             types.Int64    `tfsdk:"update_time"`
+	Timeouts               timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (ds *commitmentDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -57,7 +59,11 @@ func (ds *commitmentDataSource) Configure(_ context.Context, req datasource.Conf
 }
 
 func (ds *commitmentDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_commitment.CommitmentDataSourceSchema(ctx)
+	s := datasource_commitment.CommitmentDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 	resp.Schema.Description = "Retrieves details of a specific commitment contract."
 	resp.Schema.MarkdownDescription = resp.Schema.Description
 }
@@ -68,6 +74,14 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ID is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.

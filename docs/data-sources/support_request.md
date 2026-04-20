@@ -34,6 +34,10 @@ output "status" {
 
 - `ticket_id` (Number) The unique identifier of the support request.
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `create_time` (Number) The time when this ticket was created, in milliseconds since the epoch.
@@ -48,3 +52,10 @@ output "status" {
 - `subject` (String) The subject of the ticket.
 - `update_time` (Number) The time when this ticket was last updated, in milliseconds since the epoch.
 - `url_ui` (String) Link to the ticket in DoiT console.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).

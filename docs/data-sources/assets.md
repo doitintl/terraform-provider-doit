@@ -40,11 +40,20 @@ filter results in “AND,” while using the same key multiple times in
 the same filter results in “OR”.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `assets` (Attributes List) Array of Assets (see [below for nested schema](#nestedatt--assets))
 - `row_count` (Number) Assets rows count
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--assets"></a>
 ### Nested Schema for `assets`

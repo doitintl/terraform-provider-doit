@@ -74,6 +74,7 @@ data "doit_report_result" "last_week" {
 - `end_date` (String) An optional parameter to override the report time settings. Must be provided together with `start_date`. Format: `yyyy-mm-dd`.
 - `start_date` (String) An optional parameter to override the report time settings. Must be provided together with `end_date`. Format: `yyyy-mm-dd`.
 - `time_range` (String) An optional parameter to override the report time settings. Value should be represented in the ISO 8601 duration format `P[n]Y[n]M[n]D` (e.g., `P7D` for 7 days, `P1M` for 1 month).
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
@@ -81,3 +82,10 @@ data "doit_report_result" "last_week" {
 - `report_name` (String) The name of the report.
 - `result_json` (String) The full report result as a JSON string. Contains `schema` (column definitions), `rows` (data), and metadata. Use `jsondecode()` to parse.
 - `row_count` (Number) The number of data rows in the result.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).

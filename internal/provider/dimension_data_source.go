@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_dimension"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -20,6 +22,11 @@ func NewDimensionDataSource() datasource.DataSource {
 
 type dimensionDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type dimensionDataSourceModel struct {
+	datasource_dimension.DimensionModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *dimensionDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,15 +49,27 @@ func (d *dimensionDataSource) Configure(_ context.Context, req datasource.Config
 }
 
 func (d *dimensionDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_dimension.DimensionDataSourceSchema(ctx)
+	s := datasource_dimension.DimensionDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (d *dimensionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state datasource_dimension.DimensionModel
+	var state dimensionDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If required inputs are unknown (depend on resources not yet created),
 	// set all computed attributes to unknown so consumers don't treat null as

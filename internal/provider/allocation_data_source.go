@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_allocation"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -25,6 +27,7 @@ type (
 	}
 	allocationDataSourceModel struct {
 		datasource_allocation.AllocationModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -33,7 +36,11 @@ func (ds *allocationDataSource) Metadata(_ context.Context, req datasource.Metad
 }
 
 func (ds *allocationDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_allocation.AllocationDataSourceSchema(ctx)
+	s := datasource_allocation.AllocationDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (ds *allocationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -61,6 +68,14 @@ func (ds *allocationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ID is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.

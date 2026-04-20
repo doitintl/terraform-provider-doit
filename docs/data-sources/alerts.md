@@ -61,11 +61,20 @@ Available filter keys: **owner**, **name**
 Possible values: `name`, `createTime`, `updateTime`, `lastAlerted`
 - `sort_order` (String) Sort order can be ascending or descending.
 Possible values: `asc`, `desc`
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `alerts` (Attributes List) Array of alerts. (see [below for nested schema](#nestedatt--alerts))
 - `row_count` (Number) The number of returned records.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--alerts"></a>
 ### Nested Schema for `alerts`

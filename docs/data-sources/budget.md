@@ -43,6 +43,10 @@ output "budget_time_period" {
 
 - `id` (String) Budget ID
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `alerts` (Attributes List) List of up to three thresholds defined as a percentage of amount. (see [below for nested schema](#nestedatt--alerts))
@@ -70,6 +74,14 @@ required: true(if budget type is fixed)
 - `type` (String) budget type can be one of: ["fixed", "recurring"]
 - `update_time` (Number) Update time (in UNIX timestamp).
 - `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--alerts"></a>
 ### Nested Schema for `alerts`

@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_alert"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -27,6 +29,7 @@ type (
 	}
 	alertResourceModel struct {
 		resource_alert.AlertModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -75,6 +78,13 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		s.Attributes["create_time"] = attr
 	}
 
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
 	resp.Schema = s
 }
 
@@ -94,6 +104,14 @@ func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	// Convert model to API alert request
 	alertReq, diags := plan.toAlertRequest(ctx)
@@ -148,6 +166,14 @@ func (r *alertResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	// Populate state from API
 	resp.Diagnostics.Append(r.populateState(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -172,6 +198,14 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	// Convert model to API alert update request
 	alertReq, diags := plan.toAlertUpdateRequest(ctx)
@@ -234,6 +268,14 @@ func (r *alertResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	// Delete alert via API
 	deleteResp, err := r.client.DeleteAlertWithResponse(ctx, state.Id.ValueString())

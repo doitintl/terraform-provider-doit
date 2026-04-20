@@ -38,7 +38,7 @@ func TestNewClient_UserAgent(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0")
+	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
@@ -58,7 +58,7 @@ func TestNewClient_UserAgentDev(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "dev")
+	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "dev", DefaultRequestTimeout)
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
@@ -78,7 +78,7 @@ func TestNewClient_UserAgentAppend(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0")
+	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}

@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_label_assignments"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -23,12 +25,21 @@ type labelAssignmentsDataSource struct {
 	client *models.ClientWithResponses
 }
 
+type labelAssignmentsDataSourceModel struct {
+	datasource_label_assignments.LabelAssignmentsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
+}
+
 func (d *labelAssignmentsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_label_assignments"
 }
 
 func (d *labelAssignmentsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_label_assignments.LabelAssignmentsDataSourceSchema(ctx)
+	s := datasource_label_assignments.LabelAssignmentsDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 	resp.Schema.Description = "Retrieves the list of objects (reports, budgets, alerts, etc.) assigned to a specific label."
 	resp.Schema.MarkdownDescription = "Retrieves the list of objects (reports, budgets, alerts, etc.) assigned to a specific label."
 }
@@ -49,12 +60,20 @@ func (d *labelAssignmentsDataSource) Configure(ctx context.Context, req datasour
 }
 
 func (d *labelAssignmentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_label_assignments.LabelAssignmentsModel
+	var data labelAssignmentsDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ID is unknown (depends on a resource not yet created), return early
 	// but set computed list attributes to Unknown and preserve state during planning.

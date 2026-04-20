@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -30,6 +32,7 @@ type reportResource struct {
 
 type reportResourceModel struct {
 	resource_report.ReportModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (r *reportResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -49,6 +52,13 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["type"] = attr
 	}
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
 
 	resp.Schema = s
 }
@@ -92,6 +102,14 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	reportReq, diags := plan.toCreateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
@@ -153,6 +171,14 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	// allowNotFound=true: 404 means resource was deleted externally, remove from state
 	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &state, true)
 	if diags.HasError() {
@@ -176,6 +202,14 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state reportResourceModel
 	diags = req.State.Get(ctx, &state)
@@ -240,6 +274,14 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	deleteResp, err := r.client.DeleteReportWithResponse(ctx, state.Id.ValueString())
 	if err != nil {

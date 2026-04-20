@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_diagrams"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -33,9 +35,10 @@ type cloudDiagramsDataSource struct {
 // cloudDiagramsDataSourceModel is the Terraform state model.
 // The CloudDiagrams field uses the generated tfsdk tag "cloud_diagrams" to match the generated schema.
 type cloudDiagramsDataSourceModel struct {
-	Id            types.String `tfsdk:"id"`
-	Resources     types.List   `tfsdk:"resources"`
-	CloudDiagrams types.Set    `tfsdk:"cloud_diagrams"`
+	Id            types.String   `tfsdk:"id"`
+	Resources     types.List     `tfsdk:"resources"`
+	CloudDiagrams types.Set      `tfsdk:"cloud_diagrams"`
+	Timeouts      timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *cloudDiagramsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -59,6 +62,8 @@ func (d *cloudDiagramsDataSource) Schema(ctx context.Context, _ datasource.Schem
 		Description:         "Resource IDs to find diagrams for.",
 		MarkdownDescription: "Resource IDs to find diagrams for.",
 	}
+
+	genSchema.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = genSchema
 }
@@ -87,6 +92,14 @@ func (d *cloudDiagramsDataSource) Read(ctx context.Context, req datasource.ReadR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If the config contains any unknown values (e.g., a list element like
 	// [some_resource.id] during plan), we cannot make a complete API query.
@@ -143,22 +156,22 @@ func (d *cloudDiagramsDataSource) Read(ctx context.Context, req datasource.ReadR
 	// Map API response to Terraform state.
 	diagramVals := make([]datasource_cloud_diagrams.CloudDiagramsValue, 0, len(*apiResp.JSON200))
 	for _, item := range *apiResp.JSON200 {
-		diagVal, diags := datasource_cloud_diagrams.NewCloudDiagramsValue(
+		diagVal, newValDiags := datasource_cloud_diagrams.NewCloudDiagramsValue(
 			datasource_cloud_diagrams.CloudDiagramsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"diagram_url": types.StringValue(item.DiagramUrl),
 				"image_url":   types.StringValue(item.ImageUrl),
 			},
 		)
-		resp.Diagnostics.Append(diags...)
+		resp.Diagnostics.Append(newValDiags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 		diagramVals = append(diagramVals, diagVal)
 	}
 
-	diagramsSet, diags := types.SetValueFrom(ctx, datasource_cloud_diagrams.CloudDiagramsValue{}.Type(ctx), diagramVals)
-	resp.Diagnostics.Append(diags...)
+	diagramsSet, setDiags := types.SetValueFrom(ctx, datasource_cloud_diagrams.CloudDiagramsValue{}.Type(ctx), diagramVals)
+	resp.Diagnostics.Append(setDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
