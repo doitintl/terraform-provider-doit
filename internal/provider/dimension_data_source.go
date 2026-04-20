@@ -106,22 +106,22 @@ func (d *dimensionDataSource) Read(ctx context.Context, req datasource.ReadReque
 	if dimension.Values != nil && len(*dimension.Values) > 0 {
 		valVals := make([]datasource_dimension.ValuesValue, 0, len(*dimension.Values))
 		for _, v := range *dimension.Values {
-			valVal, d := datasource_dimension.NewValuesValue(
+			valVal, diags := datasource_dimension.NewValuesValue(
 				datasource_dimension.ValuesValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
 					"cloud": types.StringPointerValue(v.Cloud),
 					"value": types.StringPointerValue(v.Value),
 				},
 			)
-			resp.Diagnostics.Append(d...)
+			resp.Diagnostics.Append(diags...)
 			valVals = append(valVals, valVal)
 		}
-		valuesList, d := types.ListValueFrom(ctx, datasource_dimension.ValuesValue{}.Type(ctx), valVals)
-		resp.Diagnostics.Append(d...)
+		valuesList, diags := types.ListValueFrom(ctx, datasource_dimension.ValuesValue{}.Type(ctx), valVals)
+		resp.Diagnostics.Append(diags...)
 		state.Values = valuesList
 	} else {
-		emptyList, d := types.ListValueFrom(ctx, datasource_dimension.ValuesValue{}.Type(ctx), []datasource_dimension.ValuesValue{})
-		resp.Diagnostics.Append(d...)
+		emptyList, diags := types.ListValueFrom(ctx, datasource_dimension.ValuesValue{}.Type(ctx), []datasource_dimension.ValuesValue{})
+		resp.Diagnostics.Append(diags...)
 		state.Values = emptyList
 	}
 
