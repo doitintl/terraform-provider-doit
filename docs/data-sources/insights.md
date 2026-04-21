@@ -20,12 +20,12 @@ data "doit_insights" "all" {
 # List insights filtered by category and display status
 data "doit_insights" "actionable_finops" {
   display_status = ["actionable"]
-  category       = ["FinOps"]
+  category       = "FinOps"
 }
 
 # List insights filtered by cloud provider
 data "doit_insights" "gcp_insights" {
-  cloud_provider = ["gcp"]
+  cloud_provider = "gcp"
 }
 
 # Output the number of insights found
@@ -43,9 +43,9 @@ output "actionable_finops_count" {
 
 ### Optional
 
-- `category` (List of String)
+- `category` (String) Possible values: `FinOps`, `OperationalExcellence`, `PerformanceEfficiency`, `Reliability`, `Security`, `Sustainability`
 - `cloud_flows` (Boolean)
-- `cloud_provider` (List of String)
+- `cloud_provider` (String) The cloud provider associated with the resource.
 - `display_status` (List of String)
 - `easy_win` (Boolean)
 - `page` (Number)
@@ -75,13 +75,13 @@ Read-Only:
 
 - `categories` (List of String)
 - `cloud_flow_template_id` (String)
+- `cloud_provider` (String) The cloud provider associated with the resource.
 - `detailed_description_mdx` (String)
 - `display_status` (String) The display status of the insight.
 - `easy_win_description` (String)
 - `key` (String)
 - `last_status_change` (Attributes) If set, this object contains the last status change made by a user for this insight (see [below for nested schema](#nestedatt--results--last_status_change))
 - `last_updated` (String)
-- `provider` (String) The cloud provider associated with the resource.
 - `report_url` (String)
 - `short_description` (String)
 - `source` (String) The source that generated the insight.

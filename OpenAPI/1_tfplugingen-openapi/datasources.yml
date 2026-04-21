@@ -158,6 +158,10 @@ data_sources:
     read:
       path: /insights/v1/results
       method: GET
+  insight:
+    read:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: GET
   # AI assistant data source
   ava:
     read:

@@ -191,9 +191,9 @@ resource "doit_allocation" "dynamic_countries" {
       name    = "US"
       formula = "A"
       components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
+        key  = "country"
+        mode = "is"
+        type = "fixed"
         # Use values from the API — filter to the ones we want
         values = [for v in data.doit_dimension.country.values : v.value if v.value == "US"]
       }]
