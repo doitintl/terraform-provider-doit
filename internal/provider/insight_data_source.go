@@ -143,12 +143,12 @@ func mapInsightResponseToModel(ctx context.Context, insight *models.InsightRespo
 		summaryVal, diags = datasource_insight.NewSummaryValue(
 			datasource_insight.SummaryValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
-				"operational_risks":       float32PtrToNumberValue(insight.Summary.OperationalRisks),
-				"performance_risks":       float32PtrToNumberValue(insight.Summary.PerformanceRisks),
-				"potential_daily_savings": float32PtrToNumberValue(insight.Summary.PotentialDailySavings),
-				"reliability_risks":       float32PtrToNumberValue(insight.Summary.ReliabilityRisks),
-				"security_risks":          float32PtrToNumberValue(insight.Summary.SecurityRisks),
-				"sustainability_risks":    float32PtrToNumberValue(insight.Summary.SustainabilityRisks),
+				"operational_risks":       types.Float64PointerValue(insight.Summary.OperationalRisks),
+				"performance_risks":       types.Float64PointerValue(insight.Summary.PerformanceRisks),
+				"potential_daily_savings": types.Float64PointerValue(insight.Summary.PotentialDailySavings),
+				"reliability_risks":       types.Float64PointerValue(insight.Summary.ReliabilityRisks),
+				"security_risks":          types.Float64PointerValue(insight.Summary.SecurityRisks),
+				"sustainability_risks":    types.Float64PointerValue(insight.Summary.SustainabilityRisks),
 			},
 		)
 		diagnostics.Append(diags...)

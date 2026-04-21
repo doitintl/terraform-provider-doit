@@ -3,11 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"math/big"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_insights"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -27,6 +28,7 @@ type insightsDataSource struct {
 
 type insightsDataSourceModel struct {
 	datasource_insights.InsightsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *insightsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -34,7 +36,9 @@ func (d *insightsDataSource) Metadata(ctx context.Context, req datasource.Metada
 }
 
 func (d *insightsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_insights.InsightsDataSourceSchema(ctx)
+	s := datasource_insights.InsightsDataSourceSchema(ctx)
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+	resp.Schema = s
 }
 
 func (d *insightsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -61,6 +65,14 @@ func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// Build query parameters
 	params := &models.GetInsightResultsParams{}
@@ -260,12 +272,12 @@ func mapInsightToResultsValue(ctx context.Context, insight models.InsightRespons
 		summaryVal, diags = datasource_insights.NewSummaryValue(
 			datasource_insights.SummaryValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
-				"operational_risks":       float32PtrToNumberValue(insight.Summary.OperationalRisks),
-				"performance_risks":       float32PtrToNumberValue(insight.Summary.PerformanceRisks),
-				"potential_daily_savings": float32PtrToNumberValue(insight.Summary.PotentialDailySavings),
-				"reliability_risks":       float32PtrToNumberValue(insight.Summary.ReliabilityRisks),
-				"security_risks":          float32PtrToNumberValue(insight.Summary.SecurityRisks),
-				"sustainability_risks":    float32PtrToNumberValue(insight.Summary.SustainabilityRisks),
+				"operational_risks":       types.Float64PointerValue(insight.Summary.OperationalRisks),
+				"performance_risks":       types.Float64PointerValue(insight.Summary.PerformanceRisks),
+				"potential_daily_savings": types.Float64PointerValue(insight.Summary.PotentialDailySavings),
+				"reliability_risks":       types.Float64PointerValue(insight.Summary.ReliabilityRisks),
+				"security_risks":          types.Float64PointerValue(insight.Summary.SecurityRisks),
+				"sustainability_risks":    types.Float64PointerValue(insight.Summary.SustainabilityRisks),
 			},
 		)
 		diagnostics.Append(diags...)
@@ -356,12 +368,4 @@ func mapStringPointerSliceToList(ctx context.Context, items *[]string, diagnosti
 	list, d := types.ListValueFrom(ctx, types.StringType, *items)
 	diagnostics.Append(d...)
 	return list
-}
-
-// float32PtrToNumberValue converts a *float32 to a types.Number value.
-func float32PtrToNumberValue(v *float32) types.Number {
-	if v == nil {
-		return types.NumberNull()
-	}
-	return types.NumberValue(big.NewFloat(float64(*v)))
 }

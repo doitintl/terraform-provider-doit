@@ -3010,6 +3010,71 @@ paths:
           $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Insights
+      summary: Create or Update Single Insight
+      description: Creates or updates a single insight for the given source and key.
+      operationId: postInsightResult
+      parameters:
+        - in: path
+          name: sourceID
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: insightKey
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsightRequest"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Insights
+      summary: Delete Single Insight
+      operationId: deleteInsightResult
+      parameters:
+        - in: path
+          name: sourceID
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: insightKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
   /insights/v1/results/source/{sourceID}/insight/{insightKey}/status:
     put:
       tags:
@@ -5779,16 +5844,22 @@ components:
       properties:
         operationalRisks:
           type: number
+          format: double
         performanceRisks:
           type: number
+          format: double
         potentialDailySavings:
           type: number
+          format: double
         reliabilityRisks:
           type: number
+          format: double
         securityRisks:
           type: number
+          format: double
         sustainabilityRisks:
           type: number
+          format: double
     InviteResponse:
       type: object
       description: Response returned after creating a user invitation.
@@ -6446,7 +6517,7 @@ components:
       type: object
       properties:
         value: {type: string}
-        priorityScore: {type: number}
+        priorityScore: {type: number, format: double}
     ResourceResultResult:
       description: >
         The result data for this resource. Which fields are populated depends on the resultType.
@@ -6455,6 +6526,7 @@ components:
       properties:
         value:
           type: number
+          format: double
           description: the daily saving amount for this result
         critical:
           type: integer

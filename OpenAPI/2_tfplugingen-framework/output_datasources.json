@@ -3408,37 +3408,37 @@
 							"attributes": [
 								{
 									"name": "operational_risks",
-									"number": {
+									"float64": {
 										"computed_optional_required": "computed"
 									}
 								},
 								{
 									"name": "performance_risks",
-									"number": {
+									"float64": {
 										"computed_optional_required": "computed"
 									}
 								},
 								{
 									"name": "potential_daily_savings",
-									"number": {
+									"float64": {
 										"computed_optional_required": "computed"
 									}
 								},
 								{
 									"name": "reliability_risks",
-									"number": {
+									"float64": {
 										"computed_optional_required": "computed"
 									}
 								},
 								{
 									"name": "security_risks",
-									"number": {
+									"float64": {
 										"computed_optional_required": "computed"
 									}
 								},
 								{
 									"name": "sustainability_risks",
-									"number": {
+									"float64": {
 										"computed_optional_required": "computed"
 									}
 								}
@@ -3709,37 +3709,37 @@
 											"attributes": [
 												{
 													"name": "operational_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "performance_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "potential_daily_savings",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "reliability_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "security_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "sustainability_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												}
