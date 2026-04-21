@@ -527,123 +527,6 @@ func (e Currency) Valid() bool {
 	}
 }
 
-// Defines values for DailySavingsClusterAgentResourceResultResultType.
-const (
-	DailySavingsClusterAgentResourceResultResultTypePotentialDailySavingsWithClusterAgent DailySavingsClusterAgentResourceResultResultType = "potential_daily_savings_with_cluster_agent"
-)
-
-// Valid indicates whether the value is a known member of the DailySavingsClusterAgentResourceResultResultType enum.
-func (e DailySavingsClusterAgentResourceResultResultType) Valid() bool {
-	switch e {
-	case DailySavingsClusterAgentResourceResultResultTypePotentialDailySavingsWithClusterAgent:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for DailySavingsClusterAgentResourceResultSeverity.
-const (
-	DailySavingsClusterAgentResourceResultSeverityCritical DailySavingsClusterAgentResourceResultSeverity = "critical"
-	DailySavingsClusterAgentResourceResultSeverityHigh     DailySavingsClusterAgentResourceResultSeverity = "high"
-	DailySavingsClusterAgentResourceResultSeverityLow      DailySavingsClusterAgentResourceResultSeverity = "low"
-	DailySavingsClusterAgentResourceResultSeverityMedium   DailySavingsClusterAgentResourceResultSeverity = "medium"
-)
-
-// Valid indicates whether the value is a known member of the DailySavingsClusterAgentResourceResultSeverity enum.
-func (e DailySavingsClusterAgentResourceResultSeverity) Valid() bool {
-	switch e {
-	case DailySavingsClusterAgentResourceResultSeverityCritical:
-		return true
-	case DailySavingsClusterAgentResourceResultSeverityHigh:
-		return true
-	case DailySavingsClusterAgentResourceResultSeverityLow:
-		return true
-	case DailySavingsClusterAgentResourceResultSeverityMedium:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for DailySavingsRecommendationResourceResultResultType.
-const (
-	PotentialDailySavingsWithRecommendation DailySavingsRecommendationResourceResultResultType = "potential_daily_savings_with_recommendation"
-)
-
-// Valid indicates whether the value is a known member of the DailySavingsRecommendationResourceResultResultType enum.
-func (e DailySavingsRecommendationResourceResultResultType) Valid() bool {
-	switch e {
-	case PotentialDailySavingsWithRecommendation:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for DailySavingsRecommendationResourceResultSeverity.
-const (
-	DailySavingsRecommendationResourceResultSeverityCritical DailySavingsRecommendationResourceResultSeverity = "critical"
-	DailySavingsRecommendationResourceResultSeverityHigh     DailySavingsRecommendationResourceResultSeverity = "high"
-	DailySavingsRecommendationResourceResultSeverityLow      DailySavingsRecommendationResourceResultSeverity = "low"
-	DailySavingsRecommendationResourceResultSeverityMedium   DailySavingsRecommendationResourceResultSeverity = "medium"
-)
-
-// Valid indicates whether the value is a known member of the DailySavingsRecommendationResourceResultSeverity enum.
-func (e DailySavingsRecommendationResourceResultSeverity) Valid() bool {
-	switch e {
-	case DailySavingsRecommendationResourceResultSeverityCritical:
-		return true
-	case DailySavingsRecommendationResourceResultSeverityHigh:
-		return true
-	case DailySavingsRecommendationResourceResultSeverityLow:
-		return true
-	case DailySavingsRecommendationResourceResultSeverityMedium:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for DailySavingsResourceResultResultType.
-const (
-	PotentialDailySavings DailySavingsResourceResultResultType = "potential_daily_savings"
-)
-
-// Valid indicates whether the value is a known member of the DailySavingsResourceResultResultType enum.
-func (e DailySavingsResourceResultResultType) Valid() bool {
-	switch e {
-	case PotentialDailySavings:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for DailySavingsResourceResultSeverity.
-const (
-	DailySavingsResourceResultSeverityCritical DailySavingsResourceResultSeverity = "critical"
-	DailySavingsResourceResultSeverityHigh     DailySavingsResourceResultSeverity = "high"
-	DailySavingsResourceResultSeverityLow      DailySavingsResourceResultSeverity = "low"
-	DailySavingsResourceResultSeverityMedium   DailySavingsResourceResultSeverity = "medium"
-)
-
-// Valid indicates whether the value is a known member of the DailySavingsResourceResultSeverity enum.
-func (e DailySavingsResourceResultSeverity) Valid() bool {
-	switch e {
-	case DailySavingsResourceResultSeverityCritical:
-		return true
-	case DailySavingsResourceResultSeverityHigh:
-		return true
-	case DailySavingsResourceResultSeverityLow:
-		return true
-	case DailySavingsResourceResultSeverityMedium:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for DatahubEventsRequestBodyEventsItemDimensionsItemType.
 const (
 	DatahubEventsRequestBodyEventsItemDimensionsItemTypeFixed        DatahubEventsRequestBodyEventsItemDimensionsItemType = "fixed"
@@ -1657,22 +1540,22 @@ func (e ResourcePermissionsResponsePublic) Valid() bool {
 
 // Defines values for ResourceResultResultType.
 const (
-	ResourceResultResultTypePotentialDailySavings                   ResourceResultResultType = "potential_daily_savings"
-	ResourceResultResultTypePotentialDailySavingsWithClusterAgent   ResourceResultResultType = "potential_daily_savings_with_cluster_agent"
-	ResourceResultResultTypePotentialDailySavingsWithRecommendation ResourceResultResultType = "potential_daily_savings_with_recommendation"
-	ResourceResultResultTypeSecurityRisk                            ResourceResultResultType = "security_risk"
+	PotentialDailySavings                   ResourceResultResultType = "potential_daily_savings"
+	PotentialDailySavingsWithClusterAgent   ResourceResultResultType = "potential_daily_savings_with_cluster_agent"
+	PotentialDailySavingsWithRecommendation ResourceResultResultType = "potential_daily_savings_with_recommendation"
+	SecurityRisk                            ResourceResultResultType = "security_risk"
 )
 
 // Valid indicates whether the value is a known member of the ResourceResultResultType enum.
 func (e ResourceResultResultType) Valid() bool {
 	switch e {
-	case ResourceResultResultTypePotentialDailySavings:
+	case PotentialDailySavings:
 		return true
-	case ResourceResultResultTypePotentialDailySavingsWithClusterAgent:
+	case PotentialDailySavingsWithClusterAgent:
 		return true
-	case ResourceResultResultTypePotentialDailySavingsWithRecommendation:
+	case PotentialDailySavingsWithRecommendation:
 		return true
-	case ResourceResultResultTypeSecurityRisk:
+	case SecurityRisk:
 		return true
 	default:
 		return false
@@ -1721,45 +1604,6 @@ func (e RunReportResultResultMlFeatures) Valid() bool {
 	case RunReportResultResultMlFeaturesIncreasing:
 		return true
 	case RunReportResultResultMlFeaturesNone:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for SecurityRiskResourceResultResultType.
-const (
-	SecurityRisk SecurityRiskResourceResultResultType = "security_risk"
-)
-
-// Valid indicates whether the value is a known member of the SecurityRiskResourceResultResultType enum.
-func (e SecurityRiskResourceResultResultType) Valid() bool {
-	switch e {
-	case SecurityRisk:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for SecurityRiskResourceResultSeverity.
-const (
-	SecurityRiskResourceResultSeverityCritical SecurityRiskResourceResultSeverity = "critical"
-	SecurityRiskResourceResultSeverityHigh     SecurityRiskResourceResultSeverity = "high"
-	SecurityRiskResourceResultSeverityLow      SecurityRiskResourceResultSeverity = "low"
-	SecurityRiskResourceResultSeverityMedium   SecurityRiskResourceResultSeverity = "medium"
-)
-
-// Valid indicates whether the value is a known member of the SecurityRiskResourceResultSeverity enum.
-func (e SecurityRiskResourceResultSeverity) Valid() bool {
-	switch e {
-	case SecurityRiskResourceResultSeverityCritical:
-		return true
-	case SecurityRiskResourceResultSeverityHigh:
-		return true
-	case SecurityRiskResourceResultSeverityLow:
-		return true
-	case SecurityRiskResourceResultSeverityMedium:
 		return true
 	default:
 		return false
@@ -3358,6 +3202,9 @@ type CloudIncidentListItemPlatform string
 // CloudIncidentListItemStatus The Status of the issue
 type CloudIncidentListItemStatus string
 
+// CloudProvider The cloud provider associated with the resource.
+type CloudProvider = string
+
 // Collaborator A user or identity that has access to a resource.
 type Collaborator struct {
 	Email *string           `json:"email,omitempty"`
@@ -3609,111 +3456,6 @@ type CreateResultsBody struct {
 
 // Currency Currency code for monetary values.
 type Currency string
-
-// DailySavingsClusterAgentResourceResult defines model for DailySavingsClusterAgentResourceResult.
-type DailySavingsClusterAgentResourceResult struct {
-	Account     string                     `json:"account"`
-	Enhancement *ResourceResultEnhancement `json:"enhancement,omitempty"`
-
-	// ExternalId the external ID of the resource in the provider's system for the resource
-	ExternalId *string `json:"externalId,omitempty"`
-
-	// ExternalUrl the URL to the resource-level issue in the provider's system
-	ExternalUrl *string `json:"externalUrl,omitempty"`
-
-	// Location represents the region/zone of the resource in AWS, or equivalent for other providers
-	Location *string `json:"location,omitempty"`
-
-	// Metadata contains any additional information for the resource results
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-
-	// Provider The cloud provider associated with the resource.
-	Provider   Provider `json:"provider"`
-	Resolved   *bool    `json:"resolved,omitempty"`
-	ResourceId string   `json:"resourceId"`
-
-	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
-	ResourceType *string                                          `json:"resourceType,omitempty"`
-	Result       *PotentialDailySavingsWithClusterAgentResult     `json:"result,omitempty"`
-	ResultType   DailySavingsClusterAgentResourceResultResultType `json:"resultType"`
-	Severity     *DailySavingsClusterAgentResourceResultSeverity  `json:"severity,omitempty"`
-}
-
-// DailySavingsClusterAgentResourceResultResultType defines model for DailySavingsClusterAgentResourceResult.ResultType.
-type DailySavingsClusterAgentResourceResultResultType string
-
-// DailySavingsClusterAgentResourceResultSeverity defines model for DailySavingsClusterAgentResourceResult.Severity.
-type DailySavingsClusterAgentResourceResultSeverity string
-
-// DailySavingsRecommendationResourceResult defines model for DailySavingsRecommendationResourceResult.
-type DailySavingsRecommendationResourceResult struct {
-	Account     string                     `json:"account"`
-	Enhancement *ResourceResultEnhancement `json:"enhancement,omitempty"`
-
-	// ExternalId the external ID of the resource in the provider's system for the resource
-	ExternalId *string `json:"externalId,omitempty"`
-
-	// ExternalUrl the URL to the resource-level issue in the provider's system
-	ExternalUrl *string `json:"externalUrl,omitempty"`
-
-	// Location represents the region/zone of the resource in AWS, or equivalent for other providers
-	Location *string `json:"location,omitempty"`
-
-	// Metadata contains any additional information for the resource results
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-
-	// Provider The cloud provider associated with the resource.
-	Provider   Provider `json:"provider"`
-	Resolved   *bool    `json:"resolved,omitempty"`
-	ResourceId string   `json:"resourceId"`
-
-	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
-	ResourceType *string                                            `json:"resourceType,omitempty"`
-	Result       *PotentialDailySavingsWithRecommendationResult     `json:"result,omitempty"`
-	ResultType   DailySavingsRecommendationResourceResultResultType `json:"resultType"`
-	Severity     *DailySavingsRecommendationResourceResultSeverity  `json:"severity,omitempty"`
-}
-
-// DailySavingsRecommendationResourceResultResultType defines model for DailySavingsRecommendationResourceResult.ResultType.
-type DailySavingsRecommendationResourceResultResultType string
-
-// DailySavingsRecommendationResourceResultSeverity defines model for DailySavingsRecommendationResourceResult.Severity.
-type DailySavingsRecommendationResourceResultSeverity string
-
-// DailySavingsResourceResult defines model for DailySavingsResourceResult.
-type DailySavingsResourceResult struct {
-	Account     string                     `json:"account"`
-	Enhancement *ResourceResultEnhancement `json:"enhancement,omitempty"`
-
-	// ExternalId the external ID of the resource in the provider's system for the resource
-	ExternalId *string `json:"externalId,omitempty"`
-
-	// ExternalUrl the URL to the resource-level issue in the provider's system
-	ExternalUrl *string `json:"externalUrl,omitempty"`
-
-	// Location represents the region/zone of the resource in AWS, or equivalent for other providers
-	Location *string `json:"location,omitempty"`
-
-	// Metadata contains any additional information for the resource results
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-
-	// Provider The cloud provider associated with the resource.
-	Provider   Provider `json:"provider"`
-	Resolved   *bool    `json:"resolved,omitempty"`
-	ResourceId string   `json:"resourceId"`
-
-	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
-	ResourceType *string                              `json:"resourceType,omitempty"`
-	Result       *PotentialDailySavingsResult         `json:"result,omitempty"`
-	ResultType   DailySavingsResourceResultResultType `json:"resultType"`
-	Severity     *DailySavingsResourceResultSeverity  `json:"severity,omitempty"`
-}
-
-// DailySavingsResourceResultResultType defines model for DailySavingsResourceResult.ResultType.
-type DailySavingsResourceResultResultType string
-
-// DailySavingsResourceResultSeverity defines model for DailySavingsResourceResult.Severity.
-type DailySavingsResourceResultSeverity string
 
 // DatahubEvents201Response defines model for DatahubEvents201Response.
 type DatahubEvents201Response struct {
@@ -4453,17 +4195,17 @@ type IdOfAssets200Response struct {
 
 // InsightRequest defines model for InsightRequest.
 type InsightRequest struct {
-	Categories             []CreateCategory `json:"categories"`
-	CloudFlowTemplateId    *string          `json:"cloudFlowTemplateId,omitempty"`
-	DetailedDescriptionMdx *string          `json:"detailedDescriptionMdx,omitempty"`
-	EasyWinDescription     *string          `json:"easyWinDescription,omitempty"`
-	Key                    string           `json:"key"`
+	Categories          []CreateCategory `json:"categories"`
+	CloudFlowTemplateId *string          `json:"cloudFlowTemplateId,omitempty"`
 
-	// Provider The cloud provider associated with the resource.
-	Provider         Provider        `json:"provider"`
-	ReportUrl        *string         `json:"reportUrl,omitempty"`
-	ResourceResults  ResourceResults `json:"resourceResults"`
-	ShortDescription string          `json:"shortDescription"`
+	// CloudProvider The cloud provider associated with the resource.
+	CloudProvider          CloudProvider   `json:"cloudProvider"`
+	DetailedDescriptionMdx *string         `json:"detailedDescriptionMdx,omitempty"`
+	EasyWinDescription     *string         `json:"easyWinDescription,omitempty"`
+	Key                    string          `json:"key"`
+	ReportUrl              *string         `json:"reportUrl,omitempty"`
+	ResourceResults        ResourceResults `json:"resourceResults"`
+	ShortDescription       string          `json:"shortDescription"`
 
 	// Tags primary purpose, initially, is to provide security certification information, eg. ISO etc.
 	Tags  *[]string `json:"tags,omitempty"`
@@ -4472,9 +4214,12 @@ type InsightRequest struct {
 
 // InsightResponse defines model for InsightResponse.
 type InsightResponse struct {
-	Categories             *[]Category `json:"categories,omitempty"`
-	CloudFlowTemplateId    *string     `json:"cloudFlowTemplateId,omitempty"`
-	DetailedDescriptionMdx *string     `json:"detailedDescriptionMdx,omitempty"`
+	Categories          *[]Category `json:"categories,omitempty"`
+	CloudFlowTemplateId *string     `json:"cloudFlowTemplateId,omitempty"`
+
+	// CloudProvider The cloud provider associated with the resource.
+	CloudProvider          *CloudProvider `json:"cloudProvider,omitempty"`
+	DetailedDescriptionMdx *string        `json:"detailedDescriptionMdx,omitempty"`
 
 	// DisplayStatus The display status of the insight.
 	DisplayStatus      *DisplayStatus `json:"displayStatus,omitempty"`
@@ -4484,11 +4229,8 @@ type InsightResponse struct {
 	// LastStatusChange If set, this object contains the last status change made by a user for this insight
 	LastStatusChange *LastInsightStatusChange `json:"lastStatusChange,omitempty"`
 	LastUpdated      *time.Time               `json:"lastUpdated,omitempty"`
-
-	// Provider The cloud provider associated with the resource.
-	Provider         *Provider `json:"provider,omitempty"`
-	ReportUrl        *string   `json:"reportUrl,omitempty"`
-	ShortDescription *string   `json:"shortDescription,omitempty"`
+	ReportUrl        *string                  `json:"reportUrl,omitempty"`
+	ShortDescription *string                  `json:"shortDescription,omitempty"`
 
 	// Source The source that generated the insight.
 	Source  *Source         `json:"source,omitempty"`
@@ -4833,42 +4575,12 @@ type PlatformAPI struct {
 	Id          *string `json:"id,omitempty"`
 }
 
-// PotentialDailySavingsResult defines model for PotentialDailySavingsResult.
-type PotentialDailySavingsResult struct {
-	// Value the daily saving amount for this result
-	Value float32 `json:"value"`
-}
-
-// PotentialDailySavingsWithClusterAgentResult defines model for PotentialDailySavingsWithClusterAgentResult.
-type PotentialDailySavingsWithClusterAgentResult struct {
-	// AgentInstalled true if the agent is installed
-	AgentInstalled bool `json:"agentInstalled"`
-
-	// Value the daily saving amount for this result
-	Value float32 `json:"value"`
-}
-
-// PotentialDailySavingsWithRecommendationResult defines model for PotentialDailySavingsWithRecommendationResult.
-type PotentialDailySavingsWithRecommendationResult struct {
-	// Current the current state (i.e. current instance type)
-	Current string `json:"current"`
-
-	// Recommendation the recommended state (i.e. recommended instance type)
-	Recommendation string `json:"recommendation"`
-
-	// Value the daily saving amount for this result
-	Value float32 `json:"value"`
-}
-
 // ProductAPI Platform/product metadata used by product listing endpoints.
 type ProductAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
 	Platform    *string `json:"platform,omitempty"`
 }
-
-// Provider The cloud provider associated with the resource.
-type Provider = string
 
 // QueryRequestBody defines model for QueryRequestBody.
 type QueryRequestBody struct {
@@ -4971,8 +4683,11 @@ type ResourceReference struct {
 
 // ResourceResult defines model for ResourceResult.
 type ResourceResult struct {
-	Account     string                     `json:"account"`
-	Enhancement *ResourceResultEnhancement `json:"enhancement,omitempty"`
+	Account string `json:"account"`
+
+	// CloudProvider The cloud provider associated with the resource.
+	CloudProvider CloudProvider              `json:"cloudProvider"`
+	Enhancement   *ResourceResultEnhancement `json:"enhancement,omitempty"`
 
 	// ExternalId the external ID of the resource in the provider's system for the resource
 	ExternalId *string `json:"externalId,omitempty"`
@@ -4984,22 +4699,22 @@ type ResourceResult struct {
 	Location *string `json:"location,omitempty"`
 
 	// Metadata contains any additional information for the resource results
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-
-	// Provider The cloud provider associated with the resource.
-	Provider   Provider `json:"provider"`
-	Resolved   *bool    `json:"resolved,omitempty"`
-	ResourceId string   `json:"resourceId"`
+	Metadata   *map[string]interface{} `json:"metadata,omitempty"`
+	Resolved   *bool                   `json:"resolved,omitempty"`
+	ResourceId string                  `json:"resourceId"`
 
 	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
 	ResourceType *string `json:"resourceType,omitempty"`
 
-	// ResultType The discriminator property that determines the schema of the 'result' field.
+	// Result The result data for this resource. Which fields are populated depends on the resultType.
+	Result *ResourceResultResult `json:"result,omitempty"`
+
+	// ResultType The discriminator property that determines which fields are populated in the 'result' object.
 	ResultType ResourceResultResultType `json:"resultType"`
 	Severity   *ResourceResultSeverity  `json:"severity,omitempty"`
 }
 
-// ResourceResultResultType The discriminator property that determines the schema of the 'result' field.
+// ResourceResultResultType The discriminator property that determines which fields are populated in the 'result' object.
 type ResourceResultResultType string
 
 // ResourceResultSeverity defines model for ResourceResult.Severity.
@@ -5019,13 +4734,35 @@ type ResourceResultEnhancementPriority struct {
 	Value         *string  `json:"value,omitempty"`
 }
 
-// ResourceResults defines model for ResourceResults.
-type ResourceResults = []ResourceResults_Item
+// ResourceResultResult The result data for this resource. Which fields are populated depends on the resultType.
+type ResourceResultResult struct {
+	// AgentInstalled true if the agent is installed
+	AgentInstalled *bool `json:"agentInstalled,omitempty"`
 
-// ResourceResults_Item defines model for ResourceResults.Item.
-type ResourceResults_Item struct {
-	union json.RawMessage
+	// Critical number of critical security risks
+	Critical *int `json:"critical,omitempty"`
+
+	// Current the current state (i.e. current instance type)
+	Current *string `json:"current,omitempty"`
+
+	// High number of high security risks
+	High *int `json:"high,omitempty"`
+
+	// Low number of low security risks
+	Low *int `json:"low,omitempty"`
+
+	// Medium number of medium security risks
+	Medium *int `json:"medium,omitempty"`
+
+	// Recommendation the recommended state (i.e. recommended instance type)
+	Recommendation *string `json:"recommendation,omitempty"`
+
+	// Value the daily saving amount for this result
+	Value *float32 `json:"value,omitempty"`
 }
+
+// ResourceResults defines model for ResourceResults.
+type ResourceResults = []ResourceResult
 
 // ResultsBody defines model for ResultsBody.
 type ResultsBody struct {
@@ -5039,14 +4776,6 @@ type ResultsError struct {
 	Code       *int    `json:"code,omitempty"`
 	Error      *string `json:"error,omitempty"`
 	InsightKey *string `json:"insightKey,omitempty"`
-}
-
-// RisksBreakdownValue defines model for RisksBreakdownValue.
-type RisksBreakdownValue struct {
-	Critical int `json:"critical"`
-	High     int `json:"high"`
-	Low      int `json:"low"`
-	Medium   int `json:"medium"`
 }
 
 // Role Definition and permissions assigned to a role.
@@ -5105,41 +4834,6 @@ type Seats struct {
 	// NumberOfSeats The number of committed seats. Applies to annual commitment plans.
 	NumberOfSeats *int64 `json:"numberOfSeats,omitempty"`
 }
-
-// SecurityRiskResourceResult defines model for SecurityRiskResourceResult.
-type SecurityRiskResourceResult struct {
-	Account     string                     `json:"account"`
-	Enhancement *ResourceResultEnhancement `json:"enhancement,omitempty"`
-
-	// ExternalId the external ID of the resource in the provider's system for the resource
-	ExternalId *string `json:"externalId,omitempty"`
-
-	// ExternalUrl the URL to the resource-level issue in the provider's system
-	ExternalUrl *string `json:"externalUrl,omitempty"`
-
-	// Location represents the region/zone of the resource in AWS, or equivalent for other providers
-	Location *string `json:"location,omitempty"`
-
-	// Metadata contains any additional information for the resource results
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
-
-	// Provider The cloud provider associated with the resource.
-	Provider   Provider `json:"provider"`
-	Resolved   *bool    `json:"resolved,omitempty"`
-	ResourceId string   `json:"resourceId"`
-
-	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
-	ResourceType *string                              `json:"resourceType,omitempty"`
-	Result       *RisksBreakdownValue                 `json:"result,omitempty"`
-	ResultType   SecurityRiskResourceResultResultType `json:"resultType"`
-	Severity     *SecurityRiskResourceResultSeverity  `json:"severity,omitempty"`
-}
-
-// SecurityRiskResourceResultResultType defines model for SecurityRiskResourceResult.ResultType.
-type SecurityRiskResourceResultResultType string
-
-// SecurityRiskResourceResultSeverity defines model for SecurityRiskResourceResult.Severity.
-type SecurityRiskResourceResultSeverity string
 
 // SlackChannel Information of a Slack channel for notifications.
 type SlackChannel struct {
@@ -6010,8 +5704,8 @@ type DeleteInsightResultsParams struct {
 type GetInsightResultsParams struct {
 	SearchTerm    *string                                 `form:"searchTerm,omitempty" json:"searchTerm,omitempty"`
 	DisplayStatus *[]GetInsightResultsParamsDisplayStatus `form:"displayStatus,omitempty" json:"displayStatus,omitempty"`
-	Category      *[]GetInsightResultsParamsCategory      `form:"category,omitempty" json:"category,omitempty"`
-	Provider      *Provider                               `form:"provider,omitempty" json:"provider,omitempty"`
+	Category      *GetInsightResultsParamsCategory        `form:"category,omitempty" json:"category,omitempty"`
+	CloudProvider *CloudProvider                          `form:"cloudProvider,omitempty" json:"cloudProvider,omitempty"`
 
 	// Source the source that generated insights
 	Source     *[]Source                          `form:"source,omitempty" json:"source,omitempty"`
@@ -6218,120 +5912,6 @@ func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) MarshalJSON() ([
 }
 
 func (t *DatahubEventsRequestBodyEventsItemDimensionsItem_Value) UnmarshalJSON(b []byte) error {
-	err := t.union.UnmarshalJSON(b)
-	return err
-}
-
-// AsSecurityRiskResourceResult returns the union data inside the ResourceResults_Item as a SecurityRiskResourceResult
-func (t ResourceResults_Item) AsSecurityRiskResourceResult() (SecurityRiskResourceResult, error) {
-	var body SecurityRiskResourceResult
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromSecurityRiskResourceResult overwrites any union data inside the ResourceResults_Item as the provided SecurityRiskResourceResult
-func (t *ResourceResults_Item) FromSecurityRiskResourceResult(v SecurityRiskResourceResult) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeSecurityRiskResourceResult performs a merge with any union data inside the ResourceResults_Item, using the provided SecurityRiskResourceResult
-func (t *ResourceResults_Item) MergeSecurityRiskResourceResult(v SecurityRiskResourceResult) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsDailySavingsResourceResult returns the union data inside the ResourceResults_Item as a DailySavingsResourceResult
-func (t ResourceResults_Item) AsDailySavingsResourceResult() (DailySavingsResourceResult, error) {
-	var body DailySavingsResourceResult
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromDailySavingsResourceResult overwrites any union data inside the ResourceResults_Item as the provided DailySavingsResourceResult
-func (t *ResourceResults_Item) FromDailySavingsResourceResult(v DailySavingsResourceResult) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeDailySavingsResourceResult performs a merge with any union data inside the ResourceResults_Item, using the provided DailySavingsResourceResult
-func (t *ResourceResults_Item) MergeDailySavingsResourceResult(v DailySavingsResourceResult) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsDailySavingsRecommendationResourceResult returns the union data inside the ResourceResults_Item as a DailySavingsRecommendationResourceResult
-func (t ResourceResults_Item) AsDailySavingsRecommendationResourceResult() (DailySavingsRecommendationResourceResult, error) {
-	var body DailySavingsRecommendationResourceResult
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromDailySavingsRecommendationResourceResult overwrites any union data inside the ResourceResults_Item as the provided DailySavingsRecommendationResourceResult
-func (t *ResourceResults_Item) FromDailySavingsRecommendationResourceResult(v DailySavingsRecommendationResourceResult) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeDailySavingsRecommendationResourceResult performs a merge with any union data inside the ResourceResults_Item, using the provided DailySavingsRecommendationResourceResult
-func (t *ResourceResults_Item) MergeDailySavingsRecommendationResourceResult(v DailySavingsRecommendationResourceResult) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsDailySavingsClusterAgentResourceResult returns the union data inside the ResourceResults_Item as a DailySavingsClusterAgentResourceResult
-func (t ResourceResults_Item) AsDailySavingsClusterAgentResourceResult() (DailySavingsClusterAgentResourceResult, error) {
-	var body DailySavingsClusterAgentResourceResult
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromDailySavingsClusterAgentResourceResult overwrites any union data inside the ResourceResults_Item as the provided DailySavingsClusterAgentResourceResult
-func (t *ResourceResults_Item) FromDailySavingsClusterAgentResourceResult(v DailySavingsClusterAgentResourceResult) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeDailySavingsClusterAgentResourceResult performs a merge with any union data inside the ResourceResults_Item, using the provided DailySavingsClusterAgentResourceResult
-func (t *ResourceResults_Item) MergeDailySavingsClusterAgentResourceResult(v DailySavingsClusterAgentResourceResult) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-func (t ResourceResults_Item) MarshalJSON() ([]byte, error) {
-	b, err := t.union.MarshalJSON()
-	return b, err
-}
-
-func (t *ResourceResults_Item) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -6769,6 +6349,9 @@ type ClientInterface interface {
 	PostInsightResultsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostInsightResults(ctx context.Context, body PostInsightResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetInsightResult request
+	GetInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInsightResourceResults request
 	GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -8002,6 +7585,18 @@ func (c *Client) PostInsightResultsWithBody(ctx context.Context, contentType str
 
 func (c *Client) PostInsightResults(ctx context.Context, body PostInsightResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInsightResultsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInsightResultRequest(c.Server, sourceID, insightKey)
 	if err != nil {
 		return nil, err
 	}
@@ -11919,7 +11514,7 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		if params.Category != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "category", *params.Category, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "category", *params.Category, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11933,9 +11528,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.Provider != nil {
+		if params.CloudProvider != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "provider", *params.Provider, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cloudProvider", *params.CloudProvider, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -12108,6 +11703,47 @@ func NewPostInsightResultsRequestWithBody(server string, contentType string, bod
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetInsightResultRequest generates requests for GetInsightResult
+func NewGetInsightResultRequest(server string, sourceID string, insightKey string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "sourceID", sourceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "insightKey", insightKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/insights/v1/results/source/%s/insight/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -12961,6 +12597,9 @@ type ClientWithResponsesInterface interface {
 	PostInsightResultsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInsightResultsResp, error)
 
 	PostInsightResultsWithResponse(ctx context.Context, body PostInsightResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultsResp, error)
+
+	// GetInsightResultWithResponse request
+	GetInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResultResp, error)
 
 	// GetInsightResourceResultsWithResponse request
 	GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error)
@@ -14895,6 +14534,33 @@ func (r PostInsightResultsResp) StatusCode() int {
 	return 0
 }
 
+type GetInsightResultResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InsightResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInsightResultResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInsightResultResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetInsightResourceResultsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -16051,6 +15717,15 @@ func (c *ClientWithResponses) PostInsightResultsWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParsePostInsightResultsResp(rsp)
+}
+
+// GetInsightResultWithResponse request returning *GetInsightResultResp
+func (c *ClientWithResponses) GetInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResultResp, error) {
+	rsp, err := c.GetInsightResult(ctx, sourceID, insightKey, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInsightResultResp(rsp)
 }
 
 // GetInsightResourceResultsWithResponse request returning *GetInsightResourceResultsResp
@@ -20032,6 +19707,67 @@ func ParsePostInsightResultsResp(rsp *http.Response) (*PostInsightResultsResp, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []ResultsError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInsightResultResp parses an HTTP response from a GetInsightResultWithResponse call
+func ParseGetInsightResultResp(rsp *http.Response) (*GetInsightResultResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInsightResultResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InsightResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

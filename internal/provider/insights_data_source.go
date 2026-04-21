@@ -84,21 +84,13 @@ func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	if !data.Category.IsNull() && !data.Category.IsUnknown() {
-		var categories []string
-		resp.Diagnostics.Append(data.Category.ElementsAs(ctx, &categories, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		catVals := make([]models.GetInsightResultsParamsCategory, len(categories))
-		for i, c := range categories {
-			catVals[i] = models.GetInsightResultsParamsCategory(c)
-		}
-		params.Category = &catVals
+		c := models.GetInsightResultsParamsCategory(data.Category.ValueString())
+		params.Category = &c
 	}
 
-	if !data.Provider.IsNull() && !data.Provider.IsUnknown() {
-		p := data.Provider.ValueString()
-		params.Provider = &p
+	if !data.CloudProvider.IsNull() && !data.CloudProvider.IsUnknown() {
+		p := data.CloudProvider.ValueString()
+		params.CloudProvider = &p
 	}
 
 	if !data.Source.IsNull() && !data.Source.IsUnknown() {
@@ -214,10 +206,10 @@ func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.DisplayStatus = types.ListNull(types.StringType)
 	}
 	if data.Category.IsUnknown() {
-		data.Category = types.ListNull(types.StringType)
+		data.Category = types.StringNull()
 	}
-	if data.Provider.IsUnknown() {
-		data.Provider = types.StringNull()
+	if data.CloudProvider.IsUnknown() {
+		data.CloudProvider = types.StringNull()
 	}
 	if data.Source.IsUnknown() {
 		data.Source = types.ListNull(types.StringType)
@@ -305,12 +297,12 @@ func mapInsightToResultsValue(ctx context.Context, insight models.InsightRespons
 		displayStatusVal = types.StringNull()
 	}
 
-	// Map provider
-	var providerVal types.String
-	if insight.Provider != nil {
-		providerVal = types.StringValue(*insight.Provider)
+	// Map cloud_provider
+	var cloudProviderVal types.String
+	if insight.CloudProvider != nil {
+		cloudProviderVal = types.StringValue(*insight.CloudProvider)
 	} else {
-		providerVal = types.StringNull()
+		cloudProviderVal = types.StringNull()
 	}
 
 	// Map source
@@ -340,7 +332,7 @@ func mapInsightToResultsValue(ctx context.Context, insight models.InsightRespons
 			"key":                      types.StringPointerValue(insight.Key),
 			"last_status_change":       lastStatusChangeVal,
 			"last_updated":             lastUpdatedVal,
-			"provider":                 providerVal,
+			"cloud_provider":           cloudProviderVal,
 			"report_url":               types.StringPointerValue(insight.ReportUrl),
 			"short_description":        types.StringPointerValue(insight.ShortDescription),
 			"source":                   sourceVal,

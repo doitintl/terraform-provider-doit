@@ -70,7 +70,7 @@ func testAccInsightsDataSourceFilteredConfig() string {
 	return `
 data "doit_insights" "filtered" {
   display_status = ["actionable"]
-  category       = ["FinOps"]
+  category       = "FinOps"
 }
 `
 }

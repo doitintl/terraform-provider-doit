@@ -3312,15 +3312,24 @@
 					},
 					{
 						"name": "category",
-						"list": {
+						"string": {
 							"computed_optional_required": "computed_optional",
-							"element_type": {
-								"string": {}
-							}
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"FinOps\",\n\"OperationalExcellence\",\n\"PerformanceEfficiency\",\n\"Reliability\",\n\"Security\",\n\"Sustainability\",\n)"
+									}
+								}
+							]
 						}
 					},
 					{
-						"name": "provider",
+						"name": "cloud_provider",
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "The cloud provider associated with the resource."
@@ -3440,6 +3449,13 @@
 										}
 									},
 									{
+										"name": "cloud_provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud provider associated with the resource."
+										}
+									},
+									{
 										"name": "detailed_description_mdx",
 										"string": {
 											"computed_optional_required": "computed"
@@ -3490,13 +3506,6 @@
 										"name": "last_updated",
 										"string": {
 											"computed_optional_required": "computed"
-										}
-									},
-									{
-										"name": "provider",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "The cloud provider associated with the resource."
 										}
 									},
 									{

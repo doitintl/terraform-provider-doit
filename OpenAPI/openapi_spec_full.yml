@@ -3413,23 +3413,14 @@ paths:
         - in: query
           name: category
           schema:
-            type: array
-            items:
-              type: string
-              enum:
-                [
-                  "FinOps",
-                  "OperationalExcellence",
-                  "PerformanceEfficiency",
-                  "Reliability",
-                  "Security",
-                  "Sustainability",
-                ]
+            type: string
+            enum:
+              ["FinOps", "OperationalExcellence", "PerformanceEfficiency", "Reliability", "Security", "Sustainability"]
           required: false
         - in: query
-          name: provider
+          name: cloudProvider
           schema:
-            $ref: "#/components/schemas/Provider"
+            $ref: "#/components/schemas/CloudProvider"
           required: false
         - in: query
           name: source
@@ -3543,6 +3534,40 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /insights/v1/results/source/{sourceID}/insight/{insightKey}:
+    get:
+      tags:
+        - Insights
+      summary: Get Single Insight Result
+      operationId: getInsightResult
+      parameters:
+        - in: path
+          name: sourceID
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: insightKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
   /insights/v1/results/source/{sourceID}/insight/{insightKey}/status:
     put:
       tags:
@@ -3642,7 +3667,7 @@ components:
             $ref: "#/components/schemas/InsightRequest"
     InsightRequest:
       type: object
-      required: [key, title, shortDescription, provider, categories, resourceResults]
+      required: [key, title, shortDescription, cloudProvider, categories, resourceResults]
       properties:
         key:
           type: string
@@ -3652,8 +3677,8 @@ components:
           type: string
         detailedDescriptionMdx:
           type: string
-        provider:
-          $ref: "#/components/schemas/Provider"
+        cloudProvider:
+          $ref: "#/components/schemas/CloudProvider"
         categories:
           type: array
           minItems: 1
@@ -3688,8 +3713,8 @@ components:
           type: string
         displayStatus:
           $ref: "#/components/schemas/DisplayStatus"
-        provider:
-          $ref: "#/components/schemas/Provider"
+        cloudProvider:
+          $ref: "#/components/schemas/CloudProvider"
         categories:
           type: array
           items:
@@ -3736,18 +3761,14 @@ components:
     ResourceResults:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/SecurityRiskResourceResult"
-          - $ref: "#/components/schemas/DailySavingsResourceResult"
-          - $ref: "#/components/schemas/DailySavingsRecommendationResourceResult"
-          - $ref: "#/components/schemas/DailySavingsClusterAgentResourceResult"
+        $ref: "#/components/schemas/ResourceResult"
     ResourceResult:
       type: object
       required:
         - resourceId
         - resultType
         - account
-        - provider
+        - cloudProvider
       properties:
         resourceId:
           type: string
@@ -3755,8 +3776,8 @@ components:
           description: What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
           type: string
           example: instance, disk, cache
-        provider:
-          $ref: "#/components/schemas/Provider"
+        cloudProvider:
+          $ref: "#/components/schemas/CloudProvider"
         account:
           type: string
         location:
@@ -3788,62 +3809,36 @@ components:
               "potential_daily_savings_with_recommendation",
               "potential_daily_savings_with_cluster_agent",
             ]
-          description: The discriminator property that determines the schema of the 'result' field.
-      discriminator:
-        propertyName: resultType
-        mapping:
-          security_risk: "#/components/schemas/SecurityRiskResourceResult"
-          potential_daily_savings: "#/components/schemas/DailySavingsResourceResult"
-          potential_daily_savings_with_recommendation: "#/components/schemas/DailySavingsRecommendationResourceResult"
-          potential_daily_savings_with_cluster_agent: "#/components/schemas/DailySavingsClusterAgentResourceResult"
-    SecurityRiskResourceResult:
-      allOf:
-        - $ref: "#/components/schemas/ResourceResult"
-        - type: object
-          required:
-            - resultType
+          description: The discriminator property that determines which fields are populated in the 'result' object.
+        result:
+          description: >
+            The result data for this resource. Which fields are populated depends on the resultType.
+          type: object
           properties:
-            resultType:
+            value:
+              type: number
+              description: the daily saving amount for this result
+            critical:
+              type: integer
+              description: number of critical security risks
+            high:
+              type: integer
+              description: number of high security risks
+            medium:
+              type: integer
+              description: number of medium security risks
+            low:
+              type: integer
+              description: number of low security risks
+            current:
               type: string
-              enum: ["security_risk"]
-            result:
-              $ref: "#/components/schemas/RisksBreakdownValue"
-    DailySavingsResourceResult:
-      allOf:
-        - $ref: "#/components/schemas/ResourceResult"
-        - type: object
-          required:
-            - resultType
-          properties:
-            resultType:
+              description: the current state (i.e. current instance type)
+            recommendation:
               type: string
-              enum: ["potential_daily_savings"]
-            result:
-              $ref: "#/components/schemas/PotentialDailySavingsResult"
-    DailySavingsRecommendationResourceResult:
-      allOf:
-        - $ref: "#/components/schemas/ResourceResult"
-        - type: object
-          required:
-            - resultType
-          properties:
-            resultType:
-              type: string
-              enum: ["potential_daily_savings_with_recommendation"]
-            result:
-              $ref: "#/components/schemas/PotentialDailySavingsWithRecommendationResult"
-    DailySavingsClusterAgentResourceResult:
-      allOf:
-        - $ref: "#/components/schemas/ResourceResult"
-        - type: object
-          required:
-            - resultType
-          properties:
-            resultType:
-              type: string
-              enum: ["potential_daily_savings_with_cluster_agent"]
-            result:
-              $ref: "#/components/schemas/PotentialDailySavingsWithClusterAgentResult"
+              description: the recommended state (i.e. recommended instance type)
+            agentInstalled:
+              type: boolean
+              description: true if the agent is installed
     ResourceResultEnhancement:
       type: object
       properties:
@@ -3858,22 +3853,6 @@ components:
             priorityScore: { type: number }
         lastUpdatedBy: { type: string }
         lastUpdatedAt: { type: string, format: date-time }
-    RisksBreakdownValue:
-      type: object
-      properties:
-        critical:
-          type: integer
-        high:
-          type: integer
-        medium:
-          type: integer
-        low:
-          type: integer
-      required:
-        - critical
-        - high
-        - medium
-        - low
     UpdateStatusRequest:
       type: object
       required:
@@ -3911,9 +3890,9 @@ components:
           type: string
         code:
           type: integer
-    Provider:
+    CloudProvider:
       type: string
-      example: aws
+      example: "aws"
       description: The cloud provider associated with the resource.
     Source:
       type: string
@@ -3944,42 +3923,6 @@ components:
       required:
         - userId
         - lastChangedAt
-    PotentialDailySavingsResult:
-      type: object
-      properties:
-        value:
-          type: number
-          description: the daily saving amount for this result
-      required:
-        - value
-    PotentialDailySavingsWithRecommendationResult:
-      type: object
-      properties:
-        value:
-          type: number
-          description: the daily saving amount for this result
-        current:
-          type: string
-          description: the current state (i.e. current instance type)
-        recommendation:
-          type: string
-          description: the recommended state (i.e. recommended instance type)
-      required:
-        - value
-        - current
-        - recommendation
-    PotentialDailySavingsWithClusterAgentResult:
-      type: object
-      properties:
-        value:
-          type: number
-          description: the daily saving amount for this result
-        agentInstalled:
-          type: boolean
-          description: true if the agent is installed
-      required:
-        - value
-        - agentInstalled
     AccountManagerListItem:
       type: object
       description: Information of a DoiT account manager assigned to your organization.

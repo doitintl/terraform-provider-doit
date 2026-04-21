@@ -5,12 +5,12 @@ data "doit_insights" "all" {
 # List insights filtered by category and display status
 data "doit_insights" "actionable_finops" {
   display_status = ["actionable"]
-  category       = ["FinOps"]
+  category       = "FinOps"
 }
 
 # List insights filtered by cloud provider
 data "doit_insights" "gcp_insights" {
-  provider = "gcp"
+  cloud_provider = "gcp"
 }
 
 # Output the number of insights found

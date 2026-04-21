@@ -286,8 +286,6 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewProductsDataSource,
 		NewOrganizationsDataSource,
 		NewDatahubDatasetsDataSource,
-		// AI assistant data source
-		NewAvaDataSource,
 		NewCloudDiagramsDataSource,
 		// Insights data source
 		NewInsightsDataSource,

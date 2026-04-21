@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -20,14 +21,31 @@ import (
 func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"category": schema.ListAttribute{
-				ElementType: types.StringType,
-				Optional:    true,
-				Computed:    true,
+			"category": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Possible values: `FinOps`, `OperationalExcellence`, `PerformanceEfficiency`, `Reliability`, `Security`, `Sustainability`",
+				MarkdownDescription: "Possible values: `FinOps`, `OperationalExcellence`, `PerformanceEfficiency`, `Reliability`, `Security`, `Sustainability`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"FinOps",
+						"OperationalExcellence",
+						"PerformanceEfficiency",
+						"Reliability",
+						"Security",
+						"Sustainability",
+					),
+				},
 			},
 			"cloud_flows": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
+			},
+			"cloud_provider": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The cloud provider associated with the resource.",
+				MarkdownDescription: "The cloud provider associated with the resource.",
 			},
 			"display_status": schema.ListAttribute{
 				ElementType: types.StringType,
@@ -74,12 +92,6 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Computed:    true,
 			},
-			"provider": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The cloud provider associated with the resource.",
-				MarkdownDescription: "The cloud provider associated with the resource.",
-			},
 			"results": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -88,14 +100,15 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:    true,
 						},
 						"cloud_flow_template_id": schema.StringAttribute{
+							Computed: true,
+						},
+						"cloud_provider": schema.StringAttribute{
 							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Description:         "The cloud provider associated with the resource.",
+							MarkdownDescription: "The cloud provider associated with the resource.",
 						},
 						"detailed_description_mdx": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"display_status": schema.StringAttribute{
 							Computed:            true,
@@ -103,21 +116,15 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "The display status of the insight.",
 						},
 						"easy_win_description": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"key": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"last_status_change": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"last_changed_at": schema.StringAttribute{
-									Computed:            true,
-									Description:         "",
-									MarkdownDescription: "",
+									Computed: true,
 								},
 								"user_id": schema.StringAttribute{
 									Computed:            true,
@@ -135,24 +142,13 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "If set, this object contains the last status change made by a user for this insight",
 						},
 						"last_updated": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
-						},
-						"provider": schema.StringAttribute{
-							Computed:            true,
-							Description:         "The cloud provider associated with the resource.",
-							MarkdownDescription: "The cloud provider associated with the resource.",
+							Computed: true,
 						},
 						"report_url": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"short_description": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"source": schema.StringAttribute{
 							Computed:            true,
@@ -194,9 +190,7 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "primary purpose, initially, is to provide security certification information, eg. ISO etc.",
 						},
 						"title": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 					},
 					CustomType: ResultsType{
@@ -208,10 +202,8 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 			"search_term": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "",
-				MarkdownDescription: "",
+				Optional: true,
+				Computed: true,
 			},
 			"source": schema.ListAttribute{
 				ElementType:         types.StringType,
@@ -232,15 +224,15 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type InsightsModel struct {
-	Category      types.List      `tfsdk:"category"`
+	Category      types.String    `tfsdk:"category"`
 	CloudFlows    types.Bool      `tfsdk:"cloud_flows"`
+	CloudProvider types.String    `tfsdk:"cloud_provider"`
 	DisplayStatus types.List      `tfsdk:"display_status"`
 	EasyWin       types.Bool      `tfsdk:"easy_win"`
 	Page          types.Int64     `tfsdk:"page"`
 	PageSize      types.Int64     `tfsdk:"page_size"`
 	Pagination    PaginationValue `tfsdk:"pagination"`
 	Priority      types.List      `tfsdk:"priority"`
-	Provider      types.String    `tfsdk:"provider"`
 	Results       types.List      `tfsdk:"results"`
 	SearchTerm    types.String    `tfsdk:"search_term"`
 	Source        types.List      `tfsdk:"source"`
@@ -632,6 +624,24 @@ func (t ResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`cloud_flow_template_id expected to be basetypes.StringValue, was: %T`, cloudFlowTemplateIdAttribute))
 	}
 
+	cloudProviderAttribute, ok := attributes["cloud_provider"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud_provider is missing from object`)
+
+		return nil, diags
+	}
+
+	cloudProviderVal, ok := cloudProviderAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_provider expected to be basetypes.StringValue, was: %T`, cloudProviderAttribute))
+	}
+
 	detailedDescriptionMdxAttribute, ok := attributes["detailed_description_mdx"]
 
 	if !ok {
@@ -738,24 +748,6 @@ func (t ResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`last_updated expected to be basetypes.StringValue, was: %T`, lastUpdatedAttribute))
-	}
-
-	providerAttribute, ok := attributes["provider"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`provider is missing from object`)
-
-		return nil, diags
-	}
-
-	providerVal, ok := providerAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`provider expected to be basetypes.StringValue, was: %T`, providerAttribute))
 	}
 
 	reportUrlAttribute, ok := attributes["report_url"]
@@ -873,13 +865,13 @@ func (t ResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 	return ResultsValue{
 		Categories:             categoriesVal,
 		CloudFlowTemplateId:    cloudFlowTemplateIdVal,
+		CloudProvider:          cloudProviderVal,
 		DetailedDescriptionMdx: detailedDescriptionMdxVal,
 		DisplayStatus:          displayStatusVal,
 		EasyWinDescription:     easyWinDescriptionVal,
 		Key:                    keyVal,
 		LastStatusChange:       lastStatusChangeVal,
 		LastUpdated:            lastUpdatedVal,
-		Provider:               providerVal,
 		ReportUrl:              reportUrlVal,
 		ShortDescription:       shortDescriptionVal,
 		Source:                 sourceVal,
@@ -989,6 +981,24 @@ func NewResultsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`cloud_flow_template_id expected to be basetypes.StringValue, was: %T`, cloudFlowTemplateIdAttribute))
 	}
 
+	cloudProviderAttribute, ok := attributes["cloud_provider"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud_provider is missing from object`)
+
+		return NewResultsValueUnknown(), diags
+	}
+
+	cloudProviderVal, ok := cloudProviderAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_provider expected to be basetypes.StringValue, was: %T`, cloudProviderAttribute))
+	}
+
 	detailedDescriptionMdxAttribute, ok := attributes["detailed_description_mdx"]
 
 	if !ok {
@@ -1095,24 +1105,6 @@ func NewResultsValue(attributeTypes map[string]attr.Type, attributes map[string]
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`last_updated expected to be basetypes.StringValue, was: %T`, lastUpdatedAttribute))
-	}
-
-	providerAttribute, ok := attributes["provider"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`provider is missing from object`)
-
-		return NewResultsValueUnknown(), diags
-	}
-
-	providerVal, ok := providerAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`provider expected to be basetypes.StringValue, was: %T`, providerAttribute))
 	}
 
 	reportUrlAttribute, ok := attributes["report_url"]
@@ -1230,13 +1222,13 @@ func NewResultsValue(attributeTypes map[string]attr.Type, attributes map[string]
 	return ResultsValue{
 		Categories:             categoriesVal,
 		CloudFlowTemplateId:    cloudFlowTemplateIdVal,
+		CloudProvider:          cloudProviderVal,
 		DetailedDescriptionMdx: detailedDescriptionMdxVal,
 		DisplayStatus:          displayStatusVal,
 		EasyWinDescription:     easyWinDescriptionVal,
 		Key:                    keyVal,
 		LastStatusChange:       lastStatusChangeVal,
 		LastUpdated:            lastUpdatedVal,
-		Provider:               providerVal,
 		ReportUrl:              reportUrlVal,
 		ShortDescription:       shortDescriptionVal,
 		Source:                 sourceVal,
@@ -1317,13 +1309,13 @@ var _ basetypes.ObjectValuable = ResultsValue{}
 type ResultsValue struct {
 	Categories             basetypes.ListValue   `tfsdk:"categories"`
 	CloudFlowTemplateId    basetypes.StringValue `tfsdk:"cloud_flow_template_id"`
+	CloudProvider          basetypes.StringValue `tfsdk:"cloud_provider"`
 	DetailedDescriptionMdx basetypes.StringValue `tfsdk:"detailed_description_mdx"`
 	DisplayStatus          basetypes.StringValue `tfsdk:"display_status"`
 	EasyWinDescription     basetypes.StringValue `tfsdk:"easy_win_description"`
 	Key                    basetypes.StringValue `tfsdk:"key"`
 	LastStatusChange       LastStatusChangeValue `tfsdk:"last_status_change"`
 	LastUpdated            basetypes.StringValue `tfsdk:"last_updated"`
-	Provider               basetypes.StringValue `tfsdk:"provider"`
 	ReportUrl              basetypes.StringValue `tfsdk:"report_url"`
 	ShortDescription       basetypes.StringValue `tfsdk:"short_description"`
 	Source                 basetypes.StringValue `tfsdk:"source"`
@@ -1343,6 +1335,7 @@ func (v ResultsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
 	attrTypes["cloud_flow_template_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["cloud_provider"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["detailed_description_mdx"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["display_status"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["easy_win_description"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1353,7 +1346,6 @@ func (v ResultsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		},
 	}.TerraformType(ctx)
 	attrTypes["last_updated"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["provider"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["report_url"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["short_description"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["source"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1388,6 +1380,14 @@ func (v ResultsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["cloud_flow_template_id"] = val
+
+		val, err = v.CloudProvider.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cloud_provider"] = val
 
 		val, err = v.DetailedDescriptionMdx.ToTerraformValue(ctx)
 
@@ -1436,14 +1436,6 @@ func (v ResultsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["last_updated"] = val
-
-		val, err = v.Provider.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["provider"] = val
 
 		val, err = v.ReportUrl.ToTerraformValue(ctx)
 
@@ -1552,6 +1544,7 @@ func (v ResultsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 				ElemType: types.StringType,
 			},
 			"cloud_flow_template_id":   basetypes.StringType{},
+			"cloud_provider":           basetypes.StringType{},
 			"detailed_description_mdx": basetypes.StringType{},
 			"display_status":           basetypes.StringType{},
 			"easy_win_description":     basetypes.StringType{},
@@ -1562,7 +1555,6 @@ func (v ResultsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 				},
 			},
 			"last_updated":      basetypes.StringType{},
-			"provider":          basetypes.StringType{},
 			"report_url":        basetypes.StringType{},
 			"short_description": basetypes.StringType{},
 			"source":            basetypes.StringType{},
@@ -1596,6 +1588,7 @@ func (v ResultsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 				ElemType: types.StringType,
 			},
 			"cloud_flow_template_id":   basetypes.StringType{},
+			"cloud_provider":           basetypes.StringType{},
 			"detailed_description_mdx": basetypes.StringType{},
 			"display_status":           basetypes.StringType{},
 			"easy_win_description":     basetypes.StringType{},
@@ -1606,7 +1599,6 @@ func (v ResultsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 				},
 			},
 			"last_updated":      basetypes.StringType{},
-			"provider":          basetypes.StringType{},
 			"report_url":        basetypes.StringType{},
 			"short_description": basetypes.StringType{},
 			"source":            basetypes.StringType{},
@@ -1627,6 +1619,7 @@ func (v ResultsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			ElemType: types.StringType,
 		},
 		"cloud_flow_template_id":   basetypes.StringType{},
+		"cloud_provider":           basetypes.StringType{},
 		"detailed_description_mdx": basetypes.StringType{},
 		"display_status":           basetypes.StringType{},
 		"easy_win_description":     basetypes.StringType{},
@@ -1637,7 +1630,6 @@ func (v ResultsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			},
 		},
 		"last_updated":      basetypes.StringType{},
-		"provider":          basetypes.StringType{},
 		"report_url":        basetypes.StringType{},
 		"short_description": basetypes.StringType{},
 		"source":            basetypes.StringType{},
@@ -1665,13 +1657,13 @@ func (v ResultsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		map[string]attr.Value{
 			"categories":               categoriesVal,
 			"cloud_flow_template_id":   v.CloudFlowTemplateId,
+			"cloud_provider":           v.CloudProvider,
 			"detailed_description_mdx": v.DetailedDescriptionMdx,
 			"display_status":           v.DisplayStatus,
 			"easy_win_description":     v.EasyWinDescription,
 			"key":                      v.Key,
 			"last_status_change":       lastStatusChange,
 			"last_updated":             v.LastUpdated,
-			"provider":                 v.Provider,
 			"report_url":               v.ReportUrl,
 			"short_description":        v.ShortDescription,
 			"source":                   v.Source,
@@ -1706,6 +1698,10 @@ func (v ResultsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.CloudProvider.Equal(other.CloudProvider) {
+		return false
+	}
+
 	if !v.DetailedDescriptionMdx.Equal(other.DetailedDescriptionMdx) {
 		return false
 	}
@@ -1727,10 +1723,6 @@ func (v ResultsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.LastUpdated.Equal(other.LastUpdated) {
-		return false
-	}
-
-	if !v.Provider.Equal(other.Provider) {
 		return false
 	}
 
@@ -1775,6 +1767,7 @@ func (v ResultsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 			ElemType: types.StringType,
 		},
 		"cloud_flow_template_id":   basetypes.StringType{},
+		"cloud_provider":           basetypes.StringType{},
 		"detailed_description_mdx": basetypes.StringType{},
 		"display_status":           basetypes.StringType{},
 		"easy_win_description":     basetypes.StringType{},
@@ -1785,7 +1778,6 @@ func (v ResultsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 			},
 		},
 		"last_updated":      basetypes.StringType{},
-		"provider":          basetypes.StringType{},
 		"report_url":        basetypes.StringType{},
 		"short_description": basetypes.StringType{},
 		"source":            basetypes.StringType{},
