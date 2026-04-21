@@ -112,3 +112,16 @@ resources:
     read:
       path: /analytics/v1/labels/{id}/assignments
       method: GET
+  insight:
+    create:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: POST
+    read:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: GET
+    update:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: POST
+    delete:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: DELETE

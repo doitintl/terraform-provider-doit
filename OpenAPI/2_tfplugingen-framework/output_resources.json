@@ -1408,6 +1408,424 @@
 			}
 		},
 		{
+			"name": "insight",
+			"schema": {
+				"attributes": [
+					{
+						"name": "categories",
+						"list": {
+							"computed_optional_required": "required",
+							"element_type": {
+								"string": {}
+							},
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.SizeAtLeast(1)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.UniqueValues()"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "cloud_flow_template_id",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The cloud provider associated with the resource."
+						}
+					},
+					{
+						"name": "detailed_description_mdx",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "easy_win_description",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "key",
+						"string": {
+							"computed_optional_required": "required"
+						}
+					},
+					{
+						"name": "report_url",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "resource_results",
+						"list_nested": {
+							"computed_optional_required": "required",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "account",
+										"string": {
+											"computed_optional_required": "required"
+										}
+									},
+									{
+										"name": "cloud_provider",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The cloud provider associated with the resource."
+										}
+									},
+									{
+										"name": "enhancement",
+										"single_nested": {
+											"computed_optional_required": "computed_optional",
+											"attributes": [
+												{
+													"name": "last_updated_at",
+													"string": {
+														"computed_optional_required": "computed_optional"
+													}
+												},
+												{
+													"name": "last_updated_by",
+													"string": {
+														"computed_optional_required": "computed_optional"
+													}
+												},
+												{
+													"name": "priority",
+													"single_nested": {
+														"computed_optional_required": "computed_optional",
+														"attributes": [
+															{
+																"name": "priority_score",
+																"float64": {
+																	"computed_optional_required": "computed_optional"
+																}
+															},
+															{
+																"name": "value",
+																"string": {
+																	"computed_optional_required": "computed_optional"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "tags",
+													"list": {
+														"computed_optional_required": "computed_optional",
+														"element_type": {
+															"string": {}
+														}
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "external_id",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "the external ID of the resource in the provider's system for the resource"
+										}
+									},
+									{
+										"name": "external_url",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "the URL to the resource-level issue in the provider's system"
+										}
+									},
+									{
+										"name": "location",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "represents the region/zone of the resource in AWS, or equivalent for other providers"
+										}
+									},
+									{
+										"name": "metadata",
+										"single_nested": {
+											"computed_optional_required": "computed_optional",
+											"description": "contains any additional information for the resource results"
+										}
+									},
+									{
+										"name": "resolved",
+										"bool": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "resource_id",
+										"string": {
+											"computed_optional_required": "required"
+										}
+									},
+									{
+										"name": "resource_type",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`"
+										}
+									},
+									{
+										"name": "result",
+										"single_nested": {
+											"computed_optional_required": "computed_optional",
+											"attributes": [
+												{
+													"name": "agent_installed",
+													"bool": {
+														"computed_optional_required": "computed_optional",
+														"description": "true if the agent is installed"
+													}
+												},
+												{
+													"name": "critical",
+													"int64": {
+														"computed_optional_required": "computed_optional",
+														"description": "number of critical security risks"
+													}
+												},
+												{
+													"name": "current",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "the current state (i.e. current instance type)"
+													}
+												},
+												{
+													"name": "high",
+													"int64": {
+														"computed_optional_required": "computed_optional",
+														"description": "number of high security risks"
+													}
+												},
+												{
+													"name": "low",
+													"int64": {
+														"computed_optional_required": "computed_optional",
+														"description": "number of low security risks"
+													}
+												},
+												{
+													"name": "medium",
+													"int64": {
+														"computed_optional_required": "computed_optional",
+														"description": "number of medium security risks"
+													}
+												},
+												{
+													"name": "recommendation",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "the recommended state (i.e. recommended instance type)"
+													}
+												},
+												{
+													"name": "value",
+													"float64": {
+														"computed_optional_required": "computed_optional",
+														"description": "the daily saving amount for this result"
+													}
+												}
+											],
+											"description": "The result data for this resource. Which fields are populated depends on the resultType.\n"
+										}
+									},
+									{
+										"name": "result_type",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "The discriminator property that determines which fields are populated in the 'result' object.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"security_risk\",\n\"potential_daily_savings\",\n\"potential_daily_savings_with_recommendation\",\n\"potential_daily_savings_with_cluster_agent\",\n)"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "severity",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"critical\",\n\"high\",\n\"medium\",\n\"low\",\n)"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "short_description",
+						"string": {
+							"computed_optional_required": "required"
+						}
+					},
+					{
+						"name": "tags",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "primary purpose, initially, is to provide security certification information, eg. ISO etc."
+						}
+					},
+					{
+						"name": "title",
+						"string": {
+							"computed_optional_required": "required"
+						}
+					},
+					{
+						"name": "display_status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The display status of the insight."
+						}
+					},
+					{
+						"name": "last_status_change",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "last_changed_at",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "user_id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.\n"
+									}
+								}
+							],
+							"description": "If set, this object contains the last status change made by a user for this insight"
+						}
+					},
+					{
+						"name": "last_updated",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "source",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The source that generated the insight."
+						}
+					},
+					{
+						"name": "summary",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "operational_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "performance_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "potential_daily_savings",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "reliability_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "security_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "sustainability_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "source_id",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "insight_key",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					}
+				],
+				"description": "Insights API",
+				"markdown_description": "Insights API"
+			}
+		},
+		{
 			"name": "label",
 			"schema": {
 				"attributes": [
