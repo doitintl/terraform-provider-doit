@@ -37,10 +37,22 @@ output "image_urls" {
 
 - `resources` (List of String) Resource IDs to find diagrams for.
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `cloud_diagrams` (Attributes Set) List of diagram URLs matching the criteria. (see [below for nested schema](#nestedatt--cloud_diagrams))
 - `id` (String) A deterministic hash of the resource IDs, used as the data source identifier.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--cloud_diagrams"></a>
 ### Nested Schema for `cloud_diagrams`

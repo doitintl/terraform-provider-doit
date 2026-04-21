@@ -17,6 +17,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// DefaultRequestTimeout is the default timeout for individual HTTP requests
+// to the DoiT API. This matches the Google Cloud Terraform provider's default.
+const DefaultRequestTimeout = 120 * time.Second
+
 // DCIRetryClient wraps an HTTP client with retry logic tailored for the DoiT Console API (DCI).
 //
 // # Why a Custom Client?
@@ -172,10 +176,12 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 		}
 	}
 
-	// Retry with exponential backoff and a 2-minute timeout
+	// Retry with exponential backoff. MaxElapsedTime is disabled (0) so the
+	// retry loop defers entirely to the provided context's deadline
+	// (e.g., Terraform's timeouts {} block).
 	return backoff.Retry(req.Context(), operation,
 		backoff.WithBackOff(backoff.NewExponentialBackOff()),
-		backoff.WithMaxElapsedTime(2*time.Minute), // Reasonable timeout for Terraform operations
+		backoff.WithMaxElapsedTime(0),
 	)
 }
 
@@ -188,10 +194,10 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 //
 // The TF_APPEND_USER_AGENT environment variable is also respected, allowing
 // users to append custom identifiers (e.g., CI system, org name).
-func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVersion, providerVersion string) (*models.ClientWithResponses, error) {
+func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVersion, providerVersion string, requestTimeout time.Duration) (*models.ClientWithResponses, error) {
 	retryClient := &DCIRetryClient{
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: requestTimeout,
 		},
 	}
 
@@ -223,7 +229,14 @@ func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVe
 	if err != nil {
 		return nil, err
 	}
-	_, err = client.Validate(ctx)
+	// Validate the API token with a bounded context derived from
+	// requestTimeout so initialization does not hang indefinitely.
+	validateCtx, validateCancel := context.WithTimeout(ctx, requestTimeout)
+	defer validateCancel()
+	validateResp, err := client.Validate(validateCtx)
+	if validateResp != nil && validateResp.Body != nil {
+		validateResp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}

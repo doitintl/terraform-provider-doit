@@ -39,6 +39,10 @@ output "allocation_description" {
 
 - `id` (String) Allocation ID
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `allocation_type` (String) Composition type of allocation.
@@ -51,6 +55,14 @@ output "allocation_description" {
 - `type` (String) Type of allocation (preset or custom).
 - `unallocated_costs` (String) Custom label for values that do not fit into allocation (required for group type allocation).
 - `update_time` (Number) Last time the allocation was modified (in UNIX timestamp).
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--rule"></a>
 ### Nested Schema for `rule`

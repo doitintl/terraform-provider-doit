@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_datahub_dataset"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -19,6 +21,7 @@ type (
 	}
 	datahubDatasetResourceModel struct {
 		resource_datahub_dataset.DatahubDatasetModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -67,6 +70,13 @@ func (r *datahubDatasetResource) Schema(ctx context.Context, _ resource.SchemaRe
 		nameAttr.PlanModifiers = append(nameAttr.PlanModifiers, stringplanmodifier.RequiresReplace())
 		resp.Schema.Attributes["name"] = nameAttr
 	}
+
+	resp.Schema.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
 }
 
 // overlayDatahubDatasetComputedFields uses the two-phase overlay pattern to
@@ -96,6 +106,14 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	apiReq := models.CreateDatahubDatasetRequestBody{
 		Name: plan.Name.ValueString(),
@@ -144,6 +162,14 @@ func (r *datahubDatasetResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	datasetResp, err := r.client.GetDatahubDatasetWithResponse(ctx, state.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -186,6 +212,14 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state datahubDatasetResourceModel
 
@@ -238,6 +272,14 @@ func (r *datahubDatasetResource) Delete(ctx context.Context, req resource.Delete
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	deleteResp, err := r.client.DeleteDatahubDatasetWithResponse(ctx, state.Name.ValueString())
 	if err != nil {

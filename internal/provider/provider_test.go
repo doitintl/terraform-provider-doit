@@ -49,7 +49,7 @@ func sweepOrphanedAllocations() {
 	client, err := provider.NewClient(
 		context.Background(),
 		host, token, customerCtx,
-		"test", "dev",
+		"test", "dev", provider.DefaultRequestTimeout,
 	)
 	if err != nil {
 		log.Printf("Warning: sweep failed to create API client: %v", err)
@@ -145,6 +145,7 @@ func getAPIClient(t *testing.T) *models.ClientWithResponses {
 		os.Getenv("DOIT_CUSTOMER_CONTEXT"),
 		"test", // terraformVersion - not available outside provider lifecycle
 		"dev",  // providerVersion - matches default in main.go
+		provider.DefaultRequestTimeout,
 	)
 	if err != nil {
 		t.Fatalf("Failed to create API client: %v", err)

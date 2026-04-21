@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_asset"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,6 +23,11 @@ func NewAssetDataSource() datasource.DataSource {
 
 type assetDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type assetDataSourceModel struct {
+	datasource_asset.AssetModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (ds *assetDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -43,30 +50,42 @@ func (ds *assetDataSource) Configure(_ context.Context, req datasource.Configure
 }
 
 func (ds *assetDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_asset.AssetDataSourceSchema(ctx)
+	s := datasource_asset.AssetDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (ds *assetDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state datasource_asset.AssetModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
+	var data assetDataSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	// If ID is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.
-	if state.Id.IsUnknown() {
-		state.Name = types.StringUnknown()
-		state.Type = types.StringUnknown()
-		state.Url = types.StringUnknown()
-		state.Quantity = types.Int64Unknown()
-		state.CreateTime = types.Int64Unknown()
-		state.Properties = datasource_asset.NewPropertiesValueUnknown()
-		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	if data.Id.IsUnknown() {
+		data.Name = types.StringUnknown()
+		data.Type = types.StringUnknown()
+		data.Url = types.StringUnknown()
+		data.Quantity = types.Int64Unknown()
+		data.CreateTime = types.Int64Unknown()
+		data.Properties = datasource_asset.NewPropertiesValueUnknown()
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
-	id := state.Id.ValueString()
+	id := data.Id.ValueString()
 	assetResp, err := ds.client.GetAssetWithResponse(ctx, id)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading asset", err.Error())
@@ -86,19 +105,19 @@ func (ds *assetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	asset := assetResp.JSON200
 
-	state.Id = types.StringPointerValue(asset.Id)
-	state.Name = types.StringPointerValue(asset.Name)
-	state.Type = types.StringPointerValue(asset.Type)
-	state.Url = types.StringPointerValue(asset.Url)
-	state.Quantity = types.Int64PointerValue(asset.Quantity)
-	state.CreateTime = types.Int64PointerValue(asset.CreateTime)
+	data.Id = types.StringPointerValue(asset.Id)
+	data.Name = types.StringPointerValue(asset.Name)
+	data.Type = types.StringPointerValue(asset.Type)
+	data.Url = types.StringPointerValue(asset.Url)
+	data.Quantity = types.Int64PointerValue(asset.Quantity)
+	data.CreateTime = types.Int64PointerValue(asset.CreateTime)
 
-	resp.Diagnostics.Append(mapAssetPropertiesToDataSource(ctx, asset, &state)...)
+	resp.Diagnostics.Append(mapAssetPropertiesToDataSource(ctx, asset, &data.AssetModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 // mapAssetPropertiesToDataSource maps the API properties to the data source model.

@@ -43,6 +43,10 @@ output "anomaly_severity" {
 
 - `id` (String) A unique identifier of the anomaly.
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `acknowledged` (Boolean) Has the anomaly been acknowledged
@@ -59,6 +63,14 @@ output "anomaly_severity" {
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly
 - `top3skus` (Attributes List) Array of SKU entries contributing to an anomaly. (see [below for nested schema](#nestedatt--top3skus))
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--resource_data"></a>
 ### Nested Schema for `resource_data`

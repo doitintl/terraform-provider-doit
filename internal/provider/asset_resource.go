@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_asset"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -23,6 +25,7 @@ type (
 	}
 	assetResourceModel struct {
 		resource_asset.AssetModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -106,6 +109,13 @@ func (r *assetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		"Destroying this resource only removes it from Terraform state; the asset continues to exist in DoiT."
 	s.MarkdownDescription = s.Description
 
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
 	resp.Schema = s
 }
 
@@ -126,6 +136,14 @@ func (r *assetResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, readDiags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(readDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// Get refreshed asset value from API
 	assetResp, err := r.client.GetAssetWithResponse(ctx, state.Id.ValueString())
@@ -196,6 +214,14 @@ func (r *assetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(updateDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	// Get the ID from state
 	var state assetResourceModel

@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_datahub_datasets"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -20,6 +22,11 @@ func NewDatahubDatasetsDataSource() datasource.DataSource {
 
 type datahubDatasetsDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type datahubDatasetsDataSourceModel struct {
+	datasource_datahub_datasets.DatahubDatasetsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *datahubDatasetsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,17 +49,29 @@ func (d *datahubDatasetsDataSource) Configure(_ context.Context, req datasource.
 }
 
 func (d *datahubDatasetsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_datahub_datasets.DatahubDatasetsDataSourceSchema(ctx)
+	s := datasource_datahub_datasets.DatahubDatasetsDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 	resp.Schema.Description = "Lists all DataHub datasets for the customer."
 	resp.Schema.MarkdownDescription = resp.Schema.Description
 }
 
 func (d *datahubDatasetsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_datahub_datasets.DatahubDatasetsModel
+	var data datahubDatasetsDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// The list endpoint has no parameters — no pagination, no filters.
 	apiResp, err := d.client.ListDatahubDatasetsWithResponse(ctx)

@@ -48,6 +48,10 @@ output "report_labels" {
 
 - `id` (String) Report ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `config` (Attributes) Report configuration. (see [below for nested schema](#nestedatt--config))
@@ -55,6 +59,14 @@ output "report_labels" {
 - `labels` (List of String) Array of label IDs assigned to the report
 - `name` (String) Report name.
 - `type` (String) Report type.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--config"></a>
 ### Nested Schema for `config`

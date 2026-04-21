@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_datahub_dataset"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -19,6 +21,11 @@ func NewDatahubDatasetDataSource() datasource.DataSource {
 
 type datahubDatasetDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type datahubDatasetDataSourceModel struct {
+	datasource_datahub_dataset.DatahubDatasetModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (ds *datahubDatasetDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -41,17 +48,29 @@ func (ds *datahubDatasetDataSource) Configure(_ context.Context, req datasource.
 }
 
 func (ds *datahubDatasetDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_datahub_dataset.DatahubDatasetDataSourceSchema(ctx)
+	s := datasource_datahub_dataset.DatahubDatasetDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 	resp.Schema.Description = "Retrieves a specific DataHub dataset by name."
 	resp.Schema.MarkdownDescription = resp.Schema.Description
 }
 
 func (ds *datahubDatasetDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state datasource_datahub_dataset.DatahubDatasetModel
+	var state datahubDatasetDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If name is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.

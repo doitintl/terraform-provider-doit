@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -49,17 +50,18 @@ type reportResultDataSourceModel struct {
 	EndDate   types.String `tfsdk:"end_date"`
 
 	// Outputs
-	ResultJSON types.String `tfsdk:"result_json"`
-	ReportName types.String `tfsdk:"report_name"`
-	CacheHit   types.Bool   `tfsdk:"cache_hit"`
-	RowCount   types.Int64  `tfsdk:"row_count"`
+	ResultJSON types.String   `tfsdk:"result_json"`
+	ReportName types.String   `tfsdk:"report_name"`
+	CacheHit   types.Bool     `tfsdk:"cache_hit"`
+	RowCount   types.Int64    `tfsdk:"row_count"`
+	Timeouts   timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *reportResultDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_report_result"
 }
 
-func (d *reportResultDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Fetches the results of an existing Cloud Analytics report." +
 			"\n\nThe report is executed and the results are returned as a JSON string in" +
@@ -155,6 +157,7 @@ func (d *reportResultDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				MarkdownDescription: "The number of data rows in the result.",
 				Computed:            true,
 			},
+			"timeouts": timeouts.Attributes(ctx),
 		},
 	}
 }
@@ -184,6 +187,14 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ID or any query parameter is unknown, return early
 	// with all computed attributes set to unknown.

@@ -7,6 +7,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_commitments"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -22,6 +23,11 @@ func NewCommitmentsDataSource() datasource.DataSource {
 
 type commitmentsDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type commitmentsDataSourceModel struct {
+	datasource_commitments.CommitmentsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *commitmentsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -42,17 +48,29 @@ func (d *commitmentsDataSource) Configure(_ context.Context, req datasource.Conf
 }
 
 func (d *commitmentsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_commitments.CommitmentsDataSourceSchema(ctx)
+	s := datasource_commitments.CommitmentsDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 	resp.Schema.Description = "Lists commitment contracts with optional filtering and pagination."
 	resp.Schema.MarkdownDescription = resp.Schema.Description
 }
 
 func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_commitments.CommitmentsModel
+	var data commitmentsDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If any filter/pagination input is unknown, return unknown list
 	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {

@@ -39,6 +39,10 @@ output "alert_last_triggered" {
 
 - `id` (String) Alert ID
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `config` (Attributes) Parameters that define when and how an alert is evaluated. (see [below for nested schema](#nestedatt--config))
@@ -47,6 +51,14 @@ output "alert_last_triggered" {
 - `name` (String) Alert Name.
 - `recipients` (List of String) List of emails that will be notified when the alert is triggered.
 - `update_time` (Number) Last time the alert was modified (in UNIX timestamp).
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--config"></a>
 ### Nested Schema for `config`

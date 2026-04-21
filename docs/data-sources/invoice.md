@@ -47,6 +47,10 @@ output "invoice_url" {
 
 - `id` (String) Invoice number.
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `balance_amount` (Number) Invoice balance to be paid
@@ -58,6 +62,14 @@ output "invoice_url" {
 - `status` (String) Status of the invoice
 - `total_amount` (Number) Total invoiced amount
 - `url` (String) Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--line_items"></a>
 ### Nested Schema for `line_items`

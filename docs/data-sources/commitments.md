@@ -46,11 +46,20 @@ Available filter keys: **name**, **provider**
 Possible values: `name`, `startDate`, `endDate`, `provider`, `createTime`, `updateTime`
 - `sort_order` (String) Sort order can be ascending or descending.
 Possible values: `asc`, `desc`
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `commitments` (Attributes List) Array of commitments. (see [below for nested schema](#nestedatt--commitments))
 - `row_count` (Number) The number of returned records.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--commitments"></a>
 ### Nested Schema for `commitments`

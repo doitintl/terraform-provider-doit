@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_alert"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,6 +23,11 @@ func NewAlertDataSource() datasource.DataSource {
 
 type alertDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type alertDataSourceModel struct {
+	datasource_alert.AlertModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (ds *alertDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -43,30 +50,42 @@ func (ds *alertDataSource) Configure(_ context.Context, req datasource.Configure
 }
 
 func (ds *alertDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_alert.AlertDataSourceSchema(ctx)
+	s := datasource_alert.AlertDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (ds *alertDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state datasource_alert.AlertModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
+	var data alertDataSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	// If ID is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.
-	if state.Id.IsUnknown() {
-		state.Name = types.StringUnknown()
-		state.CreateTime = types.Int64Unknown()
-		state.UpdateTime = types.Int64Unknown()
-		state.LastAlerted = types.Int64Unknown()
-		state.Recipients = types.ListUnknown(types.StringType)
-		state.Config = datasource_alert.NewConfigValueUnknown()
-		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	if data.Id.IsUnknown() {
+		data.Name = types.StringUnknown()
+		data.CreateTime = types.Int64Unknown()
+		data.UpdateTime = types.Int64Unknown()
+		data.LastAlerted = types.Int64Unknown()
+		data.Recipients = types.ListUnknown(types.StringType)
+		data.Config = datasource_alert.NewConfigValueUnknown()
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
-	id := state.Id.ValueString()
+	id := data.Id.ValueString()
 	alertResp, err := ds.client.GetAlertWithResponse(ctx, id)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading alert", err.Error())
@@ -85,12 +104,12 @@ func (ds *alertDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	alert := alertResp.JSON200
-	resp.Diagnostics.Append(ds.mapAlertToModel(ctx, alert, &state)...)
+	resp.Diagnostics.Append(ds.mapAlertToModel(ctx, alert, &data.AlertModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (ds *alertDataSource) mapAlertToModel(ctx context.Context, alert *models.Alert, state *datasource_alert.AlertModel) diag.Diagnostics {

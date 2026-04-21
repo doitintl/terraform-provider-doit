@@ -47,6 +47,10 @@ output "commitment_total_value" {
 
 - `id` (String) Commitment ID
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `cloud_provider` (String) The cloud provider associated with the commitment.
@@ -59,6 +63,14 @@ output "commitment_total_value" {
 - `total_commitment_value` (Number) The total value of the commitment across all periods.
 - `total_current_attainment` (Number) The total current spend attainment across all periods.
 - `update_time` (Number) The last update time in milliseconds since epoch.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--periods"></a>
 ### Nested Schema for `periods`
