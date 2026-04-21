@@ -3292,6 +3292,181 @@
 			}
 		},
 		{
+			"name": "insight",
+			"schema": {
+				"attributes": [
+					{
+						"name": "source_id",
+						"string": {
+							"computed_optional_required": "required"
+						}
+					},
+					{
+						"name": "insight_key",
+						"string": {
+							"computed_optional_required": "required"
+						}
+					},
+					{
+						"name": "categories",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "cloud_flow_template_id",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The cloud provider associated with the resource."
+						}
+					},
+					{
+						"name": "detailed_description_mdx",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "display_status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The display status of the insight."
+						}
+					},
+					{
+						"name": "easy_win_description",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "key",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "last_status_change",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "last_changed_at",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "user_id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.\n"
+									}
+								}
+							],
+							"description": "If set, this object contains the last status change made by a user for this insight"
+						}
+					},
+					{
+						"name": "last_updated",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "report_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "short_description",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "source",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The source that generated the insight."
+						}
+					},
+					{
+						"name": "summary",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "operational_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "performance_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "potential_daily_savings",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "reliability_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "security_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "sustainability_risks",
+									"float64": {
+										"computed_optional_required": "computed"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "tags",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "primary purpose, initially, is to provide security certification information, eg. ISO etc."
+						}
+					},
+					{
+						"name": "title",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Insights API",
+				"markdown_description": "Insights API"
+			}
+		},
+		{
 			"name": "insights",
 			"schema": {
 				"attributes": [
@@ -3534,37 +3709,37 @@
 											"attributes": [
 												{
 													"name": "operational_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "performance_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "potential_daily_savings",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "reliability_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "security_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												},
 												{
 													"name": "sustainability_risks",
-													"number": {
+													"float64": {
 														"computed_optional_required": "computed"
 													}
 												}

@@ -157,22 +157,22 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"summary": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
-								"operational_risks": schema.NumberAttribute{
+								"operational_risks": schema.Float64Attribute{
 									Computed: true,
 								},
-								"performance_risks": schema.NumberAttribute{
+								"performance_risks": schema.Float64Attribute{
 									Computed: true,
 								},
-								"potential_daily_savings": schema.NumberAttribute{
+								"potential_daily_savings": schema.Float64Attribute{
 									Computed: true,
 								},
-								"reliability_risks": schema.NumberAttribute{
+								"reliability_risks": schema.Float64Attribute{
 									Computed: true,
 								},
-								"security_risks": schema.NumberAttribute{
+								"security_risks": schema.Float64Attribute{
 									Computed: true,
 								},
-								"sustainability_risks": schema.NumberAttribute{
+								"sustainability_risks": schema.Float64Attribute{
 									Computed: true,
 								},
 							},
@@ -2207,12 +2207,12 @@ func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	operationalRisksVal, ok := operationalRisksAttribute.(basetypes.NumberValue)
+	operationalRisksVal, ok := operationalRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`operational_risks expected to be basetypes.NumberValue, was: %T`, operationalRisksAttribute))
+			fmt.Sprintf(`operational_risks expected to be basetypes.Float64Value, was: %T`, operationalRisksAttribute))
 	}
 
 	performanceRisksAttribute, ok := attributes["performance_risks"]
@@ -2225,12 +2225,12 @@ func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	performanceRisksVal, ok := performanceRisksAttribute.(basetypes.NumberValue)
+	performanceRisksVal, ok := performanceRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`performance_risks expected to be basetypes.NumberValue, was: %T`, performanceRisksAttribute))
+			fmt.Sprintf(`performance_risks expected to be basetypes.Float64Value, was: %T`, performanceRisksAttribute))
 	}
 
 	potentialDailySavingsAttribute, ok := attributes["potential_daily_savings"]
@@ -2243,12 +2243,12 @@ func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	potentialDailySavingsVal, ok := potentialDailySavingsAttribute.(basetypes.NumberValue)
+	potentialDailySavingsVal, ok := potentialDailySavingsAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`potential_daily_savings expected to be basetypes.NumberValue, was: %T`, potentialDailySavingsAttribute))
+			fmt.Sprintf(`potential_daily_savings expected to be basetypes.Float64Value, was: %T`, potentialDailySavingsAttribute))
 	}
 
 	reliabilityRisksAttribute, ok := attributes["reliability_risks"]
@@ -2261,12 +2261,12 @@ func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	reliabilityRisksVal, ok := reliabilityRisksAttribute.(basetypes.NumberValue)
+	reliabilityRisksVal, ok := reliabilityRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`reliability_risks expected to be basetypes.NumberValue, was: %T`, reliabilityRisksAttribute))
+			fmt.Sprintf(`reliability_risks expected to be basetypes.Float64Value, was: %T`, reliabilityRisksAttribute))
 	}
 
 	securityRisksAttribute, ok := attributes["security_risks"]
@@ -2279,12 +2279,12 @@ func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	securityRisksVal, ok := securityRisksAttribute.(basetypes.NumberValue)
+	securityRisksVal, ok := securityRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`security_risks expected to be basetypes.NumberValue, was: %T`, securityRisksAttribute))
+			fmt.Sprintf(`security_risks expected to be basetypes.Float64Value, was: %T`, securityRisksAttribute))
 	}
 
 	sustainabilityRisksAttribute, ok := attributes["sustainability_risks"]
@@ -2297,12 +2297,12 @@ func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	sustainabilityRisksVal, ok := sustainabilityRisksAttribute.(basetypes.NumberValue)
+	sustainabilityRisksVal, ok := sustainabilityRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`sustainability_risks expected to be basetypes.NumberValue, was: %T`, sustainabilityRisksAttribute))
+			fmt.Sprintf(`sustainability_risks expected to be basetypes.Float64Value, was: %T`, sustainabilityRisksAttribute))
 	}
 
 	if diags.HasError() {
@@ -2393,12 +2393,12 @@ func NewSummaryValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewSummaryValueUnknown(), diags
 	}
 
-	operationalRisksVal, ok := operationalRisksAttribute.(basetypes.NumberValue)
+	operationalRisksVal, ok := operationalRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`operational_risks expected to be basetypes.NumberValue, was: %T`, operationalRisksAttribute))
+			fmt.Sprintf(`operational_risks expected to be basetypes.Float64Value, was: %T`, operationalRisksAttribute))
 	}
 
 	performanceRisksAttribute, ok := attributes["performance_risks"]
@@ -2411,12 +2411,12 @@ func NewSummaryValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewSummaryValueUnknown(), diags
 	}
 
-	performanceRisksVal, ok := performanceRisksAttribute.(basetypes.NumberValue)
+	performanceRisksVal, ok := performanceRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`performance_risks expected to be basetypes.NumberValue, was: %T`, performanceRisksAttribute))
+			fmt.Sprintf(`performance_risks expected to be basetypes.Float64Value, was: %T`, performanceRisksAttribute))
 	}
 
 	potentialDailySavingsAttribute, ok := attributes["potential_daily_savings"]
@@ -2429,12 +2429,12 @@ func NewSummaryValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewSummaryValueUnknown(), diags
 	}
 
-	potentialDailySavingsVal, ok := potentialDailySavingsAttribute.(basetypes.NumberValue)
+	potentialDailySavingsVal, ok := potentialDailySavingsAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`potential_daily_savings expected to be basetypes.NumberValue, was: %T`, potentialDailySavingsAttribute))
+			fmt.Sprintf(`potential_daily_savings expected to be basetypes.Float64Value, was: %T`, potentialDailySavingsAttribute))
 	}
 
 	reliabilityRisksAttribute, ok := attributes["reliability_risks"]
@@ -2447,12 +2447,12 @@ func NewSummaryValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewSummaryValueUnknown(), diags
 	}
 
-	reliabilityRisksVal, ok := reliabilityRisksAttribute.(basetypes.NumberValue)
+	reliabilityRisksVal, ok := reliabilityRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`reliability_risks expected to be basetypes.NumberValue, was: %T`, reliabilityRisksAttribute))
+			fmt.Sprintf(`reliability_risks expected to be basetypes.Float64Value, was: %T`, reliabilityRisksAttribute))
 	}
 
 	securityRisksAttribute, ok := attributes["security_risks"]
@@ -2465,12 +2465,12 @@ func NewSummaryValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewSummaryValueUnknown(), diags
 	}
 
-	securityRisksVal, ok := securityRisksAttribute.(basetypes.NumberValue)
+	securityRisksVal, ok := securityRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`security_risks expected to be basetypes.NumberValue, was: %T`, securityRisksAttribute))
+			fmt.Sprintf(`security_risks expected to be basetypes.Float64Value, was: %T`, securityRisksAttribute))
 	}
 
 	sustainabilityRisksAttribute, ok := attributes["sustainability_risks"]
@@ -2483,12 +2483,12 @@ func NewSummaryValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewSummaryValueUnknown(), diags
 	}
 
-	sustainabilityRisksVal, ok := sustainabilityRisksAttribute.(basetypes.NumberValue)
+	sustainabilityRisksVal, ok := sustainabilityRisksAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`sustainability_risks expected to be basetypes.NumberValue, was: %T`, sustainabilityRisksAttribute))
+			fmt.Sprintf(`sustainability_risks expected to be basetypes.Float64Value, was: %T`, sustainabilityRisksAttribute))
 	}
 
 	if diags.HasError() {
@@ -2574,12 +2574,12 @@ func (t SummaryType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = SummaryValue{}
 
 type SummaryValue struct {
-	OperationalRisks      basetypes.NumberValue `tfsdk:"operational_risks"`
-	PerformanceRisks      basetypes.NumberValue `tfsdk:"performance_risks"`
-	PotentialDailySavings basetypes.NumberValue `tfsdk:"potential_daily_savings"`
-	ReliabilityRisks      basetypes.NumberValue `tfsdk:"reliability_risks"`
-	SecurityRisks         basetypes.NumberValue `tfsdk:"security_risks"`
-	SustainabilityRisks   basetypes.NumberValue `tfsdk:"sustainability_risks"`
+	OperationalRisks      basetypes.Float64Value `tfsdk:"operational_risks"`
+	PerformanceRisks      basetypes.Float64Value `tfsdk:"performance_risks"`
+	PotentialDailySavings basetypes.Float64Value `tfsdk:"potential_daily_savings"`
+	ReliabilityRisks      basetypes.Float64Value `tfsdk:"reliability_risks"`
+	SecurityRisks         basetypes.Float64Value `tfsdk:"security_risks"`
+	SustainabilityRisks   basetypes.Float64Value `tfsdk:"sustainability_risks"`
 	state                 attr.ValueState
 }
 
@@ -2589,12 +2589,12 @@ func (v SummaryValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 	var val tftypes.Value
 	var err error
 
-	attrTypes["operational_risks"] = basetypes.NumberType{}.TerraformType(ctx)
-	attrTypes["performance_risks"] = basetypes.NumberType{}.TerraformType(ctx)
-	attrTypes["potential_daily_savings"] = basetypes.NumberType{}.TerraformType(ctx)
-	attrTypes["reliability_risks"] = basetypes.NumberType{}.TerraformType(ctx)
-	attrTypes["security_risks"] = basetypes.NumberType{}.TerraformType(ctx)
-	attrTypes["sustainability_risks"] = basetypes.NumberType{}.TerraformType(ctx)
+	attrTypes["operational_risks"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["performance_risks"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["potential_daily_savings"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["reliability_risks"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["security_risks"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["sustainability_risks"] = basetypes.Float64Type{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
@@ -2680,12 +2680,12 @@ func (v SummaryValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	var diags diag.Diagnostics
 
 	attributeTypes := map[string]attr.Type{
-		"operational_risks":       basetypes.NumberType{},
-		"performance_risks":       basetypes.NumberType{},
-		"potential_daily_savings": basetypes.NumberType{},
-		"reliability_risks":       basetypes.NumberType{},
-		"security_risks":          basetypes.NumberType{},
-		"sustainability_risks":    basetypes.NumberType{},
+		"operational_risks":       basetypes.Float64Type{},
+		"performance_risks":       basetypes.Float64Type{},
+		"potential_daily_savings": basetypes.Float64Type{},
+		"reliability_risks":       basetypes.Float64Type{},
+		"security_risks":          basetypes.Float64Type{},
+		"sustainability_risks":    basetypes.Float64Type{},
 	}
 
 	if v.IsNull() {
@@ -2762,11 +2762,11 @@ func (v SummaryValue) Type(ctx context.Context) attr.Type {
 
 func (v SummaryValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"operational_risks":       basetypes.NumberType{},
-		"performance_risks":       basetypes.NumberType{},
-		"potential_daily_savings": basetypes.NumberType{},
-		"reliability_risks":       basetypes.NumberType{},
-		"security_risks":          basetypes.NumberType{},
-		"sustainability_risks":    basetypes.NumberType{},
+		"operational_risks":       basetypes.Float64Type{},
+		"performance_risks":       basetypes.Float64Type{},
+		"potential_daily_savings": basetypes.Float64Type{},
+		"reliability_risks":       basetypes.Float64Type{},
+		"security_risks":          basetypes.Float64Type{},
+		"sustainability_risks":    basetypes.Float64Type{},
 	}
 }

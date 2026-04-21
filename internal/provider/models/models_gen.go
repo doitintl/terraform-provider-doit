@@ -4243,12 +4243,12 @@ type InsightResponse struct {
 
 // InsightSummary defines model for InsightSummary.
 type InsightSummary struct {
-	OperationalRisks      *float32 `json:"operationalRisks,omitempty"`
-	PerformanceRisks      *float32 `json:"performanceRisks,omitempty"`
-	PotentialDailySavings *float32 `json:"potentialDailySavings,omitempty"`
-	ReliabilityRisks      *float32 `json:"reliabilityRisks,omitempty"`
-	SecurityRisks         *float32 `json:"securityRisks,omitempty"`
-	SustainabilityRisks   *float32 `json:"sustainabilityRisks,omitempty"`
+	OperationalRisks      *float64 `json:"operationalRisks,omitempty"`
+	PerformanceRisks      *float64 `json:"performanceRisks,omitempty"`
+	PotentialDailySavings *float64 `json:"potentialDailySavings,omitempty"`
+	ReliabilityRisks      *float64 `json:"reliabilityRisks,omitempty"`
+	SecurityRisks         *float64 `json:"securityRisks,omitempty"`
+	SustainabilityRisks   *float64 `json:"sustainabilityRisks,omitempty"`
 }
 
 // InviteResponse Response returned after creating a user invitation.
@@ -4730,7 +4730,7 @@ type ResourceResultEnhancement struct {
 
 // ResourceResultEnhancementPriority defines model for ResourceResultEnhancementPriority.
 type ResourceResultEnhancementPriority struct {
-	PriorityScore *float32 `json:"priorityScore,omitempty"`
+	PriorityScore *float64 `json:"priorityScore,omitempty"`
 	Value         *string  `json:"value,omitempty"`
 }
 
@@ -4758,7 +4758,7 @@ type ResourceResultResult struct {
 	Recommendation *string `json:"recommendation,omitempty"`
 
 	// Value the daily saving amount for this result
-	Value *float32 `json:"value,omitempty"`
+	Value *float64 `json:"value,omitempty"`
 }
 
 // ResourceResults defines model for ResourceResults.
@@ -5842,6 +5842,9 @@ type UpdateUserJSONRequestBody = UpdateUserRequest
 // PostInsightResultsJSONRequestBody defines body for PostInsightResults for application/json ContentType.
 type PostInsightResultsJSONRequestBody = CreateResultsBody
 
+// PostInsightResultJSONRequestBody defines body for PostInsightResult for application/json ContentType.
+type PostInsightResultJSONRequestBody = InsightRequest
+
 // UpdateInsightStatusJSONRequestBody defines body for UpdateInsightStatus for application/json ContentType.
 type UpdateInsightStatusJSONRequestBody = UpdateStatusRequest
 
@@ -6350,8 +6353,16 @@ type ClientInterface interface {
 
 	PostInsightResults(ctx context.Context, body PostInsightResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DeleteInsightResult request
+	DeleteInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetInsightResult request
 	GetInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostInsightResultWithBody request with any body
+	PostInsightResultWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostInsightResult(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInsightResourceResults request
 	GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7595,8 +7606,44 @@ func (c *Client) PostInsightResults(ctx context.Context, body PostInsightResults
 	return c.Client.Do(req)
 }
 
+func (c *Client) DeleteInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteInsightResultRequest(c.Server, sourceID, insightKey)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInsightResultRequest(c.Server, sourceID, insightKey)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInsightResultWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInsightResultRequestWithBody(c.Server, sourceID, insightKey, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInsightResult(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInsightResultRequest(c.Server, sourceID, insightKey, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11707,6 +11754,47 @@ func NewPostInsightResultsRequestWithBody(server string, contentType string, bod
 	return req, nil
 }
 
+// NewDeleteInsightResultRequest generates requests for DeleteInsightResult
+func NewDeleteInsightResultRequest(server string, sourceID string, insightKey string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "sourceID", sourceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "insightKey", insightKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/insights/v1/results/source/%s/insight/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetInsightResultRequest generates requests for GetInsightResult
 func NewGetInsightResultRequest(server string, sourceID string, insightKey string) (*http.Request, error) {
 	var err error
@@ -11744,6 +11832,60 @@ func NewGetInsightResultRequest(server string, sourceID string, insightKey strin
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPostInsightResultRequest calls the generic PostInsightResult builder with application/json body
+func NewPostInsightResultRequest(server string, sourceID string, insightKey string, body PostInsightResultJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostInsightResultRequestWithBody(server, sourceID, insightKey, "application/json", bodyReader)
+}
+
+// NewPostInsightResultRequestWithBody generates requests for PostInsightResult with any type of body
+func NewPostInsightResultRequestWithBody(server string, sourceID string, insightKey string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "sourceID", sourceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "insightKey", insightKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/insights/v1/results/source/%s/insight/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -12598,8 +12740,16 @@ type ClientWithResponsesInterface interface {
 
 	PostInsightResultsWithResponse(ctx context.Context, body PostInsightResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultsResp, error)
 
+	// DeleteInsightResultWithResponse request
+	DeleteInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*DeleteInsightResultResp, error)
+
 	// GetInsightResultWithResponse request
 	GetInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResultResp, error)
+
+	// PostInsightResultWithBodyWithResponse request with any body
+	PostInsightResultWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
+
+	PostInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
 
 	// GetInsightResourceResultsWithResponse request
 	GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error)
@@ -14534,6 +14684,31 @@ func (r PostInsightResultsResp) StatusCode() int {
 	return 0
 }
 
+type DeleteInsightResultResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteInsightResultResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteInsightResultResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetInsightResultResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -14555,6 +14730,32 @@ func (r GetInsightResultResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetInsightResultResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostInsightResultResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InsightResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r PostInsightResultResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostInsightResultResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15719,6 +15920,15 @@ func (c *ClientWithResponses) PostInsightResultsWithResponse(ctx context.Context
 	return ParsePostInsightResultsResp(rsp)
 }
 
+// DeleteInsightResultWithResponse request returning *DeleteInsightResultResp
+func (c *ClientWithResponses) DeleteInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*DeleteInsightResultResp, error) {
+	rsp, err := c.DeleteInsightResult(ctx, sourceID, insightKey, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteInsightResultResp(rsp)
+}
+
 // GetInsightResultWithResponse request returning *GetInsightResultResp
 func (c *ClientWithResponses) GetInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResultResp, error) {
 	rsp, err := c.GetInsightResult(ctx, sourceID, insightKey, reqEditors...)
@@ -15726,6 +15936,23 @@ func (c *ClientWithResponses) GetInsightResultWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParseGetInsightResultResp(rsp)
+}
+
+// PostInsightResultWithBodyWithResponse request with arbitrary body returning *PostInsightResultResp
+func (c *ClientWithResponses) PostInsightResultWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error) {
+	rsp, err := c.PostInsightResultWithBody(ctx, sourceID, insightKey, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInsightResultResp(rsp)
+}
+
+func (c *ClientWithResponses) PostInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error) {
+	rsp, err := c.PostInsightResult(ctx, sourceID, insightKey, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInsightResultResp(rsp)
 }
 
 // GetInsightResourceResultsWithResponse request returning *GetInsightResourceResultsResp
@@ -19752,6 +19979,53 @@ func ParsePostInsightResultsResp(rsp *http.Response) (*PostInsightResultsResp, e
 	return response, nil
 }
 
+// ParseDeleteInsightResultResp parses an HTTP response from a DeleteInsightResultWithResponse call
+func ParseDeleteInsightResultResp(rsp *http.Response) (*DeleteInsightResultResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteInsightResultResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetInsightResultResp parses an HTTP response from a GetInsightResultWithResponse call
 func ParseGetInsightResultResp(rsp *http.Response) (*GetInsightResultResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -19800,6 +20074,60 @@ func ParseGetInsightResultResp(rsp *http.Response) (*GetInsightResultResp, error
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostInsightResultResp parses an HTTP response from a PostInsightResultWithResponse call
+func ParsePostInsightResultResp(rsp *http.Response) (*PostInsightResultResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostInsightResultResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InsightResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500
