@@ -3,13 +3,16 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 const budgetSchemaVersion = 1
@@ -20,6 +23,7 @@ type (
 	}
 	budgetResourceModel struct {
 		resource_budget.BudgetModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -77,6 +81,24 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		}
 	}
 
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.Int64Attribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, int64planmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
+	}
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
 	resp.Schema = s
 }
 
@@ -100,6 +122,14 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	// Convert model to API budget type
 	budget, diags := plan.toUpdateRequest(ctx)
@@ -134,9 +164,12 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Map response directly to state
-	plan.Id = types.StringPointerValue(budgetResp.JSON201.Id)
-	resp.Diagnostics.Append(mapBudgetToModel(ctx, budgetResp.JSON201, &plan)...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	// This prevents "Provider produced inconsistent result" errors caused by the
+	// API normalizing user-provided values (stripping sentinels, renaming types).
+	// Read and ImportState still use mapBudgetToModel for the full API response.
+	resp.Diagnostics.Append(overlayBudgetComputedFields(ctx, budgetResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -153,6 +186,14 @@ func (r *budgetResource) Read(ctx context.Context, req resource.ReadRequest, res
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// Populate state
 	resp.Diagnostics.Append(r.populateState(ctx, &state)...)
@@ -178,6 +219,14 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	// Convert model to API budget type
 	budget, diags := plan.toUpdateRequest(ctx)
@@ -221,9 +270,9 @@ func (r *budgetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
+	// Plan-first state pattern: preserve user's plan values, overlay computed fields only.
 	plan.Id = state.Id
-	diags = mapBudgetToModel(ctx, updateResp.JSON200, &plan)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(overlayBudgetComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -240,6 +289,14 @@ func (r *budgetResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	// Delete budget via API
 	deleteResp, err := r.client.DeleteBudgetWithResponse(ctx, state.Id.ValueString())

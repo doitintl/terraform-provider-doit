@@ -2,7 +2,9 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -26,6 +28,7 @@ type doitProviderModel struct {
 	Host            types.String `tfsdk:"host"`
 	DoiTAPITOken    types.String `tfsdk:"api_token"`
 	CustomerContext types.String `tfsdk:"customer_context"`
+	RequestTimeout  types.String `tfsdk:"request_timeout"`
 }
 
 // New is a helper function to simplify provider server and testing implementation.
@@ -72,6 +75,12 @@ func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, res
 			"customer_context": schema.StringAttribute{
 				Description: "Customer context. May also be provided by DOIT_CUSTOMER_CONTEXT " +
 					"environment variable. This field is required for DoiT employees only.",
+				Optional: true,
+			},
+			"request_timeout": schema.StringAttribute{
+				Description: "Timeout for individual HTTP requests to the DoiT API, as a duration " +
+					"string (e.g. \"30s\", \"2m\"). Defaults to \"120s\". " +
+					"May also be provided via DOIT_REQUEST_TIMEOUT environment variable.",
 				Optional: true,
 			},
 		},
@@ -174,8 +183,47 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		return
 	}
 
+	// Parse request timeout
+	requestTimeout := DefaultRequestTimeout
+	if v := os.Getenv("DOIT_REQUEST_TIMEOUT"); v != "" {
+		if parsed, err := time.ParseDuration(v); err == nil {
+			requestTimeout = parsed
+		} else {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("request_timeout"),
+				"Invalid DOIT_REQUEST_TIMEOUT",
+				fmt.Sprintf("Could not parse DOIT_REQUEST_TIMEOUT environment variable %q as a duration: %s", v, err),
+			)
+		}
+	}
+	if !config.RequestTimeout.IsNull() && !config.RequestTimeout.IsUnknown() {
+		if parsed, err := time.ParseDuration(config.RequestTimeout.ValueString()); err == nil {
+			requestTimeout = parsed
+		} else {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("request_timeout"),
+				"Invalid Request Timeout",
+				fmt.Sprintf("Could not parse request_timeout %q as a duration: %s. Use Go duration format, e.g. \"30s\", \"2m\", \"1h\".", config.RequestTimeout.ValueString(), err),
+			)
+		}
+	}
+
+	if requestTimeout <= 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("request_timeout"),
+			"Invalid Request Timeout",
+			fmt.Sprintf("request_timeout must be a positive duration, got %q. Use Go duration format, e.g. \"30s\", \"2m\", \"1h\".", requestTimeout.String()),
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	tflog.Debug(ctx, "Request timeout configured", map[string]any{"timeout": requestTimeout.String()})
+
 	// Create a new DoiT client using the configuration values
-	client, err := NewClient(ctx, host, doiTAPIToken, customerContext, req.TerraformVersion, p.version)
+	client, err := NewClient(ctx, host, doiTAPIToken, customerContext, req.TerraformVersion, p.version, requestTimeout)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create DoiT API Client",
@@ -209,6 +257,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCloudIncidentDataSource,
 		NewCommitmentDataSource,
 		NewAssetDataSource,
+		NewDimensionDataSource,
 		NewDimensionsDataSource,
 		NewRolesDataSource,
 		NewCurrentUserDataSource,
@@ -216,6 +265,9 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewUsersDataSource,
 		NewReportResultDataSource,
 		NewReportQueryDataSource,
+		NewSupportRequestDataSource,
+		NewDatahubDatasetDataSource,
+		NewAvaDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
@@ -229,16 +281,14 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCommitmentsDataSource,
 		NewAssetsDataSource,
 		NewSupportRequestsDataSource,
-		NewSupportRequestDataSource,
 		NewSupportRequestCommentsDataSource,
 		NewPlatformsDataSource,
 		NewProductsDataSource,
 		NewOrganizationsDataSource,
-		// DataHub data sources
-		NewDatahubDatasetDataSource,
 		NewDatahubDatasetsDataSource,
 		// AI assistant data source
 		NewAvaDataSource,
+		NewCloudDiagramsDataSource,
 		// Insights data source
 		NewInsightsDataSource,
 	}

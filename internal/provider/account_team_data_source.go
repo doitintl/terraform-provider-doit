@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_account_team"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,6 +26,7 @@ type accountTeamDataSource struct {
 
 type accountTeamDataSourceModel struct {
 	datasource_account_team.AccountTeamModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *accountTeamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -31,7 +34,11 @@ func (d *accountTeamDataSource) Metadata(ctx context.Context, req datasource.Met
 }
 
 func (d *accountTeamDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_account_team.AccountTeamDataSourceSchema(ctx)
+	s := datasource_account_team.AccountTeamDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (d *accountTeamDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -58,6 +65,14 @@ func (d *accountTeamDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	apiResp, err := d.client.ListAccountTeamWithResponse(ctx)
 	if err != nil {

@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.3.4 (2026-04-17)
+
+### ENHANCEMENTS
+
+- **resource/doit_allocation, doit_alert, doit_annotation, doit_asset, doit_budget, doit_datahub_dataset, doit_label, doit_report**: Added `UseStateForUnknown` plan modifier to stable Computed-only fields (`id`, `create_time`, `update_time`, `allocation_type`) to reduce plan noise ([#160](https://github.com/doitintl/terraform-provider-doit/pull/160))
+
+### BUG FIXES
+
+- **resource/doit_allocation**: Adopted plan-first state pattern to prevent "Provider produced inconsistent result" errors when the API normalizes user-provided values ([#152](https://github.com/doitintl/terraform-provider-doit/pull/152))
+- **resource/doit_budget**: Adopted plan-first state pattern to prevent "Provider produced inconsistent result" errors ([#153](https://github.com/doitintl/terraform-provider-doit/pull/153))
+- **resource/doit_allocation**: Fixed acceptance test for API suffix rejection behavior change ([#164](https://github.com/doitintl/terraform-provider-doit/pull/164))
+- **build**: Quoted TEST variable in `testacc-run` Makefile target to correctly handle pipe-separated test names ([#163](https://github.com/doitintl/terraform-provider-doit/pull/163))
+
+### INTERNAL
+
+- Upgraded Go from 1.26.1 to 1.26.2
+- Upgraded dependencies: `oapi-codegen/runtime` v1.3.1→v1.4.0, `google.golang.org/grpc` v1.79.3→v1.80.0, `golang.org/x/net` v0.52.0→v0.53.0
+- Upgraded CI workflow action: `actions/setup-go` v6.3.0→v6.4.0
+- Refactored all resources to adopt universal two-phase overlay pattern for Create/Update, structurally preventing "Provider produced inconsistent result" errors ([#154](https://github.com/doitintl/terraform-provider-doit/pull/154), [#156](https://github.com/doitintl/terraform-provider-doit/pull/156), [#157](https://github.com/doitintl/terraform-provider-doit/pull/157), [#158](https://github.com/doitintl/terraform-provider-doit/pull/158), [#159](https://github.com/doitintl/terraform-provider-doit/pull/159))
+- Regenerated provider resources and updated dependencies ([#161](https://github.com/doitintl/terraform-provider-doit/pull/161))
+- Re-enabled support request acceptance tests after upstream API fix ([#162](https://github.com/doitintl/terraform-provider-doit/pull/162))
+
+## v1.3.3 (2026-04-13)
+
+### BUG FIXES
+
+- **resource/doit_allocation**: Fixed `Value Conversion Error` crash and HTTP 500 when updating a single allocation rule ([#149](https://github.com/doitintl/terraform-provider-doit/pull/149))
+
+### DOCUMENTATION
+
+- Updated `cost_of_anomaly` description to clarify it represents excess cost above baseline ([#151](https://github.com/doitintl/terraform-provider-doit/pull/151))
+
+### INTERNAL
+
+- Added drift detection steps (`ExpectEmptyPlan`) to acceptance tests for all resources ([#150](https://github.com/doitintl/terraform-provider-doit/pull/150))
+
 ## v1.3.2 (2026-04-02)
 
 ### BUG FIXES

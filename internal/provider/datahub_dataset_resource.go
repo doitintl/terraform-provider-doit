@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_datahub_dataset"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -19,6 +21,7 @@ type (
 	}
 	datahubDatasetResourceModel struct {
 		resource_datahub_dataset.DatahubDatasetModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -67,6 +70,33 @@ func (r *datahubDatasetResource) Schema(ctx context.Context, _ resource.SchemaRe
 		nameAttr.PlanModifiers = append(nameAttr.PlanModifiers, stringplanmodifier.RequiresReplace())
 		resp.Schema.Attributes["name"] = nameAttr
 	}
+
+	resp.Schema.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+}
+
+// overlayDatahubDatasetComputedFields uses the two-phase overlay pattern to
+// reconcile the Terraform plan with the API response after Create/Update.
+func overlayDatahubDatasetComputedFields(name, description *string, records *int64, updatedBy, lastUpdated *string, plan *datahubDatasetResourceModel) {
+	// Phase 1: Build fully-resolved state from API response.
+	resolved := *plan
+	mapDatahubDatasetToModel(name, description, records, updatedBy, lastUpdated, &resolved)
+
+	// Phase 2: Overlay.
+	// Name: Required — never touch.
+	// Records, UpdatedBy, LastUpdated: Computed-only — always from resolved.
+	plan.Records = resolved.Records
+	plan.UpdatedBy = resolved.UpdatedBy
+	plan.LastUpdated = resolved.LastUpdated
+
+	// Description: Optional+Computed — resolve when Unknown.
+	if plan.Description.IsUnknown() {
+		plan.Description = resolved.Description
+	}
 }
 
 func (r *datahubDatasetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -76,6 +106,14 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	apiReq := models.CreateDatahubDatasetRequestBody{
 		Name: plan.Name.ValueString(),
@@ -109,7 +147,9 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	mapDatahubDatasetToModel(createResp.JSON201.Name, createResp.JSON201.Description, createResp.JSON201.Records, createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (description) from the API when unknown.
+	overlayDatahubDatasetComputedFields(createResp.JSON201.Name, createResp.JSON201.Description, createResp.JSON201.Records, createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -121,6 +161,14 @@ func (r *datahubDatasetResource) Read(ctx context.Context, req resource.ReadRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	datasetResp, err := r.client.GetDatahubDatasetWithResponse(ctx, state.Name.ValueString())
 	if err != nil {
@@ -165,6 +213,14 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
+
 	var state datahubDatasetResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -202,7 +258,9 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	mapDatahubDatasetToModel(updateResp.JSON200.Name, updateResp.JSON200.Description, updateResp.JSON200.Records, updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
+	// Plan-first state pattern: overlay Computed-only fields and resolve
+	// Optional+Computed fields (description) from the API when unknown.
+	overlayDatahubDatasetComputedFields(updateResp.JSON200.Name, updateResp.JSON200.Description, updateResp.JSON200.Records, updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -214,6 +272,14 @@ func (r *datahubDatasetResource) Delete(ctx context.Context, req resource.Delete
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	deleteResp, err := r.client.DeleteDatahubDatasetWithResponse(ctx, state.Name.ValueString())
 	if err != nil {

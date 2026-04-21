@@ -38,8 +38,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"cost_of_anomaly": schema.Float64Attribute{
 							Computed:            true,
-							Description:         "Cost of the anomaly over and above the expected normal cost.",
-							MarkdownDescription: "Cost of the anomaly over and above the expected normal cost.",
+							Description:         "Excess cost over and above the expected normal cost.",
+							MarkdownDescription: "Excess cost over and above the expected normal cost.",
 						},
 						"end_time": schema.Int64Attribute{
 							Computed:            true,
@@ -47,9 +47,7 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "End of the anomaly.",
 						},
 						"id": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"platform": schema.StringAttribute{
 							Computed:            true,
@@ -68,14 +66,10 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 										MarkdownDescription: "For anomalies related to AWS S3",
 									},
 									"resource_id": schema.StringAttribute{
-										Computed:            true,
-										Description:         "",
-										MarkdownDescription: "",
+										Computed: true,
 									},
 									"sku_description": schema.StringAttribute{
-										Computed:            true,
-										Description:         "",
-										MarkdownDescription: "",
+										Computed: true,
 									},
 								},
 								CustomType: ResourceDataType{
@@ -109,9 +103,7 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 							MarkdownDescription: "Usage start time of the anomaly.",
 						},
 						"status": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"time_frame": schema.StringAttribute{
 							Computed:            true,
@@ -125,9 +117,7 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 										Computed: true,
 									},
 									"name": schema.StringAttribute{
-										Computed:            true,
-										Description:         "",
-										MarkdownDescription: "",
+										Computed: true,
 									},
 								},
 								CustomType: Top3skusType{

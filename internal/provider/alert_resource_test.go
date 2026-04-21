@@ -74,6 +74,15 @@ func TestAccAlert(t *testing.T) {
 						knownvalue.Float64Exact(2000)),
 				},
 			},
+			// Step 3: Drift check — re-apply same updated config, expect no changes.
+			{
+				Config: testAccAlertUpdate(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -93,6 +102,15 @@ func TestAccAlert_Import(t *testing.T) {
 				ResourceName:      "doit_alert.this",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			// Step 3: Drift check — re-apply config after import, expect no changes.
+			{
+				Config: testAccAlert(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
@@ -1349,6 +1367,73 @@ resource "doit_alert" "this" {
         values = ["Compute Engine", "[Service N/A]"]
       }
     ]
+  }
+}
+`, i)
+}
+
+// TestAccAlert_MinimalConfig tests creating an alert with only the absolute
+// minimum required fields, omitting all Optional+Computed config scalars
+// (condition, currency, operator, time_interval, evaluate_for_each, data_source).
+// This exercises the overlay code's handling of Unknown values for every
+// Optional+Computed field in the config object.
+func TestAccAlert_MinimalConfig(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with minimal config.
+			{
+				Config: testAccAlertMinimalConfig(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-alert-minimal-%d", n))),
+					// time_interval defaults to "year" via schema default
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("time_interval"),
+						knownvalue.StringExact("year")),
+					// Scopes should be empty list (not null)
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListSizeExact(0)),
+					// Attributions should be empty list (not null)
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("attributions"),
+						knownvalue.ListSizeExact(0)),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccAlertMinimalConfig(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertMinimalConfig(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-minimal-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    value    = 500
+    operator = "gt"
   }
 }
 `, i)

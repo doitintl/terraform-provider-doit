@@ -7,6 +7,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_annotation"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -25,6 +26,7 @@ type (
 	}
 	annotationDataSourceModel struct {
 		datasource_annotation.AnnotationModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -33,7 +35,11 @@ func (d *annotationDataSource) Metadata(_ context.Context, req datasource.Metada
 }
 
 func (d *annotationDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_annotation.AnnotationDataSourceSchema(ctx)
+	s := datasource_annotation.AnnotationDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (d *annotationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -61,6 +67,14 @@ func (d *annotationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ID is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.

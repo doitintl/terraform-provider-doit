@@ -86,6 +86,10 @@ output "row_count" {
 
 - `config` (Attributes) The report configuration. Same structure as the `config` attribute on the `doit_report` resource. (see [below for nested schema](#nestedatt--config))
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `cache_hit` (Boolean) If true, results were fetched from the cache.
@@ -203,7 +207,7 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 
 Optional:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--group--limit--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--group--limit--metric))
 - `sort` (String) Sort order for ranking results.
 Possible values: `a_to_z`, `asc`, `desc`
 - `value` (Number) The number of items to show
@@ -237,7 +241,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 
 Optional:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
 - `operator` (String) Comparison operator for filtering metric values.
 Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)
@@ -337,3 +341,12 @@ Optional:
 Possible values: `last`, `current`, `custom`
 - `unit` (String) Time unit for the time range.
 Possible values: `day`, `week`, `month`, `quarter`, `year`
+
+
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).

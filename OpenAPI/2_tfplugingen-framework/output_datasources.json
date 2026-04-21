@@ -1265,7 +1265,7 @@
 										"name": "cost_of_anomaly",
 										"float64": {
 											"computed_optional_required": "computed",
-											"description": "Cost of the anomaly over and above the expected normal cost."
+											"description": "Excess cost over and above the expected normal cost."
 										}
 									},
 									{
@@ -2474,6 +2474,40 @@
 			}
 		},
 		{
+			"name": "cloud_diagrams",
+			"schema": {
+				"attributes": [
+					{
+						"name": "cloud_diagrams",
+						"set_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "diagram_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to the diagram viewer."
+										}
+									},
+									{
+										"name": "image_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to the diagram image."
+										}
+									}
+								]
+							},
+							"description": "List of diagram URLs matching the criteria."
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_incident",
 			"schema": {
 				"attributes": [
@@ -3086,6 +3120,69 @@
 				],
 				"description": "Ingest third-party cost, usage, and metric-based data for analysis.",
 				"markdown_description": "Ingest third-party cost, usage, and metric-based data for analysis."
+			}
+		},
+		{
+			"name": "dimension",
+			"schema": {
+				"attributes": [
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Dimension type",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Dimension id"
+						}
+					},
+					{
+						"name": "label",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "values",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "cloud",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "value",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "View available dimensions for analysis.",
+				"markdown_description": "View available dimensions for analysis."
 			}
 		},
 		{
@@ -4293,7 +4390,7 @@
 																			}
 																		}
 																	],
-																	"description": "Deprecated: Use 'metrics' instead."
+																	"description": "Metric selector used in reports and filters."
 																}
 															},
 															{
@@ -4395,7 +4492,7 @@
 															}
 														}
 													],
-													"description": "Deprecated: Use 'metrics' instead."
+													"description": "Metric selector used in reports and filters."
 												}
 											},
 											{

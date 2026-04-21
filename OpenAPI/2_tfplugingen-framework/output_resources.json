@@ -1906,7 +1906,7 @@
 																			}
 																		}
 																	],
-																	"description": "Deprecated: Use 'metrics' instead."
+																	"description": "Metric selector used in reports and filters."
 																}
 															},
 															{
@@ -2071,7 +2071,7 @@
 															}
 														}
 													],
-													"description": "Deprecated: Use 'metrics' instead."
+													"description": "Metric selector used in reports and filters."
 												}
 											},
 											{

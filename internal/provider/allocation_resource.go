@@ -3,14 +3,21 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
-	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 type (
@@ -19,6 +26,7 @@ type (
 	}
 	allocationResourceModel struct {
 		resource_allocation.AllocationModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -95,6 +103,36 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		}
 	}
 
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.Int64Attribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, int64planmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
+	}
+	if attr, ok := s.Attributes["allocation_type"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["allocation_type"] = attr
+	}
+	if attr, ok := s.Attributes["anomaly_detection"].(schema.BoolAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, boolplanmodifier.UseStateForUnknown())
+		s.Attributes["anomaly_detection"] = attr
+	}
+	if attr, ok := s.Attributes["type"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["type"] = attr
+	}
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
 	resp.Schema = s
 }
 
@@ -123,6 +161,14 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	// Generate API request body from state
 	allocationReq, diags := plan.toCreateRequest(ctx)
@@ -165,9 +211,12 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.mapAllocationToModel(ctx, allocationResp.JSON200, plan)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	// This prevents "Provider produced inconsistent result" errors caused by the
+	// API normalizing user-provided values (stripping sentinels, renaming services).
+	// Read and ImportState still use mapAllocationToModel for the full API response.
+	resp.Diagnostics.Append(r.overlayComputedFields(ctx, allocationResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -182,6 +231,14 @@ func (r *allocationResource) Read(ctx context.Context, req resource.ReadRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// allowNotFound=true: 404 means resource was deleted externally, remove from state
 	diags = r.populateState(ctx, state, true)
@@ -207,6 +264,14 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
+
 	// Generate API request body from plan
 	allocation, diags := plan.toUpdateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
@@ -214,15 +279,24 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	state := new(allocationResourceModel)
-	diags = req.State.Get(ctx, state)
+	// We need the allocation ID from state for the API call.
+	var stateId types.String
+	diags = req.State.GetAttribute(ctx, path.Root("id"), &stateId)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	if stateId.IsNull() || stateId.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Error updating allocation",
+			"Could not update allocation because the resource ID in state is null or unknown.",
+		)
+		return
+	}
+
 	// Update the allocation
-	updateResp, err := r.client.UpdateAllocationWithResponse(ctx, state.Id.ValueString(), allocation)
+	updateResp, err := r.client.UpdateAllocationWithResponse(ctx, stateId.ValueString(), allocation)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating allocation",
@@ -255,14 +329,14 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.mapAllocationToModel(ctx, updateResp.JSON200, state)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	resp.Diagnostics.Append(r.overlayComputedFields(ctx, updateResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -272,6 +346,14 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	deleteResp, err := r.client.DeleteAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {

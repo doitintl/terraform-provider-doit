@@ -227,3 +227,125 @@ func TestReportFilterNAValidator_EmptyConfig(t *testing.T) {
 		t.Errorf("expected zero diagnostics with empty config, got %d", len(resp.Diagnostics))
 	}
 }
+
+// ---------------------------------------------------------------------------
+// TestWarnNASentinels — unknown element handling
+// ---------------------------------------------------------------------------
+
+// TestWarnNASentinels_UnknownElement verifies that unknown elements in a
+// filter/scope values list do not crash the validator. This reproduces the
+// original "Value Conversion Error" where ElementsAs to []string crashed
+// on unknown values. With []basetypes.StringValue, unknown elements are
+// silently skipped instead.
+func TestWarnNASentinels_UnknownElement(t *testing.T) {
+	ctx := context.Background()
+
+	unknownList := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("known-allocation-id"),
+		types.StringUnknown(), // simulates a cross-resource reference during plan
+	})
+
+	var diags diag.Diagnostics
+	warnNASentinels(ctx, path.Root("test"), []types.List{unknownList}, &diags)
+
+	if diags.HasError() {
+		t.Fatalf("warnNASentinels crashed with unknown element: %v", diags)
+	}
+	if countWarnings(diags) > 0 {
+		t.Errorf("expected no warnings when no sentinel values present, got %d", countWarnings(diags))
+	}
+}
+
+// TestWarnNASentinels_MixedUnknownAndSentinel verifies that known sentinel
+// values still produce deprecation warnings even when other elements in the
+// same list are unknown. This is the key advantage of using
+// []basetypes.StringValue over the skip-all approach.
+func TestWarnNASentinels_MixedUnknownAndSentinel(t *testing.T) {
+	ctx := context.Background()
+
+	mixedList := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("[Service N/A]"), // sentinel — should warn
+		types.StringUnknown(),              // unknown — should be skipped
+		types.StringValue("normal-value"),  // normal — no warning
+	})
+
+	var diags diag.Diagnostics
+	warnNASentinels(ctx, path.Root("test"), []types.List{mixedList}, &diags)
+
+	if diags.HasError() {
+		t.Fatalf("unexpected error: %v", diags)
+	}
+	if got := countWarnings(diags); got != 1 {
+		t.Errorf("expected 1 warning for sentinel in mixed list, got %d", got)
+	}
+}
+
+// TestWarnNASentinels_AllUnknown reproduces the crash when ALL elements in a
+// values list are unknown (e.g. values = [doit_allocation.xxx.id]).
+func TestWarnNASentinels_AllUnknown(t *testing.T) {
+	ctx := context.Background()
+
+	unknownList := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringUnknown(),
+	})
+
+	var diags diag.Diagnostics
+	warnNASentinels(ctx, path.Root("test"), []types.List{unknownList}, &diags)
+
+	if diags.HasError() {
+		t.Fatalf("warnNASentinels crashed with all-unknown elements: %v", diags)
+	}
+}
+
+// TestWarnNAFilterValues_UnknownElement reproduces the crash through the full
+// warnNAFilterValues path (the report validator's entry point).
+func TestWarnNAFilterValues_UnknownElement(t *testing.T) {
+	ctx := context.Background()
+
+	f, fDiags := resource_report.NewFiltersValue(
+		resource_report.FiltersValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"case_insensitive": types.BoolValue(false),
+			"id":               types.StringValue("attribution"),
+			"include_null":     types.BoolValue(false),
+			"inverse":          types.BoolNull(),
+			"mode":             types.StringValue("is"),
+			"type":             types.StringValue("allocation_rule"),
+			"values": types.ListValueMust(types.StringType, []attr.Value{
+				types.StringUnknown(), // simulates doit_allocation.xxx.id during plan
+			}),
+		},
+	)
+	if fDiags.HasError() {
+		t.Fatalf("NewFiltersValue: %v", fDiags)
+	}
+
+	var diags diag.Diagnostics
+	warnNAFilterValues(ctx, []resource_report.FiltersValue{f}, &diags)
+
+	if diags.HasError() {
+		t.Fatalf("warnNAFilterValues crashed with unknown element: %v", diags)
+	}
+}
+
+// TestWarnNASentinels_KnownValues_StillWarns verifies that the sentinel warning
+// still fires for fully-known values containing sentinels (guard against
+// false positives from the unknown-element fix).
+func TestWarnNASentinels_KnownValues_StillWarns(t *testing.T) {
+	ctx := context.Background()
+
+	knownList := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("[Service N/A]"),
+		types.StringValue("normal-value"),
+	})
+
+	var diags diag.Diagnostics
+	warnNASentinels(ctx, path.Root("test"), []types.List{knownList}, &diags)
+
+	if diags.HasError() {
+		t.Fatalf("unexpected error: %v", diags)
+	}
+	if got := countWarnings(diags); got != 1 {
+		t.Errorf("expected 1 warning for sentinel value, got %d", got)
+	}
+}

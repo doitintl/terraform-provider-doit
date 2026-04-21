@@ -46,11 +46,20 @@ Valid fields: **name**, **type**.
 Possible values: `id`, `name`, `type`, `createTime`, `updateTime`
 - `sort_order` (String) Sort order can be ascending or descending.
 Possible values: `asc`, `desc`
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `labels` (Attributes List) (see [below for nested schema](#nestedatt--labels))
 - `row_count` (Number) Total number of labels in the result set.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--labels"></a>
 ### Nested Schema for `labels`

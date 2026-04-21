@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_incident"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -19,6 +21,11 @@ func NewCloudIncidentDataSource() datasource.DataSource {
 
 type cloudIncidentDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type cloudIncidentDataSourceModel struct {
+	datasource_cloud_incident.CloudIncidentModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (ds *cloudIncidentDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -41,15 +48,27 @@ func (ds *cloudIncidentDataSource) Configure(_ context.Context, req datasource.C
 }
 
 func (ds *cloudIncidentDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_cloud_incident.CloudIncidentDataSourceSchema(ctx)
+	s := datasource_cloud_incident.CloudIncidentDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (ds *cloudIncidentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state datasource_cloud_incident.CloudIncidentModel
+	var state cloudIncidentDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ID is unknown (depends on a resource not yet created), set all computed
 	// attributes to unknown so consumers don't treat null as a real value during planning.

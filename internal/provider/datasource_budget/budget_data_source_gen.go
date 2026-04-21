@@ -50,14 +50,10 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"email": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"role": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 					},
 					CustomType: CollaboratorsType{
@@ -131,32 +127,22 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"customer_id": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"id": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"name": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"shared": schema.BoolAttribute{
 							Computed: true,
 						},
 						"type": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 						"workspace": schema.StringAttribute{
-							Computed:            true,
-							Description:         "",
-							MarkdownDescription: "",
+							Computed: true,
 						},
 					},
 					CustomType: RecipientsSlackChannelsType{

@@ -49,6 +49,10 @@ data_sources:
     read:
       path: /analytics/v1/commitment-manager/{id}
       method: GET
+  dimension:
+    read:
+      path: /analytics/v1/dimension
+      method: GET
   dimensions:
     read:
       path: /analytics/v1/dimensions
@@ -158,4 +162,9 @@ data_sources:
   ava:
     read:
       path: /ava/v1/askSync
+      method: POST
+  # Cloud Diagrams data source
+  cloud_diagrams:
+    read:
+      path: /clouddiagrams/v1/scheme/find
       method: POST

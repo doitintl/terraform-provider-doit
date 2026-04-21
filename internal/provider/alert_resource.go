@@ -3,12 +3,16 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_alert"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 // Ensure the implementation satisfies expected interfaces.
@@ -25,6 +29,7 @@ type (
 	}
 	alertResourceModel struct {
 		resource_alert.AlertModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -60,7 +65,27 @@ func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStat
 }
 
 func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_alert.AlertResourceSchema(ctx)
+	s := resource_alert.AlertResourceSchema(ctx)
+
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.Int64Attribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, int64planmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
+	}
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
+	resp.Schema = s
 }
 
 func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
@@ -79,6 +104,14 @@ func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	// Convert model to API alert request
 	alertReq, diags := plan.toAlertRequest(ctx)
@@ -113,9 +146,9 @@ func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	// Map response directly to state (API returns complete object)
-	plan.Id = types.StringPointerValue(alertResp.JSON201.Id)
-	resp.Diagnostics.Append(mapAlertToModel(ctx, alertResp.JSON201, &plan)...)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
+	resp.Diagnostics.Append(overlayAlertComputedFields(ctx, alertResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -132,6 +165,14 @@ func (r *alertResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// Populate state from API
 	resp.Diagnostics.Append(r.populateState(ctx, &state)...)
@@ -157,6 +198,14 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	// Convert model to API alert update request
 	alertReq, diags := plan.toAlertUpdateRequest(ctx)
@@ -191,7 +240,8 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// Map response directly to state (API returns complete object)
+	// Plan-first state pattern: keep all user-configured values from the plan
+	// exactly as-is, and only overlay Computed-only fields from the API response.
 	if updateResp.JSON200 == nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Alert",
@@ -201,7 +251,7 @@ func (r *alertResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	plan.Id = state.Id
-	resp.Diagnostics.Append(mapAlertToModel(ctx, updateResp.JSON200, &plan)...)
+	resp.Diagnostics.Append(overlayAlertComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -218,6 +268,14 @@ func (r *alertResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	// Delete alert via API
 	deleteResp, err := r.client.DeleteAlertWithResponse(ctx, state.Id.ValueString())

@@ -43,6 +43,10 @@ output "annotation_reports" {
 
 - `id` (String) Annotation ID
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `content` (String) The content of the annotation.
@@ -51,6 +55,14 @@ output "annotation_reports" {
 - `reports` (List of String) List of report IDs associated with the annotation.
 - `timestamp` (String) The date associated with the annotation.
 - `update_time` (String) The time when the annotation was last updated.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--labels"></a>
 ### Nested Schema for `labels`

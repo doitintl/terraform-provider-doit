@@ -18,6 +18,7 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # export TEST_COMMITMENT_ID="your-commitment-id"
 # export TEST_ASSET_ID="your-asset-id"
 # export TEST_ASSET_ID_AWS="your-aws-asset-id"
+# export TEST_CLOUD_DIAGRAM_RESOURCE="//compute.googleapis.com/projects/your-project/global/networks/your-network"
 
 # DoiT employees only - uncomment the following line:
 # export DOIT_CUSTOMER_CONTEXT="$TEST_CUSTOMER_ID"

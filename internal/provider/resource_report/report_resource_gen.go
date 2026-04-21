@@ -320,8 +320,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											},
 											Optional:            true,
 											Computed:            true,
-											Description:         "Deprecated: Use 'metrics' instead.",
-											MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+											Description:         "Metric selector used in reports and filters.",
+											MarkdownDescription: "Metric selector used in reports and filters.",
 										},
 										"sort": schema.StringAttribute{
 											Optional:            true,
@@ -490,8 +490,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								},
 								Optional:            true,
 								Computed:            true,
-								Description:         "Deprecated: Use 'metrics' instead.",
-								MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+								Description:         "Metric selector used in reports and filters.",
+								MarkdownDescription: "Metric selector used in reports and filters.",
 							},
 							"operator": schema.StringAttribute{
 								Optional:            true,

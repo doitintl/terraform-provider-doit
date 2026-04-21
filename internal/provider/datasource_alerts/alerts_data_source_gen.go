@@ -43,9 +43,7 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "Currency code for monetary values.",
 								},
 								"data_source": schema.StringAttribute{
-									Computed:            true,
-									Description:         "",
-									MarkdownDescription: "",
+									Computed: true,
 								},
 								"evaluate_for_each": schema.StringAttribute{
 									Computed:            true,
@@ -60,9 +58,7 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 											MarkdownDescription: "Identifier for metric type (e.g., basic, custom, extended).",
 										},
 										"value": schema.StringAttribute{
-											Computed:            true,
-											Description:         "",
-											MarkdownDescription: "",
+											Computed: true,
 										},
 									},
 									CustomType: MetricType{

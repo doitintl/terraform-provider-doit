@@ -6,18 +6,29 @@
 [![Go](https://img.shields.io/github/go-mod/go-version/doitintl/terraform-provider-doit)](https://go.dev/)
 [![License](https://img.shields.io/github/license/doitintl/terraform-provider-doit)](LICENSE)
 
-This Terraform provider allows you to manage DoiT Cloud Intelligence resources using the [DoiT API](https://developer.doit.com/reference). The provider is being actively developed and aims to provide full coverage of the compatible public API endpoints. Version 1.0.0 is considered the first stable release.
-
-## Upgrading to v1.0.0
+The DoiT Cloud Intelligence Terraform Provider lets you manage [DoiT Cloud Intelligence](https://www.doit.com/platform/) resources as code using the [DoiT API](https://developer.doit.com/reference). It covers FinOps workflows (budgets, allocations, alerts, reports), operational data (anomalies, incidents, commitments, assets), and organizational resources (labels, annotations, DataHub datasets).
 
 > [!IMPORTANT]
-> Version 1.0.0 is a major release with breaking changes. If you are upgrading from v0.x, please see the [v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md) for detailed migration instructions.
+> **Upgrading from v0.x?** Version 1.0.0 contains breaking changes. See the [v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md) for migration instructions.
 
 ## Getting Started
 
-To get started with the provider, you first need to create an [API key](https://developer.doit.com/docs/start#api-keys) for the DoiT Console.
+### Prerequisites
 
-You then configure the provider like so:
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
+- A DoiT Cloud Intelligence account with an [API key](https://developer.doit.com/docs/start#api-keys)
+
+### Authentication
+
+The provider supports three configuration options, all of which can be set via environment variables:
+
+| Attribute          | Environment Variable     | Required | Description                          |
+| ------------------ | ------------------------ | -------- | ------------------------------------ |
+| `api_token`        | `DOIT_API_TOKEN`         | Yes      | Your DoiT API key                    |
+| `host`             | `DOIT_HOST`              | No       | API host (defaults to `https://api.doit.com`) |
+| `customer_context` | `DOIT_CUSTOMER_CONTEXT`  | No*      | Customer context (*required for DoiT employees only*) |
+
+### Provider Configuration
 
 ```terraform
 terraform {
@@ -30,109 +41,160 @@ terraform {
 }
 
 provider "doit" {
-  api_token = "your-api-key"
+  # Set DOIT_API_TOKEN in your environment before running terraform apply
 }
 ```
 
-If you are a Do'er, you also need to define the customer context:
+Or configure explicitly:
 
 ```terraform
 provider "doit" {
-  api_token = "your-api-key"
-  customer_context = "your-customer-context"
+  api_token        = "your-api-key"
+  customer_context = "your-customer-context" # DoiT employees only
 }
 ```
 
-Alternatively, you can also use the `DOIT_API_TOKEN` and `DOIT_CUSTOMER_CONTEXT` environment variables.
+## Available Resources
 
-## Requirements
+### Resources
 
-- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.26
+| Resource | Description |
+| -------- | ----------- |
+| `doit_alert` | Cost/usage alerts with threshold notifications |
+| `doit_allocation` | Cost allocation rules and groups |
+| `doit_annotation` | Custom notes on cost data |
+| `doit_asset` | Cloud assets (import-only; manage Google Workspace licenses) |
+| `doit_budget` | Budget tracking with alerts and seasonal amounts |
+| `doit_datahub_dataset` | DataHub dataset management |
+| `doit_label` | Labels for categorizing annotations |
+| `doit_label_assignments` | Assign labels to resources |
+| `doit_report` | Cloud Analytics reports with filters, metrics, and grouping |
 
-### Optional: Using Nix Flake
+### Data Sources
 
-If you have [Nix](https://nixos.org/download.html) installed with flakes enabled:
+<details>
+<summary><strong>FinOps</strong> — budgets, allocations, alerts, reports</summary>
+
+| Data Source | Description |
+| ----------- | ----------- |
+| `doit_alert` / `doit_alerts` | Get or list cost/usage alerts |
+| `doit_allocation` / `doit_allocations` | Get or list allocation rules |
+| `doit_budget` / `doit_budgets` | Get or list budgets |
+| `doit_report` / `doit_reports` | Get or list Cloud Analytics reports |
+| `doit_report_query` | Run ad-hoc Cloud Analytics queries |
+| `doit_report_result` | Get results from an existing report |
+| `doit_dimensions` | List available report dimensions |
+
+</details>
+
+<details>
+<summary><strong>Operations</strong> — anomalies, incidents, commitments, assets, invoices</summary>
+
+| Data Source | Description |
+| ----------- | ----------- |
+| `doit_anomaly` / `doit_anomalies` | Get or list cost anomalies |
+| `doit_cloud_incident` / `doit_cloud_incidents` | Get or list cloud provider incidents |
+| `doit_commitment` / `doit_commitments` | Get or list commitments |
+| `doit_asset` / `doit_assets` | Get or list cloud assets |
+| `doit_invoice` / `doit_invoices` | Get or list invoices |
+| `doit_support_request` / `doit_support_requests` | Get or list support requests |
+| `doit_support_request_comments` | List comments on a support request |
+
+</details>
+
+<details>
+<summary><strong>Organization</strong> — users, labels, annotations, platforms, datasets</summary>
+
+| Data Source | Description |
+| ----------- | ----------- |
+| `doit_annotation` / `doit_annotations` | Get or list annotations |
+| `doit_label` / `doit_labels` | Get or list labels |
+| `doit_label_assignments` | List label assignments |
+| `doit_datahub_dataset` / `doit_datahub_datasets` | Get or list DataHub datasets |
+| `doit_current_user` | Get current authenticated user |
+| `doit_users` | List users |
+| `doit_roles` | List available roles |
+| `doit_account_team` | Get account team information |
+| `doit_organizations` | List organizations |
+| `doit_platforms` | List available cloud platforms |
+| `doit_products` | List available cloud products |
+| `doit_ava` | Query the Ava AI assistant |
+
+</details>
+
+## Documentation
+
+- **[Terraform Registry](https://registry.terraform.io/providers/doitintl/doit/latest/docs)** — Full schema documentation with examples
+- **[Pagination Guide](docs/guides/pagination.md)** — Auto and manual pagination for list data sources
+- **[v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md)** — Migration instructions from v0.x
+- **[Changelog](CHANGELOG.md)** — Release history
+- **[DoiT API Reference](https://developer.doit.com/reference)** — Underlying API documentation
+
+---
+
+## Development
+
+### Building the Provider
+
+Requires [Go](https://golang.org/doc/install) >= 1.26.
 
 ```shell
-nix develop
-```
-
-Or with [direnv](https://direnv.net/) for automatic environment loading:
-
-```shell
-direnv allow
-```
-
-This will automatically set up:
-
-- Go 1.26
-- Terraform v1.13.3
-- golangci-lint v2.5.0
-
-To enable flakes if not already enabled, add to your `~/.config/nix/nix.conf`:
-
-```
-experimental-features = nix-command flakes
-```
-
-> **Note:** If you use direnv but don't want the Nix flake environment, add `export DIRENV_SKIP_FLAKE=1` to your shell profile (e.g., `~/.zshrc`). This skips flake activation while still loading environment variables from `.envrc.local`.
-
-## Building The Provider
-
-1. Clone the repository
-1. Enter the repository directory
-1. Build the provider using the Go `install` command:
-
-```shell
+git clone https://github.com/doitintl/terraform-provider-doit.git
+cd terraform-provider-doit
 go install
 ```
 
-## Adding Dependencies
-
-This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please refer to the Go documentation for the most up-to-date information on using Go modules.
-
-To add a new dependency `github.com/author/dependency` to your Terraform provider:
+To generate or update documentation:
 
 ```shell
-go get github.com/author/dependency
-go mod tidy
+make docs
 ```
 
-Then commit the changes to `go.mod` and `go.sum`.
+### Using Nix Flake (Optional)
 
-## Using the provider
+If you have [Nix](https://nixos.org/download.html) with flakes enabled:
 
-Please check the docs folder to find an example to use the DoiT Console provider.
+```shell
+nix develop          # or: direnv allow (for automatic activation)
+```
 
-## Developing the Provider
+This provides Go, Terraform, and golangci-lint at the pinned versions. To skip flake activation with direnv, set `export DIRENV_SKIP_FLAKE=1` in your shell profile.
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
+### Acceptance Tests
 
-To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+Acceptance tests create real resources in a DoiT account. Use the following make targets:
 
-To generate or update documentation, run `go generate`.
+```shell
+# Run all acceptance tests
+make testacc
 
-## Running Acceptance Tests
+# Run specific tests
+make testacc-run TEST=TestAccBudget
+```
 
-Acceptance tests create real resources in a DoiT account and require proper configuration.
+#### Required Environment Variables
 
-### Required Environment Variables
+Copy the example file and fill in your values:
 
-| Variable           | Description                                                                    |
-| ------------------ | ------------------------------------------------------------------------------ |
-| `DOIT_API_TOKEN`   | Your DoiT API token                                                            |
-| `DOIT_HOST`        | The DoiT API host (must be set; for most users this is `https://api.doit.com`) |
-| `TEST_USER`        | Email address for test budget collaborators/recipients                         |
-| `TEST_ATTRIBUTION` | Attribution ID for test budget scope                                           |
-| `TEST_SLACK_CHAN`  | Slack channel ID for notification tests                                        |
-| `TEST_PROJECT`     | Project ID for allocation rule tests                                           |
-| `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient                                        |
+```shell
+cp .envrc.example .envrc.local
+# Edit .envrc.local with your values
+```
 
-### Optional Environment Variables
+The `make testacc` targets automatically source `.envrc.local`. If you use [direnv](https://direnv.net/), you can also run `direnv allow` to load the variables into your interactive shell.
 
-These variables are used by specific data source tests that will be skipped if unset:
+| Variable           | Description                                               |
+| ------------------ | --------------------------------------------------------- |
+| `DOIT_API_TOKEN`   | Your DoiT API token                                       |
+| `DOIT_HOST`        | API host (e.g., `https://api.doit.com`)                   |
+| `TEST_USER`        | Email for test budget collaborators/recipients             |
+| `TEST_ATTRIBUTION` | Attribution ID for test budget scope                       |
+| `TEST_SLACK_CHAN`   | Slack channel ID for notification tests                    |
+| `TEST_PROJECT`     | Project ID for allocation rule tests                       |
+| `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient                    |
+
+<details>
+<summary>Optional variables (specific data source tests are skipped if unset)</summary>
 
 | Variable                 | Description                                            |
 | ------------------------ | ------------------------------------------------------ |
@@ -143,53 +205,12 @@ These variables are used by specific data source tests that will be skipped if u
 | `TEST_COMMITMENT_ID`     | Commitment ID for commitment data source tests         |
 | `TEST_ASSET_ID`          | Asset ID for asset data source tests (G Suite)         |
 | `TEST_ASSET_ID_AWS`      | AWS asset ID for asset data source tests               |
+| `TEST_CLOUD_DIAGRAM_RESOURCE` | Cloud resource ID for cloud diagrams data source tests |
 
-### Running Tests
-
-#### Using direnv (Recommended)
-
-If you use [direnv](https://direnv.net/), copy the example file and fill in your values:
-
-```shell
-cp .envrc.example .envrc.local
-# Edit .envrc.local with your values
-direnv allow
-```
-
-Then run tests:
-
-```shell
-go test -v -timeout 120m ./...
-```
-
-#### Manual Setup
-
-Set the required environment variables and run:
-
-```shell
-export TF_ACC=1
-export DOIT_API_TOKEN="your-api-token"
-export DOIT_HOST="https://api.doit.com"
-export TEST_USER="your-email@example.com"
-export TEST_ATTRIBUTION="your-attribution-id"
-export TEST_SLACK_CHAN="your-slack-channel-id"
-export TEST_PROJECT="your-project-id"
-export TEST_CUSTOMER_ID="your-customer-id"
-
-# Optional - specific data source tests will be skipped if these are unset
-# export TEST_ATTRIBUTION_GROUP="your-attribution-group-id"
-# export TEST_INVOICE_ID="your-invoice-id"
-# export TEST_ANOMALY_ID="your-anomaly-id"
-# export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
-# export TEST_COMMITMENT_ID="your-commitment-id"
-# export TEST_ASSET_ID="your-asset-id"
-# export TEST_ASSET_ID_AWS="your-aws-asset-id"
-
-go test -v -timeout 120m ./...
-```
+</details>
 
 > [!IMPORTANT]
-> **DoiT employees only:** You must also set the `DOIT_CUSTOMER_CONTEXT` environment variable
-> to the same value as `TEST_CUSTOMER_ID` for certain tests to work correctly.
+> **DoiT employees only:** You must also set `DOIT_CUSTOMER_CONTEXT` to the same value as `TEST_CUSTOMER_ID`.
 
-_Note:_ Acceptance tests create real resources and may incur costs.
+> [!WARNING]
+> Acceptance tests create real resources and may incur costs.

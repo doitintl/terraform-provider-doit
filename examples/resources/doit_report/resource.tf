@@ -210,3 +210,48 @@ resource "doit_report" "cost_by_region" {
     currency = "USD"
   }
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Using doit_dimension (singular) to discover valid filter values
+# ─────────────────────────────────────────────────────────────────────────────
+# While doit_dimensions (plural) helps discover dimension IDs and types,
+# doit_dimension (singular) retrieves the *values* for a specific dimension.
+# This lets you dynamically populate filter values instead of hardcoding them.
+
+# Look up valid cloud_provider values from the API
+data "doit_dimension" "cloud_provider" {
+  type = "fixed"
+  id   = "cloud_provider"
+}
+
+resource "doit_report" "multi_cloud_costs" {
+  name        = "Multi-Cloud Costs (Dynamic Values)"
+  description = "Uses doit_dimension to dynamically discover valid cloud provider values"
+  config = {
+    metrics        = [{ type = "basic", value = "cost" }]
+    aggregation    = "total"
+    data_source    = "billing"
+    time_interval  = "month"
+    display_values = "actuals_only"
+    time_range = {
+      mode            = "last"
+      amount          = 3
+      include_current = true
+      unit            = "month"
+    }
+    # Filter to all known cloud providers — values discovered dynamically
+    filters = [
+      {
+        id     = "cloud_provider"
+        type   = "fixed"
+        mode   = "is"
+        values = [for v in data.doit_dimension.cloud_provider.values : v.value]
+      }
+    ]
+    group = [
+      { id = "cloud_provider", type = "fixed" }
+    ]
+    layout   = "table"
+    currency = "USD"
+  }
+}

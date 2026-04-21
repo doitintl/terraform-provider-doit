@@ -7,10 +7,12 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_annotation"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -20,6 +22,7 @@ type (
 	}
 	annotationResourceModel struct {
 		resource_annotation.AnnotationModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -72,7 +75,65 @@ func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		}
 	}
 
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["create_time"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["create_time"] = attr
+	}
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
 	resp.Schema = s
+}
+
+// overlayAnnotationComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create/Update.
+//
+// Phase 1 (Resolve): Build a fully-resolved state from the API response using
+// mapAnnotationToModel — the same mapping function used by Read.
+//
+// Phase 2 (Overlay): Walk the plan field-by-field. Known values are preserved.
+// Unknown values are replaced with the resolved counterpart.
+func overlayAnnotationComputedFields(ctx context.Context, apiResp *models.AnnotationListItem, plan *annotationResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Phase 1: Build fully-resolved state from API response.
+	resolved := *plan
+	diags.Append(mapAnnotationToModel(ctx, apiResp, &resolved)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	// Phase 2: Overlay known plan values on top of resolved state.
+
+	// ── Computed-only fields: always from resolved ──
+	plan.Id = resolved.Id
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
+
+	// ── Content, Timestamp: Required — never touch ──
+
+	// ── Labels: Optional+Computed list ──
+	if plan.Labels.IsUnknown() {
+		plan.Labels = resolved.Labels
+	}
+
+	// ── Reports: Optional+Computed list ──
+	if plan.Reports.IsUnknown() {
+		plan.Reports = resolved.Reports
+	}
+
+	return diags
 }
 
 func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -83,6 +144,14 @@ func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, createDiags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(createDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	// Parse timestamp
 	timestamp, err := time.Parse(time.RFC3339, plan.Timestamp.ValueString())
@@ -148,9 +217,10 @@ func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Map response to state
-	diags := mapAnnotationToModel(ctx, annotationResp.JSON201, &plan)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep user-configured values from the plan
+	// as-is, and overlay API response values for Computed fields plus any
+	// Optional+Computed fields (labels, reports) that are still unknown.
+	resp.Diagnostics.Append(overlayAnnotationComputedFields(ctx, annotationResp.JSON201, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -167,6 +237,14 @@ func (r *annotationResource) Read(ctx context.Context, req resource.ReadRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, readDiags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(readDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// Get refreshed annotation value from API
 	annotationResp, err := r.client.GetAnnotationWithResponse(ctx, state.Id.ValueString())
@@ -220,6 +298,14 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(updateDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	// Get the ID from the state
 	var state annotationResourceModel
@@ -294,9 +380,10 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Map response to state
-	diags := mapAnnotationToModel(ctx, updateResp.JSON200, &plan)
-	resp.Diagnostics.Append(diags...)
+	// Plan-first state pattern: keep user-configured values from the plan
+	// as-is, and overlay API response values for Computed fields plus any
+	// Optional+Computed fields (labels, reports) that are still unknown.
+	resp.Diagnostics.Append(overlayAnnotationComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -313,6 +400,14 @@ func (r *annotationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, deleteDiags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(deleteDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	// Delete annotation via API
 	deleteResp, err := r.client.DeleteAnnotationWithResponse(ctx, state.Id.ValueString())

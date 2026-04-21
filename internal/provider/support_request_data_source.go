@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_support_request"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -19,6 +21,11 @@ func NewSupportRequestDataSource() datasource.DataSource {
 
 type supportRequestDataSource struct {
 	client *models.ClientWithResponses
+}
+
+type supportRequestDataSourceModel struct {
+	datasource_support_request.SupportRequestModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (ds *supportRequestDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -41,15 +48,27 @@ func (ds *supportRequestDataSource) Configure(_ context.Context, req datasource.
 }
 
 func (ds *supportRequestDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_support_request.SupportRequestDataSourceSchema(ctx)
+	s := datasource_support_request.SupportRequestDataSourceSchema(ctx)
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	resp.Schema = s
 }
 
 func (ds *supportRequestDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state datasource_support_request.SupportRequestModel
+	var state supportRequestDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// If ticket_id is unknown (depends on a resource not yet created), return early
 	// with all computed attributes set to unknown so consumers don't treat them as real values.

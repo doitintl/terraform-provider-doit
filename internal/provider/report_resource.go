@@ -3,11 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 var (
@@ -28,6 +32,7 @@ type reportResource struct {
 
 type reportResourceModel struct {
 	resource_report.ReportModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (r *reportResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -35,7 +40,27 @@ func (r *reportResource) Metadata(_ context.Context, req resource.MetadataReques
 }
 
 func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_report.ReportResourceSchema(ctx)
+	s := resource_report.ReportResourceSchema(ctx)
+
+	// Add UseStateForUnknown to stable Computed-only fields so they don't
+	// show as "(known after apply)" on every plan that modifies the resource.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if attr, ok := s.Attributes["type"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["type"] = attr
+	}
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+		Create: true,
+		Read:   true,
+		Update: true,
+		Delete: true,
+	})
+
+	resp.Schema = s
 }
 func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
@@ -78,6 +103,14 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	reportReq, diags := plan.toCreateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -117,8 +150,11 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.populateState(ctx, &plan, reportResp.JSON201)
+	// Plan-first: preserve the user's explicit plan values, while resolving Unknown
+	// fields from the API response (id, type, labels, name, description, and nested
+	// config fields). This avoids API normalization drift (sentinel stripping, alias
+	// renaming, etc.) for all user-configured values.
+	diags = r.overlayReportComputedFields(ctx, reportResp.JSON201, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -134,6 +170,14 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// allowNotFound=true: 404 means resource was deleted externally, remove from state
 	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &state, true)
@@ -158,6 +202,14 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state reportResourceModel
 	diags = req.State.Get(ctx, &state)
@@ -202,8 +254,11 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Map the full response directly to state (no extra GET needed)
-	diags = r.populateState(ctx, &plan, reportResp.JSON200)
+	// Plan-first: preserve the user's explicit plan values, while resolving Unknown
+	// fields from the API response (id, type, labels, name, description, and nested
+	// config fields). This avoids API normalization drift (sentinel stripping, alias
+	// renaming, etc.) for all user-configured values.
+	diags = r.overlayReportComputedFields(ctx, reportResp.JSON200, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -219,6 +274,14 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	deleteResp, err := r.client.DeleteReportWithResponse(ctx, state.Id.ValueString())
 	if err != nil {

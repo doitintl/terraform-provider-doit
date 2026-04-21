@@ -32,3 +32,23 @@ func mapLabelToModel(resp *models.LabelListItem, state *labelResourceModel) {
 		state.UpdateTime = types.StringNull()
 	}
 }
+
+// overlayLabelComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create/Update.
+//
+// Label has no Optional+Computed fields — all non-Required fields are
+// Computed-only — so the overlay simply sets Computed fields from the
+// resolved model while preserving the plan's Required fields.
+func overlayLabelComputedFields(apiResp *models.LabelListItem, plan *labelResourceModel) {
+	// Phase 1: Build fully-resolved state from API response.
+	resolved := *plan
+	mapLabelToModel(apiResp, &resolved)
+
+	// Phase 2: Overlay Computed-only fields.
+	plan.Id = resolved.Id
+	plan.Type = resolved.Type
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
+
+	// Name, Color: Required — never touch.
+}

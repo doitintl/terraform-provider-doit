@@ -11,6 +11,195 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// overlayBudgetComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create/Update.
+//
+// Phase 1 (Resolve): Build a fully-resolved state from the API response using
+// mapBudgetToModel — the same mapping function used by Read/ImportState. This
+// guarantees consistency between Create/Update and Read paths.
+//
+// Phase 2 (Overlay): Walk the plan field-by-field. Known (user-configured)
+// values are preserved as-is. Unknown (user-omitted) values are replaced with
+// the resolved counterpart. Computed-only fields always come from resolved.
+//
+// This prevents "Provider produced inconsistent result" errors caused by the API
+// normalizing user-provided values (e.g. stripping [Service N/A] sentinels,
+// renaming alias types like allocation_rule → attribution).
+//
+// Used by: Create, Update
+// NOT used by: Read, ImportState (which use populateState / mapBudgetToModel directly).
+func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI, plan *budgetResourceModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Phase 1: Build fully-resolved state from API response.
+	// Copy the plan so that mapBudgetToModel's sentinel restoration and alias
+	// normalization can compare against user-configured values in the existing state.
+	resolved := *plan
+	diags.Append(mapBudgetToModel(ctx, apiResp, &resolved)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	// Phase 2: Overlay known plan values on top of resolved state.
+
+	// ── Computed-only fields: always from resolved ──
+	plan.Id = resolved.Id
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
+	plan.CurrentUtilization = resolved.CurrentUtilization
+	plan.ForecastedUtilization = resolved.ForecastedUtilization
+
+	// ── Optional+Computed scalar fields: only when Unknown ──
+	if plan.Amount.IsUnknown() {
+		plan.Amount = resolved.Amount
+	}
+	if plan.Currency.IsUnknown() {
+		plan.Currency = resolved.Currency
+	}
+	if plan.Description.IsUnknown() {
+		plan.Description = resolved.Description
+	}
+	if plan.EndPeriod.IsUnknown() {
+		plan.EndPeriod = resolved.EndPeriod
+	}
+	if plan.GrowthPerPeriod.IsUnknown() {
+		plan.GrowthPerPeriod = resolved.GrowthPerPeriod
+	}
+	if plan.Metric.IsUnknown() {
+		plan.Metric = resolved.Metric
+	}
+	if plan.Name.IsUnknown() {
+		plan.Name = resolved.Name
+	}
+	if plan.Public.IsUnknown() {
+		plan.Public = resolved.Public
+	}
+	if plan.StartPeriod.IsUnknown() {
+		plan.StartPeriod = resolved.StartPeriod
+	}
+	if plan.TimeInterval.IsUnknown() {
+		plan.TimeInterval = resolved.TimeInterval
+	}
+	if plan.Type.IsUnknown() {
+		plan.Type = resolved.Type
+	}
+	if plan.UsePrevSpend.IsUnknown() {
+		plan.UsePrevSpend = resolved.UsePrevSpend
+	}
+
+	// ── List fields: resolve whole list when Unknown, overlay elements when Known ──
+
+	if plan.Alerts.IsUnknown() {
+		plan.Alerts = resolved.Alerts
+	} else if !plan.Alerts.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Alerts, &plan.Alerts, overlayBudgetAlert)...)
+	}
+
+	if plan.Collaborators.IsUnknown() {
+		plan.Collaborators = resolved.Collaborators
+	} else if !plan.Collaborators.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Collaborators, &plan.Collaborators, overlayBudgetCollaborator)...)
+	}
+
+	if plan.Recipients.IsUnknown() {
+		plan.Recipients = resolved.Recipients
+	}
+
+	if plan.RecipientsSlackChannels.IsUnknown() {
+		plan.RecipientsSlackChannels = resolved.RecipientsSlackChannels
+	} else if !plan.RecipientsSlackChannels.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.RecipientsSlackChannels, &plan.RecipientsSlackChannels, overlayBudgetSlackChannel)...)
+	}
+
+	if plan.Scope.IsUnknown() {
+		plan.Scope = resolved.Scope
+	}
+
+	if plan.Scopes.IsUnknown() {
+		plan.Scopes = resolved.Scopes
+	} else if !plan.Scopes.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.Scopes, &plan.Scopes, overlayBudgetScope)...)
+	}
+
+	if plan.SeasonalAmounts.IsUnknown() {
+		plan.SeasonalAmounts = resolved.SeasonalAmounts
+	}
+
+	return diags
+}
+
+// ── Budget list element overlay helpers ──
+// Each helper resolves Unknown subfields from the resolved element.
+// Known values are never touched — the user's plan is the source of truth.
+
+func overlayBudgetAlert(_ context.Context, resolved, plan *resource_budget.AlertsValue) diag.Diagnostics {
+	// percentage: Optional+Computed — resolve only when Unknown.
+	if plan.Percentage.IsUnknown() {
+		plan.Percentage = resolved.Percentage
+	}
+	// forecasted_date and triggered: Computed-only — always from resolved.
+	plan.ForecastedDate = resolved.ForecastedDate
+	plan.Triggered = resolved.Triggered
+	return nil
+}
+
+func overlayBudgetCollaborator(_ context.Context, resolved, plan *resource_budget.CollaboratorsValue) diag.Diagnostics {
+	if plan.Email.IsUnknown() {
+		plan.Email = resolved.Email
+	}
+	if plan.Role.IsUnknown() {
+		plan.Role = resolved.Role
+	}
+	return nil
+}
+
+func overlayBudgetSlackChannel(_ context.Context, resolved, plan *resource_budget.RecipientsSlackChannelsValue) diag.Diagnostics {
+	if plan.CustomerId.IsUnknown() {
+		plan.CustomerId = resolved.CustomerId
+	}
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.Name.IsUnknown() {
+		plan.Name = resolved.Name
+	}
+	if plan.Shared.IsUnknown() {
+		plan.Shared = resolved.Shared
+	}
+	if plan.RecipientsSlackChannelsType.IsUnknown() {
+		plan.RecipientsSlackChannelsType = resolved.RecipientsSlackChannelsType
+	}
+	if plan.Workspace.IsUnknown() {
+		plan.Workspace = resolved.Workspace
+	}
+	return nil
+}
+
+func overlayBudgetScope(_ context.Context, resolved, plan *resource_budget.ScopesValue) diag.Diagnostics {
+	if plan.CaseInsensitive.IsUnknown() {
+		plan.CaseInsensitive = resolved.CaseInsensitive
+	}
+	if plan.Id.IsUnknown() {
+		plan.Id = resolved.Id
+	}
+	if plan.IncludeNull.IsUnknown() {
+		plan.IncludeNull = resolved.IncludeNull
+	}
+	if plan.Inverse.IsUnknown() {
+		plan.Inverse = resolved.Inverse
+	}
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+	if plan.ScopesType.IsUnknown() {
+		plan.ScopesType = resolved.ScopesType
+	}
+	if plan.Values.IsUnknown() {
+		plan.Values = resolved.Values
+	}
+	return nil
+}
+
 // toUpdateRequest converts the Terraform model to the API BudgetCreateUpdateRequest.
 // This is used for both create and update operations since they use the same request type.
 func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req models.BudgetCreateUpdateRequest, diags diag.Diagnostics) {
@@ -208,6 +397,9 @@ func (r *budgetResource) populateState(ctx context.Context, state *budgetResourc
 	return mapBudgetToModel(ctx, resp, state)
 }
 
+// mapBudgetToModel maps the full API response to the Terraform model.
+// This is used ONLY by Read and ImportState — Create/Update use overlayBudgetComputedFields instead.
+// This function contains sentinel restoration and alias normalization for the Read path.
 func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budgetResourceModel) (diags diag.Diagnostics) {
 	if resp == nil {
 		diags.AddError(

@@ -48,6 +48,10 @@ output "report_labels" {
 
 - `id` (String) Report ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `config` (Attributes) Report configuration. (see [below for nested schema](#nestedatt--config))
@@ -55,6 +59,14 @@ output "report_labels" {
 - `labels` (List of String) Array of label IDs assigned to the report
 - `name` (String) Report name.
 - `type` (String) Report type.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
 
 <a id="nestedatt--config"></a>
 ### Nested Schema for `config`
@@ -152,7 +164,7 @@ Read-Only:
 
 Read-Only:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--group--limit--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--group--limit--metric))
 - `sort` (String) Sort order for ranking results.
 - `value` (Number) The number of items to show
 
@@ -183,7 +195,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 
 Read-Only:
 
-- `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
 - `operator` (String) Comparison operator for filtering metric values.
 - `values` (List of Number)
 

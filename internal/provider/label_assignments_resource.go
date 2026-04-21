@@ -3,8 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -22,9 +24,10 @@ type (
 		client *models.ClientWithResponses
 	}
 	labelAssignmentsResourceModel struct {
-		Id          types.String `tfsdk:"id"`
-		LabelId     types.String `tfsdk:"label_id"`
-		Assignments types.Set    `tfsdk:"assignments"`
+		Id          types.String   `tfsdk:"id"`
+		LabelId     types.String   `tfsdk:"label_id"`
+		Assignments types.Set      `tfsdk:"assignments"`
+		Timeouts    timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -75,7 +78,7 @@ func (r *labelAssignmentsResource) Metadata(_ context.Context, req resource.Meta
 	resp.TypeName = req.ProviderTypeName + "_label_assignments"
 }
 
-func (r *labelAssignmentsResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *labelAssignmentsResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description:         "Manages the set of objects (reports, budgets, alerts, etc.) assigned to a label.",
 		MarkdownDescription: "Manages the set of objects (reports, budgets, alerts, etc.) assigned to a label.",
@@ -125,6 +128,12 @@ func (r *labelAssignmentsResource) Schema(_ context.Context, _ resource.SchemaRe
 					},
 				},
 			},
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
 		},
 	}
 }
@@ -136,6 +145,14 @@ func (r *labelAssignmentsResource) Create(ctx context.Context, req resource.Crea
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
 
 	assignments := r.extractAssignments(plan.Assignments, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -178,6 +195,14 @@ func (r *labelAssignmentsResource) Read(ctx context.Context, req resource.ReadRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	assignResp, err := r.client.GetLabelAssignmentsWithResponse(ctx, state.LabelId.ValueString())
 	if err != nil {
@@ -229,6 +254,14 @@ func (r *labelAssignmentsResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
+
 	oldAssignments := r.extractAssignments(state.Assignments, &resp.Diagnostics)
 	newAssignments := r.extractAssignments(plan.Assignments, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -279,6 +312,14 @@ func (r *labelAssignmentsResource) Delete(ctx context.Context, req resource.Dele
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	assignments := r.extractAssignments(state.Assignments, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

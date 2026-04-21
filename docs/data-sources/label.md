@@ -42,6 +42,10 @@ resource "doit_annotation" "example" {
 
 - `id` (String) Label ID
 
+### Optional
+
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+
 ### Read-Only
 
 - `color` (String) The color of the label.
@@ -49,3 +53,10 @@ resource "doit_annotation" "example" {
 - `name` (String) The name of the label.
 - `type` (String) The type of the label (custom or preset).
 - `update_time` (String) The time when the label was last updated.
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
