@@ -4764,6 +4764,16 @@ type ResourceResultResult struct {
 // ResourceResults defines model for ResourceResults.
 type ResourceResults = []ResourceResult
 
+// ResourceResultsResponse Paginated response for resource results.
+type ResourceResultsResponse struct {
+	// PageToken Token to retrieve the next page. Absent when there are no more pages.
+	PageToken       *string          `json:"pageToken,omitempty"`
+	ResourceResults []ResourceResult `json:"resourceResults"`
+
+	// RowCount Number of items in this page.
+	RowCount int `json:"rowCount"`
+}
+
 // ResultsBody defines model for ResultsBody.
 type ResultsBody struct {
 	// Pagination Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
@@ -5726,6 +5736,15 @@ type GetInsightResultsParamsCategory string
 // GetInsightResultsParamsPriority defines parameters for GetInsightResults.
 type GetInsightResultsParamsPriority string
 
+// GetInsightResourceResultsParams defines parameters for GetInsightResourceResults.
+type GetInsightResourceResultsParams struct {
+	// PageToken Token from a previous response to fetch the next page.
+	PageToken *string `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of results per page (default 1000, max 5000).
+	MaxResults *int `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+}
+
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
 type GetResourcePermissionParamsResourceType string
 
@@ -6365,7 +6384,7 @@ type ClientInterface interface {
 	PostInsightResult(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInsightResourceResults request
-	GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateInsightStatusWithBody request with any body
 	UpdateInsightStatusWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7654,8 +7673,8 @@ func (c *Client) PostInsightResult(ctx context.Context, sourceID string, insight
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInsightResourceResultsRequest(c.Server, sourceID, insightKey)
+func (c *Client) GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInsightResourceResultsRequest(c.Server, sourceID, insightKey, params)
 	if err != nil {
 		return nil, err
 	}
@@ -11891,7 +11910,7 @@ func NewPostInsightResultRequestWithBody(server string, sourceID string, insight
 }
 
 // NewGetInsightResourceResultsRequest generates requests for GetInsightResourceResults
-func NewGetInsightResourceResultsRequest(server string, sourceID string, insightKey string) (*http.Request, error) {
+func NewGetInsightResourceResultsRequest(server string, sourceID string, insightKey string, params *GetInsightResourceResultsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11921,6 +11940,44 @@ func NewGetInsightResourceResultsRequest(server string, sourceID string, insight
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -12752,7 +12809,7 @@ type ClientWithResponsesInterface interface {
 	PostInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
 
 	// GetInsightResourceResultsWithResponse request
-	GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error)
+	GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error)
 
 	// UpdateInsightStatusWithBodyWithResponse request with any body
 	UpdateInsightStatusWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error)
@@ -14765,7 +14822,7 @@ func (r PostInsightResultResp) StatusCode() int {
 type GetInsightResourceResultsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ResourceResults
+	JSON200      *ResourceResultsResponse
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -15956,8 +16013,8 @@ func (c *ClientWithResponses) PostInsightResultWithResponse(ctx context.Context,
 }
 
 // GetInsightResourceResultsWithResponse request returning *GetInsightResourceResultsResp
-func (c *ClientWithResponses) GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error) {
-	rsp, err := c.GetInsightResourceResults(ctx, sourceID, insightKey, reqEditors...)
+func (c *ClientWithResponses) GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error) {
+	rsp, err := c.GetInsightResourceResults(ctx, sourceID, insightKey, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -20156,7 +20213,7 @@ func ParseGetInsightResourceResultsResp(rsp *http.Response) (*GetInsightResource
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResourceResults
+		var dest ResourceResultsResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

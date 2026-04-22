@@ -537,18 +537,15 @@ func (r *insightResource) Create(ctx context.Context, req resource.CreateRequest
 	// user-provided values after to avoid precision drift (float32→float64).
 	planRR := plan.ResourceResults
 
-	// Fetch resource results from the separate endpoint to populate state
-	// consistently with what Read returns (prevents drift on first refresh).
-	rrResp, err := r.client.GetInsightResourceResultsWithResponse(ctx, sourceID, insightKey)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Insight Resource Results",
-			fmt.Sprintf("Could not read resource results after create for %s/%s: %s", sourceID, insightKey, err.Error()),
-		)
+	// Fetch resource results from the separate endpoint (with auto-pagination)
+	// to populate state consistently with what Read returns.
+	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, sourceID, insightKey)
+	resp.Diagnostics.Append(fetchDiags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if rrResp.StatusCode() == 200 && rrResp.JSON200 != nil {
-		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, rrResp.JSON200, &plan)...)
+	if allResults != nil {
+		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, allResults, &plan)...)
 		if !resp.Diagnostics.HasError() {
 			resp.Diagnostics.Append(restoreUserResourceResultValues(ctx, &planRR, &plan.ResourceResults)...)
 		}
@@ -617,31 +614,20 @@ func (r *insightResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// Fetch resource results separately (they are not included in InsightResponse)
-	rrResp, err := r.client.GetInsightResourceResultsWithResponse(ctx, sourceID, insightKey)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Insight Resource Results",
-			fmt.Sprintf("Could not read resource results for %s/%s: %s", sourceID, insightKey, err.Error()),
-		)
+	// Fetch resource results separately (with auto-pagination)
+	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, sourceID, insightKey)
+	resp.Diagnostics.Append(fetchDiags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// 404 is OK here — means no resource results (e.g. after all were resolved)
-	if rrResp.StatusCode() == 200 && rrResp.JSON200 != nil {
-		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, rrResp.JSON200, &state)...)
-	} else if rrResp.StatusCode() == 404 {
+	if allResults != nil {
+		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, allResults, &state)...)
+	} else {
 		emptyList, emptyDiags := types.ListValueFrom(ctx, resource_insight.ResourceResultsType{
 			ObjectType: types.ObjectType{AttrTypes: resource_insight.ResourceResultsValue{}.AttributeTypes(ctx)},
 		}, []resource_insight.ResourceResultsValue{})
 		resp.Diagnostics.Append(emptyDiags...)
 		state.ResourceResults = emptyList
-	} else if rrResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading Insight Resource Results",
-			fmt.Sprintf("Unexpected status %d for resource results %s/%s: %s", rrResp.StatusCode(), sourceID, insightKey, string(rrResp.Body)),
-		)
-		return
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -709,18 +695,15 @@ func (r *insightResource) Update(ctx context.Context, req resource.UpdateRequest
 	// Save the plan's resource_results before the API fetch.
 	planRR := plan.ResourceResults
 
-	// Fetch resource results from the separate endpoint to populate state
-	// consistently with what Read returns (prevents drift on first refresh).
-	rrResp, err := r.client.GetInsightResourceResultsWithResponse(ctx, sourceID, insightKey)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Insight Resource Results",
-			fmt.Sprintf("Could not read resource results after update for %s/%s: %s", sourceID, insightKey, err.Error()),
-		)
+	// Fetch resource results from the separate endpoint (with auto-pagination)
+	// to populate state consistently with what Read returns.
+	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, sourceID, insightKey)
+	resp.Diagnostics.Append(fetchDiags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	if rrResp.StatusCode() == 200 && rrResp.JSON200 != nil {
-		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, rrResp.JSON200, &plan)...)
+	if allResults != nil {
+		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, allResults, &plan)...)
 		if !resp.Diagnostics.HasError() {
 			resp.Diagnostics.Append(restoreUserResourceResultValues(ctx, &planRR, &plan.ResourceResults)...)
 		}
@@ -768,6 +751,52 @@ func (r *insightResource) Delete(ctx context.Context, req resource.DeleteRequest
 		)
 		return
 	}
+}
+
+// fetchAllResourceResults auto-paginates through all pages of resource results
+// and returns the complete list. Returns (nil, nil) when the resource has no results (404).
+func fetchAllResourceResults(ctx context.Context, client *models.ClientWithResponses, sourceID, insightKey string) ([]models.ResourceResult, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	var allResults []models.ResourceResult
+	var pageToken *string
+
+	for {
+		params := &models.GetInsightResourceResultsParams{
+			PageToken: pageToken,
+		}
+
+		rrResp, err := client.GetInsightResourceResultsWithResponse(ctx, sourceID, insightKey, params)
+		if err != nil {
+			diags.AddError(
+				"Error Reading Insight Resource Results",
+				fmt.Sprintf("Could not read resource results for %s/%s: %s", sourceID, insightKey, err.Error()),
+			)
+			return nil, diags
+		}
+
+		// 404 means no resource results (e.g. after all were resolved)
+		if rrResp.StatusCode() == 404 {
+			return nil, diags
+		}
+
+		if rrResp.StatusCode() != 200 || rrResp.JSON200 == nil {
+			diags.AddError(
+				"Error Reading Insight Resource Results",
+				fmt.Sprintf("Unexpected status %d for resource results %s/%s: %s", rrResp.StatusCode(), sourceID, insightKey, string(rrResp.Body)),
+			)
+			return nil, diags
+		}
+
+		allResults = append(allResults, rrResp.JSON200.ResourceResults...)
+
+		// Check for next page
+		if rrResp.JSON200.PageToken == nil || *rrResp.JSON200.PageToken == "" {
+			break
+		}
+		pageToken = rrResp.JSON200.PageToken
+	}
+
+	return allResults, diags
 }
 
 // mapInsightRespToResourceModel maps the full InsightResponse to the Terraform resource model.
@@ -880,10 +909,10 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 
 // mapResourceResultsToModel maps the API ResourceResults array to the Terraform model.
 // Called from Read after fetching resource results via the separate endpoint.
-func mapResourceResultsToModel(ctx context.Context, results *[]models.ResourceResult, state *insightResourceModel) diag.Diagnostics {
+func mapResourceResultsToModel(ctx context.Context, results []models.ResourceResult, state *insightResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if results == nil || len(*results) == 0 {
+	if len(results) == 0 {
 		emptyList, emptyDiags := types.ListValueFrom(ctx, resource_insight.ResourceResultsType{
 			ObjectType: types.ObjectType{AttrTypes: resource_insight.ResourceResultsValue{}.AttributeTypes(ctx)},
 		}, []resource_insight.ResourceResultsValue{})
@@ -892,8 +921,8 @@ func mapResourceResultsToModel(ctx context.Context, results *[]models.ResourceRe
 		return diags
 	}
 
-	resultValues := make([]resource_insight.ResourceResultsValue, 0, len(*results))
-	for _, rr := range *results {
+	resultValues := make([]resource_insight.ResourceResultsValue, 0, len(results))
+	for _, rr := range results {
 		// Build result nested object
 		resultObj := resource_insight.NewResultValueNull()
 		if rr.Result != nil {
