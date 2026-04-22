@@ -148,54 +148,120 @@ func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		params.CloudFlows = &v
 	}
 
-	if !data.Page.IsNull() && !data.Page.IsUnknown() {
-		v := int(data.Page.ValueInt64())
-		params.Page = &v
-	}
+	// Smart pagination: honor user-provided values, otherwise auto-paginate
+	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
 
-	if !data.PageSize.IsNull() && !data.PageSize.IsUnknown() {
-		v := int(data.PageSize.ValueInt64())
-		params.PageSize = &v
-	}
+	var allInsights []models.InsightResponse
 
-	// Make API call
-	apiResp, err := d.client.GetInsightResultsWithResponse(ctx, params)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Insights",
-			fmt.Sprintf("Unable to read insights: %v", err),
-		)
-		return
-	}
+	if userControlsPagination {
+		// Manual mode: single API call with user's params
+		v := int(data.MaxResults.ValueInt64())
+		params.MaxResults = &v
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pt := data.PageToken.ValueString()
+			params.PageToken = &pt
+		}
 
-	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Insights",
-			fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-		)
-		return
-	}
+		apiResp, err := d.client.GetInsightResultsWithResponse(ctx, params)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Insights",
+				fmt.Sprintf("Unable to read insights: %v", err),
+			)
+			return
+		}
 
-	result := apiResp.JSON200
+		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Insights",
+				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			)
+			return
+		}
 
-	// Map pagination
-	if result.Pagination != nil {
+		result := apiResp.JSON200
+		if result.Results != nil {
+			allInsights = *result.Results
+		}
+
+		// Preserve API's pagination for user to fetch next page
+		if result.Pagination != nil {
+			paginationVal, diags := datasource_insights.NewPaginationValue(
+				datasource_insights.PaginationValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"page_token": types.StringPointerValue(result.Pagination.PageToken),
+					"row_count":  types.Int64Value(int64(result.Pagination.RowCount)),
+				},
+			)
+			resp.Diagnostics.Append(diags...)
+			data.Pagination = paginationVal
+		} else {
+			paginationVal, diags := datasource_insights.NewPaginationValue(
+				datasource_insights.PaginationValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"page_token": types.StringNull(),
+					"row_count":  types.Int64Value(int64(len(allInsights))),
+				},
+			)
+			resp.Diagnostics.Append(diags...)
+			data.Pagination = paginationVal
+		}
+		// max_results is already set by user, no change needed
+	} else {
+		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pt := data.PageToken.ValueString()
+			params.PageToken = &pt
+		}
+		for {
+			apiResp, err := d.client.GetInsightResultsWithResponse(ctx, params)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Insights",
+					fmt.Sprintf("Unable to read insights: %v", err),
+				)
+				return
+			}
+
+			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Insights",
+					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+				)
+				return
+			}
+
+			result := apiResp.JSON200
+			if result.Results != nil {
+				allInsights = append(allInsights, *result.Results...)
+			}
+
+			if result.Pagination == nil || result.Pagination.PageToken == nil || *result.Pagination.PageToken == "" {
+				break
+			}
+			params.PageToken = result.Pagination.PageToken
+		}
+
+		// Auto mode: set counts based on what we fetched
 		paginationVal, diags := datasource_insights.NewPaginationValue(
 			datasource_insights.PaginationValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
-				"has_next_page": types.BoolValue(result.Pagination.HasNextPage),
+				"page_token": types.StringNull(),
+				"row_count":  types.Int64Value(int64(len(allInsights))),
 			},
 		)
 		resp.Diagnostics.Append(diags...)
 		data.Pagination = paginationVal
-	} else {
-		data.Pagination = datasource_insights.NewPaginationValueNull()
+		// page_token was not set by user or has been consumed; normalize to null
+		data.PageToken = types.StringNull()
+		// max_results was not set by user; normalize to null
+		data.MaxResults = types.Int64Null()
 	}
 
 	// Map results list
-	if result.Results != nil && len(*result.Results) > 0 {
-		resultVals := make([]datasource_insights.ResultsValue, 0, len(*result.Results))
-		for _, insight := range *result.Results {
+	if len(allInsights) > 0 {
+		resultVals := make([]datasource_insights.ResultsValue, 0, len(allInsights))
+		for _, insight := range allInsights {
 			resultVal := mapInsightToResultsValue(ctx, insight, &resp.Diagnostics)
 			resultVals = append(resultVals, resultVal)
 		}
@@ -238,11 +304,13 @@ func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if data.CloudFlows.IsUnknown() {
 		data.CloudFlows = types.BoolNull()
 	}
-	if data.Page.IsUnknown() {
-		data.Page = types.Int64Null()
+	// max_results and page_token are handled above in the pagination branches;
+	// only resolve unknown values here (should not happen in practice)
+	if data.MaxResults.IsUnknown() {
+		data.MaxResults = types.Int64Null()
 	}
-	if data.PageSize.IsUnknown() {
-		data.PageSize = types.Int64Null()
+	if data.PageToken.IsUnknown() {
+		data.PageToken = types.StringNull()
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

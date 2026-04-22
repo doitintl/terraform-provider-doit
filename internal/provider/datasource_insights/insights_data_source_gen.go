@@ -56,26 +56,32 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 				Optional: true,
 				Computed: true,
 			},
-			"page": schema.Int64Attribute{
-				Optional: true,
-				Computed: true,
+			"max_results": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Maximum number of results per page (default 50, max 500).",
+				MarkdownDescription: "Maximum number of results per page (default 50, max 500).",
 				Validators: []validator.Int64{
-					int64validator.AtLeast(0),
+					int64validator.Between(1, 500),
 				},
 			},
-			"page_size": schema.Int64Attribute{
-				Optional: true,
-				Computed: true,
-				Validators: []validator.Int64{
-					int64validator.Between(0, 100),
-				},
+			"page_token": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Token from a previous response to fetch the next page.",
+				MarkdownDescription: "Token from a previous response to fetch the next page.",
 			},
 			"pagination": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
-					"has_next_page": schema.BoolAttribute{
+					"page_token": schema.StringAttribute{
 						Computed:            true,
-						Description:         "True if there are more results to fetch.",
-						MarkdownDescription: "True if there are more results to fetch.",
+						Description:         "Token to retrieve the next page. Absent when there are no more pages.",
+						MarkdownDescription: "Token to retrieve the next page. Absent when there are no more pages.",
+					},
+					"row_count": schema.Int64Attribute{
+						Computed:            true,
+						Description:         "Number of items in this page.",
+						MarkdownDescription: "Number of items in this page.",
 					},
 				},
 				CustomType: PaginationType{
@@ -84,8 +90,8 @@ func InsightsDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.",
-				MarkdownDescription: "Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.",
+				Description:         "Cursor-based pagination metadata.",
+				MarkdownDescription: "Cursor-based pagination metadata.",
 			},
 			"priority": schema.ListAttribute{
 				ElementType: types.StringType,
@@ -229,8 +235,8 @@ type InsightsModel struct {
 	CloudProvider types.String    `tfsdk:"cloud_provider"`
 	DisplayStatus types.List      `tfsdk:"display_status"`
 	EasyWin       types.Bool      `tfsdk:"easy_win"`
-	Page          types.Int64     `tfsdk:"page"`
-	PageSize      types.Int64     `tfsdk:"page_size"`
+	MaxResults    types.Int64     `tfsdk:"max_results"`
+	PageToken     types.String    `tfsdk:"page_token"`
 	Pagination    PaginationValue `tfsdk:"pagination"`
 	Priority      types.List      `tfsdk:"priority"`
 	Results       types.List      `tfsdk:"results"`
@@ -264,22 +270,40 @@ func (t PaginationType) ValueFromObject(ctx context.Context, in basetypes.Object
 
 	attributes := in.Attributes()
 
-	hasNextPageAttribute, ok := attributes["has_next_page"]
+	pageTokenAttribute, ok := attributes["page_token"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`has_next_page is missing from object`)
+			`page_token is missing from object`)
 
 		return nil, diags
 	}
 
-	hasNextPageVal, ok := hasNextPageAttribute.(basetypes.BoolValue)
+	pageTokenVal, ok := pageTokenAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`has_next_page expected to be basetypes.BoolValue, was: %T`, hasNextPageAttribute))
+			fmt.Sprintf(`page_token expected to be basetypes.StringValue, was: %T`, pageTokenAttribute))
+	}
+
+	rowCountAttribute, ok := attributes["row_count"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`row_count is missing from object`)
+
+		return nil, diags
+	}
+
+	rowCountVal, ok := rowCountAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`row_count expected to be basetypes.Int64Value, was: %T`, rowCountAttribute))
 	}
 
 	if diags.HasError() {
@@ -287,8 +311,9 @@ func (t PaginationType) ValueFromObject(ctx context.Context, in basetypes.Object
 	}
 
 	return PaginationValue{
-		HasNextPage: hasNextPageVal,
-		state:       attr.ValueStateKnown,
+		PageToken: pageTokenVal,
+		RowCount:  rowCountVal,
+		state:     attr.ValueStateKnown,
 	}, diags
 }
 
@@ -355,22 +380,40 @@ func NewPaginationValue(attributeTypes map[string]attr.Type, attributes map[stri
 		return NewPaginationValueUnknown(), diags
 	}
 
-	hasNextPageAttribute, ok := attributes["has_next_page"]
+	pageTokenAttribute, ok := attributes["page_token"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`has_next_page is missing from object`)
+			`page_token is missing from object`)
 
 		return NewPaginationValueUnknown(), diags
 	}
 
-	hasNextPageVal, ok := hasNextPageAttribute.(basetypes.BoolValue)
+	pageTokenVal, ok := pageTokenAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`has_next_page expected to be basetypes.BoolValue, was: %T`, hasNextPageAttribute))
+			fmt.Sprintf(`page_token expected to be basetypes.StringValue, was: %T`, pageTokenAttribute))
+	}
+
+	rowCountAttribute, ok := attributes["row_count"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`row_count is missing from object`)
+
+		return NewPaginationValueUnknown(), diags
+	}
+
+	rowCountVal, ok := rowCountAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`row_count expected to be basetypes.Int64Value, was: %T`, rowCountAttribute))
 	}
 
 	if diags.HasError() {
@@ -378,8 +421,9 @@ func NewPaginationValue(attributeTypes map[string]attr.Type, attributes map[stri
 	}
 
 	return PaginationValue{
-		HasNextPage: hasNextPageVal,
-		state:       attr.ValueStateKnown,
+		PageToken: pageTokenVal,
+		RowCount:  rowCountVal,
+		state:     attr.ValueStateKnown,
 	}, diags
 }
 
@@ -451,31 +495,41 @@ func (t PaginationType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = PaginationValue{}
 
 type PaginationValue struct {
-	HasNextPage basetypes.BoolValue `tfsdk:"has_next_page"`
-	state       attr.ValueState
+	PageToken basetypes.StringValue `tfsdk:"page_token"`
+	RowCount  basetypes.Int64Value  `tfsdk:"row_count"`
+	state     attr.ValueState
 }
 
 func (v PaginationValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+	attrTypes := make(map[string]tftypes.Type, 2)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["has_next_page"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["page_token"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["row_count"] = basetypes.Int64Type{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 2)
 
-		val, err = v.HasNextPage.ToTerraformValue(ctx)
+		val, err = v.PageToken.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["has_next_page"] = val
+		vals["page_token"] = val
+
+		val, err = v.RowCount.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["row_count"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -507,7 +561,8 @@ func (v PaginationValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	var diags diag.Diagnostics
 
 	attributeTypes := map[string]attr.Type{
-		"has_next_page": basetypes.BoolType{},
+		"page_token": basetypes.StringType{},
+		"row_count":  basetypes.Int64Type{},
 	}
 
 	if v.IsNull() {
@@ -521,7 +576,8 @@ func (v PaginationValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"has_next_page": v.HasNextPage,
+			"page_token": v.PageToken,
+			"row_count":  v.RowCount,
 		})
 
 	return objVal, diags
@@ -542,7 +598,11 @@ func (v PaginationValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.HasNextPage.Equal(other.HasNextPage) {
+	if !v.PageToken.Equal(other.PageToken) {
+		return false
+	}
+
+	if !v.RowCount.Equal(other.RowCount) {
 		return false
 	}
 
@@ -559,7 +619,8 @@ func (v PaginationValue) Type(ctx context.Context) attr.Type {
 
 func (v PaginationValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"has_next_page": basetypes.BoolType{},
+		"page_token": basetypes.StringType{},
+		"row_count":  basetypes.Int64Type{},
 	}
 }
 

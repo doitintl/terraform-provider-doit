@@ -2898,17 +2898,19 @@ paths:
             type: boolean
           required: false
         - in: query
-          name: page
+          name: pageToken
+          description: Token from a previous response to fetch the next page.
           schema:
-            type: integer
-            minimum: 0
+            type: string
           required: false
         - in: query
-          name: pageSize
+          name: maxResults
+          description: Maximum number of results per page (default 50, max 500).
           schema:
             type: integer
-            minimum: 0
-            maximum: 100
+            minimum: 1
+            maximum: 500
+            default: 50
           required: false
       responses:
         "200":
@@ -6308,13 +6310,16 @@ components:
           description: The name of the organization
     Pagination:
       type: object
-      description: Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+      description: Cursor-based pagination metadata.
       required:
-        - hasNextPage
+        - rowCount
       properties:
-        hasNextPage:
-          type: boolean
-          description: True if there are more results to fetch.
+        pageToken:
+          type: string
+          description: Token to retrieve the next page. Absent when there are no more pages.
+        rowCount:
+          type: integer
+          description: Number of items in this page.
     PlatformAPI:
       type: object
       description: Platform metadata used by product listing endpoints.

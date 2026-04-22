@@ -4563,10 +4563,13 @@ type Organization struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// Pagination Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+// Pagination Cursor-based pagination metadata.
 type Pagination struct {
-	// HasNextPage True if there are more results to fetch.
-	HasNextPage bool `json:"hasNextPage"`
+	// PageToken Token to retrieve the next page. Absent when there are no more pages.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Number of items in this page.
+	RowCount int `json:"rowCount"`
 }
 
 // PlatformAPI Platform metadata used by product listing endpoints.
@@ -4766,7 +4769,7 @@ type ResourceResults = []ResourceResult
 
 // ResultsBody defines model for ResultsBody.
 type ResultsBody struct {
-	// Pagination Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+	// Pagination Cursor-based pagination metadata.
 	Pagination *Pagination        `json:"pagination,omitempty"`
 	Results    *[]InsightResponse `json:"results,omitempty"`
 }
@@ -5713,8 +5716,12 @@ type GetInsightResultsParams struct {
 	Tag        *[]string                          `form:"tag,omitempty" json:"tag,omitempty"`
 	EasyWin    *bool                              `form:"easyWin,omitempty" json:"easyWin,omitempty"`
 	CloudFlows *bool                              `form:"cloudFlows,omitempty" json:"cloudFlows,omitempty"`
-	Page       *int                               `form:"page,omitempty" json:"page,omitempty"`
-	PageSize   *int                               `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// PageToken Token from a previous response to fetch the next page.
+	PageToken *string `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of results per page (default 50, max 500).
+	MaxResults *int `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 }
 
 // GetInsightResultsParamsDisplayStatus defines parameters for GetInsightResults.
@@ -11671,9 +11678,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.Page != nil {
+		if params.PageToken != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "page", *params.Page, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11687,9 +11694,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.PageSize != nil {
+		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageSize", *params.PageSize, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
