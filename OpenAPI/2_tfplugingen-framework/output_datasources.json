@@ -3462,8 +3462,8 @@
 						}
 					}
 				],
-				"description": "Insights API",
-				"markdown_description": "Insights API"
+				"description": "Manage cloud insights representing recommendations and findings for cloud resources.",
+				"markdown_description": "Manage cloud insights representing recommendations and findings for cloud resources."
 			}
 		},
 		{
@@ -3551,27 +3551,17 @@
 						}
 					},
 					{
-						"name": "page",
-						"int64": {
+						"name": "page_token",
+						"string": {
 							"computed_optional_required": "computed_optional",
-							"validators": [
-								{
-									"custom": {
-										"imports": [
-											{
-												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-											}
-										],
-										"schema_definition": "int64validator.AtLeast(0)"
-									}
-								}
-							]
+							"description": "Token from a previous response to fetch the next page."
 						}
 					},
 					{
-						"name": "page_size",
+						"name": "max_results",
 						"int64": {
 							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of results per page (default 50, max 500).",
 							"validators": [
 								{
 									"custom": {
@@ -3580,7 +3570,7 @@
 												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 											}
 										],
-										"schema_definition": "int64validator.Between(0, 100)"
+										"schema_definition": "int64validator.Between(1, 500)"
 									}
 								}
 							]
@@ -3592,14 +3582,21 @@
 							"computed_optional_required": "computed",
 							"attributes": [
 								{
-									"name": "has_next_page",
-									"bool": {
+									"name": "page_token",
+									"string": {
 										"computed_optional_required": "computed",
-										"description": "True if there are more results to fetch."
+										"description": "Token to retrieve the next page. Absent when there are no more pages."
+									}
+								},
+								{
+									"name": "row_count",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "Number of items in this page."
 									}
 								}
 							],
-							"description": "Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time."
+							"description": "Cursor-based pagination metadata."
 						}
 					},
 					{
@@ -3767,8 +3764,8 @@
 						}
 					}
 				],
-				"description": "Insights API",
-				"markdown_description": "Insights API"
+				"description": "Manage cloud insights representing recommendations and findings for cloud resources.",
+				"markdown_description": "Manage cloud insights representing recommendations and findings for cloud resources."
 			}
 		},
 		{

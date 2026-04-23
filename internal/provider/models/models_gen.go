@@ -4563,10 +4563,13 @@ type Organization struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// Pagination Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+// Pagination Cursor-based pagination metadata.
 type Pagination struct {
-	// HasNextPage True if there are more results to fetch.
-	HasNextPage bool `json:"hasNextPage"`
+	// PageToken Token to retrieve the next page. Absent when there are no more pages.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Number of items in this page.
+	RowCount int `json:"rowCount"`
 }
 
 // PlatformAPI Platform metadata used by product listing endpoints.
@@ -4706,7 +4709,7 @@ type ResourceResult struct {
 	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
 	ResourceType *string `json:"resourceType,omitempty"`
 
-	// Result The result data for this resource. Which fields are populated depends on the resultType.
+	// Result The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
 	Result *ResourceResultResult `json:"result,omitempty"`
 
 	// ResultType The discriminator property that determines which fields are populated in the 'result' object.
@@ -4734,7 +4737,7 @@ type ResourceResultEnhancementPriority struct {
 	Value         *string  `json:"value,omitempty"`
 }
 
-// ResourceResultResult The result data for this resource. Which fields are populated depends on the resultType.
+// ResourceResultResult The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
 type ResourceResultResult struct {
 	// AgentInstalled true if the agent is installed
 	AgentInstalled *bool `json:"agentInstalled,omitempty"`
@@ -4764,9 +4767,16 @@ type ResourceResultResult struct {
 // ResourceResults defines model for ResourceResults.
 type ResourceResults = []ResourceResult
 
+// ResourceResultsResponse defines model for ResourceResultsResponse.
+type ResourceResultsResponse struct {
+	PageToken       *string          `json:"pageToken,omitempty"`
+	ResourceResults []ResourceResult `json:"resourceResults"`
+	RowCount        int              `json:"rowCount"`
+}
+
 // ResultsBody defines model for ResultsBody.
 type ResultsBody struct {
-	// Pagination Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+	// Pagination Cursor-based pagination metadata.
 	Pagination *Pagination        `json:"pagination,omitempty"`
 	Results    *[]InsightResponse `json:"results,omitempty"`
 }
@@ -5713,8 +5723,12 @@ type GetInsightResultsParams struct {
 	Tag        *[]string                          `form:"tag,omitempty" json:"tag,omitempty"`
 	EasyWin    *bool                              `form:"easyWin,omitempty" json:"easyWin,omitempty"`
 	CloudFlows *bool                              `form:"cloudFlows,omitempty" json:"cloudFlows,omitempty"`
-	Page       *int                               `form:"page,omitempty" json:"page,omitempty"`
-	PageSize   *int                               `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// PageToken Token from a previous response to fetch the next page.
+	PageToken *string `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of results per page (default 50, max 500).
+	MaxResults *int `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 }
 
 // GetInsightResultsParamsDisplayStatus defines parameters for GetInsightResults.
@@ -5725,6 +5739,15 @@ type GetInsightResultsParamsCategory string
 
 // GetInsightResultsParamsPriority defines parameters for GetInsightResults.
 type GetInsightResultsParamsPriority string
+
+// GetInsightResourceResultsParams defines parameters for GetInsightResourceResults.
+type GetInsightResourceResultsParams struct {
+	// PageToken Token from a previous response to fetch the next page.
+	PageToken *string `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of results per page (default 1000, max 5000).
+	MaxResults *int `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+}
 
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
 type GetResourcePermissionParamsResourceType string
@@ -6365,7 +6388,7 @@ type ClientInterface interface {
 	PostInsightResult(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInsightResourceResults request
-	GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateInsightStatusWithBody request with any body
 	UpdateInsightStatusWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7654,8 +7677,8 @@ func (c *Client) PostInsightResult(ctx context.Context, sourceID string, insight
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInsightResourceResultsRequest(c.Server, sourceID, insightKey)
+func (c *Client) GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInsightResourceResultsRequest(c.Server, sourceID, insightKey, params)
 	if err != nil {
 		return nil, err
 	}
@@ -11671,9 +11694,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.Page != nil {
+		if params.PageToken != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "page", *params.Page, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11687,9 +11710,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.PageSize != nil {
+		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageSize", *params.PageSize, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11891,7 +11914,7 @@ func NewPostInsightResultRequestWithBody(server string, sourceID string, insight
 }
 
 // NewGetInsightResourceResultsRequest generates requests for GetInsightResourceResults
-func NewGetInsightResourceResultsRequest(server string, sourceID string, insightKey string) (*http.Request, error) {
+func NewGetInsightResourceResultsRequest(server string, sourceID string, insightKey string, params *GetInsightResourceResultsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11921,6 +11944,44 @@ func NewGetInsightResourceResultsRequest(server string, sourceID string, insight
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -12752,7 +12813,7 @@ type ClientWithResponsesInterface interface {
 	PostInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
 
 	// GetInsightResourceResultsWithResponse request
-	GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error)
+	GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error)
 
 	// UpdateInsightStatusWithBodyWithResponse request with any body
 	UpdateInsightStatusWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error)
@@ -14689,7 +14750,6 @@ type DeleteInsightResultResp struct {
 	HTTPResponse *http.Response
 	JSON401      *N401
 	JSON403      *N403
-	JSON404      *N404
 	JSON500      *N500
 }
 
@@ -14765,7 +14825,7 @@ func (r PostInsightResultResp) StatusCode() int {
 type GetInsightResourceResultsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ResourceResults
+	JSON200      *ResourceResultsResponse
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
@@ -15956,8 +16016,8 @@ func (c *ClientWithResponses) PostInsightResultWithResponse(ctx context.Context,
 }
 
 // GetInsightResourceResultsWithResponse request returning *GetInsightResourceResultsResp
-func (c *ClientWithResponses) GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error) {
-	rsp, err := c.GetInsightResourceResults(ctx, sourceID, insightKey, reqEditors...)
+func (c *ClientWithResponses) GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error) {
+	rsp, err := c.GetInsightResourceResults(ctx, sourceID, insightKey, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -20007,13 +20067,6 @@ func ParseDeleteInsightResultResp(rsp *http.Response) (*DeleteInsightResultResp,
 		}
 		response.JSON403 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -20156,7 +20209,7 @@ func ParseGetInsightResourceResultsResp(rsp *http.Response) (*GetInsightResource
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResourceResults
+		var dest ResourceResultsResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

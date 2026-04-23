@@ -122,8 +122,8 @@ func InsightDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
-		Description:         "Insights API",
-		MarkdownDescription: "Insights API",
+		Description:         "Manage cloud insights representing recommendations and findings for cloud resources.",
+		MarkdownDescription: "Manage cloud insights representing recommendations and findings for cloud resources.",
 	}
 }
 
