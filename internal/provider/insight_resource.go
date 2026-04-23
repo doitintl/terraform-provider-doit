@@ -81,9 +81,6 @@ func (r *insightResource) ImportState(ctx context.Context, req resource.ImportSt
 func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_insight.InsightResourceSchema(ctx)
 
-	s.Description = "Manages an insight in DoiT. An insight represents a recommendation or finding for cloud resources."
-	s.MarkdownDescription = s.Description
-
 	// Add UseStateForUnknown to stable Computed-only fields
 	for _, field := range []string{"source", "display_status", "source_id", "insight_key"} {
 		if attr, ok := s.Attributes[field].(schema.StringAttribute); ok {

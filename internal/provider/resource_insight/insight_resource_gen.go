@@ -240,8 +240,8 @@ func InsightResourceSchema(ctx context.Context) schema.Schema {
 							},
 							Optional:            true,
 							Computed:            true,
-							Description:         "The result data for this resource. Which fields are populated depends on the resultType.\n",
-							MarkdownDescription: "The result data for this resource. Which fields are populated depends on the resultType.\n",
+							Description:         "The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.\n",
+							MarkdownDescription: "The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.\n",
 						},
 						"result_type": schema.StringAttribute{
 							Required:            true,
@@ -330,8 +330,8 @@ func InsightResourceSchema(ctx context.Context) schema.Schema {
 				Required: true,
 			},
 		},
-		Description:         "Insights API",
-		MarkdownDescription: "Insights API",
+		Description:         "Manage cloud insights representing recommendations and findings for cloud resources.",
+		MarkdownDescription: "Manage cloud insights representing recommendations and findings for cloud resources.",
 	}
 }
 

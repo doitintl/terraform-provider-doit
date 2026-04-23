@@ -4563,10 +4563,13 @@ type Organization struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// Pagination Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+// Pagination Cursor-based pagination metadata.
 type Pagination struct {
-	// HasNextPage True if there are more results to fetch.
-	HasNextPage bool `json:"hasNextPage"`
+	// PageToken Token to retrieve the next page. Absent when there are no more pages.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Number of items in this page.
+	RowCount int `json:"rowCount"`
 }
 
 // PlatformAPI Platform metadata used by product listing endpoints.
@@ -4706,7 +4709,7 @@ type ResourceResult struct {
 	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
 	ResourceType *string `json:"resourceType,omitempty"`
 
-	// Result The result data for this resource. Which fields are populated depends on the resultType.
+	// Result The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
 	Result *ResourceResultResult `json:"result,omitempty"`
 
 	// ResultType The discriminator property that determines which fields are populated in the 'result' object.
@@ -4734,7 +4737,7 @@ type ResourceResultEnhancementPriority struct {
 	Value         *string  `json:"value,omitempty"`
 }
 
-// ResourceResultResult The result data for this resource. Which fields are populated depends on the resultType.
+// ResourceResultResult The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
 type ResourceResultResult struct {
 	// AgentInstalled true if the agent is installed
 	AgentInstalled *bool `json:"agentInstalled,omitempty"`
@@ -4764,19 +4767,16 @@ type ResourceResultResult struct {
 // ResourceResults defines model for ResourceResults.
 type ResourceResults = []ResourceResult
 
-// ResourceResultsResponse Paginated response for resource results.
+// ResourceResultsResponse defines model for ResourceResultsResponse.
 type ResourceResultsResponse struct {
-	// PageToken Token to retrieve the next page. Absent when there are no more pages.
 	PageToken       *string          `json:"pageToken,omitempty"`
 	ResourceResults []ResourceResult `json:"resourceResults"`
-
-	// RowCount Number of items in this page.
-	RowCount int `json:"rowCount"`
+	RowCount        int              `json:"rowCount"`
 }
 
 // ResultsBody defines model for ResultsBody.
 type ResultsBody struct {
-	// Pagination Pagination support is planned but not implemented yet. Supplying pagination parameters will have no effect at this time.
+	// Pagination Cursor-based pagination metadata.
 	Pagination *Pagination        `json:"pagination,omitempty"`
 	Results    *[]InsightResponse `json:"results,omitempty"`
 }
@@ -5723,8 +5723,12 @@ type GetInsightResultsParams struct {
 	Tag        *[]string                          `form:"tag,omitempty" json:"tag,omitempty"`
 	EasyWin    *bool                              `form:"easyWin,omitempty" json:"easyWin,omitempty"`
 	CloudFlows *bool                              `form:"cloudFlows,omitempty" json:"cloudFlows,omitempty"`
-	Page       *int                               `form:"page,omitempty" json:"page,omitempty"`
-	PageSize   *int                               `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// PageToken Token from a previous response to fetch the next page.
+	PageToken *string `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of results per page (default 50, max 500).
+	MaxResults *int `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 }
 
 // GetInsightResultsParamsDisplayStatus defines parameters for GetInsightResults.
@@ -11690,9 +11694,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.Page != nil {
+		if params.PageToken != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "page", *params.Page, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11706,9 +11710,9 @@ func NewGetInsightResultsRequest(server string, params *GetInsightResultsParams)
 
 		}
 
-		if params.PageSize != nil {
+		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageSize", *params.PageSize, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -14746,7 +14750,6 @@ type DeleteInsightResultResp struct {
 	HTTPResponse *http.Response
 	JSON401      *N401
 	JSON403      *N403
-	JSON404      *N404
 	JSON500      *N500
 }
 
@@ -20063,13 +20066,6 @@ func ParseDeleteInsightResultResp(rsp *http.Response) (*DeleteInsightResultResp,
 			return nil, err
 		}
 		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500

@@ -1656,7 +1656,7 @@
 													}
 												}
 											],
-											"description": "The result data for this resource. Which fields are populated depends on the resultType.\n"
+											"description": "The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.\n"
 										}
 									},
 									{
@@ -1821,8 +1821,8 @@
 						}
 					}
 				],
-				"description": "Insights API",
-				"markdown_description": "Insights API"
+				"description": "Manage cloud insights representing recommendations and findings for cloud resources.",
+				"markdown_description": "Manage cloud insights representing recommendations and findings for cloud resources."
 			}
 		},
 		{
