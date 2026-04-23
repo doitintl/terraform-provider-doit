@@ -1080,13 +1080,14 @@ paths:
           in: query
           description: Dimension type
           required: true
+          example: "fixed"
           schema:
             $ref: "#/components/schemas/DimensionsTypes"
         - name: id
           in: query
           description: Dimension id
           required: true
-          example: "5LTlZvRUavfi0X4412"
+          example: "service_description"
           schema:
             type: string
       responses:
@@ -4054,6 +4055,14 @@ components:
           type: number
           format: double
           description: The total current spend attainment across all periods.
+        totalMarketplaceSpend:
+          type: number
+          format: double
+          description: The total marketplace spend across all periods.
+        totalForecastValue:
+          type: number
+          format: double
+          description: The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
         periods:
           type: array
           description: The list of commitment periods.
@@ -4124,6 +4133,14 @@ components:
           type: number
           format: double
           description: The total current spend attainment across all periods.
+        totalMarketplaceSpend:
+          type: number
+          format: double
+          description: The total marketplace spend across all periods.
+        totalForecastValue:
+          type: number
+          format: double
+          description: The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
         periods:
           type: array
           description: The list of commitment periods.
@@ -4159,6 +4176,18 @@ components:
           type: number
           format: double
           description: The marketplace limit as a percentage (0-100).
+        marketplaceSpend:
+          type: number
+          format: double
+          description: The marketplace spend within this period.
+        marketplaceLimitAmount:
+          type: number
+          format: double
+          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+        forecastValue:
+          type: number
+          format: double
+          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
     Condition:
       type: string
       description: Condition key or expression used in alert configurations.

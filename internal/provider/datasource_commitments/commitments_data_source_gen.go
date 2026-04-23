@@ -66,10 +66,25 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "The end date of the period.",
 										MarkdownDescription: "The end date of the period.",
 									},
+									"forecast_value": schema.Float64Attribute{
+										Computed:            true,
+										Description:         "The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.",
+										MarkdownDescription: "The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.",
+									},
+									"marketplace_limit_amount": schema.Float64Attribute{
+										Computed:            true,
+										Description:         "The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.",
+										MarkdownDescription: "The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.",
+									},
 									"marketplace_limit_percentage": schema.Float64Attribute{
 										Computed:            true,
 										Description:         "The marketplace limit as a percentage (0-100).",
 										MarkdownDescription: "The marketplace limit as a percentage (0-100).",
+									},
+									"marketplace_spend": schema.Float64Attribute{
+										Computed:            true,
+										Description:         "The marketplace spend within this period.",
+										MarkdownDescription: "The marketplace spend within this period.",
 									},
 									"start_date": schema.StringAttribute{
 										Computed:            true,
@@ -101,6 +116,16 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "The total current spend attainment across all periods.",
 							MarkdownDescription: "The total current spend attainment across all periods.",
+						},
+						"total_forecast_value": schema.Float64Attribute{
+							Computed:            true,
+							Description:         "The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.",
+							MarkdownDescription: "The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.",
+						},
+						"total_marketplace_spend": schema.Float64Attribute{
+							Computed:            true,
+							Description:         "The total marketplace spend across all periods.",
+							MarkdownDescription: "The total marketplace spend across all periods.",
 						},
 						"update_time": schema.Int64Attribute{
 							Computed:            true,
@@ -390,6 +415,42 @@ func (t CommitmentsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 			fmt.Sprintf(`total_current_attainment expected to be basetypes.Float64Value, was: %T`, totalCurrentAttainmentAttribute))
 	}
 
+	totalForecastValueAttribute, ok := attributes["total_forecast_value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total_forecast_value is missing from object`)
+
+		return nil, diags
+	}
+
+	totalForecastValueVal, ok := totalForecastValueAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total_forecast_value expected to be basetypes.Float64Value, was: %T`, totalForecastValueAttribute))
+	}
+
+	totalMarketplaceSpendAttribute, ok := attributes["total_marketplace_spend"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total_marketplace_spend is missing from object`)
+
+		return nil, diags
+	}
+
+	totalMarketplaceSpendVal, ok := totalMarketplaceSpendAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total_marketplace_spend expected to be basetypes.Float64Value, was: %T`, totalMarketplaceSpendAttribute))
+	}
+
 	updateTimeAttribute, ok := attributes["update_time"]
 
 	if !ok {
@@ -423,6 +484,8 @@ func (t CommitmentsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 		StartDate:              startDateVal,
 		TotalCommitmentValue:   totalCommitmentValueVal,
 		TotalCurrentAttainment: totalCurrentAttainmentVal,
+		TotalForecastValue:     totalForecastValueVal,
+		TotalMarketplaceSpend:  totalMarketplaceSpendVal,
 		UpdateTime:             updateTimeVal,
 		state:                  attr.ValueStateKnown,
 	}, diags
@@ -671,6 +734,42 @@ func NewCommitmentsValue(attributeTypes map[string]attr.Type, attributes map[str
 			fmt.Sprintf(`total_current_attainment expected to be basetypes.Float64Value, was: %T`, totalCurrentAttainmentAttribute))
 	}
 
+	totalForecastValueAttribute, ok := attributes["total_forecast_value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total_forecast_value is missing from object`)
+
+		return NewCommitmentsValueUnknown(), diags
+	}
+
+	totalForecastValueVal, ok := totalForecastValueAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total_forecast_value expected to be basetypes.Float64Value, was: %T`, totalForecastValueAttribute))
+	}
+
+	totalMarketplaceSpendAttribute, ok := attributes["total_marketplace_spend"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total_marketplace_spend is missing from object`)
+
+		return NewCommitmentsValueUnknown(), diags
+	}
+
+	totalMarketplaceSpendVal, ok := totalMarketplaceSpendAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total_marketplace_spend expected to be basetypes.Float64Value, was: %T`, totalMarketplaceSpendAttribute))
+	}
+
 	updateTimeAttribute, ok := attributes["update_time"]
 
 	if !ok {
@@ -704,6 +803,8 @@ func NewCommitmentsValue(attributeTypes map[string]attr.Type, attributes map[str
 		StartDate:              startDateVal,
 		TotalCommitmentValue:   totalCommitmentValueVal,
 		TotalCurrentAttainment: totalCurrentAttainmentVal,
+		TotalForecastValue:     totalForecastValueVal,
+		TotalMarketplaceSpend:  totalMarketplaceSpendVal,
 		UpdateTime:             updateTimeVal,
 		state:                  attr.ValueStateKnown,
 	}, diags
@@ -787,12 +888,14 @@ type CommitmentsValue struct {
 	StartDate              basetypes.StringValue  `tfsdk:"start_date"`
 	TotalCommitmentValue   basetypes.Float64Value `tfsdk:"total_commitment_value"`
 	TotalCurrentAttainment basetypes.Float64Value `tfsdk:"total_current_attainment"`
+	TotalForecastValue     basetypes.Float64Value `tfsdk:"total_forecast_value"`
+	TotalMarketplaceSpend  basetypes.Float64Value `tfsdk:"total_marketplace_spend"`
 	UpdateTime             basetypes.Int64Value   `tfsdk:"update_time"`
 	state                  attr.ValueState
 }
 
 func (v CommitmentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 11)
+	attrTypes := make(map[string]tftypes.Type, 13)
 
 	var val tftypes.Value
 	var err error
@@ -809,13 +912,15 @@ func (v CommitmentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 	attrTypes["start_date"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["total_commitment_value"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["total_current_attainment"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["total_forecast_value"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["total_marketplace_spend"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["update_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 11)
+		vals := make(map[string]tftypes.Value, 13)
 
 		val, err = v.CloudProvider.ToTerraformValue(ctx)
 
@@ -897,6 +1002,22 @@ func (v CommitmentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 
 		vals["total_current_attainment"] = val
 
+		val, err = v.TotalForecastValue.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["total_forecast_value"] = val
+
+		val, err = v.TotalMarketplaceSpend.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["total_marketplace_spend"] = val
+
 		val, err = v.UpdateTime.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -953,6 +1074,8 @@ func (v CommitmentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 		"start_date":               basetypes.StringType{},
 		"total_commitment_value":   basetypes.Float64Type{},
 		"total_current_attainment": basetypes.Float64Type{},
+		"total_forecast_value":     basetypes.Float64Type{},
+		"total_marketplace_spend":  basetypes.Float64Type{},
 		"update_time":              basetypes.Int64Type{},
 	}
 
@@ -977,6 +1100,8 @@ func (v CommitmentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 			"start_date":               v.StartDate,
 			"total_commitment_value":   v.TotalCommitmentValue,
 			"total_current_attainment": v.TotalCurrentAttainment,
+			"total_forecast_value":     v.TotalForecastValue,
+			"total_marketplace_spend":  v.TotalMarketplaceSpend,
 			"update_time":              v.UpdateTime,
 		})
 
@@ -1038,6 +1163,14 @@ func (v CommitmentsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.TotalForecastValue.Equal(other.TotalForecastValue) {
+		return false
+	}
+
+	if !v.TotalMarketplaceSpend.Equal(other.TotalMarketplaceSpend) {
+		return false
+	}
+
 	if !v.UpdateTime.Equal(other.UpdateTime) {
 		return false
 	}
@@ -1067,6 +1200,8 @@ func (v CommitmentsValue) AttributeTypes(ctx context.Context) map[string]attr.Ty
 		"start_date":               basetypes.StringType{},
 		"total_commitment_value":   basetypes.Float64Type{},
 		"total_current_attainment": basetypes.Float64Type{},
+		"total_forecast_value":     basetypes.Float64Type{},
+		"total_marketplace_spend":  basetypes.Float64Type{},
 		"update_time":              basetypes.Int64Type{},
 	}
 }
@@ -1132,6 +1267,42 @@ func (t PeriodsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`end_date expected to be basetypes.StringValue, was: %T`, endDateAttribute))
 	}
 
+	forecastValueAttribute, ok := attributes["forecast_value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`forecast_value is missing from object`)
+
+		return nil, diags
+	}
+
+	forecastValueVal, ok := forecastValueAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`forecast_value expected to be basetypes.Float64Value, was: %T`, forecastValueAttribute))
+	}
+
+	marketplaceLimitAmountAttribute, ok := attributes["marketplace_limit_amount"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_limit_amount is missing from object`)
+
+		return nil, diags
+	}
+
+	marketplaceLimitAmountVal, ok := marketplaceLimitAmountAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_limit_amount expected to be basetypes.Float64Value, was: %T`, marketplaceLimitAmountAttribute))
+	}
+
 	marketplaceLimitPercentageAttribute, ok := attributes["marketplace_limit_percentage"]
 
 	if !ok {
@@ -1148,6 +1319,24 @@ func (t PeriodsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`marketplace_limit_percentage expected to be basetypes.Float64Value, was: %T`, marketplaceLimitPercentageAttribute))
+	}
+
+	marketplaceSpendAttribute, ok := attributes["marketplace_spend"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_spend is missing from object`)
+
+		return nil, diags
+	}
+
+	marketplaceSpendVal, ok := marketplaceSpendAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_spend expected to be basetypes.Float64Value, was: %T`, marketplaceSpendAttribute))
 	}
 
 	startDateAttribute, ok := attributes["start_date"]
@@ -1175,7 +1364,10 @@ func (t PeriodsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 	return PeriodsValue{
 		CommitmentValue:            commitmentValueVal,
 		EndDate:                    endDateVal,
+		ForecastValue:              forecastValueVal,
+		MarketplaceLimitAmount:     marketplaceLimitAmountVal,
 		MarketplaceLimitPercentage: marketplaceLimitPercentageVal,
+		MarketplaceSpend:           marketplaceSpendVal,
 		StartDate:                  startDateVal,
 		state:                      attr.ValueStateKnown,
 	}, diags
@@ -1280,6 +1472,42 @@ func NewPeriodsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`end_date expected to be basetypes.StringValue, was: %T`, endDateAttribute))
 	}
 
+	forecastValueAttribute, ok := attributes["forecast_value"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`forecast_value is missing from object`)
+
+		return NewPeriodsValueUnknown(), diags
+	}
+
+	forecastValueVal, ok := forecastValueAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`forecast_value expected to be basetypes.Float64Value, was: %T`, forecastValueAttribute))
+	}
+
+	marketplaceLimitAmountAttribute, ok := attributes["marketplace_limit_amount"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_limit_amount is missing from object`)
+
+		return NewPeriodsValueUnknown(), diags
+	}
+
+	marketplaceLimitAmountVal, ok := marketplaceLimitAmountAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_limit_amount expected to be basetypes.Float64Value, was: %T`, marketplaceLimitAmountAttribute))
+	}
+
 	marketplaceLimitPercentageAttribute, ok := attributes["marketplace_limit_percentage"]
 
 	if !ok {
@@ -1296,6 +1524,24 @@ func NewPeriodsValue(attributeTypes map[string]attr.Type, attributes map[string]
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`marketplace_limit_percentage expected to be basetypes.Float64Value, was: %T`, marketplaceLimitPercentageAttribute))
+	}
+
+	marketplaceSpendAttribute, ok := attributes["marketplace_spend"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_spend is missing from object`)
+
+		return NewPeriodsValueUnknown(), diags
+	}
+
+	marketplaceSpendVal, ok := marketplaceSpendAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_spend expected to be basetypes.Float64Value, was: %T`, marketplaceSpendAttribute))
 	}
 
 	startDateAttribute, ok := attributes["start_date"]
@@ -1323,7 +1569,10 @@ func NewPeriodsValue(attributeTypes map[string]attr.Type, attributes map[string]
 	return PeriodsValue{
 		CommitmentValue:            commitmentValueVal,
 		EndDate:                    endDateVal,
+		ForecastValue:              forecastValueVal,
+		MarketplaceLimitAmount:     marketplaceLimitAmountVal,
 		MarketplaceLimitPercentage: marketplaceLimitPercentageVal,
+		MarketplaceSpend:           marketplaceSpendVal,
 		StartDate:                  startDateVal,
 		state:                      attr.ValueStateKnown,
 	}, diags
@@ -1399,27 +1648,33 @@ var _ basetypes.ObjectValuable = PeriodsValue{}
 type PeriodsValue struct {
 	CommitmentValue            basetypes.Float64Value `tfsdk:"commitment_value"`
 	EndDate                    basetypes.StringValue  `tfsdk:"end_date"`
+	ForecastValue              basetypes.Float64Value `tfsdk:"forecast_value"`
+	MarketplaceLimitAmount     basetypes.Float64Value `tfsdk:"marketplace_limit_amount"`
 	MarketplaceLimitPercentage basetypes.Float64Value `tfsdk:"marketplace_limit_percentage"`
+	MarketplaceSpend           basetypes.Float64Value `tfsdk:"marketplace_spend"`
 	StartDate                  basetypes.StringValue  `tfsdk:"start_date"`
 	state                      attr.ValueState
 }
 
 func (v PeriodsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 4)
+	attrTypes := make(map[string]tftypes.Type, 7)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["commitment_value"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["end_date"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["forecast_value"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["marketplace_limit_amount"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["marketplace_limit_percentage"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["marketplace_spend"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["start_date"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 4)
+		vals := make(map[string]tftypes.Value, 7)
 
 		val, err = v.CommitmentValue.ToTerraformValue(ctx)
 
@@ -1437,6 +1692,22 @@ func (v PeriodsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 		vals["end_date"] = val
 
+		val, err = v.ForecastValue.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["forecast_value"] = val
+
+		val, err = v.MarketplaceLimitAmount.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["marketplace_limit_amount"] = val
+
 		val, err = v.MarketplaceLimitPercentage.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -1444,6 +1715,14 @@ func (v PeriodsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["marketplace_limit_percentage"] = val
+
+		val, err = v.MarketplaceSpend.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["marketplace_spend"] = val
 
 		val, err = v.StartDate.ToTerraformValue(ctx)
 
@@ -1485,7 +1764,10 @@ func (v PeriodsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	attributeTypes := map[string]attr.Type{
 		"commitment_value":             basetypes.Float64Type{},
 		"end_date":                     basetypes.StringType{},
+		"forecast_value":               basetypes.Float64Type{},
+		"marketplace_limit_amount":     basetypes.Float64Type{},
 		"marketplace_limit_percentage": basetypes.Float64Type{},
+		"marketplace_spend":            basetypes.Float64Type{},
 		"start_date":                   basetypes.StringType{},
 	}
 
@@ -1502,7 +1784,10 @@ func (v PeriodsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		map[string]attr.Value{
 			"commitment_value":             v.CommitmentValue,
 			"end_date":                     v.EndDate,
+			"forecast_value":               v.ForecastValue,
+			"marketplace_limit_amount":     v.MarketplaceLimitAmount,
 			"marketplace_limit_percentage": v.MarketplaceLimitPercentage,
+			"marketplace_spend":            v.MarketplaceSpend,
 			"start_date":                   v.StartDate,
 		})
 
@@ -1532,7 +1817,19 @@ func (v PeriodsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.ForecastValue.Equal(other.ForecastValue) {
+		return false
+	}
+
+	if !v.MarketplaceLimitAmount.Equal(other.MarketplaceLimitAmount) {
+		return false
+	}
+
 	if !v.MarketplaceLimitPercentage.Equal(other.MarketplaceLimitPercentage) {
+		return false
+	}
+
+	if !v.MarketplaceSpend.Equal(other.MarketplaceSpend) {
 		return false
 	}
 
@@ -1555,7 +1852,10 @@ func (v PeriodsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"commitment_value":             basetypes.Float64Type{},
 		"end_date":                     basetypes.StringType{},
+		"forecast_value":               basetypes.Float64Type{},
+		"marketplace_limit_amount":     basetypes.Float64Type{},
 		"marketplace_limit_percentage": basetypes.Float64Type{},
+		"marketplace_spend":            basetypes.Float64Type{},
 		"start_date":                   basetypes.StringType{},
 	}
 }
