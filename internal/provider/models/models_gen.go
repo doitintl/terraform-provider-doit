@@ -3055,6 +3055,12 @@ type CommitmentExternal struct {
 	// TotalCurrentAttainment The total current spend attainment across all periods.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
+	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
+	TotalForecastValue *float64 `json:"totalForecastValue,omitempty"`
+
+	// TotalMarketplaceSpend The total marketplace spend across all periods.
+	TotalMarketplaceSpend *float64 `json:"totalMarketplaceSpend,omitempty"`
+
 	// UpdateTime The last update time in milliseconds since epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
@@ -3106,6 +3112,12 @@ type CommitmentExternalListItem struct {
 	// TotalCurrentAttainment The total current spend attainment across all periods.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
+	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
+	TotalForecastValue *float64 `json:"totalForecastValue,omitempty"`
+
+	// TotalMarketplaceSpend The total marketplace spend across all periods.
+	TotalMarketplaceSpend *float64 `json:"totalMarketplaceSpend,omitempty"`
+
 	// UpdateTime The last update time in milliseconds since epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
@@ -3121,8 +3133,17 @@ type CommitmentPeriod struct {
 	// EndDate The end date of the period.
 	EndDate *time.Time `json:"endDate,omitempty"`
 
+	// ForecastValue The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+	ForecastValue *float64 `json:"forecastValue,omitempty"`
+
+	// MarketplaceLimitAmount The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+	MarketplaceLimitAmount *float64 `json:"marketplaceLimitAmount,omitempty"`
+
 	// MarketplaceLimitPercentage The marketplace limit as a percentage (0-100).
 	MarketplaceLimitPercentage *float64 `json:"marketplaceLimitPercentage,omitempty"`
+
+	// MarketplaceSpend The marketplace spend within this period.
+	MarketplaceSpend *float64 `json:"marketplaceSpend,omitempty"`
 
 	// StartDate The start date of the period.
 	StartDate *time.Time `json:"startDate,omitempty"`

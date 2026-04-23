@@ -2821,10 +2821,31 @@
 										}
 									},
 									{
+										"name": "forecast_value",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast."
+										}
+									},
+									{
+										"name": "marketplace_limit_amount",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100."
+										}
+									},
+									{
 										"name": "marketplace_limit_percentage",
 										"float64": {
 											"computed_optional_required": "computed",
 											"description": "The marketplace limit as a percentage (0-100)."
+										}
+									},
+									{
+										"name": "marketplace_spend",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The marketplace spend within this period."
 										}
 									},
 									{
@@ -2858,6 +2879,20 @@
 						"float64": {
 							"computed_optional_required": "computed",
 							"description": "The total current spend attainment across all periods."
+						}
+					},
+					{
+						"name": "total_forecast_value",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast."
+						}
+					},
+					{
+						"name": "total_marketplace_spend",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "The total marketplace spend across all periods."
 						}
 					},
 					{
@@ -3004,10 +3039,31 @@
 														}
 													},
 													{
+														"name": "forecast_value",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast."
+														}
+													},
+													{
+														"name": "marketplace_limit_amount",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100."
+														}
+													},
+													{
 														"name": "marketplace_limit_percentage",
 														"float64": {
 															"computed_optional_required": "computed",
 															"description": "The marketplace limit as a percentage (0-100)."
+														}
+													},
+													{
+														"name": "marketplace_spend",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The marketplace spend within this period."
 														}
 													},
 													{
@@ -3041,6 +3097,20 @@
 										"float64": {
 											"computed_optional_required": "computed",
 											"description": "The total current spend attainment across all periods."
+										}
+									},
+									{
+										"name": "total_forecast_value",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast."
+										}
+									},
+									{
+										"name": "total_marketplace_spend",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The total marketplace spend across all periods."
 										}
 									},
 									{

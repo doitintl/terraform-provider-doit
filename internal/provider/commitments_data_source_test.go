@@ -139,9 +139,87 @@ func TestAccCommitmentsDataSource_AutoPagination(t *testing.T) {
 	})
 }
 
+// TestAccCommitmentsDataSource_NewAttributes verifies the new commitment-level and
+// period-level attributes (total_forecast_value, total_marketplace_spend,
+// forecast_value, marketplace_limit_amount, marketplace_spend) are present and
+// accessible in the list items.
+func TestAccCommitmentsDataSource_NewAttributes(t *testing.T) {
+	commitmentCount := getCommitmentCount(t)
+	if commitmentCount < 1 {
+		t.Skip("Need at least 1 commitment to test new attributes")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCommitmentsDataSourceNewAttributesConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_commitments.all", "commitments.#"),
+					// Verify new top-level attributes are accessible via output
+					resource.TestCheckOutput("has_commitments", "true"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccCommitmentsDataSourceNewAttributesConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 func testAccCommitmentsDataSourceConfig() string {
 	return `
 data "doit_commitments" "test" {
+}
+`
+}
+
+func testAccCommitmentsDataSourceNewAttributesConfig() string {
+	return `
+data "doit_commitments" "all" {
+}
+
+output "has_commitments" {
+  value = length(data.doit_commitments.all.commitments) > 0
+}
+
+# Exercise new commitment-level attributes
+output "first_commitment_total_forecast_value" {
+  value = length(data.doit_commitments.all.commitments) > 0 ? data.doit_commitments.all.commitments[0].total_forecast_value : null
+}
+
+output "first_commitment_total_marketplace_spend" {
+  value = length(data.doit_commitments.all.commitments) > 0 ? data.doit_commitments.all.commitments[0].total_marketplace_spend : null
+}
+
+# Exercise new period-level attributes
+output "first_period_forecast_value" {
+  value = (
+    length(data.doit_commitments.all.commitments) > 0 &&
+    length(data.doit_commitments.all.commitments[0].periods) > 0
+  ) ? data.doit_commitments.all.commitments[0].periods[0].forecast_value : null
+}
+
+output "first_period_marketplace_spend" {
+  value = (
+    length(data.doit_commitments.all.commitments) > 0 &&
+    length(data.doit_commitments.all.commitments[0].periods) > 0
+  ) ? data.doit_commitments.all.commitments[0].periods[0].marketplace_spend : null
+}
+
+output "first_period_marketplace_limit_amount" {
+  value = (
+    length(data.doit_commitments.all.commitments) > 0 &&
+    length(data.doit_commitments.all.commitments[0].periods) > 0
+  ) ? data.doit_commitments.all.commitments[0].periods[0].marketplace_limit_amount : null
 }
 `
 }

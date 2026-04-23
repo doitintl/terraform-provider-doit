@@ -37,6 +37,8 @@ type commitmentDataSourceModel struct {
 	StartDate              types.String   `tfsdk:"start_date"`
 	TotalCommitmentValue   types.Float64  `tfsdk:"total_commitment_value"`
 	TotalCurrentAttainment types.Float64  `tfsdk:"total_current_attainment"`
+	TotalForecastValue     types.Float64  `tfsdk:"total_forecast_value"`
+	TotalMarketplaceSpend  types.Float64  `tfsdk:"total_marketplace_spend"`
 	UpdateTime             types.Int64    `tfsdk:"update_time"`
 	Timeouts               timeouts.Value `tfsdk:"timeouts"`
 }
@@ -93,6 +95,8 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		state.UpdateTime = types.Int64Unknown()
 		state.TotalCommitmentValue = types.Float64Unknown()
 		state.TotalCurrentAttainment = types.Float64Unknown()
+		state.TotalForecastValue = types.Float64Unknown()
+		state.TotalMarketplaceSpend = types.Float64Unknown()
 		state.StartDate = types.StringUnknown()
 		state.EndDate = types.StringUnknown()
 		state.Periods = types.ListUnknown(datasource_commitment.PeriodsValue{}.Type(ctx))
@@ -154,6 +158,16 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		state.TotalCurrentAttainment = types.Float64Value(*commitment.TotalCurrentAttainment)
 	} else {
 		state.TotalCurrentAttainment = types.Float64Null()
+	}
+	if commitment.TotalForecastValue != nil {
+		state.TotalForecastValue = types.Float64Value(*commitment.TotalForecastValue)
+	} else {
+		state.TotalForecastValue = types.Float64Null()
+	}
+	if commitment.TotalMarketplaceSpend != nil {
+		state.TotalMarketplaceSpend = types.Float64Value(*commitment.TotalMarketplaceSpend)
+	} else {
+		state.TotalMarketplaceSpend = types.Float64Null()
 	}
 
 	// Map date-time fields using RFC3339 for consistency with other data sources
@@ -221,12 +235,36 @@ func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPerio
 			endDate = types.StringNull()
 		}
 
+		var forecastValue types.Float64
+		if p.ForecastValue != nil {
+			forecastValue = types.Float64Value(*p.ForecastValue)
+		} else {
+			forecastValue = types.Float64Null()
+		}
+
+		var marketplaceLimitAmount types.Float64
+		if p.MarketplaceLimitAmount != nil {
+			marketplaceLimitAmount = types.Float64Value(*p.MarketplaceLimitAmount)
+		} else {
+			marketplaceLimitAmount = types.Float64Null()
+		}
+
+		var marketplaceSpend types.Float64
+		if p.MarketplaceSpend != nil {
+			marketplaceSpend = types.Float64Value(*p.MarketplaceSpend)
+		} else {
+			marketplaceSpend = types.Float64Null()
+		}
+
 		pv, pvDiags := datasource_commitment.NewPeriodsValue(
 			datasource_commitment.PeriodsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"commitment_value":             commitmentValue,
 				"end_date":                     endDate,
+				"forecast_value":               forecastValue,
+				"marketplace_limit_amount":     marketplaceLimitAmount,
 				"marketplace_limit_percentage": marketplaceLimitPercentage,
+				"marketplace_spend":            marketplaceSpend,
 				"start_date":                   startDate,
 			},
 		)
