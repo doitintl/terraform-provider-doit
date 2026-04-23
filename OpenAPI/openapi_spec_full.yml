@@ -59,7 +59,7 @@ tags:
   - name: Ava
     description: Interact with Ava, DoiT's AI-powered cloud assistant.
   - name: Insights
-    description: Insights API
+    description: Manage cloud insights representing recommendations and findings for cloud resources.
 
 paths:
   /analytics/v1/alerts:
@@ -3574,7 +3574,7 @@ paths:
       tags:
         - Insights
       summary: Create or Update Single Insight
-      description: Creates or updates a single insight for the given source and key.
+      description: Creates or updates a single insight for the given source and key. If an insight with the same key already exists for the source, it will be updated.
       operationId: postInsightResult
       parameters:
         - in: path
@@ -3631,8 +3631,6 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
   /insights/v1/results/source/{sourceID}/insight/{insightKey}/status:
@@ -3688,13 +3686,28 @@ paths:
           required: true
           schema:
             type: string
+        - in: query
+          name: pageToken
+          description: Token from a previous response to fetch the next page.
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: maxResults
+          description: Maximum number of results per page (default 1000, max 5000).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5000
+            default: 1000
+          required: false
       responses:
         "200":
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResourceResults"
+                $ref: "#/components/schemas/ResourceResultsResponse"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3886,6 +3899,10 @@ components:
         result:
           description: >
             The result data for this resource. Which fields are populated depends on the resultType.
+            For security_risk: critical, high, medium, low.
+            For potential_daily_savings: value.
+            For potential_daily_savings_with_recommendation: value, current, recommendation.
+            For potential_daily_savings_with_cluster_agent: value, agentInstalled.
           type: object
           properties:
             value:
@@ -3966,7 +3983,7 @@ components:
           type: integer
     CloudProvider:
       type: string
-      example: "aws"
+      example: aws
       description: The cloud provider associated with the resource.
     Source:
       type: string
@@ -3984,6 +4001,20 @@ components:
         rowCount:
           type: integer
           description: Number of items in this page.
+    ResourceResultsResponse:
+      type: object
+      required:
+        - resourceResults
+        - rowCount
+      properties:
+        resourceResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceResult"
+        pageToken:
+          type: string
+        rowCount:
+          type: integer
     LastInsightStatusChange:
       description: If set, this object contains the last status change made by a user for this insight
       type: object

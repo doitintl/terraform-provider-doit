@@ -3589,8 +3589,8 @@
 						}
 					}
 				],
-				"description": "Insights API",
-				"markdown_description": "Insights API"
+				"description": "Manage cloud insights representing recommendations and findings for cloud resources.",
+				"markdown_description": "Manage cloud insights representing recommendations and findings for cloud resources."
 			}
 		},
 		{
