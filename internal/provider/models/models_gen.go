@@ -2623,6 +2623,10 @@ type AnomalyItemStatus string
 type AnomalyResource struct {
 	Cost *float64 `json:"cost,omitempty"`
 
+	// Labels Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.
+	// Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.
+	Labels *[]AnomalyResourceLabel `json:"labels,omitempty"`
+
 	// Operation For anomalies related to AWS S3
 	Operation      *string `json:"operation,omitempty"`
 	ResourceId     *string `json:"resourceId,omitempty"`
@@ -2631,6 +2635,18 @@ type AnomalyResource struct {
 
 // AnomalyResourceArray Array of resources contributing to an anomaly.
 type AnomalyResourceArray = []AnomalyResource
+
+// AnomalyResourceLabel A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+type AnomalyResourceLabel struct {
+	// Cost The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
+	Cost *float64 `json:"cost,omitempty"`
+
+	// Key The label/tag key.
+	Key *string `json:"key,omitempty"`
+
+	// Value The label/tag value.
+	Value *string `json:"value,omitempty"`
+}
 
 // AnomalySKU SKU-level information contributing to an anomaly.
 type AnomalySKU struct {

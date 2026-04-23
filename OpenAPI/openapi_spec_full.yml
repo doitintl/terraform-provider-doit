@@ -4030,11 +4030,33 @@ components:
         operation:
           description: "For anomalies related to AWS S3"
           type: string
+        labels:
+          type: array
+          description: |-
+            Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.
+            Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.
+          items:
+            $ref: "#/components/schemas/AnomalyResourceLabel"
     AnomalyResourceArray:
       type: array
       description: Array of resources contributing to an anomaly.
       items:
         $ref: "#/components/schemas/AnomalyResource"
+    AnomalyResourceLabel:
+      type: object
+      description: |-
+        A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+      properties:
+        key:
+          type: string
+          description: The label/tag key.
+        value:
+          type: string
+          description: The label/tag value.
+        cost:
+          type: number
+          format: double
+          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
     AssetResponse:
       type: object
       description: Response returned after creating or updating an asset.

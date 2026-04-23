@@ -78,9 +78,21 @@ Optional:
 Read-Only:
 
 - `cost` (Number)
+- `labels` (Attributes List) Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.
+Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels. (see [below for nested schema](#nestedatt--resource_data--labels))
 - `operation` (String) For anomalies related to AWS S3
 - `resource_id` (String)
 - `sku_description` (String)
+
+<a id="nestedatt--resource_data--labels"></a>
+### Nested Schema for `resource_data.labels`
+
+Read-Only:
+
+- `cost` (Number) The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
+- `key` (String) The label/tag key.
+- `value` (String) The label/tag value.
+
 
 
 <a id="nestedatt--top3skus"></a>
