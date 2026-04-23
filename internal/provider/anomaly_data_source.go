@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -143,10 +144,14 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if anomaly.ResourceData != nil && len(*anomaly.ResourceData) > 0 {
 		resourceDataVals := make([]datasource_anomaly.ResourceDataValue, 0, len(*anomaly.ResourceData))
 		for _, rd := range *anomaly.ResourceData {
+			// Map labels nested list for this resource
+			labelsList := mapAnomalyResourceLabelsForAnomaly(ctx, rd.Labels, &resp.Diagnostics)
+
 			rdVal, d := datasource_anomaly.NewResourceDataValue(
 				datasource_anomaly.ResourceDataValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
 					"cost":            types.Float64PointerValue(rd.Cost),
+					"labels":          labelsList,
 					"operation":       types.StringPointerValue(rd.Operation),
 					"resource_id":     types.StringPointerValue(rd.ResourceId),
 					"sku_description": types.StringPointerValue(rd.SkuDescription),
@@ -188,4 +193,32 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// mapAnomalyResourceLabelsForAnomaly maps API AnomalyResourceLabel slice to Terraform list
+// for the singular anomaly data source.
+func mapAnomalyResourceLabelsForAnomaly(ctx context.Context, labels *[]models.AnomalyResourceLabel, diagnostics *diag.Diagnostics) types.List {
+	if labels == nil || len(*labels) == 0 {
+		emptyLabels, d := types.ListValueFrom(ctx, datasource_anomaly.LabelsValue{}.Type(ctx), []datasource_anomaly.LabelsValue{})
+		diagnostics.Append(d...)
+		return emptyLabels
+	}
+
+	vals := make([]datasource_anomaly.LabelsValue, 0, len(*labels))
+	for _, l := range *labels {
+		labelVal, diags := datasource_anomaly.NewLabelsValue(
+			datasource_anomaly.LabelsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"cost":  types.Float64PointerValue(l.Cost),
+				"key":   types.StringPointerValue(l.Key),
+				"value": types.StringPointerValue(l.Value),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, labelVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, datasource_anomaly.LabelsValue{}.Type(ctx), vals)
+	diagnostics.Append(diags...)
+	return list
 }

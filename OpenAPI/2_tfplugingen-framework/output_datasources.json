@@ -1301,6 +1301,38 @@
 														}
 													},
 													{
+														"name": "labels",
+														"list_nested": {
+															"computed_optional_required": "computed",
+															"nested_object": {
+																"attributes": [
+																	{
+																		"name": "cost",
+																		"float64": {
+																			"computed_optional_required": "computed",
+																			"description": "The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend."
+																		}
+																	},
+																	{
+																		"name": "key",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "The label/tag key."
+																		}
+																	},
+																	{
+																		"name": "value",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "The label/tag value."
+																		}
+																	}
+																]
+															},
+															"description": "Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.\nCloud providers use different names for the same concept; GCP uses \"labels\", AWS uses \"cost-allocation tags\", and Azure uses \"tags\". We refer to all of these as labels."
+														}
+													},
+													{
 														"name": "operation",
 														"string": {
 															"computed_optional_required": "computed",
@@ -1466,6 +1498,38 @@
 										"name": "cost",
 										"float64": {
 											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "labels",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "cost",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend."
+														}
+													},
+													{
+														"name": "key",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The label/tag key."
+														}
+													},
+													{
+														"name": "value",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The label/tag value."
+														}
+													}
+												]
+											},
+											"description": "Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.\nCloud providers use different names for the same concept; GCP uses \"labels\", AWS uses \"cost-allocation tags\", and Azure uses \"tags\". We refer to all of these as labels."
 										}
 									},
 									{
