@@ -118,6 +118,96 @@ func TestAllocationComponentsValidator(t *testing.T) {
 	}
 }
 
+func TestAllocationComponentsValidator_InverseConflict(t *testing.T) {
+	ctx := context.Background()
+
+	makeComponentWithFlags := func(key, mode, compType string, inverse, inverseSelection bool) resource_allocation.ComponentsValue {
+		val, diags := resource_allocation.NewComponentsValue(
+			resource_allocation.ComponentsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"key":               types.StringValue(key),
+				"mode":              types.StringValue(mode),
+				"type":              types.StringValue(compType),
+				"values":            types.ListValueMust(types.StringType, []attr.Value{types.StringValue("JP")}),
+				"case_insensitive":  types.BoolValue(false),
+				"include_null":      types.BoolValue(false),
+				"inverse":           types.BoolValue(inverse),
+				"inverse_selection": types.BoolValue(inverseSelection),
+			},
+		)
+		if diags.HasError() {
+			t.Fatalf("failed to create component value: %s", diags.Errors())
+		}
+		return val
+	}
+
+	makeList := func(components ...resource_allocation.ComponentsValue) basetypes.ListValue {
+		elems := make([]attr.Value, len(components))
+		for i, c := range components {
+			elems[i] = c
+		}
+		list, diags := types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), elems)
+		if diags.HasError() {
+			t.Fatalf("failed to create list value: %s", diags.Errors())
+		}
+		return list
+	}
+
+	tests := []struct {
+		name        string
+		components  basetypes.ListValue
+		expectError bool
+	}{
+		{
+			name:        "valid - only inverse=true",
+			components:  makeList(makeComponentWithFlags("country", "is", "fixed", true, false)),
+			expectError: false,
+		},
+		{
+			name:        "valid - only inverse_selection=true",
+			components:  makeList(makeComponentWithFlags("country", "is", "fixed", false, true)),
+			expectError: false,
+		},
+		{
+			name:        "valid - both false",
+			components:  makeList(makeComponentWithFlags("country", "is", "fixed", false, false)),
+			expectError: false,
+		},
+		{
+			name:        "invalid - both inverse and inverse_selection true",
+			components:  makeList(makeComponentWithFlags("country", "is", "fixed", true, true)),
+			expectError: true,
+		},
+		{
+			name: "invalid - conflict in second component only",
+			components: makeList(
+				makeComponentWithFlags("country", "is", "fixed", true, false),   // ok
+				makeComponentWithFlags("project_id", "is", "fixed", true, true), // conflict
+			),
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			v := allocationComponentsValidator{}
+			req := validator.ListRequest{
+				ConfigValue: tc.components,
+			}
+			resp := &validator.ListResponse{}
+
+			v.ValidateList(ctx, req, resp)
+
+			if tc.expectError && !resp.Diagnostics.HasError() {
+				t.Error("expected error but got none")
+			}
+			if !tc.expectError && resp.Diagnostics.HasError() {
+				t.Errorf("expected no error but got: %s", resp.Diagnostics.Errors())
+			}
+		})
+	}
+}
+
 func TestAllocationComponentsValidator_NullAndUnknown(t *testing.T) {
 	ctx := context.Background()
 

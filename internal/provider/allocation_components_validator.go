@@ -22,7 +22,7 @@ var _ validator.List = allocationComponentsValidator{}
 type allocationComponentsValidator struct{}
 
 func (v allocationComponentsValidator) Description(_ context.Context) string {
-	return "validates that allocation_rule components have key='allocation_rule' and mode is 'is' or 'contains'"
+	return "validates allocation rule component constraints: allocation_rule type restrictions and inverse/inverse_selection mutual exclusivity"
 }
 
 func (v allocationComponentsValidator) MarkdownDescription(ctx context.Context) string {
@@ -46,6 +46,22 @@ func (v allocationComponentsValidator) ValidateList(ctx context.Context, req val
 
 		if compVal.ComponentsType.IsNull() || compVal.ComponentsType.IsUnknown() {
 			continue
+		}
+
+		// Validate inverse and inverse_selection are not both true.
+		// inverse_selection is deprecated in favor of inverse. Setting both
+		// causes ambiguous behavior because the API gives inverse_selection
+		// precedence, silently overriding inverse.
+		if compVal.Inverse.ValueBool() && compVal.InverseSelection.ValueBool() {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtListIndex(i).AtName("inverse"),
+				"Conflicting Inverse Attributes",
+				fmt.Sprintf(
+					"components[%d]: 'inverse' and 'inverse_selection' cannot both be true. "+
+						"Use 'inverse' only — 'inverse_selection' is deprecated.",
+					i,
+				),
+			)
 		}
 
 		if compVal.ComponentsType.ValueString() != "allocation_rule" {
