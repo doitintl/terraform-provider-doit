@@ -1,4 +1,21 @@
 # Manage sharing permissions for a Cloud Analytics report
+resource "doit_report" "example" {
+  name = "Shared Cost Report"
+
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_range = {
+      mode           = "last"
+      amount         = 1
+      unit           = "month"
+      include_current = true
+    }
+  }
+}
+
 resource "doit_resource_sharing" "example" {
   resource_type = "reports"
   resource_id   = doit_report.example.id
