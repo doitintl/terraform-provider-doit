@@ -69,6 +69,7 @@ provider "doit" {
 | `doit_label` | Labels for categorizing annotations |
 | `doit_label_assignments` | Assign labels to resources |
 | `doit_report` | Cloud Analytics reports with filters, metrics, and grouping |
+| `doit_resource_sharing` | Sharing permissions for reports, budgets, alerts, and allocations |
 
 ### Data Sources
 
@@ -188,6 +189,7 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `DOIT_API_TOKEN`   | Your DoiT API token                                       |
 | `DOIT_HOST`        | API host (e.g., `https://api.doit.com`)                   |
 | `TEST_USER`        | Email for test budget collaborators/recipients             |
+| `TEST_USER_2`      | Second user email for resource sharing tests               |
 | `TEST_ATTRIBUTION` | Attribution ID for test budget scope                       |
 | `TEST_SLACK_CHAN`   | Slack channel ID for notification tests                    |
 | `TEST_PROJECT`     | Project ID for allocation rule tests                       |

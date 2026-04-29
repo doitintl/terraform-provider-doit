@@ -554,3 +554,245 @@ resource "doit_resource_sharing" "this" {
 }
 `, i)
 }
+
+// --- Tests for other resource types (budgets, alerts, allocations) ---
+
+// TestAccResourceSharing_Budget tests sharing permissions on a budget resource.
+func TestAccResourceSharing_Budget(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testUser2() == "" {
+				t.Skip("TEST_USER_2 must be set for this test")
+			}
+			if testAttribution() == "" {
+				t.Skip("TEST_ATTRIBUTION must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceSharingBudget(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_resource_sharing.budget",
+						tfjsonpath.New("resource_type"),
+						knownvalue.StringExact("budgets")),
+					statecheck.ExpectKnownValue(
+						"doit_resource_sharing.budget",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListSizeExact(2)),
+				},
+			},
+			// Drift check
+			{
+				Config: testAccResourceSharingBudget(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccResourceSharing_Alert tests sharing permissions on an alert resource.
+func TestAccResourceSharing_Alert(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testUser2() == "" {
+				t.Skip("TEST_USER_2 must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceSharingAlert(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_resource_sharing.alert",
+						tfjsonpath.New("resource_type"),
+						knownvalue.StringExact("alerts")),
+					statecheck.ExpectKnownValue(
+						"doit_resource_sharing.alert",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListSizeExact(2)),
+				},
+			},
+			// Drift check
+			{
+				Config: testAccResourceSharingAlert(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccResourceSharing_Allocation tests sharing permissions on an allocation resource.
+func TestAccResourceSharing_Allocation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testUser2() == "" {
+				t.Skip("TEST_USER_2 must be set for this test")
+			}
+			if testProject() == "" {
+				t.Skip("TEST_PROJECT must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceSharingAllocation(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_resource_sharing.allocation",
+						tfjsonpath.New("resource_type"),
+						knownvalue.StringExact("allocations")),
+					statecheck.ExpectKnownValue(
+						"doit_resource_sharing.allocation",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListSizeExact(2)),
+				},
+			},
+			// Drift check
+			{
+				Config: testAccResourceSharingAllocation(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// --- Config generators for other resource types ---
+
+func testAccResourceSharingBudget(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "sharing_target" {
+  name          = "sharing-test-budget-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scope         = ["%s"]
+  alerts = [
+    { percentage = 50 }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type         = "recurring"
+  start_period = local.start_period
+}
+
+resource "doit_resource_sharing" "budget" {
+  resource_type = "budgets"
+  resource_id   = doit_budget.sharing_target.id
+
+  permissions = [
+    {
+      user = "%s"
+      role = "owner"
+    },
+    {
+      user = "%s"
+      role = "viewer"
+    }
+  ]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser(), testUser2())
+}
+
+func testAccResourceSharingAlert(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "sharing_target" {
+  name = "sharing-test-alert-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+
+resource "doit_resource_sharing" "alert" {
+  resource_type = "alerts"
+  resource_id   = doit_alert.sharing_target.id
+
+  permissions = [
+    {
+      user = "%s"
+      role = "owner"
+    },
+    {
+      user = "%s"
+      role = "viewer"
+    }
+  ]
+}
+`, i, testUser(), testUser2())
+}
+
+func testAccResourceSharingAllocation(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "sharing_target" {
+  name        = "sharing-test-alloc-%d"
+  description = "allocation for sharing test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "project_id"
+        mode   = "is"
+        type   = "fixed"
+        values = ["%s"]
+      }
+    ]
+  }
+}
+
+resource "doit_resource_sharing" "allocation" {
+  resource_type = "allocations"
+  resource_id   = doit_allocation.sharing_target.id
+
+  permissions = [
+    {
+      user = "%s"
+      role = "owner"
+    },
+    {
+      user = "%s"
+      role = "viewer"
+    }
+  ]
+}
+`, i, testProject(), testUser(), testUser2())
+}
