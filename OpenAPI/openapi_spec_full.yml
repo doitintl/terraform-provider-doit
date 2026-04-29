@@ -2973,9 +2973,10 @@ paths:
           description: The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
           schema:
             minimum: 1
+            maximum: 100
             type: integer
             format: int64
-            default: 50
+            default: 100
         - $ref: "#/components/parameters/pageToken"
         - name: filter
           in: query

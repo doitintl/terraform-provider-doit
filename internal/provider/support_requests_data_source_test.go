@@ -13,9 +13,6 @@ import (
 
 // TestAccSupportRequestsDataSource_MaxResultsOnly tests that setting max_results limits results.
 func TestAccSupportRequestsDataSource_MaxResultsOnly(t *testing.T) {
-	// TODO(CMP-40423): The support requests API ignores maxResults and pageToken entirely,
-	// returning all results regardless of pagination parameters.
-	t.Skip("Skipped: support requests API ignores maxResults entirely (CMP-40423)")
 	ticketCount := getSupportRequestCount(t)
 	if ticketCount < 3 {
 		t.Skipf("Need at least 3 support requests to test pagination, got %d", ticketCount)
@@ -61,7 +58,7 @@ data "doit_support_requests" "limited" {
 // TestAccSupportRequestsDataSource_PageTokenOnly tests that setting only page_token (without max_results)
 // auto-paginates starting from the token, returning fewer results than a full run.
 func TestAccSupportRequestsDataSource_PageTokenOnly(t *testing.T) {
-	t.Skip("Skipped: support requests API returns 400 'Failed to get tickets'")
+
 	totalRequests := getSupportRequestCount(t)
 	if totalRequests < 2 {
 		t.Skipf("Need at least 2 support requests to test page_token-only, got %d", totalRequests)
