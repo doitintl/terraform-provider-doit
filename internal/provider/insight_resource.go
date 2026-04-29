@@ -82,7 +82,7 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 	s := resource_insight.InsightResourceSchema(ctx)
 
 	// Add UseStateForUnknown to stable Computed-only fields
-	for _, field := range []string{"source", "display_status", "source_id", "insight_key"} {
+	for _, field := range []string{"source", "source_id", "insight_key"} {
 		if attr, ok := s.Attributes[field].(schema.StringAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 			s.Attributes[field] = attr
@@ -194,6 +194,10 @@ func buildInsightRequest(ctx context.Context, plan *insightResourceModel) (*mode
 				v := models.ResourceResultSeverity(rr.Severity.ValueString())
 				apiResult.Severity = &v
 			}
+			if !rr.Resolved.IsNull() && !rr.Resolved.IsUnknown() {
+				v := rr.Resolved.ValueBool()
+				apiResult.Resolved = &v
+			}
 
 			// Result object
 			if !rr.Result.IsNull() && !rr.Result.IsUnknown() {
@@ -209,6 +213,26 @@ func buildInsightRequest(ctx context.Context, plan *insightResourceModel) (*mode
 				if !rr.Result.Recommendation.IsNull() && !rr.Result.Recommendation.IsUnknown() {
 					v := rr.Result.Recommendation.ValueString()
 					result.Recommendation = &v
+				}
+				if !rr.Result.AgentInstalled.IsNull() && !rr.Result.AgentInstalled.IsUnknown() {
+					v := rr.Result.AgentInstalled.ValueBool()
+					result.AgentInstalled = &v
+				}
+				if !rr.Result.Critical.IsNull() && !rr.Result.Critical.IsUnknown() {
+					v := int(rr.Result.Critical.ValueInt64())
+					result.Critical = &v
+				}
+				if !rr.Result.High.IsNull() && !rr.Result.High.IsUnknown() {
+					v := int(rr.Result.High.ValueInt64())
+					result.High = &v
+				}
+				if !rr.Result.Medium.IsNull() && !rr.Result.Medium.IsUnknown() {
+					v := int(rr.Result.Medium.ValueInt64())
+					result.Medium = &v
+				}
+				if !rr.Result.Low.IsNull() && !rr.Result.Low.IsUnknown() {
+					v := int(rr.Result.Low.ValueInt64())
+					result.Low = &v
 				}
 				apiResult.Result = result
 			}
@@ -447,6 +471,11 @@ func restoreUserResourceResultValues(ctx context.Context, planRR, apiRR *types.L
 			a.Severity = p.Severity
 		}
 
+		// Restore user-provided Optional fields at the ResourceResult level
+		if !p.Resolved.IsNull() && !p.Resolved.IsUnknown() {
+			a.Resolved = p.Resolved
+		}
+
 		// Restore nested result — particularly result.value which suffers float32 drift
 		if !p.Result.IsNull() && !p.Result.IsUnknown() && !a.Result.IsNull() {
 			if !p.Result.Value.IsNull() && !p.Result.Value.IsUnknown() {
@@ -457,6 +486,21 @@ func restoreUserResourceResultValues(ctx context.Context, planRR, apiRR *types.L
 			}
 			if !p.Result.Recommendation.IsNull() && !p.Result.Recommendation.IsUnknown() {
 				a.Result.Recommendation = p.Result.Recommendation
+			}
+			if !p.Result.AgentInstalled.IsNull() && !p.Result.AgentInstalled.IsUnknown() {
+				a.Result.AgentInstalled = p.Result.AgentInstalled
+			}
+			if !p.Result.Critical.IsNull() && !p.Result.Critical.IsUnknown() {
+				a.Result.Critical = p.Result.Critical
+			}
+			if !p.Result.High.IsNull() && !p.Result.High.IsUnknown() {
+				a.Result.High = p.Result.High
+			}
+			if !p.Result.Medium.IsNull() && !p.Result.Medium.IsUnknown() {
+				a.Result.Medium = p.Result.Medium
+			}
+			if !p.Result.Low.IsNull() && !p.Result.Low.IsUnknown() {
+				a.Result.Low = p.Result.Low
 			}
 		}
 
@@ -924,12 +968,12 @@ func mapResourceResultsToModel(ctx context.Context, results []models.ResourceRes
 		resultObj := resource_insight.NewResultValueNull()
 		if rr.Result != nil {
 			resultAttrs := map[string]attr.Value{
-				"agent_installed": types.BoolNull(),
-				"critical":        types.Int64Null(),
+				"agent_installed": types.BoolPointerValue(rr.Result.AgentInstalled),
+				"critical":        intPointerToInt64Value(rr.Result.Critical),
 				"current":         types.StringPointerValue(rr.Result.Current),
-				"high":            types.Int64Null(),
-				"low":             types.Int64Null(),
-				"medium":          types.Int64Null(),
+				"high":            intPointerToInt64Value(rr.Result.High),
+				"low":             intPointerToInt64Value(rr.Result.Low),
+				"medium":          intPointerToInt64Value(rr.Result.Medium),
 				"recommendation":  types.StringPointerValue(rr.Result.Recommendation),
 				"value":           types.Float64PointerValue(rr.Result.Value),
 			}
@@ -983,6 +1027,14 @@ func severityToString(s *models.ResourceResultSeverity) types.String {
 		return types.StringNull()
 	}
 	return types.StringValue(string(*s))
+}
+
+// intPointerToInt64Value converts *int to types.Int64, returning Null if nil.
+func intPointerToInt64Value(i *int) types.Int64 {
+	if i == nil {
+		return types.Int64Null()
+	}
+	return types.Int64Value(int64(*i))
 }
 
 // planModifier that makes a string attribute require replacement on change.
