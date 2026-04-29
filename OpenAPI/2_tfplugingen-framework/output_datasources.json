@@ -1248,6 +1248,20 @@
 										}
 									},
 									{
+										"name": "acknowledged_at",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the anomaly was first acknowledged"
+										}
+									},
+									{
+										"name": "acknowledged_by",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Email of the user who first acknowledged the anomaly"
+										}
+									},
+									{
 										"name": "attribution",
 										"string": {
 											"computed_optional_required": "computed",
@@ -1451,6 +1465,20 @@
 						"bool": {
 							"computed_optional_required": "computed",
 							"description": "Has the anomaly been acknowledged"
+						}
+					},
+					{
+						"name": "acknowledged_at",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the anomaly was first acknowledged"
+						}
+					},
+					{
+						"name": "acknowledged_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email of the user who first acknowledged the anomaly"
 						}
 					},
 					{

@@ -3317,6 +3317,15 @@ components:
         acknowledged:
           description: "Has the anomaly been acknowledged"
           type: boolean
+        acknowledgedAt:
+          description: "When the anomaly was first acknowledged"
+          type: string
+          format: date-time
+          nullable: true
+        acknowledgedBy:
+          description: "Email of the user who first acknowledged the anomaly"
+          type: string
+          nullable: true
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -5204,6 +5213,15 @@ components:
         acknowledged:
           description: "Has the anomaly been acknowledged"
           type: boolean
+        acknowledgedAt:
+          description: "When the anomaly was first acknowledged"
+          type: string
+          format: date-time
+          nullable: true
+        acknowledgedBy:
+          description: "Email of the user who first acknowledged the anomaly"
+          type: string
+          nullable: true
     GetDatahubDataset200Response:
       type: object
       properties:

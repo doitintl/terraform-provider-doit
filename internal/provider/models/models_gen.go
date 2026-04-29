@@ -2577,6 +2577,12 @@ type AnomalyItem struct {
 	// Acknowledged Has the anomaly been acknowledged
 	Acknowledged *bool `json:"acknowledged,omitempty"`
 
+	// AcknowledgedAt When the anomaly was first acknowledged
+	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
+
+	// AcknowledgedBy Email of the user who first acknowledged the anomaly
+	AcknowledgedBy *string `json:"acknowledgedBy,omitempty"`
+
 	// Attribution Attribution ID.
 	Attribution string `json:"attribution"`
 
@@ -3728,6 +3734,12 @@ type FindCloudDiagramsResponseItem struct {
 type GetAnomaly200Response struct {
 	// Acknowledged Has the anomaly been acknowledged
 	Acknowledged *bool `json:"acknowledged,omitempty"`
+
+	// AcknowledgedAt When the anomaly was first acknowledged
+	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
+
+	// AcknowledgedBy Email of the user who first acknowledged the anomaly
+	AcknowledgedBy *string `json:"acknowledgedBy,omitempty"`
 
 	// Attribution Attribution ID
 	Attribution string `json:"attribution"`
