@@ -38,7 +38,7 @@ func SupportRequestsDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
 				MarkdownDescription: "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.",
 				Validators: []validator.Int64{
-					int64validator.AtLeast(1),
+					int64validator.Between(1, 100),
 				},
 			},
 			"min_creation_time": schema.StringAttribute{
