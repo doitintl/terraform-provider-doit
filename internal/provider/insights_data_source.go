@@ -1,0 +1,439 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_insights"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+var _ datasource.DataSource = (*insightsDataSource)(nil)
+var _ datasource.DataSourceWithConfigure = (*insightsDataSource)(nil)
+
+func NewInsightsDataSource() datasource.DataSource {
+	return &insightsDataSource{}
+}
+
+type insightsDataSource struct {
+	client *models.ClientWithResponses
+}
+
+type insightsDataSourceModel struct {
+	datasource_insights.InsightsModel
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
+}
+
+func (d *insightsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_insights"
+}
+
+func (d *insightsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	s := datasource_insights.InsightsDataSourceSchema(ctx)
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+	resp.Schema = s
+}
+
+func (d *insightsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*models.ClientWithResponses)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T.", req.ProviderData),
+		)
+		return
+	}
+
+	d.client = client
+}
+
+func (d *insightsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data insightsDataSourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
+	// Build query parameters
+	params := &models.GetInsightResultsParams{}
+
+	if !data.SearchTerm.IsNull() && !data.SearchTerm.IsUnknown() {
+		v := data.SearchTerm.ValueString()
+		params.SearchTerm = &v
+	}
+
+	if !data.DisplayStatus.IsNull() && !data.DisplayStatus.IsUnknown() {
+		var statuses []string
+		resp.Diagnostics.Append(data.DisplayStatus.ElementsAs(ctx, &statuses, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		dsVals := make([]models.GetInsightResultsParamsDisplayStatus, len(statuses))
+		for i, s := range statuses {
+			dsVals[i] = models.GetInsightResultsParamsDisplayStatus(s)
+		}
+		params.DisplayStatus = &dsVals
+	}
+
+	if !data.Category.IsNull() && !data.Category.IsUnknown() {
+		c := models.GetInsightResultsParamsCategory(data.Category.ValueString())
+		params.Category = &c
+	}
+
+	if !data.CloudProvider.IsNull() && !data.CloudProvider.IsUnknown() {
+		p := data.CloudProvider.ValueString()
+		params.CloudProvider = &p
+	}
+
+	if !data.Source.IsNull() && !data.Source.IsUnknown() {
+		var sources []string
+		resp.Diagnostics.Append(data.Source.ElementsAs(ctx, &sources, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		srcVals := make([]models.Source, len(sources))
+		copy(srcVals, sources)
+		params.Source = &srcVals
+	}
+
+	if !data.Priority.IsNull() && !data.Priority.IsUnknown() {
+		var priorities []string
+		resp.Diagnostics.Append(data.Priority.ElementsAs(ctx, &priorities, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		priVals := make([]models.GetInsightResultsParamsPriority, len(priorities))
+		for i, p := range priorities {
+			priVals[i] = models.GetInsightResultsParamsPriority(p)
+		}
+		params.Priority = &priVals
+	}
+
+	if !data.Tag.IsNull() && !data.Tag.IsUnknown() {
+		var tags []string
+		resp.Diagnostics.Append(data.Tag.ElementsAs(ctx, &tags, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		params.Tag = &tags
+	}
+
+	if !data.EasyWin.IsNull() && !data.EasyWin.IsUnknown() {
+		v := data.EasyWin.ValueBool()
+		params.EasyWin = &v
+	}
+
+	if !data.CloudFlows.IsNull() && !data.CloudFlows.IsUnknown() {
+		v := data.CloudFlows.ValueBool()
+		params.CloudFlows = &v
+	}
+
+	// Smart pagination: honor user-provided values, otherwise auto-paginate
+	userControlsPagination := !data.MaxResults.IsNull() && !data.MaxResults.IsUnknown()
+
+	var allInsights []models.InsightResponse
+
+	if userControlsPagination {
+		// Manual mode: single API call with user's params
+		v := int(data.MaxResults.ValueInt64())
+		params.MaxResults = &v
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pt := data.PageToken.ValueString()
+			params.PageToken = &pt
+		}
+
+		apiResp, err := d.client.GetInsightResultsWithResponse(ctx, params)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Insights",
+				fmt.Sprintf("Unable to read insights: %v", err),
+			)
+			return
+		}
+
+		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Insights",
+				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+			)
+			return
+		}
+
+		result := apiResp.JSON200
+		if result.Results != nil {
+			allInsights = *result.Results
+		}
+
+		// Preserve API's pagination for user to fetch next page
+		if result.Pagination != nil {
+			paginationVal, diags := datasource_insights.NewPaginationValue(
+				datasource_insights.PaginationValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"page_token": types.StringPointerValue(result.Pagination.PageToken),
+					"row_count":  types.Int64Value(int64(result.Pagination.RowCount)),
+				},
+			)
+			resp.Diagnostics.Append(diags...)
+			data.Pagination = paginationVal
+		} else {
+			paginationVal, diags := datasource_insights.NewPaginationValue(
+				datasource_insights.PaginationValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"page_token": types.StringNull(),
+					"row_count":  types.Int64Value(int64(len(allInsights))),
+				},
+			)
+			resp.Diagnostics.Append(diags...)
+			data.Pagination = paginationVal
+		}
+		// max_results is already set by user, no change needed
+	} else {
+		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
+		if !data.PageToken.IsNull() && !data.PageToken.IsUnknown() {
+			pt := data.PageToken.ValueString()
+			params.PageToken = &pt
+		}
+		for {
+			apiResp, err := d.client.GetInsightResultsWithResponse(ctx, params)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Insights",
+					fmt.Sprintf("Unable to read insights: %v", err),
+				)
+				return
+			}
+
+			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Error Reading Insights",
+					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
+				)
+				return
+			}
+
+			result := apiResp.JSON200
+			if result.Results != nil {
+				allInsights = append(allInsights, *result.Results...)
+			}
+
+			if result.Pagination == nil || result.Pagination.PageToken == nil || *result.Pagination.PageToken == "" {
+				break
+			}
+			params.PageToken = result.Pagination.PageToken
+		}
+
+		// Auto mode: set counts based on what we fetched
+		paginationVal, diags := datasource_insights.NewPaginationValue(
+			datasource_insights.PaginationValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"page_token": types.StringNull(),
+				"row_count":  types.Int64Value(int64(len(allInsights))),
+			},
+		)
+		resp.Diagnostics.Append(diags...)
+		data.Pagination = paginationVal
+		// page_token was not set by user or has been consumed; normalize to null
+		data.PageToken = types.StringNull()
+		// max_results was not set by user; normalize to null
+		data.MaxResults = types.Int64Null()
+	}
+
+	// Map results list
+	if len(allInsights) > 0 {
+		resultVals := make([]datasource_insights.ResultsValue, 0, len(allInsights))
+		for _, insight := range allInsights {
+			resultVal := mapInsightToResultsValue(ctx, insight, &resp.Diagnostics)
+			resultVals = append(resultVals, resultVal)
+		}
+
+		resultsList, diags := types.ListValueFrom(ctx, datasource_insights.ResultsValue{}.Type(ctx), resultVals)
+		resp.Diagnostics.Append(diags...)
+		data.Results = resultsList
+	} else {
+		emptyList, diags := types.ListValueFrom(ctx, datasource_insights.ResultsValue{}.Type(ctx), []datasource_insights.ResultsValue{})
+		resp.Diagnostics.Append(diags...)
+		data.Results = emptyList
+	}
+
+	// Preserve user-provided filter values in state; set computed-only values
+	// Filter params that are Optional+Computed: if user didn't set them, keep them null
+	if data.SearchTerm.IsUnknown() {
+		data.SearchTerm = types.StringNull()
+	}
+	if data.DisplayStatus.IsUnknown() {
+		data.DisplayStatus = types.ListNull(types.StringType)
+	}
+	if data.Category.IsUnknown() {
+		data.Category = types.StringNull()
+	}
+	if data.CloudProvider.IsUnknown() {
+		data.CloudProvider = types.StringNull()
+	}
+	if data.Source.IsUnknown() {
+		data.Source = types.ListNull(types.StringType)
+	}
+	if data.Priority.IsUnknown() {
+		data.Priority = types.ListNull(types.StringType)
+	}
+	if data.Tag.IsUnknown() {
+		data.Tag = types.ListNull(types.StringType)
+	}
+	if data.EasyWin.IsUnknown() {
+		data.EasyWin = types.BoolNull()
+	}
+	if data.CloudFlows.IsUnknown() {
+		data.CloudFlows = types.BoolNull()
+	}
+	// max_results and page_token are handled above in the pagination branches;
+	// only resolve unknown values here (should not happen in practice)
+	if data.MaxResults.IsUnknown() {
+		data.MaxResults = types.Int64Null()
+	}
+	if data.PageToken.IsUnknown() {
+		data.PageToken = types.StringNull()
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// mapInsightToResultsValue maps a single InsightResponse to a ResultsValue.
+func mapInsightToResultsValue(ctx context.Context, insight models.InsightResponse, diagnostics *diag.Diagnostics) datasource_insights.ResultsValue {
+	// Map categories list
+	categoriesList := mapStringPointerSliceToList(ctx, func() *[]string {
+		if insight.Categories == nil {
+			return nil
+		}
+		cats := make([]string, len(*insight.Categories))
+		for i, c := range *insight.Categories {
+			cats[i] = string(c)
+		}
+		return &cats
+	}(), diagnostics)
+
+	// Map tags list
+	tagsList := mapStringPointerSliceToList(ctx, insight.Tags, diagnostics)
+
+	// Map summary nested object
+	var summaryVal datasource_insights.SummaryValue
+	if insight.Summary != nil {
+		var diags diag.Diagnostics
+		summaryVal, diags = datasource_insights.NewSummaryValue(
+			datasource_insights.SummaryValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"operational_risks":       types.Float64PointerValue(insight.Summary.OperationalRisks),
+				"performance_risks":       types.Float64PointerValue(insight.Summary.PerformanceRisks),
+				"potential_daily_savings": types.Float64PointerValue(insight.Summary.PotentialDailySavings),
+				"reliability_risks":       types.Float64PointerValue(insight.Summary.ReliabilityRisks),
+				"security_risks":          types.Float64PointerValue(insight.Summary.SecurityRisks),
+				"sustainability_risks":    types.Float64PointerValue(insight.Summary.SustainabilityRisks),
+			},
+		)
+		diagnostics.Append(diags...)
+	} else {
+		summaryVal = datasource_insights.NewSummaryValueNull()
+	}
+
+	// Map last status change nested object
+	var lastStatusChangeVal datasource_insights.LastStatusChangeValue
+	if insight.LastStatusChange != nil {
+		var diags diag.Diagnostics
+		lastStatusChangeVal, diags = datasource_insights.NewLastStatusChangeValue(
+			datasource_insights.LastStatusChangeValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"last_changed_at": types.StringValue(insight.LastStatusChange.LastChangedAt.String()),
+				"user_id":         types.StringValue(insight.LastStatusChange.UserId),
+			},
+		)
+		diagnostics.Append(diags...)
+	} else {
+		lastStatusChangeVal = datasource_insights.NewLastStatusChangeValueNull()
+	}
+
+	// Map display_status enum
+	var displayStatusVal types.String
+	if insight.DisplayStatus != nil {
+		displayStatusVal = types.StringValue(string(*insight.DisplayStatus))
+	} else {
+		displayStatusVal = types.StringNull()
+	}
+
+	// Map cloud_provider
+	var cloudProviderVal types.String
+	if insight.CloudProvider != nil {
+		cloudProviderVal = types.StringValue(*insight.CloudProvider)
+	} else {
+		cloudProviderVal = types.StringNull()
+	}
+
+	// Map source
+	var sourceVal types.String
+	if insight.Source != nil {
+		sourceVal = types.StringValue(*insight.Source)
+	} else {
+		sourceVal = types.StringNull()
+	}
+
+	// Map last_updated
+	var lastUpdatedVal types.String
+	if insight.LastUpdated != nil {
+		lastUpdatedVal = types.StringValue(insight.LastUpdated.String())
+	} else {
+		lastUpdatedVal = types.StringNull()
+	}
+
+	resultVal, diags := datasource_insights.NewResultsValue(
+		datasource_insights.ResultsValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"categories":               categoriesList,
+			"cloud_flow_template_id":   types.StringPointerValue(insight.CloudFlowTemplateId),
+			"detailed_description_mdx": types.StringPointerValue(insight.DetailedDescriptionMdx),
+			"display_status":           displayStatusVal,
+			"easy_win_description":     types.StringPointerValue(insight.EasyWinDescription),
+			"key":                      types.StringPointerValue(insight.Key),
+			"last_status_change":       lastStatusChangeVal,
+			"last_updated":             lastUpdatedVal,
+			"cloud_provider":           cloudProviderVal,
+			"report_url":               types.StringPointerValue(insight.ReportUrl),
+			"short_description":        types.StringPointerValue(insight.ShortDescription),
+			"source":                   sourceVal,
+			"summary":                  summaryVal,
+			"tags":                     tagsList,
+			"title":                    types.StringPointerValue(insight.Title),
+		},
+	)
+	diagnostics.Append(diags...)
+	return resultVal
+}
+
+// mapStringPointerSliceToList maps a *[]string to a types.List of strings.
+func mapStringPointerSliceToList(ctx context.Context, items *[]string, diagnostics *diag.Diagnostics) types.List {
+	if items == nil || len(*items) == 0 {
+		emptyList, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		diagnostics.Append(d...)
+		return emptyList
+	}
+
+	list, d := types.ListValueFrom(ctx, types.StringType, *items)
+	diagnostics.Append(d...)
+	return list
+}

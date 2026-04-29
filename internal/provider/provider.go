@@ -287,6 +287,8 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewOrganizationsDataSource,
 		NewDatahubDatasetsDataSource,
 		NewCloudDiagramsDataSource,
+		// Insights data source
+		NewInsightsDataSource,
 	}
 }
 
