@@ -496,7 +496,7 @@ func (r *insightResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// sourceID is always "public-api" for API-created insights
-	sourceID := "public-api"
+	sourceID := models.PostInsightResultParamsSourceIDPublicApi
 	insightKey := plan.Key.ValueString()
 
 	createResp, err := r.client.PostInsightResultWithResponse(ctx, sourceID, insightKey, *apiReq)
@@ -536,7 +536,7 @@ func (r *insightResource) Create(ctx context.Context, req resource.CreateRequest
 
 	// Fetch resource results from the separate endpoint (with auto-pagination)
 	// to populate state consistently with what Read returns.
-	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, sourceID, insightKey)
+	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, string(sourceID), insightKey)
 	resp.Diagnostics.Append(fetchDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -655,7 +655,7 @@ func (r *insightResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	sourceID := "public-api"
+	sourceID := models.PostInsightResultParamsSourceIDPublicApi
 	insightKey := plan.Key.ValueString()
 
 	updateResp, err := r.client.PostInsightResultWithResponse(ctx, sourceID, insightKey, *apiReq)
@@ -694,7 +694,7 @@ func (r *insightResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// Fetch resource results from the separate endpoint (with auto-pagination)
 	// to populate state consistently with what Read returns.
-	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, sourceID, insightKey)
+	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, string(sourceID), insightKey)
 	resp.Diagnostics.Append(fetchDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -728,7 +728,7 @@ func (r *insightResource) Delete(ctx context.Context, req resource.DeleteRequest
 	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
 	defer cancel()
 
-	sourceID := state.SourceId.ValueString()
+	sourceID := models.DeleteInsightResultParamsSourceIDPublicApi
 	insightKey := state.InsightKey.ValueString()
 
 	deleteResp, err := r.client.DeleteInsightResultWithResponse(ctx, sourceID, insightKey)

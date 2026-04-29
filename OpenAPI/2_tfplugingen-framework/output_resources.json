@@ -1418,6 +1418,7 @@
 							"element_type": {
 								"string": {}
 							},
+							"description": "One or more categories this insight belongs to.",
 							"validators": [
 								{
 									"custom": {
@@ -1445,7 +1446,8 @@
 					{
 						"name": "cloud_flow_template_id",
 						"string": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "ID of a CloudFlow template that can automate the remediation of this insight."
 						}
 					},
 					{
@@ -1458,25 +1460,29 @@
 					{
 						"name": "detailed_description_mdx",
 						"string": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "A detailed description of the insight in MDX format."
 						}
 					},
 					{
 						"name": "easy_win_description",
 						"string": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "A description of why this insight is considered an easy win."
 						}
 					},
 					{
 						"name": "key",
 						"string": {
-							"computed_optional_required": "required"
+							"computed_optional_required": "required",
+							"description": "A unique key for this insight within the source."
 						}
 					},
 					{
 						"name": "report_url",
 						"string": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "URL to an external report related to this insight."
 						}
 					},
 					{
@@ -1488,7 +1494,8 @@
 									{
 										"name": "account",
 										"string": {
-											"computed_optional_required": "required"
+											"computed_optional_required": "required",
+											"description": "The cloud account or project ID containing this resource."
 										}
 									},
 									{
@@ -1506,13 +1513,15 @@
 												{
 													"name": "last_updated_at",
 													"string": {
-														"computed_optional_required": "computed_optional"
+														"computed_optional_required": "computed_optional",
+														"description": "Timestamp of the last update."
 													}
 												},
 												{
 													"name": "last_updated_by",
 													"string": {
-														"computed_optional_required": "computed_optional"
+														"computed_optional_required": "computed_optional",
+														"description": "The user who last updated this enhancement."
 													}
 												},
 												{
@@ -1523,16 +1532,19 @@
 															{
 																"name": "priority_score",
 																"float64": {
-																	"computed_optional_required": "computed_optional"
+																	"computed_optional_required": "computed_optional",
+																	"description": "Numeric priority score."
 																}
 															},
 															{
 																"name": "value",
 																"string": {
-																	"computed_optional_required": "computed_optional"
+																	"computed_optional_required": "computed_optional",
+																	"description": "The priority level (e.g. Low, Medium, High)."
 																}
 															}
-														]
+														],
+														"description": "Priority information for this resource result."
 													}
 												},
 												{
@@ -1541,10 +1553,12 @@
 														"computed_optional_required": "computed_optional",
 														"element_type": {
 															"string": {}
-														}
+														},
+														"description": "Tags assigned to this resource result."
 													}
 												}
-											]
+											],
+											"description": "DoiT-managed metadata associated with a resource result."
 										}
 									},
 									{
@@ -1578,13 +1592,15 @@
 									{
 										"name": "resolved",
 										"bool": {
-											"computed_optional_required": "computed_optional"
+											"computed_optional_required": "computed_optional",
+											"description": "Whether this resource-level issue has been resolved."
 										}
 									},
 									{
 										"name": "resource_id",
 										"string": {
-											"computed_optional_required": "required"
+											"computed_optional_required": "required",
+											"description": "The cloud resource identifier."
 										}
 									},
 									{
@@ -1682,6 +1698,7 @@
 										"name": "severity",
 										"string": {
 											"computed_optional_required": "computed_optional",
+											"description": "The severity level of the finding.",
 											"validators": [
 												{
 													"custom": {
@@ -1697,13 +1714,15 @@
 										}
 									}
 								]
-							}
+							},
+							"description": "A list of resource-level results."
 						}
 					},
 					{
 						"name": "short_description",
 						"string": {
-							"computed_optional_required": "required"
+							"computed_optional_required": "required",
+							"description": "A brief summary of the insight."
 						}
 					},
 					{
@@ -1713,13 +1732,14 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "primary purpose, initially, is to provide security certification information, eg. ISO etc."
+							"description": "Tags for the insight, primarily used for security certification labels (e.g. ISO)."
 						}
 					},
 					{
 						"name": "title",
 						"string": {
-							"computed_optional_required": "required"
+							"computed_optional_required": "required",
+							"description": "The display title of the insight."
 						}
 					},
 					{
@@ -1754,7 +1774,8 @@
 					{
 						"name": "last_updated",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "Timestamp of the last update to this insight."
 						}
 					},
 					{
@@ -1772,52 +1793,61 @@
 								{
 									"name": "operational_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of operational risks."
 									}
 								},
 								{
 									"name": "performance_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of performance risks."
 									}
 								},
 								{
 									"name": "potential_daily_savings",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total potential daily savings in USD."
 									}
 								},
 								{
 									"name": "reliability_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of reliability risks."
 									}
 								},
 								{
 									"name": "security_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of security risks."
 									}
 								},
 								{
 									"name": "sustainability_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of sustainability risks."
 									}
 								}
-							]
+							],
+							"description": "Aggregate summary of risks and savings across all resource results for an insight."
 						}
 					},
 					{
 						"name": "source_id",
 						"string": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "The identifier of the source that generated the insight."
 						}
 					},
 					{
 						"name": "insight_key",
 						"string": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "The unique key identifying the insight."
 						}
 					}
 				],

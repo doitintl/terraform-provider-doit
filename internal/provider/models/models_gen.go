@@ -2486,6 +2486,51 @@ func (e GetInsightResultsParamsPriority) Valid() bool {
 	}
 }
 
+// Defines values for DeleteInsightResultParamsSourceID.
+const (
+	DeleteInsightResultParamsSourceIDPublicApi DeleteInsightResultParamsSourceID = "public-api"
+)
+
+// Valid indicates whether the value is a known member of the DeleteInsightResultParamsSourceID enum.
+func (e DeleteInsightResultParamsSourceID) Valid() bool {
+	switch e {
+	case DeleteInsightResultParamsSourceIDPublicApi:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PostInsightResultParamsSourceID.
+const (
+	PostInsightResultParamsSourceIDPublicApi PostInsightResultParamsSourceID = "public-api"
+)
+
+// Valid indicates whether the value is a known member of the PostInsightResultParamsSourceID enum.
+func (e PostInsightResultParamsSourceID) Valid() bool {
+	switch e {
+	case PostInsightResultParamsSourceIDPublicApi:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateInsightStatusParamsSourceID.
+const (
+	PublicApi UpdateInsightStatusParamsSourceID = "public-api"
+)
+
+// Valid indicates whether the value is a known member of the UpdateInsightStatusParamsSourceID enum.
+func (e UpdateInsightStatusParamsSourceID) Valid() bool {
+	switch e {
+	case PublicApi:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetResourcePermissionParamsResourceType.
 const (
 	GetResourcePermissionParamsResourceTypeAlerts      GetResourcePermissionParamsResourceType = "alerts"
@@ -3172,7 +3217,7 @@ type BudgetListItem struct {
 	Url          *string                 `json:"url,omitempty"`
 }
 
-// Category defines model for Category.
+// Category The insight category.
 type Category string
 
 // CloudIncidentListItem Summary information for a cloud incident.
@@ -3383,7 +3428,7 @@ type CreateAnnotationRequest struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// CreateCategory defines model for CreateCategory.
+// CreateCategory Allowed categories when creating insights via the public API.
 type CreateCategory string
 
 // CreateCommentRequest Request body for adding a comment to a support ticket.
@@ -3449,8 +3494,9 @@ type CreateReportRequestBody struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// CreateResultsBody defines model for CreateResultsBody.
+// CreateResultsBody Request body for creating multiple insights in a batch.
 type CreateResultsBody struct {
+	// Results List of insights to create.
 	Results *[]InsightRequest `json:"results,omitempty"`
 }
 
@@ -3627,13 +3673,16 @@ type DimensionsExternalAPIListResponse struct {
 // "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
 type DimensionsTypes string
 
-// DismissalDetails defines model for DismissalDetails.
+// DismissalDetails Details for why an insight was dismissed.
 type DismissalDetails struct {
-	Comment *string                 `json:"comment,omitempty"`
-	Reason  *DismissalDetailsReason `json:"reason,omitempty"`
+	// Comment An optional free-text comment providing additional context.
+	Comment *string `json:"comment,omitempty"`
+
+	// Reason The reason for dismissal.
+	Reason *DismissalDetailsReason `json:"reason,omitempty"`
 }
 
-// DismissalDetailsReason defines model for DismissalDetails.Reason.
+// DismissalDetailsReason The reason for dismissal.
 type DismissalDetailsReason string
 
 // DisplayStatus The display status of the insight.
@@ -4193,62 +4242,109 @@ type IdOfAssets200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
-// InsightRequest defines model for InsightRequest.
+// InsightRequest Request body for creating or updating an insight.
 type InsightRequest struct {
-	Categories          []CreateCategory `json:"categories"`
-	CloudFlowTemplateId *string          `json:"cloudFlowTemplateId,omitempty"`
+	// Categories One or more categories this insight belongs to.
+	Categories []CreateCategory `json:"categories"`
+
+	// CloudFlowTemplateId ID of a CloudFlow template that can automate the remediation of this insight.
+	CloudFlowTemplateId *string `json:"cloudFlowTemplateId,omitempty"`
 
 	// CloudProvider The cloud provider associated with the resource.
-	CloudProvider          CloudProvider   `json:"cloudProvider"`
-	DetailedDescriptionMdx *string         `json:"detailedDescriptionMdx,omitempty"`
-	EasyWinDescription     *string         `json:"easyWinDescription,omitempty"`
-	Key                    string          `json:"key"`
-	ReportUrl              *string         `json:"reportUrl,omitempty"`
-	ResourceResults        ResourceResults `json:"resourceResults"`
-	ShortDescription       string          `json:"shortDescription"`
+	CloudProvider CloudProvider `json:"cloudProvider"`
 
-	// Tags primary purpose, initially, is to provide security certification information, eg. ISO etc.
-	Tags  *[]string `json:"tags,omitempty"`
-	Title string    `json:"title"`
+	// DetailedDescriptionMdx A detailed description of the insight in MDX format.
+	DetailedDescriptionMdx *string `json:"detailedDescriptionMdx,omitempty"`
+
+	// EasyWinDescription A description of why this insight is considered an easy win.
+	EasyWinDescription *string `json:"easyWinDescription,omitempty"`
+
+	// Key A unique key for this insight within the source.
+	Key string `json:"key"`
+
+	// ReportUrl URL to an external report related to this insight.
+	ReportUrl *string `json:"reportUrl,omitempty"`
+
+	// ResourceResults A list of resource-level results.
+	ResourceResults ResourceResults `json:"resourceResults"`
+
+	// ShortDescription A brief summary of the insight.
+	ShortDescription string `json:"shortDescription"`
+
+	// Tags Tags for the insight, primarily used for security certification labels (e.g. ISO).
+	Tags *[]string `json:"tags,omitempty"`
+
+	// Title The display title of the insight.
+	Title string `json:"title"`
 }
 
-// InsightResponse defines model for InsightResponse.
+// InsightResponse An insight result containing summary information and metadata.
 type InsightResponse struct {
-	Categories          *[]Category `json:"categories,omitempty"`
-	CloudFlowTemplateId *string     `json:"cloudFlowTemplateId,omitempty"`
+	// Categories Categories this insight belongs to.
+	Categories *[]Category `json:"categories,omitempty"`
+
+	// CloudFlowTemplateId ID of a CloudFlow template that can automate the remediation of this insight.
+	CloudFlowTemplateId *string `json:"cloudFlowTemplateId,omitempty"`
 
 	// CloudProvider The cloud provider associated with the resource.
-	CloudProvider          *CloudProvider `json:"cloudProvider,omitempty"`
-	DetailedDescriptionMdx *string        `json:"detailedDescriptionMdx,omitempty"`
+	CloudProvider *CloudProvider `json:"cloudProvider,omitempty"`
+
+	// DetailedDescriptionMdx A detailed description of the insight in MDX format.
+	DetailedDescriptionMdx *string `json:"detailedDescriptionMdx,omitempty"`
 
 	// DisplayStatus The display status of the insight.
-	DisplayStatus      *DisplayStatus `json:"displayStatus,omitempty"`
-	EasyWinDescription *string        `json:"easyWinDescription,omitempty"`
-	Key                *string        `json:"key,omitempty"`
+	DisplayStatus *DisplayStatus `json:"displayStatus,omitempty"`
+
+	// EasyWinDescription A description of why this insight is considered an easy win.
+	EasyWinDescription *string `json:"easyWinDescription,omitempty"`
+
+	// Key The unique key identifying this insight.
+	Key *string `json:"key,omitempty"`
 
 	// LastStatusChange If set, this object contains the last status change made by a user for this insight
 	LastStatusChange *LastInsightStatusChange `json:"lastStatusChange,omitempty"`
-	LastUpdated      *time.Time               `json:"lastUpdated,omitempty"`
-	ReportUrl        *string                  `json:"reportUrl,omitempty"`
-	ShortDescription *string                  `json:"shortDescription,omitempty"`
+
+	// LastUpdated Timestamp of the last update to this insight.
+	LastUpdated *time.Time `json:"lastUpdated,omitempty"`
+
+	// ReportUrl URL to an external report related to this insight.
+	ReportUrl *string `json:"reportUrl,omitempty"`
+
+	// ShortDescription A brief summary of the insight.
+	ShortDescription *string `json:"shortDescription,omitempty"`
 
 	// Source The source that generated the insight.
-	Source  *Source         `json:"source,omitempty"`
+	Source *Source `json:"source,omitempty"`
+
+	// Summary Aggregate summary of risks and savings across all resource results for an insight.
 	Summary *InsightSummary `json:"summary,omitempty"`
 
-	// Tags primary purpose, initially, is to provide security certification information, eg. ISO etc.
-	Tags  *[]string `json:"tags,omitempty"`
-	Title *string   `json:"title,omitempty"`
+	// Tags Tags for the insight, primarily used for security certification labels (e.g. ISO).
+	Tags *[]string `json:"tags,omitempty"`
+
+	// Title The display title of the insight.
+	Title *string `json:"title,omitempty"`
 }
 
-// InsightSummary defines model for InsightSummary.
+// InsightSummary Aggregate summary of risks and savings across all resource results for an insight.
 type InsightSummary struct {
-	OperationalRisks      *float64 `json:"operationalRisks,omitempty"`
-	PerformanceRisks      *float64 `json:"performanceRisks,omitempty"`
+	// OperationalRisks Total number of operational risks.
+	OperationalRisks *float64 `json:"operationalRisks,omitempty"`
+
+	// PerformanceRisks Total number of performance risks.
+	PerformanceRisks *float64 `json:"performanceRisks,omitempty"`
+
+	// PotentialDailySavings Total potential daily savings in USD.
 	PotentialDailySavings *float64 `json:"potentialDailySavings,omitempty"`
-	ReliabilityRisks      *float64 `json:"reliabilityRisks,omitempty"`
-	SecurityRisks         *float64 `json:"securityRisks,omitempty"`
-	SustainabilityRisks   *float64 `json:"sustainabilityRisks,omitempty"`
+
+	// ReliabilityRisks Total number of reliability risks.
+	ReliabilityRisks *float64 `json:"reliabilityRisks,omitempty"`
+
+	// SecurityRisks Total number of security risks.
+	SecurityRisks *float64 `json:"securityRisks,omitempty"`
+
+	// SustainabilityRisks Total number of sustainability risks.
+	SustainabilityRisks *float64 `json:"sustainabilityRisks,omitempty"`
 }
 
 // InviteResponse Response returned after creating a user invitation.
@@ -4684,13 +4780,16 @@ type ResourceReference struct {
 	Owner *string `json:"owner,omitempty"`
 }
 
-// ResourceResult defines model for ResourceResult.
+// ResourceResult A single resource-level result within an insight.
 type ResourceResult struct {
+	// Account The cloud account or project ID containing this resource.
 	Account string `json:"account"`
 
 	// CloudProvider The cloud provider associated with the resource.
-	CloudProvider CloudProvider              `json:"cloudProvider"`
-	Enhancement   *ResourceResultEnhancement `json:"enhancement,omitempty"`
+	CloudProvider CloudProvider `json:"cloudProvider"`
+
+	// Enhancement DoiT-managed metadata associated with a resource result.
+	Enhancement *ResourceResultEnhancement `json:"enhancement,omitempty"`
 
 	// ExternalId the external ID of the resource in the provider's system for the resource
 	ExternalId *string `json:"externalId,omitempty"`
@@ -4702,9 +4801,13 @@ type ResourceResult struct {
 	Location *string `json:"location,omitempty"`
 
 	// Metadata contains any additional information for the resource results
-	Metadata   *map[string]interface{} `json:"metadata,omitempty"`
-	Resolved   *bool                   `json:"resolved,omitempty"`
-	ResourceId string                  `json:"resourceId"`
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+
+	// Resolved Whether this resource-level issue has been resolved.
+	Resolved *bool `json:"resolved,omitempty"`
+
+	// ResourceId The cloud resource identifier.
+	ResourceId string `json:"resourceId"`
 
 	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
 	ResourceType *string `json:"resourceType,omitempty"`
@@ -4714,27 +4817,39 @@ type ResourceResult struct {
 
 	// ResultType The discriminator property that determines which fields are populated in the 'result' object.
 	ResultType ResourceResultResultType `json:"resultType"`
-	Severity   *ResourceResultSeverity  `json:"severity,omitempty"`
+
+	// Severity The severity level of the finding.
+	Severity *ResourceResultSeverity `json:"severity,omitempty"`
 }
 
 // ResourceResultResultType The discriminator property that determines which fields are populated in the 'result' object.
 type ResourceResultResultType string
 
-// ResourceResultSeverity defines model for ResourceResult.Severity.
+// ResourceResultSeverity The severity level of the finding.
 type ResourceResultSeverity string
 
-// ResourceResultEnhancement defines model for ResourceResultEnhancement.
+// ResourceResultEnhancement DoiT-managed metadata associated with a resource result.
 type ResourceResultEnhancement struct {
-	LastUpdatedAt *time.Time                         `json:"lastUpdatedAt,omitempty"`
-	LastUpdatedBy *string                            `json:"lastUpdatedBy,omitempty"`
-	Priority      *ResourceResultEnhancementPriority `json:"priority,omitempty"`
-	Tags          *[]string                          `json:"tags,omitempty"`
+	// LastUpdatedAt Timestamp of the last update.
+	LastUpdatedAt *time.Time `json:"lastUpdatedAt,omitempty"`
+
+	// LastUpdatedBy The user who last updated this enhancement.
+	LastUpdatedBy *string `json:"lastUpdatedBy,omitempty"`
+
+	// Priority Priority information for this resource result.
+	Priority *ResourceResultEnhancementPriority `json:"priority,omitempty"`
+
+	// Tags Tags assigned to this resource result.
+	Tags *[]string `json:"tags,omitempty"`
 }
 
-// ResourceResultEnhancementPriority defines model for ResourceResultEnhancementPriority.
+// ResourceResultEnhancementPriority Priority information for this resource result.
 type ResourceResultEnhancementPriority struct {
+	// PriorityScore Numeric priority score.
 	PriorityScore *float64 `json:"priorityScore,omitempty"`
-	Value         *string  `json:"value,omitempty"`
+
+	// Value The priority level (e.g. Low, Medium, High).
+	Value *string `json:"value,omitempty"`
 }
 
 // ResourceResultResult The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
@@ -4764,7 +4879,7 @@ type ResourceResultResult struct {
 	Value *float64 `json:"value,omitempty"`
 }
 
-// ResourceResults defines model for ResourceResults.
+// ResourceResults A list of resource-level results.
 type ResourceResults = []ResourceResult
 
 // ResourceResultsResponse defines model for ResourceResultsResponse.
@@ -4774,17 +4889,24 @@ type ResourceResultsResponse struct {
 	RowCount        int              `json:"rowCount"`
 }
 
-// ResultsBody defines model for ResultsBody.
+// ResultsBody Paginated list of insight results.
 type ResultsBody struct {
 	// Pagination Cursor-based pagination metadata.
-	Pagination *Pagination        `json:"pagination,omitempty"`
-	Results    *[]InsightResponse `json:"results,omitempty"`
+	Pagination *Pagination `json:"pagination,omitempty"`
+
+	// Results List of insight results.
+	Results *[]InsightResponse `json:"results,omitempty"`
 }
 
-// ResultsError defines model for ResultsError.
+// ResultsError Error details for a failed insight in a batch operation.
 type ResultsError struct {
-	Code       *int    `json:"code,omitempty"`
-	Error      *string `json:"error,omitempty"`
+	// Code The HTTP status code associated with the error.
+	Code *int `json:"code,omitempty"`
+
+	// Error The error message.
+	Error *string `json:"error,omitempty"`
+
+	// InsightKey The key of the insight that failed.
 	InsightKey *string `json:"insightKey,omitempty"`
 }
 
@@ -5212,8 +5334,9 @@ type UpdateResourcePermissionRequestBody struct {
 // UpdateResourcePermissionRequestBodyPublic The type of permissions granted to all users in the organization for this resource.
 type UpdateResourcePermissionRequestBodyPublic string
 
-// UpdateStatusRequest defines model for UpdateStatusRequest.
+// UpdateStatusRequest Request body for updating an insight's display status.
 type UpdateStatusRequest struct {
+	// DismissalDetails Details for why an insight was dismissed.
 	DismissalDetails *DismissalDetails `json:"dismissalDetails,omitempty"`
 
 	// Status The display status of the insight.
@@ -5707,22 +5830,38 @@ type ListKnownIssuesParams struct {
 
 // DeleteInsightResultsParams defines parameters for DeleteInsightResults.
 type DeleteInsightResultsParams struct {
+	// InsightKey The unique key identifying the insight to delete.
 	InsightKey string `form:"insightKey" json:"insightKey"`
 }
 
 // GetInsightResultsParams defines parameters for GetInsightResults.
 type GetInsightResultsParams struct {
-	SearchTerm    *string                                 `form:"searchTerm,omitempty" json:"searchTerm,omitempty"`
+	// SearchTerm Free-text search term to filter insights by title or description.
+	SearchTerm *string `form:"searchTerm,omitempty" json:"searchTerm,omitempty"`
+
+	// DisplayStatus Filter by one or more display statuses.
 	DisplayStatus *[]GetInsightResultsParamsDisplayStatus `form:"displayStatus,omitempty" json:"displayStatus,omitempty"`
-	Category      *GetInsightResultsParamsCategory        `form:"category,omitempty" json:"category,omitempty"`
-	CloudProvider *CloudProvider                          `form:"cloudProvider,omitempty" json:"cloudProvider,omitempty"`
+
+	// Category Filter by insight category.
+	Category *GetInsightResultsParamsCategory `form:"category,omitempty" json:"category,omitempty"`
+
+	// CloudProvider Filter by cloud provider (e.g. "aws", "gcp", "azure").
+	CloudProvider *CloudProvider `form:"cloudProvider,omitempty" json:"cloudProvider,omitempty"`
 
 	// Source the source that generated insights
-	Source     *[]Source                          `form:"source,omitempty" json:"source,omitempty"`
-	Priority   *[]GetInsightResultsParamsPriority `form:"priority,omitempty" json:"priority,omitempty"`
-	Tag        *[]string                          `form:"tag,omitempty" json:"tag,omitempty"`
-	EasyWin    *bool                              `form:"easyWin,omitempty" json:"easyWin,omitempty"`
-	CloudFlows *bool                              `form:"cloudFlows,omitempty" json:"cloudFlows,omitempty"`
+	Source *[]Source `form:"source,omitempty" json:"source,omitempty"`
+
+	// Priority Filter by one or more priority levels.
+	Priority *[]GetInsightResultsParamsPriority `form:"priority,omitempty" json:"priority,omitempty"`
+
+	// Tag Filter by one or more tags (e.g. security certification labels like "ISO").
+	Tag *[]string `form:"tag,omitempty" json:"tag,omitempty"`
+
+	// EasyWin When true, return only insights flagged as easy wins.
+	EasyWin *bool `form:"easyWin,omitempty" json:"easyWin,omitempty"`
+
+	// CloudFlows When true, return only insights that have associated CloudFlow automations.
+	CloudFlows *bool `form:"cloudFlows,omitempty" json:"cloudFlows,omitempty"`
 
 	// PageToken Token from a previous response to fetch the next page.
 	PageToken *string `form:"pageToken,omitempty" json:"pageToken,omitempty"`
@@ -5740,6 +5879,12 @@ type GetInsightResultsParamsCategory string
 // GetInsightResultsParamsPriority defines parameters for GetInsightResults.
 type GetInsightResultsParamsPriority string
 
+// DeleteInsightResultParamsSourceID defines parameters for DeleteInsightResult.
+type DeleteInsightResultParamsSourceID string
+
+// PostInsightResultParamsSourceID defines parameters for PostInsightResult.
+type PostInsightResultParamsSourceID string
+
 // GetInsightResourceResultsParams defines parameters for GetInsightResourceResults.
 type GetInsightResourceResultsParams struct {
 	// PageToken Token from a previous response to fetch the next page.
@@ -5748,6 +5893,9 @@ type GetInsightResourceResultsParams struct {
 	// MaxResults Maximum number of results per page (default 1000, max 5000).
 	MaxResults *int `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 }
+
+// UpdateInsightStatusParamsSourceID defines parameters for UpdateInsightStatus.
+type UpdateInsightStatusParamsSourceID string
 
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
 type GetResourcePermissionParamsResourceType string
@@ -6377,23 +6525,23 @@ type ClientInterface interface {
 	PostInsightResults(ctx context.Context, body PostInsightResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteInsightResult request
-	DeleteInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteInsightResult(ctx context.Context, sourceID DeleteInsightResultParamsSourceID, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInsightResult request
 	GetInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostInsightResultWithBody request with any body
-	PostInsightResultWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostInsightResultWithBody(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostInsightResult(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostInsightResult(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInsightResourceResults request
 	GetInsightResourceResults(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateInsightStatusWithBody request with any body
-	UpdateInsightStatusWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateInsightStatusWithBody(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateInsightStatus(ctx context.Context, sourceID string, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateInsightStatus(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetResourcePermission request
 	GetResourcePermission(ctx context.Context, resourceType GetResourcePermissionParamsResourceType, resourceId ResourceId, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7629,7 +7777,7 @@ func (c *Client) PostInsightResults(ctx context.Context, body PostInsightResults
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteInsightResult(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteInsightResult(ctx context.Context, sourceID DeleteInsightResultParamsSourceID, insightKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteInsightResultRequest(c.Server, sourceID, insightKey)
 	if err != nil {
 		return nil, err
@@ -7653,7 +7801,7 @@ func (c *Client) GetInsightResult(ctx context.Context, sourceID string, insightK
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostInsightResultWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostInsightResultWithBody(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInsightResultRequestWithBody(c.Server, sourceID, insightKey, contentType, body)
 	if err != nil {
 		return nil, err
@@ -7665,7 +7813,7 @@ func (c *Client) PostInsightResultWithBody(ctx context.Context, sourceID string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostInsightResult(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PostInsightResult(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInsightResultRequest(c.Server, sourceID, insightKey, body)
 	if err != nil {
 		return nil, err
@@ -7689,7 +7837,7 @@ func (c *Client) GetInsightResourceResults(ctx context.Context, sourceID string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateInsightStatusWithBody(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateInsightStatusWithBody(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateInsightStatusRequestWithBody(c.Server, sourceID, insightKey, contentType, body)
 	if err != nil {
 		return nil, err
@@ -7701,7 +7849,7 @@ func (c *Client) UpdateInsightStatusWithBody(ctx context.Context, sourceID strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateInsightStatus(ctx context.Context, sourceID string, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateInsightStatus(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateInsightStatusRequest(c.Server, sourceID, insightKey, body)
 	if err != nil {
 		return nil, err
@@ -11778,7 +11926,7 @@ func NewPostInsightResultsRequestWithBody(server string, contentType string, bod
 }
 
 // NewDeleteInsightResultRequest generates requests for DeleteInsightResult
-func NewDeleteInsightResultRequest(server string, sourceID string, insightKey string) (*http.Request, error) {
+func NewDeleteInsightResultRequest(server string, sourceID DeleteInsightResultParamsSourceID, insightKey string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11860,7 +12008,7 @@ func NewGetInsightResultRequest(server string, sourceID string, insightKey strin
 }
 
 // NewPostInsightResultRequest calls the generic PostInsightResult builder with application/json body
-func NewPostInsightResultRequest(server string, sourceID string, insightKey string, body PostInsightResultJSONRequestBody) (*http.Request, error) {
+func NewPostInsightResultRequest(server string, sourceID PostInsightResultParamsSourceID, insightKey string, body PostInsightResultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -11871,7 +12019,7 @@ func NewPostInsightResultRequest(server string, sourceID string, insightKey stri
 }
 
 // NewPostInsightResultRequestWithBody generates requests for PostInsightResult with any type of body
-func NewPostInsightResultRequestWithBody(server string, sourceID string, insightKey string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPostInsightResultRequestWithBody(server string, sourceID PostInsightResultParamsSourceID, insightKey string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11993,7 +12141,7 @@ func NewGetInsightResourceResultsRequest(server string, sourceID string, insight
 }
 
 // NewUpdateInsightStatusRequest calls the generic UpdateInsightStatus builder with application/json body
-func NewUpdateInsightStatusRequest(server string, sourceID string, insightKey string, body UpdateInsightStatusJSONRequestBody) (*http.Request, error) {
+func NewUpdateInsightStatusRequest(server string, sourceID UpdateInsightStatusParamsSourceID, insightKey string, body UpdateInsightStatusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -12004,7 +12152,7 @@ func NewUpdateInsightStatusRequest(server string, sourceID string, insightKey st
 }
 
 // NewUpdateInsightStatusRequestWithBody generates requests for UpdateInsightStatus with any type of body
-func NewUpdateInsightStatusRequestWithBody(server string, sourceID string, insightKey string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateInsightStatusRequestWithBody(server string, sourceID UpdateInsightStatusParamsSourceID, insightKey string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -12802,23 +12950,23 @@ type ClientWithResponsesInterface interface {
 	PostInsightResultsWithResponse(ctx context.Context, body PostInsightResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultsResp, error)
 
 	// DeleteInsightResultWithResponse request
-	DeleteInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*DeleteInsightResultResp, error)
+	DeleteInsightResultWithResponse(ctx context.Context, sourceID DeleteInsightResultParamsSourceID, insightKey string, reqEditors ...RequestEditorFn) (*DeleteInsightResultResp, error)
 
 	// GetInsightResultWithResponse request
 	GetInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*GetInsightResultResp, error)
 
 	// PostInsightResultWithBodyWithResponse request with any body
-	PostInsightResultWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
+	PostInsightResultWithBodyWithResponse(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
 
-	PostInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
+	PostInsightResultWithResponse(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error)
 
 	// GetInsightResourceResultsWithResponse request
 	GetInsightResourceResultsWithResponse(ctx context.Context, sourceID string, insightKey string, params *GetInsightResourceResultsParams, reqEditors ...RequestEditorFn) (*GetInsightResourceResultsResp, error)
 
 	// UpdateInsightStatusWithBodyWithResponse request with any body
-	UpdateInsightStatusWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error)
+	UpdateInsightStatusWithBodyWithResponse(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error)
 
-	UpdateInsightStatusWithResponse(ctx context.Context, sourceID string, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error)
+	UpdateInsightStatusWithResponse(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error)
 
 	// GetResourcePermissionWithResponse request
 	GetResourcePermissionWithResponse(ctx context.Context, resourceType GetResourcePermissionParamsResourceType, resourceId ResourceId, reqEditors ...RequestEditorFn) (*GetResourcePermissionResp, error)
@@ -15981,7 +16129,7 @@ func (c *ClientWithResponses) PostInsightResultsWithResponse(ctx context.Context
 }
 
 // DeleteInsightResultWithResponse request returning *DeleteInsightResultResp
-func (c *ClientWithResponses) DeleteInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, reqEditors ...RequestEditorFn) (*DeleteInsightResultResp, error) {
+func (c *ClientWithResponses) DeleteInsightResultWithResponse(ctx context.Context, sourceID DeleteInsightResultParamsSourceID, insightKey string, reqEditors ...RequestEditorFn) (*DeleteInsightResultResp, error) {
 	rsp, err := c.DeleteInsightResult(ctx, sourceID, insightKey, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -15999,7 +16147,7 @@ func (c *ClientWithResponses) GetInsightResultWithResponse(ctx context.Context, 
 }
 
 // PostInsightResultWithBodyWithResponse request with arbitrary body returning *PostInsightResultResp
-func (c *ClientWithResponses) PostInsightResultWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error) {
+func (c *ClientWithResponses) PostInsightResultWithBodyWithResponse(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error) {
 	rsp, err := c.PostInsightResultWithBody(ctx, sourceID, insightKey, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -16007,7 +16155,7 @@ func (c *ClientWithResponses) PostInsightResultWithBodyWithResponse(ctx context.
 	return ParsePostInsightResultResp(rsp)
 }
 
-func (c *ClientWithResponses) PostInsightResultWithResponse(ctx context.Context, sourceID string, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error) {
+func (c *ClientWithResponses) PostInsightResultWithResponse(ctx context.Context, sourceID PostInsightResultParamsSourceID, insightKey string, body PostInsightResultJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResultResp, error) {
 	rsp, err := c.PostInsightResult(ctx, sourceID, insightKey, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -16025,7 +16173,7 @@ func (c *ClientWithResponses) GetInsightResourceResultsWithResponse(ctx context.
 }
 
 // UpdateInsightStatusWithBodyWithResponse request with arbitrary body returning *UpdateInsightStatusResp
-func (c *ClientWithResponses) UpdateInsightStatusWithBodyWithResponse(ctx context.Context, sourceID string, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error) {
+func (c *ClientWithResponses) UpdateInsightStatusWithBodyWithResponse(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error) {
 	rsp, err := c.UpdateInsightStatusWithBody(ctx, sourceID, insightKey, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -16033,7 +16181,7 @@ func (c *ClientWithResponses) UpdateInsightStatusWithBodyWithResponse(ctx contex
 	return ParseUpdateInsightStatusResp(rsp)
 }
 
-func (c *ClientWithResponses) UpdateInsightStatusWithResponse(ctx context.Context, sourceID string, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error) {
+func (c *ClientWithResponses) UpdateInsightStatusWithResponse(ctx context.Context, sourceID UpdateInsightStatusParamsSourceID, insightKey string, body UpdateInsightStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInsightStatusResp, error) {
 	rsp, err := c.UpdateInsightStatus(ctx, sourceID, insightKey, body, reqEditors...)
 	if err != nil {
 		return nil, err
