@@ -216,8 +216,8 @@ func (r *resourceSharingResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	// Handle externally deleted resource (populateState sets ResourceType to null on 404)
-	if state.ResourceType.IsNull() {
+	// Handle externally deleted resource (populateState sets Id to null on 404)
+	if state.Id.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -397,7 +397,7 @@ func (r *resourceSharingResource) ImportState(ctx context.Context, req resource.
 }
 
 // populateState reads the current permissions from the API and populates the state model.
-// On 404, sets ResourceType to null to signal the caller to call RemoveResource().
+// On 404, sets Id to null to signal the caller to call RemoveResource().
 func (r *resourceSharingResource) populateState(ctx context.Context, state *resourceSharingResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -419,7 +419,7 @@ func (r *resourceSharingResource) populateState(ctx context.Context, state *reso
 
 	// Handle externally deleted resource
 	if getResp.StatusCode() == 404 {
-		state.ResourceType = types.StringNull()
+		state.Id = types.StringNull()
 		return diags
 	}
 
@@ -524,12 +524,10 @@ func buildSharingRequest(ctx context.Context, plan *resourceSharingResourceModel
 
 			perm := models.ResourcePermission{}
 			if !pv.User.IsNull() && !pv.User.IsUnknown() {
-				user := pv.User.ValueString()
-				perm.User = &user
+				perm.User = new(pv.User.ValueString())
 			}
 			if !pv.Role.IsNull() && !pv.Role.IsUnknown() {
-				role := models.ResourcePermissionRole(pv.Role.ValueString())
-				perm.Role = &role
+				perm.Role = new(models.ResourcePermissionRole(pv.Role.ValueString()))
 			}
 
 			perms = append(perms, perm)
@@ -539,8 +537,7 @@ func buildSharingRequest(ctx context.Context, plan *resourceSharingResourceModel
 
 	// Map public from plan to API type
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
-		pub := models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString())
-		reqBody.Public = &pub
+		reqBody.Public = new(models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString()))
 	}
 
 	return reqBody, diags

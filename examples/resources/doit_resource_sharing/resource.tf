@@ -18,6 +18,7 @@ resource "doit_resource_sharing" "example" {
     }
   ]
 
-  # Optional: Grant view access to all users in the organization
+  # Optional: Grant view access to all users in the organization.
+  # Omitting this attribute (or setting it to null) clears public access.
   public = "viewer"
 }

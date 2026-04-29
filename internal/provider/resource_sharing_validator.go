@@ -42,8 +42,10 @@ func (v resourceSharingOwnerValidator) ValidateResource(ctx context.Context, req
 	}
 
 	ownerCount := 0
+	unknownCount := 0
 	for _, pv := range permVals {
 		if pv.IsNull() || pv.IsUnknown() || pv.Role.IsNull() || pv.Role.IsUnknown() {
+			unknownCount++
 			continue
 		}
 		if pv.Role.ValueString() == "owner" {
@@ -51,7 +53,9 @@ func (v resourceSharingOwnerValidator) ValidateResource(ctx context.Context, req
 		}
 	}
 
-	if ownerCount == 0 {
+	// If any roles are unknown (e.g. from variables), skip validation — one of them
+	// might resolve to "owner" at apply time.
+	if ownerCount == 0 && unknownCount == 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("permissions"),
 			"Missing Owner",
