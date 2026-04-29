@@ -105,6 +105,13 @@ resources:
     delete:
       path: /datahub/v1/datasets/{name}
       method: DELETE
+  resource_sharing:
+    create:
+      path: /sharing/v1/{resourceType}/{resourceId}
+      method: PUT
+    read:
+      path: /sharing/v1/{resourceType}/{resourceId}
+      method: GET
   label_assignments:
     create:
       path: /analytics/v1/labels/{id}/assignments

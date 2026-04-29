@@ -303,5 +303,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewLabelResource,
 		NewDatahubDatasetResource,
 		NewLabelAssignmentsResource,
+		NewResourceSharingResource,
 	}
 }
