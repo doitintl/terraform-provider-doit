@@ -3298,13 +3298,15 @@
 					{
 						"name": "source_id",
 						"string": {
-							"computed_optional_required": "required"
+							"computed_optional_required": "required",
+							"description": "The identifier of the source that generated the insight."
 						}
 					},
 					{
 						"name": "insight_key",
 						"string": {
-							"computed_optional_required": "required"
+							"computed_optional_required": "required",
+							"description": "The unique key identifying the insight."
 						}
 					},
 					{
@@ -3313,13 +3315,15 @@
 							"computed_optional_required": "computed",
 							"element_type": {
 								"string": {}
-							}
+							},
+							"description": "Categories this insight belongs to."
 						}
 					},
 					{
 						"name": "cloud_flow_template_id",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "ID of a CloudFlow template that can automate the remediation of this insight."
 						}
 					},
 					{
@@ -3332,7 +3336,8 @@
 					{
 						"name": "detailed_description_mdx",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "A detailed description of the insight in MDX format."
 						}
 					},
 					{
@@ -3345,13 +3350,15 @@
 					{
 						"name": "easy_win_description",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "A description of why this insight is considered an easy win."
 						}
 					},
 					{
 						"name": "key",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "The unique key identifying this insight."
 						}
 					},
 					{
@@ -3379,19 +3386,22 @@
 					{
 						"name": "last_updated",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "Timestamp of the last update to this insight."
 						}
 					},
 					{
 						"name": "report_url",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "URL to an external report related to this insight."
 						}
 					},
 					{
 						"name": "short_description",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "A brief summary of the insight."
 						}
 					},
 					{
@@ -3409,40 +3419,47 @@
 								{
 									"name": "operational_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of operational risks."
 									}
 								},
 								{
 									"name": "performance_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of performance risks."
 									}
 								},
 								{
 									"name": "potential_daily_savings",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total potential daily savings in USD."
 									}
 								},
 								{
 									"name": "reliability_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of reliability risks."
 									}
 								},
 								{
 									"name": "security_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of security risks."
 									}
 								},
 								{
 									"name": "sustainability_risks",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Total number of sustainability risks."
 									}
 								}
-							]
+							],
+							"description": "Aggregate summary of risks and savings across all resource results for an insight."
 						}
 					},
 					{
@@ -3452,13 +3469,14 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "primary purpose, initially, is to provide security certification information, eg. ISO etc."
+							"description": "Tags for the insight, primarily used for security certification labels (e.g. ISO)."
 						}
 					},
 					{
 						"name": "title",
 						"string": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "The display title of the insight."
 						}
 					}
 				],
@@ -3473,7 +3491,8 @@
 					{
 						"name": "search_term",
 						"string": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "Free-text search term to filter insights by title or description."
 						}
 					},
 					{
@@ -3482,13 +3501,15 @@
 							"computed_optional_required": "computed_optional",
 							"element_type": {
 								"string": {}
-							}
+							},
+							"description": "Filter by one or more display statuses."
 						}
 					},
 					{
 						"name": "category",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"description": "Filter by insight category.",
 							"validators": [
 								{
 									"custom": {
@@ -3507,7 +3528,7 @@
 						"name": "cloud_provider",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The cloud provider associated with the resource."
+							"description": "Filter by cloud provider (e.g. \"aws\", \"gcp\", \"azure\")."
 						}
 					},
 					{
@@ -3526,7 +3547,8 @@
 							"computed_optional_required": "computed_optional",
 							"element_type": {
 								"string": {}
-							}
+							},
+							"description": "Filter by one or more priority levels."
 						}
 					},
 					{
@@ -3535,19 +3557,22 @@
 							"computed_optional_required": "computed_optional",
 							"element_type": {
 								"string": {}
-							}
+							},
+							"description": "Filter by one or more tags (e.g. security certification labels like \"ISO\")."
 						}
 					},
 					{
 						"name": "easy_win",
 						"bool": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "When true, return only insights flagged as easy wins."
 						}
 					},
 					{
 						"name": "cloud_flows",
 						"bool": {
-							"computed_optional_required": "computed_optional"
+							"computed_optional_required": "computed_optional",
+							"description": "When true, return only insights that have associated CloudFlow automations."
 						}
 					},
 					{
@@ -3611,13 +3636,15 @@
 											"computed_optional_required": "computed",
 											"element_type": {
 												"string": {}
-											}
+											},
+											"description": "Categories this insight belongs to."
 										}
 									},
 									{
 										"name": "cloud_flow_template_id",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "ID of a CloudFlow template that can automate the remediation of this insight."
 										}
 									},
 									{
@@ -3630,7 +3657,8 @@
 									{
 										"name": "detailed_description_mdx",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "A detailed description of the insight in MDX format."
 										}
 									},
 									{
@@ -3643,13 +3671,15 @@
 									{
 										"name": "easy_win_description",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "A description of why this insight is considered an easy win."
 										}
 									},
 									{
 										"name": "key",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "The unique key identifying this insight."
 										}
 									},
 									{
@@ -3677,19 +3707,22 @@
 									{
 										"name": "last_updated",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "Timestamp of the last update to this insight."
 										}
 									},
 									{
 										"name": "report_url",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "URL to an external report related to this insight."
 										}
 									},
 									{
 										"name": "short_description",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "A brief summary of the insight."
 										}
 									},
 									{
@@ -3707,40 +3740,47 @@
 												{
 													"name": "operational_risks",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Total number of operational risks."
 													}
 												},
 												{
 													"name": "performance_risks",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Total number of performance risks."
 													}
 												},
 												{
 													"name": "potential_daily_savings",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Total potential daily savings in USD."
 													}
 												},
 												{
 													"name": "reliability_risks",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Total number of reliability risks."
 													}
 												},
 												{
 													"name": "security_risks",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Total number of security risks."
 													}
 												},
 												{
 													"name": "sustainability_risks",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Total number of sustainability risks."
 													}
 												}
-											]
+											],
+											"description": "Aggregate summary of risks and savings across all resource results for an insight."
 										}
 									},
 									{
@@ -3750,17 +3790,19 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "primary purpose, initially, is to provide security certification information, eg. ISO etc."
+											"description": "Tags for the insight, primarily used for security certification labels (e.g. ISO)."
 										}
 									},
 									{
 										"name": "title",
 										"string": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "The display title of the insight."
 										}
 									}
 								]
-							}
+							},
+							"description": "List of insight results."
 						}
 					}
 				],

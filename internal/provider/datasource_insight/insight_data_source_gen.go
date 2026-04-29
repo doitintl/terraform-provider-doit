@@ -19,11 +19,15 @@ func InsightDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"categories": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "Categories this insight belongs to.",
+				MarkdownDescription: "Categories this insight belongs to.",
 			},
 			"cloud_flow_template_id": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "ID of a CloudFlow template that can automate the remediation of this insight.",
+				MarkdownDescription: "ID of a CloudFlow template that can automate the remediation of this insight.",
 			},
 			"cloud_provider": schema.StringAttribute{
 				Computed:            true,
@@ -31,7 +35,9 @@ func InsightDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The cloud provider associated with the resource.",
 			},
 			"detailed_description_mdx": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "A detailed description of the insight in MDX format.",
+				MarkdownDescription: "A detailed description of the insight in MDX format.",
 			},
 			"display_status": schema.StringAttribute{
 				Computed:            true,
@@ -39,13 +45,19 @@ func InsightDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The display status of the insight.",
 			},
 			"easy_win_description": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "A description of why this insight is considered an easy win.",
+				MarkdownDescription: "A description of why this insight is considered an easy win.",
 			},
 			"insight_key": schema.StringAttribute{
-				Required: true,
+				Required:            true,
+				Description:         "The unique key identifying the insight.",
+				MarkdownDescription: "The unique key identifying the insight.",
 			},
 			"key": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The unique key identifying this insight.",
+				MarkdownDescription: "The unique key identifying this insight.",
 			},
 			"last_status_change": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -68,13 +80,19 @@ func InsightDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "If set, this object contains the last status change made by a user for this insight",
 			},
 			"last_updated": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "Timestamp of the last update to this insight.",
+				MarkdownDescription: "Timestamp of the last update to this insight.",
 			},
 			"report_url": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "URL to an external report related to this insight.",
+				MarkdownDescription: "URL to an external report related to this insight.",
 			},
 			"short_description": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "A brief summary of the insight.",
+				MarkdownDescription: "A brief summary of the insight.",
 			},
 			"source": schema.StringAttribute{
 				Computed:            true,
@@ -82,27 +100,41 @@ func InsightDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The source that generated the insight.",
 			},
 			"source_id": schema.StringAttribute{
-				Required: true,
+				Required:            true,
+				Description:         "The identifier of the source that generated the insight.",
+				MarkdownDescription: "The identifier of the source that generated the insight.",
 			},
 			"summary": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"operational_risks": schema.Float64Attribute{
-						Computed: true,
+						Computed:            true,
+						Description:         "Total number of operational risks.",
+						MarkdownDescription: "Total number of operational risks.",
 					},
 					"performance_risks": schema.Float64Attribute{
-						Computed: true,
+						Computed:            true,
+						Description:         "Total number of performance risks.",
+						MarkdownDescription: "Total number of performance risks.",
 					},
 					"potential_daily_savings": schema.Float64Attribute{
-						Computed: true,
+						Computed:            true,
+						Description:         "Total potential daily savings in USD.",
+						MarkdownDescription: "Total potential daily savings in USD.",
 					},
 					"reliability_risks": schema.Float64Attribute{
-						Computed: true,
+						Computed:            true,
+						Description:         "Total number of reliability risks.",
+						MarkdownDescription: "Total number of reliability risks.",
 					},
 					"security_risks": schema.Float64Attribute{
-						Computed: true,
+						Computed:            true,
+						Description:         "Total number of security risks.",
+						MarkdownDescription: "Total number of security risks.",
 					},
 					"sustainability_risks": schema.Float64Attribute{
-						Computed: true,
+						Computed:            true,
+						Description:         "Total number of sustainability risks.",
+						MarkdownDescription: "Total number of sustainability risks.",
 					},
 				},
 				CustomType: SummaryType{
@@ -110,16 +142,20 @@ func InsightDataSourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: SummaryValue{}.AttributeTypes(ctx),
 					},
 				},
-				Computed: true,
+				Computed:            true,
+				Description:         "Aggregate summary of risks and savings across all resource results for an insight.",
+				MarkdownDescription: "Aggregate summary of risks and savings across all resource results for an insight.",
 			},
 			"tags": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
-				Description:         "primary purpose, initially, is to provide security certification information, eg. ISO etc.",
-				MarkdownDescription: "primary purpose, initially, is to provide security certification information, eg. ISO etc.",
+				Description:         "Tags for the insight, primarily used for security certification labels (e.g. ISO).",
+				MarkdownDescription: "Tags for the insight, primarily used for security certification labels (e.g. ISO).",
 			},
 			"title": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The display title of the insight.",
+				MarkdownDescription: "The display title of the insight.",
 			},
 		},
 		Description:         "Manage cloud insights representing recommendations and findings for cloud resources.",
