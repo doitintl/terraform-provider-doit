@@ -23,6 +23,16 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Has the anomaly been acknowledged",
 				MarkdownDescription: "Has the anomaly been acknowledged",
 			},
+			"acknowledged_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "When the anomaly was first acknowledged",
+				MarkdownDescription: "When the anomaly was first acknowledged",
+			},
+			"acknowledged_by": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Email of the user who first acknowledged the anomaly",
+				MarkdownDescription: "Email of the user who first acknowledged the anomaly",
+			},
 			"attribution": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Attribution ID",
@@ -166,6 +176,8 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 
 type AnomalyModel struct {
 	Acknowledged   types.Bool    `tfsdk:"acknowledged"`
+	AcknowledgedAt types.String  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy types.String  `tfsdk:"acknowledged_by"`
 	Attribution    types.String  `tfsdk:"attribution"`
 	BillingAccount types.String  `tfsdk:"billing_account"`
 	CostOfAnomaly  types.Float64 `tfsdk:"cost_of_anomaly"`

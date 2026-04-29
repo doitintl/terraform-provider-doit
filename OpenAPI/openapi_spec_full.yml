@@ -1743,6 +1743,15 @@ paths:
                   acknowledged:
                     description: "Has the anomaly been acknowledged"
                     type: boolean
+                  acknowledgedAt:
+                    description: "When the anomaly was first acknowledged"
+                    type: string
+                    format: date-time
+                    nullable: true
+                  acknowledgedBy:
+                    description: "Email of the user who first acknowledged the anomaly"
+                    type: string
+                    nullable: true
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4003,6 +4012,15 @@ components:
         acknowledged:
           description: "Has the anomaly been acknowledged"
           type: boolean
+        acknowledgedAt:
+          description: "When the anomaly was first acknowledged"
+          type: string
+          format: date-time
+          nullable: true
+        acknowledgedBy:
+          description: "Email of the user who first acknowledged the anomaly"
+          type: string
+          nullable: true
 
     AnomalySKU:
       type: object

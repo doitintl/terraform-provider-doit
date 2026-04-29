@@ -26,6 +26,16 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Has the anomaly been acknowledged",
 							MarkdownDescription: "Has the anomaly been acknowledged",
 						},
+						"acknowledged_at": schema.StringAttribute{
+							Computed:            true,
+							Description:         "When the anomaly was first acknowledged",
+							MarkdownDescription: "When the anomaly was first acknowledged",
+						},
+						"acknowledged_by": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Email of the user who first acknowledged the anomaly",
+							MarkdownDescription: "Email of the user who first acknowledged the anomaly",
+						},
 						"attribution": schema.StringAttribute{
 							Computed:            true,
 							Description:         "Attribution ID.",
@@ -260,6 +270,42 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`acknowledged expected to be basetypes.BoolValue, was: %T`, acknowledgedAttribute))
 	}
 
+	acknowledgedAtAttribute, ok := attributes["acknowledged_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`acknowledged_at is missing from object`)
+
+		return nil, diags
+	}
+
+	acknowledgedAtVal, ok := acknowledgedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`acknowledged_at expected to be basetypes.StringValue, was: %T`, acknowledgedAtAttribute))
+	}
+
+	acknowledgedByAttribute, ok := attributes["acknowledged_by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`acknowledged_by is missing from object`)
+
+		return nil, diags
+	}
+
+	acknowledgedByVal, ok := acknowledgedByAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`acknowledged_by expected to be basetypes.StringValue, was: %T`, acknowledgedByAttribute))
+	}
+
 	attributionAttribute, ok := attributes["attribution"]
 
 	if !ok {
@@ -518,6 +564,8 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 
 	return AnomaliesValue{
 		Acknowledged:   acknowledgedVal,
+		AcknowledgedAt: acknowledgedAtVal,
+		AcknowledgedBy: acknowledgedByVal,
 		Attribution:    attributionVal,
 		BillingAccount: billingAccountVal,
 		CostOfAnomaly:  costOfAnomalyVal,
@@ -617,6 +665,42 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`acknowledged expected to be basetypes.BoolValue, was: %T`, acknowledgedAttribute))
 	}
 
+	acknowledgedAtAttribute, ok := attributes["acknowledged_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`acknowledged_at is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	acknowledgedAtVal, ok := acknowledgedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`acknowledged_at expected to be basetypes.StringValue, was: %T`, acknowledgedAtAttribute))
+	}
+
+	acknowledgedByAttribute, ok := attributes["acknowledged_by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`acknowledged_by is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	acknowledgedByVal, ok := acknowledgedByAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`acknowledged_by expected to be basetypes.StringValue, was: %T`, acknowledgedByAttribute))
+	}
+
 	attributionAttribute, ok := attributes["attribution"]
 
 	if !ok {
@@ -875,6 +959,8 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 
 	return AnomaliesValue{
 		Acknowledged:   acknowledgedVal,
+		AcknowledgedAt: acknowledgedAtVal,
+		AcknowledgedBy: acknowledgedByVal,
 		Attribution:    attributionVal,
 		BillingAccount: billingAccountVal,
 		CostOfAnomaly:  costOfAnomalyVal,
@@ -962,6 +1048,8 @@ var _ basetypes.ObjectValuable = AnomaliesValue{}
 
 type AnomaliesValue struct {
 	Acknowledged   basetypes.BoolValue    `tfsdk:"acknowledged"`
+	AcknowledgedAt basetypes.StringValue  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy basetypes.StringValue  `tfsdk:"acknowledged_by"`
 	Attribution    basetypes.StringValue  `tfsdk:"attribution"`
 	BillingAccount basetypes.StringValue  `tfsdk:"billing_account"`
 	CostOfAnomaly  basetypes.Float64Value `tfsdk:"cost_of_anomaly"`
@@ -980,12 +1068,14 @@ type AnomaliesValue struct {
 }
 
 func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 15)
+	attrTypes := make(map[string]tftypes.Type, 17)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["acknowledged"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["acknowledged_at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["acknowledged_by"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["attribution"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["billing_account"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["cost_of_anomaly"] = basetypes.Float64Type{}.TerraformType(ctx)
@@ -1009,7 +1099,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 15)
+		vals := make(map[string]tftypes.Value, 17)
 
 		val, err = v.Acknowledged.ToTerraformValue(ctx)
 
@@ -1018,6 +1108,22 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["acknowledged"] = val
+
+		val, err = v.AcknowledgedAt.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["acknowledged_at"] = val
+
+		val, err = v.AcknowledgedBy.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["acknowledged_by"] = val
 
 		val, err = v.Attribution.ToTerraformValue(ctx)
 
@@ -1174,6 +1280,8 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 
 	attributeTypes := map[string]attr.Type{
 		"acknowledged":    basetypes.BoolType{},
+		"acknowledged_at": basetypes.StringType{},
+		"acknowledged_by": basetypes.StringType{},
 		"attribution":     basetypes.StringType{},
 		"billing_account": basetypes.StringType{},
 		"cost_of_anomaly": basetypes.Float64Type{},
@@ -1206,6 +1314,8 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		attributeTypes,
 		map[string]attr.Value{
 			"acknowledged":    v.Acknowledged,
+			"acknowledged_at": v.AcknowledgedAt,
+			"acknowledged_by": v.AcknowledgedBy,
 			"attribution":     v.Attribution,
 			"billing_account": v.BillingAccount,
 			"cost_of_anomaly": v.CostOfAnomaly,
@@ -1241,6 +1351,14 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Acknowledged.Equal(other.Acknowledged) {
+		return false
+	}
+
+	if !v.AcknowledgedAt.Equal(other.AcknowledgedAt) {
+		return false
+	}
+
+	if !v.AcknowledgedBy.Equal(other.AcknowledgedBy) {
 		return false
 	}
 
@@ -1314,6 +1432,8 @@ func (v AnomaliesValue) Type(ctx context.Context) attr.Type {
 func (v AnomaliesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"acknowledged":    basetypes.BoolType{},
+		"acknowledged_at": basetypes.StringType{},
+		"acknowledged_by": basetypes.StringType{},
 		"attribution":     basetypes.StringType{},
 		"billing_account": basetypes.StringType{},
 		"cost_of_anomaly": basetypes.Float64Type{},

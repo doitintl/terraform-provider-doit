@@ -76,6 +76,8 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if data.Id.IsUnknown() {
 		data.Acknowledged = types.BoolUnknown()
+		data.AcknowledgedAt = types.StringUnknown()
+		data.AcknowledgedBy = types.StringUnknown()
 		data.Attribution = types.StringUnknown()
 		data.BillingAccount = types.StringUnknown()
 		data.CostOfAnomaly = types.Float64Unknown()
@@ -125,6 +127,16 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	data.Platform = types.StringValue(anomaly.Platform)
 	data.SeverityLevel = types.StringValue(anomaly.SeverityLevel)
 	data.TimeFrame = types.StringValue(anomaly.TimeFrame)
+
+	// AcknowledgedAt is *time.Time
+	if anomaly.AcknowledgedAt != nil {
+		data.AcknowledgedAt = types.StringValue(anomaly.AcknowledgedAt.UTC().Format(time.RFC3339))
+	} else {
+		data.AcknowledgedAt = types.StringNull()
+	}
+
+	// AcknowledgedBy is *string
+	data.AcknowledgedBy = types.StringPointerValue(anomaly.AcknowledgedBy)
 
 	// EndTime is *int in the API
 	if anomaly.EndTime != nil {

@@ -195,6 +195,14 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 				statusVal = types.StringNull()
 			}
 
+			// Map AcknowledgedAt (*time.Time)
+			var acknowledgedAtVal types.String
+			if anomaly.AcknowledgedAt != nil {
+				acknowledgedAtVal = types.StringValue(anomaly.AcknowledgedAt.UTC().Format(time.RFC3339))
+			} else {
+				acknowledgedAtVal = types.StringNull()
+			}
+
 			// Map ResourceData nested list
 			resourceDataList := mapAnomalyResourceData(ctx, anomaly.ResourceData, &resp.Diagnostics)
 
@@ -206,6 +214,8 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 				map[string]attr.Value{
 					"id":              types.StringPointerValue(anomaly.Id),
 					"acknowledged":    types.BoolPointerValue(anomaly.Acknowledged),
+					"acknowledged_at": acknowledgedAtVal,
+					"acknowledged_by": types.StringPointerValue(anomaly.AcknowledgedBy),
 					"attribution":     types.StringValue(anomaly.Attribution),
 					"billing_account": types.StringValue(anomaly.BillingAccount),
 					"cost_of_anomaly": types.Float64Value(anomaly.CostOfAnomaly),
