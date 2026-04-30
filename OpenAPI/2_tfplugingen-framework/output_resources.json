@@ -2531,6 +2531,131 @@
 				"description": "Manage Cloud Analytics reports and get reports data in JSON format.",
 				"markdown_description": "Manage Cloud Analytics reports and get reports data in JSON format."
 			}
+		},
+		{
+			"name": "sharing",
+			"schema": {
+				"attributes": [
+					{
+						"name": "permissions",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "role",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "The role assigned to the user, defining their level of access to the resource.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"owner\",\n\"editor\",\n\"viewer\",\n)"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "user",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"description": "The email address of the user to whom the role is assigned."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "public",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The type of permissions granted to all users in the organization for this resource.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"editor\",\n\"viewer\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this resource was created, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Resource description."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Resource ID."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Resource name."
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this resource was last updated, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "resource_type",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Resource type.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"alerts\",\n\"budgets\",\n\"reports\",\n\"allocations\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "resource_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids)."
+						}
+					}
+				],
+				"description": "Manage permissions associated with specified Cloud Analytics resources.",
+				"markdown_description": "Manage permissions associated with specified Cloud Analytics resources."
+			}
 		}
 	],
 	"version": "0.1"

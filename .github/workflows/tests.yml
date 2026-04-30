@@ -90,4 +90,5 @@ jobs:
           TEST_ASSET_ID: ${{ vars.TEST_ASSET_ID }}
           TEST_ASSET_ID_AWS: ${{ vars.TEST_ASSET_ID_AWS }}
           TEST_CLOUD_DIAGRAM_RESOURCE: ${{ vars.TEST_CLOUD_DIAGRAM_RESOURCE }}
+          TEST_USER_2: ${{ vars.TEST_USER_2 }}
         run: go test -v -timeout 120m ./...
