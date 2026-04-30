@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
-	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_resource_sharing"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_sharing"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -20,30 +20,30 @@ import (
 )
 
 type (
-	resourceSharingResource struct {
+	sharingResource struct {
 		client *models.ClientWithResponses
 	}
-	resourceSharingResourceModel struct {
-		resource_resource_sharing.ResourceSharingModel
+	sharingResourceModel struct {
+		resource_sharing.SharingModel
 		Timeouts timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                     = (*resourceSharingResource)(nil)
-	_ resource.ResourceWithConfigure        = (*resourceSharingResource)(nil)
-	_ resource.ResourceWithImportState      = (*resourceSharingResource)(nil)
-	_ resource.ResourceWithConfigValidators = (*resourceSharingResource)(nil)
+	_ resource.Resource                     = (*sharingResource)(nil)
+	_ resource.ResourceWithConfigure        = (*sharingResource)(nil)
+	_ resource.ResourceWithImportState      = (*sharingResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*sharingResource)(nil)
 )
 
-// NewResourceSharingResource creates a new resource sharing resource instance.
-func NewResourceSharingResource() resource.Resource {
-	return &resourceSharingResource{}
+// NewSharingResource creates a new resource sharing resource instance.
+func NewSharingResource() resource.Resource {
+	return &sharingResource{}
 }
 
 // Configure adds the provider configured client to the resource.
-func (r *resourceSharingResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *sharingResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -60,12 +60,12 @@ func (r *resourceSharingResource) Configure(_ context.Context, req resource.Conf
 	r.client = client
 }
 
-func (r *resourceSharingResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_resource_sharing"
+func (r *sharingResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_sharing"
 }
 
-func (r *resourceSharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	s := resource_resource_sharing.ResourceSharingResourceSchema(ctx)
+func (r *sharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := resource_sharing.SharingResourceSchema(ctx)
 
 	// resource_type: make Required + RequiresReplace (codegen sets Optional+Computed for path params)
 	if attr, ok := s.Attributes["resource_type"].(schema.StringAttribute); ok {
@@ -148,15 +148,15 @@ func (r *resourceSharingResource) Schema(ctx context.Context, _ resource.SchemaR
 	resp.Schema = s
 }
 
-func (r *resourceSharingResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
+func (r *sharingResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
-		resourceSharingOwnerValidator{},
-		resourceSharingAllocationPublicValidator{},
+		sharingOwnerValidator{},
+		sharingAllocationPublicValidator{},
 	}
 }
 
-func (r *resourceSharingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan resourceSharingResourceModel
+func (r *sharingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan sharingResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -208,13 +208,13 @@ func (r *resourceSharingResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Plan-first state pattern: keep user values, overlay only Computed-only fields
-	overlayResourceSharingComputedFields(putResp.JSON200, &plan)
+	overlaySharingComputedFields(putResp.JSON200, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *resourceSharingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state resourceSharingResourceModel
+func (r *sharingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state sharingResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -243,8 +243,8 @@ func (r *resourceSharingResource) Read(ctx context.Context, req resource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *resourceSharingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan resourceSharingResourceModel
+func (r *sharingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan sharingResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -296,13 +296,13 @@ func (r *resourceSharingResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	// Plan-first state pattern: preserve user's plan values, overlay computed fields only
-	overlayResourceSharingComputedFields(putResp.JSON200, &plan)
+	overlaySharingComputedFields(putResp.JSON200, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *resourceSharingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state resourceSharingResourceModel
+func (r *sharingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state sharingResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -403,7 +403,7 @@ func (r *resourceSharingResource) Delete(ctx context.Context, req resource.Delet
 	}
 }
 
-func (r *resourceSharingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *sharingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Import ID format: {resourceType}/{resourceId}
 	parts := strings.SplitN(req.ID, "/", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
@@ -420,7 +420,7 @@ func (r *resourceSharingResource) ImportState(ctx context.Context, req resource.
 
 // populateState reads the current permissions from the API and populates the state model.
 // On 404, sets Id to null to signal the caller to call RemoveResource().
-func (r *resourceSharingResource) populateState(ctx context.Context, state *resourceSharingResourceModel) diag.Diagnostics {
+func (r *sharingResource) populateState(ctx context.Context, state *sharingResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	resType := state.ResourceType.ValueString()
@@ -453,13 +453,13 @@ func (r *resourceSharingResource) populateState(ctx context.Context, state *reso
 		return diags
 	}
 
-	diags.Append(mapResourceSharingToModel(ctx, getResp.JSON200, state)...)
+	diags.Append(mapSharingToModel(ctx, getResp.JSON200, state)...)
 	return diags
 }
 
-// mapResourceSharingToModel maps the full API response to the Terraform model.
+// mapSharingToModel maps the full API response to the Terraform model.
 // Used by Read and ImportState (not by Create/Update, which use the overlay pattern).
-func mapResourceSharingToModel(ctx context.Context, apiResp *models.ResourcePermissionsResponse, state *resourceSharingResourceModel) diag.Diagnostics {
+func mapSharingToModel(ctx context.Context, apiResp *models.ResourcePermissionsResponse, state *sharingResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Computed-only fields from the response
@@ -494,10 +494,10 @@ func mapResourceSharingToModel(ctx context.Context, apiResp *models.ResourcePerm
 	return diags
 }
 
-// overlayResourceSharingComputedFields overlays only the Computed-only fields from the
+// overlaySharingComputedFields overlays only the Computed-only fields from the
 // API response onto the plan. User-configured values (permissions, public, resource_type,
 // resource_id) are preserved from the plan exactly as-is.
-func overlayResourceSharingComputedFields(apiResp *models.ResourcePermissionsResponse, plan *resourceSharingResourceModel) {
+func overlaySharingComputedFields(apiResp *models.ResourcePermissionsResponse, plan *sharingResourceModel) {
 	// Computed-only: always set from API response
 	plan.Id = types.StringPointerValue(apiResp.Id)
 	plan.Name = types.StringPointerValue(apiResp.Name)
@@ -518,7 +518,7 @@ func overlayResourceSharingComputedFields(apiResp *models.ResourcePermissionsRes
 	// Required (permissions) and explicit Optional (public when set): never touch — plan values preserved
 
 	// Optional+Computed (public): resolve only when unknown (user omitted it)
-	// Normalize empty string to null (see mapResourceSharingToModel).
+	// Normalize empty string to null (see mapSharingToModel).
 	if plan.Public.IsUnknown() {
 		if apiResp.Public != nil && string(*apiResp.Public) != "" {
 			plan.Public = types.StringValue(string(*apiResp.Public))
@@ -529,13 +529,13 @@ func overlayResourceSharingComputedFields(apiResp *models.ResourcePermissionsRes
 }
 
 // buildSharingRequest converts the Terraform model into an API request body.
-func buildSharingRequest(ctx context.Context, plan *resourceSharingResourceModel, resourceType string) (models.UpdateResourcePermissionJSONRequestBody, diag.Diagnostics) {
+func buildSharingRequest(ctx context.Context, plan *sharingResourceModel, resourceType string) (models.UpdateResourcePermissionJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var reqBody models.UpdateResourcePermissionJSONRequestBody
 
 	// Map permissions from plan to API type
 	if !plan.Permissions.IsNull() && !plan.Permissions.IsUnknown() {
-		var permVals []resource_resource_sharing.PermissionsValue
+		var permVals []resource_sharing.PermissionsValue
 		diags.Append(plan.Permissions.ElementsAs(ctx, &permVals, false)...)
 		if diags.HasError() {
 			return reqBody, diags
@@ -577,15 +577,15 @@ func buildSharingRequest(ctx context.Context, plan *resourceSharingResourceModel
 
 // mapPermissionsToList converts the API permissions array to a Terraform list.
 func mapPermissionsToList(ctx context.Context, apiPerms *[]models.ResourcePermission, diags *diag.Diagnostics) types.List {
-	elemType := resource_resource_sharing.PermissionsValue{}.Type(ctx)
+	elemType := resource_sharing.PermissionsValue{}.Type(ctx)
 
 	if apiPerms == nil || len(*apiPerms) == 0 {
-		emptyList, d := types.ListValueFrom(ctx, elemType, []resource_resource_sharing.PermissionsValue{})
+		emptyList, d := types.ListValueFrom(ctx, elemType, []resource_sharing.PermissionsValue{})
 		diags.Append(d...)
 		return emptyList
 	}
 
-	vals := make([]resource_resource_sharing.PermissionsValue, 0, len(*apiPerms))
+	vals := make([]resource_sharing.PermissionsValue, 0, len(*apiPerms))
 	for _, p := range *apiPerms {
 		var user, role types.String
 		if p.User != nil {
@@ -599,8 +599,8 @@ func mapPermissionsToList(ctx context.Context, apiPerms *[]models.ResourcePermis
 			role = types.StringNull()
 		}
 
-		permVal, d := resource_resource_sharing.NewPermissionsValue(
-			resource_resource_sharing.PermissionsValue{}.AttributeTypes(ctx),
+		permVal, d := resource_sharing.NewPermissionsValue(
+			resource_sharing.PermissionsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"user": user,
 				"role": role,

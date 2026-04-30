@@ -4,26 +4,26 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_resource_sharing"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_sharing"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// resourceSharingOwnerValidator validates that exactly one owner is defined in permissions.
-type resourceSharingOwnerValidator struct{}
+// sharingOwnerValidator validates that exactly one owner is defined in permissions.
+type sharingOwnerValidator struct{}
 
-var _ resource.ConfigValidator = resourceSharingOwnerValidator{}
+var _ resource.ConfigValidator = sharingOwnerValidator{}
 
-func (v resourceSharingOwnerValidator) Description(_ context.Context) string {
+func (v sharingOwnerValidator) Description(_ context.Context) string {
 	return "Validates that the permissions list contains exactly one entry with role = 'owner'."
 }
 
-func (v resourceSharingOwnerValidator) MarkdownDescription(ctx context.Context) string {
+func (v sharingOwnerValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-func (v resourceSharingOwnerValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+func (v sharingOwnerValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var permissions types.List
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("permissions"), &permissions)...)
 	if resp.Diagnostics.HasError() {
@@ -35,7 +35,7 @@ func (v resourceSharingOwnerValidator) ValidateResource(ctx context.Context, req
 		return
 	}
 
-	var permVals []resource_resource_sharing.PermissionsValue
+	var permVals []resource_sharing.PermissionsValue
 	resp.Diagnostics.Append(permissions.ElementsAs(ctx, &permVals, false)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -78,23 +78,23 @@ func (v resourceSharingOwnerValidator) ValidateResource(ctx context.Context, req
 	}
 }
 
-// resourceSharingAllocationPublicValidator rejects setting "public" when
+// sharingAllocationPublicValidator rejects setting "public" when
 // resource_type is "allocations". The allocation API silently discards any
 // public access role (even "viewer" is accepted but stored as ""), so allowing
 // users to set it would always cause drift on the next plan.
-type resourceSharingAllocationPublicValidator struct{}
+type sharingAllocationPublicValidator struct{}
 
-var _ resource.ConfigValidator = resourceSharingAllocationPublicValidator{}
+var _ resource.ConfigValidator = sharingAllocationPublicValidator{}
 
-func (v resourceSharingAllocationPublicValidator) Description(_ context.Context) string {
+func (v sharingAllocationPublicValidator) Description(_ context.Context) string {
 	return "Validates that 'public' is not set when resource_type is 'allocations'."
 }
 
-func (v resourceSharingAllocationPublicValidator) MarkdownDescription(ctx context.Context) string {
+func (v sharingAllocationPublicValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-func (v resourceSharingAllocationPublicValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+func (v sharingAllocationPublicValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var resourceType types.String
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("resource_type"), &resourceType)...)
 	if resp.Diagnostics.HasError() {

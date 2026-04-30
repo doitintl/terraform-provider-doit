@@ -2533,7 +2533,7 @@
 			}
 		},
 		{
-			"name": "resource_sharing",
+			"name": "sharing",
 			"schema": {
 				"attributes": [
 					{

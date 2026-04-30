@@ -20,9 +20,9 @@ func testUser2() string {
 	return os.Getenv("TEST_USER_2")
 }
 
-// TestAccResourceSharing_Basic creates a report and sets sharing permissions (owner + viewer),
+// TestAccSharing_Basic creates a report and sets sharing permissions (owner + viewer),
 // then verifies no drift on re-apply.
-func TestAccResourceSharing_Basic(t *testing.T) {
+func TestAccSharing_Basic(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -37,38 +37,38 @@ func TestAccResourceSharing_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create report + sharing with owner + viewer
 			{
-				Config: testAccResourceSharingBasic(n),
+				Config: testAccSharingBasic(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
 						plancheck.ExpectResourceAction(
-							"doit_resource_sharing.this",
+							"doit_sharing.this",
 							plancheck.ResourceActionCreate,
 						),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("resource_type"),
 						knownvalue.StringExact("reports")),
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("permissions"),
 						knownvalue.ListSizeExact(2)),
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull()),
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("name"),
 						knownvalue.NotNull()),
 				},
 			},
 			// Step 2: Drift detection - re-apply same config, expect no changes
 			{
-				Config: testAccResourceSharingBasic(n),
+				Config: testAccSharingBasic(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -79,8 +79,8 @@ func TestAccResourceSharing_Basic(t *testing.T) {
 	})
 }
 
-// TestAccResourceSharing_Update tests updating sharing permissions (add user, change roles).
-func TestAccResourceSharing_Update(t *testing.T) {
+// TestAccSharing_Update tests updating sharing permissions (add user, change roles).
+func TestAccSharing_Update(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -95,30 +95,30 @@ func TestAccResourceSharing_Update(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create with owner + viewer
 			{
-				Config: testAccResourceSharingBasic(n),
+				Config: testAccSharingBasic(n),
 			},
 			// Step 2: Update - promote viewer to editor
 			{
-				Config: testAccResourceSharingUpdated(n),
+				Config: testAccSharingUpdated(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
 						plancheck.ExpectResourceAction(
-							"doit_resource_sharing.this",
+							"doit_sharing.this",
 							plancheck.ResourceActionUpdate,
 						),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("permissions"),
 						knownvalue.ListSizeExact(2)),
 				},
 			},
 			// Step 3: Drift detection
 			{
-				Config: testAccResourceSharingUpdated(n),
+				Config: testAccSharingUpdated(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -129,9 +129,9 @@ func TestAccResourceSharing_Update(t *testing.T) {
 	})
 }
 
-// TestAccResourceSharing_ChangeOwner tests transferring ownership to another user
+// TestAccSharing_ChangeOwner tests transferring ownership to another user
 // and then transferring it back so the CI user can delete the report at cleanup.
-func TestAccResourceSharing_ChangeOwner(t *testing.T) {
+func TestAccSharing_ChangeOwner(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -146,11 +146,11 @@ func TestAccResourceSharing_ChangeOwner(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create with CI user as owner
 			{
-				Config: testAccResourceSharingBasic(n),
+				Config: testAccSharingBasic(n),
 			},
 			// Step 2: Transfer ownership to TEST_USER_2
 			{
-				Config: testAccResourceSharingChangedOwner(n),
+				Config: testAccSharingChangedOwner(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -158,14 +158,14 @@ func TestAccResourceSharing_ChangeOwner(t *testing.T) {
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("permissions"),
 						knownvalue.ListSizeExact(2)),
 				},
 			},
 			// Step 3: Drift detection
 			{
-				Config: testAccResourceSharingChangedOwner(n),
+				Config: testAccSharingChangedOwner(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -174,7 +174,7 @@ func TestAccResourceSharing_ChangeOwner(t *testing.T) {
 			},
 			// Step 4: Transfer ownership back to CI user so destroy succeeds
 			{
-				Config: testAccResourceSharingBasic(n),
+				Config: testAccSharingBasic(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -185,10 +185,10 @@ func TestAccResourceSharing_ChangeOwner(t *testing.T) {
 	})
 }
 
-// TestAccResourceSharing_PublicAccess tests setting, changing, and clearing public access.
+// TestAccSharing_PublicAccess tests setting, changing, and clearing public access.
 // The custom plan modifier (useNullForUnknownWhenConfigNull) allows clearing public
 // by explicitly setting public = null in config.
-func TestAccResourceSharing_PublicAccess(t *testing.T) {
+func TestAccSharing_PublicAccess(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -203,17 +203,17 @@ func TestAccResourceSharing_PublicAccess(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create with public = viewer
 			{
-				Config: testAccResourceSharingPublic(n, "viewer"),
+				Config: testAccSharingPublic(n, "viewer"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("public"),
 						knownvalue.StringExact("viewer")),
 				},
 			},
 			// Step 2: Drift detection
 			{
-				Config: testAccResourceSharingPublic(n, "viewer"),
+				Config: testAccSharingPublic(n, "viewer"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -222,7 +222,7 @@ func TestAccResourceSharing_PublicAccess(t *testing.T) {
 			},
 			// Step 3: Change public access from viewer to editor
 			{
-				Config: testAccResourceSharingPublic(n, "editor"),
+				Config: testAccSharingPublic(n, "editor"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -230,14 +230,14 @@ func TestAccResourceSharing_PublicAccess(t *testing.T) {
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("public"),
 						knownvalue.StringExact("editor")),
 				},
 			},
 			// Step 4: Drift detection
 			{
-				Config: testAccResourceSharingPublic(n, "editor"),
+				Config: testAccSharingPublic(n, "editor"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -246,7 +246,7 @@ func TestAccResourceSharing_PublicAccess(t *testing.T) {
 			},
 			// Step 5: Remove public access with explicit null
 			{
-				Config: testAccResourceSharingPublicNull(n),
+				Config: testAccSharingPublicNull(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -254,14 +254,14 @@ func TestAccResourceSharing_PublicAccess(t *testing.T) {
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.this",
+						"doit_sharing.this",
 						tfjsonpath.New("public"),
 						knownvalue.Null()),
 				},
 			},
 			// Step 6: Drift detection after null
 			{
-				Config: testAccResourceSharingPublicNull(n),
+				Config: testAccSharingPublicNull(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -272,8 +272,8 @@ func TestAccResourceSharing_PublicAccess(t *testing.T) {
 	})
 }
 
-// TestAccResourceSharing_Import tests importing existing sharing permissions.
-func TestAccResourceSharing_Import(t *testing.T) {
+// TestAccSharing_Import tests importing existing sharing permissions.
+func TestAccSharing_Import(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -288,16 +288,16 @@ func TestAccResourceSharing_Import(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create
 			{
-				Config: testAccResourceSharingBasic(n),
+				Config: testAccSharingBasic(n),
 			},
 			// Step 2: Import using composite ID
 			{
-				ResourceName: "doit_resource_sharing.this",
+				ResourceName: "doit_sharing.this",
 				ImportState:  true,
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					rs, ok := s.RootModule().Resources["doit_resource_sharing.this"]
+					rs, ok := s.RootModule().Resources["doit_sharing.this"]
 					if !ok {
-						return "", fmt.Errorf("resource not found: doit_resource_sharing.this")
+						return "", fmt.Errorf("resource not found: doit_sharing.this")
 					}
 					resType := rs.Primary.Attributes["resource_type"]
 					resID := rs.Primary.Attributes["resource_id"]
@@ -310,8 +310,8 @@ func TestAccResourceSharing_Import(t *testing.T) {
 	})
 }
 
-// TestAccResourceSharing_OwnerValidator tests the exactly-one-owner validator.
-func TestAccResourceSharing_OwnerValidator(t *testing.T) {
+// TestAccSharing_OwnerValidator tests the exactly-one-owner validator.
+func TestAccSharing_OwnerValidator(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -321,26 +321,26 @@ func TestAccResourceSharing_OwnerValidator(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test: No owners
 			{
-				Config:      testAccResourceSharingNoOwner(n),
+				Config:      testAccSharingNoOwner(n),
 				ExpectError: regexp.MustCompile(`Missing Owner`),
 			},
 			// Test: Multiple owners
 			{
-				Config:      testAccResourceSharingMultipleOwners(n),
+				Config:      testAccSharingMultipleOwners(n),
 				ExpectError: regexp.MustCompile(`Multiple Owners`),
 			},
 			// Test: public set on allocations (not allowed)
 			{
-				Config:      testAccResourceSharingAllocationWithPublic(n),
+				Config:      testAccSharingAllocationWithPublic(n),
 				ExpectError: regexp.MustCompile(`Public Access Not Supported for Allocations`),
 			},
 		},
 	})
 }
 
-// TestAccResourceSharing_Disappears verifies Terraform handles externally deleted
+// TestAccSharing_Disappears verifies Terraform handles externally deleted
 // target resources. When the report is deleted, the sharing GET returns 404.
-func TestAccResourceSharing_Disappears(t *testing.T) {
+func TestAccSharing_Disappears(t *testing.T) {
 	n := acctest.RandInt()
 	var reportID string
 
@@ -356,7 +356,7 @@ func TestAccResourceSharing_Disappears(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Create the resources
 			{
-				Config: testAccResourceSharingBasic(n),
+				Config: testAccSharingBasic(n),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrWith("doit_report.sharing_target", "id", func(value string) error {
 						if value == "" {
@@ -380,7 +380,7 @@ func TestAccResourceSharing_Disappears(t *testing.T) {
 							resp.StatusCode(), string(resp.Body))
 					}
 				},
-				Config:             testAccResourceSharingBasic(n),
+				Config:             testAccSharingBasic(n),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
@@ -390,7 +390,7 @@ func TestAccResourceSharing_Disappears(t *testing.T) {
 
 // --- HCL Config Helpers ---
 
-func testAccResourceSharingReport(i int) string {
+func testAccSharingReport(i int) string {
 	return fmt.Sprintf(`
 resource "doit_report" "sharing_target" {
   name = "test-sharing-target-%d"
@@ -410,11 +410,11 @@ resource "doit_report" "sharing_target" {
 `, i)
 }
 
-func testAccResourceSharingBasic(i int) string {
+func testAccSharingBasic(i int) string {
 	return fmt.Sprintf(`
 %s
 
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "reports"
   resource_id   = doit_report.sharing_target.id
 
@@ -429,14 +429,14 @@ resource "doit_resource_sharing" "this" {
     }
   ]
 }
-`, testAccResourceSharingReport(i), testUser(), testUser2())
+`, testAccSharingReport(i), testUser(), testUser2())
 }
 
-func testAccResourceSharingUpdated(i int) string {
+func testAccSharingUpdated(i int) string {
 	return fmt.Sprintf(`
 %s
 
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "reports"
   resource_id   = doit_report.sharing_target.id
 
@@ -451,14 +451,14 @@ resource "doit_resource_sharing" "this" {
     }
   ]
 }
-`, testAccResourceSharingReport(i), testUser(), testUser2())
+`, testAccSharingReport(i), testUser(), testUser2())
 }
 
-func testAccResourceSharingChangedOwner(i int) string {
+func testAccSharingChangedOwner(i int) string {
 	return fmt.Sprintf(`
 %s
 
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "reports"
   resource_id   = doit_report.sharing_target.id
 
@@ -473,14 +473,14 @@ resource "doit_resource_sharing" "this" {
     }
   ]
 }
-`, testAccResourceSharingReport(i), testUser2(), testUser())
+`, testAccSharingReport(i), testUser2(), testUser())
 }
 
-func testAccResourceSharingPublic(i int, publicLevel string) string {
+func testAccSharingPublic(i int, publicLevel string) string {
 	return fmt.Sprintf(`
 %s
 
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "reports"
   resource_id   = doit_report.sharing_target.id
 
@@ -497,14 +497,14 @@ resource "doit_resource_sharing" "this" {
 
   public = "%s"
 }
-`, testAccResourceSharingReport(i), testUser(), testUser2(), publicLevel)
+`, testAccSharingReport(i), testUser(), testUser2(), publicLevel)
 }
 
-func testAccResourceSharingPublicNull(i int) string {
+func testAccSharingPublicNull(i int) string {
 	return fmt.Sprintf(`
 %s
 
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "reports"
   resource_id   = doit_report.sharing_target.id
 
@@ -521,12 +521,12 @@ resource "doit_resource_sharing" "this" {
 
   public = null
 }
-`, testAccResourceSharingReport(i), testUser(), testUser2())
+`, testAccSharingReport(i), testUser(), testUser2())
 }
 
-func testAccResourceSharingNoOwner(i int) string {
+func testAccSharingNoOwner(i int) string {
 	return fmt.Sprintf(`
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "reports"
   resource_id   = "fake-id-%d"
 
@@ -540,9 +540,9 @@ resource "doit_resource_sharing" "this" {
 `, i)
 }
 
-func testAccResourceSharingMultipleOwners(i int) string {
+func testAccSharingMultipleOwners(i int) string {
 	return fmt.Sprintf(`
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "reports"
   resource_id   = "fake-id-%d"
 
@@ -560,9 +560,9 @@ resource "doit_resource_sharing" "this" {
 `, i)
 }
 
-func testAccResourceSharingAllocationWithPublic(i int) string {
+func testAccSharingAllocationWithPublic(i int) string {
 	return fmt.Sprintf(`
-resource "doit_resource_sharing" "this" {
+resource "doit_sharing" "this" {
   resource_type = "allocations"
   resource_id   = "fake-id-%d"
   public        = "viewer"
@@ -579,8 +579,8 @@ resource "doit_resource_sharing" "this" {
 
 // --- Tests for other resource types (budgets, alerts, allocations) ---
 
-// TestAccResourceSharing_Budget tests sharing permissions on a budget resource.
-func TestAccResourceSharing_Budget(t *testing.T) {
+// TestAccSharing_Budget tests sharing permissions on a budget resource.
+func TestAccSharing_Budget(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -603,17 +603,17 @@ func TestAccResourceSharing_Budget(t *testing.T) {
 		TerraformVersionChecks: testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceSharingBudget(n),
+				Config: testAccSharingBudget(n),
 				// The sharing API syncs permissions to budget collaborators server-side,
 				// causing expected drift on the doit_budget resource.
 				ExpectNonEmptyPlan: true,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.budget",
+						"doit_sharing.budget",
 						tfjsonpath.New("resource_type"),
 						knownvalue.StringExact("budgets")),
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.budget",
+						"doit_sharing.budget",
 						tfjsonpath.New("permissions"),
 						knownvalue.ListSizeExact(2)),
 				},
@@ -621,7 +621,7 @@ func TestAccResourceSharing_Budget(t *testing.T) {
 			// Step 2: Align the budget's collaborators with the sharing permissions.
 			// When both resources declare the same users, drift disappears entirely.
 			{
-				Config: testAccResourceSharingBudgetAligned(n),
+				Config: testAccSharingBudgetAligned(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -632,8 +632,8 @@ func TestAccResourceSharing_Budget(t *testing.T) {
 	})
 }
 
-// TestAccResourceSharing_Alert tests sharing permissions on an alert resource.
-func TestAccResourceSharing_Alert(t *testing.T) {
+// TestAccSharing_Alert tests sharing permissions on an alert resource.
+func TestAccSharing_Alert(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -647,21 +647,21 @@ func TestAccResourceSharing_Alert(t *testing.T) {
 		TerraformVersionChecks: testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceSharingAlert(n),
+				Config: testAccSharingAlert(n),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.alert",
+						"doit_sharing.alert",
 						tfjsonpath.New("resource_type"),
 						knownvalue.StringExact("alerts")),
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.alert",
+						"doit_sharing.alert",
 						tfjsonpath.New("permissions"),
 						knownvalue.ListSizeExact(2)),
 				},
 			},
 			// Drift check
 			{
-				Config: testAccResourceSharingAlert(n),
+				Config: testAccSharingAlert(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -672,8 +672,8 @@ func TestAccResourceSharing_Alert(t *testing.T) {
 	})
 }
 
-// TestAccResourceSharing_Allocation tests sharing permissions on an allocation resource.
-func TestAccResourceSharing_Allocation(t *testing.T) {
+// TestAccSharing_Allocation tests sharing permissions on an allocation resource.
+func TestAccSharing_Allocation(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -690,21 +690,21 @@ func TestAccResourceSharing_Allocation(t *testing.T) {
 		TerraformVersionChecks: testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceSharingAllocation(n),
+				Config: testAccSharingAllocation(n),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.allocation",
+						"doit_sharing.allocation",
 						tfjsonpath.New("resource_type"),
 						knownvalue.StringExact("allocations")),
 					statecheck.ExpectKnownValue(
-						"doit_resource_sharing.allocation",
+						"doit_sharing.allocation",
 						tfjsonpath.New("permissions"),
 						knownvalue.ListSizeExact(2)),
 				},
 			},
 			// Drift check
 			{
-				Config: testAccResourceSharingAllocation(n),
+				Config: testAccSharingAllocation(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -717,7 +717,7 @@ func TestAccResourceSharing_Allocation(t *testing.T) {
 
 // --- Config generators for other resource types ---
 
-func testAccResourceSharingBudget(i int) string {
+func testAccSharingBudget(i int) string {
 	return fmt.Sprintf(`
 %s
 
@@ -740,7 +740,7 @@ resource "doit_budget" "sharing_target" {
   start_period = local.start_period
 }
 
-resource "doit_resource_sharing" "budget" {
+resource "doit_sharing" "budget" {
   resource_type = "budgets"
   resource_id   = doit_budget.sharing_target.id
 
@@ -758,11 +758,11 @@ resource "doit_resource_sharing" "budget" {
 `, budgetStartPeriod(), i, testAttribution(), testUser(), testUser(), testUser2())
 }
 
-// testAccResourceSharingBudgetAligned returns a config where the budget's
+// testAccSharingBudgetAligned returns a config where the budget's
 // collaborators are aligned with the sharing resource's permissions. This
 // eliminates cross-resource drift that occurs when the sharing API syncs
 // permissions to the budget's collaborators server-side.
-func testAccResourceSharingBudgetAligned(i int) string {
+func testAccSharingBudgetAligned(i int) string {
 	return fmt.Sprintf(`
 %s
 
@@ -789,7 +789,7 @@ resource "doit_budget" "sharing_target" {
   start_period = local.start_period
 }
 
-resource "doit_resource_sharing" "budget" {
+resource "doit_sharing" "budget" {
   resource_type = "budgets"
   resource_id   = doit_budget.sharing_target.id
 
@@ -806,7 +806,7 @@ resource "doit_resource_sharing" "budget" {
 }
 `, budgetStartPeriod(), i, testAttribution(), testUser(), testUser2(), testUser(), testUser2())
 }
-func testAccResourceSharingAlert(i int) string {
+func testAccSharingAlert(i int) string {
 	return fmt.Sprintf(`
 resource "doit_alert" "sharing_target" {
   name = "sharing-test-alert-%d"
@@ -823,7 +823,7 @@ resource "doit_alert" "sharing_target" {
   }
 }
 
-resource "doit_resource_sharing" "alert" {
+resource "doit_sharing" "alert" {
   resource_type = "alerts"
   resource_id   = doit_alert.sharing_target.id
 
@@ -841,7 +841,7 @@ resource "doit_resource_sharing" "alert" {
 `, i, testUser(), testUser2())
 }
 
-func testAccResourceSharingAllocation(i int) string {
+func testAccSharingAllocation(i int) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "sharing_target" {
   name        = "sharing-test-alloc-%d"
@@ -859,7 +859,7 @@ resource "doit_allocation" "sharing_target" {
   }
 }
 
-resource "doit_resource_sharing" "allocation" {
+resource "doit_sharing" "allocation" {
   resource_type = "allocations"
   resource_id   = doit_allocation.sharing_target.id
 

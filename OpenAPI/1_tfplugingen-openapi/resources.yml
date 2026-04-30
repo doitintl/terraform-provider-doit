@@ -105,7 +105,7 @@ resources:
     delete:
       path: /datahub/v1/datasets/{name}
       method: DELETE
-  resource_sharing:
+  sharing:
     create:
       path: /sharing/v1/{resourceType}/{resourceId}
       method: PUT

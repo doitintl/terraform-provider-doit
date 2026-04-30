@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_resource_sharing"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_sharing"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -16,7 +16,7 @@ import (
 // Each entry is (user, role) where role="" means unknown.
 func buildSharingConfig(ctx context.Context, t *testing.T, perms []struct{ user, role string }) tfsdk.Config {
 	t.Helper()
-	schema := resource_resource_sharing.ResourceSharingResourceSchema(ctx)
+	schema := resource_sharing.SharingResourceSchema(ctx)
 
 	// Build the framework-level list elements.
 	elems := make([]attr.Value, len(perms))
@@ -28,8 +28,8 @@ func buildSharingConfig(ctx context.Context, t *testing.T, perms []struct{ user,
 		} else {
 			role = types.StringValue(p.role)
 		}
-		pv, diags := resource_resource_sharing.NewPermissionsValue(
-			resource_resource_sharing.PermissionsValue{}.AttributeTypes(ctx),
+		pv, diags := resource_sharing.NewPermissionsValue(
+			resource_sharing.PermissionsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"user": user,
 				"role": role,
@@ -43,7 +43,7 @@ func buildSharingConfig(ctx context.Context, t *testing.T, perms []struct{ user,
 
 	permsList, listDiags := types.ListValueFrom(
 		ctx,
-		resource_resource_sharing.PermissionsValue{}.Type(ctx),
+		resource_sharing.PermissionsValue{}.Type(ctx),
 		elems,
 	)
 	if listDiags.HasError() {
@@ -76,15 +76,15 @@ func buildSharingConfig(ctx context.Context, t *testing.T, perms []struct{ user,
 	}
 }
 
-// TestResourceSharingOwnerValidator_UnknownRole verifies that when a role is
+// TestSharingOwnerValidator_UnknownRole verifies that when a role is
 // unknown (e.g., from a variable), the validator does NOT error with "Missing Owner".
-func TestResourceSharingOwnerValidator_UnknownRole(t *testing.T) {
+func TestSharingOwnerValidator_UnknownRole(t *testing.T) {
 	ctx := context.Background()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"user@example.com", ""}, // role unknown — simulates var.role during plan
 	})
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)
@@ -94,14 +94,14 @@ func TestResourceSharingOwnerValidator_UnknownRole(t *testing.T) {
 	}
 }
 
-// TestResourceSharingOwnerValidator_KnownOwner verifies that a known "owner" role passes.
-func TestResourceSharingOwnerValidator_KnownOwner(t *testing.T) {
+// TestSharingOwnerValidator_KnownOwner verifies that a known "owner" role passes.
+func TestSharingOwnerValidator_KnownOwner(t *testing.T) {
 	ctx := context.Background()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"owner@example.com", "owner"},
 	})
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)
@@ -111,15 +111,15 @@ func TestResourceSharingOwnerValidator_KnownOwner(t *testing.T) {
 	}
 }
 
-// TestResourceSharingOwnerValidator_NoOwnerKnown verifies that if all roles are known
+// TestSharingOwnerValidator_NoOwnerKnown verifies that if all roles are known
 // and none is "owner", the validator errors.
-func TestResourceSharingOwnerValidator_NoOwnerKnown(t *testing.T) {
+func TestSharingOwnerValidator_NoOwnerKnown(t *testing.T) {
 	ctx := context.Background()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"viewer@example.com", "viewer"},
 	})
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)
@@ -138,17 +138,17 @@ func TestResourceSharingOwnerValidator_NoOwnerKnown(t *testing.T) {
 	}
 }
 
-// TestResourceSharingOwnerValidator_MixedUnknownAndOwner verifies that when one role
+// TestSharingOwnerValidator_MixedUnknownAndOwner verifies that when one role
 // is unknown and another is a known "owner", the validator passes (no false-positive
 // "Multiple Owners" from the unknown).
-func TestResourceSharingOwnerValidator_MixedUnknownAndOwner(t *testing.T) {
+func TestSharingOwnerValidator_MixedUnknownAndOwner(t *testing.T) {
 	ctx := context.Background()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"owner@example.com", "owner"},
 		{"dynamic@example.com", ""}, // unknown role
 	})
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)
@@ -158,16 +158,16 @@ func TestResourceSharingOwnerValidator_MixedUnknownAndOwner(t *testing.T) {
 	}
 }
 
-// TestResourceSharingOwnerValidator_NullPermissions verifies the validator skips
+// TestSharingOwnerValidator_NullPermissions verifies the validator skips
 // validation when permissions is null (e.g., during import planning).
-func TestResourceSharingOwnerValidator_NullPermissions(t *testing.T) {
+func TestSharingOwnerValidator_NullPermissions(t *testing.T) {
 	ctx := context.Background()
-	schema := resource_resource_sharing.ResourceSharingResourceSchema(ctx)
+	schema := resource_sharing.SharingResourceSchema(ctx)
 
 	// Empty config — permissions will be null.
 	config := tfsdk.Config{Schema: schema}
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)
@@ -177,16 +177,16 @@ func TestResourceSharingOwnerValidator_NullPermissions(t *testing.T) {
 	}
 }
 
-// TestResourceSharingOwnerValidator_MultipleOwners verifies the validator rejects
+// TestSharingOwnerValidator_MultipleOwners verifies the validator rejects
 // configs with more than one owner.
-func TestResourceSharingOwnerValidator_MultipleOwners(t *testing.T) {
+func TestSharingOwnerValidator_MultipleOwners(t *testing.T) {
 	ctx := context.Background()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"owner1@example.com", "owner"},
 		{"owner2@example.com", "owner"},
 	})
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)
@@ -205,16 +205,16 @@ func TestResourceSharingOwnerValidator_MultipleOwners(t *testing.T) {
 	}
 }
 
-// TestResourceSharingOwnerValidator_AllUnknown verifies the validator does not error
+// TestSharingOwnerValidator_AllUnknown verifies the validator does not error
 // when ALL roles are unknown (all provided via variables).
-func TestResourceSharingOwnerValidator_AllUnknown(t *testing.T) {
+func TestSharingOwnerValidator_AllUnknown(t *testing.T) {
 	ctx := context.Background()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"user1@example.com", ""},
 		{"user2@example.com", ""},
 	})
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)
@@ -224,16 +224,16 @@ func TestResourceSharingOwnerValidator_AllUnknown(t *testing.T) {
 	}
 }
 
-// TestResourceSharingOwnerValidator_EmptyList verifies the validator on an empty
+// TestSharingOwnerValidator_EmptyList verifies the validator on an empty
 // permissions list uses the path.Root("permissions") attribute error.
-func TestResourceSharingOwnerValidator_EmptyList(t *testing.T) {
+func TestSharingOwnerValidator_EmptyList(t *testing.T) {
 	ctx := context.Background()
-	schema := resource_resource_sharing.ResourceSharingResourceSchema(ctx)
+	schema := resource_sharing.SharingResourceSchema(ctx)
 
 	// Build a config with an empty permissions list.
 	permsList, listDiags := types.ListValueFrom(
 		ctx,
-		resource_resource_sharing.PermissionsValue{}.Type(ctx),
+		resource_sharing.PermissionsValue{}.Type(ctx),
 		[]attr.Value{},
 	)
 	if listDiags.HasError() {
@@ -257,7 +257,7 @@ func TestResourceSharingOwnerValidator_EmptyList(t *testing.T) {
 		Raw:    tftypes.NewValue(schemaType, attrValues),
 	}
 
-	v := resourceSharingOwnerValidator{}
+	v := sharingOwnerValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
 	resp := &resource.ValidateConfigResponse{}
 	v.ValidateResource(ctx, req, resp)

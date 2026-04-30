@@ -16,7 +16,7 @@ resource "doit_report" "example" {
   }
 }
 
-resource "doit_resource_sharing" "example" {
+resource "doit_sharing" "example" {
   resource_type = "reports"
   resource_id   = doit_report.example.id
 
