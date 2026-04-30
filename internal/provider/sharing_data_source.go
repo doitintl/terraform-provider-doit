@@ -38,6 +38,12 @@ func (d *sharingDataSource) Metadata(_ context.Context, req datasource.MetadataR
 func (d *sharingDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_sharing.SharingDataSourceSchema(ctx)
 
+	// Override the generated description which says "Manage" (inherited from the
+	// resource's OpenAPI tag) — this is a read-only data source.
+	desc := "Retrieve permissions associated with specified Cloud Analytics resources."
+	s.Description = desc
+	s.MarkdownDescription = desc
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -100,6 +106,14 @@ func (d *sharingDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		resp.Diagnostics.AddError(
 			"Error Reading Resource Sharing",
 			fmt.Sprintf("Could not read resource permissions for %s/%s: %s", data.ResourceType.ValueString(), resID, err.Error()),
+		)
+		return
+	}
+
+	if getResp.StatusCode() == 404 {
+		resp.Diagnostics.AddError(
+			"Resource not found",
+			fmt.Sprintf("No %s resource found with ID %s", data.ResourceType.ValueString(), resID),
 		)
 		return
 	}

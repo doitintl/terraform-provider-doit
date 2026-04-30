@@ -3,12 +3,12 @@
 page_title: "doit_sharing Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Manage permissions associated with specified Cloud Analytics resources.
+  Retrieve permissions associated with specified Cloud Analytics resources.
 ---
 
 # doit_sharing (Data Source)
 
-Manage permissions associated with specified Cloud Analytics resources.
+Retrieve permissions associated with specified Cloud Analytics resources.
 
 ## Example Usage
 
