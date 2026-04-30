@@ -158,6 +158,11 @@ data_sources:
     read:
       path: /ava/v1/askSync
       method: POST
+  # Sharing data source
+  sharing:
+    read:
+      path: /sharing/v1/{resourceType}/{resourceId}
+      method: GET
   # Cloud Diagrams data source
   cloud_diagrams:
     read:
