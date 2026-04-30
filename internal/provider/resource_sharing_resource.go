@@ -90,6 +90,23 @@ func (r *resourceSharingResource) Schema(ctx context.Context, _ resource.SchemaR
 		attr.Required = true
 		attr.Optional = false
 		attr.Computed = false
+
+		// user and role: make Required inside nested permissions
+		// The codegen generates these as Optional+Computed because the response schema
+		// includes them, but they are required inputs for each permission entry.
+		if userAttr, uOk := attr.NestedObject.Attributes["user"].(schema.StringAttribute); uOk {
+			userAttr.Required = true
+			userAttr.Optional = false
+			userAttr.Computed = false
+			attr.NestedObject.Attributes["user"] = userAttr
+		}
+		if roleAttr, rOk := attr.NestedObject.Attributes["role"].(schema.StringAttribute); rOk {
+			roleAttr.Required = true
+			roleAttr.Optional = false
+			roleAttr.Computed = false
+			attr.NestedObject.Attributes["role"] = roleAttr
+		}
+
 		s.Attributes["permissions"] = attr
 	}
 
@@ -134,6 +151,7 @@ func (r *resourceSharingResource) Schema(ctx context.Context, _ resource.SchemaR
 func (r *resourceSharingResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		resourceSharingOwnerValidator{},
+		resourceSharingAllocationPublicValidator{},
 	}
 }
 
@@ -154,7 +172,7 @@ func (r *resourceSharingResource) Create(ctx context.Context, req resource.Creat
 	defer cancel()
 
 	// Build API request from plan
-	apiReq, diags := buildSharingRequest(ctx, &plan)
+	apiReq, diags := buildSharingRequest(ctx, &plan, plan.ResourceType.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -242,7 +260,7 @@ func (r *resourceSharingResource) Update(ctx context.Context, req resource.Updat
 	defer cancel()
 
 	// Build API request from plan
-	apiReq, diags := buildSharingRequest(ctx, &plan)
+	apiReq, diags := buildSharingRequest(ctx, &plan, plan.ResourceType.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -351,11 +369,15 @@ func (r *resourceSharingResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	// Step 3: PUT with just the owner (strips all editors/viewers) and null public
+	// Step 3: PUT with just the owner (strips all editors/viewers) and null public.
+	// Allocations require the public field to be present (API returns 500 if omitted),
+	// so we send an explicit empty string for that resource type.
 	resetPerms := []models.ResourcePermission{*ownerPerm}
 	resetReq := models.UpdateResourcePermissionJSONRequestBody{
 		Permissions: &resetPerms,
-		Public:      nil,
+	}
+	if resType == "allocations" {
+		resetReq.Public = new(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
 
 	putResp, err := r.client.UpdateResourcePermissionWithResponse(
@@ -460,8 +482,10 @@ func mapResourceSharingToModel(ctx context.Context, apiResp *models.ResourcePerm
 	// Map permissions
 	state.Permissions = mapPermissionsToList(ctx, apiResp.Permissions, &diags)
 
-	// Map public
-	if apiResp.Public != nil {
+	// Map public — normalize empty string to null.
+	// Allocations return public:"" to mean "no public access" while other resource
+	// types return null. We normalize both to null to prevent spurious drift.
+	if apiResp.Public != nil && string(*apiResp.Public) != "" {
 		state.Public = types.StringValue(string(*apiResp.Public))
 	} else {
 		state.Public = types.StringNull()
@@ -494,8 +518,9 @@ func overlayResourceSharingComputedFields(apiResp *models.ResourcePermissionsRes
 	// Required (permissions) and explicit Optional (public when set): never touch — plan values preserved
 
 	// Optional+Computed (public): resolve only when unknown (user omitted it)
+	// Normalize empty string to null (see mapResourceSharingToModel).
 	if plan.Public.IsUnknown() {
-		if apiResp.Public != nil {
+		if apiResp.Public != nil && string(*apiResp.Public) != "" {
 			plan.Public = types.StringValue(string(*apiResp.Public))
 		} else {
 			plan.Public = types.StringNull()
@@ -504,7 +529,7 @@ func overlayResourceSharingComputedFields(apiResp *models.ResourcePermissionsRes
 }
 
 // buildSharingRequest converts the Terraform model into an API request body.
-func buildSharingRequest(ctx context.Context, plan *resourceSharingResourceModel) (models.UpdateResourcePermissionJSONRequestBody, diag.Diagnostics) {
+func buildSharingRequest(ctx context.Context, plan *resourceSharingResourceModel, resourceType string) (models.UpdateResourcePermissionJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var reqBody models.UpdateResourcePermissionJSONRequestBody
 
@@ -535,9 +560,16 @@ func buildSharingRequest(ctx context.Context, plan *resourceSharingResourceModel
 		reqBody.Permissions = &perms
 	}
 
-	// Map public from plan to API type
+	// Map public from plan to API type.
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
 		reqBody.Public = new(models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString()))
+	} else if resourceType == "allocations" {
+		// Allocations require the public field to be present in the request body.
+		// The API returns 500 if public is omitted or null. An empty string signals
+		// "no public access" and is the only accepted sentinel for allocations.
+		// Other resource types (reports, budgets, alerts) reject empty string as
+		// "invalid public access role" — so this workaround is allocation-specific.
+		reqBody.Public = new(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
 
 	return reqBody, diags

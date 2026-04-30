@@ -83,7 +83,7 @@ Possible values: `editor`, `viewer`
 <a id="nestedatt--permissions"></a>
 ### Nested Schema for `permissions`
 
-Optional:
+Required:
 
 - `role` (String) The role assigned to the user, defining their level of access to the resource.
 Possible values: `owner`, `editor`, `viewer`

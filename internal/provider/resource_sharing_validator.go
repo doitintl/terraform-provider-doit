@@ -44,7 +44,13 @@ func (v resourceSharingOwnerValidator) ValidateResource(ctx context.Context, req
 	ownerCount := 0
 	unknownCount := 0
 	for _, pv := range permVals {
-		if pv.IsNull() || pv.IsUnknown() || pv.Role.IsNull() || pv.Role.IsUnknown() {
+		if pv.IsNull() || pv.IsUnknown() {
+			unknownCount++
+			continue
+		}
+		// Only truly unknown roles (e.g. from variables not yet resolved) should
+		// defer validation. A null role is a config error, not an unknown.
+		if pv.Role.IsUnknown() {
 			unknownCount++
 			continue
 		}
@@ -70,4 +76,56 @@ func (v resourceSharingOwnerValidator) ValidateResource(ctx context.Context, req
 				"A shared resource can only have a single owner.", ownerCount),
 		)
 	}
+}
+
+// resourceSharingAllocationPublicValidator rejects setting "public" when
+// resource_type is "allocations". The allocation API silently discards any
+// public access role (even "viewer" is accepted but stored as ""), so allowing
+// users to set it would always cause drift on the next plan.
+type resourceSharingAllocationPublicValidator struct{}
+
+var _ resource.ConfigValidator = resourceSharingAllocationPublicValidator{}
+
+func (v resourceSharingAllocationPublicValidator) Description(_ context.Context) string {
+	return "Validates that 'public' is not set when resource_type is 'allocations'."
+}
+
+func (v resourceSharingAllocationPublicValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v resourceSharingAllocationPublicValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var resourceType types.String
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("resource_type"), &resourceType)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Can't validate if resource_type is not yet known.
+	if resourceType.IsNull() || resourceType.IsUnknown() {
+		return
+	}
+
+	if resourceType.ValueString() != "allocations" {
+		return
+	}
+
+	var public types.String
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("public"), &public)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Null = not set in config → that's fine, we handle it internally.
+	if public.IsNull() || public.IsUnknown() {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		path.Root("public"),
+		"Public Access Not Supported for Allocations",
+		"The 'public' attribute cannot be set when resource_type is \"allocations\". "+
+			"The allocation API does not support public access roles — any value is silently discarded, "+
+			"which would cause perpetual drift. Remove the 'public' attribute from your configuration.",
+	)
 }

@@ -329,6 +329,11 @@ func TestAccResourceSharing_OwnerValidator(t *testing.T) {
 				Config:      testAccResourceSharingMultipleOwners(n),
 				ExpectError: regexp.MustCompile(`Multiple Owners`),
 			},
+			// Test: public set on allocations (not allowed)
+			{
+				Config:      testAccResourceSharingAllocationWithPublic(n),
+				ExpectError: regexp.MustCompile(`Public Access Not Supported for Allocations`),
+			},
 		},
 	})
 }
@@ -555,6 +560,23 @@ resource "doit_resource_sharing" "this" {
 `, i)
 }
 
+func testAccResourceSharingAllocationWithPublic(i int) string {
+	return fmt.Sprintf(`
+resource "doit_resource_sharing" "this" {
+  resource_type = "allocations"
+  resource_id   = "fake-id-%d"
+  public        = "viewer"
+
+  permissions = [
+    {
+      user = "owner@example.com"
+      role = "owner"
+    }
+  ]
+}
+`, i)
+}
+
 // --- Tests for other resource types (budgets, alerts, allocations) ---
 
 // TestAccResourceSharing_Budget tests sharing permissions on a budget resource.
@@ -562,6 +584,12 @@ func TestAccResourceSharing_Budget(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck: func() {
 			testAccPreCheckFunc(t)()
@@ -576,6 +604,9 @@ func TestAccResourceSharing_Budget(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceSharingBudget(n),
+				// The sharing API syncs permissions to budget collaborators server-side,
+				// causing expected drift on the doit_budget resource.
+				ExpectNonEmptyPlan: true,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_resource_sharing.budget",
@@ -587,9 +618,10 @@ func TestAccResourceSharing_Budget(t *testing.T) {
 						knownvalue.ListSizeExact(2)),
 				},
 			},
-			// Drift check
+			// Step 2: Align the budget's collaborators with the sharing permissions.
+			// When both resources declare the same users, drift disappears entirely.
 			{
-				Config: testAccResourceSharingBudget(n),
+				Config: testAccResourceSharingBudgetAligned(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -726,6 +758,54 @@ resource "doit_resource_sharing" "budget" {
 `, budgetStartPeriod(), i, testAttribution(), testUser(), testUser(), testUser2())
 }
 
+// testAccResourceSharingBudgetAligned returns a config where the budget's
+// collaborators are aligned with the sharing resource's permissions. This
+// eliminates cross-resource drift that occurs when the sharing API syncs
+// permissions to the budget's collaborators server-side.
+func testAccResourceSharingBudgetAligned(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "sharing_target" {
+  name          = "sharing-test-budget-%d"
+  amount        = 100
+  currency      = "EUR"
+  time_interval = "month"
+  scope         = ["%s"]
+  alerts = [
+    { percentage = 50 }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+    {
+      "email" : "%s",
+      "role" : "viewer"
+    },
+  ]
+  type         = "recurring"
+  start_period = local.start_period
+}
+
+resource "doit_resource_sharing" "budget" {
+  resource_type = "budgets"
+  resource_id   = doit_budget.sharing_target.id
+
+  permissions = [
+    {
+      user = "%s"
+      role = "owner"
+    },
+    {
+      user = "%s"
+      role = "viewer"
+    }
+  ]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser2(), testUser(), testUser2())
+}
 func testAccResourceSharingAlert(i int) string {
 	return fmt.Sprintf(`
 resource "doit_alert" "sharing_target" {
