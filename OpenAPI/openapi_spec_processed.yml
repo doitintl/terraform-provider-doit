@@ -3219,7 +3219,7 @@ paths:
         - Insights
       summary: Replace resource results for an insight
       description: >
-        Replaces all resource results for the specified insight. Any existing unresolved resource results not present in the new set will be marked as resolved after the staleness window. The response includes server-computed fields (severity, resolved, enhancement) for each resource result. To delete all resource results, send an empty array.
+        Replaces all resource results for the specified insight. Any existing unresolved resource results not present in the new set will be removed. The response includes server-computed fields (severity, resolved, enhancement) for each resource result. To delete all resource results, send an empty array.
 
       operationId: postInsightResourceResults
       parameters:
