@@ -4301,6 +4301,9 @@ type InsightMetadataRequest struct {
 	// DetailedDescriptionMdx A detailed description of the insight in MDX format.
 	DetailedDescriptionMdx *string `json:"detailedDescriptionMdx,omitempty"`
 
+	// DismissalDetails Details for why an insight was dismissed.
+	DismissalDetails *DismissalDetails `json:"dismissalDetails,omitempty"`
+
 	// EasyWinDescription A description of why this insight is considered an easy win.
 	EasyWinDescription *string `json:"easyWinDescription,omitempty"`
 
@@ -4312,6 +4315,9 @@ type InsightMetadataRequest struct {
 
 	// ShortDescription A brief summary of the insight.
 	ShortDescription string `json:"shortDescription"`
+
+	// Status The display status of the insight.
+	Status *DisplayStatus `json:"status,omitempty"`
 
 	// Title The display title of the insight.
 	Title string `json:"title"`
@@ -4363,6 +4369,9 @@ type InsightResponse struct {
 
 	// DetailedDescriptionMdx A detailed description of the insight in MDX format.
 	DetailedDescriptionMdx *string `json:"detailedDescriptionMdx,omitempty"`
+
+	// DismissalDetails Details for why an insight was dismissed.
+	DismissalDetails *DismissalDetails `json:"dismissalDetails,omitempty"`
 
 	// DisplayStatus The display status of the insight.
 	DisplayStatus *DisplayStatus `json:"displayStatus,omitempty"`

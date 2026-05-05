@@ -435,3 +435,184 @@ resource "doit_insight" "test" {
 }
 `, key)
 }
+
+// TestAccInsightResource_Status tests creating an insight with an explicit status.
+func TestAccInsightResource_Status(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with status = "acknowledged"
+			{
+				Config: testAccInsightResourceWithStatusConfig(rName, "acknowledged"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("status"),
+						knownvalue.StringExact("acknowledged")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("display_status"),
+						knownvalue.StringExact("acknowledged")),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccInsightResourceWithStatusConfig(rName, "acknowledged"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResource_StatusUpdate tests changing the status of an insight.
+func TestAccInsightResource_StatusUpdate(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with default status (omitted — API defaults to "dismissed")
+			{
+				Config: testAccInsightResourceConfig(rName, "Status Update Test", "Testing status transitions"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("display_status"),
+						knownvalue.StringExact("dismissed")),
+				},
+			},
+			// Step 2: Update to "acknowledged"
+			{
+				Config: testAccInsightResourceWithStatusConfig(rName, "acknowledged"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("status"),
+						knownvalue.StringExact("acknowledged")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("display_status"),
+						knownvalue.StringExact("acknowledged")),
+				},
+			},
+			// Step 3: Update to "in progress"
+			{
+				Config: testAccInsightResourceWithStatusConfig(rName, "in progress"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("status"),
+						knownvalue.StringExact("in progress")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("display_status"),
+						knownvalue.StringExact("in progress")),
+				},
+			},
+			// Step 4: Drift check
+			{
+				Config: testAccInsightResourceWithStatusConfig(rName, "in progress"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResource_Dismissed tests creating an insight with "dismissed" status
+// and the required dismissal_details.
+func TestAccInsightResource_Dismissed(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with status = "dismissed" + dismissal_details
+			{
+				Config: testAccInsightResourceDismissedConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("status"),
+						knownvalue.StringExact("dismissed")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("display_status"),
+						knownvalue.StringExact("dismissed")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("dismissal_details"),
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
+							"reason":  knownvalue.StringExact("not relevant"),
+							"comment": knownvalue.StringExact("Managed by Terraform test"),
+						})),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccInsightResourceDismissedConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccInsightResourceWithStatusConfig(key, status string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Status Test"
+  short_description = "Testing status transitions"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+  status            = %[2]q
+}
+`, key, status)
+}
+
+func testAccInsightResourceDismissedConfig(key string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Dismissed Test"
+  short_description = "Testing dismissal with details"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+  status            = "dismissed"
+
+  dismissal_details = {
+    reason  = "not relevant"
+    comment = "Managed by Terraform test"
+  }
+}
+`, key)
+}

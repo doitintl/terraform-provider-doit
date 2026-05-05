@@ -147,6 +147,26 @@ func buildInsightRequest(ctx context.Context, plan *insightResourceModel) (*mode
 		req.CloudFlowTemplateId = &v
 	}
 
+	// Status (Optional+Computed) — sets the display status inline
+	if !plan.Status.IsNull() && !plan.Status.IsUnknown() {
+		v := models.DisplayStatus(plan.Status.ValueString())
+		req.Status = &v
+	}
+
+	// DismissalDetails (Optional+Computed) — required when status is "dismissed"
+	if !plan.DismissalDetails.IsNull() && !plan.DismissalDetails.IsUnknown() {
+		dd := models.DismissalDetails{}
+		if !plan.DismissalDetails.Comment.IsNull() && !plan.DismissalDetails.Comment.IsUnknown() {
+			v := plan.DismissalDetails.Comment.ValueString()
+			dd.Comment = &v
+		}
+		if !plan.DismissalDetails.Reason.IsNull() && !plan.DismissalDetails.Reason.IsUnknown() {
+			v := models.DismissalDetailsReason(plan.DismissalDetails.Reason.ValueString())
+			dd.Reason = &v
+		}
+		req.DismissalDetails = &dd
+	}
+
 	return &req, diags
 }
 
@@ -186,6 +206,12 @@ func overlayInsightComputedFields(ctx context.Context, apiResp *models.InsightRe
 	}
 	if plan.ReportUrl.IsUnknown() {
 		plan.ReportUrl = resolved.ReportUrl
+	}
+	if plan.Status.IsUnknown() {
+		plan.Status = resolved.Status
+	}
+	if plan.DismissalDetails.IsUnknown() {
+		plan.DismissalDetails = resolved.DismissalDetails
 	}
 
 	return diags
@@ -428,8 +454,11 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 
 	if resp.DisplayStatus != nil {
 		state.DisplayStatus = types.StringValue(string(*resp.DisplayStatus))
+		// status mirrors display_status — it's the user-facing write field
+		state.Status = types.StringValue(string(*resp.DisplayStatus))
 	} else {
 		state.DisplayStatus = types.StringNull()
+		state.Status = types.StringNull()
 	}
 
 	// Use stringPtrOrNull to normalize empty strings ("") to null.
@@ -502,6 +531,30 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 		state.LastStatusChange = lscVal
 	} else {
 		state.LastStatusChange = resource_insight.NewLastStatusChangeValueNull()
+	}
+
+	// DismissalDetails (Optional+Computed nested object)
+	if resp.DismissalDetails != nil {
+		reasonVal := types.StringNull()
+		if resp.DismissalDetails.Reason != nil {
+			reasonVal = types.StringValue(string(*resp.DismissalDetails.Reason))
+		}
+		commentVal := types.StringNull()
+		if resp.DismissalDetails.Comment != nil {
+			commentVal = types.StringValue(*resp.DismissalDetails.Comment)
+		}
+
+		ddVal, ddDiags := resource_insight.NewDismissalDetailsValue(
+			resource_insight.DismissalDetailsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"reason":  reasonVal,
+				"comment": commentVal,
+			},
+		)
+		diags.Append(ddDiags...)
+		state.DismissalDetails = ddVal
+	} else {
+		state.DismissalDetails = resource_insight.NewDismissalDetailsValueNull()
 	}
 
 	return diags

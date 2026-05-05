@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -46,6 +47,39 @@ func InsightResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "A detailed description of the insight in MDX format.",
 				MarkdownDescription: "A detailed description of the insight in MDX format.",
+			},
+			"dismissal_details": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"comment": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "An optional free-text comment providing additional context.",
+						MarkdownDescription: "An optional free-text comment providing additional context.",
+					},
+					"reason": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "The reason for dismissal.\nPossible values: `not relevant`, `not enough information`, `not worth the effort`, `inaccurate optimization opportunities`",
+						MarkdownDescription: "The reason for dismissal.\nPossible values: `not relevant`, `not enough information`, `not worth the effort`, `inaccurate optimization opportunities`",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"not relevant",
+								"not enough information",
+								"not worth the effort",
+								"inaccurate optimization opportunities",
+							),
+						},
+					},
+				},
+				CustomType: DismissalDetailsType{
+					ObjectType: types.ObjectType{
+						AttrTypes: DismissalDetailsValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "Details for why an insight was dismissed.",
+				MarkdownDescription: "Details for why an insight was dismissed.",
 			},
 			"display_status": schema.StringAttribute{
 				Computed:            true,
@@ -116,6 +150,23 @@ func InsightResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The identifier of the source that generated the insight.",
 				MarkdownDescription: "The identifier of the source that generated the insight.",
 			},
+			"status": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The display status of the insight.\nPossible values: `actionable`, `acknowledged`, `optimized`, `dismissed`, `in progress`, `upgrade needed`, `permissions needed`",
+				MarkdownDescription: "The display status of the insight.\nPossible values: `actionable`, `acknowledged`, `optimized`, `dismissed`, `in progress`, `upgrade needed`, `permissions needed`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"actionable",
+						"acknowledged",
+						"optimized",
+						"dismissed",
+						"in progress",
+						"upgrade needed",
+						"permissions needed",
+					),
+				},
+			},
 			"summary": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"operational_risks": schema.Float64Attribute{
@@ -180,6 +231,7 @@ type InsightModel struct {
 	CloudFlowTemplateId    types.String          `tfsdk:"cloud_flow_template_id"`
 	CloudProvider          types.String          `tfsdk:"cloud_provider"`
 	DetailedDescriptionMdx types.String          `tfsdk:"detailed_description_mdx"`
+	DismissalDetails       DismissalDetailsValue `tfsdk:"dismissal_details"`
 	DisplayStatus          types.String          `tfsdk:"display_status"`
 	EasyWinDescription     types.String          `tfsdk:"easy_win_description"`
 	InsightKey             types.String          `tfsdk:"insight_key"`
@@ -190,9 +242,389 @@ type InsightModel struct {
 	ShortDescription       types.String          `tfsdk:"short_description"`
 	Source                 types.String          `tfsdk:"source"`
 	SourceId               types.String          `tfsdk:"source_id"`
+	Status                 types.String          `tfsdk:"status"`
 	Summary                SummaryValue          `tfsdk:"summary"`
 	Tags                   types.List            `tfsdk:"tags"`
 	Title                  types.String          `tfsdk:"title"`
+}
+
+var _ basetypes.ObjectTypable = DismissalDetailsType{}
+
+type DismissalDetailsType struct {
+	basetypes.ObjectType
+}
+
+func (t DismissalDetailsType) Equal(o attr.Type) bool {
+	other, ok := o.(DismissalDetailsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t DismissalDetailsType) String() string {
+	return "DismissalDetailsType"
+}
+
+func (t DismissalDetailsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	commentAttribute, ok := attributes["comment"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`comment is missing from object`)
+
+		return nil, diags
+	}
+
+	commentVal, ok := commentAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`comment expected to be basetypes.StringValue, was: %T`, commentAttribute))
+	}
+
+	reasonAttribute, ok := attributes["reason"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`reason is missing from object`)
+
+		return nil, diags
+	}
+
+	reasonVal, ok := reasonAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`reason expected to be basetypes.StringValue, was: %T`, reasonAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return DismissalDetailsValue{
+		Comment: commentVal,
+		Reason:  reasonVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDismissalDetailsValueNull() DismissalDetailsValue {
+	return DismissalDetailsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewDismissalDetailsValueUnknown() DismissalDetailsValue {
+	return DismissalDetailsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewDismissalDetailsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (DismissalDetailsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing DismissalDetailsValue Attribute Value",
+				"While creating a DismissalDetailsValue value, a missing attribute value was detected. "+
+					"A DismissalDetailsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DismissalDetailsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid DismissalDetailsValue Attribute Type",
+				"While creating a DismissalDetailsValue value, an invalid attribute value was detected. "+
+					"A DismissalDetailsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DismissalDetailsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("DismissalDetailsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra DismissalDetailsValue Attribute Value",
+				"While creating a DismissalDetailsValue value, an extra attribute value was detected. "+
+					"A DismissalDetailsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra DismissalDetailsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewDismissalDetailsValueUnknown(), diags
+	}
+
+	commentAttribute, ok := attributes["comment"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`comment is missing from object`)
+
+		return NewDismissalDetailsValueUnknown(), diags
+	}
+
+	commentVal, ok := commentAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`comment expected to be basetypes.StringValue, was: %T`, commentAttribute))
+	}
+
+	reasonAttribute, ok := attributes["reason"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`reason is missing from object`)
+
+		return NewDismissalDetailsValueUnknown(), diags
+	}
+
+	reasonVal, ok := reasonAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`reason expected to be basetypes.StringValue, was: %T`, reasonAttribute))
+	}
+
+	if diags.HasError() {
+		return NewDismissalDetailsValueUnknown(), diags
+	}
+
+	return DismissalDetailsValue{
+		Comment: commentVal,
+		Reason:  reasonVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDismissalDetailsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) DismissalDetailsValue {
+	object, diags := NewDismissalDetailsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewDismissalDetailsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t DismissalDetailsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewDismissalDetailsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewDismissalDetailsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewDismissalDetailsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewDismissalDetailsValueMust(DismissalDetailsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t DismissalDetailsType) ValueType(ctx context.Context) attr.Value {
+	return DismissalDetailsValue{}
+}
+
+var _ basetypes.ObjectValuable = DismissalDetailsValue{}
+
+type DismissalDetailsValue struct {
+	Comment basetypes.StringValue `tfsdk:"comment"`
+	Reason  basetypes.StringValue `tfsdk:"reason"`
+	state   attr.ValueState
+}
+
+func (v DismissalDetailsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["comment"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["reason"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Comment.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["comment"] = val
+
+		val, err = v.Reason.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["reason"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v DismissalDetailsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v DismissalDetailsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v DismissalDetailsValue) String() string {
+	return "DismissalDetailsValue"
+}
+
+func (v DismissalDetailsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"comment": basetypes.StringType{},
+		"reason":  basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"comment": v.Comment,
+			"reason":  v.Reason,
+		})
+
+	return objVal, diags
+}
+
+func (v DismissalDetailsValue) Equal(o attr.Value) bool {
+	other, ok := o.(DismissalDetailsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Comment.Equal(other.Comment) {
+		return false
+	}
+
+	if !v.Reason.Equal(other.Reason) {
+		return false
+	}
+
+	return true
+}
+
+func (v DismissalDetailsValue) Type(ctx context.Context) attr.Type {
+	return DismissalDetailsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v DismissalDetailsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"comment": basetypes.StringType{},
+		"reason":  basetypes.StringType{},
+	}
 }
 
 var _ basetypes.ObjectTypable = LastStatusChangeType{}

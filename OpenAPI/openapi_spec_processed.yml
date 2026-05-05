@@ -2837,7 +2837,11 @@ paths:
     get:
       tags:
         - Insights
-      summary: Get Insight Results containing aggregate summary of results
+      summary: List insights
+      description: |
+        Returns a paginated list of insights with their aggregate summaries (savings, risk counts).
+        Use query parameters to filter by status, category, provider, or priority.
+        Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResults
       parameters:
         - in: query
@@ -2940,7 +2944,12 @@ paths:
     post:
       tags:
         - Insights
-      summary: Post Insight Results
+      summary: Create insights (batch)
+      description: |
+        Creates or updates multiple insights in a single batch request.
+        Each insight in the batch includes its metadata and resource results inline.
+        For granular control over insight metadata and resource results independently,
+        use the single-insight and resource-results endpoints instead.
       operationId: postInsightResults
       requestBody:
         content:
@@ -2969,7 +2978,11 @@ paths:
     delete:
       tags:
         - Insights
-      summary: Delete Insight Results
+      summary: Delete insights (batch)
+      description: |
+        Deletes all insights matching the specified key from the batch source.
+        This removes the insight and all its associated resource results.
+        For single-insight deletion, use DELETE /source/{sourceID}/insight/{insightKey} instead.
       operationId: deleteInsightResults
       parameters:
         - in: query
@@ -2991,7 +3004,10 @@ paths:
     get:
       tags:
         - Insights
-      summary: Get Single Insight Result
+      summary: Retrieve an insight
+      description: |
+        Returns the metadata and aggregate summary for a single insight identified by source and key.
+        Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResult
       parameters:
         - in: path
@@ -3026,8 +3042,11 @@ paths:
     post:
       tags:
         - Insights
-      summary: Create or Update Single Insight
-      description: Creates or updates a single insight for the given source and key. If an insight with the same key already exists for the source, it will be updated.
+      summary: Create or update an insight
+      description: |
+        Creates or updates a single insight for the given source and key.
+        If an insight with the same key already exists for the source, it will be updated.
+        Resource results are managed separately via the resource-results endpoint.
       operationId: postInsightResult
       parameters:
         - in: path
@@ -3068,7 +3087,10 @@ paths:
     delete:
       tags:
         - Insights
-      summary: Delete Single Insight
+      summary: Delete an insight
+      description: |
+        Permanently deletes a single insight and all its associated resource results.
+        Only insights created via the public API can be deleted.
       operationId: deleteInsightResult
       parameters:
         - in: path
@@ -3099,6 +3121,11 @@ paths:
       tags:
         - Insights
       summary: Update Insight Status
+      description: |
+        Updates the display status (e.g. actionable, acknowledged, dismissed) of a single insight.
+        Only insights created via the public API can have their status changed.
+        Deprecated: use the status field on the create/update insight endpoint instead.
+      deprecated: true
       operationId: updateInsightStatus
       parameters:
         - in: path
@@ -3138,7 +3165,11 @@ paths:
     get:
       tags:
         - Insights
-      summary: Get Insight Resource Results
+      summary: List resource results for an insight
+      description: |
+        Returns a paginated list of individual resource-level results for a specific insight.
+        Each resource result represents a single cloud resource (e.g. an EC2 instance, a GCS bucket)
+        affected by the insight, along with its risk scores or potential savings.
       operationId: getInsightResourceResults
       parameters:
         - in: path
@@ -3186,7 +3217,7 @@ paths:
     post:
       tags:
         - Insights
-      summary: Create or Replace Resource Results for an Insight
+      summary: Replace resource results for an insight
       description: >
         Replaces all resource results for the specified insight. Any existing unresolved resource results not present in the new set will be marked as resolved after the staleness window. The response includes server-computed fields (severity, resolved, enhancement) for each resource result. To delete all resource results, send an empty array.
 
@@ -5912,6 +5943,10 @@ components:
         easyWinDescription:
           type: string
           description: A description of why this insight is considered an easy win.
+        status:
+          $ref: "#/components/schemas/DisplayStatus"
+        dismissalDetails:
+          $ref: "#/components/schemas/DismissalDetails"
     InsightRequest:
       type: object
       description: Request body for creating or updating an insight.
@@ -5998,6 +6033,8 @@ components:
         easyWinDescription:
           type: string
           description: A description of why this insight is considered an easy win.
+        dismissalDetails:
+          $ref: "#/components/schemas/DismissalDetails"
     InsightSummary:
       type: object
       description: Aggregate summary of risks and savings across all resource results for an insight.

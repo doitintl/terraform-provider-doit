@@ -1465,6 +1465,41 @@
 						}
 					},
 					{
+						"name": "dismissal_details",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "comment",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "An optional free-text comment providing additional context."
+									}
+								},
+								{
+									"name": "reason",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "The reason for dismissal.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"not relevant\",\n\"not enough information\",\n\"not worth the effort\",\n\"inaccurate optimization opportunities\",\n)"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Details for why an insight was dismissed."
+						}
+					},
+					{
 						"name": "easy_win_description",
 						"string": {
 							"computed_optional_required": "computed_optional",
@@ -1490,6 +1525,25 @@
 						"string": {
 							"computed_optional_required": "required",
 							"description": "A brief summary of the insight."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The display status of the insight.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"actionable\",\n\"acknowledged\",\n\"optimized\",\n\"dismissed\",\n\"in progress\",\n\"upgrade needed\",\n\"permissions needed\",\n)"
+									}
+								}
+							]
 						}
 					},
 					{
