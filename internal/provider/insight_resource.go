@@ -106,10 +106,11 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 }
 
 // buildInsightRequest constructs the API request body from the Terraform plan.
-func buildInsightRequest(ctx context.Context, plan *insightResourceModel) (*models.InsightRequest, diag.Diagnostics) {
+// Resource results are now managed by the separate doit_insight_resource_results resource.
+func buildInsightRequest(ctx context.Context, plan *insightResourceModel) (*models.InsightMetadataRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	req := models.InsightRequest{
+	req := models.InsightMetadataRequest{
 		Key:              plan.Key.ValueString(),
 		Title:            plan.Title.ValueString(),
 		ShortDescription: plan.ShortDescription.ValueString(),
@@ -146,102 +147,6 @@ func buildInsightRequest(ctx context.Context, plan *insightResourceModel) (*mode
 		req.CloudFlowTemplateId = &v
 	}
 
-	// Tags
-	if !plan.Tags.IsNull() && !plan.Tags.IsUnknown() {
-		var tags []string
-		diags.Append(plan.Tags.ElementsAs(ctx, &tags, false)...)
-		if diags.HasError() {
-			return nil, diags
-		}
-		req.Tags = &tags
-	}
-
-	// Resource Results (Required)
-	if !plan.ResourceResults.IsNull() && !plan.ResourceResults.IsUnknown() {
-		var resourceResults []resource_insight.ResourceResultsValue
-		diags.Append(plan.ResourceResults.ElementsAs(ctx, &resourceResults, false)...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		apiResults := make(models.ResourceResults, 0, len(resourceResults))
-		for _, rr := range resourceResults {
-			apiResult := models.ResourceResult{
-				ResourceId:    rr.ResourceId.ValueString(),
-				Account:       rr.Account.ValueString(),
-				CloudProvider: rr.CloudProvider.ValueString(),
-				ResultType:    models.ResourceResultResultType(rr.ResultType.ValueString()),
-			}
-
-			// Optional resource result fields
-			if !rr.Location.IsNull() && !rr.Location.IsUnknown() {
-				v := rr.Location.ValueString()
-				apiResult.Location = &v
-			}
-			if !rr.ExternalId.IsNull() && !rr.ExternalId.IsUnknown() {
-				v := rr.ExternalId.ValueString()
-				apiResult.ExternalId = &v
-			}
-			if !rr.ExternalUrl.IsNull() && !rr.ExternalUrl.IsUnknown() {
-				v := rr.ExternalUrl.ValueString()
-				apiResult.ExternalUrl = &v
-			}
-			if !rr.ResourceType.IsNull() && !rr.ResourceType.IsUnknown() {
-				v := rr.ResourceType.ValueString()
-				apiResult.ResourceType = &v
-			}
-			if !rr.Severity.IsNull() && !rr.Severity.IsUnknown() {
-				v := models.ResourceResultSeverity(rr.Severity.ValueString())
-				apiResult.Severity = &v
-			}
-			if !rr.Resolved.IsNull() && !rr.Resolved.IsUnknown() {
-				v := rr.Resolved.ValueBool()
-				apiResult.Resolved = &v
-			}
-
-			// Result object
-			if !rr.Result.IsNull() && !rr.Result.IsUnknown() {
-				result := &models.ResourceResultResult{}
-				if !rr.Result.Value.IsNull() && !rr.Result.Value.IsUnknown() {
-					val64 := rr.Result.Value.ValueFloat64()
-					result.Value = &val64
-				}
-				if !rr.Result.Current.IsNull() && !rr.Result.Current.IsUnknown() {
-					v := rr.Result.Current.ValueString()
-					result.Current = &v
-				}
-				if !rr.Result.Recommendation.IsNull() && !rr.Result.Recommendation.IsUnknown() {
-					v := rr.Result.Recommendation.ValueString()
-					result.Recommendation = &v
-				}
-				if !rr.Result.AgentInstalled.IsNull() && !rr.Result.AgentInstalled.IsUnknown() {
-					v := rr.Result.AgentInstalled.ValueBool()
-					result.AgentInstalled = &v
-				}
-				if !rr.Result.Critical.IsNull() && !rr.Result.Critical.IsUnknown() {
-					v := int(rr.Result.Critical.ValueInt64())
-					result.Critical = &v
-				}
-				if !rr.Result.High.IsNull() && !rr.Result.High.IsUnknown() {
-					v := int(rr.Result.High.ValueInt64())
-					result.High = &v
-				}
-				if !rr.Result.Medium.IsNull() && !rr.Result.Medium.IsUnknown() {
-					v := int(rr.Result.Medium.ValueInt64())
-					result.Medium = &v
-				}
-				if !rr.Result.Low.IsNull() && !rr.Result.Low.IsUnknown() {
-					v := int(rr.Result.Low.ValueInt64())
-					result.Low = &v
-				}
-				apiResult.Result = result
-			}
-
-			apiResults = append(apiResults, apiResult)
-		}
-		req.ResourceResults = apiResults
-	}
-
 	return &req, diags
 }
 
@@ -267,6 +172,7 @@ func overlayInsightComputedFields(ctx context.Context, apiResp *models.InsightRe
 	plan.LastStatusChange = resolved.LastStatusChange
 	plan.LastUpdated = resolved.LastUpdated
 	plan.Summary = resolved.Summary
+	plan.Tags = resolved.Tags
 
 	// Optional+Computed: resolve only when unknown
 	if plan.CloudFlowTemplateId.IsUnknown() {
@@ -281,239 +187,7 @@ func overlayInsightComputedFields(ctx context.Context, apiResp *models.InsightRe
 	if plan.ReportUrl.IsUnknown() {
 		plan.ReportUrl = resolved.ReportUrl
 	}
-	if plan.Tags.IsUnknown() {
-		plan.Tags = resolved.Tags
-	}
 
-	// ResourceResults: the API response doesn't include resource_results, so the
-	// resolved model has an empty list. We can't use overlayListElements here.
-	// Instead, walk the plan's resource_results directly and resolve unknowns
-	// to null defaults (for Optional+Computed fields the user omitted).
-	if plan.ResourceResults.IsUnknown() {
-		plan.ResourceResults = resolved.ResourceResults
-	} else if !plan.ResourceResults.IsNull() {
-		diags.Append(resolveResourceResultUnknowns(ctx, &plan.ResourceResults)...)
-	}
-
-	return diags
-}
-
-// resolveResourceResultUnknowns walks the plan's resource_results list and resolves
-// any Unknown values to their null defaults. This is used during Create/Update where
-// the API response doesn't include resource_results, so there's no "resolved" to overlay.
-func resolveResourceResultUnknowns(ctx context.Context, list *types.List) diag.Diagnostics {
-	var diags diag.Diagnostics
-	var elems []resource_insight.ResourceResultsValue
-
-	diags.Append(list.ElementsAs(ctx, &elems, true)...)
-	if diags.HasError() {
-		return diags
-	}
-
-	modified := false
-	for i := range elems {
-		if resolveOneResourceResult(&elems[i]) {
-			modified = true
-		}
-	}
-
-	if modified {
-		newList, rebuildDiags := types.ListValueFrom(ctx, list.ElementType(ctx), elems)
-		diags.Append(rebuildDiags...)
-		if !rebuildDiags.HasError() {
-			*list = newList
-		}
-	}
-	return diags
-}
-
-// resolveOneResourceResult resolves all Unknown Optional+Computed fields in a single
-// resource_results element to their null/false defaults. Returns true if any field was modified.
-func resolveOneResourceResult(rr *resource_insight.ResourceResultsValue) bool {
-	modified := false
-	if rr.Enhancement.IsUnknown() {
-		rr.Enhancement = resource_insight.NewEnhancementValueNull()
-		modified = true
-	}
-	if rr.ExternalId.IsUnknown() {
-		rr.ExternalId = types.StringNull()
-		modified = true
-	}
-	if rr.ExternalUrl.IsUnknown() {
-		rr.ExternalUrl = types.StringNull()
-		modified = true
-	}
-	if rr.Location.IsUnknown() {
-		rr.Location = types.StringNull()
-		modified = true
-	}
-	if rr.Metadata.IsUnknown() {
-		rr.Metadata = resource_insight.NewMetadataValueNull()
-		modified = true
-	}
-	if rr.Resolved.IsUnknown() {
-		rr.Resolved = types.BoolNull()
-		modified = true
-	}
-	if rr.ResourceType.IsUnknown() {
-		rr.ResourceType = types.StringNull()
-		modified = true
-	}
-	if rr.Severity.IsUnknown() {
-		rr.Severity = types.StringNull()
-		modified = true
-	}
-
-	// Nested result object
-	if rr.Result.IsUnknown() {
-		rr.Result = resource_insight.NewResultValueNull()
-		modified = true
-	} else if !rr.Result.IsNull() {
-		if resolveOneResultValue(&rr.Result) {
-			modified = true
-		}
-	}
-	return modified
-}
-
-// resolveOneResultValue resolves Unknown Optional+Computed fields in the nested result object.
-func resolveOneResultValue(r *resource_insight.ResultValue) bool {
-	modified := false
-	if r.AgentInstalled.IsUnknown() {
-		r.AgentInstalled = types.BoolNull()
-		modified = true
-	}
-	if r.Critical.IsUnknown() {
-		r.Critical = types.Int64Null()
-		modified = true
-	}
-	if r.Current.IsUnknown() {
-		r.Current = types.StringNull()
-		modified = true
-	}
-	if r.High.IsUnknown() {
-		r.High = types.Int64Null()
-		modified = true
-	}
-	if r.Low.IsUnknown() {
-		r.Low = types.Int64Null()
-		modified = true
-	}
-	if r.Medium.IsUnknown() {
-		r.Medium = types.Int64Null()
-		modified = true
-	}
-	if r.Recommendation.IsUnknown() {
-		r.Recommendation = types.StringNull()
-		modified = true
-	}
-	if r.Value.IsUnknown() {
-		r.Value = types.Float64Null()
-		modified = true
-	}
-	return modified
-}
-
-// restoreUserResourceResultValues restores user-provided values from the plan
-// after mapResourceResultsToModel has populated state from API response.
-// This prevents precision drift (e.g. float32→float64 for result.value) by
-// preserving the exact values the user wrote in HCL.
-//
-// Strategy: walk plan and API lists element-by-element (matched by index),
-// and for each Required/user-provided field, restore the plan value.
-func restoreUserResourceResultValues(ctx context.Context, planRR, apiRR *types.List) diag.Diagnostics {
-	var diags diag.Diagnostics
-	var planElems []resource_insight.ResourceResultsValue
-	var apiElems []resource_insight.ResourceResultsValue
-
-	diags.Append(planRR.ElementsAs(ctx, &planElems, true)...)
-	diags.Append(apiRR.ElementsAs(ctx, &apiElems, true)...)
-	if diags.HasError() {
-		return diags
-	}
-
-	modified := false
-	for i := range apiElems {
-		if i >= len(planElems) {
-			break
-		}
-		p := &planElems[i]
-		a := &apiElems[i]
-
-		// Restore user-provided Required fields
-		if !p.Account.IsNull() && !p.Account.IsUnknown() {
-			a.Account = p.Account
-		}
-		if !p.CloudProvider.IsNull() && !p.CloudProvider.IsUnknown() {
-			a.CloudProvider = p.CloudProvider
-		}
-		if !p.ResourceId.IsNull() && !p.ResourceId.IsUnknown() {
-			a.ResourceId = p.ResourceId
-		}
-		if !p.ResultType.IsNull() && !p.ResultType.IsUnknown() {
-			a.ResultType = p.ResultType
-		}
-
-		// Restore user-provided Optional fields
-		if !p.Location.IsNull() && !p.Location.IsUnknown() {
-			a.Location = p.Location
-		}
-		if !p.ExternalId.IsNull() && !p.ExternalId.IsUnknown() {
-			a.ExternalId = p.ExternalId
-		}
-		if !p.ExternalUrl.IsNull() && !p.ExternalUrl.IsUnknown() {
-			a.ExternalUrl = p.ExternalUrl
-		}
-		if !p.ResourceType.IsNull() && !p.ResourceType.IsUnknown() {
-			a.ResourceType = p.ResourceType
-		}
-		if !p.Severity.IsNull() && !p.Severity.IsUnknown() {
-			a.Severity = p.Severity
-		}
-
-		// Restore user-provided Optional fields at the ResourceResult level
-		if !p.Resolved.IsNull() && !p.Resolved.IsUnknown() {
-			a.Resolved = p.Resolved
-		}
-
-		// Restore nested result — particularly result.value which suffers float32 drift
-		if !p.Result.IsNull() && !p.Result.IsUnknown() && !a.Result.IsNull() {
-			if !p.Result.Value.IsNull() && !p.Result.Value.IsUnknown() {
-				a.Result.Value = p.Result.Value
-			}
-			if !p.Result.Current.IsNull() && !p.Result.Current.IsUnknown() {
-				a.Result.Current = p.Result.Current
-			}
-			if !p.Result.Recommendation.IsNull() && !p.Result.Recommendation.IsUnknown() {
-				a.Result.Recommendation = p.Result.Recommendation
-			}
-			if !p.Result.AgentInstalled.IsNull() && !p.Result.AgentInstalled.IsUnknown() {
-				a.Result.AgentInstalled = p.Result.AgentInstalled
-			}
-			if !p.Result.Critical.IsNull() && !p.Result.Critical.IsUnknown() {
-				a.Result.Critical = p.Result.Critical
-			}
-			if !p.Result.High.IsNull() && !p.Result.High.IsUnknown() {
-				a.Result.High = p.Result.High
-			}
-			if !p.Result.Medium.IsNull() && !p.Result.Medium.IsUnknown() {
-				a.Result.Medium = p.Result.Medium
-			}
-			if !p.Result.Low.IsNull() && !p.Result.Low.IsUnknown() {
-				a.Result.Low = p.Result.Low
-			}
-		}
-
-		modified = true
-	}
-
-	if modified {
-		newList, rebuildDiags := types.ListValueFrom(ctx, apiRR.ElementType(ctx), apiElems)
-		diags.Append(rebuildDiags...)
-		if !rebuildDiags.HasError() {
-			*apiRR = newList
-		}
-	}
 	return diags
 }
 
@@ -570,28 +244,6 @@ func (r *insightResource) Create(ctx context.Context, req resource.CreateRequest
 
 	// Plan-first overlay pattern
 	resp.Diagnostics.Append(overlayInsightComputedFields(ctx, createResp.JSON200, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Save the plan's resource_results before the API fetch — we'll restore
-	// user-provided values after to avoid precision drift (float32→float64).
-	planRR := plan.ResourceResults
-
-	// Fetch resource results from the separate endpoint (with auto-pagination)
-	// to populate state consistently with what Read returns.
-	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, string(sourceID), insightKey)
-	resp.Diagnostics.Append(fetchDiags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	if allResults != nil {
-		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, allResults, &plan)...)
-		if !resp.Diagnostics.HasError() {
-			resp.Diagnostics.Append(restoreUserResourceResultValues(ctx, &planRR, &plan.ResourceResults)...)
-		}
-	}
-	// 404 or non-200: keep the overlay's resolved values (safe — overlay already resolved unknowns)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -655,25 +307,6 @@ func (r *insightResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// Fetch resource results separately (with auto-pagination)
-	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, sourceID, insightKey)
-	resp.Diagnostics.Append(fetchDiags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	if allResults != nil {
-		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, allResults, &state)...)
-	} else {
-		emptyList, emptyDiags := types.ListValueFrom(ctx, resource_insight.ResourceResultsType{
-			ObjectType: types.ObjectType{AttrTypes: resource_insight.ResourceResultsValue{}.AttributeTypes(ctx)},
-		}, []resource_insight.ResourceResultsValue{})
-		resp.Diagnostics.Append(emptyDiags...)
-		state.ResourceResults = emptyList
-	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -733,26 +366,6 @@ func (r *insightResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	// Save the plan's resource_results before the API fetch.
-	planRR := plan.ResourceResults
-
-	// Fetch resource results from the separate endpoint (with auto-pagination)
-	// to populate state consistently with what Read returns.
-	allResults, fetchDiags := fetchAllResourceResults(ctx, r.client, string(sourceID), insightKey)
-	resp.Diagnostics.Append(fetchDiags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	if allResults != nil {
-		resp.Diagnostics.Append(mapResourceResultsToModel(ctx, allResults, &plan)...)
-		if !resp.Diagnostics.HasError() {
-			resp.Diagnostics.Append(restoreUserResourceResultValues(ctx, &planRR, &plan.ResourceResults)...)
-		}
-	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -794,55 +407,8 @@ func (r *insightResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 }
 
-// fetchAllResourceResults auto-paginates through all pages of resource results
-// and returns the complete list. Returns (nil, nil) when the resource has no results (404).
-func fetchAllResourceResults(ctx context.Context, client *models.ClientWithResponses, sourceID, insightKey string) ([]models.ResourceResult, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	var allResults []models.ResourceResult
-	var pageToken *string
-
-	for {
-		params := &models.GetInsightResourceResultsParams{
-			PageToken: pageToken,
-		}
-
-		rrResp, err := client.GetInsightResourceResultsWithResponse(ctx, sourceID, insightKey, params)
-		if err != nil {
-			diags.AddError(
-				"Error Reading Insight Resource Results",
-				fmt.Sprintf("Could not read resource results for %s/%s: %s", sourceID, insightKey, err.Error()),
-			)
-			return nil, diags
-		}
-
-		// 404 means no resource results (e.g. after all were resolved)
-		if rrResp.StatusCode() == 404 {
-			return nil, diags
-		}
-
-		if rrResp.StatusCode() != 200 || rrResp.JSON200 == nil {
-			diags.AddError(
-				"Error Reading Insight Resource Results",
-				fmt.Sprintf("Unexpected status %d for resource results %s/%s: %s", rrResp.StatusCode(), sourceID, insightKey, string(rrResp.Body)),
-			)
-			return nil, diags
-		}
-
-		allResults = append(allResults, rrResp.JSON200.ResourceResults...)
-
-		// Check for next page
-		if rrResp.JSON200.PageToken == nil || *rrResp.JSON200.PageToken == "" {
-			break
-		}
-		pageToken = rrResp.JSON200.PageToken
-	}
-
-	return allResults, diags
-}
-
 // mapInsightRespToResourceModel maps the full InsightResponse to the Terraform resource model.
 // Used by Read and ImportState (not Create/Update which use the overlay).
-// Named differently from mapInsightResponseToModel in insight_data_source.go to avoid collision.
 func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResponse, state *insightResourceModel) (diags diag.Diagnostics) {
 	// Identity fields
 	state.Key = types.StringPointerValue(resp.Key)
@@ -866,10 +432,14 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 		state.DisplayStatus = types.StringNull()
 	}
 
-	state.DetailedDescriptionMdx = types.StringPointerValue(resp.DetailedDescriptionMdx)
-	state.EasyWinDescription = types.StringPointerValue(resp.EasyWinDescription)
-	state.ReportUrl = types.StringPointerValue(resp.ReportUrl)
-	state.CloudFlowTemplateId = types.StringPointerValue(resp.CloudFlowTemplateId)
+	// Use stringPtrOrNull to normalize empty strings ("") to null.
+	// The API returns "" for unset optional fields due to Go's zero-value
+	// serialization (domain uses string, not *string). This keeps the insight
+	// resource consistent with the resource results resource.
+	state.DetailedDescriptionMdx = stringPtrOrNull(resp.DetailedDescriptionMdx)
+	state.EasyWinDescription = stringPtrOrNull(resp.EasyWinDescription)
+	state.ReportUrl = stringPtrOrNull(resp.ReportUrl)
+	state.CloudFlowTemplateId = stringPtrOrNull(resp.CloudFlowTemplateId)
 
 	// LastUpdated is *time.Time in the API model
 	if resp.LastUpdated != nil {
@@ -934,107 +504,7 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 		state.LastStatusChange = resource_insight.NewLastStatusChangeValueNull()
 	}
 
-	// ResourceResults are not included in InsightResponse — they are fetched
-	// separately via GetInsightResourceResultsWithResponse in Read.
-	// For Import: set to empty (Read will immediately fetch them).
-	if state.ResourceResults.IsNull() || state.ResourceResults.IsUnknown() {
-		emptyList, emptyDiags := types.ListValueFrom(ctx, resource_insight.ResourceResultsType{
-			ObjectType: types.ObjectType{AttrTypes: resource_insight.ResourceResultsValue{}.AttributeTypes(ctx)},
-		}, []resource_insight.ResourceResultsValue{})
-		diags.Append(emptyDiags...)
-		state.ResourceResults = emptyList
-	}
-
 	return diags
-}
-
-// mapResourceResultsToModel maps the API ResourceResults array to the Terraform model.
-// Called from Read after fetching resource results via the separate endpoint.
-func mapResourceResultsToModel(ctx context.Context, results []models.ResourceResult, state *insightResourceModel) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	if len(results) == 0 {
-		emptyList, emptyDiags := types.ListValueFrom(ctx, resource_insight.ResourceResultsType{
-			ObjectType: types.ObjectType{AttrTypes: resource_insight.ResourceResultsValue{}.AttributeTypes(ctx)},
-		}, []resource_insight.ResourceResultsValue{})
-		diags.Append(emptyDiags...)
-		state.ResourceResults = emptyList
-		return diags
-	}
-
-	resultValues := make([]resource_insight.ResourceResultsValue, 0, len(results))
-	for _, rr := range results {
-		// Build result nested object
-		resultObj := resource_insight.NewResultValueNull()
-		if rr.Result != nil {
-			resultAttrs := map[string]attr.Value{
-				"agent_installed": types.BoolPointerValue(rr.Result.AgentInstalled),
-				"critical":        intPointerToInt64Value(rr.Result.Critical),
-				"current":         types.StringPointerValue(rr.Result.Current),
-				"high":            intPointerToInt64Value(rr.Result.High),
-				"low":             intPointerToInt64Value(rr.Result.Low),
-				"medium":          intPointerToInt64Value(rr.Result.Medium),
-				"recommendation":  types.StringPointerValue(rr.Result.Recommendation),
-				"value":           types.Float64PointerValue(rr.Result.Value),
-			}
-			var resultDiags diag.Diagnostics
-			resultObj, resultDiags = resource_insight.NewResultValue(
-				resource_insight.ResultValue{}.AttributeTypes(ctx),
-				resultAttrs,
-			)
-			diags.Append(resultDiags...)
-		}
-
-		// Build enhancement nested object (usually null for public-api insights)
-		enhancementObj := resource_insight.NewEnhancementValueNull()
-
-		// Build metadata nested object (usually null)
-		metadataObj := resource_insight.NewMetadataValueNull()
-
-		rrVal, rrDiags := resource_insight.NewResourceResultsValue(
-			resource_insight.ResourceResultsValue{}.AttributeTypes(ctx),
-			map[string]attr.Value{
-				"account":        types.StringValue(rr.Account),
-				"cloud_provider": types.StringValue(rr.CloudProvider),
-				"enhancement":    enhancementObj,
-				"external_id":    types.StringPointerValue(rr.ExternalId),
-				"external_url":   types.StringPointerValue(rr.ExternalUrl),
-				"location":       types.StringPointerValue(rr.Location),
-				"metadata":       metadataObj,
-				"resolved":       types.BoolPointerValue(rr.Resolved),
-				"resource_id":    types.StringValue(rr.ResourceId),
-				"resource_type":  types.StringPointerValue(rr.ResourceType),
-				"result":         resultObj,
-				"result_type":    types.StringValue(string(rr.ResultType)),
-				"severity":       severityToString(rr.Severity),
-			},
-		)
-		diags.Append(rrDiags...)
-		resultValues = append(resultValues, rrVal)
-	}
-
-	rrList, listDiags := types.ListValueFrom(ctx, resource_insight.ResourceResultsType{
-		ObjectType: types.ObjectType{AttrTypes: resource_insight.ResourceResultsValue{}.AttributeTypes(ctx)},
-	}, resultValues)
-	diags.Append(listDiags...)
-	state.ResourceResults = rrList
-
-	return diags
-}
-
-func severityToString(s *models.ResourceResultSeverity) types.String {
-	if s == nil {
-		return types.StringNull()
-	}
-	return types.StringValue(string(*s))
-}
-
-// intPointerToInt64Value converts *int to types.Int64, returning Null if nil.
-func intPointerToInt64Value(i *int) types.Int64 {
-	if i == nil {
-		return types.Int64Null()
-	}
-	return types.Int64Value(int64(*i))
 }
 
 // planModifier that makes a string attribute require replacement on change.

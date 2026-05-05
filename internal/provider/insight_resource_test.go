@@ -33,6 +33,7 @@ func TestAccInsightResource_Basic(t *testing.T) {
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
+					// Required fields
 					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("key"),
@@ -53,15 +54,165 @@ func TestAccInsightResource_Basic(t *testing.T) {
 						"doit_insight.test",
 						tfjsonpath.New("categories"),
 						knownvalue.ListSizeExact(1)),
+
+					// Optional+Computed fields should be null when not set
 					statecheck.ExpectKnownValue(
 						"doit_insight.test",
-						tfjsonpath.New("resource_results"),
-						knownvalue.ListSizeExact(1)),
+						tfjsonpath.New("detailed_description_mdx"),
+						knownvalue.Null()),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("easy_win_description"),
+						knownvalue.Null()),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("report_url"),
+						knownvalue.Null()),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("cloud_flow_template_id"),
+						knownvalue.Null()),
+
+					// Computed-only: summary
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("summary"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("summary").AtMapKey("potential_daily_savings"),
+						knownvalue.Float64Exact(0)),
+
+					// Computed-only: last_status_change
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("last_status_change"),
+						knownvalue.NotNull()),
 				},
 			},
 			// Step 2: Drift check — re-apply same config, expect no changes
 			{
 				Config: testAccInsightResourceConfig(rName, "Basic Test Insight", "A basic test insight"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResource_AllFields tests creating an insight with every optional
+// metadata field populated (detailed_description_mdx, easy_win_description,
+// report_url, cloud_flow_template_id). Tags are Computed-only (read from
+// customer_insights). The Basic test above covers the minimal required-only config.
+func TestAccInsightResource_AllFields(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with all optional fields
+			{
+				Config: testAccInsightResourceAllFieldsConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Required fields
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("key"),
+						knownvalue.StringExact(rName)),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact("All Fields Test")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("short_description"),
+						knownvalue.StringExact("Testing all optional metadata fields")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("cloud_provider"),
+						knownvalue.StringExact("aws")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("categories"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact("FinOps"),
+						})),
+
+					// All optional user-configurable fields
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("detailed_description_mdx"),
+						knownvalue.StringExact("# Detailed\n\nThis is a **detailed** description.")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("easy_win_description"),
+						knownvalue.StringExact("Resize the instance to save costs.")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("report_url"),
+						knownvalue.StringExact("https://console.doit.com/customers/EE8CtpzYiKp0dVAESVrB/analytics/reports/test-report")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("tags"),
+						knownvalue.ListSizeExact(0)),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("cloud_flow_template_id"),
+						knownvalue.StringExact("tmpl-12345")),
+
+					// Computed-only fields — verify they are populated
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("source"),
+						knownvalue.StringExact("public-api")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("source_id"),
+						knownvalue.StringExact("public-api")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("insight_key"),
+						knownvalue.StringExact(rName)),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("display_status"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("last_updated"),
+						knownvalue.NotNull()),
+
+					// Computed-only: summary with all sub-fields
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("summary"),
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
+							"operational_risks":       knownvalue.Float64Exact(0),
+							"performance_risks":       knownvalue.Float64Exact(0),
+							"potential_daily_savings": knownvalue.Float64Exact(0),
+							"reliability_risks":       knownvalue.Float64Exact(0),
+							"security_risks":          knownvalue.Float64Exact(0),
+							"sustainability_risks":    knownvalue.Float64Exact(0),
+						})),
+
+					// Computed-only: last_status_change
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("last_status_change"),
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
+							"last_changed_at": knownvalue.NotNull(),
+							"user_id":         knownvalue.NotNull(),
+						})),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccInsightResourceAllFieldsConfig(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -126,6 +277,92 @@ func TestAccInsightResource_Update(t *testing.T) {
 	})
 }
 
+// TestAccInsightResource_UpdateOptionalFields tests updating optional metadata fields:
+// minimal config → all optional fields → back to minimal.
+func TestAccInsightResource_UpdateOptionalFields(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with minimal config (required fields only)
+			{
+				Config: testAccInsightResourceConfig(rName, "Minimal Title", "Minimal description"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact("Minimal Title")),
+				},
+			},
+			// Step 2: Update to all optional fields populated
+			{
+				Config: testAccInsightResourceAllFieldsConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact("All Fields Test")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("detailed_description_mdx"),
+						knownvalue.StringExact("# Detailed\n\nThis is a **detailed** description.")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("easy_win_description"),
+						knownvalue.StringExact("Resize the instance to save costs.")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("report_url"),
+						knownvalue.StringExact("https://console.doit.com/customers/EE8CtpzYiKp0dVAESVrB/analytics/reports/test-report")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("cloud_flow_template_id"),
+						knownvalue.StringExact("tmpl-12345")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("tags"),
+						knownvalue.ListSizeExact(0)),
+				},
+			},
+			// Step 3: Drift check after adding optional fields
+			{
+				Config: testAccInsightResourceAllFieldsConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Update back to minimal (remove optional fields + change title)
+			{
+				Config: testAccInsightResourceConfig(rName, "Back to Minimal", "Testing all optional metadata fields"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 5: Drift check after removing optional fields
+			{
+				Config: testAccInsightResourceConfig(rName, "Back to Minimal", "Testing all optional metadata fields"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestAccInsightResource_ImportState(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-insight")
 
@@ -151,8 +388,8 @@ func TestAccInsightResource_ImportState(t *testing.T) {
 				ImportStateId:                        fmt.Sprintf("public-api/%s", rName),
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "key",
-				// resource_results come from a separate API endpoint; timeouts are client-only
-				ImportStateVerifyIgnore: []string{"resource_results", "timeouts"},
+				// timeouts are client-only
+				ImportStateVerifyIgnore: []string{"timeouts"},
 			},
 			// Step 3: Drift check — re-apply config after import, expect no changes
 			{
@@ -167,114 +404,8 @@ func TestAccInsightResource_ImportState(t *testing.T) {
 	})
 }
 
-// TestAccInsightResource_SecurityRisk tests the security_risk result type
-// with critical/high/medium/low fields to ensure they round-trip through
-// buildInsightRequest -> API -> mapResourceResultsToModel without drift.
-func TestAccInsightResource_SecurityRisk(t *testing.T) {
-	rName := acctest.RandomWithPrefix("tf-acc-insight")
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: Create with security_risk result type
-			{
-				Config: testAccInsightResourceSecurityRiskConfig(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_insight.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
-						knownvalue.StringExact("security_risk")),
-					statecheck.ExpectKnownValue(
-						"doit_insight.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("severity"),
-						knownvalue.StringExact("high")),
-					statecheck.ExpectKnownValue(
-						"doit_insight.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resolved"),
-						knownvalue.Bool(false)),
-				},
-			},
-			// Step 2: Drift check
-			{
-				Config: testAccInsightResourceSecurityRiskConfig(rName),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-		},
-	})
-}
-
-// TestAccInsightResource_Recommendation tests potential_daily_savings_with_recommendation
-// including current and recommendation fields.
-func TestAccInsightResource_Recommendation(t *testing.T) {
-	rName := acctest.RandomWithPrefix("tf-acc-insight")
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: Create with recommendation result type
-			{
-				Config: testAccInsightResourceRecommendationConfig(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_insight.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
-						knownvalue.StringExact("potential_daily_savings_with_recommendation")),
-				},
-			},
-			// Step 2: Drift check
-			{
-				Config: testAccInsightResourceRecommendationConfig(rName),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-		},
-	})
-}
-
-// TestAccInsightResource_ClusterAgent tests potential_daily_savings_with_cluster_agent
-// including the agentInstalled boolean field.
-func TestAccInsightResource_ClusterAgent(t *testing.T) {
-	rName := acctest.RandomWithPrefix("tf-acc-insight")
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: Create with cluster agent result type
-			{
-				Config: testAccInsightResourceClusterAgentConfig(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_insight.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
-						knownvalue.StringExact("potential_daily_savings_with_cluster_agent")),
-				},
-			},
-			// Step 2: Drift check
-			{
-				Config: testAccInsightResourceClusterAgentConfig(rName),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-		},
-	})
-}
-
+// testAccInsightResourceConfig generates a minimal insight resource config (metadata only).
+// Resource results are now managed by the separate doit_insight_resource_results resource.
 func testAccInsightResourceConfig(key, title, description string) string {
 	return fmt.Sprintf(`
 resource "doit_insight" "test" {
@@ -283,95 +414,24 @@ resource "doit_insight" "test" {
   short_description = %[3]q
   cloud_provider    = "aws"
   categories        = ["FinOps"]
-
-  resource_results = [{
-    resource_id    = "i-acc-test-001"
-    account        = "111111111111"
-    cloud_provider = "aws"
-    result_type    = "potential_daily_savings"
-
-    result = {
-      value = 5.42
-    }
-  }]
 }
 `, key, title, description)
 }
 
-func testAccInsightResourceSecurityRiskConfig(key string) string {
+// testAccInsightResourceAllFieldsConfig generates a config with every optional metadata field set.
+func testAccInsightResourceAllFieldsConfig(key string) string {
 	return fmt.Sprintf(`
 resource "doit_insight" "test" {
   key               = %[1]q
-  title             = "Security Risk Test"
-  short_description = "Test insight with security_risk result type"
-  cloud_provider    = "aws"
-  categories        = ["Security"]
-
-  resource_results = [{
-    resource_id    = "sg-acc-test-001"
-    account        = "111111111111"
-    cloud_provider = "aws"
-    result_type    = "security_risk"
-    resource_type  = "security-group"
-    severity       = "high"
-    resolved       = false
-
-    result = {
-      critical = 1
-      high     = 3
-      medium   = 5
-      low      = 10
-    }
-  }]
-}
-`, key)
-}
-
-func testAccInsightResourceRecommendationConfig(key string) string {
-	return fmt.Sprintf(`
-resource "doit_insight" "test" {
-  key               = %[1]q
-  title             = "Recommendation Test"
-  short_description = "Test insight with recommendation result type"
+  title             = "All Fields Test"
+  short_description = "Testing all optional metadata fields"
   cloud_provider    = "aws"
   categories        = ["FinOps"]
 
-  resource_results = [{
-    resource_id    = "i-acc-test-rec-001"
-    account        = "111111111111"
-    cloud_provider = "aws"
-    result_type    = "potential_daily_savings_with_recommendation"
-
-    result = {
-      value          = 12.50
-      current        = "m5.xlarge"
-      recommendation = "m5.large"
-    }
-  }]
-}
-`, key)
-}
-
-func testAccInsightResourceClusterAgentConfig(key string) string {
-	return fmt.Sprintf(`
-resource "doit_insight" "test" {
-  key               = %[1]q
-  title             = "Cluster Agent Test"
-  short_description = "Test insight with cluster agent result type"
-  cloud_provider    = "aws"
-  categories        = ["FinOps"]
-
-  resource_results = [{
-    resource_id    = "i-acc-test-agent-001"
-    account        = "111111111111"
-    cloud_provider = "aws"
-    result_type    = "potential_daily_savings_with_cluster_agent"
-
-    result = {
-      value           = 8.75
-      agent_installed = true
-    }
-  }]
+  detailed_description_mdx = "# Detailed\n\nThis is a **detailed** description."
+  easy_win_description     = "Resize the instance to save costs."
+  report_url               = "https://console.doit.com/customers/EE8CtpzYiKp0dVAESVrB/analytics/reports/test-report"
+  cloud_flow_template_id   = "tmpl-12345"
 }
 `, key)
 }
