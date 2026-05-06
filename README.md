@@ -208,6 +208,7 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `TEST_ASSET_ID`               | Asset ID for asset data source tests (G Suite)         |
 | `TEST_ASSET_ID_AWS`           | AWS asset ID for asset data source tests               |
 | `TEST_CLOUD_DIAGRAM_RESOURCE` | Cloud resource ID for cloud diagrams data source tests |
+| `TEST_INVITE_EMAIL`           | Email address for user invite resource tests           |
 
 </details>
 

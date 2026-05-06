@@ -91,4 +91,5 @@ jobs:
           TEST_ASSET_ID_AWS: ${{ vars.TEST_ASSET_ID_AWS }}
           TEST_CLOUD_DIAGRAM_RESOURCE: ${{ vars.TEST_CLOUD_DIAGRAM_RESOURCE }}
           TEST_USER_2: ${{ vars.TEST_USER_2 }}
+          TEST_INVITE_EMAIL: ${{ vars.TEST_INVITE_EMAIL }}
         run: go test -v -timeout 120m ./...
