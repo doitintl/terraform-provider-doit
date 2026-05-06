@@ -2656,6 +2656,176 @@
 				"description": "Manage permissions associated with specified Cloud Analytics resources.",
 				"markdown_description": "Manage permissions associated with specified Cloud Analytics resources."
 			}
+		},
+		{
+			"name": "user",
+			"schema": {
+				"attributes": [
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The email address of the user."
+						}
+					},
+					{
+						"name": "first_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The first name of the user being invited."
+						}
+					},
+					{
+						"name": "job_title",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The job function of the user being invited.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"Data Engineer / Data Analysts\",\n\"Executive Team\",\n\"Finance / Accounting\",\n\"Founder\",\n\"Legal / Purchasing\",\n\"Management\",\n\"Sales / Marketing\",\n\"Software / Ops Engineer\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "last_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The last name of the user being invited."
+						}
+					},
+					{
+						"name": "organization_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The ID of the organization to assign the user to."
+						}
+					},
+					{
+						"name": "role_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The ID of the role to assign to the user."
+						}
+					},
+					{
+						"name": "message",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Success message"
+						}
+					},
+					{
+						"name": "user",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "display_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The display name of the invited user, if provided during invitation."
+									}
+								},
+								{
+									"name": "email",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The email address of the invited user."
+									}
+								},
+								{
+									"name": "first_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The first name of the invited user, if provided during invitation."
+									}
+								},
+								{
+									"name": "id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The unique ID of the invited user."
+									}
+								},
+								{
+									"name": "job_title",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The job function of the invited user, if provided during invitation."
+									}
+								},
+								{
+									"name": "last_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The last name of the invited user, if provided during invitation."
+									}
+								},
+								{
+									"name": "organization_id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The ID of the organization assigned to the user."
+									}
+								},
+								{
+									"name": "role_id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The ID of the role assigned to the user."
+									}
+								},
+								{
+									"name": "status",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The status of the user (invited)"
+									}
+								},
+								{
+									"name": "language",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The user's preferred language."
+									}
+								},
+								{
+									"name": "phone",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The user's country code (e.g., +44)."
+									}
+								},
+								{
+									"name": "phone_extension",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The user's phone extension."
+									}
+								}
+							],
+							"description": "The updated user record."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The unique ID of the user to update."
+						}
+					}
+				],
+				"description": "Manage users who have access to the DoiT platform.",
+				"markdown_description": "Manage users who have access to the DoiT platform."
+			}
 		}
 	],
 	"version": "0.1"

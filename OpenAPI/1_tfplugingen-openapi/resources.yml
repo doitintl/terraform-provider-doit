@@ -119,3 +119,16 @@ resources:
     read:
       path: /analytics/v1/labels/{id}/assignments
       method: GET
+  user:
+    create:
+      path: /iam/v1/users/invite
+      method: POST
+    read:
+      path: /iam/v1/users/{id}
+      method: PATCH
+    update:
+      path: /iam/v1/users/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/users/{id}
+      method: DELETE
