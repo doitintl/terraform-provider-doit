@@ -1169,6 +1169,42 @@ func (e GroupAllocationRuleAction) Valid() bool {
 	}
 }
 
+// Defines values for InviteUserRequestJobTitle.
+const (
+	InviteUserRequestJobTitleDataEngineerDataAnalysts InviteUserRequestJobTitle = "Data Engineer / Data Analysts"
+	InviteUserRequestJobTitleExecutiveTeam            InviteUserRequestJobTitle = "Executive Team"
+	InviteUserRequestJobTitleFinanceAccounting        InviteUserRequestJobTitle = "Finance / Accounting"
+	InviteUserRequestJobTitleFounder                  InviteUserRequestJobTitle = "Founder"
+	InviteUserRequestJobTitleLegalPurchasing          InviteUserRequestJobTitle = "Legal / Purchasing"
+	InviteUserRequestJobTitleManagement               InviteUserRequestJobTitle = "Management"
+	InviteUserRequestJobTitleSalesMarketing           InviteUserRequestJobTitle = "Sales / Marketing"
+	InviteUserRequestJobTitleSoftwareOpsEngineer      InviteUserRequestJobTitle = "Software / Ops Engineer"
+)
+
+// Valid indicates whether the value is a known member of the InviteUserRequestJobTitle enum.
+func (e InviteUserRequestJobTitle) Valid() bool {
+	switch e {
+	case InviteUserRequestJobTitleDataEngineerDataAnalysts:
+		return true
+	case InviteUserRequestJobTitleExecutiveTeam:
+		return true
+	case InviteUserRequestJobTitleFinanceAccounting:
+		return true
+	case InviteUserRequestJobTitleFounder:
+		return true
+	case InviteUserRequestJobTitleLegalPurchasing:
+		return true
+	case InviteUserRequestJobTitleManagement:
+		return true
+	case InviteUserRequestJobTitleSalesMarketing:
+		return true
+	case InviteUserRequestJobTitleSoftwareOpsEngineer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InvitedUserBodyStatus.
 const (
 	InvitedUserBodyStatusInvited InvitedUserBodyStatus = "invited"
@@ -1796,6 +1832,42 @@ func (e UpdateUserRequestJobFunction) Valid() bool {
 	}
 }
 
+// Defines values for UpdateUserRequestJobTitle.
+const (
+	UpdateUserRequestJobTitleDataEngineerDataAnalysts UpdateUserRequestJobTitle = "Data Engineer / Data Analysts"
+	UpdateUserRequestJobTitleExecutiveTeam            UpdateUserRequestJobTitle = "Executive Team"
+	UpdateUserRequestJobTitleFinanceAccounting        UpdateUserRequestJobTitle = "Finance / Accounting"
+	UpdateUserRequestJobTitleFounder                  UpdateUserRequestJobTitle = "Founder"
+	UpdateUserRequestJobTitleLegalPurchasing          UpdateUserRequestJobTitle = "Legal / Purchasing"
+	UpdateUserRequestJobTitleManagement               UpdateUserRequestJobTitle = "Management"
+	UpdateUserRequestJobTitleSalesMarketing           UpdateUserRequestJobTitle = "Sales / Marketing"
+	UpdateUserRequestJobTitleSoftwareOpsEngineer      UpdateUserRequestJobTitle = "Software / Ops Engineer"
+)
+
+// Valid indicates whether the value is a known member of the UpdateUserRequestJobTitle enum.
+func (e UpdateUserRequestJobTitle) Valid() bool {
+	switch e {
+	case UpdateUserRequestJobTitleDataEngineerDataAnalysts:
+		return true
+	case UpdateUserRequestJobTitleExecutiveTeam:
+		return true
+	case UpdateUserRequestJobTitleFinanceAccounting:
+		return true
+	case UpdateUserRequestJobTitleFounder:
+		return true
+	case UpdateUserRequestJobTitleLegalPurchasing:
+		return true
+	case UpdateUserRequestJobTitleManagement:
+		return true
+	case UpdateUserRequestJobTitleSalesMarketing:
+		return true
+	case UpdateUserRequestJobTitleSoftwareOpsEngineer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UpdateUserRequestLanguage.
 const (
 	UpdateUserRequestLanguageEn UpdateUserRequestLanguage = "en"
@@ -1814,36 +1886,36 @@ func (e UpdateUserRequestLanguage) Valid() bool {
 	}
 }
 
-// Defines values for UpdatedUserBodyJobFunction.
+// Defines values for UpdatedUserBodyJobTitle.
 const (
-	UpdatedUserBodyJobFunctionDataEngineerDataAnalysts UpdatedUserBodyJobFunction = "Data Engineer / Data Analysts"
-	UpdatedUserBodyJobFunctionExecutiveTeam            UpdatedUserBodyJobFunction = "Executive Team"
-	UpdatedUserBodyJobFunctionFinanceAccounting        UpdatedUserBodyJobFunction = "Finance / Accounting"
-	UpdatedUserBodyJobFunctionFounder                  UpdatedUserBodyJobFunction = "Founder"
-	UpdatedUserBodyJobFunctionLegalPurchasing          UpdatedUserBodyJobFunction = "Legal / Purchasing"
-	UpdatedUserBodyJobFunctionManagement               UpdatedUserBodyJobFunction = "Management"
-	UpdatedUserBodyJobFunctionSalesMarketing           UpdatedUserBodyJobFunction = "Sales / Marketing"
-	UpdatedUserBodyJobFunctionSoftwareOpsEngineer      UpdatedUserBodyJobFunction = "Software / Ops Engineer"
+	UpdatedUserBodyJobTitleDataEngineerDataAnalysts UpdatedUserBodyJobTitle = "Data Engineer / Data Analysts"
+	UpdatedUserBodyJobTitleExecutiveTeam            UpdatedUserBodyJobTitle = "Executive Team"
+	UpdatedUserBodyJobTitleFinanceAccounting        UpdatedUserBodyJobTitle = "Finance / Accounting"
+	UpdatedUserBodyJobTitleFounder                  UpdatedUserBodyJobTitle = "Founder"
+	UpdatedUserBodyJobTitleLegalPurchasing          UpdatedUserBodyJobTitle = "Legal / Purchasing"
+	UpdatedUserBodyJobTitleManagement               UpdatedUserBodyJobTitle = "Management"
+	UpdatedUserBodyJobTitleSalesMarketing           UpdatedUserBodyJobTitle = "Sales / Marketing"
+	UpdatedUserBodyJobTitleSoftwareOpsEngineer      UpdatedUserBodyJobTitle = "Software / Ops Engineer"
 )
 
-// Valid indicates whether the value is a known member of the UpdatedUserBodyJobFunction enum.
-func (e UpdatedUserBodyJobFunction) Valid() bool {
+// Valid indicates whether the value is a known member of the UpdatedUserBodyJobTitle enum.
+func (e UpdatedUserBodyJobTitle) Valid() bool {
 	switch e {
-	case UpdatedUserBodyJobFunctionDataEngineerDataAnalysts:
+	case UpdatedUserBodyJobTitleDataEngineerDataAnalysts:
 		return true
-	case UpdatedUserBodyJobFunctionExecutiveTeam:
+	case UpdatedUserBodyJobTitleExecutiveTeam:
 		return true
-	case UpdatedUserBodyJobFunctionFinanceAccounting:
+	case UpdatedUserBodyJobTitleFinanceAccounting:
 		return true
-	case UpdatedUserBodyJobFunctionFounder:
+	case UpdatedUserBodyJobTitleFounder:
 		return true
-	case UpdatedUserBodyJobFunctionLegalPurchasing:
+	case UpdatedUserBodyJobTitleLegalPurchasing:
 		return true
-	case UpdatedUserBodyJobFunctionManagement:
+	case UpdatedUserBodyJobTitleManagement:
 		return true
-	case UpdatedUserBodyJobFunctionSalesMarketing:
+	case UpdatedUserBodyJobTitleSalesMarketing:
 		return true
-	case UpdatedUserBodyJobFunctionSoftwareOpsEngineer:
+	case UpdatedUserBodyJobTitleSoftwareOpsEngineer:
 		return true
 	default:
 		return false
@@ -1868,20 +1940,20 @@ func (e UpdatedUserBodyLanguage) Valid() bool {
 	}
 }
 
-// Defines values for UserListItemJobFunction.
+// Defines values for UserListItemJobTitle.
 const (
-	DataEngineerDataAnalysts UserListItemJobFunction = "Data Engineer / Data Analysts"
-	ExecutiveTeam            UserListItemJobFunction = "Executive Team"
-	FinanceAccounting        UserListItemJobFunction = "Finance / Accounting"
-	Founder                  UserListItemJobFunction = "Founder"
-	LegalPurchasing          UserListItemJobFunction = "Legal / Purchasing"
-	Management               UserListItemJobFunction = "Management"
-	SalesMarketing           UserListItemJobFunction = "Sales / Marketing"
-	SoftwareOpsEngineer      UserListItemJobFunction = "Software / Ops Engineer"
+	DataEngineerDataAnalysts UserListItemJobTitle = "Data Engineer / Data Analysts"
+	ExecutiveTeam            UserListItemJobTitle = "Executive Team"
+	FinanceAccounting        UserListItemJobTitle = "Finance / Accounting"
+	Founder                  UserListItemJobTitle = "Founder"
+	LegalPurchasing          UserListItemJobTitle = "Legal / Purchasing"
+	Management               UserListItemJobTitle = "Management"
+	SalesMarketing           UserListItemJobTitle = "Sales / Marketing"
+	SoftwareOpsEngineer      UserListItemJobTitle = "Software / Ops Engineer"
 )
 
-// Valid indicates whether the value is a known member of the UserListItemJobFunction enum.
-func (e UserListItemJobFunction) Valid() bool {
+// Valid indicates whether the value is a known member of the UserListItemJobTitle enum.
+func (e UserListItemJobTitle) Valid() bool {
 	switch e {
 	case DataEngineerDataAnalysts:
 		return true
@@ -3997,6 +4069,15 @@ type InviteUserRequest struct {
 	// Email The email address of the user.
 	Email openapi_types.Email `json:"email"`
 
+	// FirstName The first name of the user being invited.
+	FirstName *string `json:"firstName,omitempty"`
+
+	// JobTitle The job function of the user being invited.
+	JobTitle *InviteUserRequestJobTitle `json:"jobTitle,omitempty"`
+
+	// LastName The last name of the user being invited.
+	LastName *string `json:"lastName,omitempty"`
+
 	// OrganizationId The ID of the organization to assign the user to.
 	OrganizationId *string `json:"organizationId,omitempty"`
 
@@ -4004,13 +4085,28 @@ type InviteUserRequest struct {
 	RoleId *string `json:"roleId,omitempty"`
 }
 
+// InviteUserRequestJobTitle The job function of the user being invited.
+type InviteUserRequestJobTitle string
+
 // InvitedUserBody defines model for InvitedUserBody.
 type InvitedUserBody struct {
+	// DisplayName The display name of the invited user, if provided during invitation.
+	DisplayName *string `json:"displayName,omitempty"`
+
 	// Email The email address of the invited user.
 	Email *string `json:"email,omitempty"`
 
+	// FirstName The first name of the invited user, if provided during invitation.
+	FirstName *string `json:"firstName,omitempty"`
+
 	// Id The unique ID of the invited user.
 	Id *string `json:"id,omitempty"`
+
+	// JobTitle The job function of the invited user, if provided during invitation.
+	JobTitle *string `json:"jobTitle,omitempty"`
+
+	// LastName The last name of the invited user, if provided during invitation.
+	LastName *string `json:"lastName,omitempty"`
 
 	// OrganizationId The ID of the organization assigned to the user.
 	OrganizationId *string `json:"organizationId,omitempty"`
@@ -4827,8 +4923,12 @@ type UpdateUserRequest struct {
 	// FirstName The user's first name.
 	FirstName *string `json:"firstName,omitempty"`
 
-	// JobFunction The user's job function.
+	// JobFunction Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	JobFunction *UpdateUserRequestJobFunction `json:"jobFunction,omitempty"`
+
+	// JobTitle The user's job function.
+	JobTitle *UpdateUserRequestJobTitle `json:"jobTitle,omitempty"`
 
 	// Language The user's preferred language.
 	Language *UpdateUserRequestLanguage `json:"language,omitempty"`
@@ -4846,8 +4946,11 @@ type UpdateUserRequest struct {
 	RoleId *string `json:"roleId,omitempty"`
 }
 
-// UpdateUserRequestJobFunction The user's job function.
+// UpdateUserRequestJobFunction Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.
 type UpdateUserRequestJobFunction string
+
+// UpdateUserRequestJobTitle The user's job function.
+type UpdateUserRequestJobTitle string
 
 // UpdateUserRequestLanguage The user's preferred language.
 type UpdateUserRequestLanguage string
@@ -4875,8 +4978,8 @@ type UpdatedUserBody struct {
 	// Id The unique ID of the user.
 	Id *string `json:"id,omitempty"`
 
-	// JobFunction The user's job function.
-	JobFunction *UpdatedUserBodyJobFunction `json:"jobFunction,omitempty"`
+	// JobTitle The user's job function.
+	JobTitle *UpdatedUserBodyJobTitle `json:"jobTitle,omitempty"`
 
 	// Language The user's preferred language.
 	Language *UpdatedUserBodyLanguage `json:"language,omitempty"`
@@ -4897,8 +5000,8 @@ type UpdatedUserBody struct {
 	RoleId *string `json:"roleId,omitempty"`
 }
 
-// UpdatedUserBodyJobFunction The user's job function.
-type UpdatedUserBodyJobFunction string
+// UpdatedUserBodyJobTitle The user's job function.
+type UpdatedUserBodyJobTitle string
 
 // UpdatedUserBodyLanguage The user's preferred language.
 type UpdatedUserBodyLanguage string
@@ -4917,8 +5020,8 @@ type UserListItem struct {
 	// Id The unique ID of the user.
 	Id *string `json:"id,omitempty"`
 
-	// JobFunction The user's job function.
-	JobFunction *UserListItemJobFunction `json:"jobFunction,omitempty"`
+	// JobTitle The user's job function.
+	JobTitle *UserListItemJobTitle `json:"jobTitle,omitempty"`
 
 	// Language The user's preferred language.
 	Language *UserListItemLanguage `json:"language,omitempty"`
@@ -4942,8 +5045,8 @@ type UserListItem struct {
 	Status *UserListItemStatus `json:"status,omitempty"`
 }
 
-// UserListItemJobFunction The user's job function.
-type UserListItemJobFunction string
+// UserListItemJobTitle The user's job function.
+type UserListItemJobTitle string
 
 // UserListItemLanguage The user's preferred language.
 type UserListItemLanguage string
@@ -5305,6 +5408,12 @@ type ListKnownIssuesParams struct {
 	// MaxCreationTime Max value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created before or at this
 	// timestamp are returned.
 	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
+}
+
+// ListUsersParams defines parameters for ListUsers.
+type ListUsersParams struct {
+	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
+	Email *openapi_types.Email `form:"email,omitempty" json:"email,omitempty"`
 }
 
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
@@ -5899,7 +6008,7 @@ type ClientInterface interface {
 	ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUsers request
-	ListUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListUsers(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// InviteUserWithBody request with any body
 	InviteUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7028,8 +7137,8 @@ func (c *Client) ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListUsersRequest(c.Server)
+func (c *Client) ListUsers(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUsersRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -10723,7 +10832,7 @@ func NewListRolesRequest(server string) (*http.Request, error) {
 }
 
 // NewListUsersRequest generates requests for ListUsers
-func NewListUsersRequest(server string) (*http.Request, error) {
+func NewListUsersRequest(server string, params *ListUsersParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -10739,6 +10848,28 @@ func NewListUsersRequest(server string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Email != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "email", *params.Email, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "email"}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -11599,7 +11730,7 @@ type ClientWithResponsesInterface interface {
 	ListRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListRolesResp, error)
 
 	// ListUsersWithResponse request
-	ListUsersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListUsersResp, error)
+	ListUsersWithResponse(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*ListUsersResp, error)
 
 	// InviteUserWithBodyWithResponse request with any body
 	InviteUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InviteUserResp, error)
@@ -14481,8 +14612,8 @@ func (c *ClientWithResponses) ListRolesWithResponse(ctx context.Context, reqEdit
 }
 
 // ListUsersWithResponse request returning *ListUsersResp
-func (c *ClientWithResponses) ListUsersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListUsersResp, error) {
-	rsp, err := c.ListUsers(ctx, reqEditors...)
+func (c *ClientWithResponses) ListUsersWithResponse(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*ListUsersResp, error) {
+	rsp, err := c.ListUsers(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
