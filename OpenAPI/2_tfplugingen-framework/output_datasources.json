@@ -5280,6 +5280,13 @@
 			"schema": {
 				"attributes": [
 					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively."
+						}
+					},
+					{
 						"name": "row_count",
 						"int64": {
 							"computed_optional_required": "computed",
@@ -5321,7 +5328,7 @@
 										}
 									},
 									{
-										"name": "job_function",
+										"name": "job_title",
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "The user's job function."

@@ -2126,8 +2126,19 @@ paths:
       tags:
         - Users
       summary: List users
-      description: Returns a list of all users in the organization, including both active users and invited users.
+      description: |-
+        Returns a list of users in the organization, including both active users and invited users.
+        When the `email` query parameter is provided, returns only the user matching that email address.
+        If no user is found for the given email, an empty list is returned.
       operationId: listUsers
+      parameters:
+        - name: email
+          in: query
+          description: Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
+          required: false
+          schema:
+            type: string
+            format: email
       responses:
         "200":
           description: OK - List of users returned.
@@ -5504,6 +5515,24 @@ components:
           type: string
           description: The email address of the user.
           format: email
+        firstName:
+          type: string
+          description: The first name of the user being invited.
+        lastName:
+          type: string
+          description: The last name of the user being invited.
+        jobTitle:
+          type: string
+          description: The job function of the user being invited.
+          enum:
+            - "Data Engineer / Data Analysts"
+            - "Executive Team"
+            - "Finance / Accounting"
+            - "Founder"
+            - "Legal / Purchasing"
+            - "Management"
+            - "Sales / Marketing"
+            - "Software / Ops Engineer"
         roleId:
           type: string
           description: The ID of the role to assign to the user.
@@ -5519,6 +5548,18 @@ components:
         email:
           type: string
           description: The email address of the invited user.
+        firstName:
+          type: string
+          description: The first name of the invited user, if provided during invitation.
+        lastName:
+          type: string
+          description: The last name of the invited user, if provided during invitation.
+        displayName:
+          type: string
+          description: The display name of the invited user, if provided during invitation.
+        jobTitle:
+          type: string
+          description: The job function of the invited user, if provided during invitation.
         roleId:
           type: string
           description: The ID of the role assigned to the user.
@@ -6631,9 +6672,22 @@ components:
         lastName:
           type: string
           description: The user's last name.
-        jobFunction:
+        jobTitle:
           type: string
           description: The user's job function.
+          enum:
+            - "Data Engineer / Data Analysts"
+            - "Executive Team"
+            - "Finance / Accounting"
+            - "Founder"
+            - "Legal / Purchasing"
+            - "Management"
+            - "Sales / Marketing"
+            - "Software / Ops Engineer"
+        jobFunction:
+          type: string
+          deprecated: true
+          description: "Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence."
           enum:
             - "Data Engineer / Data Analysts"
             - "Executive Team"
@@ -6688,7 +6742,7 @@ components:
         email:
           type: string
           description: The user's email address.
-        jobFunction:
+        jobTitle:
           type: string
           description: The user's job function.
           enum:
@@ -6738,7 +6792,7 @@ components:
         lastName:
           type: string
           description: The user's last name.
-        jobFunction:
+        jobTitle:
           type: string
           description: The user's job function.
           enum:
