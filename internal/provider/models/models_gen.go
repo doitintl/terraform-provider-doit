@@ -254,6 +254,561 @@ func (e BudgetCreateUpdateRequestPublic) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramAttachmentCldType.
+const (
+	CloudDiagramAttachmentCldTypeAWS   CloudDiagramAttachmentCldType = "AWS"
+	CloudDiagramAttachmentCldTypeAZURE CloudDiagramAttachmentCldType = "AZURE"
+	CloudDiagramAttachmentCldTypeGCP   CloudDiagramAttachmentCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramAttachmentCldType enum.
+func (e CloudDiagramAttachmentCldType) Valid() bool {
+	switch e {
+	case CloudDiagramAttachmentCldTypeAWS:
+		return true
+	case CloudDiagramAttachmentCldTypeAZURE:
+		return true
+	case CloudDiagramAttachmentCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramCombinerItemType.
+const (
+	CloudDiagramCombinerItemTypeAttachment  CloudDiagramCombinerItemType = "attachment"
+	CloudDiagramCombinerItemTypeCombiner    CloudDiagramCombinerItemType = "combiner"
+	CloudDiagramCombinerItemTypeElement     CloudDiagramCombinerItemType = "element"
+	CloudDiagramCombinerItemTypeGroup       CloudDiagramCombinerItemType = "group"
+	CloudDiagramCombinerItemTypeLink        CloudDiagramCombinerItemType = "link"
+	CloudDiagramCombinerItemTypeNode        CloudDiagramCombinerItemType = "node"
+	CloudDiagramCombinerItemTypeNote        CloudDiagramCombinerItemType = "note"
+	CloudDiagramCombinerItemTypeScheme      CloudDiagramCombinerItemType = "scheme"
+	CloudDiagramCombinerItemTypeStatussheet CloudDiagramCombinerItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramCombinerItemType enum.
+func (e CloudDiagramCombinerItemType) Valid() bool {
+	switch e {
+	case CloudDiagramCombinerItemTypeAttachment:
+		return true
+	case CloudDiagramCombinerItemTypeCombiner:
+		return true
+	case CloudDiagramCombinerItemTypeElement:
+		return true
+	case CloudDiagramCombinerItemTypeGroup:
+		return true
+	case CloudDiagramCombinerItemTypeLink:
+		return true
+	case CloudDiagramCombinerItemTypeNode:
+		return true
+	case CloudDiagramCombinerItemTypeNote:
+		return true
+	case CloudDiagramCombinerItemTypeScheme:
+		return true
+	case CloudDiagramCombinerItemTypeStatussheet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentBaseCldType.
+const (
+	CloudDiagramComponentBaseCldTypeAWS   CloudDiagramComponentBaseCldType = "AWS"
+	CloudDiagramComponentBaseCldTypeAZURE CloudDiagramComponentBaseCldType = "AZURE"
+	CloudDiagramComponentBaseCldTypeGCP   CloudDiagramComponentBaseCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentBaseCldType enum.
+func (e CloudDiagramComponentBaseCldType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentBaseCldTypeAWS:
+		return true
+	case CloudDiagramComponentBaseCldTypeAZURE:
+		return true
+	case CloudDiagramComponentBaseCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentSearchItemNodeType.
+const (
+	CloudDiagramComponentSearchItemNodeTypeAppComponent CloudDiagramComponentSearchItemNodeType = "app_component"
+	CloudDiagramComponentSearchItemNodeTypeAppGroup     CloudDiagramComponentSearchItemNodeType = "app_group"
+	CloudDiagramComponentSearchItemNodeTypeAppLink      CloudDiagramComponentSearchItemNodeType = "app_link"
+	CloudDiagramComponentSearchItemNodeTypeAttachment   CloudDiagramComponentSearchItemNodeType = "attachment"
+	CloudDiagramComponentSearchItemNodeTypeGroup        CloudDiagramComponentSearchItemNodeType = "group"
+	CloudDiagramComponentSearchItemNodeTypeHost         CloudDiagramComponentSearchItemNodeType = "host"
+	CloudDiagramComponentSearchItemNodeTypeLink         CloudDiagramComponentSearchItemNodeType = "link"
+	CloudDiagramComponentSearchItemNodeTypeService      CloudDiagramComponentSearchItemNodeType = "service"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemNodeType enum.
+func (e CloudDiagramComponentSearchItemNodeType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemNodeTypeAppComponent:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeHost:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeService:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentSearchItemType.
+const (
+	CloudDiagramComponentSearchItemTypeAttachment CloudDiagramComponentSearchItemType = "attachment"
+	CloudDiagramComponentSearchItemTypeCombiner   CloudDiagramComponentSearchItemType = "combiner"
+	CloudDiagramComponentSearchItemTypeElement    CloudDiagramComponentSearchItemType = "element"
+	CloudDiagramComponentSearchItemTypeGroup      CloudDiagramComponentSearchItemType = "group"
+	CloudDiagramComponentSearchItemTypeLink       CloudDiagramComponentSearchItemType = "link"
+	CloudDiagramComponentSearchItemTypeNode       CloudDiagramComponentSearchItemType = "node"
+	CloudDiagramComponentSearchItemTypeNote       CloudDiagramComponentSearchItemType = "note"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemType enum.
+func (e CloudDiagramComponentSearchItemType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemTypeCombiner:
+		return true
+	case CloudDiagramComponentSearchItemTypeElement:
+		return true
+	case CloudDiagramComponentSearchItemTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemTypeNode:
+		return true
+	case CloudDiagramComponentSearchItemTypeNote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramElementCldType.
+const (
+	CloudDiagramElementCldTypeAWS   CloudDiagramElementCldType = "AWS"
+	CloudDiagramElementCldTypeAZURE CloudDiagramElementCldType = "AZURE"
+	CloudDiagramElementCldTypeGCP   CloudDiagramElementCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramElementCldType enum.
+func (e CloudDiagramElementCldType) Valid() bool {
+	switch e {
+	case CloudDiagramElementCldTypeAWS:
+		return true
+	case CloudDiagramElementCldTypeAZURE:
+		return true
+	case CloudDiagramElementCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramGroupCldType.
+const (
+	CloudDiagramGroupCldTypeAWS   CloudDiagramGroupCldType = "AWS"
+	CloudDiagramGroupCldTypeAZURE CloudDiagramGroupCldType = "AZURE"
+	CloudDiagramGroupCldTypeGCP   CloudDiagramGroupCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramGroupCldType enum.
+func (e CloudDiagramGroupCldType) Valid() bool {
+	switch e {
+	case CloudDiagramGroupCldTypeAWS:
+		return true
+	case CloudDiagramGroupCldTypeAZURE:
+		return true
+	case CloudDiagramGroupCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramGroupGroupType.
+const (
+	Account            CloudDiagramGroupGroupType = "account"
+	Aks                CloudDiagramGroupGroupType = "aks"
+	Az                 CloudDiagramGroupGroupType = "az"
+	AzureCdnProfile    CloudDiagramGroupGroupType = "azure_cdn_profile"
+	AzureDnsZone       CloudDiagramGroupGroupType = "azure_dns_zone"
+	AzureResourceGroup CloudDiagramGroupGroupType = "azure_resource_group"
+	AzureSubscription  CloudDiagramGroupGroupType = "azure_subscription"
+	CustomerGateway    CloudDiagramGroupGroupType = "customer_gateway"
+	Ecs                CloudDiagramGroupGroupType = "ecs"
+	Eks                CloudDiagramGroupGroupType = "eks"
+	GcpInstanceGroup   CloudDiagramGroupGroupType = "gcp_instance_group"
+	GcpManagedZone     CloudDiagramGroupGroupType = "gcp_managed_zone"
+	GkeCluster         CloudDiagramGroupGroupType = "gke_cluster"
+	K8sDaemonSet       CloudDiagramGroupGroupType = "k8s_daemon_set"
+	K8sDeployment      CloudDiagramGroupGroupType = "k8s_deployment"
+	K8sNamespace       CloudDiagramGroupGroupType = "k8s_namespace"
+	K8sPod             CloudDiagramGroupGroupType = "k8s_pod"
+	K8sReplicaSet      CloudDiagramGroupGroupType = "k8s_replica_set"
+	K8sStatefulSet     CloudDiagramGroupGroupType = "k8s_stateful_set"
+	Project            CloudDiagramGroupGroupType = "project"
+	Region             CloudDiagramGroupGroupType = "region"
+	SecurityGroup      CloudDiagramGroupGroupType = "security_group"
+	Subnet             CloudDiagramGroupGroupType = "subnet"
+	Vpc                CloudDiagramGroupGroupType = "vpc"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramGroupGroupType enum.
+func (e CloudDiagramGroupGroupType) Valid() bool {
+	switch e {
+	case Account:
+		return true
+	case Aks:
+		return true
+	case Az:
+		return true
+	case AzureCdnProfile:
+		return true
+	case AzureDnsZone:
+		return true
+	case AzureResourceGroup:
+		return true
+	case AzureSubscription:
+		return true
+	case CustomerGateway:
+		return true
+	case Ecs:
+		return true
+	case Eks:
+		return true
+	case GcpInstanceGroup:
+		return true
+	case GcpManagedZone:
+		return true
+	case GkeCluster:
+		return true
+	case K8sDaemonSet:
+		return true
+	case K8sDeployment:
+		return true
+	case K8sNamespace:
+		return true
+	case K8sPod:
+		return true
+	case K8sReplicaSet:
+		return true
+	case K8sStatefulSet:
+		return true
+	case Project:
+		return true
+	case Region:
+		return true
+	case SecurityGroup:
+		return true
+	case Subnet:
+		return true
+	case Vpc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramGroupItemType.
+const (
+	CloudDiagramGroupItemTypeAttachment  CloudDiagramGroupItemType = "attachment"
+	CloudDiagramGroupItemTypeCombiner    CloudDiagramGroupItemType = "combiner"
+	CloudDiagramGroupItemTypeElement     CloudDiagramGroupItemType = "element"
+	CloudDiagramGroupItemTypeGroup       CloudDiagramGroupItemType = "group"
+	CloudDiagramGroupItemTypeLink        CloudDiagramGroupItemType = "link"
+	CloudDiagramGroupItemTypeNode        CloudDiagramGroupItemType = "node"
+	CloudDiagramGroupItemTypeNote        CloudDiagramGroupItemType = "note"
+	CloudDiagramGroupItemTypeScheme      CloudDiagramGroupItemType = "scheme"
+	CloudDiagramGroupItemTypeStatussheet CloudDiagramGroupItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramGroupItemType enum.
+func (e CloudDiagramGroupItemType) Valid() bool {
+	switch e {
+	case CloudDiagramGroupItemTypeAttachment:
+		return true
+	case CloudDiagramGroupItemTypeCombiner:
+		return true
+	case CloudDiagramGroupItemTypeElement:
+		return true
+	case CloudDiagramGroupItemTypeGroup:
+		return true
+	case CloudDiagramGroupItemTypeLink:
+		return true
+	case CloudDiagramGroupItemTypeNode:
+		return true
+	case CloudDiagramGroupItemTypeNote:
+		return true
+	case CloudDiagramGroupItemTypeScheme:
+		return true
+	case CloudDiagramGroupItemTypeStatussheet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramImportStateStatus.
+const (
+	Failure    CloudDiagramImportStateStatus = "failure"
+	InProgress CloudDiagramImportStateStatus = "in_progress"
+	Queued     CloudDiagramImportStateStatus = "queued"
+	Success    CloudDiagramImportStateStatus = "success"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramImportStateStatus enum.
+func (e CloudDiagramImportStateStatus) Valid() bool {
+	switch e {
+	case Failure:
+		return true
+	case InProgress:
+		return true
+	case Queued:
+		return true
+	case Success:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramImportStateType.
+const (
+	CloudDiagramImportStateTypeAWS   CloudDiagramImportStateType = "AWS"
+	CloudDiagramImportStateTypeAZURE CloudDiagramImportStateType = "AZURE"
+	CloudDiagramImportStateTypeGCP   CloudDiagramImportStateType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramImportStateType enum.
+func (e CloudDiagramImportStateType) Valid() bool {
+	switch e {
+	case CloudDiagramImportStateTypeAWS:
+		return true
+	case CloudDiagramImportStateTypeAZURE:
+		return true
+	case CloudDiagramImportStateTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramLinkCldType.
+const (
+	CloudDiagramLinkCldTypeAWS   CloudDiagramLinkCldType = "AWS"
+	CloudDiagramLinkCldTypeAZURE CloudDiagramLinkCldType = "AZURE"
+	CloudDiagramLinkCldTypeGCP   CloudDiagramLinkCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramLinkCldType enum.
+func (e CloudDiagramLinkCldType) Valid() bool {
+	switch e {
+	case CloudDiagramLinkCldTypeAWS:
+		return true
+	case CloudDiagramLinkCldTypeAZURE:
+		return true
+	case CloudDiagramLinkCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramLinkConnectionType.
+const (
+	CloudDiagramLinkConnectionTypeCrossCloudInterconnect       CloudDiagramLinkConnectionType = "Cross Cloud Interconnect"
+	CloudDiagramLinkConnectionTypeDedicatedInterconnect        CloudDiagramLinkConnectionType = "Dedicated Interconnect"
+	CloudDiagramLinkConnectionTypeNetworkConnectivityCenter    CloudDiagramLinkConnectionType = "Network Connectivity Center"
+	CloudDiagramLinkConnectionTypeNormal                       CloudDiagramLinkConnectionType = "normal"
+	CloudDiagramLinkConnectionTypePartnerInterconnect          CloudDiagramLinkConnectionType = "Partner Interconnect"
+	CloudDiagramLinkConnectionTypePrivate                      CloudDiagramLinkConnectionType = "private"
+	CloudDiagramLinkConnectionTypePrivateGoogleAccess          CloudDiagramLinkConnectionType = "Private Google Access"
+	CloudDiagramLinkConnectionTypePrivateServiceConnect        CloudDiagramLinkConnectionType = "Private Service Connect"
+	CloudDiagramLinkConnectionTypeServerlessVPC                CloudDiagramLinkConnectionType = "Serverless VPC"
+	CloudDiagramLinkConnectionTypeServerlessVPCAccessConnector CloudDiagramLinkConnectionType = "Serverless VPC Access Connector"
+	CloudDiagramLinkConnectionTypeTunnel                       CloudDiagramLinkConnectionType = "tunnel"
+	CloudDiagramLinkConnectionTypeVPCPeering                   CloudDiagramLinkConnectionType = "VPC Peering"
+	CloudDiagramLinkConnectionTypeVPN                          CloudDiagramLinkConnectionType = "VPN"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramLinkConnectionType enum.
+func (e CloudDiagramLinkConnectionType) Valid() bool {
+	switch e {
+	case CloudDiagramLinkConnectionTypeCrossCloudInterconnect:
+		return true
+	case CloudDiagramLinkConnectionTypeDedicatedInterconnect:
+		return true
+	case CloudDiagramLinkConnectionTypeNetworkConnectivityCenter:
+		return true
+	case CloudDiagramLinkConnectionTypeNormal:
+		return true
+	case CloudDiagramLinkConnectionTypePartnerInterconnect:
+		return true
+	case CloudDiagramLinkConnectionTypePrivate:
+		return true
+	case CloudDiagramLinkConnectionTypePrivateGoogleAccess:
+		return true
+	case CloudDiagramLinkConnectionTypePrivateServiceConnect:
+		return true
+	case CloudDiagramLinkConnectionTypeServerlessVPC:
+		return true
+	case CloudDiagramLinkConnectionTypeServerlessVPCAccessConnector:
+		return true
+	case CloudDiagramLinkConnectionTypeTunnel:
+		return true
+	case CloudDiagramLinkConnectionTypeVPCPeering:
+		return true
+	case CloudDiagramLinkConnectionTypeVPN:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramNodeCldType.
+const (
+	AWS   CloudDiagramNodeCldType = "AWS"
+	AZURE CloudDiagramNodeCldType = "AZURE"
+	GCP   CloudDiagramNodeCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramNodeCldType enum.
+func (e CloudDiagramNodeCldType) Valid() bool {
+	switch e {
+	case AWS:
+		return true
+	case AZURE:
+		return true
+	case GCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramSchemeResultType.
+const (
+	CloudDiagramSchemeResultTypeApplication    CloudDiagramSchemeResultType = "application"
+	CloudDiagramSchemeResultTypeInfrastructure CloudDiagramSchemeResultType = "infrastructure"
+	CloudDiagramSchemeResultTypeNetwork        CloudDiagramSchemeResultType = "network"
+	CloudDiagramSchemeResultTypeTemplate       CloudDiagramSchemeResultType = "template"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramSchemeResultType enum.
+func (e CloudDiagramSchemeResultType) Valid() bool {
+	switch e {
+	case CloudDiagramSchemeResultTypeApplication:
+		return true
+	case CloudDiagramSchemeResultTypeInfrastructure:
+		return true
+	case CloudDiagramSchemeResultTypeNetwork:
+		return true
+	case CloudDiagramSchemeResultTypeTemplate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramSchemeSearchItemType.
+const (
+	CloudDiagramSchemeSearchItemTypeStatussheet CloudDiagramSchemeSearchItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramSchemeSearchItemType enum.
+func (e CloudDiagramSchemeSearchItemType) Valid() bool {
+	switch e {
+	case CloudDiagramSchemeSearchItemTypeStatussheet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramStatsType.
+const (
+	CloudDiagramStatsTypeApplication    CloudDiagramStatsType = "application"
+	CloudDiagramStatsTypeInfrastructure CloudDiagramStatsType = "infrastructure"
+	CloudDiagramStatsTypeNetwork        CloudDiagramStatsType = "network"
+	CloudDiagramStatsTypeTemplate       CloudDiagramStatsType = "template"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramStatsType enum.
+func (e CloudDiagramStatsType) Valid() bool {
+	switch e {
+	case CloudDiagramStatsTypeApplication:
+		return true
+	case CloudDiagramStatsTypeInfrastructure:
+		return true
+	case CloudDiagramStatsTypeNetwork:
+		return true
+	case CloudDiagramStatsTypeTemplate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramStatsChangeType.
+const (
+	NODECREATE CloudDiagramStatsChangeType = "NODE_CREATE"
+	NODEDELETE CloudDiagramStatsChangeType = "NODE_DELETE"
+	NODEUPDATE CloudDiagramStatsChangeType = "NODE_UPDATE"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramStatsChangeType enum.
+func (e CloudDiagramStatsChangeType) Valid() bool {
+	switch e {
+	case NODECREATE:
+		return true
+	case NODEDELETE:
+		return true
+	case NODEUPDATE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramsGetRequestTemplate0.
+const (
+	Component   CloudDiagramsGetRequestTemplate0 = "component"
+	Statussheet CloudDiagramsGetRequestTemplate0 = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramsGetRequestTemplate0 enum.
+func (e CloudDiagramsGetRequestTemplate0) Valid() bool {
+	switch e {
+	case Component:
+		return true
+	case Statussheet:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudIncidentListItemPlatform.
 const (
 	CloudIncidentListItemPlatformAmazonWebServices CloudIncidentListItemPlatform = "amazon-web-services"
@@ -1639,22 +2194,22 @@ func (e TicketResponseExtAPIPlatform) Valid() bool {
 
 // Defines values for TicketResponseExtAPISeverity.
 const (
-	High   TicketResponseExtAPISeverity = "high"
-	Low    TicketResponseExtAPISeverity = "low"
-	Normal TicketResponseExtAPISeverity = "normal"
-	Urgent TicketResponseExtAPISeverity = "urgent"
+	TicketResponseExtAPISeverityHigh   TicketResponseExtAPISeverity = "high"
+	TicketResponseExtAPISeverityLow    TicketResponseExtAPISeverity = "low"
+	TicketResponseExtAPISeverityNormal TicketResponseExtAPISeverity = "normal"
+	TicketResponseExtAPISeverityUrgent TicketResponseExtAPISeverity = "urgent"
 )
 
 // Valid indicates whether the value is a known member of the TicketResponseExtAPISeverity enum.
 func (e TicketResponseExtAPISeverity) Valid() bool {
 	switch e {
-	case High:
+	case TicketResponseExtAPISeverityHigh:
 		return true
-	case Low:
+	case TicketResponseExtAPISeverityLow:
 		return true
-	case Normal:
+	case TicketResponseExtAPISeverityNormal:
 		return true
-	case Urgent:
+	case TicketResponseExtAPISeverityUrgent:
 		return true
 	default:
 		return false
@@ -2321,6 +2876,66 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 	case ListLabelsParamsSortOrderAsc:
 		return true
 	case ListLabelsParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCloudDiagramComponentsParamsType.
+const (
+	Application    GetCloudDiagramComponentsParamsType = "application"
+	Infrastructure GetCloudDiagramComponentsParamsType = "infrastructure"
+	Network        GetCloudDiagramComponentsParamsType = "network"
+	Template       GetCloudDiagramComponentsParamsType = "template"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramComponentsParamsType enum.
+func (e GetCloudDiagramComponentsParamsType) Valid() bool {
+	switch e {
+	case Application:
+		return true
+	case Infrastructure:
+		return true
+	case Network:
+		return true
+	case Template:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCloudDiagramComponentsParamsNodeType.
+const (
+	GetCloudDiagramComponentsParamsNodeTypeAppComponent GetCloudDiagramComponentsParamsNodeType = "app_component"
+	GetCloudDiagramComponentsParamsNodeTypeAppGroup     GetCloudDiagramComponentsParamsNodeType = "app_group"
+	GetCloudDiagramComponentsParamsNodeTypeAppLink      GetCloudDiagramComponentsParamsNodeType = "app_link"
+	GetCloudDiagramComponentsParamsNodeTypeAttachment   GetCloudDiagramComponentsParamsNodeType = "attachment"
+	GetCloudDiagramComponentsParamsNodeTypeGroup        GetCloudDiagramComponentsParamsNodeType = "group"
+	GetCloudDiagramComponentsParamsNodeTypeHost         GetCloudDiagramComponentsParamsNodeType = "host"
+	GetCloudDiagramComponentsParamsNodeTypeLink         GetCloudDiagramComponentsParamsNodeType = "link"
+	GetCloudDiagramComponentsParamsNodeTypeService      GetCloudDiagramComponentsParamsNodeType = "service"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramComponentsParamsNodeType enum.
+func (e GetCloudDiagramComponentsParamsNodeType) Valid() bool {
+	switch e {
+	case GetCloudDiagramComponentsParamsNodeTypeAppComponent:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeAppGroup:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeAppLink:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeAttachment:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeGroup:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeHost:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeLink:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeService:
 		return true
 	default:
 		return false
@@ -3033,6 +3648,742 @@ type BudgetListItem struct {
 	TimeInterval *string                 `json:"timeInterval,omitempty"`
 	UpdateTime   *int64                  `json:"updateTime,omitempty"`
 	Url          *string                 `json:"url,omitempty"`
+}
+
+// CloudDiagramAttachment defines model for CloudDiagramAttachment.
+type CloudDiagramAttachment struct {
+	// UnderscoreId Attachment ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramAttachmentCldType `json:"cld_type,omitempty"`
+
+	// Color Attachment color.
+	Color *string `json:"color,omitempty"`
+
+	// Group Parent group ID.
+	Group *string `json:"group,omitempty"`
+
+	// Icon Attachment icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Issues Issues associated with this attachment.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramAttachmentCldType Cloud account type.
+type CloudDiagramAttachmentCldType string
+
+// CloudDiagramCombiner A combiner component that visually groups multiple components.
+type CloudDiagramCombiner struct {
+	// UnderscoreId Combiner ID.
+	UnderscoreId string `json:"_id"`
+
+	// Color Combiner color.
+	Color *string `json:"color,omitempty"`
+
+	// Icon Combiner icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Items Components contained in the combiner.
+	Items *[]CloudDiagramCombinerItem `json:"items,omitempty"`
+
+	// Name Combiner name.
+	Name *string `json:"name,omitempty"`
+}
+
+// CloudDiagramCombinerItem A component reference contained within a combiner.
+type CloudDiagramCombinerItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// Type Component type.
+	Type CloudDiagramCombinerItemType `json:"type"`
+}
+
+// CloudDiagramCombinerItemType Component type.
+type CloudDiagramCombinerItemType string
+
+// CloudDiagramComponentBase Common fields shared by all statussheet component types.
+type CloudDiagramComponentBase struct {
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramComponentBaseCldType `json:"cld_type,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramComponentBaseCldType Cloud account type.
+type CloudDiagramComponentBaseCldType string
+
+// CloudDiagramComponentSearchItem A component matching the search query.
+type CloudDiagramComponentSearchItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Color Component color.
+	Color *string `json:"color,omitempty"`
+
+	// GroupType Group type (for group components).
+	GroupType *string `json:"group_type,omitempty"`
+
+	// Icon Component icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// NodeType Node type.
+	NodeType *CloudDiagramComponentSearchItemNodeType `json:"node_type,omitempty"`
+
+	// Props Component properties. For the "prop" category contains the matched property key-value pairs.
+	Props *CloudDiagramComponentSearchItemProps `json:"props,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Statussheet ID.
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Type Component type.
+	Type CloudDiagramComponentSearchItemType `json:"type"`
+}
+
+// CloudDiagramComponentSearchItemNodeType Node type.
+type CloudDiagramComponentSearchItemNodeType string
+
+// CloudDiagramComponentSearchItemType Component type.
+type CloudDiagramComponentSearchItemType string
+
+// CloudDiagramComponentSearchItemProps Component properties. For the "prop" category contains the matched property key-value pairs.
+type CloudDiagramComponentSearchItemProps struct {
+	// ServiceType Cloud service type (e.g. AWS::EC2::Instance).
+	ServiceType *string `json:"service_type,omitempty"`
+}
+
+// CloudDiagramElement defines model for CloudDiagramElement.
+type CloudDiagramElement struct {
+	// UnderscoreId Element ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramElementCldType `json:"cld_type,omitempty"`
+
+	// Color Element color.
+	Color *string `json:"color,omitempty"`
+
+	// Icon Element icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Issues Issues associated with this element.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Parent Parent element ID.
+	Parent *string `json:"parent,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramElementCldType Cloud account type.
+type CloudDiagramElementCldType string
+
+// CloudDiagramExportJsonMetadata Metadata included in a diagram JSON export.
+type CloudDiagramExportJsonMetadata struct {
+	// Connections Map of component ID to display label for external connections referenced by cross-diagram links.
+	Connections *map[string]string `json:"connections,omitempty"`
+
+	// Date ISO 8601 timestamp of the export.
+	Date time.Time `json:"date"`
+
+	// User Email of the user who triggered the export.
+	User string `json:"user"`
+
+	// Version Export format version.
+	Version string `json:"version"`
+}
+
+// CloudDiagramExportJsonResponse Full diagram export as a structured JSON document.
+type CloudDiagramExportJsonResponse struct {
+	// Attachments Exported attachments.
+	Attachments *[]CloudDiagramAttachment `json:"attachments,omitempty"`
+
+	// Combiners Exported combiners.
+	Combiners *[]CloudDiagramCombiner `json:"combiners,omitempty"`
+
+	// Elements Exported elements.
+	Elements *[]CloudDiagramElement `json:"elements,omitempty"`
+
+	// Groups Exported groups.
+	Groups *[]CloudDiagramGroup `json:"groups,omitempty"`
+
+	// Links Exported links.
+	Links *[]CloudDiagramLink `json:"links,omitempty"`
+
+	// Metadata Metadata included in a diagram JSON export.
+	Metadata CloudDiagramExportJsonMetadata `json:"metadata"`
+
+	// Nodes Exported nodes.
+	Nodes *[]CloudDiagramNode `json:"nodes,omitempty"`
+
+	// Notes Exported notes.
+	Notes *[]CloudDiagramNote `json:"notes,omitempty"`
+
+	// Statussheet Diagram-level metadata (scheme fields, excluding internal IDs).
+	Statussheet *map[string]interface{} `json:"statussheet,omitempty"`
+}
+
+// CloudDiagramGroup defines model for CloudDiagramGroup.
+type CloudDiagramGroup struct {
+	// UnderscoreId Group ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramGroupCldType `json:"cld_type,omitempty"`
+
+	// Color Group color.
+	Color *string `json:"color,omitempty"`
+
+	// GroupType Group type.
+	GroupType *CloudDiagramGroupGroupType `json:"group_type,omitempty"`
+
+	// Icon Group icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Issues Issues associated with this group.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Items Components contained in the group.
+	Items *[]CloudDiagramGroupItem `json:"items,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramGroupCldType Cloud account type.
+type CloudDiagramGroupCldType string
+
+// CloudDiagramGroupGroupType Group type.
+type CloudDiagramGroupGroupType string
+
+// CloudDiagramGroupItem Reference to a component contained within a group.
+type CloudDiagramGroupItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// Type Component type.
+	Type CloudDiagramGroupItemType `json:"type"`
+}
+
+// CloudDiagramGroupItemType Component type.
+type CloudDiagramGroupItemType string
+
+// CloudDiagramImportState Current import/sync state for a cloud-connected diagram.
+type CloudDiagramImportState struct {
+	// Account Connected account ID.
+	Account *string `json:"account,omitempty"`
+
+	// CloudId Cloud account ID.
+	CloudId *string `json:"cloudId,omitempty"`
+
+	// ErrorMessage Error message if the import failed.
+	ErrorMessage *string `json:"errorMessage,omitempty"`
+
+	// Status Import status.
+	Status *CloudDiagramImportStateStatus `json:"status,omitempty"`
+
+	// SyncedAt Timestamp of the last successful sync.
+	SyncedAt *time.Time `json:"syncedAt,omitempty"`
+
+	// Type Connected cloud account type.
+	Type *CloudDiagramImportStateType `json:"type,omitempty"`
+}
+
+// CloudDiagramImportStateStatus Import status.
+type CloudDiagramImportStateStatus string
+
+// CloudDiagramImportStateType Connected cloud account type.
+type CloudDiagramImportStateType string
+
+// CloudDiagramInfraNodeRef Reference to a linked infrastructure node in another diagram.
+type CloudDiagramInfraNodeRef struct {
+	// UnderscoreId Infrastructure node ID.
+	UnderscoreId string `json:"_id"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId string `json:"scheme_id"`
+
+	// SsId Parent statussheet ID.
+	SsId string `json:"ss_id"`
+}
+
+// CloudDiagramIssue Issue annotation linked to a component.
+type CloudDiagramIssue struct {
+	// UnderscoreId Issue reference ID.
+	UnderscoreId *string `json:"_id,omitempty"`
+
+	// Comment Optional comment on the issue.
+	Comment *string `json:"comment,omitempty"`
+
+	// Jira Linked Jira ticket key or URL.
+	Jira *string `json:"jira,omitempty"`
+
+	// Snoozed Snooze duration in seconds.
+	Snoozed *float32 `json:"snoozed,omitempty"`
+}
+
+// CloudDiagramLink defines model for CloudDiagramLink.
+type CloudDiagramLink struct {
+	// UnderscoreId Link ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramLinkCldType `json:"cld_type,omitempty"`
+
+	// ConnectionType Link connection type.
+	ConnectionType *CloudDiagramLinkConnectionType `json:"connection_type,omitempty"`
+
+	// Issues Issues associated with this link.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// OwnerSsId Owner statussheet ID for cross-diagram links.
+	OwnerSsId *string `json:"owner_ss_id,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramLinkCldType Cloud account type.
+type CloudDiagramLinkCldType string
+
+// CloudDiagramLinkConnectionType Link connection type.
+type CloudDiagramLinkConnectionType string
+
+// CloudDiagramNode defines model for CloudDiagramNode.
+type CloudDiagramNode struct {
+	// UnderscoreId Node ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramNodeCldType `json:"cld_type,omitempty"`
+
+	// Color Node color.
+	Color *string `json:"color,omitempty"`
+
+	// Icon Node icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// InfraNode Reference to a linked infrastructure node in another diagram.
+	InfraNode *CloudDiagramInfraNodeRef `json:"infra_node,omitempty"`
+
+	// InstanceCount Number of instances represented by this node.
+	InstanceCount *int `json:"instance_count,omitempty"`
+
+	// Issues Issues associated with this node.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Parent Parent node ID.
+	Parent *string `json:"parent,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Running Whether the node is currently running.
+	Running *bool `json:"running,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramNodeCldType Cloud account type.
+type CloudDiagramNodeCldType string
+
+// CloudDiagramNote A text note placed on the diagram.
+type CloudDiagramNote struct {
+	// UnderscoreId Note ID.
+	UnderscoreId string `json:"_id"`
+
+	// Color Note background color.
+	Color *string `json:"color,omitempty"`
+
+	// FontSize Note font size.
+	FontSize *float32 `json:"font_size,omitempty"`
+
+	// Text Note text content.
+	Text *string `json:"text,omitempty"`
+}
+
+// CloudDiagramSchemeResult A diagram with its connected cloud accounts.
+type CloudDiagramSchemeResult struct {
+	// UnderscoreId Diagram ID.
+	UnderscoreId string `json:"_id"`
+
+	// Color Diagram color.
+	Color *string `json:"color,omitempty"`
+
+	// Name Diagram name.
+	Name string `json:"name"`
+
+	// Statussheet Connected cloud accounts (statussheets).
+	Statussheet []CloudDiagramSchemeStatussheetInfo `json:"statussheet"`
+
+	// Type Diagram type.
+	Type CloudDiagramSchemeResultType `json:"type"`
+}
+
+// CloudDiagramSchemeResultType Diagram type.
+type CloudDiagramSchemeResultType string
+
+// CloudDiagramSchemeSearchItem A statussheet (cloud account) matching the search query.
+type CloudDiagramSchemeSearchItem struct {
+	// UnderscoreId Statussheet ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Name Statussheet name.
+	Name *string `json:"name,omitempty"`
+
+	// Scheme Parent diagram name.
+	Scheme *string `json:"scheme,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Statussheet ID (same as _id).
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Status Import/sync status.
+	Status *string `json:"status,omitempty"`
+
+	// Type Component type — always "statussheet" for this category.
+	Type CloudDiagramSchemeSearchItemType `json:"type"`
+}
+
+// CloudDiagramSchemeSearchItemType Component type — always "statussheet" for this category.
+type CloudDiagramSchemeSearchItemType string
+
+// CloudDiagramSchemeStatussheetInfo Summary of a cloud account (statussheet) connected to a diagram.
+type CloudDiagramSchemeStatussheetInfo struct {
+	// AccountName Connected cloud account name.
+	AccountName string `json:"account_name"`
+
+	// AlarmsCount Number of active alarms.
+	AlarmsCount int `json:"alarms_count"`
+
+	// Color Statussheet color.
+	Color string `json:"color"`
+
+	// Empty True when the statussheet contains no components.
+	Empty bool `json:"empty"`
+
+	// Name Statussheet name.
+	Name string `json:"name"`
+
+	// Ssid Statussheet ID.
+	Ssid string `json:"ssid"`
+}
+
+// CloudDiagramStats Diagram with activity stats for a given time period.
+type CloudDiagramStats struct {
+	// UnderscoreId ID of the diagram.
+	UnderscoreId *string `json:"_id,omitempty"`
+
+	// AccountId Cloud account ID.
+	AccountId *string `json:"account_id,omitempty"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// AccountType Cloud account type.
+	AccountType *string `json:"account_type,omitempty"`
+
+	// Changes Activity changes within the period.
+	Changes *[]CloudDiagramStatsChange `json:"changes,omitempty"`
+
+	// Import Current import/sync state for a cloud-connected diagram.
+	Import *CloudDiagramImportState `json:"import,omitempty"`
+
+	// Name Name of the diagram.
+	Name *string `json:"name,omitempty"`
+
+	// SsId ID of the statussheet the diagram belongs to.
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Type Type of the diagram.
+	Type *CloudDiagramStatsType `json:"type,omitempty"`
+}
+
+// CloudDiagramStatsType Type of the diagram.
+type CloudDiagramStatsType string
+
+// CloudDiagramStatsChange A single activity change entry in a diagram stats record.
+type CloudDiagramStatsChange struct {
+	// Count Number of occurrences of this change type.
+	Count *int `json:"count,omitempty"`
+
+	// Service Cloud service the change applies to.
+	Service *string `json:"service,omitempty"`
+
+	// Type Type of the change.
+	Type *CloudDiagramStatsChangeType `json:"type,omitempty"`
+}
+
+// CloudDiagramStatsChangeType Type of the change.
+type CloudDiagramStatsChangeType string
+
+// CloudDiagramStatussheetComponents Component collections of a statussheet, keyed by component ID.
+type CloudDiagramStatussheetComponents struct {
+	// Attachment Map of attachment ID to attachment component.
+	Attachment *map[string]CloudDiagramAttachment `json:"attachment,omitempty"`
+
+	// Combiner Map of combiner ID to combiner component.
+	Combiner *map[string]CloudDiagramCombiner `json:"combiner,omitempty"`
+
+	// Element Map of element ID to element component.
+	Element *map[string]CloudDiagramElement `json:"element,omitempty"`
+
+	// Group Map of group ID to group component.
+	Group *map[string]CloudDiagramGroup `json:"group,omitempty"`
+
+	// Link Map of link ID to link component.
+	Link *map[string]CloudDiagramLink `json:"link,omitempty"`
+
+	// Node Map of node ID to node component.
+	Node *map[string]CloudDiagramNode `json:"node,omitempty"`
+
+	// Note Map of note ID to note component.
+	Note *map[string]CloudDiagramNote `json:"note,omitempty"`
+}
+
+// CloudDiagramStatussheetData defines model for CloudDiagramStatussheetData.
+type CloudDiagramStatussheetData struct {
+	// Attachment Map of attachment ID to attachment component.
+	Attachment *map[string]CloudDiagramAttachment `json:"attachment,omitempty"`
+
+	// Combiner Map of combiner ID to combiner component.
+	Combiner *map[string]CloudDiagramCombiner `json:"combiner,omitempty"`
+
+	// Element Map of element ID to element component.
+	Element *map[string]CloudDiagramElement `json:"element,omitempty"`
+
+	// Group Map of group ID to group component.
+	Group *map[string]CloudDiagramGroup `json:"group,omitempty"`
+
+	// Link Map of link ID to link component.
+	Link *map[string]CloudDiagramLink `json:"link,omitempty"`
+
+	// Node Map of node ID to node component.
+	Node *map[string]CloudDiagramNode `json:"node,omitempty"`
+
+	// Note Map of note ID to note component.
+	Note *map[string]CloudDiagramNote `json:"note,omitempty"`
+
+	// Statussheet Projected statussheet document returned inside each statussheet entry.
+	// Fields reflect the SS_CLIENT_OPTIONS projection: _id, import, updatedAt, linksVersion.
+	Statussheet CloudDiagramStatussheetMeta `json:"statussheet"`
+}
+
+// CloudDiagramStatussheetGetRequest Request body for getting statussheet components.
+// Omit or send an empty object to retrieve all components.
+type CloudDiagramStatussheetGetRequest struct {
+	// Attachment Attachment IDs to fetch.
+	Attachment *[]string `json:"attachment,omitempty"`
+
+	// Combiner Combiner IDs to fetch.
+	Combiner *[]string `json:"combiner,omitempty"`
+
+	// Element Element IDs to fetch.
+	Element *[]string `json:"element,omitempty"`
+
+	// Group Group IDs to fetch.
+	Group *[]string `json:"group,omitempty"`
+
+	// Link Link IDs to fetch.
+	Link *[]string `json:"link,omitempty"`
+
+	// Node Node IDs to fetch.
+	Node *[]string `json:"node,omitempty"`
+
+	// Note Note IDs to fetch.
+	Note *[]string `json:"note,omitempty"`
+}
+
+// CloudDiagramStatussheetMeta Projected statussheet document returned inside each statussheet entry.
+// Fields reflect the SS_CLIENT_OPTIONS projection: _id, import, updatedAt, linksVersion.
+type CloudDiagramStatussheetMeta struct {
+	// UnderscoreId Statussheet ID.
+	UnderscoreId string `json:"_id"`
+
+	// Import Current import/sync state for a cloud-connected diagram.
+	Import *CloudDiagramImportState `json:"import,omitempty"`
+
+	// LinksVersion Links version counter, incremented on every link change.
+	LinksVersion *int `json:"linksVersion,omitempty"`
+
+	// UpdatedAt Timestamp of the last update.
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// CloudDiagramsGetRequest Request body for getting diagram components.
+// Leave empty to retrieve all accessible diagrams (returns scheme map only).
+type CloudDiagramsGetRequest struct {
+	// Scheme IDs of diagrams to load.
+	Scheme *[]string `json:"scheme,omitempty"`
+
+	// Statussheet IDs of statussheets to load.
+	Statussheet *[]string `json:"statussheet,omitempty"`
+
+	// Template Template type or array of template statussheet IDs to include.
+	Template *CloudDiagramsGetRequest_Template `json:"template,omitempty"`
+}
+
+// CloudDiagramsGetRequestTemplate0 defines model for CloudDiagramsGetRequest.Template.0.
+type CloudDiagramsGetRequestTemplate0 string
+
+// CloudDiagramsGetRequestTemplate1 defines model for .
+type CloudDiagramsGetRequestTemplate1 = []string
+
+// CloudDiagramsGetRequest_Template Template type or array of template statussheet IDs to include.
+type CloudDiagramsGetRequest_Template struct {
+	union json.RawMessage
+}
+
+// CloudDiagramsGetResponse Diagram and statussheet data.
+// When called with an empty body, only the scheme map is populated.
+// When called with a populated body, both scheme and statussheet maps are returned
+// with components projected to key display and cloud fields by default.
+type CloudDiagramsGetResponse struct {
+	// Scheme Map of diagram ID to diagram with its connected cloud accounts.
+	Scheme *map[string]CloudDiagramSchemeResult `json:"scheme,omitempty"`
+
+	// Statussheet Map of statussheet ID to statussheet metadata and component collections.
+	// Components are projected to key display and cloud fields by default.
+	Statussheet *map[string]CloudDiagramStatussheetData `json:"statussheet,omitempty"`
+
+	// Template Map of template statussheet ID to template data.
+	Template *map[string]interface{} `json:"template,omitempty"`
+}
+
+// CloudDiagramsSearchRequest Request body for searching diagrams and components.
+type CloudDiagramsSearchRequest struct {
+	// From Pagination offset (default 0).
+	From *int `json:"from,omitempty"`
+
+	// Query Search query string.
+	Query string `json:"query"`
+
+	// Size Maximum number of results per category (default 20).
+	Size *int `json:"size,omitempty"`
+
+	// SsId Limit search to components within this statussheet.
+	SsId *string `json:"ss_id,omitempty"`
+}
+
+// CloudDiagramsSearchResponse Search results grouped into three categories.
+type CloudDiagramsSearchResponse struct {
+	// Component Components matching the query by name.
+	Component *[]CloudDiagramComponentSearchItem `json:"component,omitempty"`
+
+	// Prop Components matching the query by property values.
+	Prop *[]CloudDiagramComponentSearchItem `json:"prop,omitempty"`
+
+	// Scheme statussheets (cloud accounts) matching the query.
+	Scheme *[]CloudDiagramSchemeSearchItem `json:"scheme,omitempty"`
 }
 
 // CloudIncidentListItem Summary information for a cloud incident.
@@ -5391,6 +6742,72 @@ type ListInvoicesParams struct {
 	MaxCreationTime *int64 `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
+// GetCloudDiagramComponentsParams defines parameters for GetCloudDiagramComponents.
+type GetCloudDiagramComponentsParams struct {
+	// Components Include components in the statussheet response.
+	Components *bool `form:"components,omitempty" json:"components,omitempty"`
+
+	// External Include external (cross-diagram) components.
+	External *bool `form:"external,omitempty" json:"external,omitempty"`
+
+	// Element Include elements.
+	Element *bool `form:"element,omitempty" json:"element,omitempty"`
+
+	// Link Include links.
+	Link *bool `form:"link,omitempty" json:"link,omitempty"`
+
+	// Group Include groups.
+	Group *bool `form:"group,omitempty" json:"group,omitempty"`
+
+	// Note Include notes.
+	Note *bool `form:"note,omitempty" json:"note,omitempty"`
+
+	// Combiner Include combiners.
+	Combiner *bool `form:"combiner,omitempty" json:"combiner,omitempty"`
+
+	// Type Filter diagrams by type.
+	Type *[]GetCloudDiagramComponentsParamsType `form:"type,omitempty" json:"type,omitempty"`
+
+	// NodeType Filter components by node type.
+	NodeType *GetCloudDiagramComponentsParamsNodeType `form:"node_type,omitempty" json:"node_type,omitempty"`
+
+	// AlarmsCount Include alarm counts (default true).
+	AlarmsCount *bool `form:"alarms_count,omitempty" json:"alarms_count,omitempty"`
+
+	// IssuesCount Include issue counts.
+	IssuesCount *bool `form:"issues_count,omitempty" json:"issues_count,omitempty"`
+
+	// SkipEmpty Omit diagrams that have no components.
+	SkipEmpty *bool `form:"skip_empty,omitempty" json:"skip_empty,omitempty"`
+
+	// ExcludeDefaultVpc Exclude the default VPC group (default true).
+	ExcludeDefaultVpc *bool `form:"exclude_default_vpc,omitempty" json:"exclude_default_vpc,omitempty"`
+
+	// ExcludeEmptySubnets Exclude empty subnet groups (default true).
+	ExcludeEmptySubnets *bool `form:"exclude_empty_subnets,omitempty" json:"exclude_empty_subnets,omitempty"`
+}
+
+// GetCloudDiagramComponentsParamsType defines parameters for GetCloudDiagramComponents.
+type GetCloudDiagramComponentsParamsType string
+
+// GetCloudDiagramComponentsParamsNodeType defines parameters for GetCloudDiagramComponents.
+type GetCloudDiagramComponentsParamsNodeType string
+
+// GetCloudDiagramsStatsParams defines parameters for GetCloudDiagramsStats.
+type GetCloudDiagramsStatsParams struct {
+	// Start Start of the period.
+	Start time.Time `form:"start" json:"start"`
+
+	// End End of the period.
+	End time.Time `form:"end" json:"end"`
+}
+
+// GetStatussheetComponentsParams defines parameters for GetStatussheetComponents.
+type GetStatussheetComponentsParams struct {
+	// P Space-separated projection fields for component documents.
+	P *string `form:"p,omitempty" json:"p,omitempty"`
+}
+
 // ListKnownIssuesParams defines parameters for ListKnownIssues.
 type ListKnownIssuesParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -5505,6 +6922,15 @@ type IdOfAssetJSONRequestBody = IdOfAssetRequestBody
 // FindCloudDiagramsJSONRequestBody defines body for FindCloudDiagrams for application/json ContentType.
 type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
 
+// GetCloudDiagramComponentsJSONRequestBody defines body for GetCloudDiagramComponents for application/json ContentType.
+type GetCloudDiagramComponentsJSONRequestBody = CloudDiagramsGetRequest
+
+// SearchCloudDiagramsJSONRequestBody defines body for SearchCloudDiagrams for application/json ContentType.
+type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
+
+// GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
+type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
+
 // DatahubEventsCSVFileMultipartRequestBody defines body for DatahubEventsCSVFile for multipart/form-data ContentType.
 type DatahubEventsCSVFileMultipartRequestBody = DatahubEventsCSVFileRequestBody
 
@@ -5537,6 +6963,68 @@ type IdOfTicketsPostJSONRequestBody = TicketCreateFormExtAPI
 
 // IdOfTicketCommentsPostJSONRequestBody defines body for IdOfTicketCommentsPost for application/json ContentType.
 type IdOfTicketCommentsPostJSONRequestBody = CreateCommentRequest
+
+// AsCloudDiagramsGetRequestTemplate0 returns the union data inside the CloudDiagramsGetRequest_Template as a CloudDiagramsGetRequestTemplate0
+func (t CloudDiagramsGetRequest_Template) AsCloudDiagramsGetRequestTemplate0() (CloudDiagramsGetRequestTemplate0, error) {
+	var body CloudDiagramsGetRequestTemplate0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCloudDiagramsGetRequestTemplate0 overwrites any union data inside the CloudDiagramsGetRequest_Template as the provided CloudDiagramsGetRequestTemplate0
+func (t *CloudDiagramsGetRequest_Template) FromCloudDiagramsGetRequestTemplate0(v CloudDiagramsGetRequestTemplate0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCloudDiagramsGetRequestTemplate0 performs a merge with any union data inside the CloudDiagramsGetRequest_Template, using the provided CloudDiagramsGetRequestTemplate0
+func (t *CloudDiagramsGetRequest_Template) MergeCloudDiagramsGetRequestTemplate0(v CloudDiagramsGetRequestTemplate0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCloudDiagramsGetRequestTemplate1 returns the union data inside the CloudDiagramsGetRequest_Template as a CloudDiagramsGetRequestTemplate1
+func (t CloudDiagramsGetRequest_Template) AsCloudDiagramsGetRequestTemplate1() (CloudDiagramsGetRequestTemplate1, error) {
+	var body CloudDiagramsGetRequestTemplate1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCloudDiagramsGetRequestTemplate1 overwrites any union data inside the CloudDiagramsGetRequest_Template as the provided CloudDiagramsGetRequestTemplate1
+func (t *CloudDiagramsGetRequest_Template) FromCloudDiagramsGetRequestTemplate1(v CloudDiagramsGetRequestTemplate1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCloudDiagramsGetRequestTemplate1 performs a merge with any union data inside the CloudDiagramsGetRequest_Template, using the provided CloudDiagramsGetRequestTemplate1
+func (t *CloudDiagramsGetRequest_Template) MergeCloudDiagramsGetRequestTemplate1(v CloudDiagramsGetRequestTemplate1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CloudDiagramsGetRequest_Template) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *CloudDiagramsGetRequest_Template) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0 returns the union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value as a DatahubEventsRequestBodyEventsItemDimensionsItemValue0
 func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0() (DatahubEventsRequestBodyEventsItemDimensionsItemValue0, error) {
@@ -5954,6 +7442,27 @@ type ClientInterface interface {
 	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudDiagramComponentsWithBody request with any body
+	GetCloudDiagramComponentsWithBody(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetCloudDiagramComponents(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchCloudDiagramsWithBody request with any body
+	SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudDiagramsStats request
+	GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExportCloudDiagramJson request
+	ExportCloudDiagramJson(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetStatussheetComponentsWithBody request with any body
+	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6899,6 +8408,102 @@ func (c *Client) FindCloudDiagramsWithBody(ctx context.Context, contentType stri
 
 func (c *Client) FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindCloudDiagramsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramComponentsWithBody(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramComponentsRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramComponents(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramComponentsRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramsStatsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ExportCloudDiagramJson(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExportCloudDiagramJsonRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequest(c.Server, id, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10272,6 +11877,476 @@ func NewFindCloudDiagramsRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewGetCloudDiagramComponentsRequest calls the generic GetCloudDiagramComponents builder with application/json body
+func NewGetCloudDiagramComponentsRequest(server string, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetCloudDiagramComponentsRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewGetCloudDiagramComponentsRequestWithBody generates requests for GetCloudDiagramComponents with any type of body
+func NewGetCloudDiagramComponentsRequestWithBody(server string, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/get")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Components != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "components", *params.Components, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.External != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "external", *params.External, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Element != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "element", *params.Element, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Link != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "link", *params.Link, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Group != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "group", *params.Group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Note != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "note", *params.Note, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Combiner != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "combiner", *params.Combiner, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "type", *params.Type, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.NodeType != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "node_type", *params.NodeType, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AlarmsCount != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "alarms_count", *params.AlarmsCount, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.IssuesCount != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "issues_count", *params.IssuesCount, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.SkipEmpty != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "skip_empty", *params.SkipEmpty, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExcludeDefaultVpc != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exclude_default_vpc", *params.ExcludeDefaultVpc, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExcludeEmptySubnets != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exclude_empty_subnets", *params.ExcludeEmptySubnets, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSearchCloudDiagramsRequest calls the generic SearchCloudDiagrams builder with application/json body
+func NewSearchCloudDiagramsRequest(server string, body SearchCloudDiagramsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSearchCloudDiagramsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSearchCloudDiagramsRequestWithBody generates requests for SearchCloudDiagrams with any type of body
+func NewSearchCloudDiagramsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/search")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetCloudDiagramsStatsRequest generates requests for GetCloudDiagramsStats
+func NewGetCloudDiagramsStatsRequest(server string, params *GetCloudDiagramsStatsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/stats")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "start", params.Start, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "end", params.End, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewExportCloudDiagramJsonRequest generates requests for ExportCloudDiagramJson
+func NewExportCloudDiagramJsonRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/export-json", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetStatussheetComponentsRequest calls the generic GetStatussheetComponents builder with application/json body
+func NewGetStatussheetComponentsRequest(server string, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetStatussheetComponentsRequestWithBody(server, id, params, "application/json", bodyReader)
+}
+
+// NewGetStatussheetComponentsRequestWithBody generates requests for GetStatussheetComponents with any type of body
+func NewGetStatussheetComponentsRequestWithBody(server string, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/get", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.P != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "p", *params.P, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListKnownIssuesRequest generates requests for ListKnownIssues
 func NewListKnownIssuesRequest(server string, params *ListKnownIssuesParams) (*http.Request, error) {
 	var err error
@@ -11676,6 +13751,27 @@ type ClientWithResponsesInterface interface {
 	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
 	FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
+
+	// GetCloudDiagramComponentsWithBodyWithResponse request with any body
+	GetCloudDiagramComponentsWithBodyWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error)
+
+	GetCloudDiagramComponentsWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error)
+
+	// SearchCloudDiagramsWithBodyWithResponse request with any body
+	SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
+
+	SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
+
+	// GetCloudDiagramsStatsWithResponse request
+	GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error)
+
+	// ExportCloudDiagramJsonWithResponse request
+	ExportCloudDiagramJsonWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ExportCloudDiagramJsonResp, error)
+
+	// GetStatussheetComponentsWithBodyWithResponse request with any body
+	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
+	GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -13124,6 +15220,133 @@ func (r FindCloudDiagramsResp) StatusCode() int {
 	return 0
 }
 
+type GetCloudDiagramComponentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramsGetResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramComponentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramComponentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SearchCloudDiagramsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramsSearchResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchCloudDiagramsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchCloudDiagramsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetCloudDiagramsStatsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CloudDiagramStats
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramsStatsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramsStatsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ExportCloudDiagramJsonResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramExportJsonResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r ExportCloudDiagramJsonResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExportCloudDiagramJsonResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetStatussheetComponentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramStatussheetComponents
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetStatussheetComponentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetStatussheetComponentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListKnownIssuesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -14443,6 +16666,75 @@ func (c *ClientWithResponses) FindCloudDiagramsWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseFindCloudDiagramsResp(rsp)
+}
+
+// GetCloudDiagramComponentsWithBodyWithResponse request with arbitrary body returning *GetCloudDiagramComponentsResp
+func (c *ClientWithResponses) GetCloudDiagramComponentsWithBodyWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error) {
+	rsp, err := c.GetCloudDiagramComponentsWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramComponentsResp(rsp)
+}
+
+func (c *ClientWithResponses) GetCloudDiagramComponentsWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error) {
+	rsp, err := c.GetCloudDiagramComponents(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramComponentsResp(rsp)
+}
+
+// SearchCloudDiagramsWithBodyWithResponse request with arbitrary body returning *SearchCloudDiagramsResp
+func (c *ClientWithResponses) SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagramsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
+}
+
+func (c *ClientWithResponses) SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagrams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
+}
+
+// GetCloudDiagramsStatsWithResponse request returning *GetCloudDiagramsStatsResp
+func (c *ClientWithResponses) GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error) {
+	rsp, err := c.GetCloudDiagramsStats(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramsStatsResp(rsp)
+}
+
+// ExportCloudDiagramJsonWithResponse request returning *ExportCloudDiagramJsonResp
+func (c *ClientWithResponses) ExportCloudDiagramJsonWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ExportCloudDiagramJsonResp, error) {
+	rsp, err := c.ExportCloudDiagramJson(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExportCloudDiagramJsonResp(rsp)
+}
+
+// GetStatussheetComponentsWithBodyWithResponse request with arbitrary body returning *GetStatussheetComponentsResp
+func (c *ClientWithResponses) GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponentsWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
+}
+
+func (c *ClientWithResponses) GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponents(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -17521,6 +19813,255 @@ func ParseFindCloudDiagramsResp(rsp *http.Response) (*FindCloudDiagramsResp, err
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramComponentsResp parses an HTTP response from a GetCloudDiagramComponentsWithResponse call
+func ParseGetCloudDiagramComponentsResp(rsp *http.Response) (*GetCloudDiagramComponentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramComponentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramsGetResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSearchCloudDiagramsResp parses an HTTP response from a SearchCloudDiagramsWithResponse call
+func ParseSearchCloudDiagramsResp(rsp *http.Response) (*SearchCloudDiagramsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchCloudDiagramsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramsSearchResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramsStatsResp parses an HTTP response from a GetCloudDiagramsStatsWithResponse call
+func ParseGetCloudDiagramsStatsResp(rsp *http.Response) (*GetCloudDiagramsStatsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramsStatsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CloudDiagramStats
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseExportCloudDiagramJsonResp parses an HTTP response from a ExportCloudDiagramJsonWithResponse call
+func ParseExportCloudDiagramJsonResp(rsp *http.Response) (*ExportCloudDiagramJsonResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExportCloudDiagramJsonResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramExportJsonResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetStatussheetComponentsResp parses an HTTP response from a GetStatussheetComponentsWithResponse call
+func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetComponentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetStatussheetComponentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramStatussheetComponents
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
