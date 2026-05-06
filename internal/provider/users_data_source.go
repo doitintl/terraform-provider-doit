@@ -96,10 +96,9 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	// Build query params, passing email filter if provided
 	var params *models.ListUsersParams
-	if !data.Email.IsNull() && !data.Email.IsUnknown() {
-		email := openapi_types.Email(data.Email.ValueString())
+	if !data.Email.IsNull() {
 		params = &models.ListUsersParams{
-			Email: &email,
+			Email: new(openapi_types.Email(data.Email.ValueString())),
 		}
 	}
 
