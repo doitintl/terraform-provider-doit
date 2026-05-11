@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -21,7 +22,7 @@ func TestAccFolder(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: Create folder at root (omit parent_folder_id)
+			// Step 1: Create folder at root with explicit parent_folder_id
 			{
 				Config: testAccFolderBasic(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -221,6 +222,155 @@ func TestAccFolder_NestedFolder(t *testing.T) {
 	})
 }
 
+// TestAccFolder_EmptyDescription verifies that setting description = "" is
+// preserved as a real value and does not cause drift.
+func TestAccFolder_EmptyDescription(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-folder")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with explicit empty description
+			{
+				Config: testAccFolderEmptyDescription(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_folder.this",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(rName)),
+					statecheck.ExpectKnownValue(
+						"doit_folder.this",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact("")),
+					statecheck.ExpectKnownValue(
+						"doit_folder.this",
+						tfjsonpath.New("parent_folder_id"),
+						knownvalue.StringExact("root")),
+				},
+			},
+			// Step 2: Drift check — empty string should not cause perpetual diff
+			{
+				Config: testAccFolderEmptyDescription(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccFolder_EmptyParentFolderIdRejected verifies that setting
+// parent_folder_id = "" is rejected at plan time. The API normalizes ""
+// to "root", so allowing it would cause perpetual plan drift.
+func TestAccFolder_EmptyParentFolderIdRejected(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-folder")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccFolderEmptyParentFolderId(rName),
+				ExpectError: regexp.MustCompile(`(?i)string length must be at least 1`),
+			},
+		},
+	})
+}
+
+// TestAccFolder_MoveFolder verifies that a child folder can be moved
+// from one parent to another by changing parent_folder_id.
+func TestAccFolder_MoveFolder(t *testing.T) {
+	rParentA := acctest.RandomWithPrefix("tf-acc-parent-a")
+	rParentB := acctest.RandomWithPrefix("tf-acc-parent-b")
+	rChild := acctest.RandomWithPrefix("tf-acc-child")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create two parents + child under parent_a
+			{
+				Config: testAccFolderMove(rParentA, rParentB, rChild, "doit_folder.parent_a.id"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_folder.parent_a",
+						tfjsonpath.New("parent_folder_id"),
+						knownvalue.StringExact("root")),
+					statecheck.ExpectKnownValue(
+						"doit_folder.parent_b",
+						tfjsonpath.New("parent_folder_id"),
+						knownvalue.StringExact("root")),
+				},
+			},
+			// Step 2: Drift check before move
+			{
+				Config: testAccFolderMove(rParentA, rParentB, rChild, "doit_folder.parent_a.id"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Move child from parent_a to parent_b
+			{
+				Config: testAccFolderMove(rParentA, rParentB, rChild, "doit_folder.parent_b.id"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_folder.child",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 4: Drift check after move
+			{
+				Config: testAccFolderMove(rParentA, rParentB, rChild, "doit_folder.parent_b.id"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 5: Move child to root
+			{
+				Config: testAccFolderMoveToRoot(rParentA, rParentB, rChild),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_folder.child",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_folder.child",
+						tfjsonpath.New("parent_folder_id"),
+						knownvalue.StringExact("root")),
+				},
+			},
+			// Step 6: Drift check after move to root
+			{
+				Config: testAccFolderMoveToRoot(rParentA, rParentB, rChild),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 // --- Config helpers ---
 
 func testAccFolderMinimal(name string) string {
@@ -250,6 +400,25 @@ resource "doit_folder" "this" {
 `, name)
 }
 
+func testAccFolderEmptyDescription(name string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "this" {
+  name             = %q
+  description      = ""
+  parent_folder_id = "root"
+}
+`, name)
+}
+
+func testAccFolderEmptyParentFolderId(name string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "this" {
+  name             = %q
+  parent_folder_id = ""
+}
+`, name)
+}
+
 func testAccFolderNested(parentName, childName string) string {
 	return fmt.Sprintf(`
 resource "doit_folder" "parent" {
@@ -262,4 +431,42 @@ resource "doit_folder" "child" {
   parent_folder_id = doit_folder.parent.id
 }
 `, parentName, childName)
+}
+
+func testAccFolderMove(parentA, parentB, child, childParentRef string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "parent_a" {
+  name             = %q
+  parent_folder_id = "root"
+}
+
+resource "doit_folder" "parent_b" {
+  name             = %q
+  parent_folder_id = "root"
+}
+
+resource "doit_folder" "child" {
+  name             = %q
+  parent_folder_id = %s
+}
+`, parentA, parentB, child, childParentRef)
+}
+
+func testAccFolderMoveToRoot(parentA, parentB, child string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "parent_a" {
+  name             = %q
+  parent_folder_id = "root"
+}
+
+resource "doit_folder" "parent_b" {
+  name             = %q
+  parent_folder_id = "root"
+}
+
+resource "doit_folder" "child" {
+  name             = %q
+  parent_folder_id = "root"
+}
+`, parentA, parentB, child)
 }

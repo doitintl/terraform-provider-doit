@@ -21,7 +21,7 @@ func mapFolderToModel(resp *models.Folder, state *folderResourceModel) {
 		state.Name = types.StringNull()
 	}
 
-	if resp.Description != nil && *resp.Description != "" {
+	if resp.Description != nil {
 		state.Description = types.StringValue(*resp.Description)
 	} else {
 		state.Description = types.StringNull()

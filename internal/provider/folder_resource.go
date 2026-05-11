@@ -8,6 +8,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_folder"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -72,6 +73,14 @@ func (r *folderResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["id"] = attr
 	}
 
+	// Reject empty strings for parent_folder_id — the API normalizes "" to
+	// "root", which would cause perpetual plan drift. Users who want the
+	// default (root) should omit the attribute instead.
+	if attr, ok := s.Attributes["parent_folder_id"].(schema.StringAttribute); ok {
+		attr.Validators = append(attr.Validators, stringvalidator.LengthAtLeast(1))
+		s.Attributes["parent_folder_id"] = attr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
@@ -101,18 +110,18 @@ func (r *folderResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Build API request. The API requires "root" for top-level folders,
 	// so we default to "root" when the user omits parent_folder_id.
-	parentFolderID := "root"
-	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
-		parentFolderID = plan.ParentFolderId.ValueString()
+	apiReq := models.CreateFolderRequest{
+		Name: plan.Name.ValueString(),
 	}
 
-	apiReq := models.CreateFolderRequest{
-		Name:           plan.Name.ValueString(),
-		ParentFolderId: &parentFolderID,
+	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
+		apiReq.ParentFolderId = new(plan.ParentFolderId.ValueString())
+	} else {
+		apiReq.ParentFolderId = new("root")
 	}
+
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		desc := plan.Description.ValueString()
-		apiReq.Description = &desc
+		apiReq.Description = new(plan.Description.ValueString())
 	}
 
 	// Create new folder via API
@@ -231,20 +240,18 @@ func (r *folderResource) Update(ctx context.Context, req resource.UpdateRequest,
 	folderID := state.Id.ValueString()
 
 	// Build API request. Default parent_folder_id to "root" when unset.
-	parentFolderID := "root"
-	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
-		parentFolderID = plan.ParentFolderId.ValueString()
+	apiReq := models.UpdateFolderRequest{
+		Name: new(plan.Name.ValueString()),
 	}
 
-	apiReq := models.UpdateFolderRequest{
-		ParentFolderId: &parentFolderID,
+	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
+		apiReq.ParentFolderId = new(plan.ParentFolderId.ValueString())
+	} else {
+		apiReq.ParentFolderId = new("root")
 	}
-	name := plan.Name.ValueString()
-	apiReq.Name = &name
 
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		desc := plan.Description.ValueString()
-		apiReq.Description = &desc
+		apiReq.Description = new(plan.Description.ValueString())
 	}
 
 	// Update folder via API
