@@ -66,10 +66,12 @@ provider "doit" {
 | `doit_asset`             | Cloud assets (import-only; manage Google Workspace licenses)      |
 | `doit_budget`            | Budget tracking with alerts and seasonal amounts                  |
 | `doit_datahub_dataset`   | DataHub dataset management                                        |
+| `doit_folder`            | Cloud Analytics folders for organizing reports and allocations    |
 | `doit_label`             | Labels for categorizing annotations                               |
 | `doit_label_assignments` | Assign labels to resources                                        |
 | `doit_report`            | Cloud Analytics reports with filters, metrics, and grouping       |
 | `doit_sharing`           | Sharing permissions for reports, budgets, alerts, and allocations |
+| `doit_user`              | Invite and manage platform users                                  |
 
 ### Data Sources
 
