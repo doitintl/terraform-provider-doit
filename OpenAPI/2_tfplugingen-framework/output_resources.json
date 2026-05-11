@@ -1408,6 +1408,43 @@
 			}
 		},
 		{
+			"name": "folder",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Folder description."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Folder name."
+						}
+					},
+					{
+						"name": "parent_folder_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Identifier of the parent folder. Use \"root\" or omit to place the folder at the top level."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Folder ID."
+						}
+					}
+				],
+				"description": "Organize Cloud Analytics resources (reports, allocations) into folders.",
+				"markdown_description": "Organize Cloud Analytics resources (reports, allocations) into folders."
+			}
+		},
+		{
 			"name": "label",
 			"schema": {
 				"attributes": [
