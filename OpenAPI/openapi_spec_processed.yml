@@ -18,6 +18,8 @@ tags:
     description: Create and manage labels to organize and categorize your cloud resources.
   - name: Allocations
     description: Define how costs are distributed across your organization.
+  - name: Folders
+    description: Organize Cloud Analytics resources (reports, allocations) into folders.
   - name: Budgets
     description: Track actual cloud spend against planned spend.
   - name: Dimensions
@@ -433,6 +435,160 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
+  /analytics/v1/folders:
+    get:
+      tags:
+        - Folders
+      summary: List folders
+      description: |-
+        Returns Cloud Analytics folders the current customer has access to.
+        Folders are returned in id-ascending order.
+      operationId: listFolders
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFolders200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Folders
+      summary: Create a folder
+      description: Creates a new Cloud Analytics folder.
+      operationId: createFolder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFolderRequest"
+      responses:
+        "201":
+          description: Created - The folder was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/folders/{id}":
+    get:
+      tags:
+        - Folders
+      summary: Get a folder
+      description: Returns the specified Cloud Analytics folder.
+      operationId: getFolder
+      parameters:
+        - name: id
+          in: path
+          description: Folder ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Folder returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Folders
+      summary: Update a folder
+      description: |-
+        Updates the specified folder. All fields are optional.
+        To reparent the folder, set `parentFolderId` to the target folder ID
+        (use "root" for the top level). If a sibling at the target has the same
+        name, the folder is auto-renamed.
+        To move reports or allocations into or out of a folder, update the item's
+        `folderId` field via the report or allocation PATCH endpoint.
+      operationId: updateFolder
+      parameters:
+        - name: id
+          in: path
+          description: Folder ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFolderRequest"
+      responses:
+        "200":
+          description: OK - Folder updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+      x-codegen-request-body-name: Body
+    delete:
+      tags:
+        - Folders
+      summary: Delete a folder
+      description: >-
+        Deletes the specified folder. The folder must be empty; if it still contains reports or allocations, the request fails with `400 Bad Request`.
+      operationId: deleteFolder
+      parameters:
+        - name: id
+          in: path
+          description: Folder ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content - Folder deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
   /analytics/v1/annotations:
     get:
       tags:
@@ -5404,6 +5560,22 @@ components:
           type: string
           description: An optional description for the dataset.
           example: "Dataset for tracking custom business metrics"
+    CreateFolderRequest:
+      required:
+        - name
+      type: object
+      description: Request body for creating a folder.
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
+          example: root
     CreateLabelRequest:
       required:
         - name
@@ -6258,6 +6430,23 @@ components:
           type: string
           format: uri
           description: URL to the diagram image.
+    Folder:
+      type: object
+      description: A Cloud Analytics folder.
+      properties:
+        id:
+          type: string
+          description: Folder ID.
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
+          example: root
     GetAnomaly200Response:
       required:
         - attribution
@@ -6916,6 +7105,19 @@ components:
           type: string
           description: The timestamp of the last update.
           example: "2024-03-10T23:00:00Z"
+    ListFolders200Response:
+      type: object
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Number of folders returned in this page.
+        folders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Folder"
     ListInvoices200Response:
       type: object
       properties:
@@ -7717,6 +7919,23 @@ components:
           type: string
           description: The new description for the dataset.
           example: "Updated description for the dataset"
+    UpdateFolderRequest:
+      type: object
+      description: |-
+        Request body for updating a folder. All fields are optional; only fields
+        the caller wants to change should be set.
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: >-
+            Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
+          example: root
     UpdateLabelRequest:
       type: object
       description: Request body for updating a label.
