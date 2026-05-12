@@ -3415,6 +3415,7 @@ paths:
           in: query
           required: true
           description: Start of the period.
+          example: "2026-04-01T00:00:00Z"
           schema:
             type: string
             format: date-time
@@ -3422,6 +3423,7 @@ paths:
           in: query
           required: true
           description: End of the period.
+          example: "2026-04-28T00:00:00Z"
           schema:
             type: string
             format: date-time
@@ -3446,14 +3448,14 @@ paths:
         - Cloud Diagrams
       summary: Get diagram components
       description: |-
-        Returns diagram and statussheet data. When the request body is empty, returns all diagrams
-        the caller has access to (scheme map only). When the body is populated, returns full diagram
-        data including statussheet components projected to key display and cloud fields.
+        Returns diagram and layer data. When the request body is empty, returns all diagrams
+        the caller has access to. When the body is populated, returns full diagram data including
+        layer components projected to key display and cloud fields.
       operationId: getCloudDiagramComponents
       parameters:
         - name: components
           in: query
-          description: Include components in the statussheet response.
+          description: Include components in the layer response.
           schema:
             type: boolean
         - name: external
@@ -3562,8 +3564,8 @@ paths:
         - Cloud Diagrams
       summary: Search diagrams and components
       description: |-
-        Full-text search across statussheets (cloud accounts), components by name, and components by
-        property values. Returns three result categories: scheme (matching statussheets), component
+        Full-text search across diagram layers, components by name, and components
+        by property values. Returns three result categories: diagram (matching layers), component
         (matching components by name), and prop (matching components by property values).
       operationId: searchCloudDiagrams
       requestBody:
@@ -3589,16 +3591,16 @@ paths:
     post:
       tags:
         - Cloud Diagrams
-      summary: Get statussheet components
+      summary: Get layer components
       description: |-
-        Returns the components of the specified statussheet, optionally filtered to specific
+        Returns the components of the specified diagram layer, optionally filtered to specific
         component IDs. Omit the request body (or send an empty object) to retrieve all components.
       operationId: getStatussheetComponents
       parameters:
         - name: id
           in: path
           required: true
-          description: Statussheet ID.
+          description: Layer ID.
           schema:
             type: string
         - name: p
@@ -3614,7 +3616,7 @@ paths:
               $ref: "#/components/schemas/CloudDiagramStatussheetGetRequest"
       responses:
         "200":
-          description: OK - Statussheet components returned.
+          description: OK - Layer components returned.
           content:
             application/json:
               schema:
@@ -3633,14 +3635,14 @@ paths:
         - Cloud Diagrams
       summary: Export diagram as JSON
       description: |-
-        Exports the full content of a statussheet (diagram layer) as a structured JSON document,
+        Exports the full content of a diagram layer as a structured JSON document,
         including all components and export metadata.
       operationId: exportCloudDiagramJson
       parameters:
         - name: id
           in: path
           required: true
-          description: Statussheet ID.
+          description: Layer ID.
           schema:
             type: string
       responses:
@@ -7021,7 +7023,7 @@ components:
           description: ID of the diagram.
         ss_id:
           type: string
-          description: ID of the statussheet the diagram belongs to.
+          description: ID of the layer the diagram belongs to.
         name:
           type: string
           description: Name of the diagram.
@@ -7130,10 +7132,10 @@ components:
           description: Parent diagram ID.
         ss_id:
           type: string
-          description: Parent statussheet ID.
+          description: Parent layer ID.
     CloudDiagramComponentBase:
       type: object
-      description: Common fields shared by all statussheet component types.
+      description: Common fields shared by all layer component types.
       properties:
         name:
           type: string
@@ -7329,7 +7331,7 @@ components:
               description: Link connection type.
             owner_ss_id:
               type: string
-              description: Owner statussheet ID for cross-diagram links.
+              description: Owner layer ID for cross-diagram links.
             issues:
               type: array
               description: Issues associated with this link.
@@ -7426,7 +7428,7 @@ components:
           description: Note font size.
     CloudDiagramStatussheetComponents:
       type: object
-      description: Component collections of a statussheet, keyed by component ID.
+      description: Component collections of a diagram layer, keyed by component ID.
       properties:
         node:
           type: object
@@ -7469,12 +7471,12 @@ components:
         - _id
         - updatedAt
       description: |-
-        Projected statussheet document returned inside each statussheet entry.
-        Fields reflect the SS_CLIENT_OPTIONS projection: _id, import, updatedAt, linksVersion.
+        Projected layer metadata returned inside each layer entry.
+        Contains import state, last updated timestamp, and links version.
       properties:
         _id:
           type: string
-          description: Statussheet ID.
+          description: Layer ID.
         import:
           $ref: "#/components/schemas/CloudDiagramImportState"
         updatedAt:
@@ -7490,7 +7492,7 @@ components:
         - type: object
           required:
             - statussheet
-          description: A statussheet entry with projected metadata and component collections.
+          description: A layer entry with projected metadata and component collections.
           properties:
             statussheet:
               $ref: "#/components/schemas/CloudDiagramStatussheetMeta"
@@ -7503,14 +7505,14 @@ components:
         - alarms_count
         - empty
         - color
-      description: Summary of a cloud account (statussheet) connected to a diagram.
+      description: Summary of a cloud account (layer) connected to a diagram.
       properties:
         ssid:
           type: string
-          description: Statussheet ID.
+          description: Layer ID.
         name:
           type: string
-          description: Statussheet name.
+          description: Layer name.
         account_name:
           type: string
           description: Connected cloud account name.
@@ -7519,10 +7521,10 @@ components:
           description: Number of active alarms.
         empty:
           type: boolean
-          description: True when the statussheet contains no components.
+          description: True when the layer contains no components.
         color:
           type: string
-          description: Statussheet color.
+          description: Layer color.
     CloudDiagramSchemeResult:
       type: object
       required:
@@ -7551,7 +7553,7 @@ components:
           description: Diagram type.
         statussheet:
           type: array
-          description: Connected cloud accounts (statussheets).
+          description: Connected cloud accounts (layers).
           items:
             $ref: "#/components/schemas/CloudDiagramSchemeStatussheetInfo"
     CloudDiagramsGetRequest:
@@ -7567,11 +7569,11 @@ components:
             type: string
         statussheet:
           type: array
-          description: IDs of statussheets to load.
+          description: IDs of layers to load.
           items:
             type: string
         template:
-          description: Template type or array of template statussheet IDs to include.
+          description: Template type or array of template layer IDs to include.
           oneOf:
             - type: string
               enum:
@@ -7583,9 +7585,9 @@ components:
     CloudDiagramsGetResponse:
       type: object
       description: |-
-        Diagram and statussheet data.
-        When called with an empty body, only the scheme map is populated.
-        When called with a populated body, both scheme and statussheet maps are returned
+        Diagram and layer data.
+        When called with an empty body, only the diagram map is populated.
+        When called with a populated body, both diagram and layer maps are returned
         with components projected to key display and cloud fields by default.
       properties:
         scheme:
@@ -7596,24 +7598,24 @@ components:
         statussheet:
           type: object
           description: |-
-            Map of statussheet ID to statussheet metadata and component collections.
+            Map of layer ID to layer metadata and component collections.
             Components are projected to key display and cloud fields by default.
           additionalProperties:
             $ref: "#/components/schemas/CloudDiagramStatussheetData"
         template:
           type: object
-          description: Map of template statussheet ID to template data.
+          description: Map of template layer ID to template data.
           additionalProperties: true
     CloudDiagramSchemeSearchItem:
       type: object
       required:
         - _id
         - type
-      description: A statussheet (cloud account) matching the search query.
+      description: A diagram layer (cloud account) matching the search query.
       properties:
         _id:
           type: string
-          description: Statussheet ID.
+          description: Layer ID.
         account_name:
           type: string
           description: Cloud account name.
@@ -7622,7 +7624,7 @@ components:
           description: Parent diagram ID.
         ss_id:
           type: string
-          description: Statussheet ID (same as _id).
+          description: Layer ID (same as _id).
         scheme:
           type: string
           description: Parent diagram name.
@@ -7631,7 +7633,7 @@ components:
           description: Import/sync status.
         name:
           type: string
-          description: Statussheet name.
+          description: Layer name.
         type:
           type: string
           enum:
@@ -7661,7 +7663,7 @@ components:
           description: Parent diagram ID.
         ss_id:
           type: string
-          description: Statussheet ID.
+          description: Layer ID.
         name:
           type: string
           description: Component name.
@@ -7709,7 +7711,7 @@ components:
           description: Search query string.
         ss_id:
           type: string
-          description: Limit search to components within this statussheet.
+          description: Limit search to components within this layer.
         from:
           type: integer
           minimum: 0
@@ -7724,7 +7726,7 @@ components:
       properties:
         scheme:
           type: array
-          description: statussheets (cloud accounts) matching the query.
+          description: Diagram layers (cloud accounts) matching the query.
           items:
             $ref: "#/components/schemas/CloudDiagramSchemeSearchItem"
         component:
@@ -7740,7 +7742,7 @@ components:
     CloudDiagramStatussheetGetRequest:
       type: object
       description: |-
-        Request body for getting statussheet components.
+        Request body for getting layer components.
         Omit or send an empty object to retrieve all components.
       properties:
         node:
@@ -7809,7 +7811,7 @@ components:
       properties:
         statussheet:
           type: object
-          description: Diagram-level metadata (scheme fields, excluding internal IDs).
+          description: Diagram-level metadata (excluding internal IDs).
           additionalProperties: true
         metadata:
           $ref: "#/components/schemas/CloudDiagramExportJsonMetadata"
