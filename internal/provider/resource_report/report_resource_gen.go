@@ -57,14 +57,16 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"aggregation": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`",
-						MarkdownDescription: "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`",
+						Description:         "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`",
+						MarkdownDescription: "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"total",
 								"percent_total",
 								"percent_col",
 								"percent_row",
+								"total_over_total",
+								"count",
 							),
 						},
 					},
