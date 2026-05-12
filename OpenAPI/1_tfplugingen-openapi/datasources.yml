@@ -21,6 +21,10 @@ data_sources:
     read:
       path: /analytics/v1/labels/{id}
       method: GET
+  folder:
+    read:
+      path: /analytics/v1/folders/{id}
+      method: GET
   label_assignments:
     read:
       path: /analytics/v1/labels/{id}/assignments
@@ -93,6 +97,10 @@ data_sources:
   labels:
     read:
       path: /analytics/v1/labels
+      method: GET
+  folders:
+    read:
+      path: /analytics/v1/folders
       method: GET
   reports:
     read:

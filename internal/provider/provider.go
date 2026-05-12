@@ -259,6 +259,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewAssetDataSource,
 		NewDimensionDataSource,
 		NewDimensionsDataSource,
+		NewFolderDataSource,
 		NewRolesDataSource,
 		NewCurrentUserDataSource,
 		NewAccountTeamDataSource,
@@ -286,6 +287,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewProductsDataSource,
 		NewOrganizationsDataSource,
 		NewDatahubDatasetsDataSource,
+		NewFoldersDataSource,
 		NewCloudDiagramsDataSource,
 		NewSharingDataSource,
 	}
