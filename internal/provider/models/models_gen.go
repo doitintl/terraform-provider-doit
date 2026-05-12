@@ -6057,6 +6057,13 @@ type TicketDetailExtAPI struct {
 	// Platform Platform of the ticket.
 	Platform *TicketDetailExtAPIPlatform `json:"platform,omitempty"`
 
+	// PlatformInfo The cloud asset identifier the requester selected on the support
+	// form's asset-selector control — typically the GCP project ID, AWS
+	// account ID, Azure subscription ID, or equivalent. Empty string
+	// when the ticket has no asset value (e.g. older tickets or tickets
+	// opened through paths that bypass the form selector).
+	PlatformInfo *string `json:"platform_info,omitempty"`
+
 	// Product Ticket product.
 	Product *string `json:"product,omitempty"`
 

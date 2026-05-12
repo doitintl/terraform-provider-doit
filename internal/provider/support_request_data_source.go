@@ -77,6 +77,7 @@ func (ds *supportRequestDataSource) Read(ctx context.Context, req datasource.Rea
 		state.CreateTime = types.Int64Unknown()
 		state.Description = types.StringUnknown()
 		state.IsPublic = types.BoolUnknown()
+		state.PlatformInfo = types.StringUnknown()
 		state.Product = types.StringUnknown()
 		state.Requester = types.StringUnknown()
 		state.Status = types.StringUnknown()
@@ -120,6 +121,7 @@ func (ds *supportRequestDataSource) Read(ctx context.Context, req datasource.Rea
 	state.Subject = types.StringPointerValue(ticket.Subject)
 	state.UpdateTime = types.Int64PointerValue(ticket.UpdateTime)
 	state.UrlUi = types.StringPointerValue(ticket.UrlUI)
+	state.PlatformInfo = types.StringPointerValue(ticket.PlatformInfo)
 
 	// Handle enum types — convert to string
 	if ticket.Platform != nil {
