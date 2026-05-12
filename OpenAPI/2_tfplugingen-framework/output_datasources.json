@@ -3454,6 +3454,111 @@
 			}
 		},
 		{
+			"name": "folder",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Folder ID."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Folder description."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Folder name."
+						}
+					},
+					{
+						"name": "parent_folder_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the parent folder. Set to \"root\" if the folder is at the top level."
+						}
+					}
+				],
+				"description": "Organize Cloud Analytics resources (reports, allocations) into folders.",
+				"markdown_description": "Organize Cloud Analytics resources (reports, allocations) into folders."
+			}
+		},
+		{
+			"name": "folders",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "folders",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Folder description."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Folder ID."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Folder name."
+										}
+									},
+									{
+										"name": "parent_folder_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the parent folder. Set to \"root\" if the folder is at the top level."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Number of folders returned in this page."
+						}
+					}
+				],
+				"description": "Organize Cloud Analytics resources (reports, allocations) into folders.",
+				"markdown_description": "Organize Cloud Analytics resources (reports, allocations) into folders."
+			}
+		},
+		{
 			"name": "invoice",
 			"schema": {
 				"attributes": [

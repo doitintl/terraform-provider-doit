@@ -83,6 +83,7 @@ provider "doit" {
 | `doit_alert` / `doit_alerts`           | Get or list cost/usage alerts       |
 | `doit_allocation` / `doit_allocations` | Get or list allocation rules        |
 | `doit_budget` / `doit_budgets`         | Get or list budgets                 |
+| `doit_folder` / `doit_folders`         | Get or list Cloud Analytics folders |
 | `doit_report` / `doit_reports`         | Get or list Cloud Analytics reports |
 | `doit_report_query`                    | Run ad-hoc Cloud Analytics queries  |
 | `doit_report_result`                   | Get results from an existing report |
