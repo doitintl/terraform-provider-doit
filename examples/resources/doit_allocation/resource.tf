@@ -73,6 +73,30 @@ resource "doit_allocation" "allocation_by_region" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Organizing allocations in folders
+# ─────────────────────────────────────────────────────────────────────────────
+# Use folder_id to place an allocation inside a Cloud Analytics folder.
+
+resource "doit_folder" "cost_allocations" {
+  name = "Cost Allocations"
+}
+
+resource "doit_allocation" "in_folder" {
+  name        = "Production"
+  description = "Production environment costs"
+  folder_id   = doit_folder.cost_allocations.id
+  rule = {
+    formula = "A"
+    components = [{
+      mode   = "is"
+      type   = "project_label"
+      key    = "env"
+      values = ["prod"]
+    }]
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Discovering valid component values using data sources
 # ─────────────────────────────────────────────────────────────────────────────
 # Allocation components use `type` and `key` fields that correspond to dimension

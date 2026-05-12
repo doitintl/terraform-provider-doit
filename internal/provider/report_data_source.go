@@ -83,6 +83,7 @@ func (ds *reportDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if data.Id.IsUnknown() {
 		data.Name = types.StringUnknown()
 		data.Description = types.StringUnknown()
+		data.FolderId = types.StringUnknown()
 		data.Type = types.StringUnknown()
 		data.Labels = types.ListUnknown(types.StringType)
 		data.Config = datasource_report.NewConfigValueUnknown()
@@ -136,6 +137,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Name = types.StringValue(resp.Name)
 	state.Description = types.StringPointerValue(resp.Description)
+	state.FolderId = types.StringPointerValue(resp.FolderId)
 	if resp.Type != nil {
 		state.Type = types.StringValue(string(*resp.Type))
 	} else {

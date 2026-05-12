@@ -64,6 +64,9 @@ func (r *allocationResource) overlayComputedFields(ctx context.Context, apiResp 
 	if plan.UnallocatedCosts.IsUnknown() {
 		plan.UnallocatedCosts = resolved.UnallocatedCosts
 	}
+	if plan.FolderId.IsUnknown() {
+		plan.FolderId = resolved.FolderId
+	}
 
 	// ── Rule (single nested object): use resolved when Unknown, overlay subfields when Known ──
 	if plan.Rule.IsUnknown() {
@@ -168,6 +171,7 @@ func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req m
 		req.Name = *common.Name
 	}
 	req.UnallocatedCosts = common.UnallocatedCosts
+	req.FolderId = common.FolderId
 	req.Rule = common.Rule
 	req.Rules = common.Rules
 
@@ -217,6 +221,7 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
 	req.Description = plan.Description.ValueStringPointer()
 	req.Name = plan.Name.ValueStringPointer()
+	req.FolderId = plan.FolderId.ValueStringPointer()
 	// UnallocatedCosts is only sent if not empty because it is invalid for "single" allocations.
 	if v := plan.UnallocatedCosts.ValueString(); v != "" {
 		req.UnallocatedCosts = &v
@@ -365,6 +370,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
 	state.Name = types.StringPointerValue(resp.Name)
 	state.UnallocatedCosts = types.StringPointerValue(resp.UnallocatedCosts)
+	state.FolderId = types.StringPointerValue(resp.FolderId)
 
 	if resp.AllocationType != nil {
 		state.AllocationType = types.StringValue(string(*resp.AllocationType))

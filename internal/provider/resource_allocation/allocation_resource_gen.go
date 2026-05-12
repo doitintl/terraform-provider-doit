@@ -41,6 +41,12 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Allocation description.",
 				MarkdownDescription: "Allocation description.",
 			},
+			"folder_id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
+				MarkdownDescription: "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
+			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Allocation ID.",
@@ -320,6 +326,7 @@ type AllocationModel struct {
 	AnomalyDetection types.Bool   `tfsdk:"anomaly_detection"`
 	CreateTime       types.Int64  `tfsdk:"create_time"`
 	Description      types.String `tfsdk:"description"`
+	FolderId         types.String `tfsdk:"folder_id"`
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Rule             RuleValue    `tfsdk:"rule"`

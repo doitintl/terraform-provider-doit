@@ -38,6 +38,11 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Allocation description.",
 							MarkdownDescription: "Allocation description.",
 						},
+						"folder_id": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
+							MarkdownDescription: "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
+						},
 						"id": schema.StringAttribute{
 							Computed:            true,
 							Description:         "Allocation ID.",
@@ -80,8 +85,8 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 			"filter": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**.",
-				MarkdownDescription: "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**.",
+				Description:         "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**, **folderId**.",
+				MarkdownDescription: "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**, **folderId**.",
 			},
 			"max_results": schema.StringAttribute{
 				Optional:            true,
@@ -224,6 +229,24 @@ func (t AllocationsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
 	}
 
+	folderIdAttribute, ok := attributes["folder_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`folder_id is missing from object`)
+
+		return nil, diags
+	}
+
+	folderIdVal, ok := folderIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`folder_id expected to be basetypes.StringValue, was: %T`, folderIdAttribute))
+	}
+
 	idAttribute, ok := attributes["id"]
 
 	if !ok {
@@ -340,6 +363,7 @@ func (t AllocationsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 		AllocationType:  allocationTypeVal,
 		CreateTime:      createTimeVal,
 		Description:     descriptionVal,
+		FolderId:        folderIdVal,
 		Id:              idVal,
 		Name:            nameVal,
 		Owner:           ownerVal,
@@ -467,6 +491,24 @@ func NewAllocationsValue(attributeTypes map[string]attr.Type, attributes map[str
 			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
 	}
 
+	folderIdAttribute, ok := attributes["folder_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`folder_id is missing from object`)
+
+		return NewAllocationsValueUnknown(), diags
+	}
+
+	folderIdVal, ok := folderIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`folder_id expected to be basetypes.StringValue, was: %T`, folderIdAttribute))
+	}
+
 	idAttribute, ok := attributes["id"]
 
 	if !ok {
@@ -583,6 +625,7 @@ func NewAllocationsValue(attributeTypes map[string]attr.Type, attributes map[str
 		AllocationType:  allocationTypeVal,
 		CreateTime:      createTimeVal,
 		Description:     descriptionVal,
+		FolderId:        folderIdVal,
 		Id:              idVal,
 		Name:            nameVal,
 		Owner:           ownerVal,
@@ -664,6 +707,7 @@ type AllocationsValue struct {
 	AllocationType  basetypes.StringValue `tfsdk:"allocation_type"`
 	CreateTime      basetypes.Int64Value  `tfsdk:"create_time"`
 	Description     basetypes.StringValue `tfsdk:"description"`
+	FolderId        basetypes.StringValue `tfsdk:"folder_id"`
 	Id              basetypes.StringValue `tfsdk:"id"`
 	Name            basetypes.StringValue `tfsdk:"name"`
 	Owner           basetypes.StringValue `tfsdk:"owner"`
@@ -674,7 +718,7 @@ type AllocationsValue struct {
 }
 
 func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 9)
+	attrTypes := make(map[string]tftypes.Type, 10)
 
 	var val tftypes.Value
 	var err error
@@ -682,6 +726,7 @@ func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 	attrTypes["allocation_type"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["create_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["folder_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["owner"] = basetypes.StringType{}.TerraformType(ctx)
@@ -693,7 +738,7 @@ func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 9)
+		vals := make(map[string]tftypes.Value, 10)
 
 		val, err = v.AllocationType.ToTerraformValue(ctx)
 
@@ -718,6 +763,14 @@ func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 		}
 
 		vals["description"] = val
+
+		val, err = v.FolderId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["folder_id"] = val
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -800,6 +853,7 @@ func (v AllocationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 		"allocation_type": basetypes.StringType{},
 		"create_time":     basetypes.Int64Type{},
 		"description":     basetypes.StringType{},
+		"folder_id":       basetypes.StringType{},
 		"id":              basetypes.StringType{},
 		"name":            basetypes.StringType{},
 		"owner":           basetypes.StringType{},
@@ -822,6 +876,7 @@ func (v AllocationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 			"allocation_type": v.AllocationType,
 			"create_time":     v.CreateTime,
 			"description":     v.Description,
+			"folder_id":       v.FolderId,
 			"id":              v.Id,
 			"name":            v.Name,
 			"owner":           v.Owner,
@@ -857,6 +912,10 @@ func (v AllocationsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Description.Equal(other.Description) {
+		return false
+	}
+
+	if !v.FolderId.Equal(other.FolderId) {
 		return false
 	}
 
@@ -900,6 +959,7 @@ func (v AllocationsValue) AttributeTypes(ctx context.Context) map[string]attr.Ty
 		"allocation_type": basetypes.StringType{},
 		"create_time":     basetypes.Int64Type{},
 		"description":     basetypes.StringType{},
+		"folder_id":       basetypes.StringType{},
 		"id":              basetypes.StringType{},
 		"name":            basetypes.StringType{},
 		"owner":           basetypes.StringType{},

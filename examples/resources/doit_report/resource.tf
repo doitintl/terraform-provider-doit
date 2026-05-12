@@ -68,6 +68,45 @@ resource "doit_report" "my_report" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Organizing reports in folders
+# ─────────────────────────────────────────────────────────────────────────────
+# Use folder_id to place a report inside a Cloud Analytics folder.
+# Create a folder first, then reference its ID in the report.
+
+resource "doit_folder" "cost_reports" {
+  name = "Cost Reports"
+}
+
+resource "doit_report" "in_folder" {
+  name        = "AWS Monthly Costs"
+  description = "Monthly cost breakdown for AWS services"
+  folder_id   = doit_folder.cost_reports.id
+  config = {
+    metrics        = [{ type = "basic", value = "cost" }]
+    aggregation    = "total"
+    data_source    = "billing"
+    time_interval  = "month"
+    display_values = "actuals_only"
+    time_range = {
+      mode            = "last"
+      amount          = 3
+      include_current = true
+      unit            = "month"
+    }
+    filters = [
+      {
+        id     = "cloud_provider"
+        type   = "fixed"
+        mode   = "is"
+        values = ["amazon-web-services"]
+      }
+    ]
+    layout   = "table"
+    currency = "USD"
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Assigning labels to a report
 # ─────────────────────────────────────────────────────────────────────────────
 # Labels help categorize and filter reports in the DoiT console.

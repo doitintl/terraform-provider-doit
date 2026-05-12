@@ -2347,3 +2347,120 @@ func TestAccAllocation_GroupImportActionPreservation(t *testing.T) {
 		},
 	})
 }
+
+// TestAccAllocation_FolderId verifies that allocations can be created inside a
+// folder, the folder_id is persisted in state, the allocation can be moved to
+// root, and that re-applying produces no drift.
+func TestAccAllocation_FolderId(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create allocation inside a folder
+			{
+				Config: testAccAllocationInFolder(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.folder_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"doit_allocation.folder_test", "folder_id",
+						"doit_folder.alloc_test", "id"),
+				),
+			},
+			// Step 2: Drift check — re-apply same config, expect no changes
+			{
+				Config: testAccAllocationInFolder(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Move allocation to root (folder_id = "root")
+			{
+				Config: testAccAllocationInRoot(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.folder_test",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.folder_test",
+						tfjsonpath.New("folder_id"),
+						knownvalue.StringExact("root")),
+				},
+			},
+			// Step 4: Drift check after move
+			{
+				Config: testAccAllocationInRoot(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationInFolder(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "alloc_test" {
+    name = "%s-alloc-folder"
+}
+
+resource "doit_allocation" "folder_test" {
+    name        = "%s-in-folder"
+    description = "Folder test allocation"
+    folder_id   = doit_folder.alloc_test.id
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+         }
+       ]
+    }
+}
+`, rName, rName, testProject())
+}
+
+func testAccAllocationInRoot(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "folder_test" {
+    name        = "%s-in-folder"
+    description = "Folder test allocation"
+    folder_id   = "root"
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+         }
+       ]
+    }
+}
+`, rName, testProject())
+}
