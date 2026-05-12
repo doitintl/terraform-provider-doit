@@ -108,8 +108,8 @@ func (r *folderResource) Create(ctx context.Context, req resource.CreateRequest,
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	// Build API request. The API requires "root" for top-level folders,
-	// so we default to "root" when the user omits parent_folder_id.
+	// Build API request. The API defaults to the root level when
+	// parent_folder_id is omitted; we send "root" explicitly for clarity.
 	apiReq := models.CreateFolderRequest{
 		Name: plan.Name.ValueString(),
 	}
