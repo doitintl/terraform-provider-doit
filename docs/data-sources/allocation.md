@@ -49,6 +49,7 @@ output "allocation_description" {
 - `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation.
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
 - `description` (String) Allocation description.
+- `folder_id` (String) Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
 - `name` (String) Allocation name.
 - `rule` (Attributes) Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type. (see [below for nested schema](#nestedatt--rule))
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))

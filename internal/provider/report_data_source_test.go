@@ -178,3 +178,54 @@ data "doit_report" "test" {
 }
 `
 }
+
+// TestAccReportDataSource_FolderId verifies that the data source returns the
+// correct folder_id when a report is created inside a folder.
+func TestAccReportDataSource_FolderId(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-report-ds-f")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportDataSourceFolderIdConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"data.doit_report.test", "folder_id",
+						"doit_folder.ds_test", "id"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportDataSourceFolderIdConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "ds_test" {
+    name = "%s-folder"
+}
+
+resource "doit_report" "test" {
+    name      = %q
+    folder_id = doit_folder.ds_test.id
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+
+data "doit_report" "test" {
+    id = doit_report.test.id
+}
+`, name, name)
+}

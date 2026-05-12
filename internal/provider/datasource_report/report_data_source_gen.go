@@ -526,6 +526,11 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Report description.",
 				MarkdownDescription: "Report description.",
 			},
+			"folder_id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder).",
+				MarkdownDescription: "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder).",
+			},
 			"id": schema.StringAttribute{
 				Required:            true,
 				Description:         "Report ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).",
@@ -556,6 +561,7 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 type ReportModel struct {
 	Config      ConfigValue  `tfsdk:"config"`
 	Description types.String `tfsdk:"description"`
+	FolderId    types.String `tfsdk:"folder_id"`
 	Id          types.String `tfsdk:"id"`
 	Labels      types.List   `tfsdk:"labels"`
 	Name        types.String `tfsdk:"name"`

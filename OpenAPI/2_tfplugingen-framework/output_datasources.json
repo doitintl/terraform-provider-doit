@@ -578,6 +578,13 @@
 						}
 					},
 					{
+						"name": "folder_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder)."
+						}
+					},
+					{
 						"name": "name",
 						"string": {
 							"computed_optional_required": "computed",
@@ -835,7 +842,7 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**."
+							"description": "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**, **folderId**."
 						}
 					},
 					{
@@ -901,6 +908,13 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "Allocation description."
+										}
+									},
+									{
+										"name": "folder_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder)."
 										}
 									},
 									{
@@ -4727,6 +4741,13 @@
 						}
 					},
 					{
+						"name": "folder_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder)."
+						}
+					},
+					{
 						"name": "labels",
 						"list": {
 							"computed_optional_required": "computed",
@@ -4777,7 +4798,7 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results.\nThe syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**"
+							"description": "An expression for filtering the results.\nThe syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**"
 						}
 					},
 					{

@@ -155,3 +155,54 @@ data "doit_allocation" "test" {
 }
 `
 }
+
+// TestAccAllocationDataSource_FolderId verifies that the data source returns the
+// correct folder_id when an allocation is created inside a folder.
+func TestAccAllocationDataSource_FolderId(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-alloc-ds-f")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationDataSourceFolderIdConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"data.doit_allocation.test", "folder_id",
+						"doit_folder.ds_alloc_test", "id"),
+				),
+			},
+		},
+	})
+}
+
+func testAccAllocationDataSourceFolderIdConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "ds_alloc_test" {
+    name = "%s-folder"
+}
+
+resource "doit_allocation" "test" {
+    name        = %q
+    description = "Folder DS test allocation"
+    folder_id   = doit_folder.ds_alloc_test.id
+    rule = {
+       formula = "A"
+       components = [
+        {
+           key    = "project_id"
+           mode   = "is"
+           type   = "fixed"
+           values = ["%s"]
+         }
+       ]
+    }
+}
+
+data "doit_allocation" "test" {
+    id = doit_allocation.test.id
+}
+`, name, name, testProject())
+}

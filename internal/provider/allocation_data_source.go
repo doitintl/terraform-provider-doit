@@ -82,6 +82,7 @@ func (ds *allocationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if data.Id.IsUnknown() {
 		data.Name = types.StringUnknown()
 		data.Description = types.StringUnknown()
+		data.FolderId = types.StringUnknown()
 		data.Type = types.StringUnknown()
 		data.AllocationType = types.StringUnknown()
 		data.AnomalyDetection = types.BoolUnknown()
@@ -142,6 +143,7 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 	data.CreateTime = types.Int64PointerValue(allocation.CreateTime)
 	data.UpdateTime = types.Int64PointerValue(allocation.UpdateTime)
 	data.UnallocatedCosts = types.StringPointerValue(allocation.UnallocatedCosts)
+	data.FolderId = types.StringPointerValue(allocation.FolderId)
 
 	if allocation.AllocationType != nil {
 		data.AllocationType = types.StringValue(string(*allocation.AllocationType))

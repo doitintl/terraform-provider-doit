@@ -56,6 +56,7 @@ output "report_labels" {
 
 - `config` (Attributes) Report configuration. (see [below for nested schema](#nestedatt--config))
 - `description` (String) Report description.
+- `folder_id` (String) Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
 - `labels` (List of String) Array of label IDs assigned to the report
 - `name` (String) Report name.
 - `type` (String) Report type.

@@ -3108,6 +3108,9 @@ type Allocation struct {
 	// Description Allocation description.
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Id Allocation ID.
 	Id *string `json:"id,omitempty"`
 
@@ -3196,6 +3199,9 @@ type AllocationListItem struct {
 
 	// Description Allocation description.
 	Description *string `json:"description,omitempty"`
+
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
 
 	// Id Allocation ID.
 	Id *string `json:"id,omitempty"`
@@ -4586,6 +4592,9 @@ type CreateAllocationRequest struct {
 	// Description Allocation description.
 	Description string `json:"description"`
 
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Name Allocation name.
 	Name string `json:"name"`
 
@@ -4679,6 +4688,9 @@ type CreateReportRequestBody struct {
 
 	// Description Report description.
 	Description *string `json:"description,omitempty"`
+
+	// FolderId Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
 
 	// Labels Array of label IDs assigned to the report
 	Labels *[]string `json:"labels,omitempty"`
@@ -5069,6 +5081,9 @@ type ExternalReport struct {
 	// Description Report description.
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
 
@@ -5136,6 +5151,9 @@ type ExternalUpdateReport struct {
 
 	// Description Report description
 	Description *string `json:"description,omitempty"`
+
+	// FolderId Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
 
 	// Labels Array of label IDs assigned to the report
 	Labels *[]string `json:"labels,omitempty"`
@@ -6231,6 +6249,9 @@ type UpdateAllocationRequest struct {
 	// Description Allocation description
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Name Allocation name
 	Name *string `json:"name,omitempty"`
 
@@ -6546,7 +6567,7 @@ type ListAllocationsParams struct {
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
-	// Valid fields: **type**, **owner**, **name**.
+	// Valid fields: **type**, **owner**, **name**, **folderId**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// SortBy A field by which the results will be sorted.
@@ -6709,7 +6730,7 @@ type ListReportsParams struct {
 
 	// Filter An expression for filtering the results.
 	// The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
-	// Possible filter keys: **reportName**, **owner**, **type**, **updateTime**
+	// Possible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// MinCreationTime Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.

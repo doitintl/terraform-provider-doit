@@ -186,6 +186,7 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 					"id":              types.StringPointerValue(alloc.Id),
 					"name":            types.StringPointerValue(alloc.Name),
 					"description":     types.StringPointerValue(alloc.Description),
+					"folder_id":       types.StringPointerValue(alloc.FolderId),
 					"owner":           types.StringPointerValue(alloc.Owner),
 					"type":            types.StringPointerValue(alloc.Type),
 					"allocation_type": allocTypeVal,
