@@ -1111,15 +1111,19 @@ func (e DimensionsTypes) Valid() bool {
 
 // Defines values for ExternalConfigAggregation.
 const (
-	PercentCol   ExternalConfigAggregation = "percent_col"
-	PercentRow   ExternalConfigAggregation = "percent_row"
-	PercentTotal ExternalConfigAggregation = "percent_total"
-	Total        ExternalConfigAggregation = "total"
+	Count          ExternalConfigAggregation = "count"
+	PercentCol     ExternalConfigAggregation = "percent_col"
+	PercentRow     ExternalConfigAggregation = "percent_row"
+	PercentTotal   ExternalConfigAggregation = "percent_total"
+	Total          ExternalConfigAggregation = "total"
+	TotalOverTotal ExternalConfigAggregation = "total_over_total"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigAggregation enum.
 func (e ExternalConfigAggregation) Valid() bool {
 	switch e {
+	case Count:
+		return true
 	case PercentCol:
 		return true
 	case PercentRow:
@@ -1127,6 +1131,8 @@ func (e ExternalConfigAggregation) Valid() bool {
 	case PercentTotal:
 		return true
 	case Total:
+		return true
+	case TotalOverTotal:
 		return true
 	default:
 		return false

@@ -1684,7 +1684,7 @@
 															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 														}
 													],
-													"schema_definition": "stringvalidator.OneOf(\n\"total\",\n\"percent_total\",\n\"percent_col\",\n\"percent_row\",\n)"
+													"schema_definition": "stringvalidator.OneOf(\n\"total\",\n\"percent_total\",\n\"percent_col\",\n\"percent_row\",\n\"total_over_total\",\n\"count\",\n)"
 												}
 											}
 										]

@@ -335,7 +335,7 @@ Optional:
 
 - `advanced_analysis` (Attributes) Advanced analysis options. Each can be set independently. (see [below for nested schema](#nestedatt--config--advanced_analysis))
 - `aggregation` (String) How to aggregate data values in the report.
-Possible values: `total`, `percent_total`, `percent_col`, `percent_row`
+Possible values: `total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`
 - `currency` (String) Currency code for monetary values.
 Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))

@@ -5990,6 +5990,8 @@ components:
             - percent_total
             - percent_col
             - percent_row
+            - total_over_total
+            - count
         advancedAnalysis:
           $ref: "#/components/schemas/AdvancedAnalysis"
         timeInterval:
