@@ -11,7 +11,7 @@ output "folder_names" {
   value = [for f in data.doit_folders.all.folders : f.name]
 }
 
-# Paginate through folders one at a time
+# Retrieve the first page of folders
 data "doit_folders" "first_page" {
   max_results = "5"
 }

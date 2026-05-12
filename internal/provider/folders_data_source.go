@@ -77,9 +77,11 @@ func (d *foldersDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any pagination input is unknown, return unknown list
+	// If any pagination input is unknown, return unknown for all computed attributes
 	if data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Folders = types.ListUnknown(datasource_folders.FoldersValue{}.Type(ctx))
+		data.RowCount = types.Int64Unknown()
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
