@@ -3734,7 +3734,7 @@ type CloudDiagramCombinerItem struct {
 // CloudDiagramCombinerItemType Component type.
 type CloudDiagramCombinerItemType string
 
-// CloudDiagramComponentBase Common fields shared by all statussheet component types.
+// CloudDiagramComponentBase Common fields shared by all layer component types.
 type CloudDiagramComponentBase struct {
 	// CldAccount Cloud account ID.
 	CldAccount *string `json:"cld_account,omitempty"`
@@ -3790,7 +3790,7 @@ type CloudDiagramComponentSearchItem struct {
 	// SchemeId Parent diagram ID.
 	SchemeId *string `json:"scheme_id,omitempty"`
 
-	// SsId Statussheet ID.
+	// SsId Layer ID.
 	SsId *string `json:"ss_id,omitempty"`
 
 	// Type Component type.
@@ -3892,7 +3892,7 @@ type CloudDiagramExportJsonResponse struct {
 	// Notes Exported notes.
 	Notes *[]CloudDiagramNote `json:"notes,omitempty"`
 
-	// Statussheet Diagram-level metadata (scheme fields, excluding internal IDs).
+	// Statussheet Diagram-level metadata (excluding internal IDs).
 	Statussheet *map[string]interface{} `json:"statussheet,omitempty"`
 }
 
@@ -3991,7 +3991,7 @@ type CloudDiagramInfraNodeRef struct {
 	// SchemeId Parent diagram ID.
 	SchemeId string `json:"scheme_id"`
 
-	// SsId Parent statussheet ID.
+	// SsId Parent layer ID.
 	SsId string `json:"ss_id"`
 }
 
@@ -4036,7 +4036,7 @@ type CloudDiagramLink struct {
 	// Name Component name.
 	Name *string `json:"name,omitempty"`
 
-	// OwnerSsId Owner statussheet ID for cross-diagram links.
+	// OwnerSsId Owner layer ID for cross-diagram links.
 	OwnerSsId *string `json:"owner_ss_id,omitempty"`
 
 	// Props Custom component properties (key-value pairs).
@@ -4129,7 +4129,7 @@ type CloudDiagramSchemeResult struct {
 	// Name Diagram name.
 	Name string `json:"name"`
 
-	// Statussheet Connected cloud accounts (statussheets).
+	// Statussheet Connected cloud accounts (layers).
 	Statussheet []CloudDiagramSchemeStatussheetInfo `json:"statussheet"`
 
 	// Type Diagram type.
@@ -4139,15 +4139,15 @@ type CloudDiagramSchemeResult struct {
 // CloudDiagramSchemeResultType Diagram type.
 type CloudDiagramSchemeResultType string
 
-// CloudDiagramSchemeSearchItem A statussheet (cloud account) matching the search query.
+// CloudDiagramSchemeSearchItem A diagram layer (cloud account) matching the search query.
 type CloudDiagramSchemeSearchItem struct {
-	// UnderscoreId Statussheet ID.
+	// UnderscoreId Layer ID.
 	UnderscoreId string `json:"_id"`
 
 	// AccountName Cloud account name.
 	AccountName *string `json:"account_name,omitempty"`
 
-	// Name Statussheet name.
+	// Name Layer name.
 	Name *string `json:"name,omitempty"`
 
 	// Scheme Parent diagram name.
@@ -4156,7 +4156,7 @@ type CloudDiagramSchemeSearchItem struct {
 	// SchemeId Parent diagram ID.
 	SchemeId *string `json:"scheme_id,omitempty"`
 
-	// SsId Statussheet ID (same as _id).
+	// SsId Layer ID (same as _id).
 	SsId *string `json:"ss_id,omitempty"`
 
 	// Status Import/sync status.
@@ -4169,7 +4169,7 @@ type CloudDiagramSchemeSearchItem struct {
 // CloudDiagramSchemeSearchItemType Component type — always "statussheet" for this category.
 type CloudDiagramSchemeSearchItemType string
 
-// CloudDiagramSchemeStatussheetInfo Summary of a cloud account (statussheet) connected to a diagram.
+// CloudDiagramSchemeStatussheetInfo Summary of a cloud account (layer) connected to a diagram.
 type CloudDiagramSchemeStatussheetInfo struct {
 	// AccountName Connected cloud account name.
 	AccountName string `json:"account_name"`
@@ -4177,16 +4177,16 @@ type CloudDiagramSchemeStatussheetInfo struct {
 	// AlarmsCount Number of active alarms.
 	AlarmsCount int `json:"alarms_count"`
 
-	// Color Statussheet color.
+	// Color Layer color.
 	Color string `json:"color"`
 
-	// Empty True when the statussheet contains no components.
+	// Empty True when the layer contains no components.
 	Empty bool `json:"empty"`
 
-	// Name Statussheet name.
+	// Name Layer name.
 	Name string `json:"name"`
 
-	// Ssid Statussheet ID.
+	// Ssid Layer ID.
 	Ssid string `json:"ssid"`
 }
 
@@ -4213,7 +4213,7 @@ type CloudDiagramStats struct {
 	// Name Name of the diagram.
 	Name *string `json:"name,omitempty"`
 
-	// SsId ID of the statussheet the diagram belongs to.
+	// SsId ID of the layer the diagram belongs to.
 	SsId *string `json:"ss_id,omitempty"`
 
 	// Type Type of the diagram.
@@ -4238,7 +4238,7 @@ type CloudDiagramStatsChange struct {
 // CloudDiagramStatsChangeType Type of the change.
 type CloudDiagramStatsChangeType string
 
-// CloudDiagramStatussheetComponents Component collections of a statussheet, keyed by component ID.
+// CloudDiagramStatussheetComponents Component collections of a diagram layer, keyed by component ID.
 type CloudDiagramStatussheetComponents struct {
 	// Attachment Map of attachment ID to attachment component.
 	Attachment *map[string]CloudDiagramAttachment `json:"attachment,omitempty"`
@@ -4285,12 +4285,12 @@ type CloudDiagramStatussheetData struct {
 	// Note Map of note ID to note component.
 	Note *map[string]CloudDiagramNote `json:"note,omitempty"`
 
-	// Statussheet Projected statussheet document returned inside each statussheet entry.
-	// Fields reflect the SS_CLIENT_OPTIONS projection: _id, import, updatedAt, linksVersion.
+	// Statussheet Projected layer metadata returned inside each layer entry.
+	// Contains import state, last updated timestamp, and links version.
 	Statussheet CloudDiagramStatussheetMeta `json:"statussheet"`
 }
 
-// CloudDiagramStatussheetGetRequest Request body for getting statussheet components.
+// CloudDiagramStatussheetGetRequest Request body for getting layer components.
 // Omit or send an empty object to retrieve all components.
 type CloudDiagramStatussheetGetRequest struct {
 	// Attachment Attachment IDs to fetch.
@@ -4315,10 +4315,10 @@ type CloudDiagramStatussheetGetRequest struct {
 	Note *[]string `json:"note,omitempty"`
 }
 
-// CloudDiagramStatussheetMeta Projected statussheet document returned inside each statussheet entry.
-// Fields reflect the SS_CLIENT_OPTIONS projection: _id, import, updatedAt, linksVersion.
+// CloudDiagramStatussheetMeta Projected layer metadata returned inside each layer entry.
+// Contains import state, last updated timestamp, and links version.
 type CloudDiagramStatussheetMeta struct {
-	// UnderscoreId Statussheet ID.
+	// UnderscoreId Layer ID.
 	UnderscoreId string `json:"_id"`
 
 	// Import Current import/sync state for a cloud-connected diagram.
@@ -4337,10 +4337,10 @@ type CloudDiagramsGetRequest struct {
 	// Scheme IDs of diagrams to load.
 	Scheme *[]string `json:"scheme,omitempty"`
 
-	// Statussheet IDs of statussheets to load.
+	// Statussheet IDs of layers to load.
 	Statussheet *[]string `json:"statussheet,omitempty"`
 
-	// Template Template type or array of template statussheet IDs to include.
+	// Template Template type or array of template layer IDs to include.
 	Template *CloudDiagramsGetRequest_Template `json:"template,omitempty"`
 }
 
@@ -4350,24 +4350,24 @@ type CloudDiagramsGetRequestTemplate0 string
 // CloudDiagramsGetRequestTemplate1 defines model for .
 type CloudDiagramsGetRequestTemplate1 = []string
 
-// CloudDiagramsGetRequest_Template Template type or array of template statussheet IDs to include.
+// CloudDiagramsGetRequest_Template Template type or array of template layer IDs to include.
 type CloudDiagramsGetRequest_Template struct {
 	union json.RawMessage
 }
 
-// CloudDiagramsGetResponse Diagram and statussheet data.
-// When called with an empty body, only the scheme map is populated.
-// When called with a populated body, both scheme and statussheet maps are returned
+// CloudDiagramsGetResponse Diagram and layer data.
+// When called with an empty body, only the diagram map is populated.
+// When called with a populated body, both diagram and layer maps are returned
 // with components projected to key display and cloud fields by default.
 type CloudDiagramsGetResponse struct {
 	// Scheme Map of diagram ID to diagram with its connected cloud accounts.
 	Scheme *map[string]CloudDiagramSchemeResult `json:"scheme,omitempty"`
 
-	// Statussheet Map of statussheet ID to statussheet metadata and component collections.
+	// Statussheet Map of layer ID to layer metadata and component collections.
 	// Components are projected to key display and cloud fields by default.
 	Statussheet *map[string]CloudDiagramStatussheetData `json:"statussheet,omitempty"`
 
-	// Template Map of template statussheet ID to template data.
+	// Template Map of template layer ID to template data.
 	Template *map[string]interface{} `json:"template,omitempty"`
 }
 
@@ -4382,7 +4382,7 @@ type CloudDiagramsSearchRequest struct {
 	// Size Maximum number of results per category (default 20).
 	Size *int `json:"size,omitempty"`
 
-	// SsId Limit search to components within this statussheet.
+	// SsId Limit search to components within this layer.
 	SsId *string `json:"ss_id,omitempty"`
 }
 
@@ -4394,7 +4394,7 @@ type CloudDiagramsSearchResponse struct {
 	// Prop Components matching the query by property values.
 	Prop *[]CloudDiagramComponentSearchItem `json:"prop,omitempty"`
 
-	// Scheme statussheets (cloud accounts) matching the query.
+	// Scheme Diagram layers (cloud accounts) matching the query.
 	Scheme *[]CloudDiagramSchemeSearchItem `json:"scheme,omitempty"`
 }
 
@@ -6831,7 +6831,7 @@ type ListInvoicesParams struct {
 
 // GetCloudDiagramComponentsParams defines parameters for GetCloudDiagramComponents.
 type GetCloudDiagramComponentsParams struct {
-	// Components Include components in the statussheet response.
+	// Components Include components in the layer response.
 	Components *bool `form:"components,omitempty" json:"components,omitempty"`
 
 	// External Include external (cross-diagram) components.
