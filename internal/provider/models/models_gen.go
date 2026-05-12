@@ -6034,6 +6034,22 @@ type SubscriptionPlanCommitmentInterval struct {
 	StartTime *int64 `json:"startTime,omitempty"`
 }
 
+// TagsRequest Request body for adding (POST) or removing (DELETE) tags on a support
+// request. The operation is surgical — only the tags listed are affected;
+// any other tags on the ticket are preserved.
+type TagsRequest struct {
+	// Tags List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
+	Tags []string `json:"tags"`
+}
+
+// TagsResponse Response body echoing the tags the operation actually acted on, after
+// server-side transformation (trim + lowercase + customer namespace prefix
+// where applicable).
+type TagsResponse struct {
+	// AppliedTags The tags that were stored on (POST) or removed from (DELETE) the ticket.
+	AppliedTags *[]string `json:"applied_tags,omitempty"`
+}
+
 // TicketCreateFormExtAPI Wrapper object for creating support tickets via the external API.
 type TicketCreateFormExtAPI struct {
 	// Ticket Payload to create a support ticket via API.
@@ -7064,6 +7080,12 @@ type IdOfTicketsPostJSONRequestBody = TicketCreateFormExtAPI
 // IdOfTicketCommentsPostJSONRequestBody defines body for IdOfTicketCommentsPost for application/json ContentType.
 type IdOfTicketCommentsPostJSONRequestBody = CreateCommentRequest
 
+// IdOfTicketTagsRemoveJSONRequestBody defines body for IdOfTicketTagsRemove for application/json ContentType.
+type IdOfTicketTagsRemoveJSONRequestBody = TagsRequest
+
+// IdOfTicketTagsAddJSONRequestBody defines body for IdOfTicketTagsAdd for application/json ContentType.
+type IdOfTicketTagsAddJSONRequestBody = TagsRequest
+
 // AsCloudDiagramsGetRequestTemplate0 returns the union data inside the CloudDiagramsGetRequest_Template as a CloudDiagramsGetRequestTemplate0
 func (t CloudDiagramsGetRequest_Template) AsCloudDiagramsGetRequestTemplate0() (CloudDiagramsGetRequestTemplate0, error) {
 	var body CloudDiagramsGetRequestTemplate0
@@ -7683,6 +7705,16 @@ type ClientInterface interface {
 	IdOfTicketCommentsPostWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	IdOfTicketCommentsPost(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// IdOfTicketTagsRemoveWithBody request with any body
+	IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	IdOfTicketTagsRemove(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// IdOfTicketTagsAddWithBody request with any body
+	IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	IdOfTicketTagsAdd(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) ListAlerts(ctx context.Context, params *ListAlertsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -9151,6 +9183,54 @@ func (c *Client) IdOfTicketCommentsPostWithBody(ctx context.Context, ticketId in
 
 func (c *Client) IdOfTicketCommentsPost(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIdOfTicketCommentsPostRequest(c.Server, ticketId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsRemoveRequestWithBody(c.Server, ticketId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsRemove(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsRemoveRequest(c.Server, ticketId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsAddRequestWithBody(c.Server, ticketId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsAdd(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsAddRequest(c.Server, ticketId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -13938,6 +14018,100 @@ func NewIdOfTicketCommentsPostRequestWithBody(server string, ticketId int64, con
 	return req, nil
 }
 
+// NewIdOfTicketTagsRemoveRequest calls the generic IdOfTicketTagsRemove builder with application/json body
+func NewIdOfTicketTagsRemoveRequest(server string, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewIdOfTicketTagsRemoveRequestWithBody(server, ticketId, "application/json", bodyReader)
+}
+
+// NewIdOfTicketTagsRemoveRequestWithBody generates requests for IdOfTicketTagsRemove with any type of body
+func NewIdOfTicketTagsRemoveRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "ticketId", ticketId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/support/v1/tickets/%s/tags", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewIdOfTicketTagsAddRequest calls the generic IdOfTicketTagsAdd builder with application/json body
+func NewIdOfTicketTagsAddRequest(server string, ticketId int64, body IdOfTicketTagsAddJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewIdOfTicketTagsAddRequestWithBody(server, ticketId, "application/json", bodyReader)
+}
+
+// NewIdOfTicketTagsAddRequestWithBody generates requests for IdOfTicketTagsAdd with any type of body
+func NewIdOfTicketTagsAddRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "ticketId", ticketId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/support/v1/tickets/%s/tags", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -14315,6 +14489,16 @@ type ClientWithResponsesInterface interface {
 	IdOfTicketCommentsPostWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error)
 
 	IdOfTicketCommentsPostWithResponse(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error)
+
+	// IdOfTicketTagsRemoveWithBodyWithResponse request with any body
+	IdOfTicketTagsRemoveWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error)
+
+	IdOfTicketTagsRemoveWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error)
+
+	// IdOfTicketTagsAddWithBodyWithResponse request with any body
+	IdOfTicketTagsAddWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error)
+
+	IdOfTicketTagsAddWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error)
 }
 
 type ListAlertsResp struct {
@@ -16621,6 +16805,58 @@ func (r IdOfTicketCommentsPostResp) StatusCode() int {
 	return 0
 }
 
+type IdOfTicketTagsRemoveResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TagsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r IdOfTicketTagsRemoveResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r IdOfTicketTagsRemoveResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type IdOfTicketTagsAddResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TagsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r IdOfTicketTagsAddResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r IdOfTicketTagsAddResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // ListAlertsWithResponse request returning *ListAlertsResp
 func (c *ClientWithResponses) ListAlertsWithResponse(ctx context.Context, params *ListAlertsParams, reqEditors ...RequestEditorFn) (*ListAlertsResp, error) {
 	rsp, err := c.ListAlerts(ctx, params, reqEditors...)
@@ -17692,6 +17928,40 @@ func (c *ClientWithResponses) IdOfTicketCommentsPostWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParseIdOfTicketCommentsPostResp(rsp)
+}
+
+// IdOfTicketTagsRemoveWithBodyWithResponse request with arbitrary body returning *IdOfTicketTagsRemoveResp
+func (c *ClientWithResponses) IdOfTicketTagsRemoveWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error) {
+	rsp, err := c.IdOfTicketTagsRemoveWithBody(ctx, ticketId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsRemoveResp(rsp)
+}
+
+func (c *ClientWithResponses) IdOfTicketTagsRemoveWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error) {
+	rsp, err := c.IdOfTicketTagsRemove(ctx, ticketId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsRemoveResp(rsp)
+}
+
+// IdOfTicketTagsAddWithBodyWithResponse request with arbitrary body returning *IdOfTicketTagsAddResp
+func (c *ClientWithResponses) IdOfTicketTagsAddWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error) {
+	rsp, err := c.IdOfTicketTagsAddWithBody(ctx, ticketId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsAddResp(rsp)
+}
+
+func (c *ClientWithResponses) IdOfTicketTagsAddWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error) {
+	rsp, err := c.IdOfTicketTagsAdd(ctx, ticketId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsAddResp(rsp)
 }
 
 // ParseListAlertsResp parses an HTTP response from a ListAlertsWithResponse call
@@ -22396,6 +22666,114 @@ func ParseIdOfTicketCommentsPostResp(rsp *http.Response) (*IdOfTicketCommentsPos
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIdOfTicketTagsRemoveResp parses an HTTP response from a IdOfTicketTagsRemoveWithResponse call
+func ParseIdOfTicketTagsRemoveResp(rsp *http.Response) (*IdOfTicketTagsRemoveResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &IdOfTicketTagsRemoveResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TagsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIdOfTicketTagsAddResp parses an HTTP response from a IdOfTicketTagsAddWithResponse call
+func ParseIdOfTicketTagsAddResp(rsp *http.Response) (*IdOfTicketTagsAddResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &IdOfTicketTagsAddResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TagsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400
