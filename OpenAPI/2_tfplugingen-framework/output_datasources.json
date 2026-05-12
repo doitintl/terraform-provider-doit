@@ -5115,6 +5115,13 @@
 						}
 					},
 					{
+						"name": "platform_info",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector)."
+						}
+					},
+					{
 						"name": "product",
 						"string": {
 							"computed_optional_required": "computed",
