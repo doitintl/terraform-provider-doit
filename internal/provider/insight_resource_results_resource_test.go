@@ -430,10 +430,11 @@ func TestAccInsightResourceResults_ClusterAgent(t *testing.T) {
 	})
 }
 
-// TestAccInsightResourceResults_UpdateAllFields tests mutating every optional field
-// on a resource result: location, external_id, external_url, resource_type, and
-// result.value. This is the regression test for the location upsert bug (missing
-// ON CONFLICT columns in the DAL).
+// TestAccInsightResourceResults_UpdateAllFields tests mutating every mutable field
+// on a resource result: external_id, external_url, and result.value. Immutable
+// identity fields (result_type, account, cloud_provider, location, resource_type)
+// are kept unchanged — see TestAccInsightResourceResults_UpdateResultType for
+// RequiresReplace validation.
 func TestAccInsightResourceResults_UpdateAllFields(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-irr")
 
@@ -479,7 +480,8 @@ func TestAccInsightResourceResults_UpdateAllFields(t *testing.T) {
 					},
 				},
 			},
-			// Step 3: Mutate ALL optional fields to new values
+			// Step 3: Mutate all mutable fields to new values
+			// (location and resource_type are immutable, so they stay the same)
 			{
 				Config: testAccInsightResultsAllFieldsV2(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -488,11 +490,16 @@ func TestAccInsightResourceResults_UpdateAllFields(t *testing.T) {
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
-					// Verify every field was updated
+					// Verify immutable fields are unchanged
 					statecheck.ExpectKnownValue(
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("location"),
-						knownvalue.StringExact("eu-west-1")),
+						knownvalue.StringExact("us-east-1")),
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_type"),
+						knownvalue.StringExact("instance")),
+					// Verify mutable fields were updated
 					statecheck.ExpectKnownValue(
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_id"),
@@ -501,10 +508,6 @@ func TestAccInsightResourceResults_UpdateAllFields(t *testing.T) {
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_url"),
 						knownvalue.StringExact("https://example.com/v2")),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_type"),
-						knownvalue.StringExact("vm")),
 					statecheck.ExpectKnownValue(
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
@@ -526,8 +529,8 @@ func TestAccInsightResourceResults_UpdateAllFields(t *testing.T) {
 	})
 }
 
-// TestAccInsightResourceResults_UpdateResultType tests changing the result_type
-// from potential_daily_savings → potential_daily_savings_with_recommendation.
+// TestAccInsightResourceResults_UpdateResultType tests that changing the result_type
+// triggers a destroy+create (RequiresReplace) since result_type is immutable.
 func TestAccInsightResourceResults_UpdateResultType(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-irr")
 
@@ -552,12 +555,15 @@ func TestAccInsightResourceResults_UpdateResultType(t *testing.T) {
 						})),
 				},
 			},
-			// Step 2: Update to potential_daily_savings_with_recommendation
+			// Step 2: Update to potential_daily_savings_with_recommendation.
+			// result_type is immutable (RequiresReplace), so Terraform should
+			// destroy and recreate the resource.
 			{
 				Config: testAccInsightResultsChangeToRecommendation(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction("doit_insight_resource_results.test", plancheck.ResourceActionDestroyBeforeCreate),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -949,7 +955,9 @@ resource "doit_insight_resource_results" "test" {
 `, key)
 }
 
-// testAccInsightResultsAllFieldsV2 creates a result with all optional fields mutated to V2 values.
+// testAccInsightResultsAllFieldsV2 creates a result with all mutable fields
+// mutated to V2 values. Immutable identity fields (result_type, account,
+// cloud_provider, location, resource_type) are kept the same as V1.
 func testAccInsightResultsAllFieldsV2(key string) string {
 	return fmt.Sprintf(`
 resource "doit_insight" "test" {
@@ -969,8 +977,8 @@ resource "doit_insight_resource_results" "test" {
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "potential_daily_savings"
-    location       = "eu-west-1"
-    resource_type  = "vm"
+    location       = "us-east-1"
+    resource_type  = "instance"
     external_id    = "ext-v2"
     external_url   = "https://example.com/v2"
 

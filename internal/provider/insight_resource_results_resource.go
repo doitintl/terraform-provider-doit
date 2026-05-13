@@ -14,6 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -78,6 +80,28 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 		Update: true,
 		Delete: true,
 	})
+
+	// Mark identity fields inside resource_results as RequiresReplace.
+	// These fields form the upsert key in the database and are immutable
+	// after initial insert — the API silently ignores updates to them.
+	// Changing any of these in Terraform triggers a destroy-and-recreate.
+	immutableFieldDescs := map[string]string{
+		"result_type":    "The discriminator property that determines which fields are populated in the 'result' object. **Immutable after creation** — changing this value will destroy and recreate the resource.",
+		"account":        "The cloud account or project ID containing this resource. **Immutable after creation** — changing this value will destroy and recreate the resource.",
+		"cloud_provider": "The cloud provider associated with the resource. **Immutable after creation** — changing this value will destroy and recreate the resource.",
+		"location":       "The region/zone of the resource (e.g. `eu-west-2`). **Immutable after creation** — changing this value will destroy and recreate the resource.",
+		"resource_type":  "What the resource actually is, e.g. `instance`, `disk`, `cache`. **Immutable after creation** — changing this value will destroy and recreate the resource.",
+	}
+	if rrAttr, ok := s.Attributes["resource_results"].(schema.ListNestedAttribute); ok {
+		for field, desc := range immutableFieldDescs {
+			if nested, ok := rrAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, stringplanmodifier.RequiresReplace())
+				nested.MarkdownDescription = desc
+				rrAttr.NestedObject.Attributes[field] = nested
+			}
+		}
+		s.Attributes["resource_results"] = rrAttr
+	}
 
 	resp.Schema = s
 }
