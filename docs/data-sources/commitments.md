@@ -76,6 +76,8 @@ Read-Only:
 - `start_date` (String) The start date of the commitment.
 - `total_commitment_value` (Number) The total value of the commitment across all periods.
 - `total_current_attainment` (Number) The total current spend attainment across all periods.
+- `total_forecast_value` (Number) The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
+- `total_marketplace_spend` (Number) The total marketplace spend across all periods.
 - `update_time` (Number) The last update time in milliseconds since epoch.
 
 <a id="nestedatt--commitments--periods"></a>
@@ -85,5 +87,8 @@ Read-Only:
 
 - `commitment_value` (Number) The commitment value for this period.
 - `end_date` (String) The end date of the period.
+- `forecast_value` (Number) The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+- `marketplace_limit_amount` (Number) The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
 - `marketplace_limit_percentage` (Number) The marketplace limit as a percentage (0-100).
+- `marketplace_spend` (Number) The marketplace spend within this period.
 - `start_date` (String) The start date of the period.

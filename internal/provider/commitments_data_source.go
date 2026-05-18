@@ -247,6 +247,20 @@ func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListI
 		totalCurrentAttainment = types.Float64Null()
 	}
 
+	var totalForecastValue types.Float64
+	if c.TotalForecastValue != nil {
+		totalForecastValue = types.Float64Value(*c.TotalForecastValue)
+	} else {
+		totalForecastValue = types.Float64Null()
+	}
+
+	var totalMarketplaceSpend types.Float64
+	if c.TotalMarketplaceSpend != nil {
+		totalMarketplaceSpend = types.Float64Value(*c.TotalMarketplaceSpend)
+	} else {
+		totalMarketplaceSpend = types.Float64Null()
+	}
+
 	var startDate types.String
 	if c.StartDate != nil {
 		startDate = types.StringValue(c.StartDate.UTC().Format(time.RFC3339))
@@ -278,6 +292,8 @@ func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListI
 			"start_date":               startDate,
 			"total_commitment_value":   totalCommitmentValue,
 			"total_current_attainment": totalCurrentAttainment,
+			"total_forecast_value":     totalForecastValue,
+			"total_marketplace_spend":  totalMarketplaceSpend,
 			"update_time":              updateTime,
 		},
 	)
@@ -330,12 +346,36 @@ func mapCommitmentsListPeriods(ctx context.Context, periods *[]models.Commitment
 			endDate = types.StringNull()
 		}
 
+		var forecastValue types.Float64
+		if p.ForecastValue != nil {
+			forecastValue = types.Float64Value(*p.ForecastValue)
+		} else {
+			forecastValue = types.Float64Null()
+		}
+
+		var marketplaceLimitAmount types.Float64
+		if p.MarketplaceLimitAmount != nil {
+			marketplaceLimitAmount = types.Float64Value(*p.MarketplaceLimitAmount)
+		} else {
+			marketplaceLimitAmount = types.Float64Null()
+		}
+
+		var marketplaceSpend types.Float64
+		if p.MarketplaceSpend != nil {
+			marketplaceSpend = types.Float64Value(*p.MarketplaceSpend)
+		} else {
+			marketplaceSpend = types.Float64Null()
+		}
+
 		pv, pvDiags := datasource_commitments.NewPeriodsValue(
 			datasource_commitments.PeriodsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"commitment_value":             commitmentValue,
 				"end_date":                     endDate,
+				"forecast_value":               forecastValue,
+				"marketplace_limit_amount":     marketplaceLimitAmount,
 				"marketplace_limit_percentage": marketplaceLimitPercentage,
+				"marketplace_spend":            marketplaceSpend,
 				"start_date":                   startDate,
 			},
 		)

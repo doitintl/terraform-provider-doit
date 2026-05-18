@@ -57,14 +57,16 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"aggregation": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`",
-						MarkdownDescription: "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`",
+						Description:         "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`",
+						MarkdownDescription: "How to aggregate data values in the report.\nPossible values: `total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"total",
 								"percent_total",
 								"percent_col",
 								"percent_row",
+								"total_over_total",
+								"count",
 							),
 						},
 					},
@@ -895,6 +897,12 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Report description.",
 				MarkdownDescription: "Report description.",
 			},
+			"folder_id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder).",
+				MarkdownDescription: "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder).",
+			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Report ID.",
@@ -927,6 +935,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 type ReportModel struct {
 	Config      ConfigValue  `tfsdk:"config"`
 	Description types.String `tfsdk:"description"`
+	FolderId    types.String `tfsdk:"folder_id"`
 	Id          types.String `tfsdk:"id"`
 	Labels      types.List   `tfsdk:"labels"`
 	Name        types.String `tfsdk:"name"`

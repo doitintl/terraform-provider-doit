@@ -2593,3 +2593,119 @@ resource "doit_report" "drift_test" {
 }
 `, i)
 }
+
+// TestAccReport_FolderId verifies that reports can be created inside a folder,
+// the folder_id is persisted in state, the report can be moved to root, and
+// that re-applying produces no drift.
+func TestAccReport_FolderId(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report inside a folder
+			{
+				Config: testAccReportInFolder(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.folder_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"doit_report.folder_test", "folder_id",
+						"doit_folder.test", "id"),
+				),
+			},
+			// Step 2: Drift check — re-apply same config, expect no changes
+			{
+				Config: testAccReportInFolder(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Move report to root (folder_id = "root")
+			{
+				Config: testAccReportInRoot(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.folder_test",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.folder_test",
+						tfjsonpath.New("folder_id"),
+						knownvalue.StringExact("root")),
+				},
+			},
+			// Step 4: Drift check after move
+			{
+				Config: testAccReportInRoot(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportInFolder(i int) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "test" {
+    name = "tf-acc-report-folder-%d"
+}
+
+resource "doit_report" "folder_test" {
+    name      = "test-in-folder-%d"
+    folder_id = doit_folder.test.id
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i, i)
+}
+
+func testAccReportInRoot(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "folder_test" {
+    name      = "test-in-folder-%d"
+    folder_id = "root"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}

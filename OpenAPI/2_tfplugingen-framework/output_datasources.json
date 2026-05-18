@@ -3468,6 +3468,111 @@
 			}
 		},
 		{
+			"name": "folder",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Folder ID."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Folder description."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Folder name."
+						}
+					},
+					{
+						"name": "parent_folder_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the parent folder. Set to \"root\" if the folder is at the top level."
+						}
+					}
+				],
+				"description": "Organize Cloud Analytics resources (reports, allocations) into folders.",
+				"markdown_description": "Organize Cloud Analytics resources (reports, allocations) into folders."
+			}
+		},
+		{
+			"name": "folders",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "folders",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Folder description."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Folder ID."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Folder name."
+										}
+									},
+									{
+										"name": "parent_folder_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the parent folder. Set to \"root\" if the folder is at the top level."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Number of folders returned in this page."
+						}
+					}
+				],
+				"description": "Organize Cloud Analytics resources (reports, allocations) into folders.",
+				"markdown_description": "Organize Cloud Analytics resources (reports, allocations) into folders."
+			}
+		},
+		{
 			"name": "invoice",
 			"schema": {
 				"attributes": [
@@ -4860,6 +4965,107 @@
 				],
 				"description": "Manage user permissions and access levels in your organization.",
 				"markdown_description": "Manage user permissions and access levels in your organization."
+			}
+		},
+		{
+			"name": "sharing",
+			"schema": {
+				"attributes": [
+					{
+						"name": "resource_type",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Resource type.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"alerts\",\n\"budgets\",\n\"reports\",\n\"allocations\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "resource_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids)."
+						}
+					},
+					{
+						"name": "create_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this resource was created, in milliseconds since the epoch."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Resource description."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Resource ID."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Resource name."
+						}
+					},
+					{
+						"name": "permissions",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "role",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The role assigned to the user, defining their level of access to the resource."
+										}
+									},
+									{
+										"name": "user",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The email address of the user to whom the role is assigned."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "public",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Type of permissions users in the entire organization have for this resource"
+						}
+					},
+					{
+						"name": "update_time",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The time when this resource was last updated, in milliseconds since the epoch."
+						}
+					}
+				],
+				"description": "Manage permissions associated with specified Cloud Analytics resources.",
+				"markdown_description": "Manage permissions associated with specified Cloud Analytics resources."
 			}
 		},
 		{

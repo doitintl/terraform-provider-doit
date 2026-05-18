@@ -155,6 +155,98 @@ data "doit_anomalies" "test" {
 `
 }
 
+// TestAccAnomaliesDataSource_ResourceDataLabels verifies that the labels nested
+// attribute inside resource_data is accessible on anomalies list items.
+func TestAccAnomaliesDataSource_ResourceDataLabels(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceLabelsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.labels_test", "row_count"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceLabelsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceLabelsConfig() string {
+	return `
+data "doit_anomalies" "labels_test" {
+  max_results = 1
+}
+
+output "anomaly_resource_labels" {
+  value = [
+    for a in data.doit_anomalies.labels_test.anomalies : [
+      for rd in a.resource_data : rd.labels
+    ]
+  ]
+}
+`
+}
+
+// TestAccAnomaliesDataSource_AcknowledgedFields verifies that the acknowledged_at
+// and acknowledged_by attributes are accessible on anomalies list items. These
+// may be null for un-acknowledged anomalies, so we use output expressions to
+// validate the mapping works without requiring specific values.
+func TestAccAnomaliesDataSource_AcknowledgedFields(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceAcknowledgedConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.ack_test", "row_count"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceAcknowledgedConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceAcknowledgedConfig() string {
+	return `
+data "doit_anomalies" "ack_test" {
+  max_results = 1
+}
+
+output "anomaly_acknowledged" {
+  value = [for a in data.doit_anomalies.ack_test.anomalies : a.acknowledged]
+}
+
+output "anomaly_acknowledged_at" {
+  value = [for a in data.doit_anomalies.ack_test.anomalies : a.acknowledged_at != null ? a.acknowledged_at : ""]
+}
+
+output "anomaly_acknowledged_by" {
+  value = [for a in data.doit_anomalies.ack_test.anomalies : a.acknowledged_by != null ? a.acknowledged_by : ""]
+}
+`
+}
+
 // Helper functions
 
 var (

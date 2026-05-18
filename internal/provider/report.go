@@ -69,6 +69,11 @@ func (r *reportResource) overlayReportComputedFields(ctx context.Context, apiRes
 		plan.Labels = resolved.Labels
 	}
 
+	// folder_id: use plan if known, otherwise resolved
+	if plan.FolderId.IsUnknown() {
+		plan.FolderId = resolved.FolderId
+	}
+
 	// ── Config block ──
 	// Walk each field: if the plan value is Known, keep it (user's source of truth).
 	// If Unknown, use the API-resolved value.
@@ -618,6 +623,7 @@ func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, st
 func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req models.CreateReportJSONRequestBody, diags diag.Diagnostics) {
 	req.Name = plan.Name.ValueStringPointer()
 	req.Description = plan.Description.ValueStringPointer()
+	req.FolderId = plan.FolderId.ValueStringPointer()
 
 	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
 		var labels []string
@@ -641,6 +647,7 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateReportJSONRequestBody, diags diag.Diagnostics) {
 	req.Name = plan.Name.ValueStringPointer()
 	req.Description = plan.Description.ValueStringPointer()
+	req.FolderId = plan.FolderId.ValueStringPointer()
 
 	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
 		var labels []string
@@ -953,6 +960,7 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Name = types.StringValue(resp.Name)
 	state.Description = types.StringPointerValue(resp.Description)
+	state.FolderId = types.StringPointerValue(resp.FolderId)
 	if resp.Type != nil {
 		state.Type = types.StringValue(string(*resp.Type))
 	} else {

@@ -37,6 +37,11 @@ func SupportRequestDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Platform of the ticket.",
 				MarkdownDescription: "Platform of the ticket.",
 			},
+			"platform_info": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector).",
+				MarkdownDescription: "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector).",
+			},
 			"product": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Ticket product.",
@@ -84,17 +89,18 @@ func SupportRequestDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type SupportRequestModel struct {
-	CreateTime  types.Int64  `tfsdk:"create_time"`
-	Description types.String `tfsdk:"description"`
-	Id          types.Int64  `tfsdk:"id"`
-	IsPublic    types.Bool   `tfsdk:"is_public"`
-	Platform    types.String `tfsdk:"platform"`
-	Product     types.String `tfsdk:"product"`
-	Requester   types.String `tfsdk:"requester"`
-	Severity    types.String `tfsdk:"severity"`
-	Status      types.String `tfsdk:"status"`
-	Subject     types.String `tfsdk:"subject"`
-	TicketId    types.Int64  `tfsdk:"ticket_id"`
-	UpdateTime  types.Int64  `tfsdk:"update_time"`
-	UrlUi       types.String `tfsdk:"url_ui"`
+	CreateTime   types.Int64  `tfsdk:"create_time"`
+	Description  types.String `tfsdk:"description"`
+	Id           types.Int64  `tfsdk:"id"`
+	IsPublic     types.Bool   `tfsdk:"is_public"`
+	Platform     types.String `tfsdk:"platform"`
+	PlatformInfo types.String `tfsdk:"platform_info"`
+	Product      types.String `tfsdk:"product"`
+	Requester    types.String `tfsdk:"requester"`
+	Severity     types.String `tfsdk:"severity"`
+	Status       types.String `tfsdk:"status"`
+	Subject      types.String `tfsdk:"subject"`
+	TicketId     types.Int64  `tfsdk:"ticket_id"`
+	UpdateTime   types.Int64  `tfsdk:"update_time"`
+	UrlUi        types.String `tfsdk:"url_ui"`
 }

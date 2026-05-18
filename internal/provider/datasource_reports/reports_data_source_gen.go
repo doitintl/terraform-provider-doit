@@ -21,8 +21,8 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 			"filter": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "An expression for filtering the results.\nThe syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**",
-				MarkdownDescription: "An expression for filtering the results.\nThe syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**",
+				Description:         "An expression for filtering the results.\nThe syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**",
+				MarkdownDescription: "An expression for filtering the results.\nThe syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**",
 			},
 			"max_creation_time": schema.StringAttribute{
 				Optional:            true,

@@ -88,6 +88,30 @@ resource "doit_allocation" "allocation_by_region" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Organizing allocations in folders
+# ─────────────────────────────────────────────────────────────────────────────
+# Use folder_id to place an allocation inside a Cloud Analytics folder.
+
+resource "doit_folder" "cost_allocations" {
+  name = "Cost Allocations"
+}
+
+resource "doit_allocation" "in_folder" {
+  name        = "Production"
+  description = "Production environment costs"
+  folder_id   = doit_folder.cost_allocations.id
+  rule = {
+    formula = "A"
+    components = [{
+      mode   = "is"
+      type   = "project_label"
+      key    = "env"
+      values = ["prod"]
+    }]
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Discovering valid component values using data sources
 # ─────────────────────────────────────────────────────────────────────────────
 # Allocation components use `type` and `key` fields that correspond to dimension
@@ -223,6 +247,7 @@ resource "doit_allocation" "dynamic_countries" {
 
 ### Optional
 
+- `folder_id` (String) Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
 - `rule` (Attributes) Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type. (see [below for nested schema](#nestedatt--rule))
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))

@@ -195,6 +195,14 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 				statusVal = types.StringNull()
 			}
 
+			// Map AcknowledgedAt (*time.Time)
+			var acknowledgedAtVal types.String
+			if anomaly.AcknowledgedAt != nil {
+				acknowledgedAtVal = types.StringValue(anomaly.AcknowledgedAt.UTC().Format(time.RFC3339))
+			} else {
+				acknowledgedAtVal = types.StringNull()
+			}
+
 			// Map ResourceData nested list
 			resourceDataList := mapAnomalyResourceData(ctx, anomaly.ResourceData, &resp.Diagnostics)
 
@@ -206,6 +214,8 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 				map[string]attr.Value{
 					"id":              types.StringPointerValue(anomaly.Id),
 					"acknowledged":    types.BoolPointerValue(anomaly.Acknowledged),
+					"acknowledged_at": acknowledgedAtVal,
+					"acknowledged_by": types.StringPointerValue(anomaly.AcknowledgedBy),
 					"attribution":     types.StringValue(anomaly.Attribution),
 					"billing_account": types.StringValue(anomaly.BillingAccount),
 					"cost_of_anomaly": types.Float64Value(anomaly.CostOfAnomaly),
@@ -247,10 +257,14 @@ func mapAnomalyResourceData(ctx context.Context, resourceData *models.AnomalyRes
 
 	vals := make([]datasource_anomalies.ResourceDataValue, 0, len(*resourceData))
 	for _, rd := range *resourceData {
+		// Map labels nested list for this resource
+		labelsList := mapAnomalyResourceLabels(ctx, rd.Labels, diagnostics)
+
 		rdVal, diags := datasource_anomalies.NewResourceDataValue(
 			datasource_anomalies.ResourceDataValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"cost":            types.Float64PointerValue(rd.Cost),
+				"labels":          labelsList,
 				"operation":       types.StringPointerValue(rd.Operation),
 				"resource_id":     types.StringPointerValue(rd.ResourceId),
 				"sku_description": types.StringPointerValue(rd.SkuDescription),
@@ -261,6 +275,33 @@ func mapAnomalyResourceData(ctx context.Context, resourceData *models.AnomalyRes
 	}
 
 	list, diags := types.ListValueFrom(ctx, datasource_anomalies.ResourceDataValue{}.Type(ctx), vals)
+	diagnostics.Append(diags...)
+	return list
+}
+
+// mapAnomalyResourceLabels maps API AnomalyResourceLabel slice to Terraform list.
+func mapAnomalyResourceLabels(ctx context.Context, labels *[]models.AnomalyResourceLabel, diagnostics *diag.Diagnostics) types.List {
+	if labels == nil || len(*labels) == 0 {
+		emptyLabels, d := types.ListValueFrom(ctx, datasource_anomalies.LabelsValue{}.Type(ctx), []datasource_anomalies.LabelsValue{})
+		diagnostics.Append(d...)
+		return emptyLabels
+	}
+
+	vals := make([]datasource_anomalies.LabelsValue, 0, len(*labels))
+	for _, l := range *labels {
+		labelVal, diags := datasource_anomalies.NewLabelsValue(
+			datasource_anomalies.LabelsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"cost":  types.Float64PointerValue(l.Cost),
+				"key":   types.StringPointerValue(l.Key),
+				"value": types.StringPointerValue(l.Value),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, labelVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, datasource_anomalies.LabelsValue{}.Type(ctx), vals)
 	diagnostics.Append(diags...)
 	return list
 }

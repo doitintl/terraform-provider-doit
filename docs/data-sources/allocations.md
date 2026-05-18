@@ -38,7 +38,7 @@ output "allocation_names" {
 ### Optional
 
 - `filter` (String) An expression for filtering the results.
-Valid fields: **type**, **owner**, **name**.
+Valid fields: **type**, **owner**, **name**, **folderId**.
 - `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
@@ -68,6 +68,7 @@ Read-Only:
 - `allocation_type` (String) Composition type of allocation (single or group).
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
 - `description` (String) Allocation description.
+- `folder_id` (String) Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
 - `id` (String) Allocation ID.
 - `name` (String) Allocation name.
 - `owner` (String) Allocation owner.

@@ -21,6 +21,10 @@ data_sources:
     read:
       path: /analytics/v1/labels/{id}
       method: GET
+  folder:
+    read:
+      path: /analytics/v1/folders/{id}
+      method: GET
   label_assignments:
     read:
       path: /analytics/v1/labels/{id}/assignments
@@ -94,6 +98,10 @@ data_sources:
     read:
       path: /analytics/v1/labels
       method: GET
+  folders:
+    read:
+      path: /analytics/v1/folders
+      method: GET
   reports:
     read:
       path: /analytics/v1/reports
@@ -158,6 +166,11 @@ data_sources:
     read:
       path: /ava/v1/askSync
       method: POST
+  # Sharing data source
+  sharing:
+    read:
+      path: /sharing/v1/{resourceType}/{resourceId}
+      method: GET
   # Cloud Diagrams data source
   cloud_diagrams:
     read:

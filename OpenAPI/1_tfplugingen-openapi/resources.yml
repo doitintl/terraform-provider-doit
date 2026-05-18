@@ -27,6 +27,19 @@ resources:
     delete:
       path: /analytics/v1/allocations/{id}
       method: DELETE
+  folder:
+    create:
+      path: /analytics/v1/folders
+      method: POST
+    read:
+      path: /analytics/v1/folders/{id}
+      method: GET
+    update:
+      path: /analytics/v1/folders/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/folders/{id}
+      method: DELETE
   budget:
     create:
       path: /analytics/v1/budgets
@@ -105,6 +118,13 @@ resources:
     delete:
       path: /datahub/v1/datasets/{name}
       method: DELETE
+  sharing:
+    create:
+      path: /sharing/v1/{resourceType}/{resourceId}
+      method: PUT
+    read:
+      path: /sharing/v1/{resourceType}/{resourceId}
+      method: GET
   label_assignments:
     create:
       path: /analytics/v1/labels/{id}/assignments
@@ -138,3 +158,16 @@ resources:
     delete:
       path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
       method: POST
+  user:
+    create:
+      path: /iam/v1/users/invite
+      method: POST
+    read:
+      path: /iam/v1/users/{id}
+      method: PATCH
+    update:
+      path: /iam/v1/users/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/users/{id}
+      method: DELETE
