@@ -106,93 +106,42 @@ resource "doit_insight" "rightsizing" {
 
 ### Required
 
-- `categories` (List of String)
+- `categories` (List of String) One or more categories this insight belongs to.
 - `cloud_provider` (String) The cloud provider associated with the resource.
-- `key` (String)
-- `resource_results` (Attributes List) (see [below for nested schema](#nestedatt--resource_results))
-- `short_description` (String)
-- `title` (String)
+- `key` (String) A unique key for this insight within the source.
+- `short_description` (String) A brief summary of the insight.
+- `title` (String) The display title of the insight.
 
 ### Optional
 
-- `cloud_flow_template_id` (String)
-- `detailed_description_mdx` (String)
-- `easy_win_description` (String)
-- `insight_key` (String)
-- `report_url` (String)
-- `source_id` (String)
-- `tags` (List of String) primary purpose, initially, is to provide security certification information, eg. ISO etc.
+- `cloud_flow_template_id` (String) ID of a CloudFlow template that can automate the remediation of this insight.
+- `detailed_description_mdx` (String) A detailed description of the insight in MDX format.
+- `dismissal_details` (Attributes) Details for why an insight was dismissed. (see [below for nested schema](#nestedatt--dismissal_details))
+- `easy_win_description` (String) A description of why this insight is considered an easy win.
+- `insight_key` (String) The unique key identifying the insight.
+- `report_url` (String) URL to an external report related to this insight.
+- `source_id` (String) The identifier of the source that generated the insight.
+- `status` (String) The display status of the insight.
+Possible values: `actionable`, `acknowledged`, `optimized`, `dismissed`, `in progress`, `upgrade needed`, `permissions needed`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `display_status` (String) The display status of the insight.
 - `last_status_change` (Attributes) If set, this object contains the last status change made by a user for this insight (see [below for nested schema](#nestedatt--last_status_change))
-- `last_updated` (String)
+- `last_updated` (String) Timestamp of the last update to this insight.
 - `source` (String) The source that generated the insight.
-- `summary` (Attributes) (see [below for nested schema](#nestedatt--summary))
+- `summary` (Attributes) Aggregate summary of risks and savings across all resource results for an insight. (see [below for nested schema](#nestedatt--summary))
+- `tags` (List of String) Tags for the insight, primarily used for security certification labels (e.g. ISO).
 
-<a id="nestedatt--resource_results"></a>
-### Nested Schema for `resource_results`
-
-Required:
-
-- `account` (String)
-- `cloud_provider` (String) The cloud provider associated with the resource.
-- `resource_id` (String)
-- `result_type` (String) The discriminator property that determines which fields are populated in the 'result' object.
-Possible values: `security_risk`, `potential_daily_savings`, `potential_daily_savings_with_recommendation`, `potential_daily_savings_with_cluster_agent`
+<a id="nestedatt--dismissal_details"></a>
+### Nested Schema for `dismissal_details`
 
 Optional:
 
-- `enhancement` (Attributes) (see [below for nested schema](#nestedatt--resource_results--enhancement))
-- `external_id` (String) the external ID of the resource in the provider's system for the resource
-- `external_url` (String) the URL to the resource-level issue in the provider's system
-- `location` (String) represents the region/zone of the resource in AWS, or equivalent for other providers
-- `metadata` (Attributes) contains any additional information for the resource results (see [below for nested schema](#nestedatt--resource_results--metadata))
-- `resolved` (Boolean)
-- `resource_type` (String) What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
-- `result` (Attributes) The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled. (see [below for nested schema](#nestedatt--resource_results--result))
-- `severity` (String) Possible values: `critical`, `high`, `medium`, `low`
-
-<a id="nestedatt--resource_results--enhancement"></a>
-### Nested Schema for `resource_results.enhancement`
-
-Optional:
-
-- `last_updated_at` (String)
-- `last_updated_by` (String)
-- `priority` (Attributes) (see [below for nested schema](#nestedatt--resource_results--enhancement--priority))
-- `tags` (List of String)
-
-<a id="nestedatt--resource_results--enhancement--priority"></a>
-### Nested Schema for `resource_results.enhancement.priority`
-
-Optional:
-
-- `priority_score` (Number)
-- `value` (String)
-
-
-
-<a id="nestedatt--resource_results--metadata"></a>
-### Nested Schema for `resource_results.metadata`
-
-
-<a id="nestedatt--resource_results--result"></a>
-### Nested Schema for `resource_results.result`
-
-Optional:
-
-- `agent_installed` (Boolean) true if the agent is installed
-- `critical` (Number) number of critical security risks
-- `current` (String) the current state (i.e. current instance type)
-- `high` (Number) number of high security risks
-- `low` (Number) number of low security risks
-- `medium` (Number) number of medium security risks
-- `recommendation` (String) the recommended state (i.e. recommended instance type)
-- `value` (Number) the daily saving amount for this result
-
+- `comment` (String) An optional free-text comment providing additional context.
+- `reason` (String) The reason for dismissal.
+Possible values: `not relevant`, `not enough information`, `not worth the effort`, `inaccurate optimization opportunities`
 
 
 <a id="nestedatt--timeouts"></a>
@@ -220,12 +169,12 @@ Read-Only:
 
 Read-Only:
 
-- `operational_risks` (Number)
-- `performance_risks` (Number)
-- `potential_daily_savings` (Number)
-- `reliability_risks` (Number)
-- `security_risks` (Number)
-- `sustainability_risks` (Number)
+- `operational_risks` (Number) Total number of operational risks.
+- `performance_risks` (Number) Total number of performance risks.
+- `potential_daily_savings` (Number) Total potential daily savings in USD.
+- `reliability_risks` (Number) Total number of reliability risks.
+- `security_risks` (Number) Total number of security risks.
+- `sustainability_risks` (Number) Total number of sustainability risks.
 
 ## Import
 

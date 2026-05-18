@@ -2982,7 +2982,7 @@ paths:
       description: |
         Deletes all insights matching the specified key from the batch source.
         This removes the insight and all its associated resource results.
-        For single-insight deletion, use DELETE /source/{sourceID}/insight/{insightKey} instead.
+        For single-insight deletion, use `DELETE /source/{sourceID}/insight/{insightKey}` instead.
       operationId: deleteInsightResults
       parameters:
         - in: query
@@ -5949,7 +5949,7 @@ components:
           $ref: "#/components/schemas/DismissalDetails"
     InsightRequest:
       type: object
-      description: Request body for creating or updating an insight.
+      description: Request body for creating or updating an insight via the batch endpoint. Includes resource results.
       required: [key, title, shortDescription, cloudProvider, categories, resourceResults]
       properties:
         key:
@@ -6737,7 +6737,9 @@ components:
         priorityScore: {type: number, format: double, description: "Numeric priority score."}
     ResourceResultRequest:
       type: object
-      description: A single resource-level result for creating or updating an insight. Server-computed fields (severity, resolved, enhancement) are not accepted here and will be ignored.
+      description: >
+        A single resource-level result for creating or updating an insight. Server-computed fields (severity, resolved, enhancement) are not accepted here and will be ignored. Identity fields (resourceId, resultType, account, cloudProvider) form the composite key. The fields location and resource_type are set on creation only — any values provided for these fields during subsequent upserts are silently ignored.
+
       required:
         - resourceId
         - resultType
@@ -6748,17 +6750,23 @@ components:
           type: string
           description: The cloud resource identifier.
         resourceType:
-          description: What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
+          description: >
+            What the resource actually is, e.g. for an EC2 resource ID, this field would be `instance`. Immutable after creation — updates to this field are silently ignored.
+
           type: string
           example: instance, disk, cache
         cloudProvider:
-          $ref: "#/components/schemas/CloudProvider"
+          description: Immutable after creation — updates to this field are silently ignored.
+          allOf:
+            - $ref: "#/components/schemas/CloudProvider"
         account:
           type: string
-          description: The cloud account or project ID containing this resource.
+          description: The cloud account or project ID containing this resource. Immutable after creation — updates to this field are silently ignored.
         location:
           type: string
-          description: represents the region/zone of the resource in AWS, or equivalent for other providers
+          description: >
+            Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.
+
           example: eu-west-2
         externalId:
           type: string

@@ -4323,7 +4323,7 @@ type InsightMetadataRequest struct {
 	Title string `json:"title"`
 }
 
-// InsightRequest Request body for creating or updating an insight.
+// InsightRequest Request body for creating or updating an insight via the batch endpoint. Includes resource results.
 type InsightRequest struct {
 	// Categories One or more categories this insight belongs to.
 	Categories []CreateCategory `json:"categories"`
@@ -4933,12 +4933,12 @@ type ResourceResultEnhancementPriority struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// ResourceResultRequest A single resource-level result for creating or updating an insight. Server-computed fields (severity, resolved, enhancement) are not accepted here and will be ignored.
+// ResourceResultRequest A single resource-level result for creating or updating an insight. Server-computed fields (severity, resolved, enhancement) are not accepted here and will be ignored. Identity fields (resourceId, resultType, account, cloudProvider) form the composite key. The fields location and resource_type are set on creation only — any values provided for these fields during subsequent upserts are silently ignored.
 type ResourceResultRequest struct {
-	// Account The cloud account or project ID containing this resource.
+	// Account The cloud account or project ID containing this resource. Immutable after creation — updates to this field are silently ignored.
 	Account string `json:"account"`
 
-	// CloudProvider The cloud provider associated with the resource.
+	// CloudProvider Immutable after creation — updates to this field are silently ignored.
 	CloudProvider CloudProvider `json:"cloudProvider"`
 
 	// ExternalId the external ID of the resource in the provider's system for the resource
@@ -4947,7 +4947,7 @@ type ResourceResultRequest struct {
 	// ExternalUrl the URL to the resource-level issue in the provider's system
 	ExternalUrl *string `json:"externalUrl,omitempty"`
 
-	// Location represents the region/zone of the resource in AWS, or equivalent for other providers
+	// Location Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.
 	Location *string `json:"location,omitempty"`
 
 	// Metadata contains any additional information for the resource results
@@ -4956,7 +4956,7 @@ type ResourceResultRequest struct {
 	// ResourceId The cloud resource identifier.
 	ResourceId string `json:"resourceId"`
 
-	// ResourceType What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
+	// ResourceType What the resource actually is, e.g. for an EC2 resource ID, this field would be `instance`. Immutable after creation — updates to this field are silently ignored.
 	ResourceType *string `json:"resourceType,omitempty"`
 
 	// Result The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.

@@ -1690,14 +1690,14 @@
 										"name": "account",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "The cloud account or project ID containing this resource."
+											"description": "The cloud account or project ID containing this resource. Immutable after creation — updates to this field are silently ignored."
 										}
 									},
 									{
 										"name": "cloud_provider",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "The cloud provider associated with the resource."
+											"description": "Immutable after creation — updates to this field are silently ignored."
 										}
 									},
 									{
@@ -1718,7 +1718,7 @@
 										"name": "location",
 										"string": {
 											"computed_optional_required": "computed_optional",
-											"description": "represents the region/zone of the resource in AWS, or equivalent for other providers"
+											"description": "Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.\n"
 										}
 									},
 									{
@@ -1739,7 +1739,7 @@
 										"name": "resource_type",
 										"string": {
 											"computed_optional_required": "computed_optional",
-											"description": "What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`"
+											"description": "What the resource actually is, e.g. for an EC2 resource ID, this field would be `instance`. Immutable after creation — updates to this field are silently ignored.\n"
 										}
 									},
 									{

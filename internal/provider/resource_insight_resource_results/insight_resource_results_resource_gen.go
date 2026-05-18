@@ -48,13 +48,13 @@ func InsightResourceResultsResourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"account": schema.StringAttribute{
 							Required:            true,
-							Description:         "The cloud account or project ID containing this resource.",
-							MarkdownDescription: "The cloud account or project ID containing this resource.",
+							Description:         "The cloud account or project ID containing this resource. Immutable after creation — updates to this field are silently ignored.",
+							MarkdownDescription: "The cloud account or project ID containing this resource. Immutable after creation — updates to this field are silently ignored.",
 						},
 						"cloud_provider": schema.StringAttribute{
 							Required:            true,
-							Description:         "The cloud provider associated with the resource.",
-							MarkdownDescription: "The cloud provider associated with the resource.",
+							Description:         "Immutable after creation — updates to this field are silently ignored.",
+							MarkdownDescription: "Immutable after creation — updates to this field are silently ignored.",
 						},
 						"enhancement": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -121,8 +121,8 @@ func InsightResourceResultsResourceSchema(ctx context.Context) schema.Schema {
 						"location": schema.StringAttribute{
 							Optional:            true,
 							Computed:            true,
-							Description:         "represents the region/zone of the resource in AWS, or equivalent for other providers",
-							MarkdownDescription: "represents the region/zone of the resource in AWS, or equivalent for other providers",
+							Description:         "Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.\n",
+							MarkdownDescription: "Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.\n",
 						},
 						"metadata": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{},
@@ -149,8 +149,8 @@ func InsightResourceResultsResourceSchema(ctx context.Context) schema.Schema {
 						"resource_type": schema.StringAttribute{
 							Optional:            true,
 							Computed:            true,
-							Description:         "What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`",
-							MarkdownDescription: "What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`",
+							Description:         "What the resource actually is, e.g. for an EC2 resource ID, this field would be `instance`. Immutable after creation — updates to this field are silently ignored.\n",
+							MarkdownDescription: "What the resource actually is, e.g. for an EC2 resource ID, this field would be `instance`. Immutable after creation — updates to this field are silently ignored.\n",
 						},
 						"result": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
