@@ -487,7 +487,9 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 		diags.Append(catDiags...)
 		state.Categories = catList
 	} else {
-		state.Categories, _ = types.ListValueFrom(ctx, types.StringType, []string{})
+		var catDiags diag.Diagnostics
+		state.Categories, catDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(catDiags...)
 	}
 
 	// Tags
@@ -496,7 +498,9 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 		diags.Append(tagDiags...)
 		state.Tags = tagList
 	} else {
-		state.Tags, _ = types.ListValueFrom(ctx, types.StringType, []string{})
+		var tagDiags diag.Diagnostics
+		state.Tags, tagDiags = types.ListValueFrom(ctx, types.StringType, []string{})
+		diags.Append(tagDiags...)
 	}
 
 	// Summary (Computed-only nested object)

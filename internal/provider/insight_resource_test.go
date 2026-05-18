@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -155,8 +156,7 @@ func TestAccInsightResource_AllFields(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("report_url"),
-						knownvalue.StringExact("https://console.doit.com/customers/EE8CtpzYiKp0dVAESVrB/analytics/reports/test-report")),
-					statecheck.ExpectKnownValue(
+						knownvalue.StringExact(fmt.Sprintf("https://console.doit.com/customers/%s/analytics/reports/test-report", os.Getenv("TEST_CUSTOMER_ID")))), statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("tags"),
 						knownvalue.ListSizeExact(0)),
@@ -321,8 +321,7 @@ func TestAccInsightResource_UpdateOptionalFields(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("report_url"),
-						knownvalue.StringExact("https://console.doit.com/customers/EE8CtpzYiKp0dVAESVrB/analytics/reports/test-report")),
-					statecheck.ExpectKnownValue(
+						knownvalue.StringExact(fmt.Sprintf("https://console.doit.com/customers/%s/analytics/reports/test-report", os.Getenv("TEST_CUSTOMER_ID")))), statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("cloud_flow_template_id"),
 						knownvalue.StringExact("tmpl-12345")),
@@ -420,6 +419,7 @@ resource "doit_insight" "test" {
 
 // testAccInsightResourceAllFieldsConfig generates a config with every optional metadata field set.
 func testAccInsightResourceAllFieldsConfig(key string) string {
+	customerID := os.Getenv("TEST_CUSTOMER_ID")
 	return fmt.Sprintf(`
 resource "doit_insight" "test" {
   key               = %[1]q
@@ -430,10 +430,10 @@ resource "doit_insight" "test" {
 
   detailed_description_mdx = "# Detailed\n\nThis is a **detailed** description."
   easy_win_description     = "Resize the instance to save costs."
-  report_url               = "https://console.doit.com/customers/EE8CtpzYiKp0dVAESVrB/analytics/reports/test-report"
+  report_url               = "https://console.doit.com/customers/%[2]s/analytics/reports/test-report"
   cloud_flow_template_id   = "tmpl-12345"
 }
-`, key)
+`, key, customerID)
 }
 
 // TestAccInsightResource_Status tests creating an insight with an explicit status.

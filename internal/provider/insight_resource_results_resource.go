@@ -382,24 +382,24 @@ func overlayResourceResult(_ context.Context, resolved, plan *rr.ResourceResults
 
 	// Optional+Computed scalars: resolve only when Unknown
 	if plan.ExternalId.IsUnknown() {
-		plan.ExternalId = types.StringNull()
+		plan.ExternalId = resolved.ExternalId
 	}
 	if plan.ExternalUrl.IsUnknown() {
-		plan.ExternalUrl = types.StringNull()
+		plan.ExternalUrl = resolved.ExternalUrl
 	}
 	if plan.Location.IsUnknown() {
-		plan.Location = types.StringNull()
+		plan.Location = resolved.Location
 	}
 	if plan.ResourceType.IsUnknown() {
-		plan.ResourceType = types.StringNull()
+		plan.ResourceType = resolved.ResourceType
 	}
 	if plan.Metadata.IsUnknown() {
-		plan.Metadata = rr.NewMetadataValueNull()
+		plan.Metadata = resolved.Metadata
 	}
 
 	// Nested result: resolve unknowns in subfields
 	if plan.Result.IsUnknown() {
-		plan.Result = rr.NewResultValueNull()
+		plan.Result = resolved.Result
 	} else if !plan.Result.IsNull() {
 		overlayResultNested(&resolved.Result, &plan.Result)
 	}
