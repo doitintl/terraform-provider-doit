@@ -284,6 +284,561 @@ func (e Category) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramAttachmentCldType.
+const (
+	CloudDiagramAttachmentCldTypeAWS   CloudDiagramAttachmentCldType = "AWS"
+	CloudDiagramAttachmentCldTypeAZURE CloudDiagramAttachmentCldType = "AZURE"
+	CloudDiagramAttachmentCldTypeGCP   CloudDiagramAttachmentCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramAttachmentCldType enum.
+func (e CloudDiagramAttachmentCldType) Valid() bool {
+	switch e {
+	case CloudDiagramAttachmentCldTypeAWS:
+		return true
+	case CloudDiagramAttachmentCldTypeAZURE:
+		return true
+	case CloudDiagramAttachmentCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramCombinerItemType.
+const (
+	CloudDiagramCombinerItemTypeAttachment  CloudDiagramCombinerItemType = "attachment"
+	CloudDiagramCombinerItemTypeCombiner    CloudDiagramCombinerItemType = "combiner"
+	CloudDiagramCombinerItemTypeElement     CloudDiagramCombinerItemType = "element"
+	CloudDiagramCombinerItemTypeGroup       CloudDiagramCombinerItemType = "group"
+	CloudDiagramCombinerItemTypeLink        CloudDiagramCombinerItemType = "link"
+	CloudDiagramCombinerItemTypeNode        CloudDiagramCombinerItemType = "node"
+	CloudDiagramCombinerItemTypeNote        CloudDiagramCombinerItemType = "note"
+	CloudDiagramCombinerItemTypeScheme      CloudDiagramCombinerItemType = "scheme"
+	CloudDiagramCombinerItemTypeStatussheet CloudDiagramCombinerItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramCombinerItemType enum.
+func (e CloudDiagramCombinerItemType) Valid() bool {
+	switch e {
+	case CloudDiagramCombinerItemTypeAttachment:
+		return true
+	case CloudDiagramCombinerItemTypeCombiner:
+		return true
+	case CloudDiagramCombinerItemTypeElement:
+		return true
+	case CloudDiagramCombinerItemTypeGroup:
+		return true
+	case CloudDiagramCombinerItemTypeLink:
+		return true
+	case CloudDiagramCombinerItemTypeNode:
+		return true
+	case CloudDiagramCombinerItemTypeNote:
+		return true
+	case CloudDiagramCombinerItemTypeScheme:
+		return true
+	case CloudDiagramCombinerItemTypeStatussheet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentBaseCldType.
+const (
+	CloudDiagramComponentBaseCldTypeAWS   CloudDiagramComponentBaseCldType = "AWS"
+	CloudDiagramComponentBaseCldTypeAZURE CloudDiagramComponentBaseCldType = "AZURE"
+	CloudDiagramComponentBaseCldTypeGCP   CloudDiagramComponentBaseCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentBaseCldType enum.
+func (e CloudDiagramComponentBaseCldType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentBaseCldTypeAWS:
+		return true
+	case CloudDiagramComponentBaseCldTypeAZURE:
+		return true
+	case CloudDiagramComponentBaseCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentSearchItemNodeType.
+const (
+	CloudDiagramComponentSearchItemNodeTypeAppComponent CloudDiagramComponentSearchItemNodeType = "app_component"
+	CloudDiagramComponentSearchItemNodeTypeAppGroup     CloudDiagramComponentSearchItemNodeType = "app_group"
+	CloudDiagramComponentSearchItemNodeTypeAppLink      CloudDiagramComponentSearchItemNodeType = "app_link"
+	CloudDiagramComponentSearchItemNodeTypeAttachment   CloudDiagramComponentSearchItemNodeType = "attachment"
+	CloudDiagramComponentSearchItemNodeTypeGroup        CloudDiagramComponentSearchItemNodeType = "group"
+	CloudDiagramComponentSearchItemNodeTypeHost         CloudDiagramComponentSearchItemNodeType = "host"
+	CloudDiagramComponentSearchItemNodeTypeLink         CloudDiagramComponentSearchItemNodeType = "link"
+	CloudDiagramComponentSearchItemNodeTypeService      CloudDiagramComponentSearchItemNodeType = "service"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemNodeType enum.
+func (e CloudDiagramComponentSearchItemNodeType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemNodeTypeAppComponent:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeHost:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeService:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentSearchItemType.
+const (
+	CloudDiagramComponentSearchItemTypeAttachment CloudDiagramComponentSearchItemType = "attachment"
+	CloudDiagramComponentSearchItemTypeCombiner   CloudDiagramComponentSearchItemType = "combiner"
+	CloudDiagramComponentSearchItemTypeElement    CloudDiagramComponentSearchItemType = "element"
+	CloudDiagramComponentSearchItemTypeGroup      CloudDiagramComponentSearchItemType = "group"
+	CloudDiagramComponentSearchItemTypeLink       CloudDiagramComponentSearchItemType = "link"
+	CloudDiagramComponentSearchItemTypeNode       CloudDiagramComponentSearchItemType = "node"
+	CloudDiagramComponentSearchItemTypeNote       CloudDiagramComponentSearchItemType = "note"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemType enum.
+func (e CloudDiagramComponentSearchItemType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemTypeCombiner:
+		return true
+	case CloudDiagramComponentSearchItemTypeElement:
+		return true
+	case CloudDiagramComponentSearchItemTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemTypeNode:
+		return true
+	case CloudDiagramComponentSearchItemTypeNote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramElementCldType.
+const (
+	CloudDiagramElementCldTypeAWS   CloudDiagramElementCldType = "AWS"
+	CloudDiagramElementCldTypeAZURE CloudDiagramElementCldType = "AZURE"
+	CloudDiagramElementCldTypeGCP   CloudDiagramElementCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramElementCldType enum.
+func (e CloudDiagramElementCldType) Valid() bool {
+	switch e {
+	case CloudDiagramElementCldTypeAWS:
+		return true
+	case CloudDiagramElementCldTypeAZURE:
+		return true
+	case CloudDiagramElementCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramGroupCldType.
+const (
+	CloudDiagramGroupCldTypeAWS   CloudDiagramGroupCldType = "AWS"
+	CloudDiagramGroupCldTypeAZURE CloudDiagramGroupCldType = "AZURE"
+	CloudDiagramGroupCldTypeGCP   CloudDiagramGroupCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramGroupCldType enum.
+func (e CloudDiagramGroupCldType) Valid() bool {
+	switch e {
+	case CloudDiagramGroupCldTypeAWS:
+		return true
+	case CloudDiagramGroupCldTypeAZURE:
+		return true
+	case CloudDiagramGroupCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramGroupGroupType.
+const (
+	Account            CloudDiagramGroupGroupType = "account"
+	Aks                CloudDiagramGroupGroupType = "aks"
+	Az                 CloudDiagramGroupGroupType = "az"
+	AzureCdnProfile    CloudDiagramGroupGroupType = "azure_cdn_profile"
+	AzureDnsZone       CloudDiagramGroupGroupType = "azure_dns_zone"
+	AzureResourceGroup CloudDiagramGroupGroupType = "azure_resource_group"
+	AzureSubscription  CloudDiagramGroupGroupType = "azure_subscription"
+	CustomerGateway    CloudDiagramGroupGroupType = "customer_gateway"
+	Ecs                CloudDiagramGroupGroupType = "ecs"
+	Eks                CloudDiagramGroupGroupType = "eks"
+	GcpInstanceGroup   CloudDiagramGroupGroupType = "gcp_instance_group"
+	GcpManagedZone     CloudDiagramGroupGroupType = "gcp_managed_zone"
+	GkeCluster         CloudDiagramGroupGroupType = "gke_cluster"
+	K8sDaemonSet       CloudDiagramGroupGroupType = "k8s_daemon_set"
+	K8sDeployment      CloudDiagramGroupGroupType = "k8s_deployment"
+	K8sNamespace       CloudDiagramGroupGroupType = "k8s_namespace"
+	K8sPod             CloudDiagramGroupGroupType = "k8s_pod"
+	K8sReplicaSet      CloudDiagramGroupGroupType = "k8s_replica_set"
+	K8sStatefulSet     CloudDiagramGroupGroupType = "k8s_stateful_set"
+	Project            CloudDiagramGroupGroupType = "project"
+	Region             CloudDiagramGroupGroupType = "region"
+	SecurityGroup      CloudDiagramGroupGroupType = "security_group"
+	Subnet             CloudDiagramGroupGroupType = "subnet"
+	Vpc                CloudDiagramGroupGroupType = "vpc"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramGroupGroupType enum.
+func (e CloudDiagramGroupGroupType) Valid() bool {
+	switch e {
+	case Account:
+		return true
+	case Aks:
+		return true
+	case Az:
+		return true
+	case AzureCdnProfile:
+		return true
+	case AzureDnsZone:
+		return true
+	case AzureResourceGroup:
+		return true
+	case AzureSubscription:
+		return true
+	case CustomerGateway:
+		return true
+	case Ecs:
+		return true
+	case Eks:
+		return true
+	case GcpInstanceGroup:
+		return true
+	case GcpManagedZone:
+		return true
+	case GkeCluster:
+		return true
+	case K8sDaemonSet:
+		return true
+	case K8sDeployment:
+		return true
+	case K8sNamespace:
+		return true
+	case K8sPod:
+		return true
+	case K8sReplicaSet:
+		return true
+	case K8sStatefulSet:
+		return true
+	case Project:
+		return true
+	case Region:
+		return true
+	case SecurityGroup:
+		return true
+	case Subnet:
+		return true
+	case Vpc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramGroupItemType.
+const (
+	CloudDiagramGroupItemTypeAttachment  CloudDiagramGroupItemType = "attachment"
+	CloudDiagramGroupItemTypeCombiner    CloudDiagramGroupItemType = "combiner"
+	CloudDiagramGroupItemTypeElement     CloudDiagramGroupItemType = "element"
+	CloudDiagramGroupItemTypeGroup       CloudDiagramGroupItemType = "group"
+	CloudDiagramGroupItemTypeLink        CloudDiagramGroupItemType = "link"
+	CloudDiagramGroupItemTypeNode        CloudDiagramGroupItemType = "node"
+	CloudDiagramGroupItemTypeNote        CloudDiagramGroupItemType = "note"
+	CloudDiagramGroupItemTypeScheme      CloudDiagramGroupItemType = "scheme"
+	CloudDiagramGroupItemTypeStatussheet CloudDiagramGroupItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramGroupItemType enum.
+func (e CloudDiagramGroupItemType) Valid() bool {
+	switch e {
+	case CloudDiagramGroupItemTypeAttachment:
+		return true
+	case CloudDiagramGroupItemTypeCombiner:
+		return true
+	case CloudDiagramGroupItemTypeElement:
+		return true
+	case CloudDiagramGroupItemTypeGroup:
+		return true
+	case CloudDiagramGroupItemTypeLink:
+		return true
+	case CloudDiagramGroupItemTypeNode:
+		return true
+	case CloudDiagramGroupItemTypeNote:
+		return true
+	case CloudDiagramGroupItemTypeScheme:
+		return true
+	case CloudDiagramGroupItemTypeStatussheet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramImportStateStatus.
+const (
+	CloudDiagramImportStateStatusFailure    CloudDiagramImportStateStatus = "failure"
+	CloudDiagramImportStateStatusInProgress CloudDiagramImportStateStatus = "in_progress"
+	CloudDiagramImportStateStatusQueued     CloudDiagramImportStateStatus = "queued"
+	CloudDiagramImportStateStatusSuccess    CloudDiagramImportStateStatus = "success"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramImportStateStatus enum.
+func (e CloudDiagramImportStateStatus) Valid() bool {
+	switch e {
+	case CloudDiagramImportStateStatusFailure:
+		return true
+	case CloudDiagramImportStateStatusInProgress:
+		return true
+	case CloudDiagramImportStateStatusQueued:
+		return true
+	case CloudDiagramImportStateStatusSuccess:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramImportStateType.
+const (
+	CloudDiagramImportStateTypeAWS   CloudDiagramImportStateType = "AWS"
+	CloudDiagramImportStateTypeAZURE CloudDiagramImportStateType = "AZURE"
+	CloudDiagramImportStateTypeGCP   CloudDiagramImportStateType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramImportStateType enum.
+func (e CloudDiagramImportStateType) Valid() bool {
+	switch e {
+	case CloudDiagramImportStateTypeAWS:
+		return true
+	case CloudDiagramImportStateTypeAZURE:
+		return true
+	case CloudDiagramImportStateTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramLinkCldType.
+const (
+	CloudDiagramLinkCldTypeAWS   CloudDiagramLinkCldType = "AWS"
+	CloudDiagramLinkCldTypeAZURE CloudDiagramLinkCldType = "AZURE"
+	CloudDiagramLinkCldTypeGCP   CloudDiagramLinkCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramLinkCldType enum.
+func (e CloudDiagramLinkCldType) Valid() bool {
+	switch e {
+	case CloudDiagramLinkCldTypeAWS:
+		return true
+	case CloudDiagramLinkCldTypeAZURE:
+		return true
+	case CloudDiagramLinkCldTypeGCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramLinkConnectionType.
+const (
+	CloudDiagramLinkConnectionTypeCrossCloudInterconnect       CloudDiagramLinkConnectionType = "Cross Cloud Interconnect"
+	CloudDiagramLinkConnectionTypeDedicatedInterconnect        CloudDiagramLinkConnectionType = "Dedicated Interconnect"
+	CloudDiagramLinkConnectionTypeNetworkConnectivityCenter    CloudDiagramLinkConnectionType = "Network Connectivity Center"
+	CloudDiagramLinkConnectionTypeNormal                       CloudDiagramLinkConnectionType = "normal"
+	CloudDiagramLinkConnectionTypePartnerInterconnect          CloudDiagramLinkConnectionType = "Partner Interconnect"
+	CloudDiagramLinkConnectionTypePrivate                      CloudDiagramLinkConnectionType = "private"
+	CloudDiagramLinkConnectionTypePrivateGoogleAccess          CloudDiagramLinkConnectionType = "Private Google Access"
+	CloudDiagramLinkConnectionTypePrivateServiceConnect        CloudDiagramLinkConnectionType = "Private Service Connect"
+	CloudDiagramLinkConnectionTypeServerlessVPC                CloudDiagramLinkConnectionType = "Serverless VPC"
+	CloudDiagramLinkConnectionTypeServerlessVPCAccessConnector CloudDiagramLinkConnectionType = "Serverless VPC Access Connector"
+	CloudDiagramLinkConnectionTypeTunnel                       CloudDiagramLinkConnectionType = "tunnel"
+	CloudDiagramLinkConnectionTypeVPCPeering                   CloudDiagramLinkConnectionType = "VPC Peering"
+	CloudDiagramLinkConnectionTypeVPN                          CloudDiagramLinkConnectionType = "VPN"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramLinkConnectionType enum.
+func (e CloudDiagramLinkConnectionType) Valid() bool {
+	switch e {
+	case CloudDiagramLinkConnectionTypeCrossCloudInterconnect:
+		return true
+	case CloudDiagramLinkConnectionTypeDedicatedInterconnect:
+		return true
+	case CloudDiagramLinkConnectionTypeNetworkConnectivityCenter:
+		return true
+	case CloudDiagramLinkConnectionTypeNormal:
+		return true
+	case CloudDiagramLinkConnectionTypePartnerInterconnect:
+		return true
+	case CloudDiagramLinkConnectionTypePrivate:
+		return true
+	case CloudDiagramLinkConnectionTypePrivateGoogleAccess:
+		return true
+	case CloudDiagramLinkConnectionTypePrivateServiceConnect:
+		return true
+	case CloudDiagramLinkConnectionTypeServerlessVPC:
+		return true
+	case CloudDiagramLinkConnectionTypeServerlessVPCAccessConnector:
+		return true
+	case CloudDiagramLinkConnectionTypeTunnel:
+		return true
+	case CloudDiagramLinkConnectionTypeVPCPeering:
+		return true
+	case CloudDiagramLinkConnectionTypeVPN:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramNodeCldType.
+const (
+	AWS   CloudDiagramNodeCldType = "AWS"
+	AZURE CloudDiagramNodeCldType = "AZURE"
+	GCP   CloudDiagramNodeCldType = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramNodeCldType enum.
+func (e CloudDiagramNodeCldType) Valid() bool {
+	switch e {
+	case AWS:
+		return true
+	case AZURE:
+		return true
+	case GCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramSchemeResultType.
+const (
+	CloudDiagramSchemeResultTypeApplication    CloudDiagramSchemeResultType = "application"
+	CloudDiagramSchemeResultTypeInfrastructure CloudDiagramSchemeResultType = "infrastructure"
+	CloudDiagramSchemeResultTypeNetwork        CloudDiagramSchemeResultType = "network"
+	CloudDiagramSchemeResultTypeTemplate       CloudDiagramSchemeResultType = "template"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramSchemeResultType enum.
+func (e CloudDiagramSchemeResultType) Valid() bool {
+	switch e {
+	case CloudDiagramSchemeResultTypeApplication:
+		return true
+	case CloudDiagramSchemeResultTypeInfrastructure:
+		return true
+	case CloudDiagramSchemeResultTypeNetwork:
+		return true
+	case CloudDiagramSchemeResultTypeTemplate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramSchemeSearchItemType.
+const (
+	CloudDiagramSchemeSearchItemTypeStatussheet CloudDiagramSchemeSearchItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramSchemeSearchItemType enum.
+func (e CloudDiagramSchemeSearchItemType) Valid() bool {
+	switch e {
+	case CloudDiagramSchemeSearchItemTypeStatussheet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramStatsType.
+const (
+	CloudDiagramStatsTypeApplication    CloudDiagramStatsType = "application"
+	CloudDiagramStatsTypeInfrastructure CloudDiagramStatsType = "infrastructure"
+	CloudDiagramStatsTypeNetwork        CloudDiagramStatsType = "network"
+	CloudDiagramStatsTypeTemplate       CloudDiagramStatsType = "template"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramStatsType enum.
+func (e CloudDiagramStatsType) Valid() bool {
+	switch e {
+	case CloudDiagramStatsTypeApplication:
+		return true
+	case CloudDiagramStatsTypeInfrastructure:
+		return true
+	case CloudDiagramStatsTypeNetwork:
+		return true
+	case CloudDiagramStatsTypeTemplate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramStatsChangeType.
+const (
+	NODECREATE CloudDiagramStatsChangeType = "NODE_CREATE"
+	NODEDELETE CloudDiagramStatsChangeType = "NODE_DELETE"
+	NODEUPDATE CloudDiagramStatsChangeType = "NODE_UPDATE"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramStatsChangeType enum.
+func (e CloudDiagramStatsChangeType) Valid() bool {
+	switch e {
+	case NODECREATE:
+		return true
+	case NODEDELETE:
+		return true
+	case NODEUPDATE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramsGetRequestTemplate0.
+const (
+	Component   CloudDiagramsGetRequestTemplate0 = "component"
+	Statussheet CloudDiagramsGetRequestTemplate0 = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramsGetRequestTemplate0 enum.
+func (e CloudDiagramsGetRequestTemplate0) Valid() bool {
+	switch e {
+	case Component:
+		return true
+	case Statussheet:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudIncidentListItemPlatform.
 const (
 	CloudIncidentListItemPlatformAmazonWebServices CloudIncidentListItemPlatform = "amazon-web-services"
@@ -661,15 +1216,19 @@ func (e DisplayStatus) Valid() bool {
 
 // Defines values for ExternalConfigAggregation.
 const (
-	PercentCol   ExternalConfigAggregation = "percent_col"
-	PercentRow   ExternalConfigAggregation = "percent_row"
-	PercentTotal ExternalConfigAggregation = "percent_total"
-	Total        ExternalConfigAggregation = "total"
+	Count          ExternalConfigAggregation = "count"
+	PercentCol     ExternalConfigAggregation = "percent_col"
+	PercentRow     ExternalConfigAggregation = "percent_row"
+	PercentTotal   ExternalConfigAggregation = "percent_total"
+	Total          ExternalConfigAggregation = "total"
+	TotalOverTotal ExternalConfigAggregation = "total_over_total"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigAggregation enum.
 func (e ExternalConfigAggregation) Valid() bool {
 	switch e {
+	case Count:
+		return true
 	case PercentCol:
 		return true
 	case PercentRow:
@@ -677,6 +1236,8 @@ func (e ExternalConfigAggregation) Valid() bool {
 	case PercentTotal:
 		return true
 	case Total:
+		return true
+	case TotalOverTotal:
 		return true
 	default:
 		return false
@@ -1268,6 +1829,42 @@ func (e GroupAllocationRuleAction) Valid() bool {
 	case Select:
 		return true
 	case Update:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for InviteUserRequestJobTitle.
+const (
+	InviteUserRequestJobTitleDataEngineerDataAnalysts InviteUserRequestJobTitle = "Data Engineer / Data Analysts"
+	InviteUserRequestJobTitleExecutiveTeam            InviteUserRequestJobTitle = "Executive Team"
+	InviteUserRequestJobTitleFinanceAccounting        InviteUserRequestJobTitle = "Finance / Accounting"
+	InviteUserRequestJobTitleFounder                  InviteUserRequestJobTitle = "Founder"
+	InviteUserRequestJobTitleLegalPurchasing          InviteUserRequestJobTitle = "Legal / Purchasing"
+	InviteUserRequestJobTitleManagement               InviteUserRequestJobTitle = "Management"
+	InviteUserRequestJobTitleSalesMarketing           InviteUserRequestJobTitle = "Sales / Marketing"
+	InviteUserRequestJobTitleSoftwareOpsEngineer      InviteUserRequestJobTitle = "Software / Ops Engineer"
+)
+
+// Valid indicates whether the value is a known member of the InviteUserRequestJobTitle enum.
+func (e InviteUserRequestJobTitle) Valid() bool {
+	switch e {
+	case InviteUserRequestJobTitleDataEngineerDataAnalysts:
+		return true
+	case InviteUserRequestJobTitleExecutiveTeam:
+		return true
+	case InviteUserRequestJobTitleFinanceAccounting:
+		return true
+	case InviteUserRequestJobTitleFounder:
+		return true
+	case InviteUserRequestJobTitleLegalPurchasing:
+		return true
+	case InviteUserRequestJobTitleManagement:
+		return true
+	case InviteUserRequestJobTitleSalesMarketing:
+		return true
+	case InviteUserRequestJobTitleSoftwareOpsEngineer:
 		return true
 	default:
 		return false
@@ -1973,6 +2570,42 @@ func (e UpdateUserRequestJobFunction) Valid() bool {
 	}
 }
 
+// Defines values for UpdateUserRequestJobTitle.
+const (
+	UpdateUserRequestJobTitleDataEngineerDataAnalysts UpdateUserRequestJobTitle = "Data Engineer / Data Analysts"
+	UpdateUserRequestJobTitleExecutiveTeam            UpdateUserRequestJobTitle = "Executive Team"
+	UpdateUserRequestJobTitleFinanceAccounting        UpdateUserRequestJobTitle = "Finance / Accounting"
+	UpdateUserRequestJobTitleFounder                  UpdateUserRequestJobTitle = "Founder"
+	UpdateUserRequestJobTitleLegalPurchasing          UpdateUserRequestJobTitle = "Legal / Purchasing"
+	UpdateUserRequestJobTitleManagement               UpdateUserRequestJobTitle = "Management"
+	UpdateUserRequestJobTitleSalesMarketing           UpdateUserRequestJobTitle = "Sales / Marketing"
+	UpdateUserRequestJobTitleSoftwareOpsEngineer      UpdateUserRequestJobTitle = "Software / Ops Engineer"
+)
+
+// Valid indicates whether the value is a known member of the UpdateUserRequestJobTitle enum.
+func (e UpdateUserRequestJobTitle) Valid() bool {
+	switch e {
+	case UpdateUserRequestJobTitleDataEngineerDataAnalysts:
+		return true
+	case UpdateUserRequestJobTitleExecutiveTeam:
+		return true
+	case UpdateUserRequestJobTitleFinanceAccounting:
+		return true
+	case UpdateUserRequestJobTitleFounder:
+		return true
+	case UpdateUserRequestJobTitleLegalPurchasing:
+		return true
+	case UpdateUserRequestJobTitleManagement:
+		return true
+	case UpdateUserRequestJobTitleSalesMarketing:
+		return true
+	case UpdateUserRequestJobTitleSoftwareOpsEngineer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UpdateUserRequestLanguage.
 const (
 	UpdateUserRequestLanguageEn UpdateUserRequestLanguage = "en"
@@ -1991,36 +2624,36 @@ func (e UpdateUserRequestLanguage) Valid() bool {
 	}
 }
 
-// Defines values for UpdatedUserBodyJobFunction.
+// Defines values for UpdatedUserBodyJobTitle.
 const (
-	UpdatedUserBodyJobFunctionDataEngineerDataAnalysts UpdatedUserBodyJobFunction = "Data Engineer / Data Analysts"
-	UpdatedUserBodyJobFunctionExecutiveTeam            UpdatedUserBodyJobFunction = "Executive Team"
-	UpdatedUserBodyJobFunctionFinanceAccounting        UpdatedUserBodyJobFunction = "Finance / Accounting"
-	UpdatedUserBodyJobFunctionFounder                  UpdatedUserBodyJobFunction = "Founder"
-	UpdatedUserBodyJobFunctionLegalPurchasing          UpdatedUserBodyJobFunction = "Legal / Purchasing"
-	UpdatedUserBodyJobFunctionManagement               UpdatedUserBodyJobFunction = "Management"
-	UpdatedUserBodyJobFunctionSalesMarketing           UpdatedUserBodyJobFunction = "Sales / Marketing"
-	UpdatedUserBodyJobFunctionSoftwareOpsEngineer      UpdatedUserBodyJobFunction = "Software / Ops Engineer"
+	UpdatedUserBodyJobTitleDataEngineerDataAnalysts UpdatedUserBodyJobTitle = "Data Engineer / Data Analysts"
+	UpdatedUserBodyJobTitleExecutiveTeam            UpdatedUserBodyJobTitle = "Executive Team"
+	UpdatedUserBodyJobTitleFinanceAccounting        UpdatedUserBodyJobTitle = "Finance / Accounting"
+	UpdatedUserBodyJobTitleFounder                  UpdatedUserBodyJobTitle = "Founder"
+	UpdatedUserBodyJobTitleLegalPurchasing          UpdatedUserBodyJobTitle = "Legal / Purchasing"
+	UpdatedUserBodyJobTitleManagement               UpdatedUserBodyJobTitle = "Management"
+	UpdatedUserBodyJobTitleSalesMarketing           UpdatedUserBodyJobTitle = "Sales / Marketing"
+	UpdatedUserBodyJobTitleSoftwareOpsEngineer      UpdatedUserBodyJobTitle = "Software / Ops Engineer"
 )
 
-// Valid indicates whether the value is a known member of the UpdatedUserBodyJobFunction enum.
-func (e UpdatedUserBodyJobFunction) Valid() bool {
+// Valid indicates whether the value is a known member of the UpdatedUserBodyJobTitle enum.
+func (e UpdatedUserBodyJobTitle) Valid() bool {
 	switch e {
-	case UpdatedUserBodyJobFunctionDataEngineerDataAnalysts:
+	case UpdatedUserBodyJobTitleDataEngineerDataAnalysts:
 		return true
-	case UpdatedUserBodyJobFunctionExecutiveTeam:
+	case UpdatedUserBodyJobTitleExecutiveTeam:
 		return true
-	case UpdatedUserBodyJobFunctionFinanceAccounting:
+	case UpdatedUserBodyJobTitleFinanceAccounting:
 		return true
-	case UpdatedUserBodyJobFunctionFounder:
+	case UpdatedUserBodyJobTitleFounder:
 		return true
-	case UpdatedUserBodyJobFunctionLegalPurchasing:
+	case UpdatedUserBodyJobTitleLegalPurchasing:
 		return true
-	case UpdatedUserBodyJobFunctionManagement:
+	case UpdatedUserBodyJobTitleManagement:
 		return true
-	case UpdatedUserBodyJobFunctionSalesMarketing:
+	case UpdatedUserBodyJobTitleSalesMarketing:
 		return true
-	case UpdatedUserBodyJobFunctionSoftwareOpsEngineer:
+	case UpdatedUserBodyJobTitleSoftwareOpsEngineer:
 		return true
 	default:
 		return false
@@ -2045,20 +2678,20 @@ func (e UpdatedUserBodyLanguage) Valid() bool {
 	}
 }
 
-// Defines values for UserListItemJobFunction.
+// Defines values for UserListItemJobTitle.
 const (
-	DataEngineerDataAnalysts UserListItemJobFunction = "Data Engineer / Data Analysts"
-	ExecutiveTeam            UserListItemJobFunction = "Executive Team"
-	FinanceAccounting        UserListItemJobFunction = "Finance / Accounting"
-	Founder                  UserListItemJobFunction = "Founder"
-	LegalPurchasing          UserListItemJobFunction = "Legal / Purchasing"
-	Management               UserListItemJobFunction = "Management"
-	SalesMarketing           UserListItemJobFunction = "Sales / Marketing"
-	SoftwareOpsEngineer      UserListItemJobFunction = "Software / Ops Engineer"
+	DataEngineerDataAnalysts UserListItemJobTitle = "Data Engineer / Data Analysts"
+	ExecutiveTeam            UserListItemJobTitle = "Executive Team"
+	FinanceAccounting        UserListItemJobTitle = "Finance / Accounting"
+	Founder                  UserListItemJobTitle = "Founder"
+	LegalPurchasing          UserListItemJobTitle = "Legal / Purchasing"
+	Management               UserListItemJobTitle = "Management"
+	SalesMarketing           UserListItemJobTitle = "Sales / Marketing"
+	SoftwareOpsEngineer      UserListItemJobTitle = "Software / Ops Engineer"
 )
 
-// Valid indicates whether the value is a known member of the UserListItemJobFunction enum.
-func (e UserListItemJobFunction) Valid() bool {
+// Valid indicates whether the value is a known member of the UserListItemJobTitle enum.
+func (e UserListItemJobTitle) Valid() bool {
 	switch e {
 	case DataEngineerDataAnalysts:
 		return true
@@ -2432,27 +3065,87 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for GetCloudDiagramComponentsParamsType.
+const (
+	Application    GetCloudDiagramComponentsParamsType = "application"
+	Infrastructure GetCloudDiagramComponentsParamsType = "infrastructure"
+	Network        GetCloudDiagramComponentsParamsType = "network"
+	Template       GetCloudDiagramComponentsParamsType = "template"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramComponentsParamsType enum.
+func (e GetCloudDiagramComponentsParamsType) Valid() bool {
+	switch e {
+	case Application:
+		return true
+	case Infrastructure:
+		return true
+	case Network:
+		return true
+	case Template:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCloudDiagramComponentsParamsNodeType.
+const (
+	GetCloudDiagramComponentsParamsNodeTypeAppComponent GetCloudDiagramComponentsParamsNodeType = "app_component"
+	GetCloudDiagramComponentsParamsNodeTypeAppGroup     GetCloudDiagramComponentsParamsNodeType = "app_group"
+	GetCloudDiagramComponentsParamsNodeTypeAppLink      GetCloudDiagramComponentsParamsNodeType = "app_link"
+	GetCloudDiagramComponentsParamsNodeTypeAttachment   GetCloudDiagramComponentsParamsNodeType = "attachment"
+	GetCloudDiagramComponentsParamsNodeTypeGroup        GetCloudDiagramComponentsParamsNodeType = "group"
+	GetCloudDiagramComponentsParamsNodeTypeHost         GetCloudDiagramComponentsParamsNodeType = "host"
+	GetCloudDiagramComponentsParamsNodeTypeLink         GetCloudDiagramComponentsParamsNodeType = "link"
+	GetCloudDiagramComponentsParamsNodeTypeService      GetCloudDiagramComponentsParamsNodeType = "service"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramComponentsParamsNodeType enum.
+func (e GetCloudDiagramComponentsParamsNodeType) Valid() bool {
+	switch e {
+	case GetCloudDiagramComponentsParamsNodeTypeAppComponent:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeAppGroup:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeAppLink:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeAttachment:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeGroup:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeHost:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeLink:
+		return true
+	case GetCloudDiagramComponentsParamsNodeTypeService:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetInsightResultsParamsDisplayStatus.
 const (
-	GetInsightResultsParamsDisplayStatusAcknowledged GetInsightResultsParamsDisplayStatus = "acknowledged"
-	GetInsightResultsParamsDisplayStatusActionable   GetInsightResultsParamsDisplayStatus = "actionable"
-	GetInsightResultsParamsDisplayStatusDismissed    GetInsightResultsParamsDisplayStatus = "dismissed"
-	GetInsightResultsParamsDisplayStatusInProgress   GetInsightResultsParamsDisplayStatus = "in progress"
-	GetInsightResultsParamsDisplayStatusOptimized    GetInsightResultsParamsDisplayStatus = "optimized"
+	Acknowledged GetInsightResultsParamsDisplayStatus = "acknowledged"
+	Actionable   GetInsightResultsParamsDisplayStatus = "actionable"
+	Dismissed    GetInsightResultsParamsDisplayStatus = "dismissed"
+	InProgress   GetInsightResultsParamsDisplayStatus = "in progress"
+	Optimized    GetInsightResultsParamsDisplayStatus = "optimized"
 )
 
 // Valid indicates whether the value is a known member of the GetInsightResultsParamsDisplayStatus enum.
 func (e GetInsightResultsParamsDisplayStatus) Valid() bool {
 	switch e {
-	case GetInsightResultsParamsDisplayStatusAcknowledged:
+	case Acknowledged:
 		return true
-	case GetInsightResultsParamsDisplayStatusActionable:
+	case Actionable:
 		return true
-	case GetInsightResultsParamsDisplayStatusDismissed:
+	case Dismissed:
 		return true
-	case GetInsightResultsParamsDisplayStatusInProgress:
+	case InProgress:
 		return true
-	case GetInsightResultsParamsDisplayStatusOptimized:
+	case Optimized:
 		return true
 	default:
 		return false
@@ -2491,19 +3184,19 @@ func (e GetInsightResultsParamsCategory) Valid() bool {
 
 // Defines values for GetInsightResultsParamsPriority.
 const (
-	High   GetInsightResultsParamsPriority = "High"
-	Low    GetInsightResultsParamsPriority = "Low"
-	Medium GetInsightResultsParamsPriority = "Medium"
+	GetInsightResultsParamsPriorityHigh   GetInsightResultsParamsPriority = "High"
+	GetInsightResultsParamsPriorityLow    GetInsightResultsParamsPriority = "Low"
+	GetInsightResultsParamsPriorityMedium GetInsightResultsParamsPriority = "Medium"
 )
 
 // Valid indicates whether the value is a known member of the GetInsightResultsParamsPriority enum.
 func (e GetInsightResultsParamsPriority) Valid() bool {
 	switch e {
-	case High:
+	case GetInsightResultsParamsPriorityHigh:
 		return true
-	case Low:
+	case GetInsightResultsParamsPriorityLow:
 		return true
-	case Medium:
+	case GetInsightResultsParamsPriorityMedium:
 		return true
 	default:
 		return false
@@ -2736,6 +3429,9 @@ type Allocation struct {
 	// Description Allocation description.
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Id Allocation ID.
 	Id *string `json:"id,omitempty"`
 
@@ -2825,6 +3521,9 @@ type AllocationListItem struct {
 	// Description Allocation description.
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Id Allocation ID.
 	Id *string `json:"id,omitempty"`
 
@@ -2892,6 +3591,12 @@ type AnomalyItem struct {
 	// Acknowledged Has the anomaly been acknowledged
 	Acknowledged *bool `json:"acknowledged,omitempty"`
 
+	// AcknowledgedAt When the anomaly was first acknowledged
+	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
+
+	// AcknowledgedBy Email of the user who first acknowledged the anomaly
+	AcknowledgedBy *string `json:"acknowledgedBy,omitempty"`
+
 	// Attribution Attribution ID.
 	Attribution string `json:"attribution"`
 
@@ -2938,6 +3643,10 @@ type AnomalyItemStatus string
 type AnomalyResource struct {
 	Cost *float64 `json:"cost,omitempty"`
 
+	// Labels Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.
+	// Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.
+	Labels *[]AnomalyResourceLabel `json:"labels,omitempty"`
+
 	// Operation For anomalies related to AWS S3
 	Operation      *string `json:"operation,omitempty"`
 	ResourceId     *string `json:"resourceId,omitempty"`
@@ -2946,6 +3655,18 @@ type AnomalyResource struct {
 
 // AnomalyResourceArray Array of resources contributing to an anomaly.
 type AnomalyResourceArray = []AnomalyResource
+
+// AnomalyResourceLabel A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+type AnomalyResourceLabel struct {
+	// Cost The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
+	Cost *float64 `json:"cost,omitempty"`
+
+	// Key The label/tag key.
+	Key *string `json:"key,omitempty"`
+
+	// Value The label/tag value.
+	Value *string `json:"value,omitempty"`
+}
 
 // AnomalySKU SKU-level information contributing to an anomaly.
 type AnomalySKU struct {
@@ -3259,6 +3980,742 @@ type BudgetListItem struct {
 // Category The insight category.
 type Category string
 
+// CloudDiagramAttachment defines model for CloudDiagramAttachment.
+type CloudDiagramAttachment struct {
+	// UnderscoreId Attachment ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramAttachmentCldType `json:"cld_type,omitempty"`
+
+	// Color Attachment color.
+	Color *string `json:"color,omitempty"`
+
+	// Group Parent group ID.
+	Group *string `json:"group,omitempty"`
+
+	// Icon Attachment icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Issues Issues associated with this attachment.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramAttachmentCldType Cloud account type.
+type CloudDiagramAttachmentCldType string
+
+// CloudDiagramCombiner A combiner component that visually groups multiple components.
+type CloudDiagramCombiner struct {
+	// UnderscoreId Combiner ID.
+	UnderscoreId string `json:"_id"`
+
+	// Color Combiner color.
+	Color *string `json:"color,omitempty"`
+
+	// Icon Combiner icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Items Components contained in the combiner.
+	Items *[]CloudDiagramCombinerItem `json:"items,omitempty"`
+
+	// Name Combiner name.
+	Name *string `json:"name,omitempty"`
+}
+
+// CloudDiagramCombinerItem A component reference contained within a combiner.
+type CloudDiagramCombinerItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// Type Component type.
+	Type CloudDiagramCombinerItemType `json:"type"`
+}
+
+// CloudDiagramCombinerItemType Component type.
+type CloudDiagramCombinerItemType string
+
+// CloudDiagramComponentBase Common fields shared by all layer component types.
+type CloudDiagramComponentBase struct {
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramComponentBaseCldType `json:"cld_type,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramComponentBaseCldType Cloud account type.
+type CloudDiagramComponentBaseCldType string
+
+// CloudDiagramComponentSearchItem A component matching the search query.
+type CloudDiagramComponentSearchItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Color Component color.
+	Color *string `json:"color,omitempty"`
+
+	// GroupType Group type (for group components).
+	GroupType *string `json:"group_type,omitempty"`
+
+	// Icon Component icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// NodeType Node type.
+	NodeType *CloudDiagramComponentSearchItemNodeType `json:"node_type,omitempty"`
+
+	// Props Component properties. For the "prop" category contains the matched property key-value pairs.
+	Props *CloudDiagramComponentSearchItemProps `json:"props,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Layer ID.
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Type Component type.
+	Type CloudDiagramComponentSearchItemType `json:"type"`
+}
+
+// CloudDiagramComponentSearchItemNodeType Node type.
+type CloudDiagramComponentSearchItemNodeType string
+
+// CloudDiagramComponentSearchItemType Component type.
+type CloudDiagramComponentSearchItemType string
+
+// CloudDiagramComponentSearchItemProps Component properties. For the "prop" category contains the matched property key-value pairs.
+type CloudDiagramComponentSearchItemProps struct {
+	// ServiceType Cloud service type (e.g. AWS::EC2::Instance).
+	ServiceType *string `json:"service_type,omitempty"`
+}
+
+// CloudDiagramElement defines model for CloudDiagramElement.
+type CloudDiagramElement struct {
+	// UnderscoreId Element ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramElementCldType `json:"cld_type,omitempty"`
+
+	// Color Element color.
+	Color *string `json:"color,omitempty"`
+
+	// Icon Element icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Issues Issues associated with this element.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Parent Parent element ID.
+	Parent *string `json:"parent,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramElementCldType Cloud account type.
+type CloudDiagramElementCldType string
+
+// CloudDiagramExportJsonMetadata Metadata included in a diagram JSON export.
+type CloudDiagramExportJsonMetadata struct {
+	// Connections Map of component ID to display label for external connections referenced by cross-diagram links.
+	Connections *map[string]string `json:"connections,omitempty"`
+
+	// Date ISO 8601 timestamp of the export.
+	Date time.Time `json:"date"`
+
+	// User Email of the user who triggered the export.
+	User string `json:"user"`
+
+	// Version Export format version.
+	Version string `json:"version"`
+}
+
+// CloudDiagramExportJsonResponse Full diagram export as a structured JSON document.
+type CloudDiagramExportJsonResponse struct {
+	// Attachments Exported attachments.
+	Attachments *[]CloudDiagramAttachment `json:"attachments,omitempty"`
+
+	// Combiners Exported combiners.
+	Combiners *[]CloudDiagramCombiner `json:"combiners,omitempty"`
+
+	// Elements Exported elements.
+	Elements *[]CloudDiagramElement `json:"elements,omitempty"`
+
+	// Groups Exported groups.
+	Groups *[]CloudDiagramGroup `json:"groups,omitempty"`
+
+	// Links Exported links.
+	Links *[]CloudDiagramLink `json:"links,omitempty"`
+
+	// Metadata Metadata included in a diagram JSON export.
+	Metadata CloudDiagramExportJsonMetadata `json:"metadata"`
+
+	// Nodes Exported nodes.
+	Nodes *[]CloudDiagramNode `json:"nodes,omitempty"`
+
+	// Notes Exported notes.
+	Notes *[]CloudDiagramNote `json:"notes,omitempty"`
+
+	// Statussheet Diagram-level metadata (excluding internal IDs).
+	Statussheet *map[string]interface{} `json:"statussheet,omitempty"`
+}
+
+// CloudDiagramGroup defines model for CloudDiagramGroup.
+type CloudDiagramGroup struct {
+	// UnderscoreId Group ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramGroupCldType `json:"cld_type,omitempty"`
+
+	// Color Group color.
+	Color *string `json:"color,omitempty"`
+
+	// GroupType Group type.
+	GroupType *CloudDiagramGroupGroupType `json:"group_type,omitempty"`
+
+	// Icon Group icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Issues Issues associated with this group.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Items Components contained in the group.
+	Items *[]CloudDiagramGroupItem `json:"items,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramGroupCldType Cloud account type.
+type CloudDiagramGroupCldType string
+
+// CloudDiagramGroupGroupType Group type.
+type CloudDiagramGroupGroupType string
+
+// CloudDiagramGroupItem Reference to a component contained within a group.
+type CloudDiagramGroupItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// Type Component type.
+	Type CloudDiagramGroupItemType `json:"type"`
+}
+
+// CloudDiagramGroupItemType Component type.
+type CloudDiagramGroupItemType string
+
+// CloudDiagramImportState Current import/sync state for a cloud-connected diagram.
+type CloudDiagramImportState struct {
+	// Account Connected account ID.
+	Account *string `json:"account,omitempty"`
+
+	// CloudId Cloud account ID.
+	CloudId *string `json:"cloudId,omitempty"`
+
+	// ErrorMessage Error message if the import failed.
+	ErrorMessage *string `json:"errorMessage,omitempty"`
+
+	// Status Import status.
+	Status *CloudDiagramImportStateStatus `json:"status,omitempty"`
+
+	// SyncedAt Timestamp of the last successful sync.
+	SyncedAt *time.Time `json:"syncedAt,omitempty"`
+
+	// Type Connected cloud account type.
+	Type *CloudDiagramImportStateType `json:"type,omitempty"`
+}
+
+// CloudDiagramImportStateStatus Import status.
+type CloudDiagramImportStateStatus string
+
+// CloudDiagramImportStateType Connected cloud account type.
+type CloudDiagramImportStateType string
+
+// CloudDiagramInfraNodeRef Reference to a linked infrastructure node in another diagram.
+type CloudDiagramInfraNodeRef struct {
+	// UnderscoreId Infrastructure node ID.
+	UnderscoreId string `json:"_id"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId string `json:"scheme_id"`
+
+	// SsId Parent layer ID.
+	SsId string `json:"ss_id"`
+}
+
+// CloudDiagramIssue Issue annotation linked to a component.
+type CloudDiagramIssue struct {
+	// UnderscoreId Issue reference ID.
+	UnderscoreId *string `json:"_id,omitempty"`
+
+	// Comment Optional comment on the issue.
+	Comment *string `json:"comment,omitempty"`
+
+	// Jira Linked Jira ticket key or URL.
+	Jira *string `json:"jira,omitempty"`
+
+	// Snoozed Snooze duration in seconds.
+	Snoozed *float32 `json:"snoozed,omitempty"`
+}
+
+// CloudDiagramLink defines model for CloudDiagramLink.
+type CloudDiagramLink struct {
+	// UnderscoreId Link ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramLinkCldType `json:"cld_type,omitempty"`
+
+	// ConnectionType Link connection type.
+	ConnectionType *CloudDiagramLinkConnectionType `json:"connection_type,omitempty"`
+
+	// Issues Issues associated with this link.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// OwnerSsId Owner layer ID for cross-diagram links.
+	OwnerSsId *string `json:"owner_ss_id,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramLinkCldType Cloud account type.
+type CloudDiagramLinkCldType string
+
+// CloudDiagramLinkConnectionType Link connection type.
+type CloudDiagramLinkConnectionType string
+
+// CloudDiagramNode defines model for CloudDiagramNode.
+type CloudDiagramNode struct {
+	// UnderscoreId Node ID.
+	UnderscoreId string `json:"_id"`
+
+	// CldAccount Cloud account ID.
+	CldAccount *string `json:"cld_account,omitempty"`
+
+	// CldId Cloud resource ID (set on cloud-imported components).
+	CldId *string `json:"cld_id,omitempty"`
+
+	// CldSync Whether this component is synced with cloud.
+	CldSync *bool `json:"cld_sync,omitempty"`
+
+	// CldType Cloud account type.
+	CldType *CloudDiagramNodeCldType `json:"cld_type,omitempty"`
+
+	// Color Node color.
+	Color *string `json:"color,omitempty"`
+
+	// Icon Node icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// InfraNode Reference to a linked infrastructure node in another diagram.
+	InfraNode *CloudDiagramInfraNodeRef `json:"infra_node,omitempty"`
+
+	// InstanceCount Number of instances represented by this node.
+	InstanceCount *int `json:"instance_count,omitempty"`
+
+	// Issues Issues associated with this node.
+	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// Parent Parent node ID.
+	Parent *string `json:"parent,omitempty"`
+
+	// Props Custom component properties (key-value pairs).
+	Props *map[string]interface{} `json:"props,omitempty"`
+
+	// Running Whether the node is currently running.
+	Running *bool `json:"running,omitempty"`
+
+	// Tags Tags assigned to the component.
+	Tags *[]string `json:"tags,omitempty"`
+}
+
+// CloudDiagramNodeCldType Cloud account type.
+type CloudDiagramNodeCldType string
+
+// CloudDiagramNote A text note placed on the diagram.
+type CloudDiagramNote struct {
+	// UnderscoreId Note ID.
+	UnderscoreId string `json:"_id"`
+
+	// Color Note background color.
+	Color *string `json:"color,omitempty"`
+
+	// FontSize Note font size.
+	FontSize *float32 `json:"font_size,omitempty"`
+
+	// Text Note text content.
+	Text *string `json:"text,omitempty"`
+}
+
+// CloudDiagramSchemeResult A diagram with its connected cloud accounts.
+type CloudDiagramSchemeResult struct {
+	// UnderscoreId Diagram ID.
+	UnderscoreId string `json:"_id"`
+
+	// Color Diagram color.
+	Color *string `json:"color,omitempty"`
+
+	// Name Diagram name.
+	Name string `json:"name"`
+
+	// Statussheet Connected cloud accounts (layers).
+	Statussheet []CloudDiagramSchemeStatussheetInfo `json:"statussheet"`
+
+	// Type Diagram type.
+	Type CloudDiagramSchemeResultType `json:"type"`
+}
+
+// CloudDiagramSchemeResultType Diagram type.
+type CloudDiagramSchemeResultType string
+
+// CloudDiagramSchemeSearchItem A diagram layer (cloud account) matching the search query.
+type CloudDiagramSchemeSearchItem struct {
+	// UnderscoreId Layer ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Name Layer name.
+	Name *string `json:"name,omitempty"`
+
+	// Scheme Parent diagram name.
+	Scheme *string `json:"scheme,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Layer ID (same as _id).
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Status Import/sync status.
+	Status *string `json:"status,omitempty"`
+
+	// Type Component type — always "statussheet" for this category.
+	Type CloudDiagramSchemeSearchItemType `json:"type"`
+}
+
+// CloudDiagramSchemeSearchItemType Component type — always "statussheet" for this category.
+type CloudDiagramSchemeSearchItemType string
+
+// CloudDiagramSchemeStatussheetInfo Summary of a cloud account (layer) connected to a diagram.
+type CloudDiagramSchemeStatussheetInfo struct {
+	// AccountName Connected cloud account name.
+	AccountName string `json:"account_name"`
+
+	// AlarmsCount Number of active alarms.
+	AlarmsCount int `json:"alarms_count"`
+
+	// Color Layer color.
+	Color string `json:"color"`
+
+	// Empty True when the layer contains no components.
+	Empty bool `json:"empty"`
+
+	// Name Layer name.
+	Name string `json:"name"`
+
+	// Ssid Layer ID.
+	Ssid string `json:"ssid"`
+}
+
+// CloudDiagramStats Diagram with activity stats for a given time period.
+type CloudDiagramStats struct {
+	// UnderscoreId ID of the diagram.
+	UnderscoreId *string `json:"_id,omitempty"`
+
+	// AccountId Cloud account ID.
+	AccountId *string `json:"account_id,omitempty"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// AccountType Cloud account type.
+	AccountType *string `json:"account_type,omitempty"`
+
+	// Changes Activity changes within the period.
+	Changes *[]CloudDiagramStatsChange `json:"changes,omitempty"`
+
+	// Import Current import/sync state for a cloud-connected diagram.
+	Import *CloudDiagramImportState `json:"import,omitempty"`
+
+	// Name Name of the diagram.
+	Name *string `json:"name,omitempty"`
+
+	// SsId ID of the layer the diagram belongs to.
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Type Type of the diagram.
+	Type *CloudDiagramStatsType `json:"type,omitempty"`
+}
+
+// CloudDiagramStatsType Type of the diagram.
+type CloudDiagramStatsType string
+
+// CloudDiagramStatsChange A single activity change entry in a diagram stats record.
+type CloudDiagramStatsChange struct {
+	// Count Number of occurrences of this change type.
+	Count *int `json:"count,omitempty"`
+
+	// Service Cloud service the change applies to.
+	Service *string `json:"service,omitempty"`
+
+	// Type Type of the change.
+	Type *CloudDiagramStatsChangeType `json:"type,omitempty"`
+}
+
+// CloudDiagramStatsChangeType Type of the change.
+type CloudDiagramStatsChangeType string
+
+// CloudDiagramStatussheetComponents Component collections of a diagram layer, keyed by component ID.
+type CloudDiagramStatussheetComponents struct {
+	// Attachment Map of attachment ID to attachment component.
+	Attachment *map[string]CloudDiagramAttachment `json:"attachment,omitempty"`
+
+	// Combiner Map of combiner ID to combiner component.
+	Combiner *map[string]CloudDiagramCombiner `json:"combiner,omitempty"`
+
+	// Element Map of element ID to element component.
+	Element *map[string]CloudDiagramElement `json:"element,omitempty"`
+
+	// Group Map of group ID to group component.
+	Group *map[string]CloudDiagramGroup `json:"group,omitempty"`
+
+	// Link Map of link ID to link component.
+	Link *map[string]CloudDiagramLink `json:"link,omitempty"`
+
+	// Node Map of node ID to node component.
+	Node *map[string]CloudDiagramNode `json:"node,omitempty"`
+
+	// Note Map of note ID to note component.
+	Note *map[string]CloudDiagramNote `json:"note,omitempty"`
+}
+
+// CloudDiagramStatussheetData defines model for CloudDiagramStatussheetData.
+type CloudDiagramStatussheetData struct {
+	// Attachment Map of attachment ID to attachment component.
+	Attachment *map[string]CloudDiagramAttachment `json:"attachment,omitempty"`
+
+	// Combiner Map of combiner ID to combiner component.
+	Combiner *map[string]CloudDiagramCombiner `json:"combiner,omitempty"`
+
+	// Element Map of element ID to element component.
+	Element *map[string]CloudDiagramElement `json:"element,omitempty"`
+
+	// Group Map of group ID to group component.
+	Group *map[string]CloudDiagramGroup `json:"group,omitempty"`
+
+	// Link Map of link ID to link component.
+	Link *map[string]CloudDiagramLink `json:"link,omitempty"`
+
+	// Node Map of node ID to node component.
+	Node *map[string]CloudDiagramNode `json:"node,omitempty"`
+
+	// Note Map of note ID to note component.
+	Note *map[string]CloudDiagramNote `json:"note,omitempty"`
+
+	// Statussheet Projected layer metadata returned inside each layer entry.
+	// Contains import state, last updated timestamp, and links version.
+	Statussheet CloudDiagramStatussheetMeta `json:"statussheet"`
+}
+
+// CloudDiagramStatussheetGetRequest Request body for getting layer components.
+// Omit or send an empty object to retrieve all components.
+type CloudDiagramStatussheetGetRequest struct {
+	// Attachment Attachment IDs to fetch.
+	Attachment *[]string `json:"attachment,omitempty"`
+
+	// Combiner Combiner IDs to fetch.
+	Combiner *[]string `json:"combiner,omitempty"`
+
+	// Element Element IDs to fetch.
+	Element *[]string `json:"element,omitempty"`
+
+	// Group Group IDs to fetch.
+	Group *[]string `json:"group,omitempty"`
+
+	// Link Link IDs to fetch.
+	Link *[]string `json:"link,omitempty"`
+
+	// Node Node IDs to fetch.
+	Node *[]string `json:"node,omitempty"`
+
+	// Note Note IDs to fetch.
+	Note *[]string `json:"note,omitempty"`
+}
+
+// CloudDiagramStatussheetMeta Projected layer metadata returned inside each layer entry.
+// Contains import state, last updated timestamp, and links version.
+type CloudDiagramStatussheetMeta struct {
+	// UnderscoreId Layer ID.
+	UnderscoreId string `json:"_id"`
+
+	// Import Current import/sync state for a cloud-connected diagram.
+	Import *CloudDiagramImportState `json:"import,omitempty"`
+
+	// LinksVersion Links version counter, incremented on every link change.
+	LinksVersion *int `json:"linksVersion,omitempty"`
+
+	// UpdatedAt Timestamp of the last update.
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// CloudDiagramsGetRequest Request body for getting diagram components.
+// Leave empty to retrieve all accessible diagrams (returns scheme map only).
+type CloudDiagramsGetRequest struct {
+	// Scheme IDs of diagrams to load.
+	Scheme *[]string `json:"scheme,omitempty"`
+
+	// Statussheet IDs of layers to load.
+	Statussheet *[]string `json:"statussheet,omitempty"`
+
+	// Template Template type or array of template layer IDs to include.
+	Template *CloudDiagramsGetRequest_Template `json:"template,omitempty"`
+}
+
+// CloudDiagramsGetRequestTemplate0 defines model for CloudDiagramsGetRequest.Template.0.
+type CloudDiagramsGetRequestTemplate0 string
+
+// CloudDiagramsGetRequestTemplate1 defines model for .
+type CloudDiagramsGetRequestTemplate1 = []string
+
+// CloudDiagramsGetRequest_Template Template type or array of template layer IDs to include.
+type CloudDiagramsGetRequest_Template struct {
+	union json.RawMessage
+}
+
+// CloudDiagramsGetResponse Diagram and layer data.
+// When called with an empty body, only the diagram map is populated.
+// When called with a populated body, both diagram and layer maps are returned
+// with components projected to key display and cloud fields by default.
+type CloudDiagramsGetResponse struct {
+	// Scheme Map of diagram ID to diagram with its connected cloud accounts.
+	Scheme *map[string]CloudDiagramSchemeResult `json:"scheme,omitempty"`
+
+	// Statussheet Map of layer ID to layer metadata and component collections.
+	// Components are projected to key display and cloud fields by default.
+	Statussheet *map[string]CloudDiagramStatussheetData `json:"statussheet,omitempty"`
+
+	// Template Map of template layer ID to template data.
+	Template *map[string]interface{} `json:"template,omitempty"`
+}
+
+// CloudDiagramsSearchRequest Request body for searching diagrams and components.
+type CloudDiagramsSearchRequest struct {
+	// From Pagination offset (default 0).
+	From *int `json:"from,omitempty"`
+
+	// Query Search query string.
+	Query string `json:"query"`
+
+	// Size Maximum number of results per category (default 20).
+	Size *int `json:"size,omitempty"`
+
+	// SsId Limit search to components within this layer.
+	SsId *string `json:"ss_id,omitempty"`
+}
+
+// CloudDiagramsSearchResponse Search results grouped into three categories.
+type CloudDiagramsSearchResponse struct {
+	// Component Components matching the query by name.
+	Component *[]CloudDiagramComponentSearchItem `json:"component,omitempty"`
+
+	// Prop Components matching the query by property values.
+	Prop *[]CloudDiagramComponentSearchItem `json:"prop,omitempty"`
+
+	// Scheme Diagram layers (cloud accounts) matching the query.
+	Scheme *[]CloudDiagramSchemeSearchItem `json:"scheme,omitempty"`
+}
+
 // CloudIncidentListItem Summary information for a cloud incident.
 type CloudIncidentListItem struct {
 	// CreateTime The creation time of this cloud incident, in milliseconds since the epoch.
@@ -3360,6 +4817,12 @@ type CommitmentExternal struct {
 	// TotalCurrentAttainment The total current spend attainment across all periods.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
+	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
+	TotalForecastValue *float64 `json:"totalForecastValue,omitempty"`
+
+	// TotalMarketplaceSpend The total marketplace spend across all periods.
+	TotalMarketplaceSpend *float64 `json:"totalMarketplaceSpend,omitempty"`
+
 	// UpdateTime The last update time in milliseconds since epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
@@ -3411,6 +4874,12 @@ type CommitmentExternalListItem struct {
 	// TotalCurrentAttainment The total current spend attainment across all periods.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
+	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
+	TotalForecastValue *float64 `json:"totalForecastValue,omitempty"`
+
+	// TotalMarketplaceSpend The total marketplace spend across all periods.
+	TotalMarketplaceSpend *float64 `json:"totalMarketplaceSpend,omitempty"`
+
 	// UpdateTime The last update time in milliseconds since epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
@@ -3426,8 +4895,17 @@ type CommitmentPeriod struct {
 	// EndDate The end date of the period.
 	EndDate *time.Time `json:"endDate,omitempty"`
 
+	// ForecastValue The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+	ForecastValue *float64 `json:"forecastValue,omitempty"`
+
+	// MarketplaceLimitAmount The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+	MarketplaceLimitAmount *float64 `json:"marketplaceLimitAmount,omitempty"`
+
 	// MarketplaceLimitPercentage The marketplace limit as a percentage (0-100).
 	MarketplaceLimitPercentage *float64 `json:"marketplaceLimitPercentage,omitempty"`
+
+	// MarketplaceSpend The marketplace spend within this period.
+	MarketplaceSpend *float64 `json:"marketplaceSpend,omitempty"`
 
 	// StartDate The start date of the period.
 	StartDate *time.Time `json:"startDate,omitempty"`
@@ -3440,6 +4918,9 @@ type Condition = string
 type CreateAllocationRequest struct {
 	// Description Allocation description.
 	Description string `json:"description"`
+
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
 
 	// Name Allocation name.
 	Name string `json:"name"`
@@ -3506,6 +4987,18 @@ type CreateDatahubDatasetRequestBody struct {
 	Name string `json:"name"`
 }
 
+// CreateFolderRequest Request body for creating a folder.
+type CreateFolderRequest struct {
+	// Description Folder description.
+	Description *string `json:"description,omitempty"`
+
+	// Name Folder name.
+	Name string `json:"name"`
+
+	// ParentFolderId Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
+	ParentFolderId *string `json:"parentFolderId,omitempty"`
+}
+
 // CreateLabelRequest Request body for creating a label.
 type CreateLabelRequest struct {
 	// Color The color of the label.
@@ -3525,6 +5018,9 @@ type CreateReportRequestBody struct {
 
 	// Description Report description.
 	Description *string `json:"description,omitempty"`
+
+	// FolderId Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
 
 	// Labels Array of label IDs assigned to the report
 	Labels *[]string `json:"labels,omitempty"`
@@ -3942,6 +5438,9 @@ type ExternalReport struct {
 	// Description Report description.
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Id Report ID.
 	Id *string `json:"id,omitempty"`
 
@@ -4010,6 +5509,9 @@ type ExternalUpdateReport struct {
 	// Description Report description
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Labels Array of label IDs assigned to the report
 	Labels *[]string `json:"labels,omitempty"`
 
@@ -4038,10 +5540,31 @@ type FindCloudDiagramsResponseItem struct {
 	ImageUrl string `json:"imageUrl"`
 }
 
+// Folder A Cloud Analytics folder.
+type Folder struct {
+	// Description Folder description.
+	Description *string `json:"description,omitempty"`
+
+	// Id Folder ID.
+	Id *string `json:"id,omitempty"`
+
+	// Name Folder name.
+	Name *string `json:"name,omitempty"`
+
+	// ParentFolderId Identifier of the parent folder. Set to "root" if the folder is at the top level.
+	ParentFolderId *string `json:"parentFolderId,omitempty"`
+}
+
 // GetAnomaly200Response defines model for GetAnomaly200Response.
 type GetAnomaly200Response struct {
 	// Acknowledged Has the anomaly been acknowledged
 	Acknowledged *bool `json:"acknowledged,omitempty"`
+
+	// AcknowledgedAt When the anomaly was first acknowledged
+	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
+
+	// AcknowledgedBy Email of the user who first acknowledged the anomaly
+	AcknowledgedBy *string `json:"acknowledgedBy,omitempty"`
 
 	// Attribution Attribution ID
 	Attribution string `json:"attribution"`
@@ -4440,6 +5963,15 @@ type InviteUserRequest struct {
 	// Email The email address of the user.
 	Email openapi_types.Email `json:"email"`
 
+	// FirstName The first name of the user being invited.
+	FirstName *string `json:"firstName,omitempty"`
+
+	// JobTitle The job function of the user being invited.
+	JobTitle *InviteUserRequestJobTitle `json:"jobTitle,omitempty"`
+
+	// LastName The last name of the user being invited.
+	LastName *string `json:"lastName,omitempty"`
+
 	// OrganizationId The ID of the organization to assign the user to.
 	OrganizationId *string `json:"organizationId,omitempty"`
 
@@ -4447,13 +5979,28 @@ type InviteUserRequest struct {
 	RoleId *string `json:"roleId,omitempty"`
 }
 
+// InviteUserRequestJobTitle The job function of the user being invited.
+type InviteUserRequestJobTitle string
+
 // InvitedUserBody defines model for InvitedUserBody.
 type InvitedUserBody struct {
+	// DisplayName The display name of the invited user, if provided during invitation.
+	DisplayName *string `json:"displayName,omitempty"`
+
 	// Email The email address of the invited user.
 	Email *string `json:"email,omitempty"`
 
+	// FirstName The first name of the invited user, if provided during invitation.
+	FirstName *string `json:"firstName,omitempty"`
+
 	// Id The unique ID of the invited user.
 	Id *string `json:"id,omitempty"`
+
+	// JobTitle The job function of the invited user, if provided during invitation.
+	JobTitle *string `json:"jobTitle,omitempty"`
+
+	// LastName The last name of the invited user, if provided during invitation.
+	LastName *string `json:"lastName,omitempty"`
 
 	// OrganizationId The ID of the organization assigned to the user.
 	OrganizationId *string `json:"organizationId,omitempty"`
@@ -4652,6 +6199,17 @@ type ListDatahubDatasets200ResponseDatasetsItem struct {
 
 	// UpdatedBy The email of the user who last updated the dataset.
 	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
+// ListFolders200Response defines model for ListFolders200Response.
+type ListFolders200Response struct {
+	Folders *[]Folder `json:"folders,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Number of folders returned in this page.
+	RowCount *int `json:"rowCount,omitempty"`
 }
 
 // ListInvoices200Response defines model for ListInvoices200Response.
@@ -5181,6 +6739,22 @@ type SubscriptionPlanCommitmentInterval struct {
 	StartTime *int64 `json:"startTime,omitempty"`
 }
 
+// TagsRequest Request body for adding (POST) or removing (DELETE) tags on a support
+// request. The operation is surgical — only the tags listed are affected;
+// any other tags on the ticket are preserved.
+type TagsRequest struct {
+	// Tags List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
+	Tags []string `json:"tags"`
+}
+
+// TagsResponse Response body echoing the tags the operation actually acted on, after
+// server-side transformation (trim + lowercase + customer namespace prefix
+// where applicable).
+type TagsResponse struct {
+	// AppliedTags The tags that were stored on (POST) or removed from (DELETE) the ticket.
+	AppliedTags *[]string `json:"applied_tags,omitempty"`
+}
+
 // TicketCreateFormExtAPI Wrapper object for creating support tickets via the external API.
 type TicketCreateFormExtAPI struct {
 	// Ticket Payload to create a support ticket via API.
@@ -5203,6 +6777,13 @@ type TicketDetailExtAPI struct {
 
 	// Platform Platform of the ticket.
 	Platform *TicketDetailExtAPIPlatform `json:"platform,omitempty"`
+
+	// PlatformInfo The cloud asset identifier the requester selected on the support
+	// form's asset-selector control — typically the GCP project ID, AWS
+	// account ID, Azure subscription ID, or equivalent. Empty string
+	// when the ticket has no asset value (e.g. older tickets or tickets
+	// opened through paths that bypass the form selector).
+	PlatformInfo *string `json:"platform_info,omitempty"`
 
 	// Product Ticket product.
 	Product *string `json:"product,omitempty"`
@@ -5402,6 +6983,9 @@ type UpdateAllocationRequest struct {
 	// Description Allocation description
 	Description *string `json:"description,omitempty"`
 
+	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+	FolderId *string `json:"folderId,omitempty"`
+
 	// Name Allocation name
 	Name *string `json:"name,omitempty"`
 
@@ -5455,6 +7039,19 @@ type UpdateDatahubDatasetRequestBody struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// UpdateFolderRequest Request body for updating a folder. All fields are optional; only fields
+// the caller wants to change should be set.
+type UpdateFolderRequest struct {
+	// Description Folder description.
+	Description *string `json:"description,omitempty"`
+
+	// Name Folder name.
+	Name *string `json:"name,omitempty"`
+
+	// ParentFolderId Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
+	ParentFolderId *string `json:"parentFolderId,omitempty"`
+}
+
 // UpdateLabelRequest Request body for updating a label.
 type UpdateLabelRequest struct {
 	// Color The color of the label.
@@ -5492,8 +7089,12 @@ type UpdateUserRequest struct {
 	// FirstName The user's first name.
 	FirstName *string `json:"firstName,omitempty"`
 
-	// JobFunction The user's job function.
+	// JobFunction Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	JobFunction *UpdateUserRequestJobFunction `json:"jobFunction,omitempty"`
+
+	// JobTitle The user's job function.
+	JobTitle *UpdateUserRequestJobTitle `json:"jobTitle,omitempty"`
 
 	// Language The user's preferred language.
 	Language *UpdateUserRequestLanguage `json:"language,omitempty"`
@@ -5511,8 +7112,11 @@ type UpdateUserRequest struct {
 	RoleId *string `json:"roleId,omitempty"`
 }
 
-// UpdateUserRequestJobFunction The user's job function.
+// UpdateUserRequestJobFunction Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.
 type UpdateUserRequestJobFunction string
+
+// UpdateUserRequestJobTitle The user's job function.
+type UpdateUserRequestJobTitle string
 
 // UpdateUserRequestLanguage The user's preferred language.
 type UpdateUserRequestLanguage string
@@ -5540,8 +7144,8 @@ type UpdatedUserBody struct {
 	// Id The unique ID of the user.
 	Id *string `json:"id,omitempty"`
 
-	// JobFunction The user's job function.
-	JobFunction *UpdatedUserBodyJobFunction `json:"jobFunction,omitempty"`
+	// JobTitle The user's job function.
+	JobTitle *UpdatedUserBodyJobTitle `json:"jobTitle,omitempty"`
 
 	// Language The user's preferred language.
 	Language *UpdatedUserBodyLanguage `json:"language,omitempty"`
@@ -5562,8 +7166,8 @@ type UpdatedUserBody struct {
 	RoleId *string `json:"roleId,omitempty"`
 }
 
-// UpdatedUserBodyJobFunction The user's job function.
-type UpdatedUserBodyJobFunction string
+// UpdatedUserBodyJobTitle The user's job function.
+type UpdatedUserBodyJobTitle string
 
 // UpdatedUserBodyLanguage The user's preferred language.
 type UpdatedUserBodyLanguage string
@@ -5582,8 +7186,8 @@ type UserListItem struct {
 	// Id The unique ID of the user.
 	Id *string `json:"id,omitempty"`
 
-	// JobFunction The user's job function.
-	JobFunction *UserListItemJobFunction `json:"jobFunction,omitempty"`
+	// JobTitle The user's job function.
+	JobTitle *UserListItemJobTitle `json:"jobTitle,omitempty"`
 
 	// Language The user's preferred language.
 	Language *UserListItemLanguage `json:"language,omitempty"`
@@ -5607,8 +7211,8 @@ type UserListItem struct {
 	Status *UserListItemStatus `json:"status,omitempty"`
 }
 
-// UserListItemJobFunction The user's job function.
-type UserListItemJobFunction string
+// UserListItemJobTitle The user's job function.
+type UserListItemJobTitle string
 
 // UserListItemLanguage The user's preferred language.
 type UserListItemLanguage string
@@ -5706,7 +7310,7 @@ type ListAllocationsParams struct {
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results.
-	// Valid fields: **type**, **owner**, **name**.
+	// Valid fields: **type**, **owner**, **name**, **folderId**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// SortBy A field by which the results will be sorted.
@@ -5825,6 +7429,15 @@ type ListDimensionsParamsSortBy string
 // ListDimensionsParamsSortOrder defines parameters for ListDimensions.
 type ListDimensionsParamsSortOrder string
 
+// ListFoldersParams defines parameters for ListFolders.
+type ListFoldersParams struct {
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+}
+
 // ListLabelsParams defines parameters for ListLabels.
 type ListLabelsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
@@ -5860,7 +7473,7 @@ type ListReportsParams struct {
 
 	// Filter An expression for filtering the results.
 	// The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
-	// Possible filter keys: **reportName**, **owner**, **type**, **updateTime**
+	// Possible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// MinCreationTime Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
@@ -5953,6 +7566,72 @@ type ListInvoicesParams struct {
 	MaxCreationTime *int64 `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
+// GetCloudDiagramComponentsParams defines parameters for GetCloudDiagramComponents.
+type GetCloudDiagramComponentsParams struct {
+	// Components Include components in the layer response.
+	Components *bool `form:"components,omitempty" json:"components,omitempty"`
+
+	// External Include external (cross-diagram) components.
+	External *bool `form:"external,omitempty" json:"external,omitempty"`
+
+	// Element Include elements.
+	Element *bool `form:"element,omitempty" json:"element,omitempty"`
+
+	// Link Include links.
+	Link *bool `form:"link,omitempty" json:"link,omitempty"`
+
+	// Group Include groups.
+	Group *bool `form:"group,omitempty" json:"group,omitempty"`
+
+	// Note Include notes.
+	Note *bool `form:"note,omitempty" json:"note,omitempty"`
+
+	// Combiner Include combiners.
+	Combiner *bool `form:"combiner,omitempty" json:"combiner,omitempty"`
+
+	// Type Filter diagrams by type.
+	Type *[]GetCloudDiagramComponentsParamsType `form:"type,omitempty" json:"type,omitempty"`
+
+	// NodeType Filter components by node type.
+	NodeType *GetCloudDiagramComponentsParamsNodeType `form:"node_type,omitempty" json:"node_type,omitempty"`
+
+	// AlarmsCount Include alarm counts (default true).
+	AlarmsCount *bool `form:"alarms_count,omitempty" json:"alarms_count,omitempty"`
+
+	// IssuesCount Include issue counts.
+	IssuesCount *bool `form:"issues_count,omitempty" json:"issues_count,omitempty"`
+
+	// SkipEmpty Omit diagrams that have no components.
+	SkipEmpty *bool `form:"skip_empty,omitempty" json:"skip_empty,omitempty"`
+
+	// ExcludeDefaultVpc Exclude the default VPC group (default true).
+	ExcludeDefaultVpc *bool `form:"exclude_default_vpc,omitempty" json:"exclude_default_vpc,omitempty"`
+
+	// ExcludeEmptySubnets Exclude empty subnet groups (default true).
+	ExcludeEmptySubnets *bool `form:"exclude_empty_subnets,omitempty" json:"exclude_empty_subnets,omitempty"`
+}
+
+// GetCloudDiagramComponentsParamsType defines parameters for GetCloudDiagramComponents.
+type GetCloudDiagramComponentsParamsType string
+
+// GetCloudDiagramComponentsParamsNodeType defines parameters for GetCloudDiagramComponents.
+type GetCloudDiagramComponentsParamsNodeType string
+
+// GetCloudDiagramsStatsParams defines parameters for GetCloudDiagramsStats.
+type GetCloudDiagramsStatsParams struct {
+	// Start Start of the period.
+	Start time.Time `form:"start" json:"start"`
+
+	// End End of the period.
+	End time.Time `form:"end" json:"end"`
+}
+
+// GetStatussheetComponentsParams defines parameters for GetStatussheetComponents.
+type GetStatussheetComponentsParams struct {
+	// P Space-separated projection fields for component documents.
+	P *string `form:"p,omitempty" json:"p,omitempty"`
+}
+
 // ListKnownIssuesParams defines parameters for ListKnownIssues.
 type ListKnownIssuesParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -5970,6 +7649,12 @@ type ListKnownIssuesParams struct {
 	// MaxCreationTime Max value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created before or at this
 	// timestamp are returned.
 	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
+}
+
+// ListUsersParams defines parameters for ListUsers.
+type ListUsersParams struct {
+	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
+	Email *openapi_types.Email `form:"email,omitempty" json:"email,omitempty"`
 }
 
 // DeleteInsightResultsParams defines parameters for DeleteInsightResults.
@@ -6106,6 +7791,12 @@ type CreateBudgetJSONRequestBody = BudgetCreateUpdateRequest
 // UpdateBudgetJSONRequestBody defines body for UpdateBudget for application/json ContentType.
 type UpdateBudgetJSONRequestBody = BudgetCreateUpdateRequest
 
+// CreateFolderJSONRequestBody defines body for CreateFolder for application/json ContentType.
+type CreateFolderJSONRequestBody = CreateFolderRequest
+
+// UpdateFolderJSONRequestBody defines body for UpdateFolder for application/json ContentType.
+type UpdateFolderJSONRequestBody = UpdateFolderRequest
+
 // CreateLabelJSONRequestBody defines body for CreateLabel for application/json ContentType.
 type CreateLabelJSONRequestBody = CreateLabelRequest
 
@@ -6138,6 +7829,15 @@ type IdOfAssetJSONRequestBody = IdOfAssetRequestBody
 
 // FindCloudDiagramsJSONRequestBody defines body for FindCloudDiagrams for application/json ContentType.
 type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
+
+// GetCloudDiagramComponentsJSONRequestBody defines body for GetCloudDiagramComponents for application/json ContentType.
+type GetCloudDiagramComponentsJSONRequestBody = CloudDiagramsGetRequest
+
+// SearchCloudDiagramsJSONRequestBody defines body for SearchCloudDiagrams for application/json ContentType.
+type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
+
+// GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
+type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 
 // DatahubEventsCSVFileMultipartRequestBody defines body for DatahubEventsCSVFile for multipart/form-data ContentType.
 type DatahubEventsCSVFileMultipartRequestBody = DatahubEventsCSVFileRequestBody
@@ -6183,6 +7883,74 @@ type IdOfTicketsPostJSONRequestBody = TicketCreateFormExtAPI
 
 // IdOfTicketCommentsPostJSONRequestBody defines body for IdOfTicketCommentsPost for application/json ContentType.
 type IdOfTicketCommentsPostJSONRequestBody = CreateCommentRequest
+
+// IdOfTicketTagsRemoveJSONRequestBody defines body for IdOfTicketTagsRemove for application/json ContentType.
+type IdOfTicketTagsRemoveJSONRequestBody = TagsRequest
+
+// IdOfTicketTagsAddJSONRequestBody defines body for IdOfTicketTagsAdd for application/json ContentType.
+type IdOfTicketTagsAddJSONRequestBody = TagsRequest
+
+// AsCloudDiagramsGetRequestTemplate0 returns the union data inside the CloudDiagramsGetRequest_Template as a CloudDiagramsGetRequestTemplate0
+func (t CloudDiagramsGetRequest_Template) AsCloudDiagramsGetRequestTemplate0() (CloudDiagramsGetRequestTemplate0, error) {
+	var body CloudDiagramsGetRequestTemplate0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCloudDiagramsGetRequestTemplate0 overwrites any union data inside the CloudDiagramsGetRequest_Template as the provided CloudDiagramsGetRequestTemplate0
+func (t *CloudDiagramsGetRequest_Template) FromCloudDiagramsGetRequestTemplate0(v CloudDiagramsGetRequestTemplate0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCloudDiagramsGetRequestTemplate0 performs a merge with any union data inside the CloudDiagramsGetRequest_Template, using the provided CloudDiagramsGetRequestTemplate0
+func (t *CloudDiagramsGetRequest_Template) MergeCloudDiagramsGetRequestTemplate0(v CloudDiagramsGetRequestTemplate0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCloudDiagramsGetRequestTemplate1 returns the union data inside the CloudDiagramsGetRequest_Template as a CloudDiagramsGetRequestTemplate1
+func (t CloudDiagramsGetRequest_Template) AsCloudDiagramsGetRequestTemplate1() (CloudDiagramsGetRequestTemplate1, error) {
+	var body CloudDiagramsGetRequestTemplate1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCloudDiagramsGetRequestTemplate1 overwrites any union data inside the CloudDiagramsGetRequest_Template as the provided CloudDiagramsGetRequestTemplate1
+func (t *CloudDiagramsGetRequest_Template) FromCloudDiagramsGetRequestTemplate1(v CloudDiagramsGetRequestTemplate1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCloudDiagramsGetRequestTemplate1 performs a merge with any union data inside the CloudDiagramsGetRequest_Template, using the provided CloudDiagramsGetRequestTemplate1
+func (t *CloudDiagramsGetRequest_Template) MergeCloudDiagramsGetRequestTemplate1(v CloudDiagramsGetRequestTemplate1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CloudDiagramsGetRequest_Template) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *CloudDiagramsGetRequest_Template) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0 returns the union data inside the DatahubEventsRequestBodyEventsItemDimensionsItem_Value as a DatahubEventsRequestBodyEventsItemDimensionsItemValue0
 func (t DatahubEventsRequestBodyEventsItemDimensionsItem_Value) AsDatahubEventsRequestBodyEventsItemDimensionsItemValue0() (DatahubEventsRequestBodyEventsItemDimensionsItemValue0, error) {
@@ -6495,6 +8263,25 @@ type ClientInterface interface {
 	// ListDimensions request
 	ListDimensions(ctx context.Context, params *ListDimensionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListFolders request
+	ListFolders(ctx context.Context, params *ListFoldersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateFolderWithBody request with any body
+	CreateFolderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateFolder(ctx context.Context, body CreateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteFolder request
+	DeleteFolder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetFolder request
+	GetFolder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateFolderWithBody request with any body
+	UpdateFolderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateFolder(ctx context.Context, id string, body UpdateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListLabels request
 	ListLabels(ctx context.Context, params *ListLabelsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -6601,6 +8388,27 @@ type ClientInterface interface {
 
 	FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetCloudDiagramComponentsWithBody request with any body
+	GetCloudDiagramComponentsWithBody(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetCloudDiagramComponents(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchCloudDiagramsWithBody request with any body
+	SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudDiagramsStats request
+	GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExportCloudDiagramJson request
+	ExportCloudDiagramJson(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetStatussheetComponentsWithBody request with any body
+	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -6654,7 +8462,7 @@ type ClientInterface interface {
 	ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUsers request
-	ListUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListUsers(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// InviteUserWithBody request with any body
 	InviteUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6736,6 +8544,16 @@ type ClientInterface interface {
 	IdOfTicketCommentsPostWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	IdOfTicketCommentsPost(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// IdOfTicketTagsRemoveWithBody request with any body
+	IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	IdOfTicketTagsRemove(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// IdOfTicketTagsAddWithBody request with any body
+	IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	IdOfTicketTagsAdd(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) ListAlerts(ctx context.Context, params *ListAlertsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -7112,6 +8930,90 @@ func (c *Client) GetDimensions(ctx context.Context, params *GetDimensionsParams,
 
 func (c *Client) ListDimensions(ctx context.Context, params *ListDimensionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListDimensionsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListFolders(ctx context.Context, params *ListFoldersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListFoldersRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateFolderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFolderRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateFolder(ctx context.Context, body CreateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFolderRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteFolder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteFolderRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetFolder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFolderRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateFolderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateFolderRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateFolder(ctx context.Context, id string, body UpdateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateFolderRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7590,6 +9492,102 @@ func (c *Client) FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJS
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetCloudDiagramComponentsWithBody(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramComponentsRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramComponents(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramComponentsRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramsStatsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ExportCloudDiagramJson(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExportCloudDiagramJsonRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequest(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListKnownIssuesRequest(c.Server, params)
 	if err != nil {
@@ -7818,8 +9816,8 @@ func (c *Client) ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListUsersRequest(c.Server)
+func (c *Client) ListUsers(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUsersRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -8180,6 +10178,54 @@ func (c *Client) IdOfTicketCommentsPostWithBody(ctx context.Context, ticketId in
 
 func (c *Client) IdOfTicketCommentsPost(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIdOfTicketCommentsPostRequest(c.Server, ticketId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsRemoveRequestWithBody(c.Server, ticketId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsRemove(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsRemoveRequest(c.Server, ticketId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsAddRequestWithBody(c.Server, ticketId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) IdOfTicketTagsAdd(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIdOfTicketTagsAddRequest(c.Server, ticketId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -9575,6 +11621,226 @@ func NewListDimensionsRequest(server string, params *ListDimensionsParams) (*htt
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewListFoldersRequest generates requests for ListFolders
+func NewListFoldersRequest(server string, params *ListFoldersParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/folders")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateFolderRequest calls the generic CreateFolder builder with application/json body
+func NewCreateFolderRequest(server string, body CreateFolderJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateFolderRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateFolderRequestWithBody generates requests for CreateFolder with any type of body
+func NewCreateFolderRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/folders")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteFolderRequest generates requests for DeleteFolder
+func NewDeleteFolderRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/folders/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetFolderRequest generates requests for GetFolder
+func NewGetFolderRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/folders/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateFolderRequest calls the generic UpdateFolder builder with application/json body
+func NewUpdateFolderRequest(server string, id string, body UpdateFolderJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateFolderRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateFolderRequestWithBody generates requests for UpdateFolder with any type of body
+func NewUpdateFolderRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/folders/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -11109,6 +13375,476 @@ func NewFindCloudDiagramsRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewGetCloudDiagramComponentsRequest calls the generic GetCloudDiagramComponents builder with application/json body
+func NewGetCloudDiagramComponentsRequest(server string, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetCloudDiagramComponentsRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewGetCloudDiagramComponentsRequestWithBody generates requests for GetCloudDiagramComponents with any type of body
+func NewGetCloudDiagramComponentsRequestWithBody(server string, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/get")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Components != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "components", *params.Components, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.External != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "external", *params.External, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Element != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "element", *params.Element, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Link != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "link", *params.Link, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Group != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "group", *params.Group, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Note != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "note", *params.Note, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Combiner != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "combiner", *params.Combiner, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "type", *params.Type, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.NodeType != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "node_type", *params.NodeType, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AlarmsCount != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "alarms_count", *params.AlarmsCount, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.IssuesCount != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "issues_count", *params.IssuesCount, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.SkipEmpty != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "skip_empty", *params.SkipEmpty, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExcludeDefaultVpc != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exclude_default_vpc", *params.ExcludeDefaultVpc, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExcludeEmptySubnets != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exclude_empty_subnets", *params.ExcludeEmptySubnets, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSearchCloudDiagramsRequest calls the generic SearchCloudDiagrams builder with application/json body
+func NewSearchCloudDiagramsRequest(server string, body SearchCloudDiagramsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSearchCloudDiagramsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSearchCloudDiagramsRequestWithBody generates requests for SearchCloudDiagrams with any type of body
+func NewSearchCloudDiagramsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/search")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetCloudDiagramsStatsRequest generates requests for GetCloudDiagramsStats
+func NewGetCloudDiagramsStatsRequest(server string, params *GetCloudDiagramsStatsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/stats")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "start", params.Start, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "end", params.End, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewExportCloudDiagramJsonRequest generates requests for ExportCloudDiagramJson
+func NewExportCloudDiagramJsonRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/export-json", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetStatussheetComponentsRequest calls the generic GetStatussheetComponents builder with application/json body
+func NewGetStatussheetComponentsRequest(server string, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetStatussheetComponentsRequestWithBody(server, id, params, "application/json", bodyReader)
+}
+
+// NewGetStatussheetComponentsRequestWithBody generates requests for GetStatussheetComponents with any type of body
+func NewGetStatussheetComponentsRequestWithBody(server string, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/get", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.P != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "p", *params.P, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListKnownIssuesRequest generates requests for ListKnownIssues
 func NewListKnownIssuesRequest(server string, params *ListKnownIssuesParams) (*http.Request, error) {
 	var err error
@@ -11669,7 +14405,7 @@ func NewListRolesRequest(server string) (*http.Request, error) {
 }
 
 // NewListUsersRequest generates requests for ListUsers
-func NewListUsersRequest(server string) (*http.Request, error) {
+func NewListUsersRequest(server string, params *ListUsersParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -11685,6 +14421,28 @@ func NewListUsersRequest(server string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Email != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "email", *params.Email, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "email"}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -12894,6 +15652,100 @@ func NewIdOfTicketCommentsPostRequestWithBody(server string, ticketId int64, con
 	return req, nil
 }
 
+// NewIdOfTicketTagsRemoveRequest calls the generic IdOfTicketTagsRemove builder with application/json body
+func NewIdOfTicketTagsRemoveRequest(server string, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewIdOfTicketTagsRemoveRequestWithBody(server, ticketId, "application/json", bodyReader)
+}
+
+// NewIdOfTicketTagsRemoveRequestWithBody generates requests for IdOfTicketTagsRemove with any type of body
+func NewIdOfTicketTagsRemoveRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "ticketId", ticketId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/support/v1/tickets/%s/tags", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewIdOfTicketTagsAddRequest calls the generic IdOfTicketTagsAdd builder with application/json body
+func NewIdOfTicketTagsAddRequest(server string, ticketId int64, body IdOfTicketTagsAddJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewIdOfTicketTagsAddRequestWithBody(server, ticketId, "application/json", bodyReader)
+}
+
+// NewIdOfTicketTagsAddRequestWithBody generates requests for IdOfTicketTagsAdd with any type of body
+func NewIdOfTicketTagsAddRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "ticketId", ticketId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/support/v1/tickets/%s/tags", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -13025,6 +15877,25 @@ type ClientWithResponsesInterface interface {
 	// ListDimensionsWithResponse request
 	ListDimensionsWithResponse(ctx context.Context, params *ListDimensionsParams, reqEditors ...RequestEditorFn) (*ListDimensionsResp, error)
 
+	// ListFoldersWithResponse request
+	ListFoldersWithResponse(ctx context.Context, params *ListFoldersParams, reqEditors ...RequestEditorFn) (*ListFoldersResp, error)
+
+	// CreateFolderWithBodyWithResponse request with any body
+	CreateFolderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFolderResp, error)
+
+	CreateFolderWithResponse(ctx context.Context, body CreateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFolderResp, error)
+
+	// DeleteFolderWithResponse request
+	DeleteFolderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteFolderResp, error)
+
+	// GetFolderWithResponse request
+	GetFolderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetFolderResp, error)
+
+	// UpdateFolderWithBodyWithResponse request with any body
+	UpdateFolderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFolderResp, error)
+
+	UpdateFolderWithResponse(ctx context.Context, id string, body UpdateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFolderResp, error)
+
 	// ListLabelsWithResponse request
 	ListLabelsWithResponse(ctx context.Context, params *ListLabelsParams, reqEditors ...RequestEditorFn) (*ListLabelsResp, error)
 
@@ -13131,6 +16002,27 @@ type ClientWithResponsesInterface interface {
 
 	FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
+	// GetCloudDiagramComponentsWithBodyWithResponse request with any body
+	GetCloudDiagramComponentsWithBodyWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error)
+
+	GetCloudDiagramComponentsWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error)
+
+	// SearchCloudDiagramsWithBodyWithResponse request with any body
+	SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
+
+	SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
+
+	// GetCloudDiagramsStatsWithResponse request
+	GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error)
+
+	// ExportCloudDiagramJsonWithResponse request
+	ExportCloudDiagramJsonWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ExportCloudDiagramJsonResp, error)
+
+	// GetStatussheetComponentsWithBodyWithResponse request with any body
+	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
+	GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
 
@@ -13184,7 +16076,7 @@ type ClientWithResponsesInterface interface {
 	ListRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListRolesResp, error)
 
 	// ListUsersWithResponse request
-	ListUsersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListUsersResp, error)
+	ListUsersWithResponse(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*ListUsersResp, error)
 
 	// InviteUserWithBodyWithResponse request with any body
 	InviteUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InviteUserResp, error)
@@ -13266,6 +16158,16 @@ type ClientWithResponsesInterface interface {
 	IdOfTicketCommentsPostWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error)
 
 	IdOfTicketCommentsPostWithResponse(ctx context.Context, ticketId int64, body IdOfTicketCommentsPostJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsPostResp, error)
+
+	// IdOfTicketTagsRemoveWithBodyWithResponse request with any body
+	IdOfTicketTagsRemoveWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error)
+
+	IdOfTicketTagsRemoveWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error)
+
+	// IdOfTicketTagsAddWithBodyWithResponse request with any body
+	IdOfTicketTagsAddWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error)
+
+	IdOfTicketTagsAddWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error)
 }
 
 type ListAlertsResp struct {
@@ -13884,6 +16786,137 @@ func (r ListDimensionsResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListDimensionsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListFoldersResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListFolders200Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r ListFoldersResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListFoldersResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateFolderResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *Folder
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateFolderResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateFolderResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteFolderResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteFolderResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteFolderResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetFolderResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Folder
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFolderResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFolderResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateFolderResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Folder
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateFolderResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateFolderResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -14607,6 +17640,133 @@ func (r FindCloudDiagramsResp) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r FindCloudDiagramsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetCloudDiagramComponentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramsGetResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramComponentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramComponentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SearchCloudDiagramsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramsSearchResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchCloudDiagramsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchCloudDiagramsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetCloudDiagramsStatsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CloudDiagramStats
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramsStatsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramsStatsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ExportCloudDiagramJsonResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramExportJsonResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r ExportCloudDiagramJsonResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExportCloudDiagramJsonResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetStatussheetComponentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramStatussheetComponents
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetStatussheetComponentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetStatussheetComponentsResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15548,6 +18708,58 @@ func (r IdOfTicketCommentsPostResp) StatusCode() int {
 	return 0
 }
 
+type IdOfTicketTagsRemoveResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TagsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r IdOfTicketTagsRemoveResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r IdOfTicketTagsRemoveResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type IdOfTicketTagsAddResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TagsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r IdOfTicketTagsAddResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r IdOfTicketTagsAddResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // ListAlertsWithResponse request returning *ListAlertsResp
 func (c *ClientWithResponses) ListAlertsWithResponse(ctx context.Context, params *ListAlertsParams, reqEditors ...RequestEditorFn) (*ListAlertsResp, error) {
 	rsp, err := c.ListAlerts(ctx, params, reqEditors...)
@@ -15826,6 +19038,67 @@ func (c *ClientWithResponses) ListDimensionsWithResponse(ctx context.Context, pa
 		return nil, err
 	}
 	return ParseListDimensionsResp(rsp)
+}
+
+// ListFoldersWithResponse request returning *ListFoldersResp
+func (c *ClientWithResponses) ListFoldersWithResponse(ctx context.Context, params *ListFoldersParams, reqEditors ...RequestEditorFn) (*ListFoldersResp, error) {
+	rsp, err := c.ListFolders(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListFoldersResp(rsp)
+}
+
+// CreateFolderWithBodyWithResponse request with arbitrary body returning *CreateFolderResp
+func (c *ClientWithResponses) CreateFolderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFolderResp, error) {
+	rsp, err := c.CreateFolderWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateFolderResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateFolderWithResponse(ctx context.Context, body CreateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFolderResp, error) {
+	rsp, err := c.CreateFolder(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateFolderResp(rsp)
+}
+
+// DeleteFolderWithResponse request returning *DeleteFolderResp
+func (c *ClientWithResponses) DeleteFolderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteFolderResp, error) {
+	rsp, err := c.DeleteFolder(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteFolderResp(rsp)
+}
+
+// GetFolderWithResponse request returning *GetFolderResp
+func (c *ClientWithResponses) GetFolderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetFolderResp, error) {
+	rsp, err := c.GetFolder(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFolderResp(rsp)
+}
+
+// UpdateFolderWithBodyWithResponse request with arbitrary body returning *UpdateFolderResp
+func (c *ClientWithResponses) UpdateFolderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFolderResp, error) {
+	rsp, err := c.UpdateFolderWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateFolderResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateFolderWithResponse(ctx context.Context, id string, body UpdateFolderJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFolderResp, error) {
+	rsp, err := c.UpdateFolder(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateFolderResp(rsp)
 }
 
 // ListLabelsWithResponse request returning *ListLabelsResp
@@ -16168,6 +19441,75 @@ func (c *ClientWithResponses) FindCloudDiagramsWithResponse(ctx context.Context,
 	return ParseFindCloudDiagramsResp(rsp)
 }
 
+// GetCloudDiagramComponentsWithBodyWithResponse request with arbitrary body returning *GetCloudDiagramComponentsResp
+func (c *ClientWithResponses) GetCloudDiagramComponentsWithBodyWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error) {
+	rsp, err := c.GetCloudDiagramComponentsWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramComponentsResp(rsp)
+}
+
+func (c *ClientWithResponses) GetCloudDiagramComponentsWithResponse(ctx context.Context, params *GetCloudDiagramComponentsParams, body GetCloudDiagramComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetCloudDiagramComponentsResp, error) {
+	rsp, err := c.GetCloudDiagramComponents(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramComponentsResp(rsp)
+}
+
+// SearchCloudDiagramsWithBodyWithResponse request with arbitrary body returning *SearchCloudDiagramsResp
+func (c *ClientWithResponses) SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagramsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
+}
+
+func (c *ClientWithResponses) SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagrams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
+}
+
+// GetCloudDiagramsStatsWithResponse request returning *GetCloudDiagramsStatsResp
+func (c *ClientWithResponses) GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error) {
+	rsp, err := c.GetCloudDiagramsStats(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramsStatsResp(rsp)
+}
+
+// ExportCloudDiagramJsonWithResponse request returning *ExportCloudDiagramJsonResp
+func (c *ClientWithResponses) ExportCloudDiagramJsonWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ExportCloudDiagramJsonResp, error) {
+	rsp, err := c.ExportCloudDiagramJson(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExportCloudDiagramJsonResp(rsp)
+}
+
+// GetStatussheetComponentsWithBodyWithResponse request with arbitrary body returning *GetStatussheetComponentsResp
+func (c *ClientWithResponses) GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponentsWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
+}
+
+func (c *ClientWithResponses) GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponents(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
+}
+
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
 func (c *ClientWithResponses) ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error) {
 	rsp, err := c.ListKnownIssues(ctx, params, reqEditors...)
@@ -16335,8 +19677,8 @@ func (c *ClientWithResponses) ListRolesWithResponse(ctx context.Context, reqEdit
 }
 
 // ListUsersWithResponse request returning *ListUsersResp
-func (c *ClientWithResponses) ListUsersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListUsersResp, error) {
-	rsp, err := c.ListUsers(ctx, reqEditors...)
+func (c *ClientWithResponses) ListUsersWithResponse(ctx context.Context, params *ListUsersParams, reqEditors ...RequestEditorFn) (*ListUsersResp, error) {
+	rsp, err := c.ListUsers(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -16602,6 +19944,40 @@ func (c *ClientWithResponses) IdOfTicketCommentsPostWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParseIdOfTicketCommentsPostResp(rsp)
+}
+
+// IdOfTicketTagsRemoveWithBodyWithResponse request with arbitrary body returning *IdOfTicketTagsRemoveResp
+func (c *ClientWithResponses) IdOfTicketTagsRemoveWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error) {
+	rsp, err := c.IdOfTicketTagsRemoveWithBody(ctx, ticketId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsRemoveResp(rsp)
+}
+
+func (c *ClientWithResponses) IdOfTicketTagsRemoveWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error) {
+	rsp, err := c.IdOfTicketTagsRemove(ctx, ticketId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsRemoveResp(rsp)
+}
+
+// IdOfTicketTagsAddWithBodyWithResponse request with arbitrary body returning *IdOfTicketTagsAddResp
+func (c *ClientWithResponses) IdOfTicketTagsAddWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error) {
+	rsp, err := c.IdOfTicketTagsAddWithBody(ctx, ticketId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsAddResp(rsp)
+}
+
+func (c *ClientWithResponses) IdOfTicketTagsAddWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error) {
+	rsp, err := c.IdOfTicketTagsAdd(ctx, ticketId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIdOfTicketTagsAddResp(rsp)
 }
 
 // ParseListAlertsResp parses an HTTP response from a ListAlertsWithResponse call
@@ -17880,6 +21256,283 @@ func ParseListDimensionsResp(rsp *http.Response) (*ListDimensionsResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListFoldersResp parses an HTTP response from a ListFoldersWithResponse call
+func ParseListFoldersResp(rsp *http.Response) (*ListFoldersResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListFoldersResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListFolders200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateFolderResp parses an HTTP response from a CreateFolderWithResponse call
+func ParseCreateFolderResp(rsp *http.Response) (*CreateFolderResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateFolderResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Folder
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteFolderResp parses an HTTP response from a DeleteFolderWithResponse call
+func ParseDeleteFolderResp(rsp *http.Response) (*DeleteFolderResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteFolderResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetFolderResp parses an HTTP response from a GetFolderWithResponse call
+func ParseGetFolderResp(rsp *http.Response) (*GetFolderResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFolderResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Folder
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateFolderResp parses an HTTP response from a UpdateFolderWithResponse call
+func ParseUpdateFolderResp(rsp *http.Response) (*UpdateFolderResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateFolderResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Folder
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
@@ -19357,6 +23010,255 @@ func ParseFindCloudDiagramsResp(rsp *http.Response) (*FindCloudDiagramsResp, err
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramComponentsResp parses an HTTP response from a GetCloudDiagramComponentsWithResponse call
+func ParseGetCloudDiagramComponentsResp(rsp *http.Response) (*GetCloudDiagramComponentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramComponentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramsGetResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSearchCloudDiagramsResp parses an HTTP response from a SearchCloudDiagramsWithResponse call
+func ParseSearchCloudDiagramsResp(rsp *http.Response) (*SearchCloudDiagramsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchCloudDiagramsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramsSearchResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramsStatsResp parses an HTTP response from a GetCloudDiagramsStatsWithResponse call
+func ParseGetCloudDiagramsStatsResp(rsp *http.Response) (*GetCloudDiagramsStatsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramsStatsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CloudDiagramStats
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseExportCloudDiagramJsonResp parses an HTTP response from a ExportCloudDiagramJsonWithResponse call
+func ParseExportCloudDiagramJsonResp(rsp *http.Response) (*ExportCloudDiagramJsonResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExportCloudDiagramJsonResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramExportJsonResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetStatussheetComponentsResp parses an HTTP response from a GetStatussheetComponentsWithResponse call
+func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetComponentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetStatussheetComponentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramStatussheetComponents
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -21266,6 +25168,114 @@ func ParseIdOfTicketCommentsPostResp(rsp *http.Response) (*IdOfTicketCommentsPos
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIdOfTicketTagsRemoveResp parses an HTTP response from a IdOfTicketTagsRemoveWithResponse call
+func ParseIdOfTicketTagsRemoveResp(rsp *http.Response) (*IdOfTicketTagsRemoveResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &IdOfTicketTagsRemoveResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TagsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIdOfTicketTagsAddResp parses an HTTP response from a IdOfTicketTagsAddWithResponse call
+func ParseIdOfTicketTagsAddResp(rsp *http.Response) (*IdOfTicketTagsAddResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &IdOfTicketTagsAddResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TagsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400

@@ -18,6 +18,8 @@ tags:
     description: Create and manage labels to organize and categorize your cloud resources.
   - name: Allocations
     description: Define how costs are distributed across your organization.
+  - name: Folders
+    description: Organize Cloud Analytics resources (reports, allocations) into folders.
   - name: Budgets
     description: Track actual cloud spend against planned spend.
   - name: Dimensions
@@ -263,7 +265,7 @@ paths:
           in: query
           description: |-
             An expression for filtering the results.
-            Valid fields: **type**, **owner**, **name**.
+            Valid fields: **type**, **owner**, **name**, **folderId**.
           example: type:custom
           schema:
             type: string
@@ -1082,13 +1084,14 @@ paths:
           in: query
           description: Dimension type
           required: true
+          example: "fixed"
           schema:
             $ref: "#/components/schemas/DimensionsTypes"
         - name: id
           in: query
           description: Dimension id
           required: true
-          example: "5LTlZvRUavfi0X4412"
+          example: "service_description"
           schema:
             type: string
       responses:
@@ -1098,6 +1101,173 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DimensionsExternalAPIGetResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  /analytics/v1/folders:
+    get:
+      tags:
+        - Folders
+      summary: List folders
+      description: |-
+        Returns Cloud Analytics folders the current customer has access to.
+        Folders are returned in id-ascending order.
+      operationId: listFolders
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFolders200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Folders
+      summary: Create a folder
+      description: Creates a new Cloud Analytics folder.
+      operationId: createFolder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFolderRequest"
+      responses:
+        "201":
+          description: Created - The folder was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+          links:
+            getFolder:
+              operationId: getFolder
+              parameters:
+                id: $response.body#/id
+            updateFolder:
+              operationId: updateFolder
+              parameters:
+                id: $response.body#/id
+            deleteFolder:
+              operationId: deleteFolder
+              parameters:
+                id: $response.body#/id
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/folders/{id}":
+    get:
+      tags:
+        - Folders
+      summary: Get a folder
+      description: Returns the specified Cloud Analytics folder.
+      operationId: getFolder
+      parameters:
+        - name: id
+          in: path
+          description: Folder ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Folder returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Folders
+      summary: Update a folder
+      description: |-
+        Updates the specified folder. All fields are optional.
+        To reparent the folder, set `parentFolderId` to the target folder ID
+        (use "root" for the top level). If a sibling at the target has the same
+        name, the folder is auto-renamed.
+        To move reports or allocations into or out of a folder, update the item's
+        `folderId` field via the report or allocation PATCH endpoint.
+      operationId: updateFolder
+      parameters:
+        - name: id
+          in: path
+          description: Folder ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFolderRequest"
+      responses:
+        "200":
+          description: OK - Folder updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+      x-codegen-request-body-name: Body
+    delete:
+      tags:
+        - Folders
+      summary: Delete a folder
+      description: >-
+        Deletes the specified folder. All nested folders will be deleted. Any reports or allocations contained in the folder are moved to the root.
+      operationId: deleteFolder
+      parameters:
+        - name: id
+          in: path
+          description: Folder ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content - Folder deleted.
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1170,7 +1340,7 @@ paths:
 
             The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 
-            Possible filter keys: **reportName**, **owner**, **type**, **updateTime**
+            Possible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**
           example: "reportName:This Month vs. Last"
           schema:
             type: string
@@ -2127,8 +2297,19 @@ paths:
       tags:
         - Users
       summary: List users
-      description: Returns a list of all users in the organization, including both active users and invited users.
+      description: |-
+        Returns a list of users in the organization, including both active users and invited users.
+        When the `email` query parameter is provided, returns only the user matching that email address.
+        If no user is found for the given email, an empty list is returned.
       operationId: listUsers
+      parameters:
+        - name: email
+          in: query
+          description: Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
+          required: false
+          schema:
+            type: string
+            format: email
       responses:
         "200":
           description: OK - List of users returned.
@@ -2421,9 +2602,10 @@ paths:
           description: The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
           schema:
             minimum: 1
+            maximum: 100
             type: integer
             format: int64
-            default: 50
+            default: 100
         - $ref: "#/components/parameters/pageToken"
         - name: filter
           in: query
@@ -2587,6 +2769,95 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  /support/v1/tickets/{ticketId}/tags:
+    post:
+      tags:
+        - Support Requests
+      summary: Add tags to a support request
+      description: |-
+        Adds one or more tags to an existing support request. The operation is
+        surgical — only the tags listed in the request are added; existing tags
+        on the ticket are preserved. Re-adding a tag that is already present is
+        a successful no-op.
+
+        All submitted tags are normalized (trim + lowercase) before storage. For
+        customers, the system additionally applies a `customer_tag/` namespace
+        prefix to prevent collisions with internal DoiT process tags. The
+        response echoes the actual stored strings so callers can verify the
+        transform.
+      operationId: idOfTicketTagsAdd
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagsRequest"
+      responses:
+        "200":
+          description: OK - Tags added (or already present).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      tags:
+        - Support Requests
+      summary: Remove tags from a support request
+      description: |-
+        Removes one or more tags from an existing support request. The operation
+        is surgical — only the tags listed in the request are removed; tags not
+        listed are preserved. Removing a tag that is not present is a successful
+        no-op.
+
+        For customers, the system applies the same `customer_tag/` namespace
+        mapping as on add, so a customer who added `my_tag` (stored as
+        `customer_tag/my_tag`) can remove it by sending `my_tag`.
+      operationId: idOfTicketTagsRemove
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagsRequest"
+      responses:
+        "200":
+          description: OK - Tags removed (or already absent).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   /iam/v1/users/invite:
     post:
       tags:
@@ -2622,8 +2893,6 @@ paths:
       summary: Find diagrams
       description: Returns diagram URLs matching the provided resource IDs.
       operationId: findCloudDiagrams
-      servers:
-        - url: ${API_BASE_URL}
       requestBody:
         required: true
         content:
@@ -2643,6 +2912,263 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /clouddiagrams/v1/scheme/stats:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Get diagrams with stats
+      description: Returns a list of all diagrams with activity stats for the given time period.
+      operationId: getCloudDiagramsStats
+      parameters:
+        - name: start
+          in: query
+          required: true
+          description: Start of the period.
+          example: "2026-04-01T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          description: End of the period.
+          example: "2026-04-28T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: OK - List of diagrams with stats returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramStats"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+  /clouddiagrams/v1/scheme/get:
+    post:
+      tags:
+        - Cloud Diagrams
+      summary: Get diagram components
+      description: |-
+        Returns diagram and layer data. When the request body is empty, returns all diagrams
+        the caller has access to. When the body is populated, returns full diagram data including
+        layer components projected to key display and cloud fields.
+      operationId: getCloudDiagramComponents
+      parameters:
+        - name: components
+          in: query
+          description: Include components in the layer response.
+          schema:
+            type: boolean
+        - name: external
+          in: query
+          description: Include external (cross-diagram) components.
+          schema:
+            type: boolean
+        - name: element
+          in: query
+          description: Include elements.
+          schema:
+            type: boolean
+        - name: link
+          in: query
+          description: Include links.
+          schema:
+            type: boolean
+        - name: group
+          in: query
+          description: Include groups.
+          schema:
+            type: boolean
+        - name: note
+          in: query
+          description: Include notes.
+          schema:
+            type: boolean
+        - name: combiner
+          in: query
+          description: Include combiners.
+          schema:
+            type: boolean
+        - name: type
+          in: query
+          description: Filter diagrams by type.
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - application
+                - infrastructure
+                - network
+                - template
+        - name: node_type
+          in: query
+          description: Filter components by node type.
+          schema:
+            type: string
+            enum:
+              - app_component
+              - app_group
+              - app_link
+              - attachment
+              - group
+              - host
+              - link
+              - service
+        - name: alarms_count
+          in: query
+          description: Include alarm counts (default true).
+          schema:
+            type: boolean
+        - name: issues_count
+          in: query
+          description: Include issue counts.
+          schema:
+            type: boolean
+        - name: skip_empty
+          in: query
+          description: Omit diagrams that have no components.
+          schema:
+            type: boolean
+        - name: exclude_default_vpc
+          in: query
+          description: Exclude the default VPC group (default true).
+          schema:
+            type: boolean
+        - name: exclude_empty_subnets
+          in: query
+          description: Exclude empty subnet groups (default true).
+          schema:
+            type: boolean
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudDiagramsGetRequest"
+      responses:
+        "200":
+          description: OK - Diagram and component data returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramsGetResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+  /clouddiagrams/v1/scheme/search:
+    post:
+      tags:
+        - Cloud Diagrams
+      summary: Search diagrams and components
+      description: |-
+        Full-text search across diagram layers, components by name, and components
+        by property values. Returns three result categories: diagram (matching layers), component
+        (matching components by name), and prop (matching components by property values).
+      operationId: searchCloudDiagrams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudDiagramsSearchRequest"
+      responses:
+        "200":
+          description: OK - Search results returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramsSearchResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+  /clouddiagrams/v1/statussheet/{id}/get:
+    post:
+      tags:
+        - Cloud Diagrams
+      summary: Get layer components
+      description: |-
+        Returns the components of the specified diagram layer, optionally filtered to specific
+        component IDs. Omit the request body (or send an empty object) to retrieve all components.
+      operationId: getStatussheetComponents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: p
+          in: query
+          description: Space-separated projection fields for component documents.
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudDiagramStatussheetGetRequest"
+      responses:
+        "200":
+          description: OK - Layer components returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramStatussheetComponents"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+  /clouddiagrams/v1/statussheet/{id}/export-json:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Export diagram as JSON
+      description: |-
+        Exports the full content of a diagram layer as a structured JSON document,
+        including all components and export metadata.
+      operationId: exportCloudDiagramJson
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Diagram exported as JSON.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramExportJsonResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   /analytics/v1/commitment-manager:
     get:
       tags:
@@ -3502,6 +4028,10 @@ components:
           type: string
           description: Custom label for values that do not fit into allocation (required for group type allocation).
           nullable: true
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          example: root
     AllocationComponent:
       required:
         - key
@@ -3625,6 +4155,10 @@ components:
         urlUI:
           type: string
           description: URL to view the allocation in the DoiT console.
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          example: root
     AllocationRule:
       required:
         - components
@@ -3754,6 +4288,15 @@ components:
         acknowledged:
           description: "Has the anomaly been acknowledged"
           type: boolean
+        acknowledgedAt:
+          description: "When the anomaly was first acknowledged"
+          type: string
+          format: date-time
+          nullable: true
+        acknowledgedBy:
+          description: "Email of the user who first acknowledged the anomaly"
+          type: string
+          nullable: true
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -3768,11 +4311,33 @@ components:
         operation:
           description: "For anomalies related to AWS S3"
           type: string
+        labels:
+          type: array
+          description: |-
+            Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.
+            Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.
+          items:
+            $ref: "#/components/schemas/AnomalyResourceLabel"
     AnomalyResourceArray:
       type: array
       description: Array of resources contributing to an anomaly.
       items:
         $ref: "#/components/schemas/AnomalyResource"
+    AnomalyResourceLabel:
+      type: object
+      description: |-
+        A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+      properties:
+        key:
+          type: string
+          description: The label/tag key.
+        value:
+          type: string
+          description: The label/tag value.
+        cost:
+          type: number
+          format: double
+          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
     AnomalySKU:
       type: object
       description: SKU-level information contributing to an anomaly.
@@ -4339,6 +4904,846 @@ components:
       type: string
       description: The insight category.
       enum: ["FinOps", "Operational excellence", "Performance efficiency", "Reliability", "Security", "Sustainability"]
+    CloudDiagramAttachment:
+      allOf:
+        - $ref: "#/components/schemas/CloudDiagramComponentBase"
+        - type: object
+          required:
+            - _id
+          description: An attachment component added to a group.
+          properties:
+            _id:
+              type: string
+              description: Attachment ID.
+            color:
+              type: string
+              description: Attachment color.
+            icon:
+              type: string
+              description: Attachment icon identifier.
+            group:
+              type: string
+              description: Parent group ID.
+            issues:
+              type: array
+              description: Issues associated with this attachment.
+              items:
+                $ref: "#/components/schemas/CloudDiagramIssue"
+    CloudDiagramCombiner:
+      type: object
+      required:
+        - _id
+      description: A combiner component that visually groups multiple components.
+      properties:
+        _id:
+          type: string
+          description: Combiner ID.
+        name:
+          type: string
+          description: Combiner name.
+        color:
+          type: string
+          description: Combiner color.
+        icon:
+          type: string
+          description: Combiner icon identifier.
+        items:
+          type: array
+          description: Components contained in the combiner.
+          items:
+            $ref: "#/components/schemas/CloudDiagramCombinerItem"
+    CloudDiagramCombinerItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: A component reference contained within a combiner.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        type:
+          type: string
+          enum:
+            - attachment
+            - combiner
+            - element
+            - group
+            - link
+            - node
+            - note
+            - scheme
+            - statussheet
+          description: Component type.
+    CloudDiagramComponentBase:
+      type: object
+      description: Common fields shared by all layer component types.
+      properties:
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+            - AWS
+            - GCP
+            - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+    CloudDiagramComponentSearchItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: A component matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        icon:
+          type: string
+          description: Component icon identifier.
+        color:
+          type: string
+          description: Component color.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID.
+        name:
+          type: string
+          description: Component name.
+        type:
+          type: string
+          enum:
+            - attachment
+            - combiner
+            - element
+            - group
+            - link
+            - node
+            - note
+          description: Component type.
+        node_type:
+          type: string
+          enum:
+            - app_component
+            - app_group
+            - app_link
+            - attachment
+            - group
+            - host
+            - link
+            - service
+          description: Node type.
+        group_type:
+          type: string
+          description: Group type (for group components).
+        props:
+          description: Component properties. For the "prop" category contains the matched property key-value pairs.
+          allOf:
+            - $ref: '#/components/schemas/CloudDiagramComponentSearchItemProps'
+    CloudDiagramComponentSearchItemProps:
+      type: object
+      description: Component properties. For the "prop" category contains the matched property key-value pairs.
+      properties:
+        service_type:
+          type: string
+          description: Cloud service type (e.g. AWS::EC2::Instance).
+    CloudDiagramElement:
+      allOf:
+        - $ref: "#/components/schemas/CloudDiagramComponentBase"
+        - type: object
+          required:
+            - _id
+          description: An element component (application-layer component).
+          properties:
+            _id:
+              type: string
+              description: Element ID.
+            color:
+              type: string
+              description: Element color.
+            icon:
+              type: string
+              description: Element icon identifier.
+            parent:
+              type: string
+              description: Parent element ID.
+            issues:
+              type: array
+              description: Issues associated with this element.
+              items:
+                $ref: "#/components/schemas/CloudDiagramIssue"
+    CloudDiagramExportJsonMetadata:
+      type: object
+      required:
+        - user
+        - date
+        - version
+      description: Metadata included in a diagram JSON export.
+      properties:
+        user:
+          type: string
+          description: Email of the user who triggered the export.
+        date:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of the export.
+        version:
+          type: string
+          description: Export format version.
+        connections:
+          type: object
+          description: Map of component ID to display label for external connections referenced by cross-diagram links.
+          additionalProperties:
+            type: string
+    CloudDiagramExportJsonResponse:
+      type: object
+      required:
+        - metadata
+      description: Full diagram export as a structured JSON document.
+      properties:
+        statussheet:
+          type: object
+          description: Diagram-level metadata (excluding internal IDs).
+          additionalProperties: true
+        metadata:
+          $ref: "#/components/schemas/CloudDiagramExportJsonMetadata"
+        nodes:
+          type: array
+          description: Exported nodes.
+          items:
+            $ref: "#/components/schemas/CloudDiagramNode"
+        elements:
+          type: array
+          description: Exported elements.
+          items:
+            $ref: "#/components/schemas/CloudDiagramElement"
+        groups:
+          type: array
+          description: Exported groups.
+          items:
+            $ref: "#/components/schemas/CloudDiagramGroup"
+        attachments:
+          type: array
+          description: Exported attachments.
+          items:
+            $ref: "#/components/schemas/CloudDiagramAttachment"
+        links:
+          type: array
+          description: Exported links.
+          items:
+            $ref: "#/components/schemas/CloudDiagramLink"
+        combiners:
+          type: array
+          description: Exported combiners.
+          items:
+            $ref: "#/components/schemas/CloudDiagramCombiner"
+        notes:
+          type: array
+          description: Exported notes.
+          items:
+            $ref: "#/components/schemas/CloudDiagramNote"
+    CloudDiagramGroup:
+      allOf:
+        - $ref: "#/components/schemas/CloudDiagramComponentBase"
+        - type: object
+          required:
+            - _id
+          description: A group component (VPC, subnet, region, cluster, etc.).
+          properties:
+            _id:
+              type: string
+              description: Group ID.
+            group_type:
+              type: string
+              enum:
+                - account
+                - az
+                - azure_subscription
+                - customer_gateway
+                - ecs
+                - eks
+                - aks
+                - k8s_namespace
+                - k8s_pod
+                - k8s_deployment
+                - k8s_daemon_set
+                - k8s_replica_set
+                - k8s_stateful_set
+                - project
+                - region
+                - security_group
+                - subnet
+                - vpc
+                - gcp_instance_group
+                - gcp_managed_zone
+                - gke_cluster
+                - azure_dns_zone
+                - azure_cdn_profile
+                - azure_resource_group
+              description: Group type.
+            color:
+              type: string
+              description: Group color.
+            icon:
+              type: string
+              description: Group icon identifier.
+            items:
+              type: array
+              description: Components contained in the group.
+              items:
+                $ref: "#/components/schemas/CloudDiagramGroupItem"
+            issues:
+              type: array
+              description: Issues associated with this group.
+              items:
+                $ref: "#/components/schemas/CloudDiagramIssue"
+    CloudDiagramGroupItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: Reference to a component contained within a group.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        type:
+          type: string
+          enum:
+            - attachment
+            - combiner
+            - element
+            - group
+            - link
+            - node
+            - note
+            - scheme
+            - statussheet
+          description: Component type.
+    CloudDiagramImportState:
+      type: object
+      description: Current import/sync state for a cloud-connected diagram.
+      properties:
+        status:
+          type: string
+          enum:
+            - queued
+            - in_progress
+            - success
+            - failure
+          description: Import status.
+        type:
+          type: string
+          enum:
+            - AWS
+            - GCP
+            - AZURE
+          description: Connected cloud account type.
+        account:
+          type: string
+          description: Connected account ID.
+        cloudId:
+          type: string
+          description: Cloud account ID.
+        errorMessage:
+          type: string
+          description: Error message if the import failed.
+        syncedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the last successful sync.
+    CloudDiagramInfraNodeRef:
+      type: object
+      required:
+        - _id
+        - scheme_id
+        - ss_id
+      description: Reference to a linked infrastructure node in another diagram.
+      properties:
+        _id:
+          type: string
+          description: Infrastructure node ID.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Parent layer ID.
+    CloudDiagramIssue:
+      type: object
+      description: Issue annotation linked to a component.
+      properties:
+        _id:
+          type: string
+          description: Issue reference ID.
+        comment:
+          type: string
+          description: Optional comment on the issue.
+        snoozed:
+          type: number
+          description: Snooze duration in seconds.
+        jira:
+          type: string
+          description: Linked Jira ticket key or URL.
+    CloudDiagramLink:
+      allOf:
+        - $ref: "#/components/schemas/CloudDiagramComponentBase"
+        - type: object
+          required:
+            - _id
+          description: A link component connecting two nodes or groups.
+          properties:
+            _id:
+              type: string
+              description: Link ID.
+            connection_type:
+              type: string
+              enum:
+                - normal
+                - tunnel
+                - private
+                - VPN
+                - VPC Peering
+                - Network Connectivity Center
+                - Private Service Connect
+                - Private Google Access
+                - Serverless VPC
+                - Serverless VPC Access Connector
+                - Cross Cloud Interconnect
+                - Partner Interconnect
+                - Dedicated Interconnect
+              description: Link connection type.
+            owner_ss_id:
+              type: string
+              description: Owner layer ID for cross-diagram links.
+            issues:
+              type: array
+              description: Issues associated with this link.
+              items:
+                $ref: "#/components/schemas/CloudDiagramIssue"
+    CloudDiagramNode:
+      allOf:
+        - $ref: "#/components/schemas/CloudDiagramComponentBase"
+        - type: object
+          required:
+            - _id
+          description: A node component (host, service, or application component).
+          properties:
+            _id:
+              type: string
+              description: Node ID.
+            color:
+              type: string
+              description: Node color.
+            icon:
+              type: string
+              description: Node icon identifier.
+            parent:
+              type: string
+              description: Parent node ID.
+            infra_node:
+              $ref: "#/components/schemas/CloudDiagramInfraNodeRef"
+            instance_count:
+              type: integer
+              description: Number of instances represented by this node.
+            running:
+              type: boolean
+              description: Whether the node is currently running.
+            issues:
+              type: array
+              description: Issues associated with this node.
+              items:
+                $ref: "#/components/schemas/CloudDiagramIssue"
+    CloudDiagramNote:
+      type: object
+      required:
+        - _id
+      description: A text note placed on the diagram.
+      properties:
+        _id:
+          type: string
+          description: Note ID.
+        text:
+          type: string
+          description: Note text content.
+        color:
+          type: string
+          description: Note background color.
+        font_size:
+          type: number
+          description: Note font size.
+    CloudDiagramSchemeResult:
+      type: object
+      required:
+        - _id
+        - name
+        - type
+        - statussheet
+      description: A diagram with its connected cloud accounts.
+      properties:
+        _id:
+          type: string
+          description: Diagram ID.
+        name:
+          type: string
+          description: Diagram name.
+        color:
+          type: string
+          description: Diagram color.
+        type:
+          type: string
+          enum:
+            - application
+            - infrastructure
+            - network
+            - template
+          description: Diagram type.
+        statussheet:
+          type: array
+          description: Connected cloud accounts (layers).
+          items:
+            $ref: "#/components/schemas/CloudDiagramSchemeStatussheetInfo"
+    CloudDiagramSchemeSearchItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: A diagram layer (cloud account) matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Layer ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID (same as _id).
+        scheme:
+          type: string
+          description: Parent diagram name.
+        status:
+          type: string
+          description: Import/sync status.
+        name:
+          type: string
+          description: Layer name.
+        type:
+          type: string
+          enum:
+            - statussheet
+          description: Component type — always "statussheet" for this category.
+    CloudDiagramSchemeStatussheetInfo:
+      type: object
+      required:
+        - ssid
+        - name
+        - account_name
+        - alarms_count
+        - empty
+        - color
+      description: Summary of a cloud account (layer) connected to a diagram.
+      properties:
+        ssid:
+          type: string
+          description: Layer ID.
+        name:
+          type: string
+          description: Layer name.
+        account_name:
+          type: string
+          description: Connected cloud account name.
+        alarms_count:
+          type: integer
+          description: Number of active alarms.
+        empty:
+          type: boolean
+          description: True when the layer contains no components.
+        color:
+          type: string
+          description: Layer color.
+    CloudDiagramStats:
+      type: object
+      description: Diagram with activity stats for a given time period.
+      properties:
+        _id:
+          type: string
+          description: ID of the diagram.
+        ss_id:
+          type: string
+          description: ID of the layer the diagram belongs to.
+        name:
+          type: string
+          description: Name of the diagram.
+        type:
+          type: string
+          enum:
+            - application
+            - infrastructure
+            - network
+            - template
+          description: Type of the diagram.
+        account_name:
+          type: string
+          description: Cloud account name.
+        account_id:
+          type: string
+          description: Cloud account ID.
+        account_type:
+          type: string
+          description: Cloud account type.
+        changes:
+          type: array
+          description: Activity changes within the period.
+          items:
+            $ref: "#/components/schemas/CloudDiagramStatsChange"
+        import:
+          $ref: "#/components/schemas/CloudDiagramImportState"
+    CloudDiagramStatsChange:
+      type: object
+      description: A single activity change entry in a diagram stats record.
+      properties:
+        type:
+          type: string
+          enum:
+            - NODE_CREATE
+            - NODE_UPDATE
+            - NODE_DELETE
+          description: Type of the change.
+        service:
+          type: string
+          description: Cloud service the change applies to.
+        count:
+          type: integer
+          description: Number of occurrences of this change type.
+    CloudDiagramStatussheetComponents:
+      type: object
+      description: Component collections of a diagram layer, keyed by component ID.
+      properties:
+        node:
+          type: object
+          description: Map of node ID to node component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramNode"
+        element:
+          type: object
+          description: Map of element ID to element component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramElement"
+        group:
+          type: object
+          description: Map of group ID to group component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramGroup"
+        link:
+          type: object
+          description: Map of link ID to link component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramLink"
+        attachment:
+          type: object
+          description: Map of attachment ID to attachment component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramAttachment"
+        combiner:
+          type: object
+          description: Map of combiner ID to combiner component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramCombiner"
+        note:
+          type: object
+          description: Map of note ID to note component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramNote"
+    CloudDiagramStatussheetData:
+      allOf:
+        - $ref: "#/components/schemas/CloudDiagramStatussheetComponents"
+        - type: object
+          required:
+            - statussheet
+          description: A layer entry with projected metadata and component collections.
+          properties:
+            statussheet:
+              $ref: "#/components/schemas/CloudDiagramStatussheetMeta"
+    CloudDiagramStatussheetGetRequest:
+      type: object
+      description: |-
+        Request body for getting layer components.
+        Omit or send an empty object to retrieve all components.
+      properties:
+        node:
+          type: array
+          description: Node IDs to fetch.
+          items:
+            type: string
+        element:
+          type: array
+          description: Element IDs to fetch.
+          items:
+            type: string
+        link:
+          type: array
+          description: Link IDs to fetch.
+          items:
+            type: string
+        group:
+          type: array
+          description: Group IDs to fetch.
+          items:
+            type: string
+        attachment:
+          type: array
+          description: Attachment IDs to fetch.
+          items:
+            type: string
+        note:
+          type: array
+          description: Note IDs to fetch.
+          items:
+            type: string
+        combiner:
+          type: array
+          description: Combiner IDs to fetch.
+          items:
+            type: string
+    CloudDiagramStatussheetMeta:
+      type: object
+      required:
+        - _id
+        - updatedAt
+      description: |-
+        Projected layer metadata returned inside each layer entry.
+        Contains import state, last updated timestamp, and links version.
+      properties:
+        _id:
+          type: string
+          description: Layer ID.
+        import:
+          $ref: "#/components/schemas/CloudDiagramImportState"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the last update.
+        linksVersion:
+          type: integer
+          description: Links version counter, incremented on every link change.
+    CloudDiagramsGetRequest:
+      type: object
+      description: |-
+        Request body for getting diagram components.
+        Leave empty to retrieve all accessible diagrams (returns scheme map only).
+      properties:
+        scheme:
+          type: array
+          description: IDs of diagrams to load.
+          items:
+            type: string
+        statussheet:
+          type: array
+          description: IDs of layers to load.
+          items:
+            type: string
+        template:
+          description: Template type or array of template layer IDs to include.
+          oneOf:
+            - type: string
+              enum:
+                - component
+                - statussheet
+            - type: array
+              items:
+                type: string
+    CloudDiagramsGetResponse:
+      type: object
+      description: |-
+        Diagram and layer data.
+        When called with an empty body, only the diagram map is populated.
+        When called with a populated body, both diagram and layer maps are returned
+        with components projected to key display and cloud fields by default.
+      properties:
+        scheme:
+          type: object
+          description: Map of diagram ID to diagram with its connected cloud accounts.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramSchemeResult"
+        statussheet:
+          type: object
+          description: |-
+            Map of layer ID to layer metadata and component collections.
+            Components are projected to key display and cloud fields by default.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramStatussheetData"
+        template:
+          type: object
+          description: Map of template layer ID to template data.
+          additionalProperties: true
+    CloudDiagramsSearchRequest:
+      type: object
+      required:
+        - query
+      description: Request body for searching diagrams and components.
+      properties:
+        query:
+          type: string
+          description: Search query string.
+        ss_id:
+          type: string
+          description: Limit search to components within this layer.
+        from:
+          type: integer
+          minimum: 0
+          description: Pagination offset (default 0).
+        size:
+          type: integer
+          minimum: 1
+          description: Maximum number of results per category (default 20).
+    CloudDiagramsSearchResponse:
+      type: object
+      description: Search results grouped into three categories.
+      properties:
+        scheme:
+          type: array
+          description: Diagram layers (cloud accounts) matching the query.
+          items:
+            $ref: "#/components/schemas/CloudDiagramSchemeSearchItem"
+        component:
+          type: array
+          description: Components matching the query by name.
+          items:
+            $ref: "#/components/schemas/CloudDiagramComponentSearchItem"
+        prop:
+          type: array
+          description: Components matching the query by property values.
+          items:
+            $ref: "#/components/schemas/CloudDiagramComponentSearchItem"
     CloudIncidentListItem:
       type: object
       description: Summary information for a cloud incident.
@@ -4478,6 +5883,14 @@ components:
           type: number
           format: double
           description: The total current spend attainment across all periods.
+        totalMarketplaceSpend:
+          type: number
+          format: double
+          description: The total marketplace spend across all periods.
+        totalForecastValue:
+          type: number
+          format: double
+          description: The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
         periods:
           type: array
           description: The list of commitment periods.
@@ -4548,6 +5961,14 @@ components:
           type: number
           format: double
           description: The total current spend attainment across all periods.
+        totalMarketplaceSpend:
+          type: number
+          format: double
+          description: The total marketplace spend across all periods.
+        totalForecastValue:
+          type: number
+          format: double
+          description: The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
         periods:
           type: array
           description: The list of commitment periods.
@@ -4583,6 +6004,18 @@ components:
           type: number
           format: double
           description: The marketplace limit as a percentage (0-100).
+        marketplaceSpend:
+          type: number
+          format: double
+          description: The marketplace spend within this period.
+        marketplaceLimitAmount:
+          type: number
+          format: double
+          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+        forecastValue:
+          type: number
+          format: double
+          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
     Condition:
       type: string
       description: Condition key or expression used in alert configurations.
@@ -4609,6 +6042,10 @@ components:
           type: string
           description: Custom label for values that do not fit into allocation (required for group type allocation).
           nullable: true
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          example: root
     CreateAnnotationRequest:
       required:
         - content
@@ -4689,6 +6126,22 @@ components:
           type: string
           description: An optional description for the dataset.
           example: "Dataset for tracking custom business metrics"
+    CreateFolderRequest:
+      required:
+        - name
+      type: object
+      description: Request body for creating a folder.
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
+          example: root
     CreateLabelRequest:
       required:
         - name
@@ -4732,6 +6185,10 @@ components:
           items:
             type: string
           description: Array of label IDs assigned to the report
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          example: root
     CreateResourceResultsBody:
       type: object
       description: Request body for creating or replacing resource results for an insight.
@@ -5117,6 +6574,8 @@ components:
             - percent_total
             - percent_col
             - percent_row
+            - total_over_total
+            - count
         advancedAnalysis:
           $ref: "#/components/schemas/AdvancedAnalysis"
         timeInterval:
@@ -5455,6 +6914,10 @@ components:
           items:
             type: string
           description: Array of label IDs assigned to the report
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          example: root
     ExternalSplit:
       type: object
       description: Specification of how to split costs.
@@ -5542,6 +7005,10 @@ components:
           items:
             type: string
           description: Array of label IDs assigned to the report
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          example: root
       example:
         config:
           timeRange:
@@ -5586,6 +7053,23 @@ components:
           type: string
           format: uri
           description: URL to the diagram image.
+    Folder:
+      type: object
+      description: A Cloud Analytics folder.
+      properties:
+        id:
+          type: string
+          description: Folder ID.
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
+          example: root
     GetAnomaly200Response:
       required:
         - attribution
@@ -5646,6 +7130,15 @@ components:
         acknowledged:
           description: "Has the anomaly been acknowledged"
           type: boolean
+        acknowledgedAt:
+          description: "When the anomaly was first acknowledged"
+          type: string
+          format: date-time
+          nullable: true
+        acknowledgedBy:
+          description: "Email of the user who first acknowledged the anomaly"
+          type: string
+          nullable: true
     GetDatahubDataset200Response:
       type: object
       properties:
@@ -6082,6 +7575,24 @@ components:
           type: string
           description: The email address of the user.
           format: email
+        firstName:
+          type: string
+          description: The first name of the user being invited.
+        lastName:
+          type: string
+          description: The last name of the user being invited.
+        jobTitle:
+          type: string
+          description: The job function of the user being invited.
+          enum:
+            - "Data Engineer / Data Analysts"
+            - "Executive Team"
+            - "Finance / Accounting"
+            - "Founder"
+            - "Legal / Purchasing"
+            - "Management"
+            - "Sales / Marketing"
+            - "Software / Ops Engineer"
         roleId:
           type: string
           description: The ID of the role to assign to the user.
@@ -6097,6 +7608,18 @@ components:
         email:
           type: string
           description: The email address of the invited user.
+        firstName:
+          type: string
+          description: The first name of the invited user, if provided during invitation.
+        lastName:
+          type: string
+          description: The last name of the invited user, if provided during invitation.
+        displayName:
+          type: string
+          description: The display name of the invited user, if provided during invitation.
+        jobTitle:
+          type: string
+          description: The job function of the invited user, if provided during invitation.
         roleId:
           type: string
           description: The ID of the role assigned to the user.
@@ -6384,6 +7907,19 @@ components:
           type: string
           description: The timestamp of the last update.
           example: "2024-03-10T23:00:00Z"
+    ListFolders200Response:
+      type: object
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Number of folders returned in this page.
+        folders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Folder"
     ListInvoices200Response:
       type: object
       properties:
@@ -7060,6 +8596,36 @@ components:
           type: integer
           description: The start time of the commitment interval, in milliseconds since the epoch.
           format: int64
+    TagsRequest:
+      type: object
+      description: |
+        Request body for adding (POST) or removing (DELETE) tags on a support
+        request. The operation is surgical — only the tags listed are affected;
+        any other tags on the ticket are preserved.
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+          description: List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
+    TagsResponse:
+      type: object
+      description: |
+        Response body echoing the tags the operation actually acted on, after
+        server-side transformation (trim + lowercase + customer namespace prefix
+        where applicable).
+      properties:
+        applied_tags:
+          type: array
+          items:
+            type: string
+          description: The tags that were stored on (POST) or removed from (DELETE) the ticket.
     TicketCreateFormExtAPI:
       type: object
       description: Wrapper object for creating support tickets via the external API.
@@ -7106,6 +8672,15 @@ components:
         product:
           type: string
           description: Ticket product.
+        platform_info:
+          type: string
+          description: |-
+            The cloud asset identifier the requester selected on the support
+            form's asset-selector control — typically the GCP project ID, AWS
+            account ID, Azure subscription ID, or equivalent. Empty string
+            when the ticket has no asset value (e.g. older tickets or tickets
+            opened through paths that bypass the form selector).
+          example: cmp-playground
         status:
           type: string
           description: Ticket status.
@@ -7370,6 +8945,10 @@ components:
           type: string
           description: Custom label for values that do not fit into allocation (required for group type allocation).
           nullable: true
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          example: root
     UpdateAnnotationRequest:
       type: object
       description: Request body for updating an annotation.
@@ -7432,6 +9011,23 @@ components:
           type: string
           description: The new description for the dataset.
           example: "Updated description for the dataset"
+    UpdateFolderRequest:
+      type: object
+      description: |-
+        Request body for updating a folder. All fields are optional; only fields
+        the caller wants to change should be set.
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: >-
+            Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
+          example: root
     UpdateLabelRequest:
       type: object
       description: Request body for updating a label.
@@ -7490,9 +9086,22 @@ components:
         lastName:
           type: string
           description: The user's last name.
-        jobFunction:
+        jobTitle:
           type: string
           description: The user's job function.
+          enum:
+            - "Data Engineer / Data Analysts"
+            - "Executive Team"
+            - "Finance / Accounting"
+            - "Founder"
+            - "Legal / Purchasing"
+            - "Management"
+            - "Sales / Marketing"
+            - "Software / Ops Engineer"
+        jobFunction:
+          type: string
+          deprecated: true
+          description: "Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence."
           enum:
             - "Data Engineer / Data Analysts"
             - "Executive Team"
@@ -7547,7 +9156,7 @@ components:
         email:
           type: string
           description: The user's email address.
-        jobFunction:
+        jobTitle:
           type: string
           description: The user's job function.
           enum:
@@ -7597,7 +9206,7 @@ components:
         lastName:
           type: string
           description: The user's last name.
-        jobFunction:
+        jobTitle:
           type: string
           description: The user's job function.
           enum:

@@ -5,16 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	openapi_types "github.com/oapi-codegen/runtime/types"
+
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_users"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var _ datasource.DataSource = (*usersDataSource)(nil)
+var _ datasource.DataSourceWithConfigure = (*usersDataSource)(nil)
 
 func NewUsersDataSource() datasource.DataSource {
 	return &usersDataSource{}
@@ -37,6 +41,13 @@ func (d *usersDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 	s := datasource_users.UsersDataSourceSchema(ctx)
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
+
+	// Override email: it's an input-only filter, not a computed output.
+	s.Attributes["email"] = schema.StringAttribute{
+		Optional:            true,
+		Description:         "Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.",
+		MarkdownDescription: "Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.",
+	}
 
 	resp.Schema = s
 }
@@ -74,7 +85,24 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	apiResp, err := d.client.ListUsersWithResponse(ctx)
+	// If email is unknown (depends on an unresolved resource), defer the API call
+	// and return unknown outputs to prevent Terraform from using incorrect data.
+	if data.Email.IsUnknown() {
+		data.RowCount = types.Int64Unknown()
+		data.Users = types.ListUnknown(datasource_users.UsersValue{}.Type(ctx))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
+	// Build query params, passing email filter if provided
+	var params *models.ListUsersParams
+	if !data.Email.IsNull() {
+		params = &models.ListUsersParams{
+			Email: new(openapi_types.Email(data.Email.ValueString())),
+		}
+	}
+
+	apiResp, err := d.client.ListUsersWithResponse(ctx, params)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Users",
@@ -110,11 +138,11 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		userVals := make([]datasource_users.UsersValue, 0, len(*result.Users))
 		for _, user := range *result.Users {
 			// Handle enum types that need conversion
-			var jobFunctionVal types.String
-			if user.JobFunction != nil {
-				jobFunctionVal = types.StringValue(string(*user.JobFunction))
+			var jobTitleVal types.String
+			if user.JobTitle != nil {
+				jobTitleVal = types.StringValue(string(*user.JobTitle))
 			} else {
-				jobFunctionVal = types.StringNull()
+				jobTitleVal = types.StringNull()
 			}
 
 			var languageVal types.String
@@ -139,7 +167,7 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 					"display_name":    types.StringPointerValue(user.DisplayName),
 					"first_name":      types.StringPointerValue(user.FirstName),
 					"last_name":       types.StringPointerValue(user.LastName),
-					"job_function":    jobFunctionVal,
+					"job_title":       jobTitleVal,
 					"language":        languageVal,
 					"phone":           types.StringPointerValue(user.Phone),
 					"phone_extension": types.StringPointerValue(user.PhoneExtension),

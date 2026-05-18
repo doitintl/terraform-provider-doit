@@ -578,6 +578,13 @@
 						}
 					},
 					{
+						"name": "folder_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder)."
+						}
+					},
+					{
 						"name": "name",
 						"string": {
 							"computed_optional_required": "computed",
@@ -835,7 +842,7 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**."
+							"description": "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**, **folderId**."
 						}
 					},
 					{
@@ -901,6 +908,13 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "Allocation description."
+										}
+									},
+									{
+										"name": "folder_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder)."
 										}
 									},
 									{
@@ -1248,6 +1262,20 @@
 										}
 									},
 									{
+										"name": "acknowledged_at",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the anomaly was first acknowledged"
+										}
+									},
+									{
+										"name": "acknowledged_by",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Email of the user who first acknowledged the anomaly"
+										}
+									},
+									{
 										"name": "attribution",
 										"string": {
 											"computed_optional_required": "computed",
@@ -1298,6 +1326,38 @@
 														"name": "cost",
 														"float64": {
 															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "labels",
+														"list_nested": {
+															"computed_optional_required": "computed",
+															"nested_object": {
+																"attributes": [
+																	{
+																		"name": "cost",
+																		"float64": {
+																			"computed_optional_required": "computed",
+																			"description": "The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend."
+																		}
+																	},
+																	{
+																		"name": "key",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "The label/tag key."
+																		}
+																	},
+																	{
+																		"name": "value",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "The label/tag value."
+																		}
+																	}
+																]
+															},
+															"description": "Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.\nCloud providers use different names for the same concept; GCP uses \"labels\", AWS uses \"cost-allocation tags\", and Azure uses \"tags\". We refer to all of these as labels."
 														}
 													},
 													{
@@ -1422,6 +1482,20 @@
 						}
 					},
 					{
+						"name": "acknowledged_at",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the anomaly was first acknowledged"
+						}
+					},
+					{
+						"name": "acknowledged_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email of the user who first acknowledged the anomaly"
+						}
+					},
+					{
 						"name": "attribution",
 						"string": {
 							"computed_optional_required": "computed",
@@ -1466,6 +1540,38 @@
 										"name": "cost",
 										"float64": {
 											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "labels",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "cost",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend."
+														}
+													},
+													{
+														"name": "key",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The label/tag key."
+														}
+													},
+													{
+														"name": "value",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "The label/tag value."
+														}
+													}
+												]
+											},
+											"description": "Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label's key, its value, and the resource's cost tagged with that key/value pair.\nCloud providers use different names for the same concept; GCP uses \"labels\", AWS uses \"cost-allocation tags\", and Azure uses \"tags\". We refer to all of these as labels."
 										}
 									},
 									{
@@ -2757,10 +2863,31 @@
 										}
 									},
 									{
+										"name": "forecast_value",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast."
+										}
+									},
+									{
+										"name": "marketplace_limit_amount",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100."
+										}
+									},
+									{
 										"name": "marketplace_limit_percentage",
 										"float64": {
 											"computed_optional_required": "computed",
 											"description": "The marketplace limit as a percentage (0-100)."
+										}
+									},
+									{
+										"name": "marketplace_spend",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The marketplace spend within this period."
 										}
 									},
 									{
@@ -2794,6 +2921,20 @@
 						"float64": {
 							"computed_optional_required": "computed",
 							"description": "The total current spend attainment across all periods."
+						}
+					},
+					{
+						"name": "total_forecast_value",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast."
+						}
+					},
+					{
+						"name": "total_marketplace_spend",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "The total marketplace spend across all periods."
 						}
 					},
 					{
@@ -2940,10 +3081,31 @@
 														}
 													},
 													{
+														"name": "forecast_value",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast."
+														}
+													},
+													{
+														"name": "marketplace_limit_amount",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100."
+														}
+													},
+													{
 														"name": "marketplace_limit_percentage",
 														"float64": {
 															"computed_optional_required": "computed",
 															"description": "The marketplace limit as a percentage (0-100)."
+														}
+													},
+													{
+														"name": "marketplace_spend",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "The marketplace spend within this period."
 														}
 													},
 													{
@@ -2977,6 +3139,20 @@
 										"float64": {
 											"computed_optional_required": "computed",
 											"description": "The total current spend attainment across all periods."
+										}
+									},
+									{
+										"name": "total_forecast_value",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast."
+										}
+									},
+									{
+										"name": "total_marketplace_spend",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "The total marketplace spend across all periods."
 										}
 									},
 									{
@@ -4460,6 +4636,13 @@
 						}
 					},
 					{
+						"name": "folder_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder)."
+						}
+					},
+					{
 						"name": "labels",
 						"list": {
 							"computed_optional_required": "computed",
@@ -4510,7 +4693,7 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results.\nThe syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**"
+							"description": "An expression for filtering the results.\nThe syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**"
 						}
 					},
 					{
@@ -4726,6 +4909,13 @@
 						}
 					},
 					{
+						"name": "platform_info",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector)."
+						}
+					},
+					{
 						"name": "product",
 						"string": {
 							"computed_optional_required": "computed",
@@ -4879,7 +5069,7 @@
 												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 											}
 										],
-										"schema_definition": "int64validator.AtLeast(1)"
+										"schema_definition": "int64validator.Between(1, 100)"
 									}
 								}
 							]
@@ -5017,6 +5207,13 @@
 			"schema": {
 				"attributes": [
 					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively."
+						}
+					},
+					{
 						"name": "row_count",
 						"int64": {
 							"computed_optional_required": "computed",
@@ -5058,7 +5255,7 @@
 										}
 									},
 									{
-										"name": "job_function",
+										"name": "job_title",
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "The user's job function."

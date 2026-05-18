@@ -5,12 +5,13 @@ package datasource_users
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 )
@@ -18,6 +19,12 @@ import (
 func UsersDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"email": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.",
+				MarkdownDescription: "Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.",
+			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
 				Description:         "The number of returned records.",
@@ -46,7 +53,7 @@ func UsersDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "The unique ID of the user.",
 							MarkdownDescription: "The unique ID of the user.",
 						},
-						"job_function": schema.StringAttribute{
+						"job_title": schema.StringAttribute{
 							Computed:            true,
 							Description:         "The user's job function.",
 							MarkdownDescription: "The user's job function.",
@@ -102,8 +109,9 @@ func UsersDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type UsersModel struct {
-	RowCount types.Int64 `tfsdk:"row_count"`
-	Users    types.List  `tfsdk:"users"`
+	Email    types.String `tfsdk:"email"`
+	RowCount types.Int64  `tfsdk:"row_count"`
+	Users    types.List   `tfsdk:"users"`
 }
 
 var _ basetypes.ObjectTypable = UsersType{}
@@ -203,22 +211,22 @@ func (t UsersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
-	jobFunctionAttribute, ok := attributes["job_function"]
+	jobTitleAttribute, ok := attributes["job_title"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`job_function is missing from object`)
+			`job_title is missing from object`)
 
 		return nil, diags
 	}
 
-	jobFunctionVal, ok := jobFunctionAttribute.(basetypes.StringValue)
+	jobTitleVal, ok := jobTitleAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`job_function expected to be basetypes.StringValue, was: %T`, jobFunctionAttribute))
+			fmt.Sprintf(`job_title expected to be basetypes.StringValue, was: %T`, jobTitleAttribute))
 	}
 
 	languageAttribute, ok := attributes["language"]
@@ -356,7 +364,7 @@ func (t UsersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		Email:          emailVal,
 		FirstName:      firstNameVal,
 		Id:             idVal,
-		JobFunction:    jobFunctionVal,
+		JobTitle:       jobTitleVal,
 		Language:       languageVal,
 		LastName:       lastNameVal,
 		OrganizationId: organizationIdVal,
@@ -503,22 +511,22 @@ func NewUsersValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
-	jobFunctionAttribute, ok := attributes["job_function"]
+	jobTitleAttribute, ok := attributes["job_title"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`job_function is missing from object`)
+			`job_title is missing from object`)
 
 		return NewUsersValueUnknown(), diags
 	}
 
-	jobFunctionVal, ok := jobFunctionAttribute.(basetypes.StringValue)
+	jobTitleVal, ok := jobTitleAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`job_function expected to be basetypes.StringValue, was: %T`, jobFunctionAttribute))
+			fmt.Sprintf(`job_title expected to be basetypes.StringValue, was: %T`, jobTitleAttribute))
 	}
 
 	languageAttribute, ok := attributes["language"]
@@ -656,7 +664,7 @@ func NewUsersValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		Email:          emailVal,
 		FirstName:      firstNameVal,
 		Id:             idVal,
-		JobFunction:    jobFunctionVal,
+		JobTitle:       jobTitleVal,
 		Language:       languageVal,
 		LastName:       lastNameVal,
 		OrganizationId: organizationIdVal,
@@ -740,7 +748,7 @@ type UsersValue struct {
 	Email          basetypes.StringValue `tfsdk:"email"`
 	FirstName      basetypes.StringValue `tfsdk:"first_name"`
 	Id             basetypes.StringValue `tfsdk:"id"`
-	JobFunction    basetypes.StringValue `tfsdk:"job_function"`
+	JobTitle       basetypes.StringValue `tfsdk:"job_title"`
 	Language       basetypes.StringValue `tfsdk:"language"`
 	LastName       basetypes.StringValue `tfsdk:"last_name"`
 	OrganizationId basetypes.StringValue `tfsdk:"organization_id"`
@@ -761,7 +769,7 @@ func (v UsersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["email"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["first_name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["job_function"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["job_title"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["language"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["last_name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["organization_id"] = basetypes.StringType{}.TerraformType(ctx)
@@ -808,13 +816,13 @@ func (v UsersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 		vals["id"] = val
 
-		val, err = v.JobFunction.ToTerraformValue(ctx)
+		val, err = v.JobTitle.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["job_function"] = val
+		vals["job_title"] = val
 
 		val, err = v.Language.ToTerraformValue(ctx)
 
@@ -906,7 +914,7 @@ func (v UsersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"email":           basetypes.StringType{},
 		"first_name":      basetypes.StringType{},
 		"id":              basetypes.StringType{},
-		"job_function":    basetypes.StringType{},
+		"job_title":       basetypes.StringType{},
 		"language":        basetypes.StringType{},
 		"last_name":       basetypes.StringType{},
 		"organization_id": basetypes.StringType{},
@@ -931,7 +939,7 @@ func (v UsersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"email":           v.Email,
 			"first_name":      v.FirstName,
 			"id":              v.Id,
-			"job_function":    v.JobFunction,
+			"job_title":       v.JobTitle,
 			"language":        v.Language,
 			"last_name":       v.LastName,
 			"organization_id": v.OrganizationId,
@@ -975,7 +983,7 @@ func (v UsersValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.JobFunction.Equal(other.JobFunction) {
+	if !v.JobTitle.Equal(other.JobTitle) {
 		return false
 	}
 
@@ -1024,7 +1032,7 @@ func (v UsersValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"email":           basetypes.StringType{},
 		"first_name":      basetypes.StringType{},
 		"id":              basetypes.StringType{},
-		"job_function":    basetypes.StringType{},
+		"job_title":       basetypes.StringType{},
 		"language":        basetypes.StringType{},
 		"last_name":       basetypes.StringType{},
 		"organization_id": basetypes.StringType{},
