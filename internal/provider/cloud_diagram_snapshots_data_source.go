@@ -77,9 +77,9 @@ func (d *cloudDiagramSnapshotsDataSource) Read(ctx context.Context, req datasour
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If the config contains any unknown values (e.g., id is unknown during plan),
+	// If the config contains any unknown values (e.g., id, limit, offset, or sort is unknown during plan),
 	// we cannot make a complete API query. Return all computed attributes as unknown.
-	if data.Id.IsUnknown() {
+	if data.Id.IsUnknown() || data.Limit.IsUnknown() || data.Offset.IsUnknown() || data.Sort.IsUnknown() {
 		data.CloudDiagramSnapshots = types.SetUnknown(ds.CloudDiagramSnapshotsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -88,19 +88,16 @@ func (d *cloudDiagramSnapshotsDataSource) Read(ctx context.Context, req datasour
 	// Prepare query parameters
 	var params models.ListCloudDiagramLayerSnapshotsParams
 
-	if !data.Offset.IsNull() && !data.Offset.IsUnknown() {
-		offsetVal := int(data.Offset.ValueInt64())
-		params.Offset = &offsetVal
+	if !data.Offset.IsNull() {
+		params.Offset = new(int(data.Offset.ValueInt64()))
 	}
 
-	if !data.Limit.IsNull() && !data.Limit.IsUnknown() {
-		limitVal := int(data.Limit.ValueInt64())
-		params.Limit = &limitVal
+	if !data.Limit.IsNull() {
+		params.Limit = new(int(data.Limit.ValueInt64()))
 	}
 
-	if !data.Sort.IsNull() && !data.Sort.IsUnknown() {
-		sortVal := data.Sort.ValueString()
-		params.Sort = &sortVal
+	if !data.Sort.IsNull() {
+		params.Sort = new(data.Sort.ValueString())
 	}
 
 	// Call the API

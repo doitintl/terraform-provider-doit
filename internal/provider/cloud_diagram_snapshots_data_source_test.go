@@ -20,7 +20,8 @@ func TestAccCloudDiagramSnapshotsDataSource_Basic(t *testing.T) {
 	client := getAPIClient(t)
 	layerID := findValidLayerID(client)
 	if layerID == "" {
-		t.Skip("Skipping because no valid cloud diagram layer ID was found in the environment")
+		t.Fatal("Acceptance test failed: no valid cloud diagram layer ID was found in the environment. " +
+			"Please set either TEST_CLOUD_DIAGRAM_LAYER_ID or TEST_CLOUD_DIAGRAM_RESOURCE to a resource that has an existing diagram layer.")
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -70,20 +71,37 @@ func TestAccCloudDiagramSnapshotsDataSource_NotFound(t *testing.T) {
 func findValidLayerID(client *models.ClientWithResponses) string {
 	ctx := context.Background()
 
-	// 1. Try to extract project ID from TEST_CLOUD_DIAGRAM_RESOURCE
+	// 0. Check if a dedicated layer ID env var is provided
+	if envLayerID := os.Getenv("TEST_CLOUD_DIAGRAM_LAYER_ID"); envLayerID != "" {
+		return envLayerID
+	}
+
+	// 1. Try to fetch all diagrams dynamically to locate a valid layer ID
+	resp, err := client.GetCloudDiagramComponentsWithResponse(ctx, nil, models.CloudDiagramsGetRequest{})
+	if err == nil && resp.StatusCode() == 200 && resp.JSON200 != nil && resp.JSON200.Scheme != nil {
+		for _, schemeResult := range *resp.JSON200.Scheme {
+			if len(schemeResult.Statussheet) > 0 {
+				for _, layerInfo := range schemeResult.Statussheet {
+					if layerInfo.Ssid != "" {
+						return layerInfo.Ssid
+					}
+				}
+			}
+		}
+	}
+
+	// 2. Fall back to extracting query from TEST_CLOUD_DIAGRAM_RESOURCE and searching
 	resourceURI := os.Getenv("TEST_CLOUD_DIAGRAM_RESOURCE")
 	var queries []string
 	if resourceURI != "" {
-		parts := strings.Split(resourceURI, "/")
-		for _, part := range parts {
+		parts := strings.SplitSeq(resourceURI, "/")
+		for part := range parts {
 			part = strings.TrimSpace(part)
 			if part != "" && part != "projects" && part != "global" && part != "networks" && !strings.Contains(part, ".") {
 				queries = append(queries, part)
 			}
 		}
 	}
-	// Add some other general queries to try
-	queries = append(queries, "hannes-playground-411714", "peer-a", "hannes", "playground", "test", "a", "e", "i")
 
 	for _, query := range queries {
 		searchResp, err := client.SearchCloudDiagramsWithResponse(ctx, models.SearchCloudDiagramsJSONRequestBody{
