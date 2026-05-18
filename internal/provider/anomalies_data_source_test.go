@@ -28,6 +28,7 @@ func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.notifications.#"),
 				),
 			},
 			{
@@ -212,6 +213,7 @@ func TestAccAnomaliesDataSource_AcknowledgedFields(t *testing.T) {
 				Config: testAccAnomaliesDataSourceAcknowledgedConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.ack_test", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.ack_test", "anomalies.0.notifications.#"),
 				),
 			},
 			// Drift verification
@@ -243,6 +245,14 @@ output "anomaly_acknowledged_at" {
 
 output "anomaly_acknowledged_by" {
   value = [for a in data.doit_anomalies.ack_test.anomalies : a.acknowledged_by != null ? a.acknowledged_by : ""]
+}
+
+output "anomaly_notifications" {
+  value = [
+    for a in data.doit_anomalies.ack_test.anomalies : [
+      for n in a.notifications : n.channel
+    ]
+  ]
 }
 `
 }

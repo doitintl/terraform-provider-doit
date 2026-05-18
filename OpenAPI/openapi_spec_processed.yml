@@ -4151,6 +4151,7 @@ components:
         - startTime
         - timeFrame
         - top3SKUs
+        - notifications
       type: object
       description: Detailed information about a detected anomaly.
       properties:
@@ -4211,6 +4212,8 @@ components:
           description: "Email of the user who first acknowledged the anomaly"
           type: string
           nullable: true
+        notifications:
+          $ref: "#/components/schemas/NotificationEventArray"
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -6988,6 +6991,7 @@ components:
         - startTime
         - timeFrame
         - top3SKUs
+        - notifications
       type: object
       properties:
         attribution:
@@ -7045,6 +7049,8 @@ components:
           description: "Email of the user who first acknowledged the anomaly"
           type: string
           nullable: true
+        notifications:
+          $ref: "#/components/schemas/NotificationEventArray"
     GetDatahubDataset200Response:
       type: object
       properties:
@@ -7903,6 +7909,31 @@ components:
     MetricType:
       type: string
       description: Identifier for metric type (e.g., basic, custom, extended).
+    NotificationEvent:
+      type: object
+      description: |-
+        A successful notification dispatch for an anomaly.
+        This records that the API/worker sent the notification, not that delivery was confirmed.
+      required:
+        - timestamp
+        - channel
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Dispatch timestamp in RFC3339 UTC.
+        channel:
+          type: string
+          description: Dispatch channel.
+          enum:
+            - email
+            - slack
+            - msteams
+    NotificationEventArray:
+      type: array
+      description: Chronologically ordered notification dispatch events.
+      items:
+        $ref: "#/components/schemas/NotificationEvent"
     ObjectType:
       type: string
       description: Generic object type identifier.

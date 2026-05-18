@@ -59,6 +59,30 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						"id": schema.StringAttribute{
 							Computed: true,
 						},
+						"notifications": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"channel": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Dispatch channel.",
+										MarkdownDescription: "Dispatch channel.",
+									},
+									"timestamp": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Dispatch timestamp in RFC3339 UTC.",
+										MarkdownDescription: "Dispatch timestamp in RFC3339 UTC.",
+									},
+								},
+								CustomType: NotificationsType{
+									ObjectType: types.ObjectType{
+										AttrTypes: NotificationsValue{}.AttributeTypes(ctx),
+									},
+								},
+							},
+							Computed:            true,
+							Description:         "Chronologically ordered notification dispatch events.",
+							MarkdownDescription: "Chronologically ordered notification dispatch events.",
+						},
 						"platform": schema.StringAttribute{
 							Computed:            true,
 							Description:         "Cloud Provider name.",
@@ -396,6 +420,24 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	notificationsAttribute, ok := attributes["notifications"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`notifications is missing from object`)
+
+		return nil, diags
+	}
+
+	notificationsVal, ok := notificationsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`notifications expected to be basetypes.ListValue, was: %T`, notificationsAttribute))
+	}
+
 	platformAttribute, ok := attributes["platform"]
 
 	if !ok {
@@ -571,6 +613,7 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		CostOfAnomaly:  costOfAnomalyVal,
 		EndTime:        endTimeVal,
 		Id:             idVal,
+		Notifications:  notificationsVal,
 		Platform:       platformVal,
 		ResourceData:   resourceDataVal,
 		Scope:          scopeVal,
@@ -791,6 +834,24 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	notificationsAttribute, ok := attributes["notifications"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`notifications is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	notificationsVal, ok := notificationsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`notifications expected to be basetypes.ListValue, was: %T`, notificationsAttribute))
+	}
+
 	platformAttribute, ok := attributes["platform"]
 
 	if !ok {
@@ -966,6 +1027,7 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 		CostOfAnomaly:  costOfAnomalyVal,
 		EndTime:        endTimeVal,
 		Id:             idVal,
+		Notifications:  notificationsVal,
 		Platform:       platformVal,
 		ResourceData:   resourceDataVal,
 		Scope:          scopeVal,
@@ -1055,6 +1117,7 @@ type AnomaliesValue struct {
 	CostOfAnomaly  basetypes.Float64Value `tfsdk:"cost_of_anomaly"`
 	EndTime        basetypes.Int64Value   `tfsdk:"end_time"`
 	Id             basetypes.StringValue  `tfsdk:"id"`
+	Notifications  basetypes.ListValue    `tfsdk:"notifications"`
 	Platform       basetypes.StringValue  `tfsdk:"platform"`
 	ResourceData   basetypes.ListValue    `tfsdk:"resource_data"`
 	Scope          basetypes.StringValue  `tfsdk:"scope"`
@@ -1068,7 +1131,7 @@ type AnomaliesValue struct {
 }
 
 func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 17)
+	attrTypes := make(map[string]tftypes.Type, 18)
 
 	var val tftypes.Value
 	var err error
@@ -1081,6 +1144,9 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 	attrTypes["cost_of_anomaly"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["end_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["notifications"] = basetypes.ListType{
+		ElemType: NotificationsValue{}.Type(ctx),
+	}.TerraformType(ctx)
 	attrTypes["platform"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["resource_data"] = basetypes.ListType{
 		ElemType: ResourceDataValue{}.Type(ctx),
@@ -1099,7 +1165,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 17)
+		vals := make(map[string]tftypes.Value, 18)
 
 		val, err = v.Acknowledged.ToTerraformValue(ctx)
 
@@ -1164,6 +1230,14 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["id"] = val
+
+		val, err = v.Notifications.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["notifications"] = val
 
 		val, err = v.Platform.ToTerraformValue(ctx)
 
@@ -1266,6 +1340,12 @@ func (v AnomaliesValue) String() string {
 func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var notifications attr.Value
+
+	{
+		notifications = v.Notifications
+	}
+
 	var resourceData attr.Value
 
 	{
@@ -1287,7 +1367,10 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		"cost_of_anomaly": basetypes.Float64Type{},
 		"end_time":        basetypes.Int64Type{},
 		"id":              basetypes.StringType{},
-		"platform":        basetypes.StringType{},
+		"notifications": basetypes.ListType{
+			ElemType: NotificationsValue{}.Type(ctx),
+		},
+		"platform": basetypes.StringType{},
 		"resource_data": basetypes.ListType{
 			ElemType: ResourceDataValue{}.Type(ctx),
 		},
@@ -1321,6 +1404,7 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 			"cost_of_anomaly": v.CostOfAnomaly,
 			"end_time":        v.EndTime,
 			"id":              v.Id,
+			"notifications":   notifications,
 			"platform":        v.Platform,
 			"resource_data":   resourceData,
 			"scope":           v.Scope,
@@ -1382,6 +1466,10 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Notifications.Equal(other.Notifications) {
+		return false
+	}
+
 	if !v.Platform.Equal(other.Platform) {
 		return false
 	}
@@ -1439,7 +1527,10 @@ func (v AnomaliesValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"cost_of_anomaly": basetypes.Float64Type{},
 		"end_time":        basetypes.Int64Type{},
 		"id":              basetypes.StringType{},
-		"platform":        basetypes.StringType{},
+		"notifications": basetypes.ListType{
+			ElemType: NotificationsValue{}.Type(ctx),
+		},
+		"platform": basetypes.StringType{},
 		"resource_data": basetypes.ListType{
 			ElemType: ResourceDataValue{}.Type(ctx),
 		},
@@ -1452,6 +1543,385 @@ func (v AnomaliesValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"top3skus": basetypes.ListType{
 			ElemType: Top3skusValue{}.Type(ctx),
 		},
+	}
+}
+
+var _ basetypes.ObjectTypable = NotificationsType{}
+
+type NotificationsType struct {
+	basetypes.ObjectType
+}
+
+func (t NotificationsType) Equal(o attr.Type) bool {
+	other, ok := o.(NotificationsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t NotificationsType) String() string {
+	return "NotificationsType"
+}
+
+func (t NotificationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	channelAttribute, ok := attributes["channel"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`channel is missing from object`)
+
+		return nil, diags
+	}
+
+	channelVal, ok := channelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`channel expected to be basetypes.StringValue, was: %T`, channelAttribute))
+	}
+
+	timestampAttribute, ok := attributes["timestamp"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`timestamp is missing from object`)
+
+		return nil, diags
+	}
+
+	timestampVal, ok := timestampAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`timestamp expected to be basetypes.StringValue, was: %T`, timestampAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return NotificationsValue{
+		Channel:   channelVal,
+		Timestamp: timestampVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNotificationsValueNull() NotificationsValue {
+	return NotificationsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewNotificationsValueUnknown() NotificationsValue {
+	return NotificationsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewNotificationsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (NotificationsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing NotificationsValue Attribute Value",
+				"While creating a NotificationsValue value, a missing attribute value was detected. "+
+					"A NotificationsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NotificationsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid NotificationsValue Attribute Type",
+				"While creating a NotificationsValue value, an invalid attribute value was detected. "+
+					"A NotificationsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NotificationsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("NotificationsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra NotificationsValue Attribute Value",
+				"While creating a NotificationsValue value, an extra attribute value was detected. "+
+					"A NotificationsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra NotificationsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewNotificationsValueUnknown(), diags
+	}
+
+	channelAttribute, ok := attributes["channel"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`channel is missing from object`)
+
+		return NewNotificationsValueUnknown(), diags
+	}
+
+	channelVal, ok := channelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`channel expected to be basetypes.StringValue, was: %T`, channelAttribute))
+	}
+
+	timestampAttribute, ok := attributes["timestamp"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`timestamp is missing from object`)
+
+		return NewNotificationsValueUnknown(), diags
+	}
+
+	timestampVal, ok := timestampAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`timestamp expected to be basetypes.StringValue, was: %T`, timestampAttribute))
+	}
+
+	if diags.HasError() {
+		return NewNotificationsValueUnknown(), diags
+	}
+
+	return NotificationsValue{
+		Channel:   channelVal,
+		Timestamp: timestampVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNotificationsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) NotificationsValue {
+	object, diags := NewNotificationsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewNotificationsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t NotificationsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewNotificationsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewNotificationsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewNotificationsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewNotificationsValueMust(NotificationsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t NotificationsType) ValueType(ctx context.Context) attr.Value {
+	return NotificationsValue{}
+}
+
+var _ basetypes.ObjectValuable = NotificationsValue{}
+
+type NotificationsValue struct {
+	Channel   basetypes.StringValue `tfsdk:"channel"`
+	Timestamp basetypes.StringValue `tfsdk:"timestamp"`
+	state     attr.ValueState
+}
+
+func (v NotificationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["channel"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["timestamp"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Channel.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["channel"] = val
+
+		val, err = v.Timestamp.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["timestamp"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v NotificationsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v NotificationsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v NotificationsValue) String() string {
+	return "NotificationsValue"
+}
+
+func (v NotificationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"channel":   basetypes.StringType{},
+		"timestamp": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"channel":   v.Channel,
+			"timestamp": v.Timestamp,
+		})
+
+	return objVal, diags
+}
+
+func (v NotificationsValue) Equal(o attr.Value) bool {
+	other, ok := o.(NotificationsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Channel.Equal(other.Channel) {
+		return false
+	}
+
+	if !v.Timestamp.Equal(other.Timestamp) {
+		return false
+	}
+
+	return true
+}
+
+func (v NotificationsValue) Type(ctx context.Context) attr.Type {
+	return NotificationsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v NotificationsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"channel":   basetypes.StringType{},
+		"timestamp": basetypes.StringType{},
 	}
 }
 

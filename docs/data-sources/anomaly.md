@@ -75,6 +75,7 @@ output "anomaly_acknowledged_by" {
 - `billing_account` (String) Billing account ID
 - `cost_of_anomaly` (Number) The difference between the actual cost and the maximum cost in the normal range.
 - `end_time` (Number) End of the anomaly
+- `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--notifications))
 - `platform` (String) Cloud Provider name
 - `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--resource_data))
 - `scope` (String) Scope: Project or Account
@@ -91,6 +92,15 @@ output "anomaly_acknowledged_by" {
 Optional:
 
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
+
+<a id="nestedatt--notifications"></a>
+### Nested Schema for `notifications`
+
+Read-Only:
+
+- `channel` (String) Dispatch channel.
+- `timestamp` (String) Dispatch timestamp in RFC3339 UTC.
 
 
 <a id="nestedatt--resource_data"></a>

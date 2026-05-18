@@ -209,6 +209,9 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			// Map Top3SKUs nested list
 			top3skusList := mapAnomalyTop3SKUs(ctx, anomaly.Top3SKUs, &resp.Diagnostics)
 
+			// Map Notifications nested list
+			notificationsList := mapAnomalyNotifications(ctx, anomaly.Notifications, &resp.Diagnostics)
+
 			anomalyVal, diags := datasource_anomalies.NewAnomaliesValue(
 				datasource_anomalies.AnomaliesValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
@@ -220,6 +223,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 					"billing_account": types.StringValue(anomaly.BillingAccount),
 					"cost_of_anomaly": types.Float64Value(anomaly.CostOfAnomaly),
 					"end_time":        endTimeVal,
+					"notifications":   notificationsList,
 					"platform":        types.StringValue(anomaly.Platform),
 					"scope":           types.StringValue(anomaly.Scope),
 					"service_name":    types.StringValue(anomaly.ServiceName),
@@ -328,6 +332,32 @@ func mapAnomalyTop3SKUs(ctx context.Context, skus models.AnomalySKUArray, diagno
 	}
 
 	list, diags := types.ListValueFrom(ctx, datasource_anomalies.Top3skusValue{}.Type(ctx), vals)
+	diagnostics.Append(diags...)
+	return list
+}
+
+// mapAnomalyNotifications maps API NotificationEvent slice to Terraform list.
+func mapAnomalyNotifications(ctx context.Context, notifications []models.NotificationEvent, diagnostics *diag.Diagnostics) types.List {
+	if len(notifications) == 0 {
+		emptyNotifications, d := types.ListValueFrom(ctx, datasource_anomalies.NotificationsValue{}.Type(ctx), []datasource_anomalies.NotificationsValue{})
+		diagnostics.Append(d...)
+		return emptyNotifications
+	}
+
+	vals := make([]datasource_anomalies.NotificationsValue, 0, len(notifications))
+	for _, n := range notifications {
+		notificationVal, diags := datasource_anomalies.NewNotificationsValue(
+			datasource_anomalies.NotificationsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"channel":   types.StringValue(string(n.Channel)),
+				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339)),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, notificationVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, datasource_anomalies.NotificationsValue{}.Type(ctx), vals)
 	diagnostics.Append(diags...)
 	return list
 }

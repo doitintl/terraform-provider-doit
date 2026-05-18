@@ -1882,6 +1882,7 @@ paths:
                   - startTime
                   - timeFrame
                   - top3SKUs
+                  - notifications
                 type: object
                 properties:
                   attribution:
@@ -1939,6 +1940,8 @@ paths:
                     description: "Email of the user who first acknowledged the anomaly"
                     type: string
                     nullable: true
+                  notifications:
+                    $ref: "#/components/schemas/NotificationEventArray"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -5262,6 +5265,7 @@ components:
         - startTime
         - timeFrame
         - top3SKUs
+        - notifications
       type: object
       description: Detailed information about a detected anomaly.
       properties:
@@ -5322,6 +5326,8 @@ components:
           description: "Email of the user who first acknowledged the anomaly"
           type: string
           nullable: true
+        notifications:
+          $ref: "#/components/schemas/NotificationEventArray"
 
     AnomalySKU:
       type: object
@@ -5337,6 +5343,31 @@ components:
       description: Array of SKU entries contributing to an anomaly.
       items:
         $ref: "#/components/schemas/AnomalySKU"
+    NotificationEvent:
+      type: object
+      description: |-
+        A successful notification dispatch for an anomaly.
+        This records that the API/worker sent the notification, not that delivery was confirmed.
+      required:
+        - timestamp
+        - channel
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Dispatch timestamp in RFC3339 UTC.
+        channel:
+          type: string
+          description: Dispatch channel.
+          enum:
+            - email
+            - slack
+            - msteams
+    NotificationEventArray:
+      type: array
+      description: Chronologically ordered notification dispatch events.
+      items:
+        $ref: "#/components/schemas/NotificationEvent"
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.

@@ -1310,6 +1310,31 @@
 										}
 									},
 									{
+										"name": "notifications",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "channel",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Dispatch channel."
+														}
+													},
+													{
+														"name": "timestamp",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Dispatch timestamp in RFC3339 UTC."
+														}
+													}
+												]
+											},
+											"description": "Chronologically ordered notification dispatch events."
+										}
+									},
+									{
 										"name": "platform",
 										"string": {
 											"computed_optional_required": "computed",
@@ -1521,6 +1546,31 @@
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "End of the anomaly"
+						}
+					},
+					{
+						"name": "notifications",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "channel",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Dispatch channel."
+										}
+									},
+									{
+										"name": "timestamp",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Dispatch timestamp in RFC3339 UTC."
+										}
+									}
+								]
+							},
+							"description": "Chronologically ordered notification dispatch events."
 						}
 					},
 					{
