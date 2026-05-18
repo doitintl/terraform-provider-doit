@@ -274,6 +274,7 @@ Read-Only:
 - `cost_of_anomaly` (Number) Excess cost over and above the expected normal cost.
 - `end_time` (Number) End of the anomaly.
 - `id` (String)
+- `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--anomalies--notifications))
 - `platform` (String) Cloud Provider name.
 - `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--resource_data))
 - `scope` (String) Scope: Project or Account
@@ -283,6 +284,15 @@ Read-Only:
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly
 - `top3skus` (Attributes List) Array of SKU entries contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--top3skus))
+
+<a id="nestedatt--anomalies--notifications"></a>
+### Nested Schema for `anomalies.notifications`
+
+Read-Only:
+
+- `channel` (String) Dispatch channel.
+- `timestamp` (String) Dispatch timestamp in RFC3339 UTC.
+
 
 <a id="nestedatt--anomalies--resource_data"></a>
 ### Nested Schema for `anomalies.resource_data`

@@ -82,6 +82,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.BillingAccount = types.StringUnknown()
 		data.CostOfAnomaly = types.Float64Unknown()
 		data.EndTime = types.Int64Unknown()
+		data.Notifications = types.ListUnknown(datasource_anomaly.NotificationsValue{}.Type(ctx))
 		data.Platform = types.StringUnknown()
 		data.ResourceData = types.ListUnknown(datasource_anomaly.ResourceDataValue{}.Type(ctx))
 		data.Scope = types.StringUnknown()
@@ -204,6 +205,9 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.Top3skus = emptyList
 	}
 
+	// Map notifications
+	data.Notifications = mapAnomalyNotificationsForAnomaly(ctx, anomaly.Notifications, &resp.Diagnostics)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -231,6 +235,33 @@ func mapAnomalyResourceLabelsForAnomaly(ctx context.Context, labels *[]models.An
 	}
 
 	list, diags := types.ListValueFrom(ctx, datasource_anomaly.LabelsValue{}.Type(ctx), vals)
+	diagnostics.Append(diags...)
+	return list
+}
+
+// mapAnomalyNotificationsForAnomaly maps API NotificationEvent slice to Terraform list
+// for the singular anomaly data source.
+func mapAnomalyNotificationsForAnomaly(ctx context.Context, notifications []models.NotificationEvent, diagnostics *diag.Diagnostics) types.List {
+	if len(notifications) == 0 {
+		emptyNotifications, d := types.ListValueFrom(ctx, datasource_anomaly.NotificationsValue{}.Type(ctx), []datasource_anomaly.NotificationsValue{})
+		diagnostics.Append(d...)
+		return emptyNotifications
+	}
+
+	vals := make([]datasource_anomaly.NotificationsValue, 0, len(notifications))
+	for _, n := range notifications {
+		notificationVal, diags := datasource_anomaly.NewNotificationsValue(
+			datasource_anomaly.NotificationsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"channel":   types.StringValue(string(n.Channel)),
+				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339)),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, notificationVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, datasource_anomaly.NotificationsValue{}.Type(ctx), vals)
 	diagnostics.Append(diags...)
 	return list
 }

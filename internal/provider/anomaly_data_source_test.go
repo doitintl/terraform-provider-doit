@@ -29,6 +29,7 @@ func TestAccAnomalyDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "resource_data.#"),
 					// acknowledged is always a bool (true/false), never null
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "acknowledged"),
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "notifications.#"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -138,6 +139,10 @@ output "acknowledged_at" {
 
 output "acknowledged_by" {
   value = data.doit_anomaly.test.acknowledged_by
+}
+
+output "notifications" {
+  value = [for n in data.doit_anomaly.test.notifications : n.channel]
 }
 `, id)
 }

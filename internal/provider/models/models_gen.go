@@ -2078,6 +2078,27 @@ func (e MetricFilterText) Valid() bool {
 	}
 }
 
+// Defines values for NotificationEventChannel.
+const (
+	Email   NotificationEventChannel = "email"
+	Msteams NotificationEventChannel = "msteams"
+	Slack   NotificationEventChannel = "slack"
+)
+
+// Valid indicates whether the value is a known member of the NotificationEventChannel enum.
+func (e NotificationEventChannel) Valid() bool {
+	switch e {
+	case Email:
+		return true
+	case Msteams:
+		return true
+	case Slack:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReportType.
 const (
 	ReportTypeCustom ReportType = "custom"
@@ -3570,6 +3591,9 @@ type AnomalyItem struct {
 	// EndTime End of the anomaly.
 	EndTime *int    `json:"endTime,omitempty"`
 	Id      *string `json:"id,omitempty"`
+
+	// Notifications Chronologically ordered notification dispatch events.
+	Notifications NotificationEventArray `json:"notifications"`
 
 	// Platform Cloud Provider name.
 	Platform string `json:"platform"`
@@ -5533,6 +5557,9 @@ type GetAnomaly200Response struct {
 	// EndTime End of the anomaly
 	EndTime *int `json:"endTime,omitempty"`
 
+	// Notifications Chronologically ordered notification dispatch events.
+	Notifications NotificationEventArray `json:"notifications"`
+
 	// Platform Cloud Provider name
 	Platform string `json:"platform"`
 
@@ -6207,6 +6234,22 @@ type MetricFilterText string
 
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string
+
+// NotificationEvent A successful notification dispatch for an anomaly.
+// This records that the API/worker sent the notification, not that delivery was confirmed.
+type NotificationEvent struct {
+	// Channel Dispatch channel.
+	Channel NotificationEventChannel `json:"channel"`
+
+	// Timestamp Dispatch timestamp in RFC3339 UTC.
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// NotificationEventChannel Dispatch channel.
+type NotificationEventChannel string
+
+// NotificationEventArray Chronologically ordered notification dispatch events.
+type NotificationEventArray = []NotificationEvent
 
 // Organization Organization metadata returned by the API.
 type Organization struct {
