@@ -176,3 +176,7 @@ data_sources:
     read:
       path: /clouddiagrams/v1/scheme/find
       method: POST
+  cloud_diagram_snapshots:
+    read:
+      path: /clouddiagrams/v1/statussheet/{id}/snapshots
+      method: GET
