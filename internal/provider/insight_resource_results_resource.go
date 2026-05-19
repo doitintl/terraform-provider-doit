@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type (
@@ -445,6 +446,75 @@ func overlayResultNested(resolved, plan *rr.ResultValue) {
 	}
 }
 
+// resolveUnknownResourceResult resolves all Unknown fields on a plan element
+// to safe defaults (null for optional strings/objects, false for booleans).
+// Called when the API response contains no matching element for a plan entry.
+func resolveUnknownResourceResult(p *rr.ResourceResultsValue) {
+	// Computed-only fields — no API value to use, set safe defaults.
+	if p.Severity.IsUnknown() {
+		p.Severity = types.StringNull()
+	}
+	if p.Resolved.IsUnknown() {
+		p.Resolved = types.BoolValue(false)
+	}
+	if p.Enhancement.IsUnknown() {
+		p.Enhancement = rr.NewEnhancementValueNull()
+	}
+
+	// Optional+Computed scalars
+	if p.ExternalId.IsUnknown() {
+		p.ExternalId = types.StringNull()
+	}
+	if p.ExternalUrl.IsUnknown() {
+		p.ExternalUrl = types.StringNull()
+	}
+	if p.Location.IsUnknown() {
+		p.Location = types.StringNull()
+	}
+	if p.ResourceType.IsUnknown() {
+		p.ResourceType = types.StringNull()
+	}
+	if p.Metadata.IsUnknown() {
+		p.Metadata = rr.NewMetadataValueNull()
+	}
+
+	// Nested result object
+	if p.Result.IsUnknown() {
+		p.Result = rr.NewResultValueNull()
+	} else if !p.Result.IsNull() {
+		resolveUnknownResultNested(&p.Result)
+	}
+}
+
+// resolveUnknownResultNested resolves Unknown subfields in the result object
+// to null defaults when no API response is available.
+func resolveUnknownResultNested(r *rr.ResultValue) {
+	if r.AgentInstalled.IsUnknown() {
+		r.AgentInstalled = types.BoolNull()
+	}
+	if r.Critical.IsUnknown() {
+		r.Critical = types.Int64Null()
+	}
+	if r.Current.IsUnknown() {
+		r.Current = types.StringNull()
+	}
+	if r.High.IsUnknown() {
+		r.High = types.Int64Null()
+	}
+	if r.Low.IsUnknown() {
+		r.Low = types.Int64Null()
+	}
+	if r.Medium.IsUnknown() {
+		r.Medium = types.Int64Null()
+	}
+	if r.Recommendation.IsUnknown() {
+		r.Recommendation = types.StringNull()
+	}
+	if r.Value.IsUnknown() {
+		r.Value = types.Float64Null()
+	}
+}
+
 // overlayListElementsByKey is like overlayListElements but matches elements
 // by resource_id rather than by position. This is needed because the API may
 // return elements in a different order than the user's HCL config.
@@ -471,6 +541,12 @@ func overlayListElementsByKey(ctx context.Context, resolved, plan *types.List, o
 		p := &planElems[i]
 		r, ok := resolvedByID[rrCompositeKey(p)]
 		if !ok {
+			// No matching API element — resolve all Unknown fields to safe
+			// defaults so Terraform never sees Unknown values after apply.
+			key := rrCompositeKey(p)
+			tflog.Warn(ctx, "No matching API element for plan entry; resolving unknowns to defaults",
+				map[string]any{"composite_key": key})
+			resolveUnknownResourceResult(p)
 			continue
 		}
 		diags.Append(overlayFn(ctx, r, p)...)

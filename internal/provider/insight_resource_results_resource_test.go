@@ -32,88 +32,12 @@ func TestAccInsightResourceResults_Basic(t *testing.T) {
 						plancheck.ExpectResourceAction("doit_insight_resource_results.test", plancheck.ResourceActionCreate),
 					},
 				},
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("insight_key"),
-						knownvalue.StringExact(rName)),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("source_id"),
-						knownvalue.StringExact("public-api")),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results"),
-						knownvalue.ListSizeExact(1)),
-
-					// Required fields on element
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_id"),
-						knownvalue.StringExact("i-acc-test-001")),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("account"),
-						knownvalue.StringExact("111111111111")),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("cloud_provider"),
-						knownvalue.StringExact("aws")),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
-						knownvalue.StringExact("potential_daily_savings")),
-
-					// Computed fields: severity, resolved
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resolved"),
-						knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("severity"),
-						knownvalue.StringExact("")),
-
-					// Computed nested objects: enhancement (null), metadata (null)
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("enhancement"),
-						knownvalue.Null()),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
-						knownvalue.Null()),
-
-					// Optional+Computed: should be null when not set
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_id"),
-						knownvalue.Null()),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_url"),
-						knownvalue.Null()),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("location"),
-						knownvalue.Null()),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_type"),
-						knownvalue.Null()),
-
-					// Result nested object
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
-						knownvalue.ObjectPartial(map[string]knownvalue.Check{
-							"value": knownvalue.Float64Exact(5.42),
-						})),
-				},
+				ConfigStateChecks: basicResultChecks(rName),
 			},
-			// Step 2: Drift check
+			// Step 2: Drift check — same assertions on BOTH steps catches overlay bugs
 			{
-				Config: testAccInsightWithResults(rName, "Basic RR Test", "A basic resource results test"),
+				Config:            testAccInsightWithResults(rName, "Basic RR Test", "A basic resource results test"),
+				ConfigStateChecks: basicResultChecks(rName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -182,36 +106,13 @@ func TestAccInsightResourceResults_SecurityRisk(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInsightResultsSecurityRisk(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
-						knownvalue.StringExact("security_risk")),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resolved"),
-						knownvalue.Bool(false)),
-					// Verify result contains security severity counts
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
-						knownvalue.ObjectPartial(map[string]knownvalue.Check{
-							"critical": knownvalue.Int64Exact(1),
-							"high":     knownvalue.Int64Exact(3),
-							"medium":   knownvalue.Int64Exact(5),
-							"low":      knownvalue.Int64Exact(10),
-						})),
-					// resource_type was set in HCL
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_type"),
-						knownvalue.StringExact("security-group")),
-				},
+				Config:            testAccInsightResultsSecurityRisk(rName),
+				ConfigStateChecks: securityRiskChecks(),
 			},
-			// Drift check
+			// Drift check — same full assertions
 			{
-				Config: testAccInsightResultsSecurityRisk(rName),
+				Config:            testAccInsightResultsSecurityRisk(rName),
+				ConfigStateChecks: securityRiskChecks(),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -232,26 +133,13 @@ func TestAccInsightResourceResults_Recommendation(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInsightResultsRecommendation(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
-						knownvalue.StringExact("potential_daily_savings_with_recommendation")),
-					// Verify result contains value, current, and recommendation
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
-						knownvalue.ObjectPartial(map[string]knownvalue.Check{
-							"value":          knownvalue.Float64Exact(12.50),
-							"current":        knownvalue.StringExact("m5.xlarge"),
-							"recommendation": knownvalue.StringExact("m5.large"),
-						})),
-				},
+				Config:            testAccInsightResultsRecommendation(rName),
+				ConfigStateChecks: recommendationChecks(),
 			},
-			// Drift check
+			// Drift check — same full assertions
 			{
-				Config: testAccInsightResultsRecommendation(rName),
+				Config:            testAccInsightResultsRecommendation(rName),
+				ConfigStateChecks: recommendationChecks(),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -395,19 +283,40 @@ func TestAccInsightResourceResults_ClusterAgent(t *testing.T) {
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
 						knownvalue.StringExact("potential_daily_savings_with_cluster_agent")),
-					// Verify agent_installed and value are returned correctly
+					// Result — ObjectExact: value + agent_installed set, rest null
 					statecheck.ExpectKnownValue(
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
-						knownvalue.ObjectPartial(map[string]knownvalue.Check{
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
 							"value":           knownvalue.Float64Exact(8.50),
 							"agent_installed": knownvalue.Bool(true),
+							"critical":        knownvalue.Null(),
+							"current":         knownvalue.Null(),
+							"high":            knownvalue.Null(),
+							"low":             knownvalue.Null(),
+							"medium":          knownvalue.Null(),
+							"recommendation":  knownvalue.Null(),
 						})),
 				},
 			},
 			// Drift check
 			{
 				Config: testAccInsightResultsClusterAgent(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
+							"value":           knownvalue.Float64Exact(8.50),
+							"agent_installed": knownvalue.Bool(true),
+							"critical":        knownvalue.Null(),
+							"current":         knownvalue.Null(),
+							"high":            knownvalue.Null(),
+							"low":             knownvalue.Null(),
+							"medium":          knownvalue.Null(),
+							"recommendation":  knownvalue.Null(),
+						})),
+				},
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -619,7 +528,7 @@ func TestAccInsightResourceResults_RemoveResult(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_id"),
-						knownvalue.StringExact("i-acc-test-001")),
+						knownvalue.StringExact(fmt.Sprintf("i-acc-%s-1", rName))),
 				},
 			},
 			// Step 3: Drift check
@@ -673,6 +582,216 @@ func TestAccInsightResourceResults_AllFieldsImport(t *testing.T) {
 	})
 }
 
+// --- Assertion helpers for full attribute coverage ---
+
+// basicResultChecks returns full-coverage assertions for a single
+// potential_daily_savings result with value=5.42. Uses ObjectExact (not
+// ObjectPartial) to catch any unexpected non-null values in nested objects.
+func basicResultChecks(rName string) []statecheck.StateCheck {
+	return []statecheck.StateCheck{
+		// Top-level attributes
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("insight_key"),
+			knownvalue.StringExact(rName)),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("source_id"),
+			knownvalue.StringExact("public-api")),
+
+		// List
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results"),
+			knownvalue.ListSizeExact(1)),
+
+		// Required fields on element
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_id"),
+			knownvalue.StringExact(fmt.Sprintf("i-acc-%s-1", rName))),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("account"),
+			knownvalue.StringExact("111111111111")),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("cloud_provider"),
+			knownvalue.StringExact("aws")),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
+			knownvalue.StringExact("potential_daily_savings")),
+
+		// Computed-only fields
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resolved"),
+			knownvalue.Bool(false)),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("severity"),
+			knownvalue.StringExact("")),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("enhancement"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+			knownvalue.Null()),
+
+		// Optional+Computed: should be null when not set in HCL
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_id"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_url"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("location"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_type"),
+			knownvalue.Null()),
+
+		// Result nested object — ObjectExact catches unexpected non-null values
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
+			knownvalue.ObjectExact(map[string]knownvalue.Check{
+				"value":           knownvalue.Float64Exact(5.42),
+				"agent_installed": knownvalue.Null(),
+				"critical":        knownvalue.Null(),
+				"current":         knownvalue.Null(),
+				"high":            knownvalue.Null(),
+				"low":             knownvalue.Null(),
+				"medium":          knownvalue.Null(),
+				"recommendation":  knownvalue.Null(),
+			})),
+	}
+}
+
+// securityRiskChecks returns full-coverage assertions for a security_risk result.
+func securityRiskChecks() []statecheck.StateCheck {
+	return []statecheck.StateCheck{
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
+			knownvalue.StringExact("security_risk")),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resolved"),
+			knownvalue.Bool(false)),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_type"),
+			knownvalue.StringExact("security-group")),
+		// Computed-only
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("severity"),
+			knownvalue.NotNull()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("enhancement"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+			knownvalue.Null()),
+		// Optional+Computed not in HCL
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_id"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_url"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("location"),
+			knownvalue.Null()),
+		// Result — ObjectExact: security counts set, savings fields null
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
+			knownvalue.ObjectExact(map[string]knownvalue.Check{
+				"critical":        knownvalue.Int64Exact(1),
+				"high":            knownvalue.Int64Exact(3),
+				"medium":          knownvalue.Int64Exact(5),
+				"low":             knownvalue.Int64Exact(10),
+				"value":           knownvalue.Null(),
+				"current":         knownvalue.Null(),
+				"recommendation":  knownvalue.Null(),
+				"agent_installed": knownvalue.Null(),
+			})),
+	}
+}
+
+// recommendationChecks returns full-coverage assertions for a recommendation result.
+func recommendationChecks() []statecheck.StateCheck {
+	return []statecheck.StateCheck{
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result_type"),
+			knownvalue.StringExact("potential_daily_savings_with_recommendation")),
+		// Computed-only
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resolved"),
+			knownvalue.Bool(false)),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("severity"),
+			knownvalue.StringExact("")),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("enhancement"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+			knownvalue.Null()),
+		// Optional+Computed not in HCL
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_id"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_url"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("location"),
+			knownvalue.Null()),
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("resource_type"),
+			knownvalue.Null()),
+		// Result — ObjectExact: value/current/recommendation set, rest null
+		statecheck.ExpectKnownValue(
+			"doit_insight_resource_results.test",
+			tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("result"),
+			knownvalue.ObjectExact(map[string]knownvalue.Check{
+				"value":           knownvalue.Float64Exact(12.50),
+				"current":         knownvalue.StringExact("m5.xlarge"),
+				"recommendation":  knownvalue.StringExact("m5.large"),
+				"agent_installed": knownvalue.Null(),
+				"critical":        knownvalue.Null(),
+				"high":            knownvalue.Null(),
+				"low":             knownvalue.Null(),
+				"medium":          knownvalue.Null(),
+			})),
+	}
+}
+
 // --- Config helpers ---
 
 func testAccInsightWithResults(key, title, description string) string {
@@ -690,7 +809,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "i-acc-test-001"
+    resource_id    = "i-acc-%[1]s-1"
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "potential_daily_savings"
@@ -719,7 +838,7 @@ resource "doit_insight_resource_results" "test" {
 
   resource_results = [
     {
-      resource_id    = "i-acc-test-001"
+      resource_id    = "i-acc-%[1]s-1"
       account        = "111111111111"
       cloud_provider = "aws"
       result_type    = "potential_daily_savings"
@@ -728,7 +847,7 @@ resource "doit_insight_resource_results" "test" {
       }
     },
     {
-      resource_id    = "i-acc-test-002"
+      resource_id    = "i-acc-%[1]s-2"
       account        = "222222222222"
       cloud_provider = "aws"
       result_type    = "potential_daily_savings"
@@ -757,7 +876,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "sg-acc-test-001"
+    resource_id    = "sg-acc-%[1]s-1"
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "security_risk"
@@ -789,7 +908,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "i-acc-test-rec-001"
+    resource_id    = "i-rec-%[1]s-1"
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "potential_daily_savings_with_recommendation"
@@ -811,14 +930,14 @@ func testAccInsightResultsPaginated(key string, count int) string {
 			results += ",\n"
 		}
 		results += fmt.Sprintf(`    {
-      resource_id    = "i-paginated-%03d"
+      resource_id    = "i-pag-%s-%03d"
       account        = "111111111111"
       cloud_provider = "aws"
       result_type    = "potential_daily_savings"
       result = {
         value = %d.00
       }
-    }`, i, i+1)
+    }`, key, i, i+1)
 	}
 
 	return fmt.Sprintf(`
@@ -856,7 +975,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "i-all-fields-001"
+    resource_id    = "i-all-%[1]s-1"
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "potential_daily_savings"
@@ -888,7 +1007,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "gke-cluster-001"
+    resource_id    = "gke-%[1]s-1"
     account        = "my-gcp-project"
     cloud_provider = "gcp"
     result_type    = "potential_daily_savings_with_cluster_agent"
@@ -918,7 +1037,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "i-mutation-001"
+    resource_id    = "i-mut-%[1]s-1"
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "potential_daily_savings"
@@ -953,7 +1072,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "i-mutation-001"
+    resource_id    = "i-mut-%[1]s-1"
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "potential_daily_savings"
@@ -987,7 +1106,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
 
   resource_results = [{
-    resource_id    = "i-acc-test-001"
+    resource_id    = "i-acc-%[1]s-1"
     account        = "111111111111"
     cloud_provider = "aws"
     result_type    = "potential_daily_savings_with_recommendation"
