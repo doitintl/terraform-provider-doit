@@ -106,7 +106,7 @@ func TestAccInsightResourceResults_SecurityRisk(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInsightResultsSecurityRisk(rName),
+				Config:            testAccInsightResultsSecurityRisk(rName),
 				ConfigStateChecks: securityRiskChecks(),
 			},
 			// Drift check — same full assertions
@@ -133,7 +133,7 @@ func TestAccInsightResourceResults_Recommendation(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInsightResultsRecommendation(rName),
+				Config:            testAccInsightResultsRecommendation(rName),
 				ConfigStateChecks: recommendationChecks(),
 			},
 			// Drift check — same full assertions

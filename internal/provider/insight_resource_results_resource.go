@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type (
@@ -542,6 +543,9 @@ func overlayListElementsByKey(ctx context.Context, resolved, plan *types.List, o
 		if !ok {
 			// No matching API element — resolve all Unknown fields to safe
 			// defaults so Terraform never sees Unknown values after apply.
+			key := rrCompositeKey(p)
+			tflog.Warn(ctx, "No matching API element for plan entry; resolving unknowns to defaults",
+				map[string]any{"composite_key": key})
 			resolveUnknownResourceResult(p)
 			continue
 		}
