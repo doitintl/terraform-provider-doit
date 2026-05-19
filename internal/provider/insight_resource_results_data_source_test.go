@@ -10,7 +10,7 @@ import (
 )
 
 // TestAccInsightResourceResultsDataSource_Basic creates an insight with resource
-// results, then reads the results back through the data source.
+// results, then reads them back through the data source with full attribute coverage.
 func TestAccInsightResourceResultsDataSource_Basic(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-ds")
 
@@ -22,8 +22,41 @@ func TestAccInsightResourceResultsDataSource_Basic(t *testing.T) {
 			{
 				Config: testAccInsightResourceResultsDataSourceBasicConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_insight_resource_results.test", "resource_results.#"),
-					resource.TestCheckResourceAttrSet("data.doit_insight_resource_results.test", "row_count"),
+					// Top-level data source attributes
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "insight_key", rName),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "source_id", "public-api"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "row_count", "2"),
+
+					// List count
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.#", "2"),
+
+					// First result — full attribute coverage
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.resource_id", fmt.Sprintf("i-ds-%s-1", rName)),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.account", "test-project-123"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.cloud_provider", "gcp"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result_type", "potential_daily_savings"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.resolved", "false"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.value", "5.5"),
+					// Null number/object fields in result sub-object are absent
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.critical"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.high"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.medium"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.low"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.agent_installed"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.current"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.recommendation"),
+					// Optional string fields not set in config — still present as empty in nested objects
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.external_id", ""),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.external_url", ""),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.location", ""),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.resource_type", ""),
+
+					// Second result
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.1.resource_id", fmt.Sprintf("i-ds-%s-2", rName)),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.1.account", "test-project-456"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.1.cloud_provider", "gcp"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.1.result_type", "potential_daily_savings"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.1.result.value", "3.25"),
 				),
 			},
 			// Drift verification
@@ -52,7 +85,14 @@ func TestAccInsightResourceResultsDataSource_MaxResults(t *testing.T) {
 				Config: testAccInsightResourceResultsDataSourceMaxResultsConfig(rName, 1),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "max_results", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_insight_resource_results.test", "row_count"),
+					// First result — full field check
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.resource_id", fmt.Sprintf("i-ds-pag-%s-1", rName)),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.account", "111222333444"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.cloud_provider", "aws"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result_type", "potential_daily_savings"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.value", "10"),
 				),
 			},
 		},
@@ -60,7 +100,7 @@ func TestAccInsightResourceResultsDataSource_MaxResults(t *testing.T) {
 }
 
 // TestAccInsightResourceResultsDataSource_NestedFields verifies nested objects
-// (result, enhancement) are populated correctly.
+// (result, enhancement) are populated correctly via the data source.
 func TestAccInsightResourceResultsDataSource_NestedFields(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-ds-nest")
 
@@ -72,10 +112,29 @@ func TestAccInsightResourceResultsDataSource_NestedFields(t *testing.T) {
 			{
 				Config: testAccInsightResourceResultsDataSourceNestedConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
+					// Top-level
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.resource_id", fmt.Sprintf("i-ds-nest-%s", rName)),
 					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.account", "test-project-123"),
 					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.cloud_provider", "gcp"),
 					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result_type", "potential_daily_savings"),
-					resource.TestCheckResourceAttrSet("data.doit_insight_resource_results.test", "resource_results.0.result.value"),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.resolved", "false"),
+
+					// Result sub-object — full field checks
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.value", "12.5"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.critical"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.high"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.medium"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.low"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.agent_installed"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.current"),
+					resource.TestCheckNoResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.result.recommendation"),
+
+					// Optional string fields — present as empty in nested objects
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.external_id", ""),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.external_url", ""),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.location", ""),
+					resource.TestCheckResourceAttr("data.doit_insight_resource_results.test", "resource_results.0.resource_type", ""),
 				),
 			},
 		},
@@ -97,7 +156,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
   resource_results = [
     {
-      resource_id    = "test-vm-1"
+      resource_id    = "i-ds-%[1]s-1"
       account        = "test-project-123"
       cloud_provider = "gcp"
       result_type    = "potential_daily_savings"
@@ -106,7 +165,7 @@ resource "doit_insight_resource_results" "test" {
       }
     },
     {
-      resource_id    = "test-vm-2"
+      resource_id    = "i-ds-%[1]s-2"
       account        = "test-project-456"
       cloud_provider = "gcp"
       result_type    = "potential_daily_savings"
@@ -140,7 +199,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
   resource_results = [
     {
-      resource_id    = "i-abc001"
+      resource_id    = "i-ds-pag-%[1]s-1"
       account        = "111222333444"
       cloud_provider = "aws"
       result_type    = "potential_daily_savings"
@@ -149,7 +208,7 @@ resource "doit_insight_resource_results" "test" {
       }
     },
     {
-      resource_id    = "i-abc002"
+      resource_id    = "i-ds-pag-%[1]s-2"
       account        = "111222333444"
       cloud_provider = "aws"
       result_type    = "potential_daily_savings"
@@ -184,7 +243,7 @@ resource "doit_insight_resource_results" "test" {
   insight_key = doit_insight.test.key
   resource_results = [
     {
-      resource_id    = "test-vm-nested"
+      resource_id    = "i-ds-nest-%[1]s"
       account        = "test-project-123"
       cloud_provider = "gcp"
       result_type    = "potential_daily_savings"

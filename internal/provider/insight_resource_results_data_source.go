@@ -70,12 +70,13 @@ func (ds *insightResourceResultsDataSource) Read(ctx context.Context, req dataso
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If required inputs are unknown, return unknown list
+	// If required inputs are unknown, return unknown for computed outputs only.
+	// page_token is computed (overwritten by API response or set to null in auto mode).
+	// max_results is a pure user input — never overwritten, so leave it untouched.
 	if data.SourceId.IsUnknown() || data.InsightKey.IsUnknown() {
 		data.ResourceResults = types.ListUnknown(datasource_insight_resource_results.ResourceResultsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
-		data.MaxResults = types.Int64Unknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
