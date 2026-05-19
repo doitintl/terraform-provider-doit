@@ -9,6 +9,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_insight"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -86,6 +87,14 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 			s.Attributes[field] = attr
 		}
+	}
+
+	// Validate source_id — the API only accepts "public-api" today
+	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok {
+		attr.Validators = append(attr.Validators, stringvalidator.OneOf(
+			string(models.PostInsightResultParamsSourceIDPublicApi),
+		))
+		s.Attributes["source_id"] = attr
 	}
 
 	// key should be RequiresReplace since it's the identity
@@ -297,7 +306,7 @@ func (r *insightResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	// Handle import: if source_id or insight_key is missing, derive from key
 	if sourceID == "" {
-		sourceID = "public-api"
+		sourceID = string(models.PostInsightResultParamsSourceIDPublicApi)
 	}
 	if insightKey == "" {
 		insightKey = state.Key.ValueString()
@@ -357,7 +366,10 @@ func (r *insightResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	sourceID := models.PostInsightResultParamsSourceIDPublicApi
+	sourceID := models.PostInsightResultParamsSourceID(plan.SourceId.ValueString())
+	if sourceID == "" {
+		sourceID = models.PostInsightResultParamsSourceIDPublicApi
+	}
 	insightKey := plan.Key.ValueString()
 
 	updateResp, err := r.client.PostInsightResultWithResponse(ctx, sourceID, insightKey, *apiReq)
@@ -410,7 +422,10 @@ func (r *insightResource) Delete(ctx context.Context, req resource.DeleteRequest
 	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
 	defer cancel()
 
-	sourceID := models.DeleteInsightResultParamsSourceIDPublicApi
+	sourceID := models.DeleteInsightResultParamsSourceID(state.SourceId.ValueString())
+	if sourceID == "" {
+		sourceID = models.DeleteInsightResultParamsSourceIDPublicApi
+	}
 	insightKey := state.InsightKey.ValueString()
 
 	deleteResp, err := r.client.DeleteInsightResultWithResponse(ctx, sourceID, insightKey)

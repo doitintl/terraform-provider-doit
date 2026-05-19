@@ -10,6 +10,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	rr "github.com/doitintl/terraform-provider-doit/internal/provider/resource_insight_resource_results"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -109,6 +110,14 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 			}
 		}
 		s.Attributes["resource_results"] = rrAttr
+	}
+
+	// Validate source_id — the API only accepts "public-api" today
+	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok {
+		attr.Validators = append(attr.Validators, stringvalidator.OneOf(
+			string(models.PostInsightResourceResultsParamsSourceIDPublicApi),
+		))
+		s.Attributes["source_id"] = attr
 	}
 
 	resp.Schema = s
@@ -450,15 +459,17 @@ func overlayListElementsByKey(ctx context.Context, resolved, plan *types.List, o
 		return diags
 	}
 
-	// Build map by resource_id for key-based matching.
+	// Build map by composite key for matching.
+	// The API identity for a resource result is (resource_id, result_type, account, cloud_provider).
 	resolvedByID := make(map[string]*rr.ResourceResultsValue, len(resolvedElems))
 	for i := range resolvedElems {
-		resolvedByID[resolvedElems[i].ResourceId.ValueString()] = &resolvedElems[i]
+		key := rrCompositeKey(&resolvedElems[i])
+		resolvedByID[key] = &resolvedElems[i]
 	}
 
 	for i := range planElems {
 		p := &planElems[i]
-		r, ok := resolvedByID[p.ResourceId.ValueString()]
+		r, ok := resolvedByID[rrCompositeKey(p)]
 		if !ok {
 			continue
 		}
@@ -538,7 +549,10 @@ func (r *insightResourceResultsResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	sourceID := models.PostInsightResourceResultsParamsSourceIDPublicApi
+	sourceID := models.PostInsightResourceResultsParamsSourceID(plan.SourceId.ValueString())
+	if sourceID == "" {
+		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+	}
 	insightKey := plan.InsightKey.ValueString()
 
 	createResp, err := r.client.PostInsightResourceResultsWithResponse(ctx, sourceID, insightKey, nil, *apiReq)
@@ -592,7 +606,7 @@ func (r *insightResourceResultsResource) Read(ctx context.Context, req resource.
 	insightKey := state.InsightKey.ValueString()
 
 	if sourceID == "" {
-		sourceID = "public-api"
+		sourceID = string(models.PostInsightResourceResultsParamsSourceIDPublicApi)
 	}
 
 	allResults, fetchDiags := fetchAllRRResults(ctx, r.client, sourceID, insightKey)
@@ -641,7 +655,10 @@ func (r *insightResourceResultsResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	sourceID := models.PostInsightResourceResultsParamsSourceIDPublicApi
+	sourceID := models.PostInsightResourceResultsParamsSourceID(plan.SourceId.ValueString())
+	if sourceID == "" {
+		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+	}
 	insightKey := plan.InsightKey.ValueString()
 
 	updateResp, err := r.client.PostInsightResourceResultsWithResponse(ctx, sourceID, insightKey, nil, *apiReq)
@@ -681,7 +698,10 @@ func (r *insightResourceResultsResource) Delete(ctx context.Context, req resourc
 	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
 	defer cancel()
 
-	sourceID := models.PostInsightResourceResultsParamsSourceIDPublicApi
+	sourceID := models.PostInsightResourceResultsParamsSourceID(state.SourceId.ValueString())
+	if sourceID == "" {
+		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+	}
 	insightKey := state.InsightKey.ValueString()
 
 	// POST with empty array triggers stale resolution, marking all existing
@@ -702,11 +722,12 @@ func (r *insightResourceResultsResource) Delete(ctx context.Context, req resourc
 			"Error Deleting Insight Resource Results",
 			fmt.Sprintf("non-retryable error: %d, body: %s", delResp.StatusCode(), string(delResp.Body)),
 		)
+		return
 	}
 }
 
 // reorderResultsToMatchState re-orders API results to match the prior state's
-// element ordering (by resource_id). This prevents false drift caused by the
+// element ordering (by composite key). This prevents false drift caused by the
 // API returning results in a different order than the plan/state.
 // New results (not in prior state) are appended at the end in stable order.
 func reorderResultsToMatchState(apiResults []models.ResourceResult, priorElems []rr.ResourceResultsValue) []models.ResourceResult {
@@ -714,17 +735,19 @@ func reorderResultsToMatchState(apiResults []models.ResourceResult, priorElems [
 		return apiResults
 	}
 
-	// Build a position map from prior state: resource_id -> index
+	// Build a position map from prior state: composite_key -> index
 	stateOrder := make(map[string]int, len(priorElems))
 	for i, elem := range priorElems {
-		stateOrder[elem.ResourceId.ValueString()] = i
+		stateOrder[rrCompositeKey(&elem)] = i
 	}
 
 	// Sort API results: elements present in prior state come first in their
 	// original order, new elements come after in stable (original API) order.
 	sort.SliceStable(apiResults, func(i, j int) bool {
-		posI, okI := stateOrder[apiResults[i].ResourceId]
-		posJ, okJ := stateOrder[apiResults[j].ResourceId]
+		keyI := apiResultCompositeKey(&apiResults[i])
+		keyJ := apiResultCompositeKey(&apiResults[j])
+		posI, okI := stateOrder[keyI]
+		posJ, okJ := stateOrder[keyJ]
 
 		switch {
 		case okI && okJ:
@@ -739,4 +762,21 @@ func reorderResultsToMatchState(apiResults []models.ResourceResult, priorElems [
 	})
 
 	return apiResults
+}
+
+// rrCompositeKey builds a composite key from the Terraform model element.
+// The API identity for a resource result is (resource_id, result_type, account, cloud_provider).
+func rrCompositeKey(elem *rr.ResourceResultsValue) string {
+	return elem.ResourceId.ValueString() + "|" +
+		elem.ResultType.ValueString() + "|" +
+		elem.Account.ValueString() + "|" +
+		elem.CloudProvider.ValueString()
+}
+
+// apiResultCompositeKey builds a composite key from an API response element.
+func apiResultCompositeKey(r *models.ResourceResult) string {
+	return r.ResourceId + "|" +
+		string(r.ResultType) + "|" +
+		r.Account + "|" +
+		r.CloudProvider
 }
