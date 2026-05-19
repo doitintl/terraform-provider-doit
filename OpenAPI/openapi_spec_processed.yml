@@ -3135,9 +3135,7 @@ paths:
         "401":
           $ref: "#/components/responses/401"
         "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /clouddiagrams/v1/statussheet/{id}/export-json:
     get:
       tags:
@@ -3166,9 +3164,7 @@ paths:
         "401":
           $ref: "#/components/responses/401"
         "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /clouddiagrams/v1/statussheet/{id}/snapshots:
     get:
       tags:
@@ -3214,9 +3210,7 @@ paths:
         "401":
           $ref: "#/components/responses/401"
         "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /clouddiagrams/v1/statussheet/{id}/snapshot:
     get:
       tags:
@@ -3249,9 +3243,7 @@ paths:
         "401":
           $ref: "#/components/responses/401"
         "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /clouddiagrams/v1/activity:
     get:
       tags:
@@ -9411,6 +9403,13 @@ components:
     "403":
       description: >-
         Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "403_resource_or_forbidden":
+      description: >-
+        Forbidden - Either the resource does not exist, or the caller is not authorized to access it. These two cases are deliberately indistinguishable to avoid information disclosure: the access guard runs before any existence check, so callers receive 403 (not 404) for unknown IDs on this endpoint. Used by Cloud Diagrams routes keyed by a path-param resource id (e.g. `/clouddiagrams/v1/statussheet/{id}/...`).
       content:
         application/json:
           schema:

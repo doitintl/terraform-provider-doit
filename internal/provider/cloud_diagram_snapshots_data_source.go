@@ -110,14 +110,6 @@ func (d *cloudDiagramSnapshotsDataSource) Read(ctx context.Context, req datasour
 		return
 	}
 
-	if apiResp.StatusCode() == 404 {
-		resp.Diagnostics.AddError(
-			"Cloud Diagram Layer Not Found",
-			fmt.Sprintf("Cloud Diagram layer (statussheet) with ID %q not found.", data.Id.ValueString()),
-		)
-		return
-	}
-
 	if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Cloud Diagram Snapshots",

@@ -7325,6 +7325,9 @@ type N401 = Error
 // N403 Standard error response structure.
 type N403 = Error
 
+// N403ResourceOrForbidden Standard error response structure.
+type N403ResourceOrForbidden = Error
+
 // N404 Standard error response structure.
 type N404 = Error
 
@@ -18155,8 +18158,7 @@ type ExportCloudDiagramJsonResp struct {
 	JSON200      *CloudDiagramExportJsonResponse
 	JSON400      *N400
 	JSON401      *N401
-	JSON403      *N403
-	JSON404      *N404
+	JSON403      *N403ResourceOrForbidden
 }
 
 // Status returns HTTPResponse.Status
@@ -18181,8 +18183,7 @@ type GetStatussheetComponentsResp struct {
 	JSON200      *CloudDiagramStatussheetComponents
 	JSON400      *N400
 	JSON401      *N401
-	JSON403      *N403
-	JSON404      *N404
+	JSON403      *N403ResourceOrForbidden
 }
 
 // Status returns HTTPResponse.Status
@@ -18207,8 +18208,7 @@ type GetCloudDiagramLayerSnapshotResp struct {
 	JSON200      *CloudDiagramLayerSnapshot
 	JSON400      *N400
 	JSON401      *N401
-	JSON403      *N403
-	JSON404      *N404
+	JSON403      *N403ResourceOrForbidden
 }
 
 // Status returns HTTPResponse.Status
@@ -18233,8 +18233,7 @@ type ListCloudDiagramLayerSnapshotsResp struct {
 	JSON200      *[]CloudDiagramLayerSnapshot
 	JSON400      *N400
 	JSON401      *N401
-	JSON403      *N403
-	JSON404      *N404
+	JSON403      *N403ResourceOrForbidden
 }
 
 // Status returns HTTPResponse.Status
@@ -23759,18 +23758,11 @@ func ParseExportCloudDiagramJsonResp(rsp *http.Response) (*ExportCloudDiagramJso
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
 
 	}
 
@@ -23813,18 +23805,11 @@ func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetCompo
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
 
 	}
 
@@ -23867,18 +23852,11 @@ func ParseGetCloudDiagramLayerSnapshotResp(rsp *http.Response) (*GetCloudDiagram
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
 
 	}
 
@@ -23921,18 +23899,11 @@ func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiag
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
 
 	}
 
