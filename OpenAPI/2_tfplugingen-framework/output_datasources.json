@@ -3623,6 +3623,834 @@
 			}
 		},
 		{
+			"name": "insight",
+			"schema": {
+				"attributes": [
+					{
+						"name": "source_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The identifier of the source that generated the insight."
+						}
+					},
+					{
+						"name": "insight_key",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The unique key identifying the insight."
+						}
+					},
+					{
+						"name": "categories",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Categories this insight belongs to."
+						}
+					},
+					{
+						"name": "cloud_flow_template_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of a CloudFlow template that can automate the remediation of this insight."
+						}
+					},
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The cloud provider associated with the resource."
+						}
+					},
+					{
+						"name": "detailed_description_mdx",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "A detailed description of the insight in MDX format."
+						}
+					},
+					{
+						"name": "dismissal_details",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "comment",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "An optional free-text comment providing additional context."
+									}
+								},
+								{
+									"name": "reason",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The reason for dismissal."
+									}
+								}
+							],
+							"description": "Details for why an insight was dismissed."
+						}
+					},
+					{
+						"name": "display_status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The display status of the insight."
+						}
+					},
+					{
+						"name": "easy_win_description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "A description of why this insight is considered an easy win."
+						}
+					},
+					{
+						"name": "key",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The unique key identifying this insight."
+						}
+					},
+					{
+						"name": "last_status_change",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "last_changed_at",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "user_id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.\n"
+									}
+								}
+							],
+							"description": "If set, this object contains the last status change made by a user for this insight"
+						}
+					},
+					{
+						"name": "last_updated",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Timestamp of the last update to this insight."
+						}
+					},
+					{
+						"name": "report_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "URL to an external report related to this insight."
+						}
+					},
+					{
+						"name": "short_description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "A brief summary of the insight."
+						}
+					},
+					{
+						"name": "source",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The source that generated the insight."
+						}
+					},
+					{
+						"name": "summary",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "operational_risks",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Total number of operational risks."
+									}
+								},
+								{
+									"name": "performance_risks",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Total number of performance risks."
+									}
+								},
+								{
+									"name": "potential_daily_savings",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Total potential daily savings in USD."
+									}
+								},
+								{
+									"name": "reliability_risks",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Total number of reliability risks."
+									}
+								},
+								{
+									"name": "security_risks",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Total number of security risks."
+									}
+								},
+								{
+									"name": "sustainability_risks",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Total number of sustainability risks."
+									}
+								}
+							],
+							"description": "Aggregate summary of risks and savings across all resource results for an insight."
+						}
+					},
+					{
+						"name": "tags",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Tags for the insight, primarily used for security certification labels (e.g. ISO)."
+						}
+					},
+					{
+						"name": "title",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The display title of the insight."
+						}
+					}
+				],
+				"description": "Manage cloud insights representing recommendations and findings for cloud resources.",
+				"markdown_description": "Manage cloud insights representing recommendations and findings for cloud resources."
+			}
+		},
+		{
+			"name": "insight_resource_results",
+			"schema": {
+				"attributes": [
+					{
+						"name": "source_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The identifier of the source that generated the insight."
+						}
+					},
+					{
+						"name": "insight_key",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The unique key identifying the insight."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Token from a previous response to fetch the next page."
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of results per page (default 1000, max 5000).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 5000)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "resource_results",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "account",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud account or project ID containing this resource."
+										}
+									},
+									{
+										"name": "cloud_provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud provider associated with the resource."
+										}
+									},
+									{
+										"name": "enhancement",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "last_updated_at",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Timestamp of the last update."
+													}
+												},
+												{
+													"name": "last_updated_by",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The user who last updated this enhancement."
+													}
+												},
+												{
+													"name": "priority",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "priority_score",
+																"float64": {
+																	"computed_optional_required": "computed",
+																	"description": "Numeric priority score."
+																}
+															},
+															{
+																"name": "value",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The priority level (e.g. Low, Medium, High)."
+																}
+															}
+														],
+														"description": "Priority information for this resource result."
+													}
+												},
+												{
+													"name": "tags",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Tags assigned to this resource result."
+													}
+												}
+											],
+											"description": "DoiT-managed metadata associated with a resource result."
+										}
+									},
+									{
+										"name": "external_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "the external ID of the resource in the provider's system for the resource"
+										}
+									},
+									{
+										"name": "external_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "the URL to the resource-level issue in the provider's system"
+										}
+									},
+									{
+										"name": "location",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "represents the region/zone of the resource in AWS, or equivalent for other providers"
+										}
+									},
+									{
+										"name": "metadata",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"description": "contains any additional information for the resource results"
+										}
+									},
+									{
+										"name": "resolved",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether this resource-level issue has been resolved. Computed server-side."
+										}
+									},
+									{
+										"name": "resource_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud resource identifier."
+										}
+									},
+									{
+										"name": "resource_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`"
+										}
+									},
+									{
+										"name": "result",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "agent_installed",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "true if the agent is installed"
+													}
+												},
+												{
+													"name": "critical",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "number of critical security risks"
+													}
+												},
+												{
+													"name": "current",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "the current state (i.e. current instance type)"
+													}
+												},
+												{
+													"name": "high",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "number of high security risks"
+													}
+												},
+												{
+													"name": "low",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "number of low security risks"
+													}
+												},
+												{
+													"name": "medium",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "number of medium security risks"
+													}
+												},
+												{
+													"name": "recommendation",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "the recommended state (i.e. recommended instance type)"
+													}
+												},
+												{
+													"name": "value",
+													"float64": {
+														"computed_optional_required": "computed",
+														"description": "the daily saving amount for this result"
+													}
+												}
+											],
+											"description": "The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.\n"
+										}
+									},
+									{
+										"name": "result_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The discriminator property that determines which fields are populated in the 'result' object."
+										}
+									},
+									{
+										"name": "severity",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The severity level of the finding. Computed server-side from the security risk counts."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Manage cloud insights representing recommendations and findings for cloud resources.",
+				"markdown_description": "Manage cloud insights representing recommendations and findings for cloud resources."
+			}
+		},
+		{
+			"name": "insights",
+			"schema": {
+				"attributes": [
+					{
+						"name": "search_term",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Free-text search term to filter insights by title or description."
+						}
+					},
+					{
+						"name": "display_status",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Filter by one or more display statuses."
+						}
+					},
+					{
+						"name": "category",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by insight category.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"FinOps\",\n\"OperationalExcellence\",\n\"PerformanceEfficiency\",\n\"Reliability\",\n\"Security\",\n\"Sustainability\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by cloud provider (e.g. \"aws\", \"gcp\", \"azure\")."
+						}
+					},
+					{
+						"name": "source",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "the source that generated insights"
+						}
+					},
+					{
+						"name": "priority",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Filter by one or more priority levels."
+						}
+					},
+					{
+						"name": "tag",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Filter by one or more tags (e.g. security certification labels like \"ISO\")."
+						}
+					},
+					{
+						"name": "easy_win",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "When true, return only insights flagged as easy wins."
+						}
+					},
+					{
+						"name": "cloud_flows",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "When true, return only insights that have associated CloudFlow automations."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Token from a previous response to fetch the next page."
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of results per page (default 50, max 500).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 500)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "pagination",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "page_token",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Token to retrieve the next page. Absent when there are no more pages."
+									}
+								},
+								{
+									"name": "row_count",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "Number of items in this page."
+									}
+								}
+							],
+							"description": "Cursor-based pagination metadata."
+						}
+					},
+					{
+						"name": "results",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "categories",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Categories this insight belongs to."
+										}
+									},
+									{
+										"name": "cloud_flow_template_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of a CloudFlow template that can automate the remediation of this insight."
+										}
+									},
+									{
+										"name": "cloud_provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The cloud provider associated with the resource."
+										}
+									},
+									{
+										"name": "detailed_description_mdx",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "A detailed description of the insight in MDX format."
+										}
+									},
+									{
+										"name": "dismissal_details",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "comment",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "An optional free-text comment providing additional context."
+													}
+												},
+												{
+													"name": "reason",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The reason for dismissal."
+													}
+												}
+											],
+											"description": "Details for why an insight was dismissed."
+										}
+									},
+									{
+										"name": "display_status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The display status of the insight."
+										}
+									},
+									{
+										"name": "easy_win_description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "A description of why this insight is considered an easy win."
+										}
+									},
+									{
+										"name": "key",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique key identifying this insight."
+										}
+									},
+									{
+										"name": "last_status_change",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "last_changed_at",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "user_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.\n"
+													}
+												}
+											],
+											"description": "If set, this object contains the last status change made by a user for this insight"
+										}
+									},
+									{
+										"name": "last_updated",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Timestamp of the last update to this insight."
+										}
+									},
+									{
+										"name": "report_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to an external report related to this insight."
+										}
+									},
+									{
+										"name": "short_description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "A brief summary of the insight."
+										}
+									},
+									{
+										"name": "source",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The source that generated the insight."
+										}
+									},
+									{
+										"name": "summary",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "operational_risks",
+													"float64": {
+														"computed_optional_required": "computed",
+														"description": "Total number of operational risks."
+													}
+												},
+												{
+													"name": "performance_risks",
+													"float64": {
+														"computed_optional_required": "computed",
+														"description": "Total number of performance risks."
+													}
+												},
+												{
+													"name": "potential_daily_savings",
+													"float64": {
+														"computed_optional_required": "computed",
+														"description": "Total potential daily savings in USD."
+													}
+												},
+												{
+													"name": "reliability_risks",
+													"float64": {
+														"computed_optional_required": "computed",
+														"description": "Total number of reliability risks."
+													}
+												},
+												{
+													"name": "security_risks",
+													"float64": {
+														"computed_optional_required": "computed",
+														"description": "Total number of security risks."
+													}
+												},
+												{
+													"name": "sustainability_risks",
+													"float64": {
+														"computed_optional_required": "computed",
+														"description": "Total number of sustainability risks."
+													}
+												}
+											],
+											"description": "Aggregate summary of risks and savings across all resource results for an insight."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Tags for the insight, primarily used for security certification labels (e.g. ISO)."
+										}
+									},
+									{
+										"name": "title",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The display title of the insight."
+										}
+									}
+								]
+							},
+							"description": "List of insight results."
+						}
+					}
+				],
+				"description": "Manage cloud insights representing recommendations and findings for cloud resources.",
+				"markdown_description": "Manage cloud insights representing recommendations and findings for cloud resources."
+			}
+		},
+		{
 			"name": "invoice",
 			"schema": {
 				"attributes": [
