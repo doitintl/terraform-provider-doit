@@ -70,10 +70,12 @@ func (ds *insightResourceResultsDataSource) Read(ctx context.Context, req dataso
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If required inputs are unknown, return unknown for computed outputs only.
-	// page_token is computed (overwritten by API response or set to null in auto mode).
-	// max_results is a pure user input — never overwritten, so leave it untouched.
-	if data.SourceId.IsUnknown() || data.InsightKey.IsUnknown() {
+	// Guard against any unknown inputs (source_id, insight_key, max_results,
+	// page_token). Using IsFullyKnown catches derived values that aren't
+	// resolved yet during planning — prevents calling ValueString/ValueInt64
+	// on unknowns. Only computed outputs are set to unknown; max_results is
+	// a pure user input and left untouched.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.ResourceResults = types.ListUnknown(datasource_insight_resource_results.ResourceResultsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -93,11 +95,9 @@ func (ds *insightResourceResultsDataSource) Read(ctx context.Context, req dataso
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResults := int(data.MaxResults.ValueInt64())
-		params.MaxResults = &maxResults
+		params.MaxResults = new(int(data.MaxResults.ValueInt64()))
 		if !data.PageToken.IsNull() {
-			v := data.PageToken.ValueString()
-			params.PageToken = &v
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := ds.client.GetInsightResourceResultsWithResponse(ctx, sourceID, insightKey, params)
@@ -125,8 +125,7 @@ func (ds *insightResourceResultsDataSource) Read(ctx context.Context, req dataso
 	} else {
 		// Auto mode: fetch all pages
 		if !data.PageToken.IsNull() {
-			v := data.PageToken.ValueString()
-			params.PageToken = &v
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
 			apiResp, err := ds.client.GetInsightResourceResultsWithResponse(ctx, sourceID, insightKey, params)

@@ -82,24 +82,19 @@ func (ds *insightsDataSource) Read(ctx context.Context, req datasource.ReadReque
 	params := &models.GetInsightResultsParams{}
 
 	if !data.SearchTerm.IsNull() {
-		v := data.SearchTerm.ValueString()
-		params.SearchTerm = &v
+		params.SearchTerm = new(data.SearchTerm.ValueString())
 	}
 	if !data.Category.IsNull() {
-		v := models.GetInsightResultsParamsCategory(data.Category.ValueString())
-		params.Category = &v
+		params.Category = new(models.GetInsightResultsParamsCategory(data.Category.ValueString()))
 	}
 	if !data.CloudProvider.IsNull() {
-		v := data.CloudProvider.ValueString()
-		params.CloudProvider = &v
+		params.CloudProvider = new(data.CloudProvider.ValueString())
 	}
 	if !data.EasyWin.IsNull() {
-		v := data.EasyWin.ValueBool()
-		params.EasyWin = &v
+		params.EasyWin = new(data.EasyWin.ValueBool())
 	}
 	if !data.CloudFlows.IsNull() {
-		v := data.CloudFlows.ValueBool()
-		params.CloudFlows = &v
+		params.CloudFlows = new(data.CloudFlows.ValueBool())
 	}
 
 	// List filters: display_status, priority, source, tag
@@ -151,11 +146,9 @@ func (ds *insightsDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		maxResults := int(data.MaxResults.ValueInt64())
-		params.MaxResults = &maxResults
+		params.MaxResults = new(int(data.MaxResults.ValueInt64()))
 		if !data.PageToken.IsNull() {
-			v := data.PageToken.ValueString()
-			params.PageToken = &v
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 
 		apiResp, err := ds.client.GetInsightResultsWithResponse(ctx, params)
@@ -196,8 +189,7 @@ func (ds *insightsDataSource) Read(ctx context.Context, req datasource.ReadReque
 	} else {
 		// Auto mode: fetch all pages
 		if !data.PageToken.IsNull() {
-			v := data.PageToken.ValueString()
-			params.PageToken = &v
+			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
 			apiResp, err := ds.client.GetInsightResultsWithResponse(ctx, params)
