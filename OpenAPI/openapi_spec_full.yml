@@ -16,6 +16,8 @@ tags:
     description: Custom notes added to cost data to provide contextual information.
   - name: Labels
     description: Create and manage labels to organize and categorize your cloud resources.
+  - name: Reports Settings
+    description: Configure presentation settings for Cloud Analytics reports, including custom color themes.
   - name: Allocations
     description: Define how costs are distributed across your organization.
   - name: Folders
@@ -896,6 +898,172 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
+  "/analytics/v1/settings/themes":
+    get:
+      tags:
+        - Settings
+      summary: List custom themes
+      description: Returns the list of custom color themes defined for your account.
+      operationId: listCustomThemes
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rowCount:
+                    type: integer
+                    description: Total number of custom themes in the result set.
+                  themes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CustomTheme"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Settings
+      summary: Create a custom theme
+      description: Creates a new custom color theme. Requires Cloud Analytics Admin permission.
+      operationId: createCustomTheme
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomThemeRequest"
+        required: true
+      responses:
+        "201":
+          description: Created - Custom theme created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomTheme"
+          links:
+            getCustomTheme:
+              operationId: getCustomTheme
+              parameters:
+                id: $response.body#/id
+            updateCustomTheme:
+              operationId: updateCustomTheme
+              parameters:
+                id: $response.body#/id
+            deleteCustomTheme:
+              operationId: deleteCustomTheme
+              parameters:
+                id: $response.body#/id
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/settings/themes/{id}":
+    get:
+      tags:
+        - Settings
+      summary: Retrieve a custom theme
+      description: Returns a custom theme by the specified Id.
+      operationId: getCustomTheme
+      parameters:
+        - name: id
+          in: path
+          description: Custom theme ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Custom theme returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomTheme"
+          links:
+            updateCustomTheme:
+              operationId: updateCustomTheme
+              parameters:
+                id: $request.path.id
+            deleteCustomTheme:
+              operationId: deleteCustomTheme
+              parameters:
+                id: $request.path.id
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      tags:
+        - Settings
+      summary: Update a custom theme
+      description: Updates the custom theme specified by the Id. Requires Cloud Analytics Admin permission.
+      operationId: updateCustomTheme
+      parameters:
+        - name: id
+          in: path
+          description: Custom theme ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomThemeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK - Custom theme updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomTheme"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+    delete:
+      tags:
+        - Settings
+      summary: Delete a custom theme
+      description: Deletes the custom theme specified by the Id. Requires Cloud Analytics Admin permission.
+      operationId: deleteCustomTheme
+      parameters:
+        - name: id
+          in: path
+          description: Custom theme ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Custom theme deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   /analytics/v1/budgets:
     get:
       tags:
@@ -5883,6 +6051,90 @@ components:
           items:
             $ref: "#/components/schemas/LabelAssignmentObject"
           description: Array of objects currently assigned to the label.
+    HexColor:
+      type: string
+      description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+      pattern: "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+      example: "#1A73E8"
+    ThemeColors:
+      type: object
+      required:
+        - light
+        - dark
+      description: |-
+        Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+      properties:
+        light:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: "#/components/schemas/HexColor"
+          description: Colors used when the report is displayed in light mode.
+        dark:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: "#/components/schemas/HexColor"
+          description: Colors used when the report is displayed in dark mode.
+    CustomTheme:
+      required:
+        - id
+        - name
+        - primaryColor
+        - colors
+      type: object
+      description: A custom color theme applied to Cloud Analytics reports.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the custom theme.
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
+        createTime:
+          type: string
+          format: date-time
+          description: The creation time of the custom theme.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the custom theme was last updated.
+    CreateCustomThemeRequest:
+      required:
+        - name
+        - primaryColor
+        - colors
+      type: object
+      description: Request body for creating a custom theme.
+      properties:
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
+    UpdateCustomThemeRequest:
+      type: object
+      description: Request body for updating a custom theme. Only provided fields are modified.
+      properties:
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+          nullable: true
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
     Budget:
       required:
         - currency
