@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -562,23 +561,4 @@ func mapInsightRespToResourceModel(ctx context.Context, resp *models.InsightResp
 	}
 
 	return diags
-}
-
-// planModifier that makes a string attribute require replacement on change.
-var _ planmodifier.String = stringRequiresReplace{}
-
-type stringRequiresReplace struct{}
-
-func (m stringRequiresReplace) Description(_ context.Context) string {
-	return "If the value of this attribute changes, Terraform will destroy and recreate the resource."
-}
-
-func (m stringRequiresReplace) MarkdownDescription(ctx context.Context) string {
-	return m.Description(ctx)
-}
-
-func (m stringRequiresReplace) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if !req.StateValue.IsNull() && !req.PlanValue.Equal(req.StateValue) {
-		resp.RequiresReplace = true
-	}
 }

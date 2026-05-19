@@ -185,14 +185,8 @@ resource "doit_insight_resource_results" "detailed_findings" {
 ### Optional
 
 - `insight_key` (String) The unique key identifying the insight.
-- `max_results` (Number) Maximum number of results per page (default 1000, max 5000).
 - `source_id` (String) The identifier of the source that generated the insight.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
-
-### Read-Only
-
-- `page_token` (String) Token from a previous response to fetch the next page.
-- `row_count` (Number)
 
 <a id="nestedatt--resource_results"></a>
 ### Nested Schema for `resource_results`

@@ -45,10 +45,6 @@ func TestAccInsightResourceResults_Basic(t *testing.T) {
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results"),
 						knownvalue.ListSizeExact(1)),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("row_count"),
-						knownvalue.Int64Exact(1)),
 
 					// Required fields on element
 					statecheck.ExpectKnownValue(
@@ -160,10 +156,6 @@ func TestAccInsightResourceResults_Update(t *testing.T) {
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results"),
 						knownvalue.ListSizeExact(2)),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("row_count"),
-						knownvalue.Int64Exact(2)),
 				},
 			},
 			// Step 3: Drift check
@@ -289,10 +281,6 @@ func TestAccInsightResourceResults_Pagination(t *testing.T) {
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results"),
 						knownvalue.ListSizeExact(numResults)),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("row_count"),
-						knownvalue.Int64Exact(int64(numResults))),
 				},
 			},
 			// Step 2: Drift check — verifies Read auto-paginates and returns all results
@@ -329,7 +317,7 @@ func TestAccInsightResourceResults_ImportState(t *testing.T) {
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "insight_key",
 				ImportStateVerifyIgnore: []string{
-					"timeouts", "max_results",
+					"timeouts",
 					// Optional fields not returned by API when empty
 					"resource_results.0.external_id",
 					"resource_results.0.external_url",
@@ -612,10 +600,6 @@ func TestAccInsightResourceResults_RemoveResult(t *testing.T) {
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results"),
 						knownvalue.ListSizeExact(2)),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("row_count"),
-						knownvalue.Int64Exact(2)),
 				},
 			},
 			// Step 2: Remove second result (go back to 1)
@@ -631,10 +615,6 @@ func TestAccInsightResourceResults_RemoveResult(t *testing.T) {
 						"doit_insight_resource_results.test",
 						tfjsonpath.New("resource_results"),
 						knownvalue.ListSizeExact(1)),
-					statecheck.ExpectKnownValue(
-						"doit_insight_resource_results.test",
-						tfjsonpath.New("row_count"),
-						knownvalue.Int64Exact(1)),
 					// Verify the remaining result is the first one
 					statecheck.ExpectKnownValue(
 						"doit_insight_resource_results.test",
@@ -677,7 +657,7 @@ func TestAccInsightResourceResults_AllFieldsImport(t *testing.T) {
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "insight_key",
 				ImportStateVerifyIgnore: []string{
-					"timeouts", "max_results",
+					"timeouts",
 				},
 			},
 			// Step 3: Drift check after import — re-apply same config, expect no changes

@@ -156,7 +156,8 @@ func TestAccInsightResource_AllFields(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("report_url"),
-						knownvalue.StringExact(fmt.Sprintf("https://console.doit.com/customers/%s/analytics/reports/test-report", os.Getenv("TEST_CUSTOMER_ID")))), statecheck.ExpectKnownValue(
+						knownvalue.StringExact(fmt.Sprintf("https://console.doit.com/customers/%s/analytics/reports/test-report", os.Getenv("TEST_CUSTOMER_ID")))),
+					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("tags"),
 						knownvalue.ListSizeExact(0)),
@@ -321,7 +322,8 @@ func TestAccInsightResource_UpdateOptionalFields(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("report_url"),
-						knownvalue.StringExact(fmt.Sprintf("https://console.doit.com/customers/%s/analytics/reports/test-report", os.Getenv("TEST_CUSTOMER_ID")))), statecheck.ExpectKnownValue(
+						knownvalue.StringExact(fmt.Sprintf("https://console.doit.com/customers/%s/analytics/reports/test-report", os.Getenv("TEST_CUSTOMER_ID")))),
+					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("cloud_flow_template_id"),
 						knownvalue.StringExact("tmpl-12345")),

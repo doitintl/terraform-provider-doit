@@ -24,8 +24,10 @@ type (
 		client *models.ClientWithResponses
 	}
 	insightResourceResultsModel struct {
-		rr.InsightResourceResultsModel
-		Timeouts timeouts.Value `tfsdk:"timeouts"`
+		InsightKey      types.String   `tfsdk:"insight_key"`
+		ResourceResults types.List     `tfsdk:"resource_results"`
+		SourceId        types.String   `tfsdk:"source_id"`
+		Timeouts        timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -73,6 +75,12 @@ func (r *insightResourceResultsResource) ImportState(ctx context.Context, req re
 
 func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := rr.InsightResourceResultsResourceSchema(ctx)
+
+	// Remove pagination attributes — we always fetch all results for proper state comparison,
+	// so these API-level fields are not meaningful in a Terraform resource.
+	delete(s.Attributes, "max_results")
+	delete(s.Attributes, "page_token")
+	delete(s.Attributes, "row_count")
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
@@ -199,7 +207,6 @@ func mapRRResponseToModel(ctx context.Context, results []models.ResourceResult, 
 		}, []rr.ResourceResultsValue{})
 		diags.Append(emptyDiags...)
 		state.ResourceResults = emptyList
-		state.RowCount = types.Int64Value(0)
 		return diags
 	}
 
@@ -316,7 +323,6 @@ func mapRRResponseToModel(ctx context.Context, results []models.ResourceResult, 
 	}, resultValues)
 	diags.Append(listDiags...)
 	state.ResourceResults = rrList
-	state.RowCount = types.Int64Value(int64(len(results)))
 
 	return diags
 }
@@ -348,17 +354,12 @@ func overlayRRComputedFields(ctx context.Context, results []models.ResourceResul
 	resolved := insightResourceResultsModel{Timeouts: plan.Timeouts}
 	resolved.SourceId = plan.SourceId
 	resolved.InsightKey = plan.InsightKey
-	resolved.MaxResults = plan.MaxResults
 	diags.Append(mapRRResponseToModel(ctx, results, &resolved)...)
 	if diags.HasError() {
 		return diags
 	}
 
-	// Phase 2: Overlay computed-only fields.
-	plan.RowCount = resolved.RowCount
-	plan.PageToken = resolved.PageToken
-
-	// Phase 3: For resource_results, walk each element and overlay
+	// Phase 2: For resource_results, walk each element and overlay
 	// computed fields (severity, resolved, enhancement) from the API response
 	// while preserving user-provided values. Uses key-based matching by
 	// resource_id since the API may return elements in a different order.
@@ -560,9 +561,6 @@ func (r *insightResourceResultsResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	// PageToken from response — always set to null after create (we have all results)
-	plan.PageToken = types.StringNull()
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -619,7 +617,6 @@ func (r *insightResourceResultsResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	state.PageToken = types.StringNull()
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -666,7 +663,6 @@ func (r *insightResourceResultsResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	plan.PageToken = types.StringNull()
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
