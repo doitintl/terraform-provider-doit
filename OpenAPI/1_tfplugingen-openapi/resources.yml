@@ -132,6 +132,32 @@ resources:
     read:
       path: /analytics/v1/labels/{id}/assignments
       method: GET
+  insight:
+    create:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: POST
+    read:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: GET
+    update:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: POST
+    delete:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: DELETE
+  insight_resource_results:
+    create:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
+      method: POST
+    read:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
+      method: GET
+    update:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
+      method: POST
+    delete:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
+      method: POST
   user:
     create:
       path: /iam/v1/users/invite

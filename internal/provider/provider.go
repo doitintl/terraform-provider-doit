@@ -307,6 +307,8 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewFolderResource,
 		NewDatahubDatasetResource,
 		NewLabelAssignmentsResource,
+		NewInsightResource,
+		NewInsightResourceResultsResource,
 		NewSharingResource,
 		NewUserResource,
 	}
