@@ -3536,7 +3536,11 @@ paths:
     get:
       tags:
         - Insights
-      summary: Get Insight Results containing aggregate summary of results
+      summary: List insights
+      description: |
+        Returns a paginated list of insights with their aggregate summaries (savings, risk counts).
+        Use query parameters to filter by status, category, provider, or priority.
+        Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResults
       parameters:
         - in: query
@@ -3639,7 +3643,12 @@ paths:
     post:
       tags:
         - Insights
-      summary: Post Insight Results
+      summary: Create insights (batch)
+      description: |
+        Creates or updates multiple insights in a single batch request.
+        Each insight in the batch includes its metadata and resource results inline.
+        For granular control over insight metadata and resource results independently,
+        use the single-insight and resource-results endpoints instead.
       operationId: postInsightResults
       requestBody:
         content:
@@ -3668,7 +3677,11 @@ paths:
     delete:
       tags:
         - Insights
-      summary: Delete Insight Results
+      summary: Delete insights (batch)
+      description: |
+        Deletes all insights matching the specified key from the batch source.
+        This removes the insight and all its associated resource results.
+        For single-insight deletion, use `DELETE /source/{sourceID}/insight/{insightKey}` instead.
       operationId: deleteInsightResults
       parameters:
         - in: query
@@ -3690,7 +3703,10 @@ paths:
     get:
       tags:
         - Insights
-      summary: Get Single Insight Result
+      summary: Retrieve an insight
+      description: |
+        Returns the metadata and aggregate summary for a single insight identified by source and key.
+        Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResult
       parameters:
         - in: path
@@ -3725,8 +3741,11 @@ paths:
     post:
       tags:
         - Insights
-      summary: Create or Update Single Insight
-      description: Creates or updates a single insight for the given source and key. If an insight with the same key already exists for the source, it will be updated.
+      summary: Create or update an insight
+      description: |
+        Creates or updates a single insight for the given source and key.
+        If an insight with the same key already exists for the source, it will be updated.
+        Resource results are managed separately via the resource-results endpoint.
       operationId: postInsightResult
       parameters:
         - in: path
@@ -3748,7 +3767,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InsightRequest"
+              $ref: "#/components/schemas/InsightMetadataRequest"
       responses:
         "200":
           description: Successful operation
@@ -3767,7 +3786,10 @@ paths:
     delete:
       tags:
         - Insights
-      summary: Delete Single Insight
+      summary: Delete an insight
+      description: |
+        Permanently deletes a single insight and all its associated resource results.
+        Only insights created via the public API can be deleted.
       operationId: deleteInsightResult
       parameters:
         - in: path
@@ -3798,6 +3820,11 @@ paths:
       tags:
         - Insights
       summary: Update Insight Status
+      description: |
+        Updates the display status (e.g. actionable, acknowledged, dismissed) of a single insight.
+        Only insights created via the public API can have their status changed.
+        Deprecated: use the status field on the create/update insight endpoint instead.
+      deprecated: true
       operationId: updateInsightStatus
       parameters:
         - in: path
@@ -3837,7 +3864,11 @@ paths:
     get:
       tags:
         - Insights
-      summary: Get Insight Resource Results
+      summary: List resource results for an insight
+      description: |
+        Returns a paginated list of individual resource-level results for a specific insight.
+        Each resource result represents a single cloud resource (e.g. an EC2 instance, a GCS bucket)
+        affected by the insight, along with its risk scores or potential savings.
       operationId: getInsightResourceResults
       parameters:
         - in: path
@@ -3882,6 +3913,61 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Insights
+      summary: Replace resource results for an insight
+      description: >
+        Replaces all resource results for the specified insight. Any existing unresolved resource results not present in the new set will be removed. The response includes server-computed fields (severity, resolved, enhancement) for each resource result. To delete all resource results, send an empty array.
+
+      operationId: postInsightResourceResults
+      parameters:
+        - in: path
+          name: sourceID
+          description: Only insights created via the public API can be managed. Currently only "public-api" is supported.
+          required: true
+          schema:
+            type: string
+            enum:
+              - public-api
+        - in: path
+          name: insightKey
+          description: The unique key identifying the insight.
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: maxResults
+          description: Maximum number of results per page in the response (default 1000, max 5000).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5000
+            default: 1000
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResourceResultsBody"
+      responses:
+        "200":
+          description: Resource results created/replaced successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResultsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
 components:
   schemas:
     AccountManagerListItem:
@@ -6415,6 +6501,14 @@ components:
           type: string
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
           example: root
+    CreateResourceResultsBody:
+      type: object
+      description: Request body for creating or replacing resource results for an insight.
+      required:
+        - resourceResults
+      properties:
+        resourceResults:
+          $ref: "#/components/schemas/ResourceResults"
     CreateResultsBody:
       type: object
       description: Request body for creating multiple insights in a batch.
@@ -7622,9 +7716,48 @@ components:
           type: integer
           description: Assets rows count
           format: int64
+    InsightMetadataRequest:
+      type: object
+      description: Request body for creating or updating a single insight's metadata. Resource results are managed separately via the resource-results endpoint.
+      required: [key, title, shortDescription, cloudProvider, categories]
+      properties:
+        key:
+          type: string
+          description: A unique key for this insight within the source.
+        title:
+          type: string
+          description: The display title of the insight.
+        shortDescription:
+          type: string
+          description: A brief summary of the insight.
+        detailedDescriptionMdx:
+          type: string
+          description: A detailed description of the insight in MDX format.
+        cloudProvider:
+          $ref: "#/components/schemas/CloudProvider"
+        categories:
+          description: One or more categories this insight belongs to.
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/CreateCategory"
+        reportUrl:
+          type: string
+          description: URL to an external report related to this insight.
+        cloudFlowTemplateId:
+          type: string
+          description: ID of a CloudFlow template that can automate the remediation of this insight.
+        easyWinDescription:
+          type: string
+          description: A description of why this insight is considered an easy win.
+        status:
+          $ref: "#/components/schemas/DisplayStatus"
+        dismissalDetails:
+          $ref: "#/components/schemas/DismissalDetails"
     InsightRequest:
       type: object
-      description: Request body for creating or updating an insight.
+      description: Request body for creating or updating an insight via the batch endpoint. Includes resource results.
       required: [key, title, shortDescription, cloudProvider, categories, resourceResults]
       properties:
         key:
@@ -7648,11 +7781,6 @@ components:
           uniqueItems: true
           items:
             $ref: "#/components/schemas/CreateCategory"
-        tags:
-          description: Tags for the insight, primarily used for security certification labels (e.g. ISO).
-          type: array
-          items:
-            type: string
         reportUrl:
           type: string
           description: URL to an external report related to this insight.
@@ -7713,6 +7841,8 @@ components:
         easyWinDescription:
           type: string
           description: A description of why this insight is considered an easy win.
+        dismissalDetails:
+          $ref: "#/components/schemas/DismissalDetails"
     InsightSummary:
       type: object
       description: Aggregate summary of risks and savings across all resource results for an insight.
@@ -8409,7 +8539,7 @@ components:
           description: Resource owner (only present if requester doesn't have access)
     ResourceResult:
       type: object
-      description: A single resource-level result within an insight.
+      description: A single resource-level result within an insight, as returned in API responses.
       required:
         - resourceId
         - resultType
@@ -8434,11 +8564,11 @@ components:
           example: eu-west-2
         resolved:
           type: boolean
-          description: Whether this resource-level issue has been resolved.
+          description: Whether this resource-level issue has been resolved. Computed server-side.
         severity:
           type: string
           enum: ["critical", "high", "medium", "low"]
-          description: The severity level of the finding.
+          description: The severity level of the finding. Computed server-side from the security risk counts.
         externalId:
           type: string
           description: the external ID of the resource in the provider's system for the resource
@@ -8481,6 +8611,89 @@ components:
       properties:
         value: {type: string, description: "The priority level (e.g. Low, Medium, High)."}
         priorityScore: {type: number, format: double, description: "Numeric priority score."}
+    ResourceResultRequest:
+      type: object
+      description: >
+        A single resource-level result for creating or updating an insight. Server-computed fields (severity, resolved, enhancement) are not accepted here and will be ignored. Identity fields (resourceId, resultType, account, cloudProvider) form the composite key. The fields location and resource_type are set on creation only — any values provided for these fields during subsequent upserts are silently ignored.
+
+      required:
+        - resourceId
+        - resultType
+        - account
+        - cloudProvider
+      properties:
+        resourceId:
+          type: string
+          description: The cloud resource identifier.
+        resourceType:
+          description: >
+            What the resource actually is, e.g. for an EC2 resource ID, this field would be `instance`. Immutable after creation — updates to this field are silently ignored.
+
+          type: string
+          example: instance, disk, cache
+        cloudProvider:
+          description: Immutable after creation — updates to this field are silently ignored.
+          allOf:
+            - $ref: "#/components/schemas/CloudProvider"
+        account:
+          type: string
+          description: The cloud account or project ID containing this resource. Immutable after creation — updates to this field are silently ignored.
+        location:
+          type: string
+          description: >
+            Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.
+
+          example: eu-west-2
+        externalId:
+          type: string
+          description: the external ID of the resource in the provider's system for the resource
+        externalUrl:
+          type: string
+          description: the URL to the resource-level issue in the provider's system
+        metadata:
+          type: object
+          description: contains any additional information for the resource results
+        resultType:
+          type: string
+          enum: ["security_risk", "potential_daily_savings", "potential_daily_savings_with_recommendation", "potential_daily_savings_with_cluster_agent"]
+          description: The discriminator property that determines which fields are populated in the 'result' object.
+        result:
+          description: >
+            The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
+
+          allOf:
+            - $ref: '#/components/schemas/ResourceResultRequestResult'
+    ResourceResultRequestResult:
+      description: >
+        The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
+
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+          description: the daily saving amount for this result
+        critical:
+          type: integer
+          description: number of critical security risks
+        high:
+          type: integer
+          description: number of high security risks
+        medium:
+          type: integer
+          description: number of medium security risks
+        low:
+          type: integer
+          description: number of low security risks
+        current:
+          type: string
+          description: the current state (i.e. current instance type)
+        recommendation:
+          type: string
+          description: the recommended state (i.e. recommended instance type)
+        agentInstalled:
+          type: boolean
+          description: true if the agent is installed
     ResourceResultResult:
       description: >
         The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled.
@@ -8514,9 +8727,9 @@ components:
           description: true if the agent is installed
     ResourceResults:
       type: array
-      description: A list of resource-level results.
+      description: A list of resource-level results for creating or updating an insight.
       items:
-        $ref: "#/components/schemas/ResourceResult"
+        $ref: "#/components/schemas/ResourceResultRequest"
     ResourceResultsResponse:
       type: object
       required:

@@ -179,4 +179,16 @@ data_sources:
   cloud_diagram_snapshots:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/snapshots
+  # Insight data sources
+  insight:
+    read:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}
+      method: GET
+  insights:
+    read:
+      path: /insights/v1/results
+      method: GET
+  insight_resource_results:
+    read:
+      path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
       method: GET
