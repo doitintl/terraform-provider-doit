@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.4.0 (2026-05-21)
+
+### FEATURES
+
+- **resource/doit_folder**: New resource for managing Cloud Analytics folders ([#181](https://github.com/doitintl/terraform-provider-doit/pull/181))
+- **resource/doit_sharing**: New resource for managing sharing permissions on reports, budgets, alerts, and allocations ([#176](https://github.com/doitintl/terraform-provider-doit/pull/176))
+- **resource/doit_user**: New resource for user invitations and profile management ([#179](https://github.com/doitintl/terraform-provider-doit/pull/179))
+- **resource/doit_insight**: New resource for managing cloud optimization insights ([#175](https://github.com/doitintl/terraform-provider-doit/pull/175))
+- **resource/doit_insight_resource_results**: New resource for managing insight resource-level results ([#175](https://github.com/doitintl/terraform-provider-doit/pull/175))
+- **data-source/doit_folder, doit_folders**: New data sources for Cloud Analytics folders ([#182](https://github.com/doitintl/terraform-provider-doit/pull/182))
+- **data-source/doit_sharing**: New data source for resource sharing permissions ([#177](https://github.com/doitintl/terraform-provider-doit/pull/177))
+- **data-source/doit_insight, doit_insights, doit_insight_resource_results**: New data sources for cloud optimization insights ([#191](https://github.com/doitintl/terraform-provider-doit/pull/191))
+- **data-source/doit_dimension**: New singular data source for retrieving a single dimension by type/ID ([#167](https://github.com/doitintl/terraform-provider-doit/pull/167))
+- **data-source/doit_cloud_diagrams**: New data source for searching cloud infrastructure diagrams by resource IDs ([#168](https://github.com/doitintl/terraform-provider-doit/pull/168))
+
+### ENHANCEMENTS
+
+- **resource/doit_report, doit_allocation**: Added `folder_id` attribute for organizing resources in Cloud Analytics folders ([#183](https://github.com/doitintl/terraform-provider-doit/pull/183))
+- **resource/doit_report**: Added `total_over_total` and `count` options to the aggregation enum ([#184](https://github.com/doitintl/terraform-provider-doit/pull/184))
+- **data-source/doit_users**: Updated for IAM API v2 with `email` filter and `job_title` attribute ([#178](https://github.com/doitintl/terraform-provider-doit/pull/178))
+- **data-source/doit_anomaly, doit_anomalies**: Added `acknowledged`, `acknowledged_at`, `acknowledged_by` attributes ([#174](https://github.com/doitintl/terraform-provider-doit/pull/174))
+- **data-source/doit_anomaly, doit_anomalies**: Added `notifications` support ([#189](https://github.com/doitintl/terraform-provider-doit/pull/189))
+- **data-source/doit_anomaly, doit_anomalies**: Added `labels` (cost-allocation tags) support ([#170](https://github.com/doitintl/terraform-provider-doit/pull/170))
+- **data-source/doit_commitment, doit_commitments**: Added `marketplace` and `forecast` fields ([#171](https://github.com/doitintl/terraform-provider-doit/pull/171))
+- **data-source/doit_support_request**: Added `platform_info` attribute ([#186](https://github.com/doitintl/terraform-provider-doit/pull/186))
+- Added configurable timeouts for all resources and data sources ([#169](https://github.com/doitintl/terraform-provider-doit/pull/169))
+
+### BUG FIXES
+
+- **resource/doit_allocation**: Prevent `inverse_selection` from silently overwriting `inverse` ([#172](https://github.com/doitintl/terraform-provider-doit/pull/172))
+- **data-source/doit_insight_resource_results**: Resolve Unknown fields when API key mismatch ([#192](https://github.com/doitintl/terraform-provider-doit/pull/192))
+- **data-source/doit_support_requests**: Align spec with CMP-40423 pagination fix and re-enable tests ([#173](https://github.com/doitintl/terraform-provider-doit/pull/173))
+
+### DOCUMENTATION
+
+- Overhauled README with expanded resource/data source tables, development guide, and nix flake instructions ([#166](https://github.com/doitintl/terraform-provider-doit/pull/166))
+
+### INTERNAL
+
+- Upgraded Go from 1.26.2 to 1.26.3
+- Upgraded golangci-lint from v2.11.4 to v2.12.2 (pre-commit, CI, flake.nix)
+- Upgraded goreleaser-action from v7.0.0 to v7.2.0
+- Upgraded dependencies: `oapi-codegen/runtime` v1.4.0→v1.4.1, `oapi-codegen/oapi-codegen` v2.6.0→v2.7.0, `terraform-plugin-docs` v0.24.0→v0.25.0, `google.golang.org/grpc` v1.80.0→v1.81.1, `hashicorp/go-plugin` v1.7.0→v1.8.0, `golang.org/x/crypto` v0.50.0→v0.51.0, `golang.org/x/net` v0.53.0→v0.54.0
+- Synced upstream OpenAPI spec: Cloud Diagrams API endpoints ([#180](https://github.com/doitintl/terraform-provider-doit/pull/180), [#185](https://github.com/doitintl/terraform-provider-doit/pull/185)), insights API ([#188](https://github.com/doitintl/terraform-provider-doit/pull/188)), ticket tag endpoints ([#187](https://github.com/doitintl/terraform-provider-doit/pull/187))
+
 ## v1.3.4 (2026-04-17)
 
 ### ENHANCEMENTS

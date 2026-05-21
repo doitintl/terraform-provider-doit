@@ -15,6 +15,10 @@ generate:
 	go run ./tools/extract-inline-schemas -input OpenAPI/openapi_spec_full.yml -output OpenAPI/openapi_spec_processed.yml
 	cd OpenAPI/1_tfplugingen-openapi && go generate ./...
 	cd OpenAPI/2_tfplugingen-framework && go generate ./...
+	# Ensure generated JSON files end with a trailing newline (required by pre-commit end-of-file-fixer)
+	for f in OpenAPI/2_tfplugingen-framework/output_datasources.json OpenAPI/2_tfplugingen-framework/output_resources.json; do \
+		[ -n "$$(tail -c 1 "$$f")" ] && echo >> "$$f"; \
+	done
 	cd internal/provider/models && go generate ./...
 
 # Generate provider documentation from templates
