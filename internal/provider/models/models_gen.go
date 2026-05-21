@@ -284,6 +284,54 @@ func (e Category) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramActivityItemActivity.
+const (
+	CloudDiagramActivityItemActivityATTACHMENTCREATE CloudDiagramActivityItemActivity = "ATTACHMENT_CREATE"
+	CloudDiagramActivityItemActivityATTACHMENTDELETE CloudDiagramActivityItemActivity = "ATTACHMENT_DELETE"
+	CloudDiagramActivityItemActivityATTACHMENTUPDATE CloudDiagramActivityItemActivity = "ATTACHMENT_UPDATE"
+	CloudDiagramActivityItemActivityGROUPCREATE      CloudDiagramActivityItemActivity = "GROUP_CREATE"
+	CloudDiagramActivityItemActivityGROUPDELETE      CloudDiagramActivityItemActivity = "GROUP_DELETE"
+	CloudDiagramActivityItemActivityGROUPUPDATE      CloudDiagramActivityItemActivity = "GROUP_UPDATE"
+	CloudDiagramActivityItemActivityLINKCREATE       CloudDiagramActivityItemActivity = "LINK_CREATE"
+	CloudDiagramActivityItemActivityLINKDELETE       CloudDiagramActivityItemActivity = "LINK_DELETE"
+	CloudDiagramActivityItemActivityLINKUPDATE       CloudDiagramActivityItemActivity = "LINK_UPDATE"
+	CloudDiagramActivityItemActivityNODECREATE       CloudDiagramActivityItemActivity = "NODE_CREATE"
+	CloudDiagramActivityItemActivityNODEDELETE       CloudDiagramActivityItemActivity = "NODE_DELETE"
+	CloudDiagramActivityItemActivityNODEUPDATE       CloudDiagramActivityItemActivity = "NODE_UPDATE"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramActivityItemActivity enum.
+func (e CloudDiagramActivityItemActivity) Valid() bool {
+	switch e {
+	case CloudDiagramActivityItemActivityATTACHMENTCREATE:
+		return true
+	case CloudDiagramActivityItemActivityATTACHMENTDELETE:
+		return true
+	case CloudDiagramActivityItemActivityATTACHMENTUPDATE:
+		return true
+	case CloudDiagramActivityItemActivityGROUPCREATE:
+		return true
+	case CloudDiagramActivityItemActivityGROUPDELETE:
+		return true
+	case CloudDiagramActivityItemActivityGROUPUPDATE:
+		return true
+	case CloudDiagramActivityItemActivityLINKCREATE:
+		return true
+	case CloudDiagramActivityItemActivityLINKDELETE:
+		return true
+	case CloudDiagramActivityItemActivityLINKUPDATE:
+		return true
+	case CloudDiagramActivityItemActivityNODECREATE:
+		return true
+	case CloudDiagramActivityItemActivityNODEDELETE:
+		return true
+	case CloudDiagramActivityItemActivityNODEUPDATE:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudDiagramAttachmentCldType.
 const (
 	CloudDiagramAttachmentCldTypeAWS   CloudDiagramAttachmentCldType = "AWS"
@@ -731,6 +779,27 @@ func (e CloudDiagramNodeCldType) Valid() bool {
 	case AZURE:
 		return true
 	case GCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramNodeActivityActivity.
+const (
+	CloudDiagramNodeActivityActivityNODECREATE CloudDiagramNodeActivityActivity = "NODE_CREATE"
+	CloudDiagramNodeActivityActivityNODEDELETE CloudDiagramNodeActivityActivity = "NODE_DELETE"
+	CloudDiagramNodeActivityActivityNODEUPDATE CloudDiagramNodeActivityActivity = "NODE_UPDATE"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramNodeActivityActivity enum.
+func (e CloudDiagramNodeActivityActivity) Valid() bool {
+	switch e {
+	case CloudDiagramNodeActivityActivityNODECREATE:
+		return true
+	case CloudDiagramNodeActivityActivityNODEDELETE:
+		return true
+	case CloudDiagramNodeActivityActivityNODEUPDATE:
 		return true
 	default:
 		return false
@@ -4004,6 +4073,36 @@ type BudgetListItem struct {
 // Category The insight category.
 type Category string
 
+// CloudDiagramActivityItem An individual activity record within an activity group.
+type CloudDiagramActivityItem struct {
+	// UnderscoreId Activity record ID.
+	UnderscoreId string `json:"_id"`
+
+	// Activity Activity type.
+	Activity CloudDiagramActivityItemActivity `json:"activity"`
+
+	// Group ID of the activity group this record belongs to.
+	Group string `json:"group"`
+
+	// GroupType Activity group sub-type.
+	GroupType *string `json:"group_type,omitempty"`
+
+	// Metadata Activity-specific payload (structure varies by activity type).
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+
+	// ServiceType Cloud service type the activity applies to.
+	ServiceType *string `json:"service_type,omitempty"`
+
+	// Tags Tags associated with the activity.
+	Tags *[]string `json:"tags,omitempty"`
+
+	// Timestamp Timestamp of the activity.
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// CloudDiagramActivityItemActivity Activity type.
+type CloudDiagramActivityItemActivity string
+
 // CloudDiagramAttachment defines model for CloudDiagramAttachment.
 type CloudDiagramAttachment struct {
 	// UnderscoreId Attachment ID.
@@ -4352,6 +4451,21 @@ type CloudDiagramIssue struct {
 	Snoozed *float32 `json:"snoozed,omitempty"`
 }
 
+// CloudDiagramLayerSnapshot A saved snapshot of a diagram layer's state.
+type CloudDiagramLayerSnapshot struct {
+	// UnderscoreId Snapshot ID.
+	UnderscoreId string `json:"_id"`
+
+	// CreatedAt Timestamp when the snapshot was created.
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Name Snapshot name.
+	Name *string `json:"name,omitempty"`
+
+	// PrevState ID of the previous snapshot in the chain.
+	PrevState *string `json:"prevState,omitempty"`
+}
+
 // CloudDiagramLink defines model for CloudDiagramLink.
 type CloudDiagramLink struct {
 	// UnderscoreId Link ID.
@@ -4445,6 +4559,30 @@ type CloudDiagramNode struct {
 // CloudDiagramNodeCldType Cloud account type.
 type CloudDiagramNodeCldType string
 
+// CloudDiagramNodeActivity An individual activity record scoped to a specific component node.
+type CloudDiagramNodeActivity struct {
+	// UnderscoreId Activity record ID.
+	UnderscoreId string `json:"_id"`
+
+	// Activity Activity type.
+	Activity CloudDiagramNodeActivityActivity `json:"activity"`
+
+	// Metadata Activity-specific payload (structure varies by activity type).
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+
+	// Statussheet Layer ID where the activity occurred.
+	Statussheet string `json:"statussheet"`
+
+	// Timestamp Timestamp of the activity.
+	Timestamp time.Time `json:"timestamp"`
+
+	// User ID of the user who performed the activity.
+	User string `json:"user"`
+}
+
+// CloudDiagramNodeActivityActivity Activity type.
+type CloudDiagramNodeActivityActivity string
+
 // CloudDiagramNote A text note placed on the diagram.
 type CloudDiagramNote struct {
 	// UnderscoreId Note ID.
@@ -4530,6 +4668,27 @@ type CloudDiagramSchemeStatussheetInfo struct {
 
 	// Ssid Layer ID.
 	Ssid string `json:"ssid"`
+}
+
+// CloudDiagramSnapshotActivityGroup A snapshot activity group containing the individual activity records that produced it.
+type CloudDiagramSnapshotActivityGroup struct {
+	// UnderscoreId Activity group ID.
+	UnderscoreId string `json:"_id"`
+
+	// Items Individual activity records within this group.
+	Items *[]CloudDiagramActivityItem `json:"items,omitempty"`
+
+	// Snapshot ID of the associated snapshot (equal to the group ID).
+	Snapshot string `json:"snapshot"`
+
+	// Statussheet Layer ID this group belongs to.
+	Statussheet string `json:"statussheet"`
+
+	// Tags Tags associated with the group.
+	Tags *[]string `json:"tags,omitempty"`
+
+	// Timestamp Timestamp of the activity group.
+	Timestamp time.Time `json:"timestamp"`
 }
 
 // CloudDiagramStats Diagram with activity stats for a given time period.
@@ -6874,7 +7033,7 @@ type TicketExtAPI struct {
 	Severity TicketExtAPISeverity `json:"severity"`
 
 	// Subject The subject of the ticket.
-	Subject string `json:"subject"`
+	Subject *string `json:"subject,omitempty"`
 }
 
 // TicketExtAPIPlatform Platform of the ticket.
@@ -7310,6 +7469,9 @@ type N401 = Error
 // N403 Standard error response structure.
 type N403 = Error
 
+// N403ResourceOrForbidden Standard error response structure.
+type N403ResourceOrForbidden = Error
+
 // N404 Standard error response structure.
 type N404 = Error
 
@@ -7618,6 +7780,36 @@ type ListInvoicesParams struct {
 	MaxCreationTime *int64 `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
+// ListCloudDiagramActivityGroupsParams defines parameters for ListCloudDiagramActivityGroups.
+type ListCloudDiagramActivityGroupsParams struct {
+	// SsId Layer ID.
+	SsId string `form:"ss_id" json:"ss_id"`
+
+	// Limit Maximum number of groups to return (default 10).
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of groups to skip (default 0).
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Tags Filter by tags.
+	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
+}
+
+// ListCloudDiagramNodeActivitiesParams defines parameters for ListCloudDiagramNodeActivities.
+type ListCloudDiagramNodeActivitiesParams struct {
+	// SsId Layer ID.
+	SsId string `form:"ss_id" json:"ss_id"`
+
+	// NodeId Node component ID.
+	NodeId string `form:"nodeId" json:"nodeId"`
+
+	// Limit Maximum number of records to return (default 50).
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of records to skip (default 0).
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // GetCloudDiagramComponentsParams defines parameters for GetCloudDiagramComponents.
 type GetCloudDiagramComponentsParams struct {
 	// Components Include components in the layer response.
@@ -7682,6 +7874,24 @@ type GetCloudDiagramsStatsParams struct {
 type GetStatussheetComponentsParams struct {
 	// P Space-separated projection fields for component documents.
 	P *string `form:"p,omitempty" json:"p,omitempty"`
+}
+
+// GetCloudDiagramLayerSnapshotParams defines parameters for GetCloudDiagramLayerSnapshot.
+type GetCloudDiagramLayerSnapshotParams struct {
+	// UnderscoreId Snapshot ID.
+	UnderscoreId string `form:"_id" json:"_id"`
+}
+
+// ListCloudDiagramLayerSnapshotsParams defines parameters for ListCloudDiagramLayerSnapshots.
+type ListCloudDiagramLayerSnapshotsParams struct {
+	// Offset Number of snapshots to skip (default 0).
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Limit Maximum number of snapshots to return (default 10).
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Sort Sort expression (e.g. "-createdAt" for descending).
+	Sort *string `form:"sort,omitempty" json:"sort,omitempty"`
 }
 
 // ListKnownIssuesParams defines parameters for ListKnownIssues.
@@ -8435,6 +8645,12 @@ type ClientInterface interface {
 	// GetInvoice request
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListCloudDiagramActivityGroups request
+	ListCloudDiagramActivityGroups(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCloudDiagramNodeActivities request
+	ListCloudDiagramNodeActivities(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// FindCloudDiagramsWithBody request with any body
 	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -8460,6 +8676,12 @@ type ClientInterface interface {
 	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudDiagramLayerSnapshot request
+	GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCloudDiagramLayerSnapshots request
+	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9520,6 +9742,30 @@ func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListCloudDiagramActivityGroups(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCloudDiagramActivityGroupsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCloudDiagramNodeActivities(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCloudDiagramNodeActivitiesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindCloudDiagramsRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -9630,6 +9876,30 @@ func (c *Client) GetStatussheetComponentsWithBody(ctx context.Context, id string
 
 func (c *Client) GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStatussheetComponentsRequest(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramLayerSnapshotRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCloudDiagramLayerSnapshotsRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -13271,6 +13541,174 @@ func NewGetInvoiceRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListCloudDiagramActivityGroupsRequest generates requests for ListCloudDiagramActivityGroups
+func NewListCloudDiagramActivityGroupsRequest(server string, params *ListCloudDiagramActivityGroupsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/activity")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ss_id", params.SsId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "offset", *params.Offset, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Tags != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "tags", *params.Tags, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListCloudDiagramNodeActivitiesRequest generates requests for ListCloudDiagramNodeActivities
+func NewListCloudDiagramNodeActivitiesRequest(server string, params *ListCloudDiagramNodeActivitiesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/activity/node-activities")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ss_id", params.SsId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nodeId", params.NodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "offset", *params.Offset, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewFindCloudDiagramsRequest calls the generic FindCloudDiagrams builder with application/json body
 func NewFindCloudDiagramsRequest(server string, body FindCloudDiagramsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -13736,6 +14174,148 @@ func NewGetStatussheetComponentsRequestWithBody(server string, id string, params
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetCloudDiagramLayerSnapshotRequest generates requests for GetCloudDiagramLayerSnapshot
+func NewGetCloudDiagramLayerSnapshotRequest(server string, id string, params *GetCloudDiagramLayerSnapshotParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/snapshot", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "_id", params.UnderscoreId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListCloudDiagramLayerSnapshotsRequest generates requests for ListCloudDiagramLayerSnapshots
+func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *ListCloudDiagramLayerSnapshotsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/snapshots", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "offset", *params.Offset, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Sort != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sort", *params.Sort, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -15856,6 +16436,12 @@ type ClientWithResponsesInterface interface {
 	// GetInvoiceWithResponse request
 	GetInvoiceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoiceResp, error)
 
+	// ListCloudDiagramActivityGroupsWithResponse request
+	ListCloudDiagramActivityGroupsWithResponse(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramActivityGroupsResp, error)
+
+	// ListCloudDiagramNodeActivitiesWithResponse request
+	ListCloudDiagramNodeActivitiesWithResponse(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramNodeActivitiesResp, error)
+
 	// FindCloudDiagramsWithBodyWithResponse request with any body
 	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
@@ -15881,6 +16467,12 @@ type ClientWithResponsesInterface interface {
 	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
 
 	GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
+	// GetCloudDiagramLayerSnapshotWithResponse request
+	GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error)
+
+	// ListCloudDiagramLayerSnapshotsWithResponse request
+	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -17928,6 +18520,72 @@ func (r GetInvoiceResp) ContentType() string {
 	return ""
 }
 
+type ListCloudDiagramActivityGroupsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CloudDiagramSnapshotActivityGroup
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCloudDiagramActivityGroupsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCloudDiagramActivityGroupsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCloudDiagramActivityGroupsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListCloudDiagramNodeActivitiesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CloudDiagramNodeActivity
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCloudDiagramNodeActivitiesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCloudDiagramNodeActivitiesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCloudDiagramNodeActivitiesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type FindCloudDiagramsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18066,8 +18724,7 @@ type ExportCloudDiagramJsonResp struct {
 	JSON200      *CloudDiagramExportJsonResponse
 	JSON400      *N400
 	JSON401      *N401
-	JSON403      *N403
-	JSON404      *N404
+	JSON403      *N403ResourceOrForbidden
 }
 
 // Status returns HTTPResponse.Status
@@ -18100,8 +18757,7 @@ type GetStatussheetComponentsResp struct {
 	JSON200      *CloudDiagramStatussheetComponents
 	JSON400      *N400
 	JSON401      *N401
-	JSON403      *N403
-	JSON404      *N404
+	JSON403      *N403ResourceOrForbidden
 }
 
 // Status returns HTTPResponse.Status
@@ -18122,6 +18778,72 @@ func (r GetStatussheetComponentsResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetStatussheetComponentsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetCloudDiagramLayerSnapshotResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramLayerSnapshot
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramLayerSnapshotResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramLayerSnapshotResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCloudDiagramLayerSnapshotResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListCloudDiagramLayerSnapshotsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CloudDiagramLayerSnapshot
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCloudDiagramLayerSnapshotsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCloudDiagramLayerSnapshotsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -20083,6 +20805,24 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 	return ParseGetInvoiceResp(rsp)
 }
 
+// ListCloudDiagramActivityGroupsWithResponse request returning *ListCloudDiagramActivityGroupsResp
+func (c *ClientWithResponses) ListCloudDiagramActivityGroupsWithResponse(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramActivityGroupsResp, error) {
+	rsp, err := c.ListCloudDiagramActivityGroups(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCloudDiagramActivityGroupsResp(rsp)
+}
+
+// ListCloudDiagramNodeActivitiesWithResponse request returning *ListCloudDiagramNodeActivitiesResp
+func (c *ClientWithResponses) ListCloudDiagramNodeActivitiesWithResponse(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramNodeActivitiesResp, error) {
+	rsp, err := c.ListCloudDiagramNodeActivities(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCloudDiagramNodeActivitiesResp(rsp)
+}
+
 // FindCloudDiagramsWithBodyWithResponse request with arbitrary body returning *FindCloudDiagramsResp
 func (c *ClientWithResponses) FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error) {
 	rsp, err := c.FindCloudDiagramsWithBody(ctx, contentType, body, reqEditors...)
@@ -20167,6 +20907,24 @@ func (c *ClientWithResponses) GetStatussheetComponentsWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParseGetStatussheetComponentsResp(rsp)
+}
+
+// GetCloudDiagramLayerSnapshotWithResponse request returning *GetCloudDiagramLayerSnapshotResp
+func (c *ClientWithResponses) GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error) {
+	rsp, err := c.GetCloudDiagramLayerSnapshot(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramLayerSnapshotResp(rsp)
+}
+
+// ListCloudDiagramLayerSnapshotsWithResponse request returning *ListCloudDiagramLayerSnapshotsResp
+func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error) {
+	rsp, err := c.ListCloudDiagramLayerSnapshots(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCloudDiagramLayerSnapshotsResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -23628,6 +24386,100 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 	return response, nil
 }
 
+// ParseListCloudDiagramActivityGroupsResp parses an HTTP response from a ListCloudDiagramActivityGroupsWithResponse call
+func ParseListCloudDiagramActivityGroupsResp(rsp *http.Response) (*ListCloudDiagramActivityGroupsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCloudDiagramActivityGroupsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CloudDiagramSnapshotActivityGroup
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCloudDiagramNodeActivitiesResp parses an HTTP response from a ListCloudDiagramNodeActivitiesWithResponse call
+func ParseListCloudDiagramNodeActivitiesResp(rsp *http.Response) (*ListCloudDiagramNodeActivitiesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCloudDiagramNodeActivitiesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CloudDiagramNodeActivity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseFindCloudDiagramsResp parses an HTTP response from a FindCloudDiagramsWithResponse call
 func ParseFindCloudDiagramsResp(rsp *http.Response) (*FindCloudDiagramsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -23852,18 +24704,11 @@ func ParseExportCloudDiagramJsonResp(rsp *http.Response) (*ExportCloudDiagramJso
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
 
 	}
 
@@ -23906,18 +24751,105 @@ func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetCompo
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramLayerSnapshotResp parses an HTTP response from a GetCloudDiagramLayerSnapshotWithResponse call
+func ParseGetCloudDiagramLayerSnapshotResp(rsp *http.Response) (*GetCloudDiagramLayerSnapshotResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramLayerSnapshotResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramLayerSnapshot
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON404 = &dest
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCloudDiagramLayerSnapshotsResp parses an HTTP response from a ListCloudDiagramLayerSnapshotsWithResponse call
+func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiagramLayerSnapshotsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCloudDiagramLayerSnapshotsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CloudDiagramLayerSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	}
 
