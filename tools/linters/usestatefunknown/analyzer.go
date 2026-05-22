@@ -47,23 +47,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
-	// Build a set of Computed-only stable fields from all schemas in this package.
-	computedStable := map[string]bool{}
-	for _, schemaInfo := range schemaResult.Schemas {
-		for fieldName, info := range schemaInfo.Attrs {
-			if info.Class == schemaparser.ComputedOnly && stableFields[fieldName] {
-				computedStable[fieldName] = true
-			}
-		}
-	}
-
-	if len(computedStable) == 0 {
-		return nil, nil
-	}
-
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Find the Schema() method and check for UseStateForUnknown on stable fields.
+	// Find each Schema() method and check for UseStateForUnknown on stable fields
+	// from the specific schema that method references (not all schemas in the package).
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
@@ -71,6 +58,27 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 		if fn.Recv == nil || len(fn.Recv.List) == 0 {
+			return
+		}
+
+		// Find which generated schema this method references.
+		schemaName := findReferencedSchemaName(fn)
+		if schemaName == "" {
+			return
+		}
+		schemaInfo, ok := schemaResult.Schemas[schemaName]
+		if !ok {
+			return
+		}
+
+		// Build Computed-only stable fields for THIS specific schema only.
+		computedStable := map[string]bool{}
+		for fieldName, info := range schemaInfo.Attrs {
+			if info.Class == schemaparser.ComputedOnly && stableFields[fieldName] {
+				computedStable[fieldName] = true
+			}
+		}
+		if len(computedStable) == 0 {
 			return
 		}
 
@@ -95,6 +103,39 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	})
 
 	return nil, nil
+}
+
+// findReferencedSchemaName finds the generated schema function name referenced
+// in a Schema() method body. For example, in:
+//
+//	s := resource_folder.FolderResourceSchema(ctx)
+//
+// it returns "FolderResourceSchema".
+func findReferencedSchemaName(fn *ast.FuncDecl) string {
+	for _, stmt := range fn.Body.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			continue
+		}
+		call, ok := assign.Rhs[0].(*ast.CallExpr)
+		if !ok {
+			continue
+		}
+		// Match: pkg.XxxSchema(ctx)
+		if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
+			name := sel.Sel.Name
+			if strings.HasSuffix(name, "Schema") {
+				return name
+			}
+		}
+		// Match: XxxSchema(ctx) — same-package call (used in tests)
+		if ident, ok := call.Fun.(*ast.Ident); ok {
+			if strings.HasSuffix(ident.Name, "Schema") {
+				return ident.Name
+			}
+		}
+	}
+	return ""
 }
 
 // findFieldsWithUseStateForUnknown scans a Schema() method body and returns
