@@ -930,7 +930,7 @@ func testAccInsightResultsPaginated(key string, count int) string {
 		if i > 0 {
 			results.WriteString(",\n")
 		}
-		results.WriteString(fmt.Sprintf(`    {
+		fmt.Fprintf(&results, `    {
       resource_id    = "i-pag-%s-%03d"
       account        = "111111111111"
       cloud_provider = "aws"
@@ -938,7 +938,7 @@ func testAccInsightResultsPaginated(key string, count int) string {
       result = {
         value = %d.00
       }
-    }`, key, i, i+1))
+    }`, key, i, i+1)
 	}
 
 	return fmt.Sprintf(`

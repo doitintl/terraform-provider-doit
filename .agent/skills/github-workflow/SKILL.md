@@ -68,3 +68,9 @@ git check-ignore -v path/to/file
 ```
 
 Some files (like `OpenAPI/api_endpoint_analysis.md`, `OpenAPI/issues/`) are local documentation and should NOT be committed.
+
+## Commit Hygiene
+
+- **Never use `--no-verify`** — pre-commit hooks exist for a reason. If a hook fails, fix the issue before committing.
+- **Never force-push** (`--force` or `--force-with-lease`) unless the user explicitly requests it.
+- Prefer small, focused commits over amending previous ones.
