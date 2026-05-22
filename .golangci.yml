@@ -42,6 +42,8 @@ linters:
     - paralleltest
     - interfacestyle
     - crudnaming
+    - constructor
+    - newexpr
   exclusions:
     generated: lax
     presets:
@@ -84,6 +86,8 @@ linters:
           - usestatefunknown
           - interfacestyle
           - crudnaming
+          - constructor
+          - newexpr
       # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
@@ -98,6 +102,8 @@ linters:
           - usestatefunknown
           - interfacestyle
           - crudnaming
+          - constructor
+          - newexpr
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -192,6 +198,12 @@ linters:
       crudnaming:
         type: "module"
         description: "Enforces plan/state variable naming in CRUD methods."
+      constructor:
+        type: "module"
+        description: "Ensures NewXxxResource/DataSource constructors use &type{} style."
+      newexpr:
+        type: "module"
+        description: "Suggests new(expr) instead of temp-variable-then-address pattern."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

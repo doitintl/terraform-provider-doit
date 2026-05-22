@@ -3,12 +3,14 @@ package linters
 
 import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/constructor"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/crudnaming"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/delete404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/diagsuppressed"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/errformat"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/interfacestyle"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/listnullread"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/newexpr"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlaycheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlayinvariant"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/paralleltest"
@@ -87,6 +89,14 @@ func init() {
 
 	register.Plugin("crudnaming", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{crudnaming.Analyzer}}, nil
+	})
+
+	register.Plugin("constructor", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{constructor.Analyzer}}, nil
+	})
+
+	register.Plugin("newexpr", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{newexpr.Analyzer}}, nil
 	})
 }
 
