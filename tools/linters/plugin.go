@@ -4,6 +4,7 @@ package linters
 import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/delete404"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/errformat"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/diagsuppressed"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlaycheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlayinvariant"
@@ -57,6 +58,10 @@ func init() {
 
 	register.Plugin("configuretype", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{configuretype.Analyzer}}, nil
+	})
+
+	register.Plugin("errformat", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{errformat.Analyzer}}, nil
 	})
 }
 

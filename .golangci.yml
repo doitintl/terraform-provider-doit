@@ -36,6 +36,7 @@ linters:
     - timeoutcheck
     - read404
     - configuretype
+    - errformat
   exclusions:
     generated: lax
     presets:
@@ -73,6 +74,7 @@ linters:
           - delete404
           - timeoutcheck
           - read404
+          - errformat
       # Test files — exclude custom linters
       - path: _test\.go
         linters:
@@ -82,6 +84,7 @@ linters:
           - timeoutcheck
           - read404
           - configuretype
+          - errformat
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -151,6 +154,9 @@ linters:
       configuretype:
         type: "module"
         description: "Detects mismatched Configure type strings (Data Source vs Resource)."
+      errformat:
+        type: "module"
+        description: "Ensures HTTP error messages include status code and response body."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
