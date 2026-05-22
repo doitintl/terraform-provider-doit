@@ -32,6 +32,10 @@ linters:
     - structliteral
     - overlayinvariant
     - overlaycheck
+    - delete404
+    - timeoutcheck
+    - read404
+    - configuretype
   exclusions:
     generated: lax
     presets:
@@ -60,22 +64,31 @@ linters:
         linters:
           - godot
           - revive
-      # Generated schema files — exclude overlaycheck (it reads them for facts, not linting)
+      # Generated schema files — exclude custom linters (schemaparser reads them for facts)
       - path: _gen\.go
         linters:
           - overlaycheck
           - overlayinvariant
           - structliteral
+          - delete404
+          - timeoutcheck
+          - read404
       # Test files — exclude custom linters
       - path: _test\.go
         linters:
           - overlaycheck
           - overlayinvariant
-      # Data sources — exclude overlay linters (data sources don't use overlays)
+          - delete404
+          - timeoutcheck
+          - read404
+          - configuretype
+      # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
           - overlaycheck
           - overlayinvariant
+          - delete404
+          - read404
   settings:
     depguard:
       rules:
@@ -126,6 +139,18 @@ linters:
       overlaycheck:
         type: "module"
         description: "Validates overlay functions handle all schema fields correctly per their classification."
+      delete404:
+        type: "module"
+        description: "Ensures Delete methods treat HTTP 404 as success."
+      timeoutcheck:
+        type: "module"
+        description: "Ensures CRUD methods use context.WithTimeout."
+      read404:
+        type: "module"
+        description: "Ensures resource Read methods call RemoveResource for externally deleted resources."
+      configuretype:
+        type: "module"
+        description: "Detects mismatched Configure type strings (Data Source vs Resource)."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
