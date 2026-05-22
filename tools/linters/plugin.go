@@ -4,13 +4,15 @@ package linters
 import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/delete404"
-	"github.com/doitintl/terraform-provider-doit/tools/linters/errformat"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/diagsuppressed"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/errformat"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/listnullread"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlaycheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlayinvariant"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/read404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
 )
@@ -62,6 +64,14 @@ func init() {
 
 	register.Plugin("errformat", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{errformat.Analyzer}}, nil
+	})
+
+	register.Plugin("listnullread", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{listnullread.Analyzer}}, nil
+	})
+
+	register.Plugin("usestatefunknown", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{usestatefunknown.Analyzer}}, nil
 	})
 }
 

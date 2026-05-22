@@ -37,6 +37,8 @@ linters:
     - read404
     - configuretype
     - errformat
+    - listnullread
+    - usestatefunknown
   exclusions:
     generated: lax
     presets:
@@ -75,6 +77,8 @@ linters:
           - timeoutcheck
           - read404
           - errformat
+          - listnullread
+          - usestatefunknown
       # Test files — exclude custom linters
       - path: _test\.go
         linters:
@@ -85,6 +89,8 @@ linters:
           - read404
           - configuretype
           - errformat
+          - listnullread
+          - usestatefunknown
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -92,6 +98,12 @@ linters:
           - overlayinvariant
           - delete404
           - read404
+          - listnullread
+          - usestatefunknown
+      # Provider config — not a resource, no plan modifiers
+      - path: provider\.go
+        linters:
+          - usestatefunknown
   settings:
     depguard:
       rules:
@@ -157,6 +169,12 @@ linters:
       errformat:
         type: "module"
         description: "Ensures HTTP error messages include status code and response body."
+      listnullread:
+        type: "module"
+        description: "Flags types.ListNull() in Read paths for Optional/Optional+Computed list attributes."
+      usestatefunknown:
+        type: "module"
+        description: "Ensures Computed-only stable fields have UseStateForUnknown plan modifiers."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
