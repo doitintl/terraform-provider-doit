@@ -76,7 +76,7 @@ func isResourceFile(filename string) bool {
 	if len(filename) < 12 {
 		return false
 	}
-	return strings.HasSuffix(filename, "_resource.go") && !strings.HasSuffix(filename, "_data_source.go")
+	return strings.HasSuffix(filename, "_resource.go")
 }
 
 // isDataSourceFile checks if a filename matches the data source naming pattern.

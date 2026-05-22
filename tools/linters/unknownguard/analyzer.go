@@ -63,10 +63,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	// Find each data source's Schema() method to map receiver types to schema names.
 	// Then find Read() methods on the same receiver types.
-	type dsInfo struct {
-		schemaName string
-		receiverType string
-	}
 
 	// Step 1: Map receiver types to their schema names via Schema() methods.
 	receiverToSchema := map[string]string{}
