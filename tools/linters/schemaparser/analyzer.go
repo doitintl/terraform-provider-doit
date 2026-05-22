@@ -146,10 +146,25 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		facts.Schemas[name] = info
 	})
 
-	// Export as a package fact so other packages (e.g., internal/provider)
-	// can access this package's schema classifications.
+	// Export as a package fact so downstream packages (in the same analyzer's
+	// vertical dependency chain) can inherit this package's schema classifications.
 	if len(facts.Schemas) > 0 {
 		pass.ExportPackageFact(facts)
+	}
+
+	// Also aggregate schemas from imported packages (inherited via vertical edges).
+	// This is critical: when schemaparser runs on internal/provider, it inherits
+	// facts from schemaparser running on resource_label, resource_budget, etc.
+	// We merge them into the Result so that overlaycheck (which reads ResultOf)
+	// gets the complete picture.
+	for _, pf := range pass.AllPackageFacts() {
+		if sf, ok := pf.Fact.(*SchemaFacts); ok {
+			for name, info := range sf.Schemas {
+				if _, exists := facts.Schemas[name]; !exists {
+					facts.Schemas[name] = info
+				}
+			}
+		}
 	}
 
 	return facts, nil

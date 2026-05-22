@@ -40,38 +40,17 @@ type fieldAssignment struct {
 	// pos is the position of the assignment for error reporting.
 	pos token.Pos
 }
-
 func run(pass *analysis.Pass) (interface{}, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Collect schema facts from all packages (current + imported).
-	// The schemaparser exports SchemaFacts as a package fact on each resource_*
-	// package. We need to aggregate them all since overlay functions in
-	// internal/provider reference schemas from imported resource_* packages.
-	allSchemas := make(map[string]*schemaparser.SchemaInfo)
+	// The schemaparser result aggregates schemas from both the current package
+	// and all imported packages (via vertical fact inheritance). This gives us
+	// the complete picture of all schemas visible from this package.
+	facts := pass.ResultOf[schemaparser.Analyzer].(*schemaparser.SchemaFacts)
 
-	// From current package (if it has schemas).
-	if localFacts, ok := pass.ResultOf[schemaparser.Analyzer].(*schemaparser.SchemaFacts); ok && localFacts != nil {
-		for name, info := range localFacts.Schemas {
-			allSchemas[name] = info
-		}
-	}
-
-	// From imported packages (cross-package facts).
-	for _, fact := range pass.AllPackageFacts() {
-		if sf, ok := fact.Fact.(*schemaparser.SchemaFacts); ok {
-			for name, info := range sf.Schemas {
-				allSchemas[name] = info
-			}
-		}
-	}
-
-	if len(allSchemas) == 0 {
+	if len(facts.Schemas) == 0 {
 		return nil, nil
 	}
-
-	// Build an aggregated facts struct for matching.
-	facts := &schemaparser.SchemaFacts{Schemas: allSchemas}
 
 	// Find overlay functions. These are functions whose name starts with "overlay"
 	// and ends with "ComputedFields" (top-level overlays).
