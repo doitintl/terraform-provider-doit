@@ -136,3 +136,24 @@ func overlayNoMappingComputedFields(apiResp *ApiResponse, plan *GoodModel) { // 
 		plan.Currency = plan.Currency
 	}
 }
+
+// --- GOOD: Optional+Computed nested field handled via helper function ---
+
+func mapHelperOverlayToModel(apiResp *ApiResponse, m *HelperOverlayModel) {}
+func overlayHelperConfigFields(resolved *ConfigValue, plan *ConfigValue)   {}
+
+func overlayHelperOverlayComputedFields(apiResp *ApiResponse, plan *HelperOverlayModel) {
+	resolved := *plan
+	mapHelperOverlayToModel(apiResp, &resolved)
+
+	// Computed-only: unconditional. ✓
+	plan.Id = resolved.Id
+
+	// Optional+Computed nested: handled via helper function. ✓
+	if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
+		overlayHelperConfigFields(&resolved.Config, &plan.Config)
+	} else if plan.Config.IsUnknown() {
+		plan.Config = resolved.Config
+	}
+}
+

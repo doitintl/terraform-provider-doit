@@ -164,16 +164,20 @@ func analyzeOverlayBody(body *ast.BlockStmt, planParam string) map[string]*field
 			if guardedField != "" {
 				// Look for assignments inside the if body.
 				for _, innerStmt := range s.Body.List {
-					if assign, ok := innerStmt.(*ast.AssignStmt); ok {
-						for _, lhs := range assign.Lhs {
+					switch inner := innerStmt.(type) {
+					case *ast.AssignStmt:
+						for _, lhs := range inner.Lhs {
 							fieldName := selectorFieldOn(lhs, planParam)
 							if fieldName != "" {
 								result[fieldName] = &fieldAssignment{
 									guardedByIsUnknown: true,
-									pos:                assign.Pos(),
+									pos:                inner.Pos(),
 								}
 							}
 						}
+					case *ast.ExprStmt:
+						// Handle &plan.X passed to helper functions inside if body.
+						handleExprForListOverlay(inner.X, planParam, result, inner.Pos())
 					}
 				}
 				// If no explicit assignment found in the body but the guard is
@@ -195,6 +199,15 @@ func analyzeOverlayBody(body *ast.BlockStmt, planParam string) map[string]*field
 				// `if apiResp.X != nil { plan.F = val } else { plan.F = null }`
 				// Both branches assign to plan.F → treat as unconditional.
 				detectIfElseUnconditional(s, planParam, result)
+
+				// Also scan for &plan.X passed to helper functions inside if-body
+				// and else branches. This catches patterns like:
+				//   if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
+				//       overlayConfigFields(ctx, &resolved.Config, &plan.Config)
+				//   } else if plan.Config.IsUnknown() {
+				//       plan.Config = resolved.Config
+				//   }
+				scanIfTreeForFieldHandling(s, planParam, result)
 			}
 
 		case *ast.ExprStmt:
@@ -319,6 +332,72 @@ func handleExprForListOverlay(expr ast.Expr, planParam string, result map[string
 		}
 		return true
 	})
+}
+
+// scanIfTreeForFieldHandling recursively scans an if/else-if/else tree for
+// &plan.X patterns in function calls and plan.X = assignments. This is used for
+// if-statements that don't have a simple IsUnknown guard, such as:
+//
+//	if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
+//	    diags.Append(overlayConfigFields(ctx, &resolved.Config, &plan.Config)...)
+//	} else if plan.Config.IsUnknown() {
+//	    plan.Config = resolved.Config
+//	}
+func scanIfTreeForFieldHandling(ifStmt *ast.IfStmt, planParam string, result map[string]*fieldAssignment) {
+	// Scan the if-body.
+	scanBlockForFieldHandling(ifStmt.Body, planParam, result)
+
+	// Scan else branches.
+	if ifStmt.Else != nil {
+		switch e := ifStmt.Else.(type) {
+		case *ast.BlockStmt:
+			scanBlockForFieldHandling(e, planParam, result)
+		case *ast.IfStmt:
+			// Also check if the else-if has an IsUnknown guard for an assignment.
+			guardedField := extractIsUnknownGuard(e.Cond, planParam)
+			if guardedField != "" {
+				for _, innerStmt := range e.Body.List {
+					if assign, ok := innerStmt.(*ast.AssignStmt); ok {
+						for _, lhs := range assign.Lhs {
+							fieldName := selectorFieldOn(lhs, planParam)
+							if fieldName != "" {
+								if _, exists := result[fieldName]; !exists {
+									result[fieldName] = &fieldAssignment{
+										guardedByIsUnknown: true,
+										pos:                assign.Pos(),
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			scanIfTreeForFieldHandling(e, planParam, result)
+		}
+	}
+}
+
+// scanBlockForFieldHandling scans a block for &plan.X patterns in function calls
+// and plan.X = assignments.
+func scanBlockForFieldHandling(block *ast.BlockStmt, planParam string, result map[string]*fieldAssignment) {
+	for _, stmt := range block.List {
+		switch s := stmt.(type) {
+		case *ast.ExprStmt:
+			handleExprForListOverlay(s.X, planParam, result, s.Pos())
+		case *ast.AssignStmt:
+			for _, lhs := range s.Lhs {
+				fieldName := selectorFieldOn(lhs, planParam)
+				if fieldName != "" {
+					if _, exists := result[fieldName]; !exists {
+						result[fieldName] = &fieldAssignment{
+							guardedByIsUnknown: true,
+							pos:                s.Pos(),
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // selectorFieldOn extracts the field name from an expression of the form `obj.FieldName`

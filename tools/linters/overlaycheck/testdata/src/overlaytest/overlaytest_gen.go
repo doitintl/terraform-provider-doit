@@ -189,6 +189,41 @@ func RequiredNestedResourceSchema(ctx context.Context) schema.Schema {
 	}
 }
 
+// HelperOverlayModel — tests Optional+Computed nested field handled via helper.
+type HelperOverlayModel struct {
+	Id     types.String
+	Name   types.String
+	Config ConfigValue
+}
+
+// HelperOverlayResourceSchema — Optional+Computed nested field.
+func HelperOverlayResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"config": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"mode": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+					"amount": schema.Float64Attribute{
+						Optional: true,
+						Computed: true,
+					},
+				},
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
+}
+
 type ApiResponse struct{}
 type Int64Pointer struct{ Value *int64 }
 
