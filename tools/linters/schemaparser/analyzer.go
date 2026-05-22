@@ -406,16 +406,23 @@ func findBaseSchemaCall(fn *ast.FuncDecl) (schemaName, varName string) {
 			continue
 		}
 
-		// RHS must be a call to pkg.XxxResourceSchema or pkg.XxxDataSourceSchema.
+		// RHS must be a call to pkg.XxxResourceSchema or XxxResourceSchema
+		// (package-qualified or local).
 		call, ok := assign.Rhs[0].(*ast.CallExpr)
 		if !ok {
 			continue
 		}
-		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if !ok {
+
+		var name string
+		switch fn := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			name = fn.Sel.Name
+		case *ast.Ident:
+			name = fn.Name
+		default:
 			continue
 		}
-		name := sel.Sel.Name
+
 		if strings.HasSuffix(name, "ResourceSchema") || strings.HasSuffix(name, "DataSourceSchema") {
 			return name, lhs.Name
 		}

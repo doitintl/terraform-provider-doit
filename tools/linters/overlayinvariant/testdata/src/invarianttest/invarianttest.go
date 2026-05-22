@@ -1,8 +1,14 @@
 package invarianttest
 
-import "context"
+import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+)
 
 // Stubs to simulate the Terraform framework types.
+type schemaRequest struct{}
+type schemaResponse struct{ Schema schema.Schema }
 type createRequest struct{}
 type createResponse struct{ State stateObj }
 type readRequest struct{}
@@ -24,6 +30,12 @@ func overlayComputedFields(m *myModel)         {}
 func mapResourceToModel(m *myModel)            {}
 func (r *myResource) populateState(m *myModel) {}
 func mapBudgetToModel(m *myModel)              {}
+
+// Schema method for myResource — references the generated schema.
+func (r *myResource) Schema(ctx context.Context, req schemaRequest, resp *schemaResponse) {
+	s := MyResourceSchema(ctx)
+	resp.Schema = s
+}
 
 // --- BAD: Create calls mapping functions and sets state without overlay ---
 
@@ -59,6 +71,12 @@ func (r *myResource) ImportState(ctx context.Context, req importRequest, resp *i
 
 type anotherResource struct{}
 
+// Schema method for anotherResource — references the generated schema.
+func (r *anotherResource) Schema(ctx context.Context, req schemaRequest, resp *schemaResponse) {
+	s := AnotherResourceSchema(ctx)
+	resp.Schema = s
+}
+
 func (r *anotherResource) Create(ctx context.Context, req createRequest, resp *createResponse) { // want "Create must call an overlay function"
 	var plan myModel
 	mapBudgetToModel(&plan)    // want "Create must not call mapBudgetToModel directly"
@@ -70,6 +88,12 @@ func (r *anotherResource) Create(ctx context.Context, req createRequest, resp *c
 type goodResource struct{}
 
 func (r *goodResource) populateState(m *myModel) {}
+
+// Schema method for goodResource — references the generated schema.
+func (r *goodResource) Schema(ctx context.Context, req schemaRequest, resp *schemaResponse) {
+	s := GoodResourceSchema(ctx)
+	resp.Schema = s
+}
 
 func (r *goodResource) Create(ctx context.Context, req createRequest, resp *createResponse) {
 	var plan myModel
@@ -96,4 +120,49 @@ type noopResource struct{}
 
 func (r *noopResource) Create(_ context.Context, _ createRequest, resp *createResponse) {
 	// Import-only resource: no state.Set call, so no overlay needed. ✓
+}
+
+// --- GOOD: Create without overlay is OK when schema has no computed fields ---
+// This is the label_assignments pattern: all fields are Required/Optional,
+// so no overlay is needed. The resource writes the plan directly to state.
+
+type allRequiredResource struct{}
+
+// Schema method references a schema with only Required/Optional fields.
+func (r *allRequiredResource) Schema(ctx context.Context, req schemaRequest, resp *schemaResponse) {
+	s := AllRequiredResourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (r *allRequiredResource) Create(ctx context.Context, req createRequest, resp *createResponse) {
+	// No overlay needed: schema has no Computed-only or Optional+Computed fields. ✓
+	var plan myModel
+	resp.State.Set(ctx, &plan)
+}
+
+func (r *allRequiredResource) Update(ctx context.Context, req updateRequest, resp *updateResponse) {
+	// No overlay needed: schema has no Computed-only or Optional+Computed fields. ✓
+	var plan myModel
+	resp.State.Set(ctx, &plan)
+}
+
+// --- GOOD: Create without overlay is OK when schema is defined inline ---
+// This also covers the label_assignments case where the resource doesn't use
+// a generated schema function at all.
+
+type inlineSchemaResource struct{}
+
+func (r *inlineSchemaResource) Schema(ctx context.Context, req schemaRequest, resp *schemaResponse) {
+	// Inline schema — no call to XxxResourceSchema.
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"name": schema.StringAttribute{Required: true},
+		},
+	}
+}
+
+func (r *inlineSchemaResource) Create(ctx context.Context, req createRequest, resp *createResponse) {
+	// No overlay needed: no generated schema function found. ✓
+	var plan myModel
+	resp.State.Set(ctx, &plan)
 }
