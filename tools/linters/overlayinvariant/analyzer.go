@@ -33,7 +33,7 @@ var mappingFuncNames = map[string]bool{
 	"populateState":      true,
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	facts := pass.ResultOf[schemaparser.Analyzer].(*schemaparser.SchemaFacts)
 
@@ -246,4 +246,3 @@ func isMappingFunc(name string) bool {
 func isOverlayFunc(name string) bool {
 	return strings.HasPrefix(name, "overlay")
 }
-

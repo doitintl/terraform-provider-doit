@@ -1,6 +1,6 @@
-// Package usestatefunknown ensures that Computed-only fields named "id",
-// "create_time", and "update_time" have UseStateForUnknown() plan modifiers
-// in the resource's Schema() method.
+// Package usestatefunknown ensures that stable Computed-only fields (e.g.
+// "id", "create_time") have UseStateForUnknown() plan modifiers in the
+// resource's Schema() method.
 //
 // These fields are universally stable after creation and should not show as
 // "(known after apply)" in every plan. The UseStateForUnknown plan modifier
@@ -23,7 +23,7 @@ import (
 // Analyzer is the go/analysis Analyzer for usestatefunknown.
 var Analyzer = &analysis.Analyzer{
 	Name:     "usestatefunknown",
-	Doc:      "Ensures Computed-only stable fields (id, create_time, update_time) have UseStateForUnknown plan modifiers.",
+	Doc:      "Ensures stable Computed-only fields (id, create_time) have UseStateForUnknown plan modifiers.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer, schemaparser.Analyzer},
 }
@@ -37,7 +37,7 @@ var stableFields = map[string]bool{
 	"create_time": true,
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	result := pass.ResultOf[schemaparser.Analyzer]
 	if result == nil {
 		return nil, nil

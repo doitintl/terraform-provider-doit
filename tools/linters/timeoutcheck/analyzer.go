@@ -30,7 +30,7 @@ var crudMethods = map[string]bool{
 	"Delete": true,
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}

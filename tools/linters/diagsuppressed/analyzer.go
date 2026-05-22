@@ -35,7 +35,7 @@ var Analyzer = &analysis.Analyzer{
 // diagType is the fully qualified type name for diag.Diagnostics.
 const diagType = "github.com/hashicorp/terraform-plugin-framework/diag.Diagnostics"
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{(*ast.AssignStmt)(nil)}

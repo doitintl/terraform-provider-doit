@@ -104,4 +104,3 @@ func init() {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{unknownguard.Analyzer}}, nil
 	})
 }
-

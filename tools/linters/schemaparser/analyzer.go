@@ -94,11 +94,11 @@ var Analyzer = &analysis.Analyzer{
 	Doc:        "Extracts Terraform schema field classifications from generated schema files.",
 	Run:        run,
 	Requires:   []*analysis.Analyzer{inspect.Analyzer},
-	ResultType: reflect.TypeOf((*SchemaFacts)(nil)),
+	ResultType: reflect.TypeFor[*SchemaFacts](),
 	FactTypes:  []analysis.Fact{(*SchemaFacts)(nil)},
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	facts := &SchemaFacts{
@@ -171,7 +171,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	// at runtime (e.g., changing Optional+Computed to Required, adding new fields,
 	// or deleting response-only artifacts). We detect these changes via AST and
 	// merge them into the schema classification.
-	applySchemaOverrides(pass, insp, facts)
+	applySchemaOverrides(insp, facts)
 
 	return facts, nil
 }
@@ -351,7 +351,7 @@ func unquote(expr ast.Expr) string {
 // applySchemaOverrides finds Schema() methods in the current package, identifies
 // which generated schema they reference, and applies runtime overrides to produce
 // the effective schema classification.
-func applySchemaOverrides(pass *analysis.Pass, insp *inspector.Inspector, facts *SchemaFacts) {
+func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
@@ -783,4 +783,3 @@ func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 	}
 	return dst
 }
-

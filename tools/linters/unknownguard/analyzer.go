@@ -33,7 +33,7 @@ var Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer, schemaparser.Analyzer},
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	result := pass.ResultOf[schemaparser.Analyzer]
 	if result == nil {
 		return nil, nil

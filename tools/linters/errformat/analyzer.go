@@ -9,9 +9,8 @@
 // For generic error paths (`StatusCode() != NNN`), both StatusCode() and Body
 // must appear in the error message arguments.
 //
-// For specific status checks (`StatusCode() == 404`), we only flag if
-// *neither* StatusCode() nor Body appears — a semantic message like
-// "resource not found" is acceptable for known status codes.
+// For specific status checks (`StatusCode() == 404`), no check is performed —
+// the status is already contextual, so a semantic message is acceptable.
 package errformat
 
 import (
@@ -31,7 +30,7 @@ var Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{(*ast.IfStmt)(nil)}

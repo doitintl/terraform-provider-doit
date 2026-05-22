@@ -12,7 +12,6 @@
 package overlaycheck
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"strings"
@@ -40,7 +39,8 @@ type fieldAssignment struct {
 	// pos is the position of the assignment for error reporting.
 	pos token.Pos
 }
-func run(pass *analysis.Pass) (interface{}, error) {
+
+func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// The schemaparser result aggregates schemas from both the current package
@@ -252,7 +252,7 @@ func detectIfElseUnconditional(ifStmt *ast.IfStmt, planParam string, result map[
 			if _, exists := result[fieldName]; !exists {
 				result[fieldName] = &fieldAssignment{
 					unconditional: true,
-					pos:          pos,
+					pos:           pos,
 				}
 			}
 		}
@@ -607,20 +607,6 @@ func toSnakeCase(s string) string {
 		} else {
 			result.WriteRune(r)
 		}
-	}
-	return result.String()
-}
-
-// toPascalCase converts snake_case to PascalCase.
-// e.g., "create_time" → "CreateTime", "id" → "Id".
-func toPascalCase(s string) string {
-	parts := strings.Split(s, "_")
-	var result strings.Builder
-	for _, part := range parts {
-		if len(part) == 0 {
-			continue
-		}
-		result.WriteString(fmt.Sprintf("%s%s", strings.ToUpper(part[:1]), part[1:]))
 	}
 	return result.String()
 }

@@ -90,7 +90,7 @@ func overlayUserComputedFields(user *models.UserListItem, plan *userResourceMode
 	}
 
 	// Note: phone, phone_extension, and language are Optional-only (not Computed).
-	// They can never be Unknown and must always preserve the plan value.
+	// They should always preserve the plan value regardless of Unknown/Known state.
 }
 
 // resolveInternalID looks up the current internal UUID for a user by their

@@ -8,7 +8,10 @@
 // on every apply.
 //
 // This analyzer uses schemaparser to know which attributes are lists and
-// their classification.
+// their classification. It scopes the check to the specific schema
+// associated with the mapping function's receiver type, preventing false
+// positives when the same attribute name has different classifications
+// across resource and data source schemas.
 package listnullread
 
 import (
@@ -29,7 +32,7 @@ var Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer, schemaparser.Analyzer},
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	result := pass.ResultOf[schemaparser.Analyzer]
 	if result == nil {
 		return nil, nil
@@ -39,24 +42,53 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
-	// Build a set of list fields that are Optional or Optional+Computed.
-	userConfigurableLists := map[string]bool{}
-	for _, schemaInfo := range schemaResult.Schemas {
+	// Build per-schema maps of user-configurable list attributes.
+	perSchemaLists := map[string]map[string]bool{}
+	for schemaName, schemaInfo := range schemaResult.Schemas {
+		lists := map[string]bool{}
 		for fieldName, info := range schemaInfo.Attrs {
 			if info.IsList && (info.Class == schemaparser.Optional || info.Class == schemaparser.OptionalComputed) {
-				userConfigurableLists[fieldName] = true
+				lists[fieldName] = true
 			}
+		}
+		if len(lists) > 0 {
+			perSchemaLists[schemaName] = lists
 		}
 	}
 
-	if len(userConfigurableLists) == 0 {
+	if len(perSchemaLists) == 0 {
 		return nil, nil
 	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Find mapping functions (populateState, mapXxxToModel).
+	// Step 1: Map receiver types to their schema names via Schema() methods.
+	receiverToSchema := map[string]string{}
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		fn := n.(*ast.FuncDecl)
+		if fn.Name == nil || fn.Name.Name != "Schema" || fn.Body == nil {
+			return
+		}
+		if fn.Recv == nil || len(fn.Recv.List) == 0 {
+			return
+		}
+
+		recvType := extractReceiverTypeName(fn)
+		if recvType == "" {
+			return
+		}
+
+		schemaName := findSchemaCall(fn)
+		if schemaName == "" {
+			return
+		}
+
+		receiverToSchema[recvType] = schemaName
+	})
+
+	// Step 2: Find mapping functions and check ListNull calls against
+	// the schema associated with the method's receiver type.
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
 		if fn.Name == nil || fn.Body == nil {
@@ -67,9 +99,25 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 
+		// Determine which schema this mapping function belongs to.
+		recvType := extractReceiverTypeName(fn)
+		if recvType == "" {
+			return
+		}
+
+		schemaName, ok := receiverToSchema[recvType]
+		if !ok {
+			return
+		}
+
+		lists, ok := perSchemaLists[schemaName]
+		if !ok {
+			return
+		}
+
 		// Find ListNull calls in the function body and check if they're
-		// assigned to user-configurable list fields.
-		findListNullAssignments(pass, fn.Body, userConfigurableLists)
+		// assigned to user-configurable list fields for THIS schema.
+		findListNullAssignments(pass, fn.Body, lists)
 	})
 
 	return nil, nil
@@ -88,6 +136,52 @@ func isMappingFunction(name string) bool {
 		return true
 	}
 	return false
+}
+
+// extractReceiverTypeName gets the base type name from a method receiver.
+func extractReceiverTypeName(fn *ast.FuncDecl) string {
+	if fn.Recv == nil || len(fn.Recv.List) == 0 {
+		return ""
+	}
+	recv := fn.Recv.List[0].Type
+	// Unwrap *T to T.
+	if star, ok := recv.(*ast.StarExpr); ok {
+		recv = star.X
+	}
+	if ident, ok := recv.(*ast.Ident); ok {
+		return ident.Name
+	}
+	return ""
+}
+
+// findSchemaCall finds the generated schema function call in a Schema() body.
+// Matches both resource and data source schema calls:
+//   - resource_xxx.XxxResourceSchema(ctx)
+//   - datasource_xxx.XxxDataSourceSchema(ctx)
+func findSchemaCall(fn *ast.FuncDecl) string {
+	for _, stmt := range fn.Body.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok || len(assign.Rhs) != 1 {
+			continue
+		}
+		call, ok := assign.Rhs[0].(*ast.CallExpr)
+		if !ok {
+			continue
+		}
+		var name string
+		switch f := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			name = f.Sel.Name
+		case *ast.Ident:
+			name = f.Name
+		default:
+			continue
+		}
+		if strings.HasSuffix(name, "ResourceSchema") || strings.HasSuffix(name, "DataSourceSchema") {
+			return name
+		}
+	}
+	return ""
 }
 
 // findListNullAssignments finds assignments like:
@@ -179,4 +273,3 @@ func toSnakeCase(s string) string {
 	}
 	return string(result)
 }
-
