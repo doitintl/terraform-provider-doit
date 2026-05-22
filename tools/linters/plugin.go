@@ -3,12 +3,15 @@ package linters
 
 import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/crudnaming"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/delete404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/diagsuppressed"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/errformat"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/interfacestyle"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/listnullread"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlaycheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlayinvariant"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/paralleltest"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/read404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
@@ -72,6 +75,18 @@ func init() {
 
 	register.Plugin("usestatefunknown", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{usestatefunknown.Analyzer}}, nil
+	})
+
+	register.Plugin("paralleltest", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{paralleltest.Analyzer}}, nil
+	})
+
+	register.Plugin("interfacestyle", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{interfacestyle.Analyzer}}, nil
+	})
+
+	register.Plugin("crudnaming", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{crudnaming.Analyzer}}, nil
 	})
 }
 

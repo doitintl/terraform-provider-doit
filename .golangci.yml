@@ -39,6 +39,9 @@ linters:
     - errformat
     - listnullread
     - usestatefunknown
+    - paralleltest
+    - interfacestyle
+    - crudnaming
   exclusions:
     generated: lax
     presets:
@@ -79,7 +82,9 @@ linters:
           - errformat
           - listnullread
           - usestatefunknown
-      # Test files — exclude custom linters
+          - interfacestyle
+          - crudnaming
+      # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
           - overlaycheck
@@ -91,6 +96,8 @@ linters:
           - errformat
           - listnullread
           - usestatefunknown
+          - interfacestyle
+          - crudnaming
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -100,6 +107,7 @@ linters:
           - read404
           - listnullread
           - usestatefunknown
+          - crudnaming
       # Provider config — not a resource, no plan modifiers
       - path: provider\.go
         linters:
@@ -175,6 +183,15 @@ linters:
       usestatefunknown:
         type: "module"
         description: "Ensures Computed-only stable fields have UseStateForUnknown plan modifiers."
+      paralleltest:
+        type: "module"
+        description: "Flags resource.Test() — use resource.ParallelTest() instead."
+      interfacestyle:
+        type: "module"
+        description: "Flags &type{} in interface checks — use (*type)(nil) instead."
+      crudnaming:
+        type: "module"
+        description: "Enforces plan/state variable naming in CRUD methods."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
