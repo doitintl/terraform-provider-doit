@@ -65,15 +65,20 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 
-		// Try to match this overlay function to a known schema.
-		schemaInfo := matchOverlayToSchema(name, facts)
-		if schemaInfo == nil {
-			return
-		}
-
 		// Determine the plan parameter name (the last pointer parameter).
 		planParamName := findPlanParamName(fn)
 		if planParamName == "" {
+			return
+		}
+
+		// Validate the 2-phase pattern: overlay must create a resolved copy
+		// and call a mapping function. This check runs on ALL overlay functions
+		// regardless of whether a matching schema is found.
+		validate2PhasePattern(pass, fn, planParamName)
+
+		// Schema-aware field validation requires a matching schema.
+		schemaInfo := matchOverlayToSchema(name, facts)
+		if schemaInfo == nil {
 			return
 		}
 
@@ -421,6 +426,93 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 				"add: if %s.<Field>.IsUnknown() { %s.<Field> = resolved.<Field> }",
 			fn.Name.Name, strings.Join(unhandledOptComp, ", "), planParam, planParam)
 	}
+}
+
+// validate2PhasePattern checks that an overlay function uses the standard
+// 2-phase pattern:
+//
+//	Phase 1: resolved := *plan; mapXxxToModel(apiResp, &resolved)
+//	Phase 2: plan.X = resolved.X
+//
+// Variants are accepted:
+//   - resolved := *plan (copy dereference)
+//   - var resolved ModelType (zero value)
+//   - resolved := ModelType{...} (struct literal)
+//
+// The mapping function can be any of: mapXxxToModel, populateState, mapResourceToModel,
+// or any function matching map*ToModel / map*ToResourceModel.
+func validate2PhasePattern(pass *analysis.Pass, fn *ast.FuncDecl, planParam string) {
+	hasResolvedVar := false
+	hasMappingCall := false
+
+	ast.Inspect(fn.Body, func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.AssignStmt:
+			// Check for `resolved := *plan` or `resolved := ModelType{...}`
+			for _, lhs := range n.Lhs {
+				ident, ok := lhs.(*ast.Ident)
+				if !ok || ident.Name != "resolved" {
+					continue
+				}
+				hasResolvedVar = true
+			}
+
+		case *ast.DeclStmt:
+			// Check for `var resolved ModelType`
+			genDecl, ok := n.Decl.(*ast.GenDecl)
+			if !ok || genDecl.Tok != token.VAR {
+				break
+			}
+			for _, spec := range genDecl.Specs {
+				vs, ok := spec.(*ast.ValueSpec)
+				if !ok {
+					continue
+				}
+				for _, name := range vs.Names {
+					if name.Name == "resolved" {
+						hasResolvedVar = true
+					}
+				}
+			}
+
+		case *ast.CallExpr:
+			// Check for mapping function call (mapXxxToModel, populateState, etc.)
+			calledName := ""
+			switch fn := n.Fun.(type) {
+			case *ast.Ident:
+				calledName = fn.Name
+			case *ast.SelectorExpr:
+				calledName = fn.Sel.Name
+			}
+			if calledName != "" && isMappingFunc(calledName) {
+				hasMappingCall = true
+			}
+		}
+		return true
+	})
+
+	if !hasResolvedVar {
+		pass.Reportf(fn.Pos(),
+			"%s: missing 2-phase pattern; overlay must create a 'resolved' copy "+
+				"(e.g., 'resolved := *%s') and call a mapping function (mapXxxToModel/populateState)",
+			fn.Name.Name, planParam)
+	} else if !hasMappingCall {
+		pass.Reportf(fn.Pos(),
+			"%s: missing mapping function call; overlay must call a mapping function "+
+				"(e.g., mapXxxToModel, populateState) to populate the resolved copy from the API response",
+			fn.Name.Name)
+	}
+}
+
+// isMappingFunc checks if a function name matches a mapping function pattern.
+func isMappingFunc(name string) bool {
+	if name == "mapResourceToModel" || name == "populateState" {
+		return true
+	}
+	if strings.HasPrefix(name, "map") && (strings.HasSuffix(name, "ToModel") || strings.HasSuffix(name, "ToResourceModel")) {
+		return true
+	}
+	return false
 }
 
 // toSnakeCase converts PascalCase/camelCase to snake_case.

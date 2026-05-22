@@ -56,6 +56,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		}
 
 		// Walk the function body looking for function calls.
+		overlayCallFound := false
+		setsState := false
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			call, ok := node.(*ast.CallExpr)
 			if !ok {
@@ -65,6 +67,15 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			calledName := calledFuncName(call)
 			if calledName == "" {
 				return true
+			}
+
+			if isOverlayFunc(calledName) {
+				overlayCallFound = true
+			}
+
+			// Detect resp.State.Set(...) calls — indicates state population.
+			if calledName == "Set" {
+				setsState = true
 			}
 
 			if isCreateUpdate && isMappingFunc(calledName) {
@@ -81,6 +92,17 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 			return true
 		})
+
+		// Create/Update must call an overlay function to populate state,
+		// but only if the method actually sets state (calls resp.State.Set).
+		// Skip no-op methods (e.g., import-only resources returning an error)
+		// and methods that set state purely from plan data without API-derived fields.
+		if isCreateUpdate && !overlayCallFound && setsState {
+			pass.Reportf(fn.Pos(),
+				"%s must call an overlay function (overlay*ComputedFields) to populate state; "+
+					"do not assign plan fields inline or use ad-hoc helpers",
+				methodName)
+		}
 	})
 
 	return nil, nil
