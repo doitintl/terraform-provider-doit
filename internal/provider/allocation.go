@@ -533,7 +533,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 		// Single-rule allocation: the API returns rules=nil because this isn't a
 		// group allocation. Keep state.Rules null so it's omitted from subsequent
 		// update requests. Sending "rules": [] to the API causes a 500 error.
-		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
+		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx)) //nolint:listnullread // intentional: single-rule allocations use null (sending [] causes API 500)
 	} else {
 		// API returned nil or empty slice for a group allocation (no rules left) -
 		// return empty list to avoid inconsistent result if user sets [].
