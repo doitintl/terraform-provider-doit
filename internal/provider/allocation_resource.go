@@ -32,10 +32,10 @@ type (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                     = &allocationResource{}
-	_ resource.ResourceWithConfigure        = &allocationResource{}
-	_ resource.ResourceWithImportState      = &allocationResource{}
-	_ resource.ResourceWithConfigValidators = &allocationResource{}
+	_ resource.Resource                     = (*allocationResource)(nil)
+	_ resource.ResourceWithConfigure        = (*allocationResource)(nil)
+	_ resource.ResourceWithImportState      = (*allocationResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*allocationResource)(nil)
 )
 
 // NewAllocationResource creates a new allocation resource instance.

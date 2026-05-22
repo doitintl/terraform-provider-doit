@@ -28,9 +28,9 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                = &annotationResource{}
-	_ resource.ResourceWithConfigure   = &annotationResource{}
-	_ resource.ResourceWithImportState = &annotationResource{}
+	_ resource.Resource                = (*annotationResource)(nil)
+	_ resource.ResourceWithConfigure   = (*annotationResource)(nil)
+	_ resource.ResourceWithImportState = (*annotationResource)(nil)
 )
 
 // NewAnnotationResource creates a new annotation resource instance.

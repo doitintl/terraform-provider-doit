@@ -29,11 +29,11 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                     = &budgetResource{}
-	_ resource.ResourceWithConfigure        = &budgetResource{}
-	_ resource.ResourceWithUpgradeState     = &budgetResource{}
-	_ resource.ResourceWithImportState      = &budgetResource{}
-	_ resource.ResourceWithConfigValidators = &budgetResource{}
+	_ resource.Resource                     = (*budgetResource)(nil)
+	_ resource.ResourceWithConfigure        = (*budgetResource)(nil)
+	_ resource.ResourceWithUpgradeState     = (*budgetResource)(nil)
+	_ resource.ResourceWithImportState      = (*budgetResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*budgetResource)(nil)
 )
 
 // NewBudgetResource creates a new budget resource instance.

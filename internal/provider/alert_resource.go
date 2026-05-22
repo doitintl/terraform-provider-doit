@@ -17,10 +17,10 @@ import (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                     = &alertResource{}
-	_ resource.ResourceWithConfigure        = &alertResource{}
-	_ resource.ResourceWithImportState      = &alertResource{}
-	_ resource.ResourceWithConfigValidators = &alertResource{}
+	_ resource.Resource                     = (*alertResource)(nil)
+	_ resource.ResourceWithConfigure        = (*alertResource)(nil)
+	_ resource.ResourceWithImportState      = (*alertResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*alertResource)(nil)
 )
 
 type (

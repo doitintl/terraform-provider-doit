@@ -26,9 +26,9 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                = &labelResource{}
-	_ resource.ResourceWithConfigure   = &labelResource{}
-	_ resource.ResourceWithImportState = &labelResource{}
+	_ resource.Resource                = (*labelResource)(nil)
+	_ resource.ResourceWithConfigure   = (*labelResource)(nil)
+	_ resource.ResourceWithImportState = (*labelResource)(nil)
 )
 
 // NewLabelResource creates a new label resource instance.

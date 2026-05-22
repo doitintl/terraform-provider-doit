@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	_ resource.Resource                     = &reportResource{}
-	_ resource.ResourceWithConfigure        = &reportResource{}
-	_ resource.ResourceWithImportState      = &reportResource{}
-	_ resource.ResourceWithConfigValidators = &reportResource{}
+	_ resource.Resource                     = (*reportResource)(nil)
+	_ resource.ResourceWithConfigure        = (*reportResource)(nil)
+	_ resource.ResourceWithImportState      = (*reportResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*reportResource)(nil)
 )
 
 // NewReportResource creates a new report resource instance.
