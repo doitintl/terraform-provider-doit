@@ -9,7 +9,7 @@
 // while allowing legitimate secondary reads like `req.State.GetAttribute(ctx,
 // path.Root("id"), &stateId)` in Update methods.
 //
-// GEMINI.md §6 (Resource Code Conventions):
+// Enforces variable naming conventions:
 //
 //	Use `plan` in Create and Update methods (data from Terraform plan)
 //	Use `state` in Read and Delete methods (data from Terraform state)
@@ -27,7 +27,7 @@ import (
 // Analyzer is the go/analysis Analyzer for crudnaming.
 var Analyzer = &analysis.Analyzer{
 	Name:     "crudnaming",
-	Doc:      "Enforces variable names match their data source: req.Plan.Get → plan, req.State.Get → state (GEMINI.md §6).",
+	Doc:      "Enforces variable names match their data source: req.Plan.Get → plan, req.State.Get → state.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -94,7 +94,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				expectedName = "state"
 			}
 			pass.Reportf(call.Pos(),
-				"variable %q is populated from req.%s.Get() but name suggests %s; use %q instead (GEMINI.md §6)",
+				"variable %q is populated from req.%s.Get() but name suggests %s; use %q instead",
 				ident.Name, innerSel.Sel.Name, wrongName, expectedName)
 		}
 	})

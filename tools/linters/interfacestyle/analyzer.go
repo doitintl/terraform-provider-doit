@@ -1,7 +1,7 @@
 // Package interfacestyle flags interface satisfaction checks that use &type{}
 // instead of the preferred (*type)(nil) style.
 //
-// GEMINI.md §7: Always use (*type)(nil) style, not &type{}.
+// Enforces (*type)(nil) style for interface satisfaction checks.
 // This is the convention across the entire codebase for both resources and
 // data sources.
 package interfacestyle
@@ -18,7 +18,7 @@ import (
 // Analyzer is the go/analysis Analyzer for interfacestyle.
 var Analyzer = &analysis.Analyzer{
 	Name:     "interfacestyle",
-	Doc:      "Flags &type{} in interface satisfaction checks; use (*type)(nil) instead (GEMINI.md §7).",
+	Doc:      "Flags &type{} in interface satisfaction checks; use (*type)(nil) instead.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -76,7 +76,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				}
 
 				pass.Reportf(val.Pos(),
-					"use (*%s)(nil) instead of &%s{} for interface satisfaction checks (GEMINI.md §7)",
+					"use (*%s)(nil) instead of &%s{} for interface satisfaction checks",
 					typeName, typeName)
 			}
 		}

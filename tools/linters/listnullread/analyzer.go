@@ -2,7 +2,7 @@
 // functions (mapXxxToModel / populateState) for list attributes that are
 // Optional or Optional+Computed.
 //
-// GEMINI.md §1 Common Pitfall #3: the overlay resolves unknown lists to
+// The overlay resolves unknown lists to
 // empty [], so the Read path must also return [] (not null) for empty/nil
 // API responses. Using ListNull() here causes state churn (null↔[] flip)
 // on every apply.
@@ -122,7 +122,7 @@ func findListNullAssignments(pass *analysis.Pass, body *ast.BlockStmt, userConfi
 				pass.Reportf(assign.Pos(),
 					"types.ListNull() used for Optional/Optional+Computed list field %q in Read path; "+
 						"use types.ListValueMust() with empty slice instead to avoid null↔[] state churn "+
-						"(see GEMINI.md §1 Common Pitfall #3)",
+						"(use empty list for null/[] consistency)",
 					snakeName)
 			}
 		}

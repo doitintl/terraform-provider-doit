@@ -1,7 +1,7 @@
 // Package delete404 ensures that Delete methods treat 404 responses as success.
 // When a resource has already been deleted outside of Terraform, the Delete
 // method should not return an error — the desired state (resource gone) already
-// exists. GEMINI.md §6 (Delete 404 Handling).
+// exists.
 package delete404
 
 import (

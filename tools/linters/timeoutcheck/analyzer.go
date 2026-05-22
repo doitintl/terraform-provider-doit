@@ -1,6 +1,6 @@
 // Package timeoutcheck ensures that all CRUD methods on resources and Read
 // methods on data sources wrap their context with context.WithTimeout.
-// GEMINI.md §21 (Timeout Support).
+// Enforces timeout support in CRUD methods.
 //
 // Methods are exempt if they contain no API calls (no StatusCode() or
 // WithResponse call), such as no-op Delete methods.
@@ -56,7 +56,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		if !hasWithTimeout(fn.Body) {
 			pass.Reportf(fn.Pos(),
 				"%s method must wrap context with context.WithTimeout "+
-					"using the Timeouts field (see GEMINI.md §21)",
+					"using the Timeouts field (add timeout support)",
 				fn.Name.Name)
 		}
 	})

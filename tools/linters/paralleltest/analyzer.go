@@ -1,7 +1,7 @@
 // Package paralleltest flags acceptance tests that use resource.Test() instead
 // of resource.ParallelTest().
 //
-// GEMINI.md §15.1: All acceptance tests MUST use resource.ParallelTest()
+// All acceptance tests MUST use resource.ParallelTest()
 // instead of resource.Test() to allow concurrent execution and reduce CI time.
 package paralleltest
 
@@ -16,7 +16,7 @@ import (
 // Analyzer is the go/analysis Analyzer for paralleltest.
 var Analyzer = &analysis.Analyzer{
 	Name:     "paralleltest",
-	Doc:      "Flags resource.Test() in acceptance tests; use resource.ParallelTest() instead (GEMINI.md §15.1).",
+	Doc:      "Flags resource.Test() in acceptance tests; use resource.ParallelTest() instead.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -44,7 +44,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 		pass.Reportf(call.Pos(),
 			"use resource.ParallelTest() instead of resource.Test() "+
-				"to enable concurrent test execution (GEMINI.md §15.1)")
+				"to enable concurrent test execution")
 	})
 
 	return nil, nil

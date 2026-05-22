@@ -1,7 +1,7 @@
 // Package constructor flags NewXxxResource() and NewXxxDataSource()
 // constructor functions that don't use the &type{} return style.
 //
-// GEMINI.md §6:
+// Enforces &type{} constructor style:
 //
 //	// Use &type{} style (not new())
 //	func NewLabelResource() resource.Resource {
@@ -22,7 +22,7 @@ import (
 // Analyzer is the go/analysis Analyzer for constructor.
 var Analyzer = &analysis.Analyzer{
 	Name:     "constructor",
-	Doc:      "Ensures NewXxxResource/NewXxxDataSource constructors use &type{} style (GEMINI.md §6).",
+	Doc:      "Ensures NewXxxResource/NewXxxDataSource constructors use &type{} style.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -55,7 +55,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			if call, ok := result.(*ast.CallExpr); ok {
 				if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "new" {
 					pass.Reportf(ret.Pos(),
-						"constructor %s should return &type{} instead of new(type) (GEMINI.md §6)",
+						"constructor %s should return &type{} instead of new(type)",
 						name)
 				}
 			}
@@ -65,7 +65,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			if unary, ok := result.(*ast.UnaryExpr); ok && unary.Op == token.AND {
 				if _, ok := unary.X.(*ast.CompositeLit); !ok {
 					pass.Reportf(ret.Pos(),
-						"constructor %s should return &type{} (composite literal), not &variable (GEMINI.md §6)",
+						"constructor %s should return &type{} (composite literal), not &variable",
 						name)
 				}
 			}

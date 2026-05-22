@@ -1,6 +1,6 @@
 // Package errformat ensures that error messages for HTTP response errors
 // include both the status code and response body for debugging.
-// GEMINI.md §6 (Error Messages).
+// Enforces error message formatting conventions.
 //
 // Scope: Only flags AddError calls inside HTTP status code conditionals
 // (e.g. `if resp.StatusCode() != 200`). Non-HTTP errors (e.g., connection
@@ -147,17 +147,17 @@ func checkAddErrorArgs(pass *analysis.Pass, call *ast.CallExpr, cmp *comparisonI
 		if !hasStatus && !hasBody {
 			pass.Reportf(call.Pos(),
 				"HTTP error message must include both %s.StatusCode() and %s.Body "+
-					"(see GEMINI.md §6 Error Messages)",
+					"(include both status code and body)",
 				cmp.receiverName, cmp.receiverName)
 		} else if !hasStatus {
 			pass.Reportf(call.Pos(),
 				"HTTP error message includes body but is missing %s.StatusCode() "+
-					"(see GEMINI.md §6 Error Messages)",
+					"(include both status code and body)",
 				cmp.receiverName)
 		} else if !hasBody {
 			pass.Reportf(call.Pos(),
 				"HTTP error message includes status but is missing %s.Body "+
-					"(see GEMINI.md §6 Error Messages)",
+					"(include both status code and body)",
 				cmp.receiverName)
 		}
 	}

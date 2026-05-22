@@ -1,7 +1,7 @@
 // Package newexpr detects the "temp variable then take address" anti-pattern
 // and suggests using new(expr) instead (Go 1.26+).
 //
-// GEMINI.md §17:
+// Enforces new(expr) for pointer conversions (Go 1.26+):
 //
 //	// OLD - verbose
 //	filter := data.Filter.ValueString()
@@ -28,7 +28,7 @@ import (
 // Analyzer is the go/analysis Analyzer for newexpr.
 var Analyzer = &analysis.Analyzer{
 	Name:     "newexpr",
-	Doc:      "Suggests new(expr) instead of temp-variable-then-address pattern (GEMINI.md §17, Go 1.26+).",
+	Doc:      "Suggests new(expr) instead of temp-variable-then-address pattern (Go 1.26+).",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -101,7 +101,7 @@ func checkBlock(pass *analysis.Pass, block *ast.BlockStmt) {
 		// Flag only if the variable is used exactly once (in &x) and nowhere else.
 		if addrOfCount == 1 && otherRefCount == 0 {
 			pass.Reportf(assign.Pos(),
-				"use new(%s) instead of temp variable %q then &%s (GEMINI.md §17, Go 1.26+)",
+				"use new(%s) instead of temp variable %q then &%s (Go 1.26+)",
 				exprString(assign.Rhs[0]), ident.Name, ident.Name)
 		}
 	}

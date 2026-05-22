@@ -1,6 +1,6 @@
 // Package read404 ensures that Read methods on resources call
 // resp.State.RemoveResource(ctx) to handle externally deleted resources.
-// GEMINI.md §6 (Read 404 Handling).
+// Enforces RemoveResource() call on 404 in Read methods.
 //
 // This linter checks for the presence of RemoveResource in the Read method
 // body. It accepts both direct patterns (if status == 404 → RemoveResource)

@@ -1,7 +1,7 @@
 // Package unknownguard ensures that data source Read() methods check for
 // unknown inputs before making API calls.
 //
-// GEMINI.md §10.5 (Unknown Input Handling in Data Sources):
+// Enforces unknown input checks in data source Read methods:
 //
 // If any input attribute is Unknown during plan (e.g., depends on an unresolved
 // resource), the data source must NOT make API calls. Instead, it should set all
@@ -28,7 +28,7 @@ import (
 // Analyzer is the go/analysis Analyzer for unknownguard.
 var Analyzer = &analysis.Analyzer{
 	Name:     "unknownguard",
-	Doc:      "Ensures data source Read() checks for unknown inputs before API calls (GEMINI.md §10.5).",
+	Doc:      "Ensures data source Read() checks for unknown inputs before API calls.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer, schemaparser.Analyzer},
 }
@@ -131,7 +131,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 		pass.Reportf(fn.Name.Pos(),
 			"data source Read() must check for unknown inputs before API calls "+
-				"(IsUnknown/IsFullyKnown); inputs may be unknown during plan (GEMINI.md §10.5)")
+				"(IsUnknown/IsFullyKnown); inputs may be unknown during plan")
 	})
 
 	return nil, nil
