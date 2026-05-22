@@ -266,7 +266,7 @@ func classifyAttributeLit(lit *ast.CompositeLit) *AttrInfo {
 		case "Required":
 			hasRequired = isTrueLiteral(kv.Value)
 		case "NestedObject":
-			// Recurse into nested attributes.
+			// Recurse into nested attributes (ListNestedAttribute, SetNestedAttribute).
 			nestedLit, ok := kv.Value.(*ast.CompositeLit)
 			if !ok {
 				continue
@@ -274,6 +274,15 @@ func classifyAttributeLit(lit *ast.CompositeLit) *AttrInfo {
 			nestedAttrsMap := findMapField(nestedLit, "Attributes")
 			if nestedAttrsMap != nil {
 				info.NestedAttrs = make(map[string]*AttrInfo)
+				parseAttributes(nestedAttrsMap, info.NestedAttrs)
+			}
+		case "Attributes":
+			// Recurse into nested attributes (SingleNestedAttribute).
+			// The Attributes field is a direct map[string]schema.Attribute{}.
+			if nestedAttrsMap, ok := kv.Value.(*ast.CompositeLit); ok {
+				if info.NestedAttrs == nil {
+					info.NestedAttrs = make(map[string]*AttrInfo)
+				}
 				parseAttributes(nestedAttrsMap, info.NestedAttrs)
 			}
 		}

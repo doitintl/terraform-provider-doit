@@ -118,4 +118,77 @@ type BadRequiredModel struct {
 	Name types.String
 }
 
+// IfElseModel used to test if/else covering both branches (unconditional).
+type IfElseModel struct {
+	Id         types.String
+	CreateTime types.Int64
+	UpdateTime types.Int64
+	Name       types.String
+}
+
+// IfElseResourceSchema — Computed-only fields for if/else test.
+func IfElseResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"create_time": schema.Int64Attribute{
+				Computed: true,
+			},
+			"update_time": schema.Int64Attribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+		},
+	}
+}
+
+// RequiredNestedModel used to test Required nested objects.
+type RequiredNestedModel struct {
+	Id     types.String
+	Config ConfigValue
+	Name   types.String
+}
+
+// ConfigValue is a simple nested type.
+type ConfigValue struct {
+	Mode   types.String
+	Amount types.Float64
+}
+
+func (c ConfigValue) IsUnknown() bool { return false }
+func (c ConfigValue) IsNull() bool    { return false }
+
+// RequiredNestedResourceSchema — Required nested object with Optional+Computed children.
+func RequiredNestedResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"config": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"mode": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+					"amount": schema.Float64Attribute{
+						Optional: true,
+						Computed: true,
+					},
+				},
+				Required: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+		},
+	}
+}
+
 type ApiResponse struct{}
+type Int64Pointer struct{ Value *int64 }
+

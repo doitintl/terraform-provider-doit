@@ -1,5 +1,7 @@
 package overlaytest
 
+import "github.com/hashicorp/terraform-plugin-framework/types"
+
 // --- GOOD: correct overlay ---
 
 func overlayGoodComputedFields(apiResp *ApiResponse, plan *GoodModel) {
@@ -23,7 +25,7 @@ func overlayGoodComputedFields(apiResp *ApiResponse, plan *GoodModel) {
 
 // --- BAD: missing Computed-only field "create_time" ---
 
-func overlayBadMissingComputedFields(apiResp *ApiResponse, plan *BadMissingModel) { // want `overlayBadMissingComputedFields: Computed-only field "create_time" is not set from API response`
+func overlayBadMissingComputedFields(apiResp *ApiResponse, plan *BadMissingModel) { // want `overlayBadMissingComputedFields: Computed-only field\(s\) not set from API response: create_time`
 	var resolved BadMissingModel
 
 	// Only sets "id", but "create_time" is missing.
@@ -54,4 +56,37 @@ func overlayBadRequiredComputedFields(apiResp *ApiResponse, plan *BadRequiredMod
 
 	// BAD: name is Required but is being assigned.
 	plan.Name = resolved.Name // want `overlayBadRequiredComputedFields: Required field "name" must not be assigned in overlay`
+}
+
+// --- GOOD: if/else covering both branches is unconditional ---
+
+func overlayIfElseComputedFields(apiResp *Int64Pointer, plan *IfElseModel) {
+	var resolved IfElseModel
+
+	plan.Id = resolved.Id
+
+	// Computed-only: if/else covering both branches = unconditional. ✓
+	if apiResp.Value != nil {
+		plan.CreateTime = types.Int64Value(*apiResp.Value)
+	} else {
+		plan.CreateTime = types.Int64Null()
+	}
+	if apiResp.Value != nil {
+		plan.UpdateTime = types.Int64Value(*apiResp.Value)
+	} else {
+		plan.UpdateTime = types.Int64Null()
+	}
+}
+
+// --- GOOD: Required nested object with IsUnknown guard ---
+
+func overlayRequiredNestedComputedFields(apiResp *ApiResponse, plan *RequiredNestedModel) {
+	var resolved RequiredNestedModel
+
+	plan.Id = resolved.Id
+
+	// Required nested object with Optional+Computed children: IsUnknown guard is OK. ✓
+	if plan.Config.IsUnknown() {
+		plan.Config = resolved.Config
+	}
 }

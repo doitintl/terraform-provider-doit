@@ -57,4 +57,21 @@ type NestedAttributeObject struct {
 	Attributes map[string]Attribute
 }
 
+type Int64Attribute struct {
+	Required            bool
+	Optional            bool
+	Computed            bool
+	Description         string
+	MarkdownDescription string
+}
+
+type SingleNestedAttribute struct {
+	Attributes          map[string]Attribute
+	Required            bool
+	Optional            bool
+	Computed            bool
+	Description         string
+	MarkdownDescription string
+}
+
 var _ context.Context

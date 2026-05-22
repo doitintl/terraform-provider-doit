@@ -179,12 +179,17 @@ func analyzeOverlayBody(body *ast.BlockStmt, planParam string) map[string]*field
 						pos:                s.Pos(),
 					}
 				}
-			}
 
-			// Also handle if-else chains: `if plan.X.IsUnknown() { ... } else if !plan.X.IsNull() { ... }`
-			// The else-if branch contains list overlayListElements calls — we track those too.
-			if s.Else != nil {
-				walkElseChainForAssignments(s.Else, planParam, result, s.Pos())
+				// Also handle if-else chains after IsUnknown guard:
+				// `if plan.X.IsUnknown() { ... } else if !plan.X.IsNull() { ... }`
+				if s.Else != nil {
+					walkElseChainForAssignments(s.Else, planParam, result, s.Pos())
+				}
+			} else {
+				// Not an IsUnknown guard. Check for if/else covering all paths:
+				// `if apiResp.X != nil { plan.F = val } else { plan.F = null }`
+				// Both branches assign to plan.F → treat as unconditional.
+				detectIfElseUnconditional(s, planParam, result)
 			}
 
 		case *ast.ExprStmt:
@@ -195,6 +200,61 @@ func analyzeOverlayBody(body *ast.BlockStmt, planParam string) map[string]*field
 	}
 
 	return result
+}
+
+// detectIfElseUnconditional checks if an if/else assigns to the same plan field
+// in both branches (covering all paths). E.g.:
+//
+//	if apiResp.X != nil { plan.F = types.Int64Value(*apiResp.X) } else { plan.F = types.Int64Null() }
+//
+// This is semantically unconditional for the plan field.
+func detectIfElseUnconditional(ifStmt *ast.IfStmt, planParam string, result map[string]*fieldAssignment) {
+	if ifStmt.Else == nil {
+		return // no else branch → not covering all paths
+	}
+
+	// Collect plan field assignments from the if-body.
+	ifFields := collectPlanAssignments(ifStmt.Body, planParam)
+
+	// Collect plan field assignments from the else branch.
+	var elseFields map[string]token.Pos
+	switch e := ifStmt.Else.(type) {
+	case *ast.BlockStmt:
+		elseFields = collectPlanAssignments(e, planParam)
+	case *ast.IfStmt:
+		// else-if: only treat as unconditional if the else-if also has an else.
+		// For simplicity, don't recurse into chained else-ifs.
+		return
+	}
+
+	// Fields assigned in BOTH branches are unconditional.
+	for fieldName, pos := range ifFields {
+		if _, inElse := elseFields[fieldName]; inElse {
+			// Already recorded? Don't override a more specific classification.
+			if _, exists := result[fieldName]; !exists {
+				result[fieldName] = &fieldAssignment{
+					unconditional: true,
+					pos:          pos,
+				}
+			}
+		}
+	}
+}
+
+// collectPlanAssignments extracts all plan.X = ... assignments from a block.
+func collectPlanAssignments(block *ast.BlockStmt, planParam string) map[string]token.Pos {
+	fields := make(map[string]token.Pos)
+	for _, stmt := range block.List {
+		if assign, ok := stmt.(*ast.AssignStmt); ok {
+			for _, lhs := range assign.Lhs {
+				fieldName := selectorFieldOn(lhs, planParam)
+				if fieldName != "" {
+					fields[fieldName] = assign.Pos()
+				}
+			}
+		}
+	}
+	return fields
 }
 
 // walkElseChainForAssignments handles else/else-if blocks.
@@ -290,6 +350,11 @@ func extractIsUnknownGuard(cond ast.Expr, planParam string) string {
 
 // validateOverlay checks the overlay against the schema classification.
 func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser.SchemaInfo, assignments map[string]*fieldAssignment, planParam string) {
+	// Collect missing fields by category to aggregate into single diagnostics.
+	// This avoids golangci-lint deduplicating multiple reports at fn.Pos().
+	var missingComputed []string
+	var unhandledOptComp []string
+
 	for attrName, attrInfo := range schema.Attrs {
 		// Skip the "timeouts" attribute — it's framework-managed.
 		if attrName == "timeouts" {
@@ -301,10 +366,7 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 		switch attrInfo.Class {
 		case schemaparser.ComputedOnly:
 			if !hasAssignment {
-				pass.Reportf(fn.Pos(),
-					"%s: Computed-only field %q is not set from API response; "+
-						"add unconditional assignment: %s.%s = resolved.%s",
-					fn.Name.Name, attrName, planParam, toPascalCase(attrName), toPascalCase(attrName))
+				missingComputed = append(missingComputed, attrName)
 			} else if assignment.guardedByIsUnknown {
 				pass.Reportf(assignment.pos,
 					"%s: Computed-only field %q should be assigned unconditionally (not guarded by IsUnknown)",
@@ -313,6 +375,13 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 
 		case schemaparser.Required:
 			if hasAssignment {
+				// Allow Required nested objects that have Optional+Computed children.
+				// The correct pattern is: if plan.Config.IsUnknown() { plan.Config = resolved }
+				// else { overlaySubfields() }. The IsUnknown guard on a Required field
+				// is defensive and acceptable when the field has nested subfields.
+				if assignment.guardedByIsUnknown && attrInfo.NestedAttrs != nil {
+					continue
+				}
 				pass.Reportf(assignment.pos,
 					"%s: Required field %q must not be assigned in overlay; "+
 						"the plan value should be preserved",
@@ -329,12 +398,7 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 
 		case schemaparser.OptionalComputed:
 			if !hasAssignment {
-				pass.Reportf(fn.Pos(),
-					"%s: Optional+Computed field %q is not handled; "+
-						"add: if %s.%s.IsUnknown() { %s.%s = resolved.%s }",
-					fn.Name.Name, attrName,
-					planParam, toPascalCase(attrName),
-					planParam, toPascalCase(attrName), toPascalCase(attrName))
+				unhandledOptComp = append(unhandledOptComp, attrName)
 			} else if assignment.unconditional {
 				pass.Reportf(assignment.pos,
 					"%s: Optional+Computed field %q is assigned unconditionally; "+
@@ -342,6 +406,20 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 					fn.Name.Name, attrName)
 			}
 		}
+	}
+
+	// Report aggregated missing fields.
+	if len(missingComputed) > 0 {
+		pass.Reportf(fn.Pos(),
+			"%s: Computed-only field(s) not set from API response: %s; "+
+				"add unconditional assignment: %s.<Field> = resolved.<Field>",
+			fn.Name.Name, strings.Join(missingComputed, ", "), planParam)
+	}
+	if len(unhandledOptComp) > 0 {
+		pass.Reportf(fn.Pos(),
+			"%s: Optional+Computed field(s) not handled: %s; "+
+				"add: if %s.<Field>.IsUnknown() { %s.<Field> = resolved.<Field> }",
+			fn.Name.Name, strings.Join(unhandledOptComp, ", "), planParam, planParam)
 	}
 }
 
