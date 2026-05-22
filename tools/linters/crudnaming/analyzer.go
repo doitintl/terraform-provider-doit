@@ -1,6 +1,13 @@
-// Package crudnaming enforces consistent variable naming in CRUD methods:
-//   - Create and Update methods should use `plan` (data from Terraform plan)
-//   - Read and Delete methods should use `state` (data from Terraform state)
+// Package crudnaming enforces that variables populated via req.Plan.Get() or
+// req.State.Get() are named consistently with their data source:
+//
+//   - req.Plan.Get(ctx, &x)  → x must be named "plan"
+//   - req.State.Get(ctx, &x) → x must be named "state"
+//   - req.State.GetAttribute(ctx, ..., &x) → no constraint (scalar extraction)
+//
+// This catches actual mismatches (e.g., `var plan model; req.State.Get(ctx, &plan)`)
+// while allowing legitimate secondary reads like `req.State.GetAttribute(ctx,
+// path.Root("id"), &stateId)` in Update methods.
 //
 // GEMINI.md §6 (Resource Code Conventions):
 //
@@ -10,6 +17,7 @@ package crudnaming
 
 import (
 	"go/ast"
+	"strings"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -19,60 +27,75 @@ import (
 // Analyzer is the go/analysis Analyzer for crudnaming.
 var Analyzer = &analysis.Analyzer{
 	Name:     "crudnaming",
-	Doc:      "Enforces `plan` in Create/Update and `state` in Read/Delete (GEMINI.md §6).",
+	Doc:      "Enforces variable names match their data source: req.Plan.Get → plan, req.State.Get → state (GEMINI.md §6).",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
-
-// methodRules maps method names to (expected variable name, wrong variable name).
-var methodRules = map[string]struct {
-	expected string
-	wrong    string
-}{
-	"Create": {expected: "plan", wrong: "state"},
-	"Update": {expected: "plan", wrong: "state"},
-	"Read":   {expected: "state", wrong: "plan"},
-	"Delete": {expected: "state", wrong: "plan"},
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
+	// Find all method calls matching req.Plan.Get(ctx, &x) or req.State.Get(ctx, &x).
+	nodeFilter := []ast.Node{(*ast.CallExpr)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		fn := n.(*ast.FuncDecl)
-		if fn.Name == nil || fn.Body == nil {
-			return
-		}
-		// Must be a method (has receiver).
-		if fn.Recv == nil || len(fn.Recv.List) == 0 {
+		call := n.(*ast.CallExpr)
+
+		// Must be a selector call: something.Get(...)
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != "Get" {
 			return
 		}
 
-		rule, ok := methodRules[fn.Name.Name]
+		// The receiver must be req.Plan or req.State (another selector).
+		innerSel, ok := sel.X.(*ast.SelectorExpr)
 		if !ok {
 			return
 		}
 
-		// Walk the method body looking for `var <wrong> <model>` or
-		// `<wrong> := ...` where the variable name matches the wrong convention.
-		for _, stmt := range fn.Body.List {
-			// Pattern 1: var state myResourceModel (in Create/Update)
-			if ds, ok := stmt.(*ast.DeclStmt); ok {
-				if gd, ok := ds.Decl.(*ast.GenDecl); ok {
-					for _, spec := range gd.Specs {
-						if vs, ok := spec.(*ast.ValueSpec); ok {
-							for _, name := range vs.Names {
-								if name.Name == rule.wrong {
-									pass.Reportf(name.Pos(),
-										"%s method should use %q instead of %q for the resource model variable (GEMINI.md §6)",
-										fn.Name.Name, rule.expected, rule.wrong)
-								}
-							}
-						}
-					}
-				}
+		// Determine which data source this reads from and what the wrong name would be.
+		var wrongName string
+		switch innerSel.Sel.Name {
+		case "Plan":
+			wrongName = "state" // reading from Plan but variable says "state"
+		case "State":
+			wrongName = "plan" // reading from State but variable says "plan"
+		default:
+			return
+		}
+
+		// Verify the outermost receiver is a simple ident (typically "req" or "resp").
+		if _, ok := innerSel.X.(*ast.Ident); !ok {
+			return
+		}
+
+		// Get must have at least 2 args: ctx, &model.
+		if len(call.Args) < 2 {
+			return
+		}
+
+		// Second arg must be &x (unary & expression).
+		unary, ok := call.Args[1].(*ast.UnaryExpr)
+		if !ok {
+			return
+		}
+		ident, ok := unary.X.(*ast.Ident)
+		if !ok {
+			return
+		}
+
+		// Flag only if the variable name contains the WRONG source name.
+		// "plan" from req.State.Get() → wrong (contains "plan")
+		// "oldState" from req.State.Get() → fine (contains "state", not "plan")
+		// "data" from req.Plan.Get() → fine (neutral name)
+		lower := strings.ToLower(ident.Name)
+		if strings.Contains(lower, wrongName) {
+			expectedName := "plan"
+			if wrongName == "plan" {
+				expectedName = "state"
 			}
+			pass.Reportf(call.Pos(),
+				"variable %q is populated from req.%s.Get() but name suggests %s; use %q instead (GEMINI.md §6)",
+				ident.Name, innerSel.Sel.Name, wrongName, expectedName)
 		}
 	})
 
