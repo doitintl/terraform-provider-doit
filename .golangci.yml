@@ -44,6 +44,7 @@ linters:
     - crudnaming
     - constructor
     - newexpr
+    - unknownguard
   exclusions:
     generated: lax
     presets:
@@ -88,6 +89,7 @@ linters:
           - crudnaming
           - constructor
           - newexpr
+          - unknownguard
       # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
@@ -104,6 +106,7 @@ linters:
           - crudnaming
           - constructor
           - newexpr
+          - unknownguard
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -204,6 +207,9 @@ linters:
       newexpr:
         type: "module"
         description: "Suggests new(expr) instead of temp-variable-then-address pattern."
+      unknownguard:
+        type: "module"
+        description: "Ensures data source Read() checks for unknown inputs before API calls."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

@@ -17,6 +17,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/read404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/unknownguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
@@ -97,6 +98,10 @@ func init() {
 
 	register.Plugin("newexpr", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{newexpr.Analyzer}}, nil
+	})
+
+	register.Plugin("unknownguard", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{unknownguard.Analyzer}}, nil
 	})
 }
 
