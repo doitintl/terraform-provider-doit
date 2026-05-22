@@ -1,0 +1,4 @@
+version: v2.12.2
+plugins:
+  - module: 'github.com/doitintl/terraform-provider-doit/tools/linters'
+    path: tools/linters

@@ -27,6 +27,11 @@ linters:
     - govet
     - revive
     - gosec
+    # Custom Terraform provider linters (tools/linters)
+    - diagsuppressed
+    - structliteral
+    - overlayinvariant
+    - overlaycheck
   exclusions:
     generated: lax
     presets:
@@ -55,6 +60,22 @@ linters:
         linters:
           - godot
           - revive
+      # Generated schema files — exclude overlaycheck (it reads them for facts, not linting)
+      - path: _gen\.go
+        linters:
+          - overlaycheck
+          - overlayinvariant
+          - structliteral
+      # Test files — exclude custom linters
+      - path: _test\.go
+        linters:
+          - overlaycheck
+          - overlayinvariant
+      # Data sources — exclude overlay linters (data sources don't use overlays)
+      - path: _data_source\.go
+        linters:
+          - overlaycheck
+          - overlayinvariant
   settings:
     depguard:
       rules:
@@ -92,7 +113,19 @@ linters:
       excludes:
         - G101 # Look for hardcoded credentials
         - G404 # Insecure random number source
-
+    custom:
+      diagsuppressed:
+        type: "module"
+        description: "Detects suppressed diag.Diagnostics return values."
+      structliteral:
+        type: "module"
+        description: "Detects direct struct literal construction of generated Terraform Value types."
+      overlayinvariant:
+        type: "module"
+        description: "Ensures Create/Update use overlay functions and Read/ImportState use mapping functions."
+      overlaycheck:
+        type: "module"
+        description: "Validates overlay functions handle all schema fields correctly per their classification."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
