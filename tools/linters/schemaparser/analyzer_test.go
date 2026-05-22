@@ -94,3 +94,70 @@ func TestSchemaParser(t *testing.T) {
 		}
 	}
 }
+
+func TestSchemaParserOverrides(t *testing.T) {
+	testdata := analysistest.TestData()
+
+	// Run on both the generated schema package and the provider package.
+	// The provider imports example_gen and applies overrides in Schema().
+	results := analysistest.RunWithSuggestedFixes(t, testdata, schemaparser.Analyzer, "example_gen", "example_provider")
+
+	// Find the result for example_provider (which has overrides applied).
+	for _, r := range results {
+		if r.Pass.Pkg.Name() != "example_provider" {
+			continue
+		}
+		if r.Result == nil {
+			t.Fatal("expected non-nil result for example_provider")
+		}
+		facts, ok := r.Result.(*schemaparser.SchemaFacts)
+		if !ok {
+			t.Fatalf("expected *SchemaFacts, got %T", r.Result)
+		}
+
+		schema, ok := facts.Schemas["ExampleResourceSchema"]
+		if !ok {
+			t.Fatal("expected to find ExampleResourceSchema in merged facts")
+		}
+
+		// Verify overrides.
+		tests := []struct {
+			field string
+			want  schemaparser.FieldClass
+		}{
+			// Pattern 1: Full replacement — id changed from ComputedOnly to Required.
+			{"id", schemaparser.Required},
+			// Pattern 3: Modify-in-place — amount changed from OptionalComputed to Required.
+			{"amount", schemaparser.Required},
+			// Pattern 3b: No classification change — name stays Required.
+			{"name", schemaparser.Required},
+			// Unchanged fields.
+			{"create_time", schemaparser.ComputedOnly},
+			{"description", schemaparser.Optional},
+			{"currency", schemaparser.OptionalComputed},
+			// Pattern 4: New Computed-only field.
+			{"display_name", schemaparser.ComputedOnly},
+			// Pattern 5: New Optional field.
+			{"phone", schemaparser.Optional},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.field, func(t *testing.T) {
+				info, ok := schema.Attrs[tt.field]
+				if !ok {
+					t.Fatalf("attribute %q not found in merged schema", tt.field)
+				}
+				if info.Class != tt.want {
+					t.Errorf("attribute %q: got class %s, want %s", tt.field, info.Class, tt.want)
+				}
+			})
+		}
+
+		// Pattern 2: Deletion — update_time should be gone.
+		t.Run("update_time_deleted", func(t *testing.T) {
+			if _, ok := schema.Attrs["update_time"]; ok {
+				t.Error("expected update_time to be deleted from schema")
+			}
+		})
+	}
+}
