@@ -296,23 +296,3 @@ func containsUseStateForUnknown(expr ast.Node) bool {
 	})
 	return found
 }
-
-// containsIdent checks if an expression tree contains a reference to an identifier.
-func containsIdent(expr ast.Node, name string) bool {
-	found := false
-	ast.Inspect(expr, func(n ast.Node) bool {
-		if found {
-			return false
-		}
-		ident, ok := n.(*ast.Ident)
-		if !ok {
-			return true
-		}
-		if ident.Name == name {
-			found = true
-			return false
-		}
-		return true
-	})
-	return found
-}

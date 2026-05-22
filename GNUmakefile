@@ -6,8 +6,17 @@ build:
 install: build
 	go install -v ./...
 
-lint:
-	golangci-lint run
+lint: lint-build
+	./custom-gcl run
+
+# Build the custom golangci-lint binary with our module plugins.
+# Rebuilds only when the plugin source, config, or go.sum changes.
+LINT_SOURCES := $(shell find tools/linters -name '*.go' -not -path '*/testdata/*')
+custom-gcl: .custom-gcl.yml .golangci.yml go.sum $(LINT_SOURCES)
+	golangci-lint custom
+	@touch $@
+
+lint-build: custom-gcl
 
 # Generate OpenAPI models and Terraform resource schemas
 # Must be run in order: extract-inline-schemas -> openapi -> framework -> models
@@ -53,4 +62,4 @@ testacc-run:
 validate-examples:
 	./scripts/validate_examples.sh
 
-.PHONY: fmt lint test testacc testacc-run build install generate docs validate-docs validate-examples
+.PHONY: fmt lint lint-build test testacc testacc-run build install generate docs validate-docs validate-examples
