@@ -194,8 +194,6 @@ func overlayInsightComputedFields(ctx context.Context, apiResp *models.InsightRe
 
 	// Phase 2: Overlay computed-only fields — always from resolved.
 	plan.Source = resolved.Source
-	plan.SourceId = resolved.SourceId
-	plan.InsightKey = resolved.InsightKey
 	plan.DisplayStatus = resolved.DisplayStatus
 	plan.LastStatusChange = resolved.LastStatusChange
 	plan.LastUpdated = resolved.LastUpdated
@@ -203,6 +201,12 @@ func overlayInsightComputedFields(ctx context.Context, apiResp *models.InsightRe
 	plan.Tags = resolved.Tags
 
 	// Optional+Computed: resolve only when unknown
+	if plan.SourceId.IsUnknown() {
+		plan.SourceId = resolved.SourceId
+	}
+	if plan.InsightKey.IsUnknown() {
+		plan.InsightKey = resolved.InsightKey
+	}
 	if plan.CloudFlowTemplateId.IsUnknown() {
 		plan.CloudFlowTemplateId = resolved.CloudFlowTemplateId
 	}
