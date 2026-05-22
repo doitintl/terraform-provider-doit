@@ -326,9 +326,8 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Convert model to API request type
-	content := plan.Content.ValueString()
 	apiReq := models.UpdateAnnotationRequest{
-		Content:   &content,
+		Content:   new(plan.Content.ValueString()),
 		Timestamp: &timestamp,
 	}
 

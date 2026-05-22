@@ -154,8 +154,7 @@ func (plan *alertResourceModel) toAlertRequest(ctx context.Context) (req models.
 // toAlertUpdateRequest converts the Terraform model to the API AlertUpdateRequest.
 // This is used for update operations.
 func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req models.AlertUpdateRequest, diags diag.Diagnostics) {
-	name := plan.Name.ValueString()
-	req.Name = &name
+	req.Name = new(plan.Name.ValueString())
 
 	// Convert recipients
 	if !plan.Recipients.IsNull() && !plan.Recipients.IsUnknown() {
