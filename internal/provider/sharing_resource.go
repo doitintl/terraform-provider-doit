@@ -214,7 +214,10 @@ func (r *sharingResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Plan-first state pattern: keep user values, overlay only Computed-only fields
-	overlaySharingComputedFields(putResp.JSON200, &plan)
+	resp.Diagnostics.Append(overlaySharingComputedFields(ctx, putResp.JSON200, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -302,7 +305,10 @@ func (r *sharingResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Plan-first state pattern: preserve user's plan values, overlay computed fields only
-	overlaySharingComputedFields(putResp.JSON200, &plan)
+	resp.Diagnostics.Append(overlaySharingComputedFields(ctx, putResp.JSON200, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -503,35 +509,29 @@ func mapSharingToModel(ctx context.Context, apiResp *models.ResourcePermissionsR
 // overlaySharingComputedFields overlays only the Computed-only fields from the
 // API response onto the plan. User-configured values (permissions, public, resource_type,
 // resource_id) are preserved from the plan exactly as-is.
-func overlaySharingComputedFields(apiResp *models.ResourcePermissionsResponse, plan *sharingResourceModel) {
-	// Computed-only: always set from API response
-	plan.Id = types.StringPointerValue(apiResp.Id)
-	plan.Name = types.StringPointerValue(apiResp.Name)
-	plan.Description = types.StringPointerValue(apiResp.Description)
-
-	if apiResp.CreateTime != nil {
-		plan.CreateTime = types.Int64Value(*apiResp.CreateTime)
-	} else {
-		plan.CreateTime = types.Int64Null()
+func overlaySharingComputedFields(ctx context.Context, apiResp *models.ResourcePermissionsResponse, plan *sharingResourceModel) diag.Diagnostics {
+	// Phase 1: Build fully-resolved state from API response.
+	var resolved sharingResourceModel
+	diags := mapSharingToModel(ctx, apiResp, &resolved)
+	if diags.HasError() {
+		return diags
 	}
 
-	if apiResp.UpdateTime != nil {
-		plan.UpdateTime = types.Int64Value(*apiResp.UpdateTime)
-	} else {
-		plan.UpdateTime = types.Int64Null()
-	}
+	// Phase 2: Overlay computed-only fields — always from resolved.
+	plan.Id = resolved.Id
+	plan.Name = resolved.Name
+	plan.Description = resolved.Description
+	plan.CreateTime = resolved.CreateTime
+	plan.UpdateTime = resolved.UpdateTime
 
 	// Required (permissions) and explicit Optional (public when set): never touch — plan values preserved
 
 	// Optional+Computed (public): resolve only when unknown (user omitted it)
-	// Normalize empty string to null (see mapSharingToModel).
 	if plan.Public.IsUnknown() {
-		if apiResp.Public != nil && string(*apiResp.Public) != "" {
-			plan.Public = types.StringValue(string(*apiResp.Public))
-		} else {
-			plan.Public = types.StringNull()
-		}
+		plan.Public = resolved.Public
 	}
+
+	return diags
 }
 
 // buildSharingRequest converts the Terraform model into an API request body.

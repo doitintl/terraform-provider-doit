@@ -32,10 +32,10 @@ type (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                     = &allocationResource{}
-	_ resource.ResourceWithConfigure        = &allocationResource{}
-	_ resource.ResourceWithImportState      = &allocationResource{}
-	_ resource.ResourceWithConfigValidators = &allocationResource{}
+	_ resource.Resource                     = (*allocationResource)(nil)
+	_ resource.ResourceWithConfigure        = (*allocationResource)(nil)
+	_ resource.ResourceWithImportState      = (*allocationResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*allocationResource)(nil)
 )
 
 // NewAllocationResource creates a new allocation resource instance.
@@ -52,7 +52,7 @@ func (r *allocationResource) Configure(_ context.Context, req resource.Configure
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return

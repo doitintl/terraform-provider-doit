@@ -28,9 +28,9 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                = &annotationResource{}
-	_ resource.ResourceWithConfigure   = &annotationResource{}
-	_ resource.ResourceWithImportState = &annotationResource{}
+	_ resource.Resource                = (*annotationResource)(nil)
+	_ resource.ResourceWithConfigure   = (*annotationResource)(nil)
+	_ resource.ResourceWithImportState = (*annotationResource)(nil)
 )
 
 // NewAnnotationResource creates a new annotation resource instance.
@@ -47,7 +47,7 @@ func (r *annotationResource) Configure(_ context.Context, req resource.Configure
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
@@ -326,9 +326,8 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Convert model to API request type
-	content := plan.Content.ValueString()
 	apiReq := models.UpdateAnnotationRequest{
-		Content:   &content,
+		Content:   new(plan.Content.ValueString()),
 		Timestamp: &timestamp,
 	}
 

@@ -49,10 +49,8 @@ func (r *reportResource) overlayReportComputedFields(ctx context.Context, apiRes
 	// id: always from API (Computed-only)
 	plan.Id = resolved.Id
 
-	// type: use plan if known, otherwise resolved
-	if plan.Type.IsUnknown() {
-		plan.Type = resolved.Type
-	}
+	// type: Computed-only — always from API
+	plan.Type = resolved.Type
 
 	// name: use plan if known, otherwise resolved
 	if plan.Name.IsUnknown() {

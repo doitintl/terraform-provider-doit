@@ -62,50 +62,35 @@ func mapUserToModel(user *models.UserListItem, state *userResourceModel) {
 // Create and Update. It preserves user-configured values from the plan and
 // only sets Computed-only fields from the API response.
 func overlayUserComputedFields(user *models.UserListItem, plan *userResourceModel) {
-	// Computed-only fields: ALWAYS set from API response.
-	plan.Id = types.StringPointerValue(user.Email) // id = email
-	plan.DisplayName = types.StringPointerValue(user.DisplayName)
+	// Phase 1: Build fully-resolved state from API response.
+	var resolved userResourceModel
+	mapUserToModel(user, &resolved)
 
-	if user.Status != nil {
-		plan.Status = types.StringValue(strings.ToLower(string(*user.Status)))
-	} else {
-		plan.Status = types.StringNull()
-	}
+	// Phase 2: Overlay computed-only fields — always from resolved.
+	plan.Id = resolved.Id
+	plan.DisplayName = resolved.DisplayName
+	plan.Status = resolved.Status
 
 	// Optional+Computed fields: resolve ONLY when unknown (user omitted them).
 	// When known, the user explicitly set them — preserve the plan value.
 	if plan.FirstName.IsUnknown() {
-		plan.FirstName = types.StringPointerValue(user.FirstName)
+		plan.FirstName = resolved.FirstName
 	}
 	if plan.LastName.IsUnknown() {
-		plan.LastName = types.StringPointerValue(user.LastName)
+		plan.LastName = resolved.LastName
 	}
 	if plan.JobTitle.IsUnknown() {
-		if user.JobTitle != nil {
-			plan.JobTitle = types.StringValue(string(*user.JobTitle))
-		} else {
-			plan.JobTitle = types.StringNull()
-		}
+		plan.JobTitle = resolved.JobTitle
 	}
 	if plan.RoleId.IsUnknown() {
-		plan.RoleId = types.StringPointerValue(user.RoleId)
+		plan.RoleId = resolved.RoleId
 	}
 	if plan.OrganizationId.IsUnknown() {
-		plan.OrganizationId = types.StringPointerValue(user.OrganizationId)
+		plan.OrganizationId = resolved.OrganizationId
 	}
-	if plan.Phone.IsUnknown() {
-		plan.Phone = normalizePhone(user.Phone)
-	}
-	if plan.PhoneExtension.IsUnknown() {
-		plan.PhoneExtension = types.StringPointerValue(user.PhoneExtension)
-	}
-	if plan.Language.IsUnknown() {
-		if user.Language != nil {
-			plan.Language = types.StringValue(string(*user.Language))
-		} else {
-			plan.Language = types.StringNull()
-		}
-	}
+
+	// Note: phone, phone_extension, and language are Optional-only (not Computed).
+	// They should always preserve the plan value regardless of Unknown/Known state.
 }
 
 // resolveInternalID looks up the current internal UUID for a user by their

@@ -17,10 +17,10 @@ import (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                     = &alertResource{}
-	_ resource.ResourceWithConfigure        = &alertResource{}
-	_ resource.ResourceWithImportState      = &alertResource{}
-	_ resource.ResourceWithConfigValidators = &alertResource{}
+	_ resource.Resource                     = (*alertResource)(nil)
+	_ resource.ResourceWithConfigure        = (*alertResource)(nil)
+	_ resource.ResourceWithImportState      = (*alertResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*alertResource)(nil)
 )
 
 type (
@@ -47,7 +47,7 @@ func (r *alertResource) Configure(_ context.Context, req resource.ConfigureReque
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return

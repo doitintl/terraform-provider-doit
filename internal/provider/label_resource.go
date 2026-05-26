@@ -26,9 +26,9 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                = &labelResource{}
-	_ resource.ResourceWithConfigure   = &labelResource{}
-	_ resource.ResourceWithImportState = &labelResource{}
+	_ resource.Resource                = (*labelResource)(nil)
+	_ resource.ResourceWithConfigure   = (*labelResource)(nil)
+	_ resource.ResourceWithImportState = (*labelResource)(nil)
 )
 
 // NewLabelResource creates a new label resource instance.
@@ -45,7 +45,7 @@ func (r *labelResource) Configure(_ context.Context, req resource.ConfigureReque
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
@@ -233,11 +233,9 @@ func (r *labelResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	// Both color and name are required fields in the schema, so they will always
 	// be present. We use pointers here because UpdateLabelRequest uses pointer
 	// types for PATCH semantics, but we always send both fields.
-	color := models.UpdateLabelRequestColor(plan.Color.ValueString())
-	name := plan.Name.ValueString()
 	apiReq := models.UpdateLabelRequest{
-		Color: &color,
-		Name:  &name,
+		Color: new(models.UpdateLabelRequestColor(plan.Color.ValueString())),
+		Name:  new(plan.Name.ValueString()),
 	}
 
 	// Update label via API
