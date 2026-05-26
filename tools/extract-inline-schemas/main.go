@@ -84,7 +84,25 @@ func main() {
 		extractor.insertExtractedSchemas(schemasNode)
 	}
 
-	// Phase 4: Prune unused paths and unreachable schemas (optional).
+	// Phase 4: Validate functional equivalence of the extraction.
+	// This runs BEFORE pruning so that inline-schema extraction regressions
+	// are always caught, regardless of whether pruning is enabled.
+	{
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		if err := enc.Encode(&root); err != nil {
+			log.Fatalf("marshaling YAML for validation: %v", err)
+		}
+		if err := enc.Close(); err != nil {
+			log.Fatalf("closing YAML encoder for validation: %v", err)
+		}
+		if err := validateEquivalence(data, buf.Bytes()); err != nil {
+			log.Fatalf("equivalence validation failed: %v", err)
+		}
+	}
+
+	// Phase 5: Prune unused paths and unreachable schemas (optional).
 	// When -datasources and -resources are provided, only paths/methods
 	// referenced by the provider configs (plus any -extra-paths) are retained.
 	// Schemas not transitively reachable from the remaining paths are removed.
@@ -108,8 +126,7 @@ func main() {
 		fmt.Printf("Pruned %d paths and %d methods\n", pathsRemoved, methodsPruned)
 
 		if schemasNode != nil {
-			pruneDocRoot = doc
-			reachable := collectReachableSchemas(pathsNode, schemasNode)
+			reachable := collectReachableSchemas(doc, pathsNode, schemasNode)
 			schemasRemoved := pruneSchemas(schemasNode, reachable)
 			fmt.Printf("Pruned %d unreachable schemas (kept %d)\n", schemasRemoved, len(reachable))
 
@@ -139,17 +156,6 @@ func main() {
 
 	if err := os.WriteFile(*outputPath, out, 0600); err != nil {
 		log.Fatalf("writing output: %v", err)
-	}
-
-	// Phase 5: Validate functional equivalence.
-	// Skip when pruning — the spec is intentionally reduced.
-	if !pruning {
-		if err := validateEquivalence(data, out); err != nil {
-			// Remove the output file on validation failure to avoid leaving
-			// a broken processed spec on disk.
-			os.Remove(*outputPath)
-			log.Fatalf("equivalence validation failed: %v", err)
-		}
 	}
 
 	fmt.Printf("Extracted %d inline schemas\n", len(extractor.extracted))

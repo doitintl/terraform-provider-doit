@@ -274,7 +274,7 @@ Unused:
       type: string
 `)
 
-	reachable := collectReachableSchemas(paths, schemas)
+	reachable := collectReachableSchemas(nil, paths, schemas)
 
 	for _, name := range []string{"UserList", "User", "Role"} {
 		if !reachable[name] {
@@ -309,7 +309,7 @@ TreeNode:
 `)
 
 	// Should not infinite loop
-	reachable := collectReachableSchemas(paths, schemas)
+	reachable := collectReachableSchemas(nil, paths, schemas)
 	if !reachable["TreeNode"] {
 		t.Error("TreeNode should be reachable")
 	}
@@ -347,7 +347,7 @@ Orphan:
   type: object
 `)
 
-	reachable := collectReachableSchemas(paths, schemas)
+	reachable := collectReachableSchemas(nil, paths, schemas)
 
 	if !reachable["Base"] {
 		t.Error("Base should be reachable via allOf")
@@ -409,11 +409,7 @@ components:
 	pathsNode := findMapValue(doc, "paths")
 	schemasNode := findMapValue(doc, "components", "schemas")
 
-	// Set pruneDocRoot so response refs can be resolved
-	pruneDocRoot = doc
-	defer func() { pruneDocRoot = nil }()
-
-	reachable := collectReachableSchemas(pathsNode, schemasNode)
+	reachable := collectReachableSchemas(doc, pathsNode, schemasNode)
 
 	if !reachable["User"] {
 		t.Error("User should be reachable directly")
@@ -572,10 +568,7 @@ components:
 		t.Errorf("methodsPruned = %d, want 1", methodsPruned)
 	}
 
-	pruneDocRoot = doc
-	defer func() { pruneDocRoot = nil }()
-
-	reachable := collectReachableSchemas(pathsNode, schemasNode)
+	reachable := collectReachableSchemas(doc, pathsNode, schemasNode)
 
 	// User and Role should be reachable (User -> Role via $ref)
 	if !reachable["User"] {
@@ -691,6 +684,174 @@ responses:
 	}
 	if paramQueue[0] != "PageToken" {
 		t.Errorf("paramQueue[0] = %q, want %q", paramQueue[0], "PageToken")
+	}
+}
+
+// --- pruneResponses ---
+
+func TestPruneResponses(t *testing.T) {
+	responses := mustParseYAML(t, `
+"400":
+  description: Bad Request
+  content:
+    application/json:
+      schema:
+        $ref: "#/components/schemas/Error"
+"401":
+  description: Unauthorized
+"404":
+  description: Not Found
+TicketResponse:
+  description: Ticket created
+  content:
+    application/json:
+      schema:
+        $ref: "#/components/schemas/Ticket"
+`)
+
+	reachable := map[string]bool{
+		"400": true,
+		"401": true,
+	}
+
+	removed := pruneResponses(responses, reachable)
+	if removed != 2 { // 404 and TicketResponse
+		t.Errorf("removed = %d, want 2", removed)
+	}
+
+	if getMappingValue(responses, "400") == nil {
+		t.Error("400 should remain")
+	}
+	if getMappingValue(responses, "401") == nil {
+		t.Error("401 should remain")
+	}
+	if getMappingValue(responses, "404") != nil {
+		t.Error("404 should be pruned")
+	}
+	if getMappingValue(responses, "TicketResponse") != nil {
+		t.Error("TicketResponse should be pruned")
+	}
+}
+
+func TestPruneResponses_AllReachable(t *testing.T) {
+	responses := mustParseYAML(t, `
+"400":
+  description: Bad Request
+"500":
+  description: Internal Server Error
+`)
+
+	reachable := map[string]bool{"400": true, "500": true}
+	removed := pruneResponses(responses, reachable)
+	if removed != 0 {
+		t.Errorf("removed = %d, want 0", removed)
+	}
+}
+
+// --- collectReachableResponses ---
+
+func TestCollectReachableResponses(t *testing.T) {
+	paths := mustParseYAML(t, `
+/users:
+  get:
+    responses:
+      "200":
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      "400":
+        $ref: "#/components/responses/400"
+      "401":
+        $ref: "#/components/responses/401"
+  post:
+    responses:
+      "201":
+        $ref: "#/components/responses/Created"
+      "400":
+        $ref: "#/components/responses/400"
+`)
+
+	reachable := collectReachableResponses(paths)
+
+	if !reachable["400"] {
+		t.Error("400 should be reachable")
+	}
+	if !reachable["401"] {
+		t.Error("401 should be reachable")
+	}
+	if !reachable["Created"] {
+		t.Error("Created should be reachable")
+	}
+	// 200 is an inline response, not a $ref
+	if reachable["200"] {
+		t.Error("200 should not be in reachable (it's inline, not a ref)")
+	}
+}
+
+func TestCollectReachableResponses_NilPaths(t *testing.T) {
+	reachable := collectReachableResponses(nil)
+	if len(reachable) != 0 {
+		t.Errorf("expected empty reachable set, got %d", len(reachable))
+	}
+}
+
+// --- collectReachableSchemas with parameter refs ---
+
+func TestCollectReachableSchemas_ParameterRef(t *testing.T) {
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /items:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/PageToken"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemList"
+components:
+  schemas:
+    ItemList:
+      type: object
+    PageInfo:
+      type: object
+      properties:
+        token:
+          type: string
+    Unused:
+      type: object
+  parameters:
+    PageToken:
+      name: pageToken
+      in: query
+      schema:
+        $ref: "#/components/schemas/PageInfo"
+`
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(spec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+
+	pathsNode := findMapValue(doc, "paths")
+	schemasNode := findMapValue(doc, "components", "schemas")
+
+	reachable := collectReachableSchemas(doc, pathsNode, schemasNode)
+
+	if !reachable["ItemList"] {
+		t.Error("ItemList should be reachable directly")
+	}
+	if !reachable["PageInfo"] {
+		t.Error("PageInfo should be reachable via components/parameters/PageToken")
+	}
+	if reachable["Unused"] {
+		t.Error("Unused should not be reachable")
 	}
 }
 

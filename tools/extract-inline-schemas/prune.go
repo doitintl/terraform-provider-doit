@@ -163,16 +163,13 @@ func prunePaths(pathsNode *yaml.Node, used map[pathMethod]bool) (pathsRemoved, m
 	return pathsRemoved, methodsPruned
 }
 
-// pruneDocRoot is set during the prune phase to allow collectReachableSchemas
-// to resolve $ref chains through components/responses and components/parameters.
-var pruneDocRoot *yaml.Node
-
 // collectReachableSchemas performs a BFS traversal starting from the
 // remaining paths' request/response bodies, parameters, and any schemas they
 // reference via $ref. It also follows $ref chains through components/responses
-// and components/parameters. Returns the set of schema names that are
-// transitively reachable.
-func collectReachableSchemas(pathsNode, schemasNode *yaml.Node) map[string]bool {
+// and components/parameters using the provided docRoot to locate sibling
+// component sections. Returns the set of schema names that are transitively
+// reachable.
+func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[string]bool {
 	reachable := make(map[string]bool)
 	var schemaQueue []string
 	var responseQueue []string
@@ -219,8 +216,8 @@ func collectReachableSchemas(pathsNode, schemasNode *yaml.Node) map[string]bool 
 			}
 			visitedResponses[name] = true
 
-			if pruneDocRoot != nil {
-				responsesNode := findMapValue(pruneDocRoot, "components", "responses")
+			if docRoot != nil {
+				responsesNode := findMapValue(docRoot, "components", "responses")
 				if responsesNode != nil {
 					responseNode := getMappingValue(responsesNode, name)
 					if responseNode != nil {
@@ -241,8 +238,8 @@ func collectReachableSchemas(pathsNode, schemasNode *yaml.Node) map[string]bool 
 			}
 			visitedParams[name] = true
 
-			if pruneDocRoot != nil {
-				paramsNode := findMapValue(pruneDocRoot, "components", "parameters")
+			if docRoot != nil {
+				paramsNode := findMapValue(docRoot, "components", "parameters")
 				if paramsNode != nil {
 					paramNode := getMappingValue(paramsNode, name)
 					if paramNode != nil {
