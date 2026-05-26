@@ -1,0 +1,13 @@
+# Additional path+method pairs used by manually-written resources/data sources
+# that don't have full entries in datasources.yml or resources.yml.
+#
+# The extract-inline-schemas tool reads this file (via -extra-paths) to ensure
+# these operations and their schemas are retained when pruning the OpenAPI spec.
+paths:
+  # report_result_data_source.go uses GetReportWithResponse (GET /analytics/v1/reports/{id})
+  - path: /analytics/v1/reports/{id}
+    method: GET
+
+  # report_query_data_source.go uses QueryWithResponse (POST /analytics/v1/reports/query)
+  - path: /analytics/v1/reports/query
+    method: POST

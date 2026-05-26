@@ -26,11 +26,19 @@ import (
 func main() {
 	inputPath := flag.String("input", "", "Path to the input OpenAPI spec (YAML)")
 	outputPath := flag.String("output", "", "Path to write the processed spec (YAML)")
+	datasourcesPath := flag.String("datasources", "", "Path to the provider datasources config (YAML) — enables pruning")
+	resourcesPath := flag.String("resources", "", "Path to the provider resources config (YAML) — enables pruning")
+	extraPathsFile := flag.String("extra-paths", "", "Path to a YAML file listing additional path+method pairs to retain when pruning")
 	flag.Parse()
 
 	if *inputPath == "" || *outputPath == "" {
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	pruning := *datasourcesPath != "" && *resourcesPath != ""
+	if (*datasourcesPath != "") != (*resourcesPath != "") {
+		log.Fatal("-datasources and -resources must be specified together")
 	}
 
 	data, err := os.ReadFile(*inputPath)
@@ -76,6 +84,48 @@ func main() {
 		extractor.insertExtractedSchemas(schemasNode)
 	}
 
+	// Phase 4: Prune unused paths and unreachable schemas (optional).
+	// When -datasources and -resources are provided, only paths/methods
+	// referenced by the provider configs (plus any -extra-paths) are retained.
+	// Schemas not transitively reachable from the remaining paths are removed.
+	if pruning {
+		// Re-read schemasNode after insertion, since insertExtractedSchemas
+		// may have modified it.
+		schemasNode = findMapValue(doc, "components", "schemas")
+
+		used, err := loadProviderConfigs(*datasourcesPath, *resourcesPath)
+		if err != nil {
+			log.Fatalf("loading provider configs: %v", err)
+		}
+
+		if *extraPathsFile != "" {
+			if err := loadExtraPaths(*extraPathsFile, used); err != nil {
+				log.Fatalf("loading extra paths: %v", err)
+			}
+		}
+
+		pathsRemoved, methodsPruned := prunePaths(pathsNode, used)
+		fmt.Printf("Pruned %d paths and %d methods\n", pathsRemoved, methodsPruned)
+
+		if schemasNode != nil {
+			pruneDocRoot = doc
+			reachable := collectReachableSchemas(pathsNode, schemasNode)
+			schemasRemoved := pruneSchemas(schemasNode, reachable)
+			fmt.Printf("Pruned %d unreachable schemas (kept %d)\n", schemasRemoved, len(reachable))
+
+			// Also prune components/responses that are no longer referenced
+			// from any retained path, to avoid dangling $ref errors.
+			responsesNode := findMapValue(doc, "components", "responses")
+			if responsesNode != nil {
+				reachableResponses := collectReachableResponses(pathsNode)
+				responsesRemoved := pruneResponses(responsesNode, reachableResponses)
+				if responsesRemoved > 0 {
+					fmt.Printf("Pruned %d unreachable responses\n", responsesRemoved)
+				}
+			}
+		}
+	}
+
 	var buf bytes.Buffer
 	enc := yaml.NewEncoder(&buf)
 	enc.SetIndent(2)
@@ -91,12 +141,15 @@ func main() {
 		log.Fatalf("writing output: %v", err)
 	}
 
-	// Phase 4: Validate functional equivalence
-	if err := validateEquivalence(data, out); err != nil {
-		// Remove the output file on validation failure to avoid leaving
-		// a broken processed spec on disk.
-		os.Remove(*outputPath)
-		log.Fatalf("equivalence validation failed: %v", err)
+	// Phase 5: Validate functional equivalence.
+	// Skip when pruning — the spec is intentionally reduced.
+	if !pruning {
+		if err := validateEquivalence(data, out); err != nil {
+			// Remove the output file on validation failure to avoid leaving
+			// a broken processed spec on disk.
+			os.Remove(*outputPath)
+			log.Fatalf("equivalence validation failed: %v", err)
+		}
 	}
 
 	fmt.Printf("Extracted %d inline schemas\n", len(extractor.extracted))
