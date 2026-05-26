@@ -55,8 +55,14 @@ var _ datasource.DataSourceWithConfigure = (*myDataSource)(nil)
 
 ## Step 4: Implement the Data Source
 
+### Mapping Convention
+
+Data sources map API responses to the model inline within the `Read` method. Unlike resources,
+data sources do not need a separate `mapXxxToModel` function or companion file.
+
+### Implementation
+
 - Use `*models.ClientWithResponses` for client type
-- Implement `mapXxxToModel()` for complex nested types
 - Use generated constructors (`NewXxxValue()`) for nested objects
 - Add timeout support (see [implementation-conventions](../implementation-conventions/SKILL.md#timeout-support))
 

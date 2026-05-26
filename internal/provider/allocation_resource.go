@@ -216,7 +216,7 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	// This prevents "Provider produced inconsistent result" errors caused by the
 	// API normalizing user-provided values (stripping sentinels, renaming services).
 	// Read and ImportState still use mapAllocationToModel for the full API response.
-	resp.Diagnostics.Append(r.overlayComputedFields(ctx, allocationResp.JSON200, plan)...)
+	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, allocationResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -240,8 +240,7 @@ func (r *allocationResource) Read(ctx context.Context, req resource.ReadRequest,
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// allowNotFound=true: 404 means resource was deleted externally, remove from state
-	diags = r.populateState(ctx, state, true)
+	diags = r.populateState(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -331,7 +330,7 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Plan-first state pattern: keep all user-configured values from the plan
 	// exactly as-is, and only overlay Computed-only fields from the API response.
-	resp.Diagnostics.Append(r.overlayComputedFields(ctx, updateResp.JSON200, plan)...)
+	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, updateResp.JSON200, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

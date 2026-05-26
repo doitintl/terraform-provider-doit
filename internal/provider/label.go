@@ -2,11 +2,45 @@
 package provider
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+// populateState fetches the label from the API and populates the Terraform state.
+// On 404, state.Id is set to null to signal Terraform to remove the resource from state.
+func (r *labelResource) populateState(ctx context.Context, state *labelResourceModel) diag.Diagnostics {
+	labelResp, err := r.client.GetLabelWithResponse(ctx, state.Id.ValueString())
+	if err != nil {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading Label", "Could not read label ID "+state.Id.ValueString()+": "+err.Error()),
+		}
+	}
+
+	if labelResp.StatusCode() == 404 {
+		state.Id = types.StringNull()
+		return nil
+	}
+
+	if labelResp.StatusCode() != 200 {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading Label", fmt.Sprintf("Unexpected status code %d for label ID %s: %s", labelResp.StatusCode(), state.Id.ValueString(), string(labelResp.Body))),
+		}
+	}
+
+	if labelResp.JSON200 == nil {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading Label", "Received empty response body for label ID "+state.Id.ValueString()),
+		}
+	}
+
+	mapLabelToModel(labelResp.JSON200, state)
+	return nil
+}
 
 // mapLabelToModel maps the API response to the Terraform model.
 func mapLabelToModel(resp *models.LabelListItem, state *labelResourceModel) {
@@ -51,4 +85,20 @@ func overlayLabelComputedFields(apiResp *models.LabelListItem, plan *labelResour
 	plan.UpdateTime = resolved.UpdateTime
 
 	// Name, Color: Required — never touch.
+}
+
+// toCreateRequest converts the TF model to a CreateLabelRequest.
+func (plan *labelResourceModel) toCreateRequest() models.CreateLabelRequest {
+	return models.CreateLabelRequest{
+		Color: models.CreateLabelRequestColor(plan.Color.ValueString()),
+		Name:  plan.Name.ValueString(),
+	}
+}
+
+// toUpdateRequest converts the TF model to an UpdateLabelRequest.
+func (plan *labelResourceModel) toUpdateRequest() models.UpdateLabelRequest {
+	return models.UpdateLabelRequest{
+		Color: new(models.UpdateLabelRequestColor(plan.Color.ValueString())),
+		Name:  new(plan.Name.ValueString()),
+	}
 }

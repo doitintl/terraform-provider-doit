@@ -18,7 +18,7 @@ import (
 // plan and selectively resolves only Unknown (Optional+Computed) fields from the API response.
 //
 // Strategy: Two-phase approach
-//  1. Use populateState to build a fully-resolved state from the API response.
+//  1. Use mapReportToModel to build a fully-resolved state from the API response.
 //     This resolves all Optional+Computed fields that the user omitted (Unknown).
 //  2. Walk the plan and overlay all Known values on top of the resolved state.
 //     This ensures user-configured values are preserved exactly as specified,
@@ -27,18 +27,18 @@ import (
 //
 // This eliminates the entire class of "Provider produced inconsistent result" errors
 // for Create/Update operations. Sentinel restoration, alias normalization, and timestamp
-// preservation in populateState are harmless here — they only affect Unknown values
+// preservation in mapReportToModel are harmless here — they only affect Unknown values
 // that the user didn't configure, where the API's normalized form is acceptable.
 //
 // Used by: Create, Update
-// NOT used by: Read, ImportState (which use populateState / populateStateFromAPI directly).
-func (r *reportResource) overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalReport, plan *reportResourceModel) diag.Diagnostics {
+// NOT used by: Read, ImportState (which use mapReportToModel directly).
+func overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalReport, plan *reportResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Phase 1: Build fully-resolved state from API response.
 	// This gives us known values for every Optional+Computed field the user omitted.
 	var resolved reportResourceModel
-	diags.Append(r.populateState(ctx, &resolved, apiResp)...)
+	diags.Append(mapReportToModel(ctx, apiResp, &resolved)...)
 	if diags.HasError() {
 		return diags
 	}
@@ -541,66 +541,23 @@ func mergeSentinelValues(apiValues []string, stateVals []string, apiIncludeNull 
 	return result
 }
 
-// populateStateFromAPI fetches the report from the API and populates the Terraform state.
+// populateState fetches the report from the API and populates the Terraform state.
+// This is used by Read and ImportState. Create and Update use overlayReportComputedFields
+// with the API response instead.
 //
-// # 404 Handling Strategy
-//
-// The allowNotFound parameter controls how 404 responses are handled:
-//
-//   - allowNotFound=true (used by Read):
-//     404 means the resource was deleted externally (outside Terraform).
-//     We set state.Id to null, which signals Terraform to remove the resource
-//     from state. On next plan, Terraform will propose recreating it.
-//     This is the standard Terraform pattern for "externally deleted" resources.
-//
-//   - allowNotFound=false (used by Create and Update):
-//     404 is unexpected and indicates an error. After a successful Create or
-//     Update API call, the resource MUST exist. A 404 here could indicate:
-//
-//   - A transient API issue (rare, but possible)
-//
-//   - An eventual consistency problem
-//
-//   - A bug in the provider or API
-//     In these cases, we return an error so the user knows something went wrong
-//     and can retry. This prevents silent resource orphaning.
-//
-// # Why This Matters
-//
-// Without this distinction, a transient 404 during Create would:
-//  1. Create the resource successfully (API returns 201 with ID)
-//  2. GET returns 404 (transient issue)
-//  3. populateStateFromAPI sets state.Id = null (no error!)
-//  4. Terraform "succeeds" but loses track of the resource
-//  5. Resource is orphaned - exists in API but not in Terraform state
-//
-// With allowNotFound=false for Create/Update, step 3 returns an error,
-// the user sees the failure, and can retry or investigate.
-func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, state *reportResourceModel, allowNotFound bool) diag.Diagnostics {
-	reportResp, err := r.client.GetReportConfigWithResponse(ctx, id)
+// On 404, state.Id is set to null to signal Terraform to remove the resource from state.
+func (r *reportResource) populateState(ctx context.Context, state *reportResourceModel) diag.Diagnostics {
+	reportResp, err := r.client.GetReportConfigWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
 		return diag.Diagnostics{
 			diag.NewErrorDiagnostic("Error reading report", "Could not read report config, unexpected error: "+err.Error()),
 		}
 	}
 
-	// Handle 404 based on context
+	// Handle externally deleted resource
 	if reportResp.StatusCode() == 404 {
-		if allowNotFound {
-			// Read context: Resource was deleted externally, mark for removal from state
-			state.Id = types.StringNull()
-			return nil
-		}
-		// Create/Update context: Resource should exist, 404 is an error
-		return diag.Diagnostics{
-			diag.NewErrorDiagnostic(
-				"Resource not found after operation",
-				"The report was successfully created/updated but could not be read back (404). "+
-					"This may indicate a transient API issue. Please retry the operation. "+
-					"If the problem persists, the resource may need to be imported manually. "+
-					"Report ID: "+id,
-			),
-		}
+		state.Id = types.StringNull()
+		return nil
 	}
 
 	if reportResp.StatusCode() != 200 {
@@ -615,7 +572,7 @@ func (r *reportResource) populateStateFromAPI(ctx context.Context, id string, st
 		}
 	}
 
-	return r.populateState(ctx, state, reportResp.JSON200)
+	return mapReportToModel(ctx, reportResp.JSON200, state)
 }
 
 func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req models.CreateReportJSONRequestBody, diags diag.Diagnostics) {
@@ -952,7 +909,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	return externalConfig, diags
 }
 
-func (r *reportResource) populateState(ctx context.Context, state *reportResourceModel, resp *models.ExternalReport) diag.Diagnostics {
+func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *reportResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	state.Id = types.StringPointerValue(resp.Id)

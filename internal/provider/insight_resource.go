@@ -113,9 +113,9 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 	resp.Schema = s
 }
 
-// buildInsightRequest constructs the API request body from the Terraform plan.
+// toInsightRequest constructs the API request body from the Terraform plan.
 // Resource results are now managed by the separate doit_insight_resource_results resource.
-func buildInsightRequest(ctx context.Context, plan *insightResourceModel) (*models.InsightMetadataRequest, diag.Diagnostics) {
+func (plan *insightResourceModel) toInsightRequest(ctx context.Context) (*models.InsightMetadataRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	req := models.InsightMetadataRequest{
@@ -245,7 +245,7 @@ func (r *insightResource) Create(ctx context.Context, req resource.CreateRequest
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	apiReq, buildDiags := buildInsightRequest(ctx, &plan)
+	apiReq, buildDiags := plan.toInsightRequest(ctx)
 	resp.Diagnostics.Append(buildDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -305,43 +305,15 @@ func (r *insightResource) Read(ctx context.Context, req resource.ReadRequest, re
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	sourceID := state.SourceId.ValueString()
-	insightKey := state.InsightKey.ValueString()
-
-	// Handle import: if source_id or insight_key is missing, derive from key
-	if sourceID == "" {
-		sourceID = string(models.PostInsightResultParamsSourceIDPublicApi)
-	}
-	if insightKey == "" {
-		insightKey = state.Key.ValueString()
-	}
-
-	getResp, err := r.client.GetInsightResultWithResponse(ctx, sourceID, insightKey)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Insight",
-			fmt.Sprintf("Could not read insight %s/%s: %s", sourceID, insightKey, err.Error()),
-		)
-		return
-	}
-
-	// Handle externally deleted resource
-	if getResp.StatusCode() == 404 {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	if getResp.StatusCode() != 200 || getResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Insight",
-			fmt.Sprintf("Unexpected status %d for insight %s/%s: %s", getResp.StatusCode(), sourceID, insightKey, string(getResp.Body)),
-		)
-		return
-	}
-
-	// Map full response to state — Read uses full mapping, not overlay
-	resp.Diagnostics.Append(mapInsightRespToResourceModel(ctx, getResp.JSON200, &state)...)
+	diags := r.populateState(ctx, &state)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Handle externally deleted resource (populateState sets InsightKey to null on 404)
+	if state.InsightKey.IsNull() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -364,7 +336,7 @@ func (r *insightResource) Update(ctx context.Context, req resource.UpdateRequest
 	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
 	defer cancel()
 
-	apiReq, buildDiags := buildInsightRequest(ctx, &plan)
+	apiReq, buildDiags := plan.toInsightRequest(ctx)
 	resp.Diagnostics.Append(buildDiags...)
 	if resp.Diagnostics.HasError() {
 		return

@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 type (
@@ -199,25 +198,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 	defer cancel()
 
 	// Build invite request from plan.
-	apiReq := models.InviteUserRequest{
-		Email: openapi_types.Email(plan.Email.ValueString()),
-	}
-
-	if !plan.FirstName.IsNull() && !plan.FirstName.IsUnknown() {
-		apiReq.FirstName = plan.FirstName.ValueStringPointer()
-	}
-	if !plan.LastName.IsNull() && !plan.LastName.IsUnknown() {
-		apiReq.LastName = plan.LastName.ValueStringPointer()
-	}
-	if !plan.JobTitle.IsNull() && !plan.JobTitle.IsUnknown() {
-		apiReq.JobTitle = new(models.InviteUserRequestJobTitle(plan.JobTitle.ValueString()))
-	}
-	if !plan.RoleId.IsNull() && !plan.RoleId.IsUnknown() {
-		apiReq.RoleId = plan.RoleId.ValueStringPointer()
-	}
-	if !plan.OrganizationId.IsNull() && !plan.OrganizationId.IsUnknown() {
-		apiReq.OrganizationId = plan.OrganizationId.ValueStringPointer()
-	}
+	apiReq := plan.toInviteRequest()
 
 	// Invite the user.
 	inviteResp, err := r.client.InviteUserWithResponse(ctx, apiReq)
@@ -344,23 +325,17 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// id = email, use it to look up the user.
-	email := state.Id.ValueString()
-
-	user, lookupDiags := r.lookupUser(ctx, email)
-	resp.Diagnostics.Append(lookupDiags...)
+	diags = r.populateState(ctx, &state)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Handle externally deleted resource — remove from state.
-	if user == nil {
+	// Handle externally deleted resource (populateState sets Id to null when not found)
+	if state.Id.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
 	}
-
-	// Full mapping from API response to state.
-	mapUserToModel(user, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -389,31 +364,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Build the update request from plan values.
-	// All Optional fields are sent — PATCH semantics with omitempty means
-	// null values won't be serialized.
-	patchReq := models.UpdateUserRequest{}
-
-	if !plan.FirstName.IsNull() && !plan.FirstName.IsUnknown() {
-		patchReq.FirstName = plan.FirstName.ValueStringPointer()
-	}
-	if !plan.LastName.IsNull() && !plan.LastName.IsUnknown() {
-		patchReq.LastName = plan.LastName.ValueStringPointer()
-	}
-	if !plan.JobTitle.IsNull() && !plan.JobTitle.IsUnknown() {
-		patchReq.JobTitle = new(models.UpdateUserRequestJobTitle(plan.JobTitle.ValueString()))
-	}
-	if !plan.RoleId.IsNull() && !plan.RoleId.IsUnknown() {
-		patchReq.RoleId = plan.RoleId.ValueStringPointer()
-	}
-	if !plan.Phone.IsNull() && !plan.Phone.IsUnknown() {
-		patchReq.Phone = plan.Phone.ValueStringPointer()
-	}
-	if !plan.PhoneExtension.IsNull() && !plan.PhoneExtension.IsUnknown() {
-		patchReq.PhoneExtension = plan.PhoneExtension.ValueStringPointer()
-	}
-	if !plan.Language.IsNull() && !plan.Language.IsUnknown() {
-		patchReq.Language = new(models.UpdateUserRequestLanguage(plan.Language.ValueString()))
-	}
+	patchReq := plan.toUpdateRequest()
 
 	updateResp, err := r.client.UpdateUserWithResponse(ctx, internalID, patchReq)
 	if err != nil {
