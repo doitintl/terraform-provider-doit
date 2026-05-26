@@ -27,7 +27,7 @@ import (
 // renaming alias types like allocation_rule → attribution).
 //
 // Used by: Create, Update
-// NOT used by: Read, ImportState (which use populateState / mapBudgetToModel directly).
+// NOT used by: Read, ImportState (which use populateState → mapBudgetToModel).
 func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI, plan *budgetResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 

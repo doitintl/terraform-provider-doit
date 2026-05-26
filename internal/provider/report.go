@@ -31,7 +31,7 @@ import (
 // that the user didn't configure, where the API's normalized form is acceptable.
 //
 // Used by: Create, Update
-// NOT used by: Read, ImportState (which use mapReportToModel directly).
+// NOT used by: Read, ImportState (which use populateState → mapReportToModel).
 func overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalReport, plan *reportResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 

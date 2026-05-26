@@ -27,7 +27,7 @@ import (
 // the resolved counterpart. Computed-only fields always come from resolved.
 //
 // Used by: Create, Update
-// NOT used by: Read, ImportState (which use populateState / mapAllocationToModel directly).
+// NOT used by: Read, ImportState (which use populateState → mapAllocationToModel).
 func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
