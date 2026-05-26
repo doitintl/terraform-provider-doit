@@ -59,7 +59,7 @@ Every resource must implement these four functions in `<name>.go`:
 
 | Function | Signature | Purpose |
 |----------|-----------|---------|
-| `populateState` | `(r *xResource) populateState(ctx, state *xResourceModel) diag.Diagnostics` | Fetches from API using the identifier in `state` (e.g. `state.Id`), calls `mapXxxToModel`. Sets `state.Id = types.StringNull()` on 404. Used by Read only. |
+| `populateState` | `(r *xResource) populateState(ctx, state *xResourceModel) diag.Diagnostics` | Fetches from API using the identifier in `state` (e.g. `state.Id`), calls `mapXxxToModel`. Sets `state.Id = types.StringNull()` on 404. Used by Read (and ImportState via Read). |
 | `mapXxxToModel` | `mapXxxToModel([ctx,] apiResp, state) [diag.Diagnostics]` | Pure mapping from API response to TF model. **Standalone function — no receiver.** Used by `populateState` and as Phase 1 of overlay. |
 | `overlayXxxComputedFields` | `overlayXxxComputedFields([ctx,] apiResp, plan) [diag.Diagnostics]` | Two-phase overlay. **Standalone function — no receiver. Always prefix with the resource name** (e.g. `overlayReportComputedFields`, not `overlayComputedFields`). Used by Create/Update only. |
 | `toXxxRequest` | `(plan *xResourceModel) toXxxRequest([ctx]) (req[, diag.Diagnostics])` | **Method on the plan model**, converts TF model to API request. When create and update share a request type, name it `toUpdateRequest`. |

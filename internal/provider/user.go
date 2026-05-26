@@ -24,11 +24,11 @@ func (r *userResource) populateState(ctx context.Context, state *userResourceMod
 
 	if user == nil {
 		state.Id = types.StringNull()
-		return nil
+		return diags
 	}
 
 	mapUserToModel(user, state)
-	return nil
+	return diags
 }
 
 // normalizePhone restores the "+" prefix that the API strips from phone

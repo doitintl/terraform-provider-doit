@@ -28,6 +28,10 @@ import (
 //
 // Used by: Create, Update
 // NOT used by: Read, ImportState (which use populateState → mapAllocationToModel).
+//
+// NOTE: Unlike most resources, this overlay retains the receiver because
+// mapAllocationToModel makes additional API calls (r.client.GetAllocationWithResponse)
+// to fetch full allocation rule details for multi-rule allocations.
 func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
