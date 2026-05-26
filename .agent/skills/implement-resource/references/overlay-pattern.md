@@ -28,7 +28,7 @@ Key rules:
 
 ## Step 2: Implement overlayXxxComputedFields
 
-Always include the resource name in the function name (e.g. `overlayReportComputedFields`, not `overlayComputedFields`). This must be a **standalone function** (no receiver):
+Always include the resource name in the function name (e.g. `overlayReportComputedFields`, not `overlayComputedFields`). This must be a **standalone function** (no receiver) unless `mapXxxToModel` makes additional API calls via `r.client` (e.g. allocation), in which case the receiver is allowed:
 
 ```go
 func overlayMyResourceComputedFields(ctx context.Context, apiResp *models.MyResource, plan *myResourceModel) diag.Diagnostics {

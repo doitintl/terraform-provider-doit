@@ -57,8 +57,12 @@ var _ datasource.DataSourceWithConfigure = (*myDataSource)(nil)
 
 ### Mapping Convention
 
-Data sources map API responses to the model inline within the `Read` method. Unlike resources,
-data sources do not need a separate `mapXxxToModel` function or companion file.
+Data sources that share an entity with a resource (e.g. `alert`, `report`) should reuse the
+`mapXxxToModel` helper from the companion `<name>.go` file. Data sources with their own unique
+mapping (e.g. list data sources) should place helpers in the `_data_source.go` file or in a
+companion file when the mapping is non-trivial.
+
+Simple data sources that only do a few scalar assignments may keep mapping logic inline in Read.
 
 ### Implementation
 

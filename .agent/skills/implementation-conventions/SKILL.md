@@ -38,7 +38,14 @@ Every resource splits into two files:
 
 Additional files as needed: `<name>_validator.go`, `<name>_state_upgrader.go`.
 
-Data sources use a single file: `<name>_data_source.go` (mapping logic inline in Read).
+Data sources follow the same companion-file pattern when they have non-trivial helper functions:
+
+| File | Contents |
+|------|----------|
+| `<name>_data_source.go` | Type/model declarations, interface checks, `NewXxxDataSource()`, `Configure`, `Metadata`, `Schema`, Read method |
+| `<name>.go` | `mapXxxToModel` and any helper functions (shared with the resource if one exists) |
+
+Simple data sources that only do a few scalar assignments may keep mapping logic inline in Read.
 
 ### Variable Initialization
 
@@ -59,14 +66,14 @@ Every resource must implement these four functions in `<name>.go`:
 
 | Function | Signature | Purpose |
 |----------|-----------|---------|
-| `populateState` | `(r *xResource) populateState(ctx, state *xResourceModel) diag.Diagnostics` | Fetches from API using the identifier in `state` (e.g. `state.Id`), calls `mapXxxToModel`. Sets `state.Id = types.StringNull()` on 404. Used by Read (and ImportState via Read). |
+| `populateState` | `(r *xResource) populateState(ctx, state *xResourceModel) diag.Diagnostics` | Fetches from API using the identifier in `state` (e.g. `state.Id`, `state.Name`), calls `mapXxxToModel`. Sets the identifier attribute to `types.StringNull()` on 404. Used by Read (and ImportState via Read). |
 | `mapXxxToModel` | `mapXxxToModel([ctx,] apiResp, state) [diag.Diagnostics]` | Pure mapping from API response to TF model. **Standalone function — no receiver.** Used by `populateState` and as Phase 1 of overlay. |
 | `overlayXxxComputedFields` | `overlayXxxComputedFields([ctx,] apiResp, plan) [diag.Diagnostics]` | Two-phase overlay. **Standalone function — no receiver. Always prefix with the resource name** (e.g. `overlayReportComputedFields`, not `overlayComputedFields`). Used by Create/Update only. |
 | `toXxxRequest` | `(plan *xResourceModel) toXxxRequest([ctx]) (req[, diag.Diagnostics])` | **Method on the plan model**, converts TF model to API request. When create and update share a request type, name it `toUpdateRequest`. |
 
 If create and update use different API request types, implement both `toCreateRequest` and `toUpdateRequest`.
 
-> **Receiver rule:** Only `populateState` has a receiver (it needs `r.client`). `mapXxxToModel` and `overlayXxxComputedFields` must be standalone functions. `toXxxRequest` / `toCreateRequest` / `toUpdateRequest` are methods on the plan model.
+> **Receiver rule:** Only `populateState` has a receiver (it needs `r.client`). `mapXxxToModel` and `overlayXxxComputedFields` must be standalone functions. `toXxxRequest` / `toCreateRequest` / `toUpdateRequest` are methods on the plan model. **Exception:** If `mapXxxToModel` makes additional API calls (e.g. allocation fetches full rule details via `r.client`), it may retain the receiver, which propagates to `overlayXxxComputedFields`.
 
 > **Signature flexibility:** The `ctx` and `diag.Diagnostics` parameters are required when the function maps nested objects (lists, objects) or can produce errors. Simple resources that only do scalar assignments (e.g. `types.StringValue`, `types.StringPointerValue`) may omit `ctx` and return nothing. Match the complexity of your resource.
 
