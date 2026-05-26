@@ -116,7 +116,7 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 	// Validate source_id — the API only accepts "public-api" today
 	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok {
 		attr.Validators = append(attr.Validators, stringvalidator.OneOf(
-			string(models.PostInsightResourceResultsParamsSourceIDPublicApi),
+			string(models.PublicApi),
 		))
 		s.Attributes["source_id"] = attr
 	}
@@ -627,7 +627,7 @@ func (r *insightResourceResultsResource) Create(ctx context.Context, req resourc
 
 	sourceID := models.PostInsightResourceResultsParamsSourceID(plan.SourceId.ValueString())
 	if sourceID == "" {
-		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+		sourceID = models.PublicApi
 	}
 	insightKey := plan.InsightKey.ValueString()
 
@@ -682,7 +682,7 @@ func (r *insightResourceResultsResource) Read(ctx context.Context, req resource.
 	insightKey := state.InsightKey.ValueString()
 
 	if sourceID == "" {
-		sourceID = string(models.PostInsightResourceResultsParamsSourceIDPublicApi)
+		sourceID = string(models.PublicApi)
 	}
 
 	allResults, fetchDiags := fetchAllRRResults(ctx, r.client, sourceID, insightKey)
@@ -733,7 +733,7 @@ func (r *insightResourceResultsResource) Update(ctx context.Context, req resourc
 
 	sourceID := models.PostInsightResourceResultsParamsSourceID(plan.SourceId.ValueString())
 	if sourceID == "" {
-		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+		sourceID = models.PublicApi
 	}
 	insightKey := plan.InsightKey.ValueString()
 
@@ -776,7 +776,7 @@ func (r *insightResourceResultsResource) Delete(ctx context.Context, req resourc
 
 	sourceID := models.PostInsightResourceResultsParamsSourceID(state.SourceId.ValueString())
 	if sourceID == "" {
-		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+		sourceID = models.PublicApi
 	}
 	insightKey := state.InsightKey.ValueString()
 

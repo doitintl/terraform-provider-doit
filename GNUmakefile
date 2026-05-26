@@ -25,7 +25,7 @@ lint-tools:
 # Generate OpenAPI models and Terraform resource schemas
 # Must be run in order: extract-inline-schemas -> openapi -> framework -> models
 generate:
-	go run ./tools/extract-inline-schemas -input OpenAPI/openapi_spec_full.yml -output OpenAPI/openapi_spec_processed.yml
+	go run ./tools/extract-inline-schemas -input OpenAPI/openapi_spec_full.yml -output OpenAPI/openapi_spec_processed.yml -datasources OpenAPI/1_tfplugingen-openapi/datasources.yml -resources OpenAPI/1_tfplugingen-openapi/resources.yml -extra-paths OpenAPI/extra_paths.yml
 	cd OpenAPI/1_tfplugingen-openapi && go generate ./...
 	cd OpenAPI/2_tfplugingen-framework && go generate ./...
 	# Ensure generated JSON files end with a trailing newline (required by pre-commit end-of-file-fixer)
