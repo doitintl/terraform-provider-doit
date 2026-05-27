@@ -902,6 +902,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder).",
 				MarkdownDescription: "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder).",
+				Default:             stringdefault.StaticString("root"),
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
