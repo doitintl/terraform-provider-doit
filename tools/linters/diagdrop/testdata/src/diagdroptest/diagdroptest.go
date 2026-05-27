@@ -185,3 +185,27 @@ func badAccumulatorPreferred() diag.Diagnostics {
 	}
 	return nil // want "return nil drops captured diag.Diagnostics variable \"diags\"; return diags instead"
 }
+
+// badClosureFalsePositive returns diag.Diagnostics but contains a closure that returns error/nil.
+func badClosureFalsePositive() diag.Diagnostics {
+	_, diags := lookupUser()
+	if diags.HasError() {
+		return diags
+	}
+	fn := func() error {
+		return nil // Should NOT be flagged
+	}
+	_ = fn()
+	return nil // want "return nil drops captured diag.Diagnostics variable \"diags\"; return diags instead"
+}
+
+// goodInnerBlockScope returns nil at the end, but the diags variable was only in an inner scope.
+func goodInnerBlockScope() diag.Diagnostics {
+	if true {
+		diags := mapToModel()
+		if diags.HasError() {
+			return diags
+		}
+	}
+	return nil // Should NOT be flagged
+}

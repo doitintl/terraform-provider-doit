@@ -50,6 +50,7 @@ type diagVarInfo struct {
 	name          string
 	pos           token.Pos
 	isAccumulator bool // true for named returns and var declarations, false for := temporaries
+	obj           types.Object
 }
 
 func run(pass *analysis.Pass) (any, error) {
@@ -92,6 +93,10 @@ func checkFunc(pass *analysis.Pass, funcType *ast.FuncType, body *ast.BlockStmt)
 	// Step 3: Walk all return statements and flag return nil at the diag position
 	// only if a diag variable assignment precedes the return.
 	ast.Inspect(body, func(n ast.Node) bool {
+		switch n.(type) {
+		case *ast.FuncDecl, *ast.FuncLit:
+			return false
+		}
 		ret, ok := n.(*ast.ReturnStmt)
 		if !ok {
 			return true
@@ -113,7 +118,7 @@ func checkFunc(pass *analysis.Pass, funcType *ast.FuncType, body *ast.BlockStmt)
 		}
 
 		// Find the first diag variable assigned before this return.
-		varName := latestDiagVarBefore(diagVars, ret.Pos())
+		varName := latestDiagVarBefore(pass, diagVars, ret.Pos())
 		if varName == "" {
 			// No diag variable assigned before this return — safe early return.
 			return true
@@ -163,7 +168,7 @@ func collectDiagVars(pass *analysis.Pass, funcType *ast.FuncType, body *ast.Bloc
 			if typ != nil && isDiagnosticsType(typ) {
 				for _, name := range field.Names {
 					if name.Name != "" && name.Name != "_" {
-						vars = append(vars, diagVarInfo{name: name.Name, pos: 0, isAccumulator: true})
+						vars = append(vars, diagVarInfo{name: name.Name, pos: 0, isAccumulator: true, obj: pass.TypesInfo.Defs[name]})
 					}
 				}
 			}
@@ -174,6 +179,8 @@ func collectDiagVars(pass *analysis.Pass, funcType *ast.FuncType, body *ast.Bloc
 	// and assignments (e.g. diags := lookupUser(...)) that capture diag.Diagnostics.
 	ast.Inspect(body, func(n ast.Node) bool {
 		switch node := n.(type) {
+		case *ast.FuncDecl, *ast.FuncLit:
+			return false
 		case *ast.GenDecl:
 			// Handle: var diags diag.Diagnostics
 			if node.Tok != token.VAR {
@@ -188,7 +195,7 @@ func collectDiagVars(pass *analysis.Pass, funcType *ast.FuncType, body *ast.Bloc
 				if typ != nil && isDiagnosticsType(typ) {
 					for _, name := range vSpec.Names {
 						if name.Name != "" && name.Name != "_" {
-							vars = append(vars, diagVarInfo{name: name.Name, pos: node.Pos(), isAccumulator: true})
+							vars = append(vars, diagVarInfo{name: name.Name, pos: node.Pos(), isAccumulator: true, obj: pass.TypesInfo.Defs[name]})
 						}
 					}
 				}
@@ -216,7 +223,11 @@ func collectDiagVars(pass *analysis.Pass, funcType *ast.FuncType, body *ast.Bloc
 				}
 
 				if typ != nil && isDiagnosticsType(typ) {
-					vars = append(vars, diagVarInfo{name: ident.Name, pos: node.Pos()})
+					obj := pass.TypesInfo.Defs[ident]
+					if obj == nil {
+						obj = pass.TypesInfo.Uses[ident]
+					}
+					vars = append(vars, diagVarInfo{name: ident.Name, pos: node.Pos(), obj: obj})
 				}
 			}
 		}
@@ -230,13 +241,25 @@ func collectDiagVars(pass *analysis.Pass, funcType *ast.FuncType, body *ast.Bloc
 // returning, among those declared or assigned before the given position.
 // It prefers accumulators (named returns, var declarations) over assignment
 // temporaries. Among equal-priority variables, it picks the latest.
-func latestDiagVarBefore(vars []diagVarInfo, pos token.Pos) string {
+func latestDiagVarBefore(pass *analysis.Pass, vars []diagVarInfo, pos token.Pos) string {
+	innerScope := findInnermostScope(pass, pos)
+	if innerScope == nil {
+		innerScope = pass.Pkg.Scope()
+	}
+
 	var best string
 	var bestPos token.Pos
 	var bestIsAccum bool
 	for _, v := range vars {
 		if v.pos >= pos {
 			continue
+		}
+		// Verify that the variable is still in scope at 'pos' and resolves to the same object.
+		if v.obj != nil {
+			_, lookupObj := innerScope.LookupParent(v.name, pos)
+			if lookupObj != v.obj {
+				continue
+			}
 		}
 		// Prefer accumulators over temporaries; among same kind, prefer latest.
 		if best == "" || (v.isAccumulator && !bestIsAccum) || (v.isAccumulator == bestIsAccum && v.pos >= bestPos) {
@@ -246,6 +269,19 @@ func latestDiagVarBefore(vars []diagVarInfo, pos token.Pos) string {
 		}
 	}
 	return best
+}
+
+// findInnermostScope returns the innermost types.Scope containing the given position by searching pass.TypesInfo.Scopes.
+func findInnermostScope(pass *analysis.Pass, pos token.Pos) *types.Scope {
+	var innermost *types.Scope
+	for _, scope := range pass.TypesInfo.Scopes {
+		if scope.Pos() <= pos && pos <= scope.End() {
+			if innermost == nil || scope.End()-scope.Pos() < innermost.End()-innermost.Pos() {
+				innermost = scope
+			}
+		}
+	}
+	return innermost
 }
 
 // isNilLiteral checks if an expression is the nil identifier.
