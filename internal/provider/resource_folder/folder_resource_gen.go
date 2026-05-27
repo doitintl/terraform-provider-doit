@@ -4,6 +4,7 @@ package resource_folder
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -33,6 +34,7 @@ func FolderResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Identifier of the parent folder. Use \"root\" or omit to place the folder at the top level.",
 				MarkdownDescription: "Identifier of the parent folder. Use \"root\" or omit to place the folder at the top level.",
+				Default:             stringdefault.StaticString("root"),
 			},
 		},
 		Description:         "Organize Cloud Analytics resources (reports, allocations) into folders.",

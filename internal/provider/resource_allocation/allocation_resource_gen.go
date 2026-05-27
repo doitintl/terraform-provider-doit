@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -46,6 +47,7 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
 				MarkdownDescription: "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
+				Default:             stringdefault.StaticString("root"),
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,

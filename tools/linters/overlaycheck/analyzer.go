@@ -482,7 +482,11 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 
 		case schemaparser.OptionalComputed:
 			if !hasAssignment {
-				unhandledOptComp = append(unhandledOptComp, attrName)
+				// Fields with a schema Default are resolved at plan time and are
+				// never Unknown, so they don't need to be handled in the overlay.
+				if !attrInfo.HasDefault {
+					unhandledOptComp = append(unhandledOptComp, attrName)
+				}
 			} else if assignment.unconditional {
 				pass.Reportf(assignment.pos,
 					"%s: Optional+Computed field %q is assigned unconditionally; "+
