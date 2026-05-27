@@ -22,7 +22,7 @@ import (
 // the resolved counterpart. Computed-only fields always come from resolved.
 //
 // Used by: Create, Update
-// NOT used by: Read, ImportState (which use populateState / mapAlertToModel directly).
+// NOT used by: Read, ImportState (which use populateState → mapAlertToModel).
 func overlayAlertComputedFields(ctx context.Context, apiResp *models.Alert, plan *alertResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 

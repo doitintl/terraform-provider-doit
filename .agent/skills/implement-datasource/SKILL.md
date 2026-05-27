@@ -55,8 +55,18 @@ var _ datasource.DataSourceWithConfigure = (*myDataSource)(nil)
 
 ## Step 4: Implement the Data Source
 
+### Mapping Convention
+
+Data sources that share an entity with a resource (e.g. `alert`, `report`) should reuse the
+`mapXxxToModel` helper from the companion `<name>.go` file. Data sources with their own unique
+mapping (e.g. list data sources) should place helpers in the `_data_source.go` file or in a
+companion file when the mapping is non-trivial.
+
+Simple data sources that only do a few scalar assignments may keep mapping logic inline in Read.
+
+### Implementation
+
 - Use `*models.ClientWithResponses` for client type
-- Implement `mapXxxToModel()` for complex nested types
 - Use generated constructors (`NewXxxValue()`) for nested objects
 - Add timeout support (see [implementation-conventions](../implementation-conventions/SKILL.md#timeout-support))
 

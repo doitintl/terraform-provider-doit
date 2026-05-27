@@ -25,6 +25,58 @@ func NewLabelResource() resource.Resource {
 
 > **Linter:** `constructor` — flags `new(type)` in constructor return statements.
 
+## File Structure & Code Organization
+
+### Resource File Layout
+
+Every resource splits into two files:
+
+| File | Contents |
+|------|----------|
+| `<name>_resource.go` | Type/model declarations, interface checks, `NewXxxResource()`, `Configure`, `Metadata`, `Schema`, `ImportState`, `ConfigValidators`, CRUD methods |
+| `<name>.go` | `populateState`, `mapXxxToModel`, `overlayXxxComputedFields`, `toXxxRequest`, and any helper functions |
+
+Additional files as needed: `<name>_validator.go`, `<name>_state_upgrader.go`.
+
+Data sources follow the same companion-file pattern when they have non-trivial helper functions:
+
+| File | Contents |
+|------|----------|
+| `<name>_data_source.go` | Type/model declarations, interface checks, `NewXxxDataSource()`, `Configure`, `Metadata`, `Schema`, Read method |
+| `<name>.go` | `mapXxxToModel` and any helper functions (shared with the resource if one exists) |
+
+Simple data sources that only do a few scalar assignments may keep mapping logic inline in Read.
+
+### Variable Initialization
+
+Always use `var` for plan/state variables, never `new()`:
+
+```go
+// CORRECT
+var plan myResourceModel
+resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+
+// WRONG — do not use new() for model variables
+plan := new(myResourceModel)
+```
+
+### Standard Helper Functions
+
+Every resource must implement these four functions in `<name>.go`:
+
+| Function | Signature | Purpose |
+|----------|-----------|---------|
+| `populateState` | `(r *xResource) populateState(ctx, state *xResourceModel) diag.Diagnostics` | Fetches from API using the identifier in `state` (e.g. `state.Id`, `state.Name`), calls `mapXxxToModel`. Sets the identifier attribute to `types.StringNull()` on 404. Used by Read (and ImportState via Read). |
+| `mapXxxToModel` | `mapXxxToModel([ctx,] apiResp, state) [diag.Diagnostics]` | Pure mapping from API response to TF model. **Standalone function — no receiver.** Used by `populateState` and as Phase 1 of overlay. |
+| `overlayXxxComputedFields` | `overlayXxxComputedFields([ctx,] apiResp, plan) [diag.Diagnostics]` | Two-phase overlay. **Standalone function — no receiver. Always prefix with the resource name** (e.g. `overlayReportComputedFields`, not `overlayComputedFields`). Used by Create/Update only. |
+| `toXxxRequest` | `(plan *xResourceModel) toXxxRequest([ctx]) (req[, diag.Diagnostics])` | **Method on the plan model**, converts TF model to API request. When create and update share a request type, name it `toUpdateRequest`. |
+
+If create and update use different API request types, implement both `toCreateRequest` and `toUpdateRequest`.
+
+> **Receiver rule:** Only `populateState` has a receiver (it needs `r.client`). `mapXxxToModel` and `overlayXxxComputedFields` must be standalone functions. `toXxxRequest` / `toCreateRequest` / `toUpdateRequest` are methods on the plan model. **Exception:** If `mapXxxToModel` makes additional API calls (e.g. allocation fetches full rule details via `r.client`), it may retain the receiver, which propagates to `overlayXxxComputedFields`.
+
+> **Signature flexibility:** The `ctx` and `diag.Diagnostics` parameters are required when the function maps nested objects (lists, objects) or can produce errors. Simple resources that only do scalar assignments (e.g. `types.StringValue`, `types.StringPointerValue`) may omit `ctx` and return nothing. Match the complexity of your resource.
+
 ## Variable Naming
 
 Variable names must match their data source:
@@ -105,25 +157,7 @@ resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 
 > **Linter:** `read404` — flags Read methods that don't call `RemoveResource`.
 
-## Create/Update 404 Handling
 
-If a GET after Create/Update returns 404, that's an error (transient API issue), not an external deletion. Use `allowNotFound` to differentiate:
-
-```go
-func (r *myResource) populateState(ctx context.Context, state *myModel, allowNotFound bool) diag.Diagnostics {
-    if httpResp.StatusCode() == 404 {
-        if allowNotFound {
-            state.Id = types.StringNull()  // Read context
-            return nil
-        }
-        return diag.Diagnostics{diag.NewErrorDiagnostic(
-            "Resource not found after operation",
-            "Created/updated but could not be read back (404). Please retry.",
-        )}
-    }
-    // ...
-}
-```
 
 ## Configure Error Type
 

@@ -124,8 +124,8 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 	resp.Schema = s
 }
 
-// buildResourceResultsRequest builds the API request body from the plan.
-func buildResourceResultsRequest(ctx context.Context, plan *insightResourceResultsModel) (*models.CreateResourceResultsBody, diag.Diagnostics) {
+// toResourceResultsRequest builds the API request body from the plan.
+func (plan *insightResourceResultsModel) toResourceResultsRequest(ctx context.Context) (*models.CreateResourceResultsBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var elements []rr.ResourceResultsValue
@@ -619,7 +619,7 @@ func (r *insightResourceResultsResource) Create(ctx context.Context, req resourc
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	apiReq, buildDiags := buildResourceResultsRequest(ctx, &plan)
+	apiReq, buildDiags := plan.toResourceResultsRequest(ctx)
 	resp.Diagnostics.Append(buildDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -725,7 +725,7 @@ func (r *insightResourceResultsResource) Update(ctx context.Context, req resourc
 	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
 	defer cancel()
 
-	apiReq, buildDiags := buildResourceResultsRequest(ctx, &plan)
+	apiReq, buildDiags := plan.toResourceResultsRequest(ctx)
 	resp.Diagnostics.Append(buildDiags...)
 	if resp.Diagnostics.HasError() {
 		return

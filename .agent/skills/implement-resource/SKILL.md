@@ -43,23 +43,27 @@ var _ resource.ResourceWithImportState = (*myResource)(nil)
 
 ## Step 4: Implement CRUD Methods
 
-All resources use the **plan-first overlay pattern**. See [Overlay Pattern Reference](references/overlay-pattern.md) for the full deep-dive.
+All resources use the **plan-first overlay pattern** and the **standard helper functions** defined in [implementation-conventions](../implementation-conventions/SKILL.md#standard-helper-functions). See [Overlay Pattern Reference](references/overlay-pattern.md) for the overlay deep-dive.
 
-Summary:
+### Helper functions (in `<name>.go`)
 
-- **Create**: Build request from plan → call API → call `overlayComputedFields()` → set state
-- **Read**: Call `populateState()` / `mapResourceToModel()` → handle 404 with `RemoveResource()`
-- **Update**: Same as Create — overlay pattern
-- **Delete**: Treat 404 as success
-- **ImportState**: Use `ImportStatePassthroughID`
+Every resource must implement these in `<name>.go`:
+- `populateState` — wraps API GET + `mapXxxToModel`. Sets `state.Id = null` on 404.
+- `mapXxxToModel` — pure mapping from API response to TF model.
+- `overlayXxxComputedFields` — two-phase overlay for Create/Update.
+- `toXxxRequest` (or `toCreateRequest` / `toUpdateRequest`) — converts TF model to API request.
 
-```go
-func (r *myResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-    resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-```
+### CRUD flow
 
-**Invariant:** Create/Update = overlay wrapper. Read/Import = full mapping directly. Never mix these.
+| Method | Flow |
+|--------|------|
+| **Create** | `plan.toXxxRequest(ctx)` → API call → `overlayXxxComputedFields()` → `resp.State.Set()` |
+| **Read** | `r.populateState(ctx, &state)` → check `state.Id.IsNull()` → `RemoveResource()` or `resp.State.Set()` |
+| **Update** | Same as Create (get ID from state) |
+| **Delete** | Treat 404 as success |
+| **ImportState** | `ImportStatePassthroughID` |
+
+**Invariant:** Create/Update = overlay wrapper. Read/Import = full mapping via populateState. Never mix these.
 
 > **Linters:** `overlaycheck`, `overlayinvariant` — enforce overlay pattern correctness.
 

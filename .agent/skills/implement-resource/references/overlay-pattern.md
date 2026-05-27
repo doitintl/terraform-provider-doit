@@ -26,10 +26,12 @@ Key rules:
 - **Optional+Computed when `IsUnknown()`**: user omitted the field — resolve from API response, fall back to null/false
 - **Optional+Computed when known**: user explicitly set it — never overwrite
 
-## Step 2: Implement overlayComputedFields
+## Step 2: Implement overlayXxxComputedFields
+
+Always include the resource name in the function name (e.g. `overlayReportComputedFields`, not `overlayComputedFields`). This must be a **standalone function** (no receiver) unless `mapXxxToModel` makes additional API calls via `r.client` (e.g. allocation), in which case the receiver is allowed:
 
 ```go
-func overlayComputedFields(ctx context.Context, apiResp *models.MyResource, plan *myResourceModel) diag.Diagnostics {
+func overlayMyResourceComputedFields(ctx context.Context, apiResp *models.MyResource, plan *myResourceModel) diag.Diagnostics {
     var diags diag.Diagnostics
 
     // 1. Computed-only fields: ALWAYS set from API response.
@@ -62,12 +64,12 @@ func (r *myResource) Create(ctx context.Context, req resource.CreateRequest, res
     // ... build request from plan, call API ...
 
     // Plan-first: keep user values, overlay only computed fields
-    resp.Diagnostics.Append(overlayComputedFields(ctx, apiResp, &plan)...)
+    resp.Diagnostics.Append(overlayMyResourceComputedFields(ctx, apiResp, &plan)...)
     resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 ```
 
-Apply the same to Update. Read and ImportState continue using `mapResourceToModel` / `populateState` since they have no plan to preserve.
+Apply the same to Update. Read and ImportState continue using `populateState` (which calls `mapXxxToModel`) since they have no plan to preserve.
 
 ## Step 4: Handle Read-Path Reconciliation
 
@@ -87,7 +89,7 @@ The Read path detects **real** external changes while ignoring API normalization
 
 4. **Not testing the Update path separately.** Create and Update can have different API behaviors. Always test both.
 
-5. **Mixing overlay and full mapping.** Never call `mapResourceToModel`/`populateState` directly from Create/Update — always go through the overlay wrapper. Conversely, never use `overlayComputedFields` in Read/ImportState.
+5. **Mixing overlay and full mapping.** Never call `mapXxxToModel`/`populateState` directly from Create/Update — always go through the overlay wrapper. Conversely, never use `overlayXxxComputedFields` in Read/ImportState.
 
 6. **API-defaulted lists need API response, not null.** Some lists are auto-populated by the API when omitted (e.g. `collaborators` adds creator as owner). Resolving `IsUnknown()` to `null` causes drift. Resolve from the API response instead.
 

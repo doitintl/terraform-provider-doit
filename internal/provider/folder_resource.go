@@ -108,21 +108,8 @@ func (r *folderResource) Create(ctx context.Context, req resource.CreateRequest,
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	// Build API request. The API defaults to the root level when
-	// parent_folder_id is omitted; we send "root" explicitly for clarity.
-	apiReq := models.CreateFolderRequest{
-		Name: plan.Name.ValueString(),
-	}
-
-	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
-		apiReq.ParentFolderId = new(plan.ParentFolderId.ValueString())
-	} else {
-		apiReq.ParentFolderId = new("root")
-	}
-
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		apiReq.Description = new(plan.Description.ValueString())
-	}
+	// Build API request
+	apiReq := plan.toCreateRequest()
 
 	// Create new folder via API
 	folderResp, err := r.client.CreateFolderWithResponse(ctx, apiReq)
@@ -174,41 +161,17 @@ func (r *folderResource) Read(ctx context.Context, req resource.ReadRequest, res
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// Get refreshed folder from API
-	folderResp, err := r.client.GetFolderWithResponse(ctx, state.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Folder",
-			"Could not read folder ID "+state.Id.ValueString()+": "+err.Error(),
-		)
+	diags = r.populateState(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Handle externally deleted resource - remove from state
-	if folderResp.StatusCode() == 404 {
+	// Handle externally deleted resource (populateState sets Id to null on 404)
+	if state.Id.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
 	}
-
-	// Check for successful response
-	if folderResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading Folder",
-			fmt.Sprintf("Unexpected status code %d for folder ID %s: %s", folderResp.StatusCode(), state.Id.ValueString(), string(folderResp.Body)),
-		)
-		return
-	}
-
-	if folderResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Folder",
-			"Received empty response body for folder ID "+state.Id.ValueString(),
-		)
-		return
-	}
-
-	// Map response to state (full mapping for Read path)
-	mapFolderToModel(folderResp.JSON200, &state)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -239,20 +202,8 @@ func (r *folderResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 	folderID := state.Id.ValueString()
 
-	// Build API request. Default parent_folder_id to "root" when unset.
-	apiReq := models.UpdateFolderRequest{
-		Name: new(plan.Name.ValueString()),
-	}
-
-	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
-		apiReq.ParentFolderId = new(plan.ParentFolderId.ValueString())
-	} else {
-		apiReq.ParentFolderId = new("root")
-	}
-
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		apiReq.Description = new(plan.Description.ValueString())
-	}
+	// Build API request
+	apiReq := plan.toUpdateRequest()
 
 	// Update folder via API
 	updateResp, err := r.client.UpdateFolderWithResponse(ctx, folderID, apiReq)

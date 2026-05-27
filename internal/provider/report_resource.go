@@ -26,14 +26,15 @@ func NewReportResource() resource.Resource {
 	return &reportResource{}
 }
 
-type reportResource struct {
-	client *models.ClientWithResponses
-}
-
-type reportResourceModel struct {
-	resource_report.ReportModel
-	Timeouts timeouts.Value `tfsdk:"timeouts"`
-}
+type (
+	reportResource struct {
+		client *models.ClientWithResponses
+	}
+	reportResourceModel struct {
+		resource_report.ReportModel
+		Timeouts timeouts.Value `tfsdk:"timeouts"`
+	}
+)
 
 func (r *reportResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_report"
@@ -154,7 +155,7 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 	// fields from the API response (id, type, labels, name, description, and nested
 	// config fields). This avoids API normalization drift (sentinel stripping, alias
 	// renaming, etc.) for all user-configured values.
-	diags = r.overlayReportComputedFields(ctx, reportResp.JSON201, &plan)
+	diags = overlayReportComputedFields(ctx, reportResp.JSON201, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -179,14 +180,13 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// allowNotFound=true: 404 means resource was deleted externally, remove from state
-	diags = r.populateStateFromAPI(ctx, state.Id.ValueString(), &state, true)
+	diags = r.populateState(ctx, &state)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
-	// Handle externally deleted resource (populateStateFromAPI sets Id to null on 404)
+	// Handle externally deleted resource (populateState sets Id to null on 404)
 	if state.Id.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
@@ -258,7 +258,7 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// fields from the API response (id, type, labels, name, description, and nested
 	// config fields). This avoids API normalization drift (sentinel stripping, alias
 	// renaming, etc.) for all user-configured values.
-	diags = r.overlayReportComputedFields(ctx, reportResp.JSON200, &plan)
+	diags = overlayReportComputedFields(ctx, reportResp.JSON200, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
