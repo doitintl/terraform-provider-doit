@@ -62,7 +62,13 @@ func mapFolderToModel(resp *models.Folder, state *folderResourceModel) {
 		state.Description = types.StringNull()
 	}
 
-	state.ParentFolderId = types.StringPointerValue(resp.ParentFolderId)
+	// Defend against API returning nil: fall back to "root" to match the
+	// schema default and prevent perpetual plan drift.
+	if resp.ParentFolderId != nil {
+		state.ParentFolderId = types.StringValue(*resp.ParentFolderId)
+	} else {
+		state.ParentFolderId = types.StringValue("root")
+	}
 }
 
 // overlayFolderComputedFields uses the two-phase overlay pattern to reconcile

@@ -910,7 +910,13 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Name = types.StringValue(resp.Name)
 	state.Description = types.StringPointerValue(resp.Description)
-	state.FolderId = types.StringPointerValue(resp.FolderId)
+	// Defend against API returning nil: fall back to "root" to match the
+	// schema default and prevent perpetual plan drift.
+	if resp.FolderId != nil {
+		state.FolderId = types.StringValue(*resp.FolderId)
+	} else {
+		state.FolderId = types.StringValue("root")
+	}
 	if resp.Type != nil {
 		state.Type = types.StringValue(string(*resp.Type))
 	} else {

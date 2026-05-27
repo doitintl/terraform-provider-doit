@@ -337,7 +337,13 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
 	state.Name = types.StringPointerValue(resp.Name)
 	state.UnallocatedCosts = types.StringPointerValue(resp.UnallocatedCosts)
-	state.FolderId = types.StringPointerValue(resp.FolderId)
+	// Defend against API returning nil: fall back to "root" to match the
+	// schema default and prevent perpetual plan drift.
+	if resp.FolderId != nil {
+		state.FolderId = types.StringValue(*resp.FolderId)
+	} else {
+		state.FolderId = types.StringValue("root")
+	}
 
 	if resp.AllocationType != nil {
 		state.AllocationType = types.StringValue(string(*resp.AllocationType))

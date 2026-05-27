@@ -276,8 +276,11 @@ func classifyAttributeLit(lit *ast.CompositeLit) *AttrInfo {
 		case "Required":
 			hasRequired = isTrueLiteral(kv.Value)
 		case "Default":
-			// Any non-nil Default value means the field is resolved at plan time.
-			info.HasDefault = true
+			// A non-nil Default means the field is resolved at plan time.
+			// Exclude `Default: nil` which is effectively no default.
+			if !isNilLiteral(kv.Value) {
+				info.HasDefault = true
+			}
 		case "NestedObject":
 			// Recurse into nested attributes (ListNestedAttribute, SetNestedAttribute).
 			nestedLit, ok := kv.Value.(*ast.CompositeLit)
@@ -336,6 +339,15 @@ func isTrueLiteral(expr ast.Expr) bool {
 		return false
 	}
 	return ident.Name == "true" && ident.Obj == nil
+}
+
+// isNilLiteral checks if an expression is the `nil` literal.
+func isNilLiteral(expr ast.Expr) bool {
+	ident, ok := expr.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	return ident.Name == "nil" && ident.Obj == nil
 }
 
 // unquote extracts a string from a basic literal, removing quotes.
