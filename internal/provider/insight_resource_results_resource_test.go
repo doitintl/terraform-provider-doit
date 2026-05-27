@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -924,12 +925,12 @@ resource "doit_insight_resource_results" "test" {
 }
 
 func testAccInsightResultsPaginated(key string, count int) string {
-	results := ""
-	for i := 0; i < count; i++ {
+	var results strings.Builder
+	for i := range count {
 		if i > 0 {
-			results += ",\n"
+			results.WriteString(",\n")
 		}
-		results += fmt.Sprintf(`    {
+		fmt.Fprintf(&results, `    {
       resource_id    = "i-pag-%s-%03d"
       account        = "111111111111"
       cloud_provider = "aws"
@@ -957,7 +958,7 @@ resource "doit_insight_resource_results" "test" {
 %[2]s
   ]
 }
-`, key, results)
+`, key, results.String())
 }
 
 func testAccInsightResultsAllFields(key string) string {

@@ -71,7 +71,7 @@ func TestAccUser_Basic(t *testing.T) {
 	deleteTestUser(t, email)
 	t.Cleanup(func() { deleteTestUser(t, email) })
 
-	resource.Test(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // sequential: shares TEST_INVITE_EMAIL
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -115,7 +115,7 @@ func TestAccUser_AllFields(t *testing.T) {
 	deleteTestUser(t, email)
 	t.Cleanup(func() { deleteTestUser(t, email) })
 
-	resource.Test(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // sequential: shares TEST_INVITE_EMAIL
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -174,7 +174,7 @@ func TestAccUser_Update(t *testing.T) {
 	deleteTestUser(t, email)
 	t.Cleanup(func() { deleteTestUser(t, email) })
 
-	resource.Test(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // sequential: shares TEST_INVITE_EMAIL
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -230,7 +230,7 @@ func TestAccUser_Import(t *testing.T) {
 	deleteTestUser(t, email)
 	t.Cleanup(func() { deleteTestUser(t, email) })
 
-	resource.Test(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // sequential: shares TEST_INVITE_EMAIL
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -266,7 +266,7 @@ func TestAccUser_Disappears(t *testing.T) {
 	deleteTestUser(t, email)
 	t.Cleanup(func() { deleteTestUser(t, email) })
 
-	resource.Test(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // sequential: shares TEST_INVITE_EMAIL
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,

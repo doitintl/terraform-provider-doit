@@ -111,10 +111,9 @@ func (d *avaDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	question := data.Question.ValueString()
 
 	// Always use ephemeral mode to avoid creating persistent conversations
-	ephemeral := true
 	apiResp, err := d.client.AskAvaSyncWithResponse(ctx, models.AskAvaSyncJSONRequestBody{
 		Question:  question,
-		Ephemeral: &ephemeral,
+		Ephemeral: new(true),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(

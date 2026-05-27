@@ -1902,7 +1902,7 @@ paths:
     get:
       tags:
         - Sharing
-      summary: Get resource permissions (beta)
+      summary: Get resource permissions
       description: |-
         Returns the permissions associated with the specified Cloud Analytics resource.
         Supports Allocations, Alerts, Budgets, and Reports.
@@ -1930,7 +1930,7 @@ paths:
     put:
       tags:
         - Sharing
-      summary: Update resource permissions (beta)
+      summary: Update resource permissions
       description: |-
         Updates the permissions associated with the specified Cloud Analytics resource.
         Supports Allocations, Alerts, Budgets, and Reports.
@@ -3888,9 +3888,7 @@ paths:
         "401":
           $ref: "#/components/responses/401"
         "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /clouddiagrams/v1/statussheet/{id}/export-json:
     get:
       tags:
@@ -3919,9 +3917,184 @@ paths:
         "401":
           $ref: "#/components/responses/401"
         "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/statussheet/{id}/snapshots:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: List layer snapshots
+      description: Returns the list of saved snapshots for the specified diagram layer.
+      operationId: listCloudDiagramLayerSnapshots
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: Number of snapshots to skip (default 0).
+          schema:
+            type: integer
+            minimum: 0
+        - name: limit
+          in: query
+          description: Maximum number of snapshots to return (default 10).
+          schema:
+            type: integer
+            minimum: 1
+        - name: sort
+          in: query
+          description: Sort expression (e.g. "-createdAt" for descending).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Snapshots returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramLayerSnapshot"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/statussheet/{id}/snapshot:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Get a layer snapshot
+      description: Returns a single snapshot of the specified diagram layer identified by its ID.
+      operationId: getCloudDiagramLayerSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: _id
+          in: query
+          required: true
+          description: Snapshot ID.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Snapshot returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramLayerSnapshot"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/activity:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: List activity groups for a layer
+      description: |-
+        Returns snapshot activity groups for the specified diagram layer,
+        ordered by timestamp descending. Each group contains a snapshot reference
+        and the individual activity records that belong to it.
+      operationId: listCloudDiagramActivityGroups
+      parameters:
+        - name: ss_id
+          in: query
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of groups to return (default 10).
+          schema:
+            type: integer
+            minimum: 1
+        - name: offset
+          in: query
+          description: Number of groups to skip (default 0).
+          schema:
+            type: integer
+            minimum: 0
+        - name: tags
+          in: query
+          description: Filter by tags.
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK - Activity groups returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramSnapshotActivityGroup"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
           $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
+  /clouddiagrams/v1/activity/node-activities:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: List node activities
+      description: Returns individual activity records for the specified component node, ordered by timestamp descending.
+      operationId: listCloudDiagramNodeActivities
+      parameters:
+        - name: ss_id
+          in: query
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: nodeId
+          in: query
+          required: true
+          description: Node component ID.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of records to return (default 50).
+          schema:
+            type: integer
+            minimum: 1
+        - name: offset
+          in: query
+          description: Number of records to skip (default 0).
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: OK - Node activity records returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramNodeActivity"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
   /analytics/v1/commitment-manager:
     get:
       tags:
@@ -7986,7 +8159,6 @@ components:
         - platform
         - product
         - severity
-        - subject
       properties:
         body:
           type: string
@@ -9200,6 +9372,142 @@ components:
           description: Exported notes.
           items:
             $ref: "#/components/schemas/CloudDiagramNote"
+    CloudDiagramLayerSnapshot:
+      type: object
+      required:
+        - _id
+        - createdAt
+      description: A saved snapshot of a diagram layer's state.
+      properties:
+        _id:
+          type: string
+          description: Snapshot ID.
+        name:
+          type: string
+          description: Snapshot name.
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the snapshot was created.
+        prevState:
+          type: string
+          description: ID of the previous snapshot in the chain.
+    CloudDiagramActivityItem:
+      type: object
+      required:
+        - _id
+        - group
+        - activity
+        - timestamp
+      description: An individual activity record within an activity group.
+      properties:
+        _id:
+          type: string
+          description: Activity record ID.
+        group:
+          type: string
+          description: ID of the activity group this record belongs to.
+        activity:
+          type: string
+          enum:
+            - NODE_CREATE
+            - NODE_UPDATE
+            - NODE_DELETE
+            - LINK_CREATE
+            - LINK_UPDATE
+            - LINK_DELETE
+            - GROUP_CREATE
+            - GROUP_UPDATE
+            - GROUP_DELETE
+            - ATTACHMENT_CREATE
+            - ATTACHMENT_UPDATE
+            - ATTACHMENT_DELETE
+          description: Activity type.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Activity-specific payload (structure varies by activity type).
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity.
+        service_type:
+          type: string
+          description: Cloud service type the activity applies to.
+        group_type:
+          type: string
+          description: Activity group sub-type.
+        tags:
+          type: array
+          description: Tags associated with the activity.
+          items:
+            type: string
+    CloudDiagramSnapshotActivityGroup:
+      type: object
+      required:
+        - _id
+        - statussheet
+        - timestamp
+        - snapshot
+      description: A snapshot activity group containing the individual activity records that produced it.
+      properties:
+        _id:
+          type: string
+          description: Activity group ID.
+        statussheet:
+          type: string
+          description: Layer ID this group belongs to.
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity group.
+        tags:
+          type: array
+          description: Tags associated with the group.
+          items:
+            type: string
+        snapshot:
+          type: string
+          description: ID of the associated snapshot (equal to the group ID).
+        items:
+          type: array
+          description: Individual activity records within this group.
+          items:
+            $ref: "#/components/schemas/CloudDiagramActivityItem"
+    CloudDiagramNodeActivity:
+      type: object
+      required:
+        - _id
+        - activity
+        - timestamp
+        - user
+        - statussheet
+      description: An individual activity record scoped to a specific component node.
+      properties:
+        _id:
+          type: string
+          description: Activity record ID.
+        activity:
+          type: string
+          enum:
+            - NODE_CREATE
+            - NODE_UPDATE
+            - NODE_DELETE
+          description: Activity type.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Activity-specific payload (structure varies by activity type).
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity.
+        user:
+          type: string
+          description: ID of the user who performed the activity.
+        statussheet:
+          type: string
+          description: Layer ID where the activity occurred.
     Organization:
       type: object
       description: Organization metadata returned by the API.
@@ -9518,6 +9826,17 @@ components:
     "403":
       description: >-
         Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "403_resource_or_forbidden":
+      description: >-
+        Forbidden - Either the resource does not exist, or the caller is not authorized to access it.
+        These two cases are deliberately indistinguishable to avoid information disclosure: the access
+        guard runs before any existence check, so callers receive 403 (not 404) for unknown IDs on this
+        endpoint. Used by Cloud Diagrams routes keyed by a path-param resource id (e.g.
+        `/clouddiagrams/v1/statussheet/{id}/...`).
       content:
         application/json:
           schema:

@@ -22,7 +22,7 @@ import (
 // the resolved counterpart. Computed-only fields always come from resolved.
 //
 // Used by: Create, Update
-// NOT used by: Read, ImportState (which use populateState / mapAlertToModel directly).
+// NOT used by: Read, ImportState (which use populateState → mapAlertToModel).
 func overlayAlertComputedFields(ctx context.Context, apiResp *models.Alert, plan *alertResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -154,8 +154,7 @@ func (plan *alertResourceModel) toAlertRequest(ctx context.Context) (req models.
 // toAlertUpdateRequest converts the Terraform model to the API AlertUpdateRequest.
 // This is used for update operations.
 func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req models.AlertUpdateRequest, diags diag.Diagnostics) {
-	name := plan.Name.ValueString()
-	req.Name = &name
+	req.Name = new(plan.Name.ValueString())
 
 	// Convert recipients
 	if !plan.Recipients.IsNull() && !plan.Recipients.IsUnknown() {

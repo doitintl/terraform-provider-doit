@@ -8,12 +8,10 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_annotation"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type (
@@ -28,9 +26,9 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                = &annotationResource{}
-	_ resource.ResourceWithConfigure   = &annotationResource{}
-	_ resource.ResourceWithImportState = &annotationResource{}
+	_ resource.Resource                = (*annotationResource)(nil)
+	_ resource.ResourceWithConfigure   = (*annotationResource)(nil)
+	_ resource.ResourceWithImportState = (*annotationResource)(nil)
 )
 
 // NewAnnotationResource creates a new annotation resource instance.
@@ -47,7 +45,7 @@ func (r *annotationResource) Configure(_ context.Context, req resource.Configure
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
@@ -96,46 +94,6 @@ func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	resp.Schema = s
 }
 
-// overlayAnnotationComputedFields uses the two-phase overlay pattern to reconcile
-// the Terraform plan with the API response after Create/Update.
-//
-// Phase 1 (Resolve): Build a fully-resolved state from the API response using
-// mapAnnotationToModel — the same mapping function used by Read.
-//
-// Phase 2 (Overlay): Walk the plan field-by-field. Known values are preserved.
-// Unknown values are replaced with the resolved counterpart.
-func overlayAnnotationComputedFields(ctx context.Context, apiResp *models.AnnotationListItem, plan *annotationResourceModel) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	// Phase 1: Build fully-resolved state from API response.
-	resolved := *plan
-	diags.Append(mapAnnotationToModel(ctx, apiResp, &resolved)...)
-	if diags.HasError() {
-		return diags
-	}
-
-	// Phase 2: Overlay known plan values on top of resolved state.
-
-	// ── Computed-only fields: always from resolved ──
-	plan.Id = resolved.Id
-	plan.CreateTime = resolved.CreateTime
-	plan.UpdateTime = resolved.UpdateTime
-
-	// ── Content, Timestamp: Required — never touch ──
-
-	// ── Labels: Optional+Computed list ──
-	if plan.Labels.IsUnknown() {
-		plan.Labels = resolved.Labels
-	}
-
-	// ── Reports: Optional+Computed list ──
-	if plan.Reports.IsUnknown() {
-		plan.Reports = resolved.Reports
-	}
-
-	return diags
-}
-
 func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan annotationResourceModel
 
@@ -153,42 +111,11 @@ func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequ
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	// Parse timestamp
-	timestamp, err := time.Parse(time.RFC3339, plan.Timestamp.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Parsing Timestamp",
-			fmt.Sprintf("Could not parse timestamp '%s': %s", plan.Timestamp.ValueString(), err.Error()),
-		)
+	// Build API request
+	apiReq, buildDiags := plan.toCreateRequest(ctx)
+	resp.Diagnostics.Append(buildDiags...)
+	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	// Convert model to API request type
-	apiReq := models.CreateAnnotationRequest{
-		Content:   plan.Content.ValueString(),
-		Timestamp: timestamp,
-	}
-
-	// Handle optional labels list
-	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
-		var labels []string
-		diags := plan.Labels.ElementsAs(ctx, &labels, false)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		apiReq.Labels = &labels
-	}
-
-	// Handle optional reports list
-	if !plan.Reports.IsNull() && !plan.Reports.IsUnknown() {
-		var reports []string
-		diags := plan.Reports.ElementsAs(ctx, &reports, false)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		apiReq.Reports = &reports
 	}
 
 	// Create new annotation via API
@@ -246,43 +173,15 @@ func (r *annotationResource) Read(ctx context.Context, req resource.ReadRequest,
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// Get refreshed annotation value from API
-	annotationResp, err := r.client.GetAnnotationWithResponse(ctx, state.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Annotation",
-			"Could not read annotation ID "+state.Id.ValueString()+": "+err.Error(),
-		)
-		return
-	}
-
-	// Handle externally deleted resource - remove from state
-	if annotationResp.StatusCode() == 404 {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	// Check for successful response
-	if annotationResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading Annotation",
-			fmt.Sprintf("Unexpected status code %d for annotation ID %s: %s", annotationResp.StatusCode(), state.Id.ValueString(), string(annotationResp.Body)),
-		)
-		return
-	}
-
-	if annotationResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Annotation",
-			"Received empty response body for annotation ID "+state.Id.ValueString(),
-		)
-		return
-	}
-
-	// Map response to state
-	diags := mapAnnotationToModel(ctx, annotationResp.JSON200, &state)
+	diags := r.populateState(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Handle externally deleted resource (populateState sets Id to null on 404)
+	if state.Id.IsNull() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -315,43 +214,11 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 	annotationID := state.Id.ValueString()
 
-	// Parse timestamp
-	timestamp, err := time.Parse(time.RFC3339, plan.Timestamp.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Parsing Timestamp",
-			fmt.Sprintf("Could not parse timestamp '%s': %s", plan.Timestamp.ValueString(), err.Error()),
-		)
+	// Build API request
+	apiReq, buildDiags := plan.toUpdateRequest(ctx)
+	resp.Diagnostics.Append(buildDiags...)
+	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	// Convert model to API request type
-	content := plan.Content.ValueString()
-	apiReq := models.UpdateAnnotationRequest{
-		Content:   &content,
-		Timestamp: &timestamp,
-	}
-
-	// Handle optional labels list
-	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
-		var labels []string
-		diags := plan.Labels.ElementsAs(ctx, &labels, false)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		apiReq.Labels = &labels
-	}
-
-	// Handle optional reports list
-	if !plan.Reports.IsNull() && !plan.Reports.IsUnknown() {
-		var reports []string
-		diags := plan.Reports.ElementsAs(ctx, &reports, false)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		apiReq.Reports = &reports
 	}
 
 	// Update annotation via API
@@ -427,66 +294,4 @@ func (r *annotationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		)
 		return
 	}
-}
-
-// mapAnnotationToModel maps the API response to the Terraform model.
-func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, state *annotationResourceModel) (diags diag.Diagnostics) {
-	state.Id = types.StringValue(resp.Id)
-	state.Content = types.StringValue(resp.Content)
-
-	// Check if the timestamp has changed semantically before overwriting to preserve user formatting
-	existingTime, err := time.Parse(time.RFC3339, state.Timestamp.ValueString())
-	if err == nil && existingTime.Equal(resp.Timestamp) {
-		// Keep the existing string to avoid diffs if the time is the same
-	} else {
-		state.Timestamp = types.StringValue(resp.Timestamp.UTC().Format(time.RFC3339))
-	}
-
-	if resp.CreateTime != nil {
-		state.CreateTime = types.StringValue(resp.CreateTime.Format(time.RFC3339))
-	} else {
-		state.CreateTime = types.StringNull()
-	}
-
-	if resp.UpdateTime != nil {
-		state.UpdateTime = types.StringValue(resp.UpdateTime.Format(time.RFC3339))
-	} else {
-		state.UpdateTime = types.StringNull()
-	}
-
-	// Map labels - API returns []LabelInfo, but we store just the IDs
-	// Use resp.Labels != nil (not len check) to handle explicit empty lists correctly
-	if resp.Labels != nil {
-		labelIDs := make([]string, len(*resp.Labels))
-		for i, label := range *resp.Labels {
-			labelIDs[i] = label.Id
-		}
-		labelsList, d := types.ListValueFrom(ctx, types.StringType, labelIDs)
-		diags.Append(d...)
-		if diags.HasError() {
-			return diags
-		}
-		state.Labels = labelsList
-	} else {
-		var emptyDiags diag.Diagnostics
-		state.Labels, emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})
-		diags.Append(emptyDiags...)
-	}
-
-	// Map reports
-	// Use resp.Reports != nil (not len check) to handle explicit empty lists correctly
-	if resp.Reports != nil {
-		reportsList, d := types.ListValueFrom(ctx, types.StringType, *resp.Reports)
-		diags.Append(d...)
-		if diags.HasError() {
-			return diags
-		}
-		state.Reports = reportsList
-	} else {
-		var emptyDiags diag.Diagnostics
-		state.Reports, emptyDiags = types.ListValueFrom(ctx, types.StringType, []string{})
-		diags.Append(emptyDiags...)
-	}
-
-	return diags
 }

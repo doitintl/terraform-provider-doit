@@ -1,0 +1,26 @@
+version: "2"
+
+# golangci-lint config for the tools/linters module itself.
+# Uses stock linters only (the custom plugins can't analyze themselves).
+run:
+  timeout: 2m
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - misspell
+    - staticcheck
+    - unparam
+    - unused
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+issues:
+  exclude-dirs:
+    - testdata

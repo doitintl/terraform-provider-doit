@@ -26,9 +26,9 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                = &labelResource{}
-	_ resource.ResourceWithConfigure   = &labelResource{}
-	_ resource.ResourceWithImportState = &labelResource{}
+	_ resource.Resource                = (*labelResource)(nil)
+	_ resource.ResourceWithConfigure   = (*labelResource)(nil)
+	_ resource.ResourceWithImportState = (*labelResource)(nil)
 )
 
 // NewLabelResource creates a new label resource instance.
@@ -45,7 +45,7 @@ func (r *labelResource) Configure(_ context.Context, req resource.ConfigureReque
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
@@ -108,11 +108,7 @@ func (r *labelResource) Create(ctx context.Context, req resource.CreateRequest, 
 	defer cancel()
 
 	// Convert model to API request type
-	color := models.CreateLabelRequestColor(plan.Color.ValueString())
-	apiReq := models.CreateLabelRequest{
-		Color: color,
-		Name:  plan.Name.ValueString(),
-	}
+	apiReq := plan.toCreateRequest()
 
 	// Create new label via API
 	labelResp, err := r.client.CreateLabelWithResponse(ctx, apiReq)
@@ -164,41 +160,17 @@ func (r *labelResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// Get refreshed label value from API
-	labelResp, err := r.client.GetLabelWithResponse(ctx, state.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Label",
-			"Could not read label ID "+state.Id.ValueString()+": "+err.Error(),
-		)
+	diags = r.populateState(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Handle externally deleted resource - remove from state
-	if labelResp.StatusCode() == 404 {
+	// Handle externally deleted resource (populateState sets Id to null on 404)
+	if state.Id.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
 	}
-
-	// Check for successful response
-	if labelResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading Label",
-			fmt.Sprintf("Unexpected status code %d for label ID %s: %s", labelResp.StatusCode(), state.Id.ValueString(), string(labelResp.Body)),
-		)
-		return
-	}
-
-	if labelResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Label",
-			"Received empty response body for label ID "+state.Id.ValueString(),
-		)
-		return
-	}
-
-	// Map response to state
-	mapLabelToModel(labelResp.JSON200, &state)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -229,16 +201,8 @@ func (r *labelResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 	labelID := state.Id.ValueString()
 
-	// Convert model to API request type.
-	// Both color and name are required fields in the schema, so they will always
-	// be present. We use pointers here because UpdateLabelRequest uses pointer
-	// types for PATCH semantics, but we always send both fields.
-	color := models.UpdateLabelRequestColor(plan.Color.ValueString())
-	name := plan.Name.ValueString()
-	apiReq := models.UpdateLabelRequest{
-		Color: &color,
-		Name:  &name,
-	}
+	// Convert model to API request type
+	apiReq := plan.toUpdateRequest()
 
 	// Update label via API
 	updateResp, err := r.client.UpdateLabelWithResponse(ctx, labelID, apiReq)
