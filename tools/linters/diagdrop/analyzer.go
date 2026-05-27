@@ -47,8 +47,9 @@ const diagType = "github.com/hashicorp/terraform-plugin-framework/diag.Diagnosti
 
 // diagVarInfo holds information about a named diag.Diagnostics variable.
 type diagVarInfo struct {
-	name string
-	pos  token.Pos
+	name          string
+	pos           token.Pos
+	isAccumulator bool // true for named returns and var declarations, false for := temporaries
 }
 
 func run(pass *analysis.Pass) (any, error) {
@@ -112,7 +113,7 @@ func checkFunc(pass *analysis.Pass, funcType *ast.FuncType, body *ast.BlockStmt)
 		}
 
 		// Find the first diag variable assigned before this return.
-		varName := firstDiagVarBefore(diagVars, ret.Pos())
+		varName := latestDiagVarBefore(diagVars, ret.Pos())
 		if varName == "" {
 			// No diag variable assigned before this return — safe early return.
 			return true
@@ -162,41 +163,61 @@ func collectDiagVars(pass *analysis.Pass, funcType *ast.FuncType, body *ast.Bloc
 			if typ != nil && isDiagnosticsType(typ) {
 				for _, name := range field.Names {
 					if name.Name != "" && name.Name != "_" {
-						vars = append(vars, diagVarInfo{name: name.Name, pos: 0})
+						vars = append(vars, diagVarInfo{name: name.Name, pos: 0, isAccumulator: true})
 					}
 				}
 			}
 		}
 	}
 
-	// Scan function body for assignments that capture diag.Diagnostics.
+	// Scan function body for var declarations (e.g. var diags diag.Diagnostics)
+	// and assignments (e.g. diags := lookupUser(...)) that capture diag.Diagnostics.
 	ast.Inspect(body, func(n ast.Node) bool {
-		assign, ok := n.(*ast.AssignStmt)
-		if !ok {
-			return true
-		}
-
-		for i, lhs := range assign.Lhs {
-			ident, ok := lhs.(*ast.Ident)
-			if !ok || ident.Name == "_" {
-				continue
+		switch node := n.(type) {
+		case *ast.GenDecl:
+			// Handle: var diags diag.Diagnostics
+			if node.Tok != token.VAR {
+				return true
 			}
-
-			var typ types.Type
-			if len(assign.Rhs) == 1 {
-				// Multi-return: check tuple position.
-				rhsType := pass.TypesInfo.TypeOf(assign.Rhs[0])
-				if tuple, ok := rhsType.(*types.Tuple); ok && i < tuple.Len() {
-					typ = tuple.At(i).Type()
-				} else if i == 0 {
-					typ = rhsType
+			for _, spec := range node.Specs {
+				vSpec, ok := spec.(*ast.ValueSpec)
+				if !ok || vSpec.Type == nil {
+					continue
 				}
-			} else if i < len(assign.Rhs) {
-				typ = pass.TypesInfo.TypeOf(assign.Rhs[i])
+				typ := pass.TypesInfo.TypeOf(vSpec.Type)
+				if typ != nil && isDiagnosticsType(typ) {
+					for _, name := range vSpec.Names {
+						if name.Name != "" && name.Name != "_" {
+							vars = append(vars, diagVarInfo{name: name.Name, pos: node.Pos(), isAccumulator: true})
+						}
+					}
+				}
 			}
 
-			if typ != nil && isDiagnosticsType(typ) {
-				vars = append(vars, diagVarInfo{name: ident.Name, pos: assign.Pos()})
+		case *ast.AssignStmt:
+			// Handle: diags := lookupUser(...) or d := mapToModel()
+			for i, lhs := range node.Lhs {
+				ident, ok := lhs.(*ast.Ident)
+				if !ok || ident.Name == "_" {
+					continue
+				}
+
+				var typ types.Type
+				if len(node.Rhs) == 1 {
+					// Multi-return: check tuple position.
+					rhsType := pass.TypesInfo.TypeOf(node.Rhs[0])
+					if tuple, ok := rhsType.(*types.Tuple); ok && i < tuple.Len() {
+						typ = tuple.At(i).Type()
+					} else if i == 0 {
+						typ = rhsType
+					}
+				} else if i < len(node.Rhs) {
+					typ = pass.TypesInfo.TypeOf(node.Rhs[i])
+				}
+
+				if typ != nil && isDiagnosticsType(typ) {
+					vars = append(vars, diagVarInfo{name: ident.Name, pos: node.Pos()})
+				}
 			}
 		}
 		return true
@@ -205,15 +226,26 @@ func collectDiagVars(pass *analysis.Pass, funcType *ast.FuncType, body *ast.Bloc
 	return vars
 }
 
-// firstDiagVarBefore returns the name of the first diag variable assigned
-// before the given position, or "" if none.
-func firstDiagVarBefore(vars []diagVarInfo, pos token.Pos) string {
+// latestDiagVarBefore returns the name of the best diag variable to suggest
+// returning, among those declared or assigned before the given position.
+// It prefers accumulators (named returns, var declarations) over assignment
+// temporaries. Among equal-priority variables, it picks the latest.
+func latestDiagVarBefore(vars []diagVarInfo, pos token.Pos) string {
+	var best string
+	var bestPos token.Pos
+	var bestIsAccum bool
 	for _, v := range vars {
-		if v.pos < pos {
-			return v.name
+		if v.pos >= pos {
+			continue
+		}
+		// Prefer accumulators over temporaries; among same kind, prefer latest.
+		if best == "" || (v.isAccumulator && !bestIsAccum) || (v.isAccumulator == bestIsAccum && v.pos >= bestPos) {
+			best = v.name
+			bestPos = v.pos
+			bestIsAccum = v.isAccumulator
 		}
 	}
-	return ""
+	return best
 }
 
 // isNilLiteral checks if an expression is the nil identifier.

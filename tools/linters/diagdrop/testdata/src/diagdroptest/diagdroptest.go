@@ -151,3 +151,37 @@ func goodMultiEarlyReturnBeforeCapture() (NullValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	return NullValue{}, diags
 }
+
+// --- BAD: var declaration patterns ---
+
+// badVarDeclaration uses var declaration instead of :=.
+func badVarDeclaration() diag.Diagnostics {
+	var diags diag.Diagnostics
+	_, d := lookupUser()
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+	return nil // want "return nil drops captured diag.Diagnostics variable \"diags\"; return diags instead"
+}
+
+// badVarDeclarationOnly uses only var declaration, no assignments.
+func badVarDeclarationOnly() diag.Diagnostics {
+	var diags diag.Diagnostics
+	_ = diags.HasError()
+	return nil // want "return nil drops captured diag.Diagnostics variable \"diags\"; return diags instead"
+}
+
+// --- BAD: accumulator preference ---
+
+// badAccumulatorPreferred has both a temporary d and an accumulator diags.
+// The suggestion should name "diags" (the accumulator), not "d" (the temporary).
+func badAccumulatorPreferred() diag.Diagnostics {
+	_, d := lookupUser()
+	var diags diag.Diagnostics
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+	return nil // want "return nil drops captured diag.Diagnostics variable \"diags\"; return diags instead"
+}
