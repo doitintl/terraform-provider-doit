@@ -78,7 +78,7 @@ func mapFolderToModel(resp *models.Folder, state *folderResourceModel) {
 //   - id:               Computed-only — always set from API response
 //   - name:             Required — never touch
 //   - description:      Optional+Computed — resolve when unknown
-//   - parent_folder_id: Optional+Computed — resolve when unknown
+//   - parent_folder_id: Optional+Computed — has schema default, never Unknown
 func overlayFolderComputedFields(apiResp *models.Folder, plan *folderResourceModel) {
 	// Phase 1: Build fully-resolved state from API response.
 	resolved := *plan
