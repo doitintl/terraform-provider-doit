@@ -293,6 +293,9 @@
 						"name": "folder_id",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "root"
+							},
 							"description": "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder)."
 						}
 					},
@@ -1436,6 +1439,9 @@
 						"name": "parent_folder_id",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "root"
+							},
 							"description": "Identifier of the parent folder. Use \"root\" or omit to place the folder at the top level."
 						}
 					},
@@ -3092,6 +3098,9 @@
 						"name": "folder_id",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "root"
+							},
 							"description": "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder)."
 						}
 					},

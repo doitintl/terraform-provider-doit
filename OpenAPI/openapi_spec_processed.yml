@@ -3273,6 +3273,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     AllocationComponent:
       required:
@@ -3400,6 +3401,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     AllocationRule:
       required:
@@ -4266,6 +4268,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     CreateAnnotationRequest:
       required:
@@ -4349,6 +4352,7 @@ components:
         parentFolderId:
           type: string
           description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
+          default: root
           example: root
     CreateLabelRequest:
       required:
@@ -4396,6 +4400,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
           example: root
     CreateResourceResultsBody:
       type: object
@@ -4955,6 +4960,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
           example: root
     ExternalSplit:
       type: object
@@ -5046,6 +5052,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
           example: root
       example:
         config:
@@ -5107,6 +5114,7 @@ components:
         parentFolderId:
           type: string
           description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
+          default: root
           example: root
     GetAnomaly200Response:
       required:
@@ -6830,6 +6838,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     UpdateAnnotationRequest:
       type: object
@@ -6909,6 +6918,7 @@ components:
           type: string
           description: >-
             Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
+          default: root
           example: root
     UpdateLabelRequest:
       type: object
