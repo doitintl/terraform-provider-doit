@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -361,6 +362,75 @@ func TestAccFolder_MoveFolder(t *testing.T) {
 			// Step 6: Drift check after move to root
 			{
 				Config: testAccFolderMoveToRoot(rParentA, rParentB, rChild),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccFolder_UpdateNamePreservesParent verifies that updating an unrelated
+// field (name) on a nested folder does NOT move it to root. This disproves the
+// concern that toUpdateRequest() defaults parent_folder_id to "root" when the
+// user only changes another field.
+// Ref: https://github.com/doitintl/terraform-provider-doit/pull/199#discussion_r3302936367
+func TestAccFolder_UpdateNamePreservesParent(t *testing.T) {
+	rParent := acctest.RandomWithPrefix("tf-acc-parent")
+	rChild := acctest.RandomWithPrefix("tf-acc-child")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create parent + child nested under parent
+			{
+				Config: testAccFolderNested(rParent, rChild),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_folder.child",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(rChild)),
+				},
+			},
+			// Step 2: Update only the child's name — parent_folder_id stays the same
+			{
+				Config: testAccFolderNested(rParent, rChild+"-renamed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_folder.child",
+							plancheck.ResourceActionUpdate,
+						),
+						// Parent folder should NOT be planned for update
+						plancheck.ExpectResourceAction(
+							"doit_folder.parent",
+							plancheck.ResourceActionNoop,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_folder.child",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(rChild+"-renamed")),
+					// The key assertion: parent_folder_id must NOT have changed to "root"
+					statecheck.CompareValuePairs(
+						"doit_folder.parent",
+						tfjsonpath.New("id"),
+						"doit_folder.child",
+						tfjsonpath.New("parent_folder_id"),
+						compare.ValuesSame(),
+					),
+				},
+			},
+			// Step 3: Drift check — no changes expected
+			{
+				Config: testAccFolderNested(rParent, rChild+"-renamed"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
