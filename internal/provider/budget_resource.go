@@ -29,11 +29,11 @@ type (
 
 // Ensure the implementation satisfies expected interfaces.
 var (
-	_ resource.Resource                     = &budgetResource{}
-	_ resource.ResourceWithConfigure        = &budgetResource{}
-	_ resource.ResourceWithUpgradeState     = &budgetResource{}
-	_ resource.ResourceWithImportState      = &budgetResource{}
-	_ resource.ResourceWithConfigValidators = &budgetResource{}
+	_ resource.Resource                     = (*budgetResource)(nil)
+	_ resource.ResourceWithConfigure        = (*budgetResource)(nil)
+	_ resource.ResourceWithUpgradeState     = (*budgetResource)(nil)
+	_ resource.ResourceWithImportState      = (*budgetResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*budgetResource)(nil)
 )
 
 // NewBudgetResource creates a new budget resource instance.
@@ -50,7 +50,7 @@ func (r *budgetResource) Configure(_ context.Context, req resource.ConfigureRequ
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return

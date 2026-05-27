@@ -12,6 +12,25 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// populateState fetches the user from the API and populates the Terraform state.
+// On nil user (not found), state.Id is set to null to signal Terraform to remove the resource.
+func (r *userResource) populateState(ctx context.Context, state *userResourceModel) diag.Diagnostics {
+	email := state.Id.ValueString()
+
+	user, diags := r.lookupUser(ctx, email)
+	if diags.HasError() {
+		return diags
+	}
+
+	if user == nil {
+		state.Id = types.StringNull()
+		return diags
+	}
+
+	mapUserToModel(user, state)
+	return diags
+}
+
 // normalizePhone restores the "+" prefix that the API strips from phone
 // country codes. The spec accepts "^\+[0-9]+$" but stores without the "+".
 func normalizePhone(phone *string) types.String {
@@ -62,50 +81,35 @@ func mapUserToModel(user *models.UserListItem, state *userResourceModel) {
 // Create and Update. It preserves user-configured values from the plan and
 // only sets Computed-only fields from the API response.
 func overlayUserComputedFields(user *models.UserListItem, plan *userResourceModel) {
-	// Computed-only fields: ALWAYS set from API response.
-	plan.Id = types.StringPointerValue(user.Email) // id = email
-	plan.DisplayName = types.StringPointerValue(user.DisplayName)
+	// Phase 1: Build fully-resolved state from API response.
+	var resolved userResourceModel
+	mapUserToModel(user, &resolved)
 
-	if user.Status != nil {
-		plan.Status = types.StringValue(strings.ToLower(string(*user.Status)))
-	} else {
-		plan.Status = types.StringNull()
-	}
+	// Phase 2: Overlay computed-only fields — always from resolved.
+	plan.Id = resolved.Id
+	plan.DisplayName = resolved.DisplayName
+	plan.Status = resolved.Status
 
 	// Optional+Computed fields: resolve ONLY when unknown (user omitted them).
 	// When known, the user explicitly set them — preserve the plan value.
 	if plan.FirstName.IsUnknown() {
-		plan.FirstName = types.StringPointerValue(user.FirstName)
+		plan.FirstName = resolved.FirstName
 	}
 	if plan.LastName.IsUnknown() {
-		plan.LastName = types.StringPointerValue(user.LastName)
+		plan.LastName = resolved.LastName
 	}
 	if plan.JobTitle.IsUnknown() {
-		if user.JobTitle != nil {
-			plan.JobTitle = types.StringValue(string(*user.JobTitle))
-		} else {
-			plan.JobTitle = types.StringNull()
-		}
+		plan.JobTitle = resolved.JobTitle
 	}
 	if plan.RoleId.IsUnknown() {
-		plan.RoleId = types.StringPointerValue(user.RoleId)
+		plan.RoleId = resolved.RoleId
 	}
 	if plan.OrganizationId.IsUnknown() {
-		plan.OrganizationId = types.StringPointerValue(user.OrganizationId)
+		plan.OrganizationId = resolved.OrganizationId
 	}
-	if plan.Phone.IsUnknown() {
-		plan.Phone = normalizePhone(user.Phone)
-	}
-	if plan.PhoneExtension.IsUnknown() {
-		plan.PhoneExtension = types.StringPointerValue(user.PhoneExtension)
-	}
-	if plan.Language.IsUnknown() {
-		if user.Language != nil {
-			plan.Language = types.StringValue(string(*user.Language))
-		} else {
-			plan.Language = types.StringNull()
-		}
-	}
+
+	// Note: phone, phone_extension, and language are Optional-only (not Computed).
+	// They should always preserve the plan value regardless of Unknown/Known state.
 }
 
 // resolveInternalID looks up the current internal UUID for a user by their
@@ -188,4 +192,58 @@ func (r *userResource) lookupUser(ctx context.Context, email string) (*models.Us
 
 	users := *listResp.JSON200.Users
 	return &users[0], diags
+}
+
+// toInviteRequest converts the TF model to an InviteUserRequest (Create path).
+func (plan *userResourceModel) toInviteRequest() models.InviteUserRequest {
+	req := models.InviteUserRequest{
+		Email: openapi_types.Email(plan.Email.ValueString()),
+	}
+
+	if !plan.FirstName.IsNull() && !plan.FirstName.IsUnknown() {
+		req.FirstName = plan.FirstName.ValueStringPointer()
+	}
+	if !plan.LastName.IsNull() && !plan.LastName.IsUnknown() {
+		req.LastName = plan.LastName.ValueStringPointer()
+	}
+	if !plan.JobTitle.IsNull() && !plan.JobTitle.IsUnknown() {
+		req.JobTitle = new(models.InviteUserRequestJobTitle(plan.JobTitle.ValueString()))
+	}
+	if !plan.RoleId.IsNull() && !plan.RoleId.IsUnknown() {
+		req.RoleId = plan.RoleId.ValueStringPointer()
+	}
+	if !plan.OrganizationId.IsNull() && !plan.OrganizationId.IsUnknown() {
+		req.OrganizationId = plan.OrganizationId.ValueStringPointer()
+	}
+
+	return req
+}
+
+// toUpdateRequest converts the TF model to an UpdateUserRequest (Update path).
+func (plan *userResourceModel) toUpdateRequest() models.UpdateUserRequest {
+	req := models.UpdateUserRequest{}
+
+	if !plan.FirstName.IsNull() && !plan.FirstName.IsUnknown() {
+		req.FirstName = plan.FirstName.ValueStringPointer()
+	}
+	if !plan.LastName.IsNull() && !plan.LastName.IsUnknown() {
+		req.LastName = plan.LastName.ValueStringPointer()
+	}
+	if !plan.JobTitle.IsNull() && !plan.JobTitle.IsUnknown() {
+		req.JobTitle = new(models.UpdateUserRequestJobTitle(plan.JobTitle.ValueString()))
+	}
+	if !plan.RoleId.IsNull() && !plan.RoleId.IsUnknown() {
+		req.RoleId = plan.RoleId.ValueStringPointer()
+	}
+	if !plan.Phone.IsNull() && !plan.Phone.IsUnknown() {
+		req.Phone = plan.Phone.ValueStringPointer()
+	}
+	if !plan.PhoneExtension.IsNull() && !plan.PhoneExtension.IsUnknown() {
+		req.PhoneExtension = plan.PhoneExtension.ValueStringPointer()
+	}
+	if !plan.Language.IsNull() && !plan.Language.IsUnknown() {
+		req.Language = new(models.UpdateUserRequestLanguage(plan.Language.ValueString()))
+	}
+
+	return req
 }

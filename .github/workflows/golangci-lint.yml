@@ -20,7 +20,14 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - name: golangci-lint
+      # Install golangci-lint via the official action (install only, no run).
+      # The binary is needed to build our custom-gcl with module plugins.
+      - name: Install golangci-lint
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
-          version: v2.11.4
+          version: v2.12.2
+          install-only: true
+
+      # Build custom binary and run linting (same as local `make lint`)
+      - name: golangci-lint (custom)
+        run: make lint

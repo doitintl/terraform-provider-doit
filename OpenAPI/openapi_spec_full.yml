@@ -1734,7 +1734,7 @@ paths:
     get:
       tags:
         - Sharing
-      summary: Get resource permissions (beta)
+      summary: Get resource permissions
       description: |-
         Returns the permissions associated with the specified Cloud Analytics resource.
         Supports Allocations, Alerts, Budgets, and Reports.
@@ -1762,7 +1762,7 @@ paths:
     put:
       tags:
         - Sharing
-      summary: Update resource permissions (beta)
+      summary: Update resource permissions
       description: |-
         Updates the permissions associated with the specified Cloud Analytics resource.
         Supports Allocations, Alerts, Budgets, and Reports.
@@ -7907,7 +7907,6 @@ components:
         - platform
         - product
         - severity
-        - subject
       properties:
         body:
           type: string

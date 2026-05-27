@@ -27,6 +27,24 @@ linters:
     - govet
     - revive
     - gosec
+    # Custom Terraform provider linters (tools/linters)
+    - diagsuppressed
+    - structliteral
+    - overlayinvariant
+    - overlaycheck
+    - delete404
+    - timeoutcheck
+    - read404
+    - configuretype
+    - errformat
+    - listnullread
+    - usestatefunknown
+    - paralleltest
+    - interfacestyle
+    - crudnaming
+    - constructor
+    - newexpr
+    - unknownguard
   exclusions:
     generated: lax
     presets:
@@ -55,6 +73,54 @@ linters:
         linters:
           - godot
           - revive
+      # Generated schema files — exclude custom linters (schemaparser reads them for facts)
+      - path: _gen\.go
+        linters:
+          - overlaycheck
+          - overlayinvariant
+          - structliteral
+          - delete404
+          - timeoutcheck
+          - read404
+          - errformat
+          - listnullread
+          - usestatefunknown
+          - interfacestyle
+          - crudnaming
+          - constructor
+          - newexpr
+          - unknownguard
+      # Test files — exclude custom linters (except paralleltest which only applies to tests)
+      - path: _test\.go
+        linters:
+          - overlaycheck
+          - overlayinvariant
+          - delete404
+          - timeoutcheck
+          - read404
+          - configuretype
+          - errformat
+          - listnullread
+          - usestatefunknown
+          - interfacestyle
+          - crudnaming
+          - constructor
+          - newexpr
+          - unknownguard
+      # Data sources — exclude resource-only linters
+      - path: _data_source\.go
+        linters:
+          - overlaycheck
+          - overlayinvariant
+          - delete404
+          - read404
+          - listnullread
+          - usestatefunknown
+          - crudnaming
+      # Provider config — not a resource, no plan modifiers
+      - path: provider\.go
+        linters:
+          - usestatefunknown
   settings:
     depguard:
       rules:
@@ -92,7 +158,58 @@ linters:
       excludes:
         - G101 # Look for hardcoded credentials
         - G404 # Insecure random number source
-
+    custom:
+      diagsuppressed:
+        type: "module"
+        description: "Detects suppressed diag.Diagnostics return values."
+      structliteral:
+        type: "module"
+        description: "Detects direct struct literal construction of generated Terraform Value types."
+      overlayinvariant:
+        type: "module"
+        description: "Ensures Create/Update use overlay functions and Read/ImportState use mapping functions."
+      overlaycheck:
+        type: "module"
+        description: "Validates overlay functions handle all schema fields correctly per their classification."
+      delete404:
+        type: "module"
+        description: "Ensures Delete methods treat HTTP 404 as success."
+      timeoutcheck:
+        type: "module"
+        description: "Ensures CRUD methods use context.WithTimeout."
+      read404:
+        type: "module"
+        description: "Ensures resource Read methods call RemoveResource for externally deleted resources."
+      configuretype:
+        type: "module"
+        description: "Detects mismatched Configure type strings (Data Source vs Resource)."
+      errformat:
+        type: "module"
+        description: "Ensures HTTP error messages include status code and response body."
+      listnullread:
+        type: "module"
+        description: "Flags types.ListNull() in Read paths for Optional/Optional+Computed list attributes."
+      usestatefunknown:
+        type: "module"
+        description: "Ensures Computed-only stable fields have UseStateForUnknown plan modifiers."
+      paralleltest:
+        type: "module"
+        description: "Flags resource.Test() — use resource.ParallelTest() instead."
+      interfacestyle:
+        type: "module"
+        description: "Flags &type{} in interface checks — use (*type)(nil) instead."
+      crudnaming:
+        type: "module"
+        description: "Enforces plan/state variable naming in CRUD methods."
+      constructor:
+        type: "module"
+        description: "Ensures NewXxxResource/DataSource constructors use &type{} style."
+      newexpr:
+        type: "module"
+        description: "Suggests new(expr) instead of temp-variable-then-address pattern."
+      unknownguard:
+        type: "module"
+        description: "Ensures data source Read() checks for unknown inputs before API calls."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

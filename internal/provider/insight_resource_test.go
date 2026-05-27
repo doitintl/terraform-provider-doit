@@ -405,6 +405,65 @@ func TestAccInsightResource_ImportState(t *testing.T) {
 	})
 }
 
+// TestAccInsightResource_ExplicitSourceFields tests that explicitly setting the
+// Optional+Computed fields source_id and insight_key preserves user values in
+// state. This covers a latent bug where the overlay unconditionally overwrites
+// these fields from the API response instead of guarding with IsUnknown().
+func TestAccInsightResource_ExplicitSourceFields(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with explicit source_id and insight_key
+			{
+				Config: testAccInsightResourceExplicitSourceFields(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Verify user-provided values are preserved
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("source_id"),
+						knownvalue.StringExact("public-api")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("insight_key"),
+						knownvalue.StringExact(rName)),
+				},
+			},
+			// Step 2: Drift check — the plan-first pattern must preserve
+			// user-configured values so re-apply causes no changes
+			{
+				Config: testAccInsightResourceExplicitSourceFields(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// testAccInsightResourceExplicitSourceFields generates a config that explicitly
+// sets source_id and insight_key. These are Optional+Computed; when set by the
+// user, the overlay must preserve the plan value (not overwrite from API).
+func testAccInsightResourceExplicitSourceFields(key string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Explicit Source Fields Test"
+  short_description = "Testing explicit source_id and insight_key"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+
+  source_id   = "public-api"
+  insight_key = %[1]q
+}
+`, key)
+}
+
 // testAccInsightResourceConfig generates a minimal insight resource config (metadata only).
 // Resource results are now managed by the separate doit_insight_resource_results resource.
 func testAccInsightResourceConfig(key, title, description string) string {

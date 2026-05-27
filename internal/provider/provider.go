@@ -17,7 +17,7 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ provider.Provider = &doitProvider{}
+	_ provider.Provider = (*doitProvider)(nil)
 )
 
 // HostURL is the default DoiT API URL.

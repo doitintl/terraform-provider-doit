@@ -116,7 +116,7 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 	// Validate source_id — the API only accepts "public-api" today
 	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok {
 		attr.Validators = append(attr.Validators, stringvalidator.OneOf(
-			string(models.PostInsightResourceResultsParamsSourceIDPublicApi),
+			string(models.PublicApi),
 		))
 		s.Attributes["source_id"] = attr
 	}
@@ -124,8 +124,8 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 	resp.Schema = s
 }
 
-// buildResourceResultsRequest builds the API request body from the plan.
-func buildResourceResultsRequest(ctx context.Context, plan *insightResourceResultsModel) (*models.CreateResourceResultsBody, diag.Diagnostics) {
+// toResourceResultsRequest builds the API request body from the plan.
+func (plan *insightResourceResultsModel) toResourceResultsRequest(ctx context.Context) (*models.CreateResourceResultsBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var elements []rr.ResourceResultsValue
@@ -619,7 +619,7 @@ func (r *insightResourceResultsResource) Create(ctx context.Context, req resourc
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	apiReq, buildDiags := buildResourceResultsRequest(ctx, &plan)
+	apiReq, buildDiags := plan.toResourceResultsRequest(ctx)
 	resp.Diagnostics.Append(buildDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -627,7 +627,7 @@ func (r *insightResourceResultsResource) Create(ctx context.Context, req resourc
 
 	sourceID := models.PostInsightResourceResultsParamsSourceID(plan.SourceId.ValueString())
 	if sourceID == "" {
-		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+		sourceID = models.PublicApi
 	}
 	insightKey := plan.InsightKey.ValueString()
 
@@ -682,7 +682,7 @@ func (r *insightResourceResultsResource) Read(ctx context.Context, req resource.
 	insightKey := state.InsightKey.ValueString()
 
 	if sourceID == "" {
-		sourceID = string(models.PostInsightResourceResultsParamsSourceIDPublicApi)
+		sourceID = string(models.PublicApi)
 	}
 
 	allResults, fetchDiags := fetchAllRRResults(ctx, r.client, sourceID, insightKey)
@@ -725,7 +725,7 @@ func (r *insightResourceResultsResource) Update(ctx context.Context, req resourc
 	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
 	defer cancel()
 
-	apiReq, buildDiags := buildResourceResultsRequest(ctx, &plan)
+	apiReq, buildDiags := plan.toResourceResultsRequest(ctx)
 	resp.Diagnostics.Append(buildDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -733,7 +733,7 @@ func (r *insightResourceResultsResource) Update(ctx context.Context, req resourc
 
 	sourceID := models.PostInsightResourceResultsParamsSourceID(plan.SourceId.ValueString())
 	if sourceID == "" {
-		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+		sourceID = models.PublicApi
 	}
 	insightKey := plan.InsightKey.ValueString()
 
@@ -776,7 +776,7 @@ func (r *insightResourceResultsResource) Delete(ctx context.Context, req resourc
 
 	sourceID := models.PostInsightResourceResultsParamsSourceID(state.SourceId.ValueString())
 	if sourceID == "" {
-		sourceID = models.PostInsightResourceResultsParamsSourceIDPublicApi
+		sourceID = models.PublicApi
 	}
 	insightKey := state.InsightKey.ValueString()
 

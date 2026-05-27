@@ -15,24 +15,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// overlayComputedFields uses the two-phase overlay pattern to reconcile
-// the Terraform plan with the API response after Create/Update.
+// overlayAllocationComputedFields uses the two-phase overlay pattern to reconcile
+// the Terraform plan with the API response after Create or Update.
 //
 // Phase 1 (Resolve): Build a fully-resolved state from the API response using
-// mapAllocationToModel — the same mapping function used by Read/ImportState.
-// This guarantees consistency between Create/Update and Read paths.
+// mapAllocationToModel — the same mapping function used by Read/ImportState. This
+// guarantees consistency between Create/Update and Read paths.
 //
 // Phase 2 (Overlay): Walk the plan field-by-field. Known (user-configured)
 // values are preserved as-is. Unknown (user-omitted) values are replaced with
 // the resolved counterpart. Computed-only fields always come from resolved.
 //
-// This prevents "Provider produced inconsistent result" errors caused by the API
-// normalizing user-provided values (e.g. stripping [Service N/A] sentinels,
-// renaming type aliases like "allocation_rule" to "attribution").
-//
 // Used by: Create, Update
-// NOT used by: Read, ImportState (which use populateState / mapAllocationToModel directly).
-func (r *allocationResource) overlayComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
+// NOT used by: Read, ImportState (which use populateState → mapAllocationToModel).
+//
+// NOTE: Unlike most resources, this overlay retains the receiver because
+// mapAllocationToModel makes additional API calls (r.client.GetAllocationWithResponse)
+// to fetch full allocation rule details for multi-rule allocations.
+func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Phase 1: Build fully-resolved state from API response.
@@ -55,12 +55,6 @@ func (r *allocationResource) overlayComputedFields(ctx context.Context, apiResp 
 	plan.AllocationType = resolved.AllocationType
 
 	// ── Optional+Computed scalar fields: only when Unknown ──
-	if plan.Description.IsUnknown() {
-		plan.Description = resolved.Description
-	}
-	if plan.Name.IsUnknown() {
-		plan.Name = resolved.Name
-	}
 	if plan.UnallocatedCosts.IsUnknown() {
 		plan.UnallocatedCosts = resolved.UnallocatedCosts
 	}
@@ -292,23 +286,11 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 }
 
 // populateState fetches the allocation from the API and populates the Terraform state.
-// This is used by Read and ImportState. Create and Update use mapAllocationToModel
-// directly with the API response instead.
+// This is used by Read and ImportState. Create and Update use overlayAllocationComputedFields
+// with the API response instead.
 //
-// # 404 Handling Strategy
-//
-// The allowNotFound parameter controls how 404 responses are handled:
-//
-//   - allowNotFound=true (used by Read):
-//     404 means the resource was deleted externally (outside Terraform).
-//     We set state.Id to null, which signals Terraform to remove the resource
-//     from state. On next plan, Terraform will propose recreating it.
-//     This is the standard Terraform pattern for "externally deleted" resources.
-//
-//   - allowNotFound=false:
-//     404 is unexpected and indicates an error. This is kept as a safety measure
-//     but is not currently used since Create/Update no longer call populateState.
-func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel, allowNotFound bool) (diags diag.Diagnostics) {
+// On 404, state.Id is set to null to signal Terraform to remove the resource from state.
+func (r *allocationResource) populateState(ctx context.Context, state *allocationResourceModel) (diags diag.Diagnostics) {
 	// Get refreshed allocation value from DoiT using the ID from the state.
 	httpResp, err := r.client.GetAllocationWithResponse(ctx, state.Id.ValueString())
 	if err != nil {
@@ -319,21 +301,9 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	// Handle 404 based on context
+	// Handle externally deleted resource
 	if httpResp.StatusCode() == 404 {
-		if allowNotFound {
-			// Read context: Resource was deleted externally, mark for removal from state
-			state.Id = types.StringNull()
-			return
-		}
-		// Create/Update context: Resource should exist, 404 is an error
-		diags.AddError(
-			"Resource not found after operation",
-			"The allocation was successfully created/updated but could not be read back (404). "+
-				"This may indicate a transient API issue. Please retry the operation. "+
-				"If the problem persists, the resource may need to be imported manually. "+
-				"Allocation ID: "+state.Id.ValueString(),
-		)
+		state.Id = types.StringNull()
 		return
 	}
 
@@ -533,7 +503,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 		// Single-rule allocation: the API returns rules=nil because this isn't a
 		// group allocation. Keep state.Rules null so it's omitted from subsequent
 		// update requests. Sending "rules": [] to the API causes a 500 error.
-		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
+		state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx)) //nolint:listnullread // intentional: single-rule allocations use null (sending [] causes API 500)
 	} else {
 		// API returned nil or empty slice for a group allocation (no rules left) -
 		// return empty list to avoid inconsistent result if user sets [].

@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type (
@@ -43,7 +42,7 @@ func (r *datahubDatasetResource) Configure(_ context.Context, req resource.Confi
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T.", req.ProviderData),
 		)
 		return
@@ -79,26 +78,6 @@ func (r *datahubDatasetResource) Schema(ctx context.Context, _ resource.SchemaRe
 	})
 }
 
-// overlayDatahubDatasetComputedFields uses the two-phase overlay pattern to
-// reconcile the Terraform plan with the API response after Create/Update.
-func overlayDatahubDatasetComputedFields(name, description *string, records *int64, updatedBy, lastUpdated *string, plan *datahubDatasetResourceModel) {
-	// Phase 1: Build fully-resolved state from API response.
-	resolved := *plan
-	mapDatahubDatasetToModel(name, description, records, updatedBy, lastUpdated, &resolved)
-
-	// Phase 2: Overlay.
-	// Name: Required — never touch.
-	// Records, UpdatedBy, LastUpdated: Computed-only — always from resolved.
-	plan.Records = resolved.Records
-	plan.UpdatedBy = resolved.UpdatedBy
-	plan.LastUpdated = resolved.LastUpdated
-
-	// Description: Optional+Computed — resolve when Unknown.
-	if plan.Description.IsUnknown() {
-		plan.Description = resolved.Description
-	}
-}
-
 func (r *datahubDatasetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan datahubDatasetResourceModel
 
@@ -115,12 +94,7 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	apiReq := models.CreateDatahubDatasetRequestBody{
-		Name: plan.Name.ValueString(),
-	}
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		apiReq.Description = new(plan.Description.ValueString())
-	}
+	apiReq := plan.toCreateRequest()
 
 	createResp, err := r.client.CreateDatahubDatasetWithResponse(ctx, apiReq)
 	if err != nil {
@@ -147,8 +121,6 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	// Plan-first state pattern: overlay Computed-only fields and resolve
-	// Optional+Computed fields (description) from the API when unknown.
 	overlayDatahubDatasetComputedFields(createResp.JSON201.Name, createResp.JSON201.Description, createResp.JSON201.Records, createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -170,37 +142,17 @@ func (r *datahubDatasetResource) Read(ctx context.Context, req resource.ReadRequ
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	datasetResp, err := r.client.GetDatahubDatasetWithResponse(ctx, state.Name.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading DataHub Dataset",
-			"Could not read dataset "+state.Name.ValueString()+": "+err.Error(),
-		)
+	diags = r.populateState(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if datasetResp.StatusCode() == 404 {
+	// Handle externally deleted resource (populateState sets Name to null on 404)
+	if state.Name.IsNull() {
 		resp.State.RemoveResource(ctx)
 		return
 	}
-
-	if datasetResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading DataHub Dataset",
-			fmt.Sprintf("Unexpected status code %d for dataset %s: %s", datasetResp.StatusCode(), state.Name.ValueString(), string(datasetResp.Body)),
-		)
-		return
-	}
-
-	if datasetResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading DataHub Dataset",
-			"Received empty response body for dataset "+state.Name.ValueString(),
-		)
-		return
-	}
-
-	mapDatahubDatasetToModel(datasetResp.JSON200.Name, datasetResp.JSON200.Description, datasetResp.JSON200.Records, datasetResp.JSON200.UpdatedBy, datasetResp.JSON200.LastUpdated, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -222,16 +174,12 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 	defer cancel()
 
 	var state datahubDatasetResourceModel
-
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	apiReq := models.UpdateDatahubDatasetRequestBody{}
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		apiReq.Description = new(plan.Description.ValueString())
-	}
+	apiReq := plan.toUpdateRequest()
 
 	updateResp, err := r.client.UpdateDatahubDatasetWithResponse(ctx, state.Name.ValueString(), apiReq)
 	if err != nil {
@@ -258,8 +206,6 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	// Plan-first state pattern: overlay Computed-only fields and resolve
-	// Optional+Computed fields (description) from the API when unknown.
 	overlayDatahubDatasetComputedFields(updateResp.JSON200.Name, updateResp.JSON200.Description, updateResp.JSON200.Records, updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -297,12 +243,4 @@ func (r *datahubDatasetResource) Delete(ctx context.Context, req resource.Delete
 		)
 		return
 	}
-}
-
-func mapDatahubDatasetToModel(name, description *string, records *int64, updatedBy, lastUpdated *string, state *datahubDatasetResourceModel) {
-	state.Name = types.StringPointerValue(name)
-	state.Description = types.StringPointerValue(description)
-	state.Records = types.Int64PointerValue(records)
-	state.UpdatedBy = types.StringPointerValue(updatedBy)
-	state.LastUpdated = types.StringPointerValue(lastUpdated)
 }
