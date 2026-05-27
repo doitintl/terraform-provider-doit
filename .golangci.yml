@@ -29,6 +29,7 @@ linters:
     - gosec
     # Custom Terraform provider linters (tools/linters)
     - diagsuppressed
+    - diagdrop
     - structliteral
     - overlayinvariant
     - overlaycheck
@@ -90,6 +91,7 @@ linters:
           - constructor
           - newexpr
           - unknownguard
+          - diagdrop
       # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
@@ -107,6 +109,7 @@ linters:
           - constructor
           - newexpr
           - unknownguard
+          - diagdrop
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -210,6 +213,9 @@ linters:
       unknownguard:
         type: "module"
         description: "Ensures data source Read() checks for unknown inputs before API calls."
+      diagdrop:
+        type: "module"
+        description: "Detects return nil that drops captured diag.Diagnostics variables."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

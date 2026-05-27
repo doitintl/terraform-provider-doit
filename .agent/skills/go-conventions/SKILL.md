@@ -7,7 +7,7 @@ description: Go code style rules for the Terraform provider. Covers diagnostics 
 
 Code style rules that apply to **all** Go code in this provider. These are actively enforced by custom linters in `tools/linters/`.
 
-## Diagnostics Must Never Be Suppressed
+## Diagnostics Must Never Be Suppressed or Dropped
 
 **CRITICAL:** Never suppress `diag.Diagnostics` return values with `_`. All diagnostics must be properly handled:
 
@@ -29,6 +29,26 @@ This applies to all Terraform Framework functions that return diagnostics:
 - Any other function returning `diag.Diagnostics`
 
 > **Linter:** `diagsuppressed` — flags suppressed diagnostics.
+
+**Also:** never return `nil` when a `diag.Diagnostics` variable has been captured — this silently drops non-error diagnostics (e.g. warnings):
+
+```go
+// BAD — non-error diagnostics (warnings) silently lost
+func populateState(...) diag.Diagnostics {
+    user, diags := r.lookupUser(ctx, email)
+    if diags.HasError() { return diags }
+    return nil  // ← drops warnings in diags
+}
+
+// GOOD — all diagnostics propagated
+func populateState(...) diag.Diagnostics {
+    user, diags := r.lookupUser(ctx, email)
+    if diags.HasError() { return diags }
+    return diags
+}
+```
+
+> **Linter:** `diagdrop` — flags `return nil` that drops captured diagnostics.
 
 ## Generated Constructors (NewXxxValue)
 
