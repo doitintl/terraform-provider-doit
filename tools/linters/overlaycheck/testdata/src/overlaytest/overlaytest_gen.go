@@ -227,3 +227,28 @@ func HelperOverlayResourceSchema(ctx context.Context) schema.Schema {
 type ApiResponse struct{}
 type Int64Pointer struct{ Value *int64 }
 
+// DefaultModel used to test Optional+Computed fields with schema Default.
+type DefaultModel struct {
+	Id       types.String
+	Name     types.String
+	FolderId types.String
+}
+
+// DefaultResourceSchema — Optional+Computed field with Default (never Unknown at plan time).
+func DefaultResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"folder_id": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  "root", // stringdefault.StaticString("root") in real code
+			},
+		},
+	}
+}

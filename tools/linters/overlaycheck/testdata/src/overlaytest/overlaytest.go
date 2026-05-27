@@ -157,3 +157,17 @@ func overlayHelperOverlayComputedFields(apiResp *ApiResponse, plan *HelperOverla
 	}
 }
 
+// --- GOOD: Optional+Computed field with Default is never Unknown ---
+
+func mapDefaultToModel(apiResp *ApiResponse, m *DefaultModel) {}
+
+func overlayDefaultComputedFields(apiResp *ApiResponse, plan *DefaultModel) {
+	resolved := *plan
+	mapDefaultToModel(apiResp, &resolved)
+
+	// Computed-only: unconditional. ✓
+	plan.Id = resolved.Id
+
+	// folder_id: has schema Default — never Unknown at plan time. ✓
+	// No IsUnknown() guard needed.
+}

@@ -481,6 +481,11 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 			}
 
 		case schemaparser.OptionalComputed:
+			// Fields with a schema Default are resolved at plan time and are
+			// never Unknown, so they don't need an IsUnknown() guard.
+			if attrInfo.HasDefault {
+				continue
+			}
 			if !hasAssignment {
 				unhandledOptComp = append(unhandledOptComp, attrName)
 			} else if assignment.unconditional {
@@ -593,6 +598,7 @@ func isMappingFunc(name string) bool {
 	}
 	return false
 }
+
 
 // toSnakeCase converts PascalCase/camelCase to snake_case.
 // e.g., "CreateTime" → "create_time", "Id" → "id".
