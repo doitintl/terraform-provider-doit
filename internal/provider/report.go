@@ -67,11 +67,6 @@ func overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalRe
 		plan.Labels = resolved.Labels
 	}
 
-	// folder_id: use plan if known, otherwise resolved
-	if plan.FolderId.IsUnknown() {
-		plan.FolderId = resolved.FolderId
-	}
-
 	// ── Config block ──
 	// Walk each field: if the plan value is Known, keep it (user's source of truth).
 	// If Unknown, use the API-resolved value.

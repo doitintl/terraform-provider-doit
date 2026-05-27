@@ -58,9 +58,6 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	if plan.UnallocatedCosts.IsUnknown() {
 		plan.UnallocatedCosts = resolved.UnallocatedCosts
 	}
-	if plan.FolderId.IsUnknown() {
-		plan.FolderId = resolved.FolderId
-	}
 
 	// ── Rule (single nested object): use resolved when Unknown, overlay subfields when Known ──
 	if plan.Rule.IsUnknown() {

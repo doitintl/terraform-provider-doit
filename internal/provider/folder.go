@@ -62,12 +62,7 @@ func mapFolderToModel(resp *models.Folder, state *folderResourceModel) {
 		state.Description = types.StringNull()
 	}
 
-	if resp.ParentFolderId != nil {
-		state.ParentFolderId = types.StringValue(*resp.ParentFolderId)
-	} else {
-		// API always returns parentFolderId; if somehow nil, default to "root"
-		state.ParentFolderId = types.StringValue("root")
-	}
+	state.ParentFolderId = types.StringPointerValue(resp.ParentFolderId)
 }
 
 // overlayFolderComputedFields uses the two-phase overlay pattern to reconcile
@@ -90,9 +85,7 @@ func overlayFolderComputedFields(apiResp *models.Folder, plan *folderResourceMod
 	if plan.Description.IsUnknown() {
 		plan.Description = resolved.Description
 	}
-	if plan.ParentFolderId.IsUnknown() {
-		plan.ParentFolderId = resolved.ParentFolderId
-	}
+	// parent_folder_id: has schema default "root" — never Unknown at plan time.
 
 	// name: Required — never touch.
 }
@@ -103,11 +96,7 @@ func (plan *folderResourceModel) toCreateRequest() models.CreateFolderRequest {
 		Name: plan.Name.ValueString(),
 	}
 
-	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
-		req.ParentFolderId = new(plan.ParentFolderId.ValueString())
-	} else {
-		req.ParentFolderId = new("root")
-	}
+	req.ParentFolderId = plan.ParentFolderId.ValueStringPointer()
 
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
 		req.Description = new(plan.Description.ValueString())
@@ -122,11 +111,7 @@ func (plan *folderResourceModel) toUpdateRequest() models.UpdateFolderRequest {
 		Name: new(plan.Name.ValueString()),
 	}
 
-	if !plan.ParentFolderId.IsNull() && !plan.ParentFolderId.IsUnknown() {
-		req.ParentFolderId = new(plan.ParentFolderId.ValueString())
-	} else {
-		req.ParentFolderId = new("root")
-	}
+	req.ParentFolderId = plan.ParentFolderId.ValueStringPointer()
 
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
 		req.Description = new(plan.Description.ValueString())
