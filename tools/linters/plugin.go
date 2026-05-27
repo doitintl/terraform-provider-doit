@@ -6,6 +6,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/constructor"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/crudnaming"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/delete404"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/diagdrop"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/diagsuppressed"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/errformat"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/interfacestyle"
@@ -102,5 +103,9 @@ func init() {
 
 	register.Plugin("unknownguard", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{unknownguard.Analyzer}}, nil
+	})
+
+	register.Plugin("diagdrop", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{diagdrop.Analyzer}}, nil
 	})
 }
