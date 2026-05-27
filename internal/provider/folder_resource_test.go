@@ -398,7 +398,7 @@ func TestAccFolder_UpdateNamePreservesParent(t *testing.T) {
 			},
 			// Step 2: Update only the child's name — parent_folder_id stays the same
 			{
-				Config: testAccFolderNestedRenamed(rParent, rChild+"-renamed"),
+				Config: testAccFolderNested(rParent, rChild+"-renamed"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
@@ -430,7 +430,7 @@ func TestAccFolder_UpdateNamePreservesParent(t *testing.T) {
 			},
 			// Step 3: Drift check — no changes expected
 			{
-				Config: testAccFolderNestedRenamed(rParent, rChild+"-renamed"),
+				Config: testAccFolderNested(rParent, rChild+"-renamed"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -490,20 +490,6 @@ resource "doit_folder" "this" {
 }
 
 func testAccFolderNested(parentName, childName string) string {
-	return fmt.Sprintf(`
-resource "doit_folder" "parent" {
-  name             = %q
-  parent_folder_id = "root"
-}
-
-resource "doit_folder" "child" {
-  name             = %q
-  parent_folder_id = doit_folder.parent.id
-}
-`, parentName, childName)
-}
-
-func testAccFolderNestedRenamed(parentName, childName string) string {
 	return fmt.Sprintf(`
 resource "doit_folder" "parent" {
   name             = %q
