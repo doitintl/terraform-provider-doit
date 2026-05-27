@@ -3456,6 +3456,18 @@ type CreateAnnotationRequest struct {
 // CreateCategory Allowed categories when creating insights via the public API.
 type CreateCategory string
 
+// CreateCustomThemeRequest Request body for creating a custom theme.
+type CreateCustomThemeRequest struct {
+	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+	Colors ThemeColors `json:"colors"`
+
+	// Name The display name of the custom theme.
+	Name string `json:"name"`
+
+	// PrimaryColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+	PrimaryColor HexColor `json:"primaryColor"`
+}
+
 // CreateDatahubDataset201Response defines model for CreateDatahubDataset201Response.
 type CreateDatahubDataset201Response struct {
 	// Description The description of the dataset.
@@ -3533,6 +3545,27 @@ type CreateResourceResultsBody struct {
 
 // Currency Currency code for monetary values.
 type Currency string
+
+// CustomTheme A custom color theme applied to Cloud Analytics reports.
+type CustomTheme struct {
+	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+	Colors ThemeColors `json:"colors"`
+
+	// CreateTime The creation time of the custom theme.
+	CreateTime *time.Time `json:"createTime,omitempty"`
+
+	// Id The unique identifier of the custom theme.
+	Id string `json:"id"`
+
+	// Name The display name of the custom theme.
+	Name string `json:"name"`
+
+	// PrimaryColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+	PrimaryColor HexColor `json:"primaryColor"`
+
+	// UpdateTime The time when the custom theme was last updated.
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
 
 // DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
 type DeleteDatahubDataset200Response struct {
@@ -4171,6 +4204,9 @@ type GroupAllocationRule struct {
 
 // GroupAllocationRuleAction Action to perform with this rule.
 type GroupAllocationRuleAction string
+
+// HexColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+type HexColor = string
 
 // IdOfAsset200Response defines model for IdOfAsset200Response.
 type IdOfAsset200Response struct {
@@ -5098,6 +5134,15 @@ type SubscriptionPlanCommitmentInterval struct {
 	StartTime *int64 `json:"startTime,omitempty"`
 }
 
+// ThemeColors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+type ThemeColors struct {
+	// Dark Colors used when the report is displayed in dark mode.
+	Dark []HexColor `json:"dark"`
+
+	// Light Colors used when the report is displayed in light mode.
+	Light []HexColor `json:"light"`
+}
+
 // TicketDetailExtAPI Detailed information about a single support ticket.
 type TicketDetailExtAPI struct {
 	// CreateTime The time when this ticket was created, in milliseconds since the epoch.
@@ -5284,6 +5329,18 @@ type UpdateAnnotationRequest struct {
 
 	// Timestamp The date associated with the annotation.
 	Timestamp *time.Time `json:"timestamp,omitempty"`
+}
+
+// UpdateCustomThemeRequest Request body for updating a custom theme. Only provided fields are modified.
+type UpdateCustomThemeRequest struct {
+	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+	Colors *ThemeColors `json:"colors,omitempty"`
+
+	// Name The display name of the custom theme.
+	Name *string `json:"name,omitempty"`
+
+	// PrimaryColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+	PrimaryColor *HexColor `json:"primaryColor,omitempty"`
 }
 
 // UpdateDatahubDataset200Response defines model for UpdateDatahubDataset200Response.
@@ -5993,6 +6050,12 @@ type QueryJSONRequestBody = QueryRequestBody
 // UpdateReportJSONRequestBody defines body for UpdateReport for application/json ContentType.
 type UpdateReportJSONRequestBody = ExternalUpdateReport
 
+// CreateCustomThemeJSONRequestBody defines body for CreateCustomTheme for application/json ContentType.
+type CreateCustomThemeJSONRequestBody = CreateCustomThemeRequest
+
+// UpdateCustomThemeJSONRequestBody defines body for UpdateCustomTheme for application/json ContentType.
+type UpdateCustomThemeJSONRequestBody = UpdateCustomThemeRequest
+
 // AskAvaSyncJSONRequestBody defines body for AskAvaSync for application/json ContentType.
 type AskAvaSyncJSONRequestBody = AvaAskSyncRequest
 
@@ -6344,6 +6407,22 @@ type ClientInterface interface {
 
 	// GetReportConfig request
 	GetReportConfig(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCustomThemeWithBody request with any body
+	CreateCustomThemeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateCustomTheme(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteCustomTheme request
+	DeleteCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCustomTheme request
+	GetCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomThemeWithBody request with any body
+	UpdateCustomThemeWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateCustomTheme(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListAnomalies request
 	ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7185,6 +7264,78 @@ func (c *Client) GetReportConfig(ctx context.Context, id ReportId, reqEditors ..
 	return c.Client.Do(req)
 }
 
+func (c *Client) CreateCustomThemeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomThemeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateCustomTheme(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomThemeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCustomThemeRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomThemeRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCustomThemeWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomThemeRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCustomTheme(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomThemeRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListAnomaliesRequest(c.Server, params)
 	if err != nil {
@@ -7823,16 +7974,7 @@ func NewListAlertsRequest(server string, params *ListAlertsParams) (*http.Reques
 				}
 			}
 
-// NewCreateCustomThemeRequest calls the generic CreateCustomTheme builder with application/json body
-func NewCreateCustomThemeRequest(server string, body CreateCustomThemeJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateCustomThemeRequestWithBody(server, "application/json", bodyReader)
-}
+		}
 
 		if params.Filter != nil {
 
@@ -7844,10 +7986,7 @@ func NewCreateCustomThemeRequest(server string, body CreateCustomThemeJSONReques
 				}
 			}
 
-	operationPath := fmt.Sprintf("/analytics/v1/settings/themes")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
+		}
 
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
@@ -7859,8 +7998,6 @@ func NewCreateCustomThemeRequest(server string, body CreateCustomThemeJSONReques
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -10028,6 +10165,161 @@ func NewGetReportConfigRequest(server string, id ReportId) (*http.Request, error
 	return req, nil
 }
 
+// NewCreateCustomThemeRequest calls the generic CreateCustomTheme builder with application/json body
+func NewCreateCustomThemeRequest(server string, body CreateCustomThemeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateCustomThemeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateCustomThemeRequestWithBody generates requests for CreateCustomTheme with any type of body
+func NewCreateCustomThemeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteCustomThemeRequest generates requests for DeleteCustomTheme
+func NewDeleteCustomThemeRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCustomThemeRequest generates requests for GetCustomTheme
+func NewGetCustomThemeRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateCustomThemeRequest calls the generic UpdateCustomTheme builder with application/json body
+func NewUpdateCustomThemeRequest(server string, id string, body UpdateCustomThemeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCustomThemeRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateCustomThemeRequestWithBody generates requests for UpdateCustomTheme with any type of body
+func NewUpdateCustomThemeRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListAnomaliesRequest generates requests for ListAnomalies
 func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.Request, error) {
 	var err error
@@ -12161,6 +12453,22 @@ type ClientWithResponsesInterface interface {
 	// GetReportConfigWithResponse request
 	GetReportConfigWithResponse(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*GetReportConfigResp, error)
 
+	// CreateCustomThemeWithBodyWithResponse request with any body
+	CreateCustomThemeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error)
+
+	CreateCustomThemeWithResponse(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error)
+
+	// DeleteCustomThemeWithResponse request
+	DeleteCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteCustomThemeResp, error)
+
+	// GetCustomThemeWithResponse request
+	GetCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomThemeResp, error)
+
+	// UpdateCustomThemeWithBodyWithResponse request with any body
+	UpdateCustomThemeWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error)
+
+	UpdateCustomThemeWithResponse(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error)
+
 	// ListAnomaliesWithResponse request
 	ListAnomaliesWithResponse(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*ListAnomaliesResp, error)
 
@@ -13747,6 +14055,141 @@ func (r GetReportConfigResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetReportConfigResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *CustomTheme
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateCustomThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteCustomThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomTheme
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCustomThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomTheme
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateCustomThemeResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -15523,6 +15966,58 @@ func (c *ClientWithResponses) GetReportConfigWithResponse(ctx context.Context, i
 		return nil, err
 	}
 	return ParseGetReportConfigResp(rsp)
+}
+
+// CreateCustomThemeWithBodyWithResponse request with arbitrary body returning *CreateCustomThemeResp
+func (c *ClientWithResponses) CreateCustomThemeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error) {
+	rsp, err := c.CreateCustomThemeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomThemeResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateCustomThemeWithResponse(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error) {
+	rsp, err := c.CreateCustomTheme(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomThemeResp(rsp)
+}
+
+// DeleteCustomThemeWithResponse request returning *DeleteCustomThemeResp
+func (c *ClientWithResponses) DeleteCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteCustomThemeResp, error) {
+	rsp, err := c.DeleteCustomTheme(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteCustomThemeResp(rsp)
+}
+
+// GetCustomThemeWithResponse request returning *GetCustomThemeResp
+func (c *ClientWithResponses) GetCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomThemeResp, error) {
+	rsp, err := c.GetCustomTheme(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomThemeResp(rsp)
+}
+
+// UpdateCustomThemeWithBodyWithResponse request with arbitrary body returning *UpdateCustomThemeResp
+func (c *ClientWithResponses) UpdateCustomThemeWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error) {
+	rsp, err := c.UpdateCustomThemeWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomThemeResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateCustomThemeWithResponse(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error) {
+	rsp, err := c.UpdateCustomTheme(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomThemeResp(rsp)
 }
 
 // ListAnomaliesWithResponse request returning *ListAnomaliesResp
@@ -18240,6 +18735,215 @@ func ParseGetReportConfigResp(rsp *http.Response) (*GetReportConfigResp, error) 
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateCustomThemeResp parses an HTTP response from a CreateCustomThemeWithResponse call
+func ParseCreateCustomThemeResp(rsp *http.Response) (*CreateCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CustomTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteCustomThemeResp parses an HTTP response from a DeleteCustomThemeWithResponse call
+func ParseDeleteCustomThemeResp(rsp *http.Response) (*DeleteCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCustomThemeResp parses an HTTP response from a GetCustomThemeWithResponse call
+func ParseGetCustomThemeResp(rsp *http.Response) (*GetCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCustomThemeResp parses an HTTP response from a UpdateCustomThemeWithResponse call
+func ParseUpdateCustomThemeResp(rsp *http.Response) (*UpdateCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 

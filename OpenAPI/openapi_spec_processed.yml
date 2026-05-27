@@ -876,25 +876,6 @@ paths:
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
   "/analytics/v1/settings/themes":
-    get:
-      tags:
-        - Settings
-      summary: List custom themes
-      description: Returns the list of custom color themes defined for your account.
-      operationId: listCustomThemes
-      responses:
-        "200":
-          description: OK - The request succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListCustomThemes200Response'
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
     post:
       tags:
         - Settings
@@ -4455,6 +4436,22 @@ components:
       type: string
       description: Allowed categories when creating insights via the public API.
       enum: ["FinOps", "Security"]
+    CreateCustomThemeRequest:
+      required:
+        - name
+        - primaryColor
+        - colors
+      type: object
+      description: Request body for creating a custom theme.
+      properties:
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
     CreateDatahubDataset201Response:
       type: object
       properties:
@@ -4591,6 +4588,34 @@ components:
         - AED
         - THB
         - COP
+    CustomTheme:
+      required:
+        - id
+        - name
+        - primaryColor
+        - colors
+      type: object
+      description: A custom color theme applied to Cloud Analytics reports.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the custom theme.
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
+        createTime:
+          type: string
+          format: date-time
+          description: The creation time of the custom theme.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the custom theme was last updated.
     DeleteDatahubDataset200Response:
       type: object
       properties:
@@ -6037,16 +6062,6 @@ components:
           type: integer
           description: Budgets rows count
           format: int64
-    ListCustomThemes200Response:
-      type: object
-      properties:
-        rowCount:
-          type: integer
-          description: Total number of custom themes in the result set.
-        themes:
-          type: array
-          items:
-            $ref: "#/components/schemas/CustomTheme"
     ListDatahubDatasets200Response:
       type: object
       properties:
@@ -6776,6 +6791,28 @@ components:
           type: integer
           description: The start time of the commitment interval, in milliseconds since the epoch.
           format: int64
+    ThemeColors:
+      type: object
+      required:
+        - light
+        - dark
+      description: |-
+        Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+      properties:
+        light:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: "#/components/schemas/HexColor"
+          description: Colors used when the report is displayed in light mode.
+        dark:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: "#/components/schemas/HexColor"
+          description: Colors used when the report is displayed in dark mode.
     TicketDetailExtAPI:
       type: object
       description: Detailed information about a single support ticket.
