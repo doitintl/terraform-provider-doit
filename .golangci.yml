@@ -48,6 +48,7 @@ linters:
     - unknownguard
     - defaultdrift
     - methodreceiver
+    - requestguard
   exclusions:
     generated: lax
     presets:
@@ -96,6 +97,7 @@ linters:
           - diagdrop
           - defaultdrift
           - methodreceiver
+          - requestguard
       # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
@@ -116,6 +118,7 @@ linters:
           - diagdrop
           - defaultdrift
           - methodreceiver
+          - requestguard
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -127,6 +130,7 @@ linters:
           - usestatefunknown
           - crudnaming
           - methodreceiver
+          - requestguard
       # Provider config — not a resource, no plan modifiers
       - path: provider\.go
         linters:
@@ -229,6 +233,9 @@ linters:
       methodreceiver:
         type: "module"
         description: "Flags mapping functions that should be free functions, not methods."
+      requestguard:
+        type: "module"
+        description: "Validates IsUnknown() guards in request builder functions."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

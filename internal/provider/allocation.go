@@ -176,8 +176,10 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 	req.Name = plan.Name.ValueStringPointer()
 	req.FolderId = plan.FolderId.ValueStringPointer()
 	// UnallocatedCosts is only sent if not empty because it is invalid for "single" allocations.
-	if v := plan.UnallocatedCosts.ValueString(); v != "" {
-		req.UnallocatedCosts = &v
+	if !plan.UnallocatedCosts.IsNull() && !plan.UnallocatedCosts.IsUnknown() {
+		if v := plan.UnallocatedCosts.ValueString(); v != "" {
+			req.UnallocatedCosts = &v
+		}
 	}
 
 	// Populate single Rule if present

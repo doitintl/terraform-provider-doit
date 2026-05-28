@@ -230,7 +230,7 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 	}
 
 	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
-	if !plan.Metric.IsNull() && !plan.Metric.IsUnknown() {
+	if !plan.Metric.IsNull() {
 		metric := models.BudgetCreateUpdateRequestMetric(plan.Metric.ValueString())
 		req.Metric = &metric
 	}

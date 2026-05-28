@@ -158,7 +158,7 @@ func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req m
 
 // toAlertConfig converts the Terraform config object to the API AlertConfig.
 func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config models.AlertConfig, diags diag.Diagnostics) {
-	if plan.Config.IsNull() || plan.Config.IsUnknown() {
+	if plan.Config.IsNull() {
 		diags.AddError("Config Required", "Alert config is required")
 		return config, diags
 	}
@@ -171,7 +171,7 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 	config.TimeInterval = models.AlertConfigTimeInterval(configVal.TimeInterval.ValueString())
 
 	// Metric (required nested object)
-	if !configVal.Metric.IsNull() && !configVal.Metric.IsUnknown() {
+	if !configVal.Metric.IsNull() {
 		metricVal := configVal.Metric
 		config.Metric = models.MetricConfig{
 			Type:  metricVal.MetricType.ValueString(),
