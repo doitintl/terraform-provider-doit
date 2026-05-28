@@ -158,8 +158,7 @@ func TestMapAllocationToModel_SingleRule_RulesNull(t *testing.T) {
 	state.Rule = resource_allocation.NewRuleValueNull()
 	state.Rules = types.ListNull(resource_allocation.RulesValue{}.Type(ctx))
 
-	r := &allocationResource{}
-	diags := r.mapAllocationToModel(ctx, apiResp, state)
+	diags := mapAllocationToModel(ctx, nil, apiResp, state)
 	if diags.HasError() {
 		t.Fatalf("mapAllocationToModel returned error: %v", diags)
 	}

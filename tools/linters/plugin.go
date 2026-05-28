@@ -5,12 +5,14 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/constructor"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/crudnaming"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/defaultdrift"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/delete404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/diagdrop"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/diagsuppressed"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/errformat"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/interfacestyle"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/listnullread"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/methodreceiver"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/newexpr"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlaycheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlayinvariant"
@@ -107,5 +109,13 @@ func init() {
 
 	register.Plugin("diagdrop", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{diagdrop.Analyzer}}, nil
+	})
+
+	register.Plugin("defaultdrift", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{defaultdrift.Analyzer}}, nil
+	})
+
+	register.Plugin("methodreceiver", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{methodreceiver.Analyzer}}, nil
 	})
 }

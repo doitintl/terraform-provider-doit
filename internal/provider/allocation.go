@@ -30,8 +30,8 @@ import (
 // NOT used by: Read, ImportState (which use populateState → mapAllocationToModel).
 //
 // NOTE: Unlike most resources, this overlay retains the receiver because
-// mapAllocationToModel makes additional API calls (r.client.GetAllocationWithResponse)
-// to fetch full allocation rule details for multi-rule allocations.
+// mapAllocationToModel needs the API client to fetch full allocation rule
+// details for multi-rule allocations.
 func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -39,7 +39,7 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	// Copy the plan so that mapAllocationToModel's sentinel restoration and alias
 	// normalization can compare against user-configured values in the existing state.
 	resolved := *plan
-	diags.Append(r.mapAllocationToModel(ctx, apiResp, &resolved)...)
+	diags.Append(mapAllocationToModel(ctx, r.client, apiResp, &resolved)...)
 	if diags.HasError() {
 		return diags
 	}
@@ -314,13 +314,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	return r.mapAllocationToModel(ctx, httpResp.JSON200, state)
+	return mapAllocationToModel(ctx, r.client, httpResp.JSON200, state)
 }
 
 // mapAllocationToModel maps an Allocation API response to the Terraform resource model.
 // This is used by both populateState (for Read) and directly by Create/Update
 // when the API returns the full object in the response.
-func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *models.Allocation, state *allocationResourceModel) (diags diag.Diagnostics) {
+func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponses, resp *models.Allocation, state *allocationResourceModel) (diags diag.Diagnostics) {
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
 	state.Description = types.StringPointerValue(resp.Description)
@@ -435,7 +435,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 
 			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
-				respHTTPFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
+				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
 				if err == nil && respHTTPFullAlloc.JSON200 != nil {
 					fullAlloc := respHTTPFullAlloc.JSON200
 					if fullAlloc.Rule != nil {
