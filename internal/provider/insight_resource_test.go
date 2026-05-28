@@ -700,8 +700,9 @@ func TestAccInsightResource_DismissedPartial(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_insight.test",
 						tfjsonpath.New("dismissal_details"),
-						knownvalue.ObjectPartial(map[string]knownvalue.Check{
-							"reason": knownvalue.StringExact("not relevant"),
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
+							"reason":  knownvalue.StringExact("not relevant"),
+							"comment": knownvalue.Null(),
 						})),
 				},
 			},

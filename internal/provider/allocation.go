@@ -76,7 +76,9 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	return diags
 }
 
-// overlayAllocationRuleFields resolves Unknown subfields in the "rule" SingleNestedAttribute.
+// overlayAllocationRuleFields overlays the "components" subfield of the "rule"
+// SingleNestedAttribute. The only other subfield, "formula", is Required and
+// never Unknown at overlay time.
 func overlayAllocationRuleFields(ctx context.Context, resolved, plan *resource_allocation.RuleValue) diag.Diagnostics {
 	if plan.Components.IsUnknown() {
 		plan.Components = resolved.Components
