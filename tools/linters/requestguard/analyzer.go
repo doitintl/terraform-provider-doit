@@ -12,6 +12,7 @@ package requestguard
 
 import (
 	"go/ast"
+	"go/token"
 	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/tools/linters/schemaparser"
@@ -53,16 +54,13 @@ func run(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Build a flat map of all schema attrs (including nested) indexed by
-	// schema function name. Each entry maps field name → AttrInfo.
-	// We store both prefixed ("config.metric") and unprefixed ("metric")
-	// for nested attrs so nested helper functions can resolve fields.
+	// Index schemas by function name. Each schema's Attrs map contains
+	// only top-level attributes; nested attrs live in AttrInfo.NestedAttrs.
+	// This avoids name collisions between top-level and nested attrs.
 	type attrMap = map[string]*schemaparser.AttrInfo
 	perSchema := map[string]attrMap{}
 	for name, info := range schemaResult.Schemas {
-		m := attrMap{}
-		collectAttrs(info.Attrs, m, "")
-		perSchema[name] = m
+		perSchema[name] = info.Attrs
 	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -117,7 +115,7 @@ func run(pass *analysis.Pass) (any, error) {
 		varSchemas := map[string]attrMap{planParam: schema}
 
 		// Track variable assignments to nested types.
-		trackVariableAssignments(fn.Body, varSchemas, schema)
+		trackVariableAssignments(fn.Body, varSchemas)
 
 		// Direction 1: Find redundant IsUnknown() guards.
 		checkRedundantGuards(pass, fn.Body, varSchemas, schema)
@@ -129,19 +127,7 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// collectAttrs recursively builds a flat map of attribute name → AttrInfo.
-// Nested attrs are stored with dot-prefixed keys AND without prefix.
-func collectAttrs(attrs map[string]*schemaparser.AttrInfo, out map[string]*schemaparser.AttrInfo, prefix string) {
-	for name, info := range attrs {
-		out[prefix+name] = info
-		if info.NestedAttrs != nil {
-			// Store nested attrs both with prefix (for top-level resolution)
-			// and without (for when a variable holds the nested type directly).
-			collectAttrs(info.NestedAttrs, out, prefix+name+".")
-			collectAttrs(info.NestedAttrs, out, "")
-		}
-	}
-}
+
 
 // isRequestBuilder returns true if the function name matches a request builder
 // pattern (toCreateRequest, toUpdateRequest, fillXxxCommon, toAlertConfig, etc.).
@@ -234,7 +220,9 @@ func findPlanParam(fn *ast.FuncDecl) string {
 
 // trackVariableAssignments scans the function body for assignments that
 // create aliases to nested schema contexts (e.g., "config := plan.Config").
-func trackVariableAssignments(body *ast.BlockStmt, varSchemas map[string]map[string]*schemaparser.AttrInfo, topSchema map[string]*schemaparser.AttrInfo) {
+// It derives the nested schema from the parent AttrInfo.NestedAttrs rather
+// than flattening the schema tree, preventing name collisions.
+func trackVariableAssignments(body *ast.BlockStmt, varSchemas map[string]map[string]*schemaparser.AttrInfo) {
 	ast.Inspect(body, func(n ast.Node) bool {
 		assign, ok := n.(*ast.AssignStmt)
 		if !ok {
@@ -258,28 +246,18 @@ func trackVariableAssignments(body *ast.BlockStmt, varSchemas map[string]map[str
 				continue
 			}
 			// Check if the parent variable has a known schema.
-			if _, ok := varSchemas[varName]; !ok {
+			parentSchema, ok := varSchemas[varName]
+			if !ok {
 				continue
 			}
-			// The field corresponds to a nested attribute — register
-			// the assigned variable with the nested schema.
+			// Look up the field in the parent's schema and use its
+			// NestedAttrs as the assigned variable's schema context.
 			attrName := toSnakeCase(fieldName)
-			nestedKey := attrName + "."
-			nested := map[string]*schemaparser.AttrInfo{}
-			for k, v := range topSchema {
-				if strings.HasPrefix(k, nestedKey) {
-					nested[strings.TrimPrefix(k, nestedKey)] = v
-				}
+			parentAttr, ok := parentSchema[attrName]
+			if !ok || parentAttr.NestedAttrs == nil {
+				continue
 			}
-			// Also include unprefixed nested attrs.
-			for k, v := range topSchema {
-				if !strings.Contains(k, ".") {
-					nested[k] = v
-				}
-			}
-			if len(nested) > 0 {
-				varSchemas[lhsIdent.Name] = nested
-			}
+			varSchemas[lhsIdent.Name] = parentAttr.NestedAttrs
 		}
 		return true
 	})
@@ -300,7 +278,7 @@ func resolveSelectorChain(sel *ast.SelectorExpr) (rootVar, fieldName string) {
 }
 
 // resolveFieldAttr resolves a selector expression to its schema AttrInfo
-// by looking up the field name in the variable's schema context.
+// by navigating the schema tree via NestedAttrs.
 func resolveFieldAttr(sel *ast.SelectorExpr, varSchemas map[string]map[string]*schemaparser.AttrInfo) *schemaparser.AttrInfo {
 	fieldName := sel.Sel.Name
 	attrName := toSnakeCase(fieldName)
@@ -314,10 +292,10 @@ func resolveFieldAttr(sel *ast.SelectorExpr, varSchemas map[string]map[string]*s
 			}
 		}
 	case *ast.SelectorExpr:
-		// Nested: e.g., plan.Config.Metric → look up Metric in Config's schema.
-		// First resolve the intermediate selector.
+		// Nested: e.g., plan.Config.Metric → look up Config in plan's schema,
+		// then look up Metric in Config's NestedAttrs.
 		parentField := x.Sel.Name
-		parentAttr := toSnakeCase(parentField)
+		parentAttrName := toSnakeCase(parentField)
 
 		rootVar := ""
 		switch rx := x.X.(type) {
@@ -332,9 +310,11 @@ func resolveFieldAttr(sel *ast.SelectorExpr, varSchemas map[string]map[string]*s
 		}
 
 		if schema, ok := varSchemas[rootVar]; ok {
-			// Look for parentAttr.attrName in the schema.
-			nestedKey := parentAttr + "." + attrName
-			if attr, ok := schema[nestedKey]; ok {
+			parentAttr, ok := schema[parentAttrName]
+			if !ok || parentAttr.NestedAttrs == nil {
+				return nil
+			}
+			if attr, ok := parentAttr.NestedAttrs[attrName]; ok {
 				return attr
 			}
 		}
@@ -345,26 +325,34 @@ func resolveFieldAttr(sel *ast.SelectorExpr, varSchemas map[string]map[string]*s
 
 
 // extractGuardedFromCond extracts field selector strings from conditions
-// containing IsUnknown() calls.
-func extractGuardedFromCond(expr ast.Expr, guarded map[string]bool) {
+// containing negated IsUnknown() calls (!plan.X.IsUnknown()). Only negated
+// calls guard the if-body — a positive check (plan.X.IsUnknown()) means the
+// body runs WHEN Unknown, so it is not a guard.
+func extractGuardedFromCond(expr ast.Expr, guarded map[string]bool, negated bool) {
 	switch e := expr.(type) {
 	case *ast.BinaryExpr:
-		extractGuardedFromCond(e.X, guarded)
-		extractGuardedFromCond(e.Y, guarded)
+		extractGuardedFromCond(e.X, guarded, negated)
+		extractGuardedFromCond(e.Y, guarded, negated)
 	case *ast.UnaryExpr:
-		extractGuardedFromCond(e.X, guarded)
+		if e.Op == token.NOT {
+			extractGuardedFromCond(e.X, guarded, !negated)
+		} else {
+			extractGuardedFromCond(e.X, guarded, negated)
+		}
 	case *ast.ParenExpr:
-		extractGuardedFromCond(e.X, guarded)
+		extractGuardedFromCond(e.X, guarded, negated)
 	case *ast.CallExpr:
 		// Check for plan.X.IsUnknown()
 		sel, ok := e.Fun.(*ast.SelectorExpr)
 		if !ok || sel.Sel.Name != "IsUnknown" {
 			return
 		}
-		// The receiver of IsUnknown is plan.X.
-		key := selectorKey(sel.X)
-		if key != "" {
-			guarded[key] = true
+		// Only treat as guard when negated: !plan.X.IsUnknown()
+		if negated {
+			key := selectorKey(sel.X)
+			if key != "" {
+				guarded[key] = true
+			}
 		}
 	}
 }
@@ -443,7 +431,7 @@ func checkMissingGuards(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map
 			return true
 		}
 		guarded := map[string]bool{}
-		extractGuardedFromCond(ifStmt.Cond, guarded)
+		extractGuardedFromCond(ifStmt.Cond, guarded, false)
 		if len(guarded) > 0 && ifStmt.Body != nil {
 			scopes = append(scopes, guardScope{
 				startPos:    int(ifStmt.Body.Pos()),

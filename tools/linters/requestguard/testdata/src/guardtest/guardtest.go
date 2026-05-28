@@ -95,3 +95,25 @@ func toConfigRequest(plan *GuardTestModel) *ConfigRequest {
 
 	return req
 }
+
+// --- Guard polarity tests ---
+
+// toInviteRequest tests that positive IsUnknown() checks are NOT treated as guards.
+func (plan *GuardTestModel) toInviteRequest() ApiRequest {
+	req := ApiRequest{}
+
+	// BAD: Positive IsUnknown() check — body runs WHEN Unknown, so
+	// ValueString() inside is definitely wrong. Must still be flagged.
+	if plan.FolderId.IsUnknown() {
+		val := plan.FolderId.ValueString() // want `ValueString\(\) on Optional\+Computed field "folder_id" without IsUnknown\(\) guard; field may be Unknown at plan time`
+		req.FolderId = &val
+	}
+
+	// GOOD: Negated IsUnknown() check — body runs when Known.
+	if !plan.FolderId.IsUnknown() {
+		val := plan.FolderId.ValueString()
+		req.FolderId = &val
+	}
+
+	return req
+}
