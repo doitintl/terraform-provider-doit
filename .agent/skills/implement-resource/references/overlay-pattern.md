@@ -18,6 +18,7 @@ DoIT APIs return complete objects in Create and Update responses, but frequently
 | **Required** | `Required: true` | Never touch — preserve plan value | `name` |
 | **Optional** | `Optional: true` | Never touch — preserve plan value | `description` |
 | **Optional+Computed** | `Optional: true, Computed: true` | Resolve only when `IsUnknown()` | `formula`, boolean flags |
+| **Optional+Computed with Default** | `Optional: true, Computed: true, Default: ...` | Never touch — default resolves at plan time | `metric`, `case_insensitive` |
 
 Key rules:
 
@@ -25,6 +26,7 @@ Key rules:
 - **Required / Optional**: never overwrite — user's plan wins
 - **Optional+Computed when `IsUnknown()`**: user omitted the field — resolve from API response, fall back to null/false
 - **Optional+Computed when known**: user explicitly set it — never overwrite
+- **Optional+Computed with Default**: always known — the framework resolves the default at plan time, so the field is never Unknown. **Do not add `IsUnknown()` guards** — they are dead code
 
 ## Step 2: Implement overlayXxxComputedFields
 
@@ -97,6 +99,8 @@ if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
 **Multi-level nesting**: Sub-overlays can call deeper sub-overlays. The linter recursively validates the entire chain.
 
 > **Linter:** `overlaycheck` **enforces** that nested attributes with computed fields use sub-overlay helper functions — inline handling is not allowed. The linter validates both top-level overlay functions and all sub-overlay helpers reachable via `overlayListElements` callbacks or direct `overlay*` calls with `&plan.X` arguments.
+>
+> **Exception:** If all children of a nested attribute are Required or have schema Defaults, no sub-overlay is needed — the field can be assigned unconditionally when Unknown. The linter skips enforcement for these cases.
 
 ## Step 3: Wire Into Create and Update
 
@@ -137,3 +141,5 @@ The Read path detects **real** external changes while ignoring API normalization
 6. **API-defaulted lists need API response, not null.** Some lists are auto-populated by the API when omitted (e.g. `collaborators` adds creator as owner). Resolving `IsUnknown()` to `null` causes drift. Resolve from the API response instead.
 
 7. **Test for null↔[] flips explicitly.** When omitting Optional+Computed list fields, add `ListSizeExact(0)` checks on both Create and drift-check steps.
+
+8. **Don't add IsUnknown() guards for fields with Defaults.** When a field has `Default: stringdefault.StaticString(...)` (or similar), the framework resolves it at plan time — the field is never Unknown. An `IsUnknown()` guard is dead code and can mask legitimate changes from cross-resource references. The `overlaycheck` linter flags these automatically.
