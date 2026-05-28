@@ -1,0 +1,108 @@
+// Package guardtest is a test fixture for the requestguard analyzer.
+package guardtest
+
+import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+// Ensure imports are used.
+var _ context.Context
+
+// GuardTestResourceSchema returns a test schema with various field types.
+func GuardTestResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			// Computed-only: IsUnknown() is legitimate.
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			// Required: IsUnknown() is dead code.
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			// Optional (no Computed): IsUnknown() is dead code.
+			"label": schema.StringAttribute{
+				Optional: true,
+			},
+			// Optional+Computed WITH default: IsUnknown() is dead code.
+			"metric": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString("cost"),
+			},
+			// Optional+Computed WITHOUT default: IsUnknown() is needed.
+			"folder_id": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			// Nested attribute with mixed fields.
+			"config": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					// Required nested field.
+					"type": schema.StringAttribute{
+						Required: true,
+					},
+					// Optional+Computed WITH default nested field.
+					"case_insensitive": schema.BoolAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(false),
+					},
+					// Optional+Computed WITHOUT default nested field.
+					"currency": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+				},
+			},
+		},
+	}
+}
+
+// GuardTestModel is the Terraform model.
+type GuardTestModel struct {
+	Id       types.String
+	Name     types.String
+	Label    types.String
+	Metric   types.String
+	FolderId types.String
+	Config   ConfigValue
+}
+
+// ConfigValue is the nested config model.
+type ConfigValue struct {
+	Type             types.String
+	CaseInsensitive  types.Bool
+	Currency         types.String
+}
+
+// guardTestResource is a mock resource.
+type guardTestResource struct{}
+
+// Schema wires the resource type to the schema.
+func (r *guardTestResource) Schema(ctx context.Context) schema.Schema {
+	return GuardTestResourceSchema(ctx)
+}
+
+// ApiRequest is a mock API request type.
+type ApiRequest struct {
+	Name     *string
+	Label    *string
+	Metric   *string
+	FolderId *string
+	Config   *ConfigRequest
+}
+
+// ConfigRequest is a mock nested API request type.
+type ConfigRequest struct {
+	Type            *string
+	CaseInsensitive *bool
+	Currency        *string
+}
