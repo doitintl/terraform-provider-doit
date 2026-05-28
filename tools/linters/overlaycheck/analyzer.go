@@ -16,6 +16,7 @@ import (
 	"go/token"
 	"go/types"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/tools/linters/schemaparser"
@@ -786,6 +787,9 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 // or Optional+Computed children use sub-overlay helper functions (e.g.,
 // overlayListElements callbacks or direct overlay* calls) rather than inline
 // handling. This ensures consistent patterns across all overlay functions.
+//
+// Missing attributes are aggregated into a single diagnostic to avoid
+// golangci-lint's --uniq-by-line deduplication hiding findings.
 func enforceSubOverlayHelpers(
 	pass *analysis.Pass,
 	fn *ast.FuncDecl,
@@ -798,6 +802,7 @@ func enforceSubOverlayHelpers(
 		coveredFields[call.fieldName] = true
 	}
 
+	var missing []string
 	for attrName, attrInfo := range schema.Attrs {
 		if attrInfo.NestedAttrs == nil {
 			continue
@@ -815,10 +820,14 @@ func enforceSubOverlayHelpers(
 		if coveredFields[attrName] {
 			continue
 		}
+		missing = append(missing, attrName)
+	}
+
+	if len(missing) > 0 {
+		sort.Strings(missing)
 		pass.Reportf(fn.Pos(),
-			"%s: nested attribute %q has computed fields that need overlay; "+
-				"extract a sub-overlay helper function (e.g., overlayListElements or overlay%sXxx)",
-			fn.Name.Name, attrName, strings.Title(attrName)) //nolint:staticcheck // strings.Title is fine for diagnostics
+			"%s: nested attribute(s) with computed fields need sub-overlay helpers: %s",
+			fn.Name.Name, strings.Join(missing, ", "))
 	}
 }
 

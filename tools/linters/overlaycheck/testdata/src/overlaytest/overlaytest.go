@@ -135,7 +135,7 @@ func overlayRequiredNestedComputedFields(apiResp *ApiResponse, plan *RequiredNes
 
 // --- BAD: Required nested object handled inline (should use helper) ---
 
-func overlayRequiredNestedInlineComputedFields(apiResp *ApiResponse, plan *RequiredNestedModel) { // want `overlayRequiredNestedInlineComputedFields: nested attribute "config" has computed fields that need overlay`
+func overlayRequiredNestedInlineComputedFields(apiResp *ApiResponse, plan *RequiredNestedModel) { // want `overlayRequiredNestedInlineComputedFields: nested attribute\(s\) with computed fields need sub-overlay helpers: config`
 	resolved := *plan
 	mapRequiredNestedToModel(apiResp, &resolved)
 
