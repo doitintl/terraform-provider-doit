@@ -257,7 +257,7 @@ func mapAlertConfig(ctx context.Context, config *models.AlertConfig, diagnostics
 	// Map condition (Condition type to string)
 	var conditionVal types.String
 	if config.Condition != nil {
-		conditionVal = types.StringValue(*config.Condition)
+		conditionVal = types.StringValue(string(*config.Condition))
 	} else {
 		conditionVal = types.StringNull()
 	}
@@ -276,7 +276,7 @@ func mapAlertConfig(ctx context.Context, config *models.AlertConfig, diagnostics
 			"attributions":      attributionsList,
 			"condition":         conditionVal,
 			"currency":          currencyVal,
-			"data_source":       types.StringPointerValue(config.DataSource),
+			"data_source":       types.StringPointerValue((*string)(config.DataSource)),
 			"evaluate_for_each": types.StringPointerValue(config.EvaluateForEach),
 			"metric":            metricVal,
 			"operator": func() types.String {

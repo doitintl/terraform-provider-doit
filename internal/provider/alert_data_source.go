@@ -162,7 +162,7 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 	// Map condition
 	var condition types.String
 	if config.Condition != nil {
-		condition = types.StringValue(*config.Condition)
+		condition = types.StringValue(string(*config.Condition))
 	} else {
 		condition = types.StringNull()
 	}
@@ -178,7 +178,7 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 	// Map data_source
 	var dataSource types.String
 	if config.DataSource != nil {
-		dataSource = types.StringValue(*config.DataSource)
+		dataSource = types.StringValue(string(*config.DataSource))
 	} else {
 		dataSource = types.StringNull()
 	}

@@ -85,7 +85,7 @@ Read-Only:
 - `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
 Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
-- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+- `type` (String) Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 - `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
 
 
@@ -114,5 +114,5 @@ Read-Only:
 - `key` (String) Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
 Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
-- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+- `type` (String) Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 - `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.

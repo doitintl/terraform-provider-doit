@@ -240,21 +240,18 @@ Optional:
 
 Required:
 
-- `id` (String) The field to filter on
-- `mode` (String) Filter mode to apply
+- `id` (String) Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
+- `mode` (String) Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Enumeration of supported dimension/filter types.
-"allocation" is an alias for "attribution_group".
-"allocation_rule" is an alias for "attribution".
-"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
 
 Optional:
 
 - `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
-- `include_null` (Boolean) Include null value.
-- `inverse` (Boolean) Set to `true` to exclude the values.
-- `values` (List of String) Values to filter on.
+- `include_null` (Boolean) Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
+- `inverse` (Boolean) Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
+- `values` (List of String) List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
 
 
 <a id="nestedatt--timeouts"></a>

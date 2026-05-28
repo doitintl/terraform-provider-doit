@@ -3128,45 +3128,53 @@ components:
         - timeInterval
         - value
       properties:
-        condition:
-          $ref: "#/components/schemas/Condition"
-        currency:
-          $ref: "#/components/schemas/Currency"
+        dataSource:
+          type: string
+          description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
+          default: billing
+          enum:
+            - billing
+            - billing-datahub
+          x-enumDescriptions:
+            billing: Standard Cloud Analytics billing data only.
+            billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        scopes:
+          type: array
+          description: The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
+          items:
+            $ref: "#/components/schemas/ExternalConfigFilter"
         metric:
           $ref: "#/components/schemas/MetricConfig"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        timeInterval:
+          type: string
+          description: The period each evaluation looks at.
+          default: year
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+        condition:
+          $ref: "#/components/schemas/Condition"
         operator:
           $ref: "#/components/schemas/MetricFilterText"
+        value:
+          type: number
+          format: double
+          description: The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
         evaluateForEach:
           type: string
           description: >-
-            Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
+            Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
         attributions:
           type: array
           deprecated: true
           description: Use 'scopes' instead. The attributions selected define the scope to monitor.
           items:
             type: string
-        scopes:
-          type: array
-          description: The filters selected define the scope of the alert.
-          items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
-        timeInterval:
-          type: string
-          description: The time interval to evaluate the condition.
-          default: year
-          enum:
-            - hour
-            - day
-            - week
-            - month
-            - quarter
-            - year
-        dataSource:
-          type: string
-        value:
-          type: number
-          format: double
     AlertRequest:
       required:
         - config
@@ -3174,14 +3182,14 @@ components:
       type: object
       description: Request body for creating a new alert.
       properties:
-        config:
-          $ref: "#/components/schemas/AlertConfig"
         name:
           type: string
-          description: Name of the alert.
+          description: Name of the alert (max 64 characters).
+        config:
+          $ref: "#/components/schemas/AlertConfig"
         recipients:
           type: array
-          description: List of emails to notify when the alert is triggered.
+          description: List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
           items:
             type: string
       example:
@@ -3216,11 +3224,11 @@ components:
       type: object
       description: Request body for modifying an existing alert.
       properties:
-        config:
-          $ref: "#/components/schemas/AlertConfig"
         name:
           type: string
           description: Alert name
+        config:
+          $ref: "#/components/schemas/AlertConfig"
         recipients:
           type: array
           description: List of emails to notify when the alert is triggered.
@@ -3349,7 +3357,8 @@ components:
             items:
               $ref: "#/components/schemas/ResourceReference"
     AllocationDimensionsTypes:
-      description: Enumeration of supported dimension/filter types for allocation components.
+      description: |-
+        Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
       type: string
       enum:
         - datetime
@@ -3362,6 +3371,17 @@ components:
         - allocation_rule
         - gke
         - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions.
+        label: Customer-defined resource labels; key is the label key.
+        tag: AWS cost allocation tags; key is the tag key.
+        project_label: Google Cloud project-level labels.
+        system_label: DoiT- or provider-generated system labels.
+        optional: Console grouping for label/tag keys; use a concrete subtype in filters.
+        datetime: Time dimensions for date-based filtering.
+        allocation_rule: Reference another allocation rule by ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels.
     AllocationListItem:
       type: object
       description: Summary information for an allocation.
@@ -4241,7 +4261,17 @@ components:
           description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
     Condition:
       type: string
-      description: Condition key or expression used in alert configurations.
+      description: >-
+        Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
+      default: percentage-change
+      enum:
+        - value
+        - percentage-change
+        - forecast
+      x-enumDescriptions:
+        value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
+        percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
+        forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
     CreateAllocationRequest:
       required:
         - name
@@ -4503,10 +4533,7 @@ components:
           format: int64
     DimensionsTypes:
       description: |-
-        Enumeration of supported dimension/filter types.
-        "allocation" is an alias for "attribution_group".
-        "allocation_rule" is an alias for "attribution".
-        "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+        Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
       type: string
       enum:
         - datetime
@@ -4522,6 +4549,20 @@ components:
         - allocation_rule
         - gke
         - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: "Deprecated. Use allocation_rule."
+        attribution_group: "Deprecated. Use allocation."
     DismissalDetails:
       type: object
       description: Details for why an insight was dismissed.
@@ -4799,33 +4840,41 @@ components:
       properties:
         id:
           type: string
-          description: The field to filter on
+          description: >-
+            Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
         type:
           $ref: "#/components/schemas/DimensionsTypes"
+        values:
+          type: array
+          description: >-
+            List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+          items:
+            type: string
         mode:
           type: string
-          description: Filter mode to apply
+          description: Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
           enum:
             - is
             - starts_with
             - ends_with
             - contains
             - regexp
+          x-enumDescriptions:
+            is: Exact match on one or more values.
+            starts_with: Value starts with the given string(s).
+            ends_with: Value ends with the given string(s).
+            contains: Value contains the given string(s).
+            regexp: Value matches the regular expression in `values` (exactly one pattern).
         inverse:
           type: boolean
-          description: Set to `true` to exclude the values.
+          description: Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
         caseInsensitive:
           type: boolean
           description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
           default: false
-        values:
-          type: array
-          description: Values to filter on.
-          items:
-            type: string
         includeNull:
           type: boolean
-          description: Include null value.
+          description: Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
           default: false
       example:
         id: cloud_provider
@@ -6030,7 +6079,7 @@ components:
           type: string
     MetricFilterText:
       type: string
-      description: Text/operator used to filter metric values in metric filters.
+      description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
       enum:
         - gt
         - lt

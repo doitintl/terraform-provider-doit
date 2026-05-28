@@ -67,14 +67,8 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 	if plan.Attributions.IsUnknown() {
 		plan.Attributions = resolved.Attributions
 	}
-	if plan.Condition.IsUnknown() {
-		plan.Condition = resolved.Condition
-	}
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
-	}
-	if plan.DataSource.IsUnknown() {
-		plan.DataSource = resolved.DataSource
 	}
 	if plan.EvaluateForEach.IsUnknown() {
 		plan.EvaluateForEach = resolved.EvaluateForEach
@@ -180,8 +174,8 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 	}
 
 	// Optional fields
-	if !configVal.Condition.IsNull() && !configVal.Condition.IsUnknown() {
-		condition := configVal.Condition.ValueString()
+	if !configVal.Condition.IsNull() {
+		condition := models.Condition(configVal.Condition.ValueString())
 		config.Condition = &condition
 	}
 
@@ -190,8 +184,8 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 		config.Currency = &currency
 	}
 
-	if !configVal.DataSource.IsNull() && !configVal.DataSource.IsUnknown() {
-		dataSource := configVal.DataSource.ValueString()
+	if !configVal.DataSource.IsNull() {
+		dataSource := models.AlertConfigDataSource(configVal.DataSource.ValueString())
 		config.DataSource = &dataSource
 	}
 
@@ -456,9 +450,9 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 	// Build config value
 	configAttrs := map[string]attr.Value{
 		"attributions":      attributionsVal,
-		"condition":         types.StringPointerValue(config.Condition),
+		"condition":         types.StringPointerValue((*string)(config.Condition)),
 		"currency":          types.StringPointerValue((*string)(config.Currency)),
-		"data_source":       types.StringPointerValue(config.DataSource),
+		"data_source":       types.StringPointerValue((*string)(config.DataSource)),
 		"evaluate_for_each": types.StringPointerValue(config.EvaluateForEach),
 		"metric":            metricVal,
 		"operator":          types.StringPointerValue((*string)(config.Operator)),

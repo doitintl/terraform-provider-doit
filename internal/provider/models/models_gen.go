@@ -23,10 +23,27 @@ const (
 	CustomerContextScopes customerContextContextKey = "customerContext.Scopes"
 )
 
+// Defines values for AlertConfigDataSource.
+const (
+	AlertConfigDataSourceBilling        AlertConfigDataSource = "billing"
+	AlertConfigDataSourceBillingDatahub AlertConfigDataSource = "billing-datahub"
+)
+
+// Valid indicates whether the value is a known member of the AlertConfigDataSource enum.
+func (e AlertConfigDataSource) Valid() bool {
+	switch e {
+	case AlertConfigDataSourceBilling:
+		return true
+	case AlertConfigDataSourceBillingDatahub:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AlertConfigTimeInterval.
 const (
 	AlertConfigTimeIntervalDay     AlertConfigTimeInterval = "day"
-	AlertConfigTimeIntervalHour    AlertConfigTimeInterval = "hour"
 	AlertConfigTimeIntervalMonth   AlertConfigTimeInterval = "month"
 	AlertConfigTimeIntervalQuarter AlertConfigTimeInterval = "quarter"
 	AlertConfigTimeIntervalWeek    AlertConfigTimeInterval = "week"
@@ -37,8 +54,6 @@ const (
 func (e AlertConfigTimeInterval) Valid() bool {
 	switch e {
 	case AlertConfigTimeIntervalDay:
-		return true
-	case AlertConfigTimeIntervalHour:
 		return true
 	case AlertConfigTimeIntervalMonth:
 		return true
@@ -386,6 +401,27 @@ func (e CommitmentExternalListItemCloudProvider) Valid() bool {
 	}
 }
 
+// Defines values for Condition.
+const (
+	ConditionForecast         Condition = "forecast"
+	ConditionPercentageChange Condition = "percentage-change"
+	ConditionValue            Condition = "value"
+)
+
+// Valid indicates whether the value is a known member of the Condition enum.
+func (e Condition) Valid() bool {
+	switch e {
+	case ConditionForecast:
+		return true
+	case ConditionPercentageChange:
+		return true
+	case ConditionValue:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CreateCategory.
 const (
 	CreateCategoryFinOps   CreateCategory = "FinOps"
@@ -667,22 +703,22 @@ func (e ExternalConfigAggregation) Valid() bool {
 
 // Defines values for ExternalConfigDataSource.
 const (
-	Billing               ExternalConfigDataSource = "billing"
-	BillingDatahub        ExternalConfigDataSource = "billing-datahub"
-	Bqlens                ExternalConfigDataSource = "bqlens"
-	KubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
+	ExternalConfigDataSourceBilling               ExternalConfigDataSource = "billing"
+	ExternalConfigDataSourceBillingDatahub        ExternalConfigDataSource = "billing-datahub"
+	ExternalConfigDataSourceBqlens                ExternalConfigDataSource = "bqlens"
+	ExternalConfigDataSourceKubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigDataSource enum.
 func (e ExternalConfigDataSource) Valid() bool {
 	switch e {
-	case Billing:
+	case ExternalConfigDataSourceBilling:
 		return true
-	case BillingDatahub:
+	case ExternalConfigDataSourceBillingDatahub:
 		return true
-	case Bqlens:
+	case ExternalConfigDataSourceBqlens:
 		return true
-	case KubernetesUtilization:
+	case ExternalConfigDataSourceKubernetesUtilization:
 		return true
 	default:
 		return false
@@ -691,22 +727,22 @@ func (e ExternalConfigDataSource) Valid() bool {
 
 // Defines values for ExternalConfigDisplayValues.
 const (
-	AbsoluteAndPercentage ExternalConfigDisplayValues = "absolute_and_percentage"
-	AbsoluteChange        ExternalConfigDisplayValues = "absolute_change"
-	ActualsOnly           ExternalConfigDisplayValues = "actuals_only"
-	PercentageChange      ExternalConfigDisplayValues = "percentage_change"
+	ExternalConfigDisplayValuesAbsoluteAndPercentage ExternalConfigDisplayValues = "absolute_and_percentage"
+	ExternalConfigDisplayValuesAbsoluteChange        ExternalConfigDisplayValues = "absolute_change"
+	ExternalConfigDisplayValuesActualsOnly           ExternalConfigDisplayValues = "actuals_only"
+	ExternalConfigDisplayValuesPercentageChange      ExternalConfigDisplayValues = "percentage_change"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigDisplayValues enum.
 func (e ExternalConfigDisplayValues) Valid() bool {
 	switch e {
-	case AbsoluteAndPercentage:
+	case ExternalConfigDisplayValuesAbsoluteAndPercentage:
 		return true
-	case AbsoluteChange:
+	case ExternalConfigDisplayValuesAbsoluteChange:
 		return true
-	case ActualsOnly:
+	case ExternalConfigDisplayValuesActualsOnly:
 		return true
-	case PercentageChange:
+	case ExternalConfigDisplayValuesPercentageChange:
 		return true
 	default:
 		return false
@@ -2629,31 +2665,38 @@ type AlertConfig struct {
 	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Attributions *[]string `json:"attributions,omitempty"`
 
-	// Condition Condition key or expression used in alert configurations.
+	// Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 	Condition *Condition `json:"condition,omitempty"`
 
 	// Currency Currency code for monetary values.
-	Currency   *Currency `json:"currency,omitempty"`
-	DataSource *string   `json:"dataSource,omitempty"`
+	Currency *Currency `json:"currency,omitempty"`
 
-	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
+	// DataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
+	DataSource *AlertConfigDataSource `json:"dataSource,omitempty"`
+
+	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 	EvaluateForEach *string `json:"evaluateForEach,omitempty"`
 
 	// Metric Define how metrics are selected and filtered in reports.
 	Metric MetricConfig `json:"metric"`
 
-	// Operator Text/operator used to filter metric values in metric filters.
+	// Operator Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
 	Operator *MetricFilterText `json:"operator,omitempty"`
 
-	// Scopes The filters selected define the scope of the alert.
+	// Scopes The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
 	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
-	// TimeInterval The time interval to evaluate the condition.
+	// TimeInterval The period each evaluation looks at.
 	TimeInterval AlertConfigTimeInterval `json:"timeInterval"`
-	Value        float64                 `json:"value"`
+
+	// Value The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
+	Value float64 `json:"value"`
 }
 
-// AlertConfigTimeInterval The time interval to evaluate the condition.
+// AlertConfigDataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
+type AlertConfigDataSource string
+
+// AlertConfigTimeInterval The period each evaluation looks at.
 type AlertConfigTimeInterval string
 
 // AlertRequest Request body for creating a new alert.
@@ -2661,10 +2704,10 @@ type AlertRequest struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config AlertConfig `json:"config"`
 
-	// Name Name of the alert.
+	// Name Name of the alert (max 64 characters).
 	Name string `json:"name"`
 
-	// Recipients List of emails to notify when the alert is triggered.
+	// Recipients List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
 	Recipients *[]string `json:"recipients,omitempty"`
 }
 
@@ -2750,7 +2793,7 @@ type AllocationComponent struct {
 	// Mode Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 	Mode AllocationComponentMode `json:"mode"`
 
-	// Type Enumeration of supported dimension/filter types for allocation components.
+	// Type Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 	Type AllocationDimensionsTypes `json:"type"`
 
 	// Values Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
@@ -2778,7 +2821,7 @@ type AllocationDeleteValidation struct {
 // AllocationDeleteValidationType Type of allocation.
 type AllocationDeleteValidationType string
 
-// AllocationDimensionsTypes Enumeration of supported dimension/filter types for allocation components.
+// AllocationDimensionsTypes Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 type AllocationDimensionsTypes string
 
 // AllocationListItem Summary information for an allocation.
@@ -3416,8 +3459,8 @@ type CommitmentPeriod struct {
 	StartDate *time.Time `json:"startDate,omitempty"`
 }
 
-// Condition Condition key or expression used in alert configurations.
-type Condition = string
+// Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
+type Condition string
 
 // CreateAllocationRequest Request body for creating an allocation.
 type CreateAllocationRequest struct {
@@ -3550,10 +3593,7 @@ type Dimension struct {
 	// Id The identifier of the dimension.
 	Id *string `json:"id,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3565,10 +3605,7 @@ type DimensionExternalAPIListItem struct {
 	// Label The label of the dimension.
 	Label *string `json:"label,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3577,10 +3614,7 @@ type DimensionsExternalAPIGetResponse struct {
 	Id    *string `json:"id,omitempty"`
 	Label *string `json:"label,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type   *DimensionsTypes       `json:"type,omitempty"`
 	Values *[]ExternalAPIGetValue `json:"values,omitempty"`
 }
@@ -3593,10 +3627,7 @@ type DimensionsExternalAPIListResponse struct {
 	RowCount   *int64                          `json:"rowCount,omitempty"`
 }
 
-// DimensionsTypes Enumeration of supported dimension/filter types.
-// "allocation" is an alias for "attribution_group".
-// "allocation_rule" is an alias for "attribution".
-// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+// DimensionsTypes Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 type DimensionsTypes string
 
 // DismissalDetails Details for why an insight was dismissed.
@@ -3749,29 +3780,26 @@ type ExternalConfigFilter struct {
 	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
 	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
 
-	// Id The field to filter on
+	// Id Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
 	Id string `json:"id"`
 
-	// IncludeNull Include null value.
+	// IncludeNull Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
 	IncludeNull *bool `json:"includeNull,omitempty"`
 
-	// Inverse Set to `true` to exclude the values.
+	// Inverse Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
 	Inverse *bool `json:"inverse,omitempty"`
 
-	// Mode Filter mode to apply
+	// Mode Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 	Mode ExternalConfigFilterMode `json:"mode"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type DimensionsTypes `json:"type"`
 
-	// Values Values to filter on.
+	// Values List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
 	Values *[]string `json:"values,omitempty"`
 }
 
-// ExternalConfigFilterMode Filter mode to apply
+// ExternalConfigFilterMode Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 type ExternalConfigFilterMode string
 
 // ExternalConfigMetricFilter Metric filter to limit report rows by metric value.
@@ -4141,10 +4169,7 @@ type Group struct {
 	// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 	Limit *Limit `json:"limit,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -4638,7 +4663,7 @@ type MetricConfig struct {
 	Value string     `json:"value"`
 }
 
-// MetricFilterText Text/operator used to filter metric values in metric filters.
+// MetricFilterText Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
 type MetricFilterText string
 
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
