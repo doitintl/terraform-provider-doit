@@ -63,14 +63,7 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	if plan.Rule.IsUnknown() {
 		plan.Rule = resolved.Rule
 	} else if !plan.Rule.IsNull() {
-		if plan.Rule.Formula.IsUnknown() {
-			plan.Rule.Formula = resolved.Rule.Formula
-		}
-		if plan.Rule.Components.IsUnknown() {
-			plan.Rule.Components = resolved.Rule.Components
-		} else if !plan.Rule.Components.IsNull() {
-			diags.Append(overlayListElements(ctx, &resolved.Rule.Components, &plan.Rule.Components, overlayAllocationComponent)...)
-		}
+		diags.Append(overlayAllocationRuleFields(ctx, &resolved.Rule, &plan.Rule)...)
 	}
 
 	// ── Rules (list): resolve whole list when Unknown, overlay elements when Known ──
@@ -83,14 +76,24 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	return diags
 }
 
+// overlayAllocationRuleFields overlays the "components" subfield of the "rule"
+// SingleNestedAttribute. The only other subfield, "formula", is Required and
+// never Unknown at overlay time.
+func overlayAllocationRuleFields(ctx context.Context, resolved, plan *resource_allocation.RuleValue) diag.Diagnostics {
+	if plan.Components.IsUnknown() {
+		plan.Components = resolved.Components
+	} else if !plan.Components.IsNull() {
+		return overlayListElements(ctx, &resolved.Components, &plan.Components, overlayAllocationComponent)
+	}
+	return nil
+}
+
 // ── Allocation list element overlay helpers ──
 // Each helper resolves Unknown subfields from the resolved element.
 // Known values are never touched — the user's plan is the source of truth.
 
 func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
-	if plan.Action.IsUnknown() {
-		plan.Action = resolved.Action
-	}
+
 	if plan.Description.IsUnknown() {
 		plan.Description = resolved.Description
 	}
@@ -125,18 +128,7 @@ func overlayAllocationComponent(_ context.Context, resolved, plan *resource_allo
 	if plan.InverseSelection.IsUnknown() {
 		plan.InverseSelection = resolved.InverseSelection
 	}
-	if plan.ComponentsType.IsUnknown() {
-		plan.ComponentsType = resolved.ComponentsType
-	}
-	if plan.Key.IsUnknown() {
-		plan.Key = resolved.Key
-	}
-	if plan.Mode.IsUnknown() {
-		plan.Mode = resolved.Mode
-	}
-	if plan.Values.IsUnknown() {
-		plan.Values = resolved.Values
-	}
+
 	return nil
 }
 

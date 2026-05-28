@@ -677,3 +677,61 @@ resource "doit_insight" "test" {
 }
 `, key)
 }
+
+// TestAccInsightResource_DismissedPartial tests creating an insight with
+// "dismissed" status and only reason set (comment omitted). The omitted
+// comment subfield is Optional+Computed and should be resolved by the overlay.
+func TestAccInsightResource_DismissedPartial(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with status = "dismissed" + partial dismissal_details (only reason)
+			{
+				Config: testAccInsightResourceDismissedPartialConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("status"),
+						knownvalue.StringExact("dismissed")),
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("dismissal_details"),
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
+							"reason":  knownvalue.StringExact("not relevant"),
+							"comment": knownvalue.Null(),
+						})),
+				},
+			},
+			// Step 2: Drift check — plan should be empty
+			{
+				Config: testAccInsightResourceDismissedPartialConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccInsightResourceDismissedPartialConfig(key string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Dismissed Partial Test"
+  short_description = "Testing dismissal with reason only"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+  status            = "dismissed"
+
+  dismissal_details = {
+    reason = "not relevant"
+  }
+}
+`, key)
+}
