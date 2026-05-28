@@ -77,6 +77,41 @@ If create and update use different API request types, implement both `toCreateRe
 
 > **Signature flexibility:** The `ctx` and `diag.Diagnostics` parameters are required when the function maps nested objects (lists, objects) or can produce errors. Simple resources that only do scalar assignments (e.g. `types.StringValue`, `types.StringPointerValue`) may omit `ctx` and return nothing. Match the complexity of your resource.
 
+### Mapping Functions and Schema Defaults
+
+When a schema field has a `Default` (e.g., `stringdefault.StaticString("cost")`), `mapXxxToModel` must map `nil` API responses to the default value, not to `null`:
+
+```go
+// CORRECT — preserves the schema default on nil response
+if apiResp.Metric != nil {
+    state.Metric = types.StringValue(*apiResp.Metric)
+} else {
+    state.Metric = types.StringValue("cost") // schema default
+}
+
+// WRONG — drifts against the schema default
+state.Metric = types.StringPointerValue(apiResp.Metric) // nil → null ≠ "cost"
+```
+
+> **Linter:** `defaultdrift` — flags `PointerValue` usage on fields with schema defaults in Read-path mapping functions.
+
+### Request Builders and IsUnknown()
+
+In `toCreateRequest` / `toUpdateRequest` and similar request builder functions, `IsUnknown()` guards are only needed for `Optional+Computed` fields **without** a `Default`. For all other fields:
+
+| Field class | `IsUnknown()` needed? | Why |
+|---|---|---|
+| Required | No | User must set it — always Known |
+| Optional (no Computed) | No | Known or Null, never Unknown |
+| Optional+Computed **with Default** | No | Default resolves at plan time |
+| Optional+Computed **without Default** | **Yes** | May be Unknown at plan time |
+
+For non-pointer value accessors (`ValueString()`, `ValueBool()`, `ValueFloat64()`, `ValueInt64()`), always guard with `IsUnknown()` when the field is Optional+Computed without Default — these accessors return zero values for Unknown, not nil.
+
+Pointer accessors (`ValueStringPointer()`, etc.) return `nil` for Unknown, which is often acceptable.
+
+> **Linter:** `requestguard` — flags both redundant guards (dead code) and missing guards (bug risk) in request builder functions.
+
 ## Variable Naming
 
 Variable names must match their data source:

@@ -17,6 +17,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlaycheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlayinvariant"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/paralleltest"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/requestguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/read404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
@@ -117,5 +118,9 @@ func init() {
 
 	register.Plugin("methodreceiver", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{methodreceiver.Analyzer}}, nil
+	})
+
+	register.Plugin("requestguard", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{requestguard.Analyzer}}, nil
 	})
 }

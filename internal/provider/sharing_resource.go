@@ -540,7 +540,7 @@ func buildSharingRequest(ctx context.Context, plan *sharingResourceModel, resour
 	var reqBody models.UpdateResourcePermissionJSONRequestBody
 
 	// Map permissions from plan to API type
-	if !plan.Permissions.IsNull() && !plan.Permissions.IsUnknown() {
+	if !plan.Permissions.IsNull() {
 		var permVals []resource_sharing.PermissionsValue
 		diags.Append(plan.Permissions.ElementsAs(ctx, &permVals, false)...)
 		if diags.HasError() {

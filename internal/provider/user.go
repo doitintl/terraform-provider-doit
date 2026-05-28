@@ -235,13 +235,13 @@ func (plan *userResourceModel) toUpdateRequest() models.UpdateUserRequest {
 	if !plan.RoleId.IsNull() && !plan.RoleId.IsUnknown() {
 		req.RoleId = plan.RoleId.ValueStringPointer()
 	}
-	if !plan.Phone.IsNull() && !plan.Phone.IsUnknown() {
+	if !plan.Phone.IsNull() {
 		req.Phone = plan.Phone.ValueStringPointer()
 	}
-	if !plan.PhoneExtension.IsNull() && !plan.PhoneExtension.IsUnknown() {
+	if !plan.PhoneExtension.IsNull() {
 		req.PhoneExtension = plan.PhoneExtension.ValueStringPointer()
 	}
-	if !plan.Language.IsNull() && !plan.Language.IsUnknown() {
+	if !plan.Language.IsNull() {
 		req.Language = new(models.UpdateUserRequestLanguage(plan.Language.ValueString()))
 	}
 
