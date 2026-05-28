@@ -1693,6 +1693,114 @@ func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 	})
 }
 
+// TestAccBudget_DefaultedScalarDrift tests that omitting Optional+Computed fields
+// with schema defaults does NOT cause perpetual plan drift.
+//
+// When a field has Default (e.g., metric defaults to "cost"), omitting it means
+// the plan resolves to "cost". After Create, Read calls mapBudgetToModel which
+// must also map the API response to "cost" (not null). If mapBudgetToModel uses
+// PointerValue and the API returns nil, state becomes null while the next plan
+// resolves to "cost" → drift.
+//
+// This test omits ALL defaulted scalar fields and verifies:
+// 1. After Create: state holds the default values (not null)
+// 2. After Read (drift check): plan is empty — state and plan agree.
+func TestAccBudget_DefaultedScalarDrift(t *testing.T) {
+	n := acctest.RandInt()
+
+	// Checks that verify defaulted scalar fields resolve to their schema defaults.
+	defaultedScalarChecks := []statecheck.StateCheck{
+		// description: Default("")
+		statecheck.ExpectKnownValue(
+			"doit_budget.defaulted_test",
+			tfjsonpath.New("description"),
+			knownvalue.StringExact("")),
+		// growth_per_period: Default(0)
+		statecheck.ExpectKnownValue(
+			"doit_budget.defaulted_test",
+			tfjsonpath.New("growth_per_period"),
+			knownvalue.Float64Exact(0)),
+		// metric: Default("cost")
+		statecheck.ExpectKnownValue(
+			"doit_budget.defaulted_test",
+			tfjsonpath.New("metric"),
+			knownvalue.StringExact("cost")),
+		// use_prev_spend: Default(false)
+		statecheck.ExpectKnownValue(
+			"doit_budget.defaulted_test",
+			tfjsonpath.New("use_prev_spend"),
+			knownvalue.Bool(false)),
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with ALL defaulted scalar fields omitted.
+			// The plan resolves them to their defaults; the overlay must agree.
+			{
+				Config: testAccBudgetDefaultedScalarsOmitted(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction("doit_budget.defaulted_test", plancheck.ResourceActionCreate),
+					},
+				},
+				ConfigStateChecks: defaultedScalarChecks,
+			},
+			// Step 2: Drift check — Read refreshes state from API.
+			// If mapBudgetToModel maps nil → null for any defaulted field,
+			// the next plan will see null ≠ default → drift → test fails.
+			{
+				Config: testAccBudgetDefaultedScalarsOmitted(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: defaultedScalarChecks,
+			},
+		},
+	})
+}
+
+// testAccBudgetDefaultedScalarsOmitted creates a budget with ALL defaulted
+// scalar fields omitted: description, growth_per_period, metric, use_prev_spend.
+func testAccBudgetDefaultedScalarsOmitted(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "defaulted_test" {
+  name          = "test-default-drift-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scope         = ["%s"]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+  recipients = ["%s"]
+  # description, growth_per_period, metric, use_prev_spend are ALL intentionally
+  # omitted — they should resolve to their schema defaults.
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser())
+}
+
 func testAccBudgetMinimalOmitted(i int) string {
 	return fmt.Sprintf(`
 %s

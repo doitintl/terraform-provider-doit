@@ -46,6 +46,8 @@ linters:
     - constructor
     - newexpr
     - unknownguard
+    - defaultdrift
+    - methodreceiver
   exclusions:
     generated: lax
     presets:
@@ -92,6 +94,8 @@ linters:
           - newexpr
           - unknownguard
           - diagdrop
+          - defaultdrift
+          - methodreceiver
       # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
@@ -110,6 +114,8 @@ linters:
           - newexpr
           - unknownguard
           - diagdrop
+          - defaultdrift
+          - methodreceiver
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -120,6 +126,7 @@ linters:
           - listnullread
           - usestatefunknown
           - crudnaming
+          - methodreceiver
       # Provider config — not a resource, no plan modifiers
       - path: provider\.go
         linters:
@@ -216,6 +223,12 @@ linters:
       diagdrop:
         type: "module"
         description: "Detects return nil that drops captured diag.Diagnostics variables."
+      defaultdrift:
+        type: "module"
+        description: "Flags PointerValue usage on fields with schema defaults in Read-path mapping functions."
+      methodreceiver:
+        type: "module"
+        description: "Flags mapping functions that should be free functions, not methods."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
