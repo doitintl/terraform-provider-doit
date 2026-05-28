@@ -118,7 +118,7 @@ func run(pass *analysis.Pass) (any, error) {
 		trackVariableAssignments(fn.Body, varSchemas)
 
 		// Direction 1: Find redundant IsUnknown() guards.
-		checkRedundantGuards(pass, fn.Body, varSchemas, schema)
+		checkRedundantGuards(pass, fn.Body, varSchemas)
 
 		// Direction 2: Find missing guards on non-pointer value accessors.
 		checkMissingGuards(pass, fn.Body, varSchemas)
@@ -278,46 +278,53 @@ func resolveSelectorChain(sel *ast.SelectorExpr) (rootVar, fieldName string) {
 }
 
 // resolveFieldAttr resolves a selector expression to its schema AttrInfo
-// by navigating the schema tree via NestedAttrs.
+// by navigating the schema tree via NestedAttrs. Supports arbitrary nesting
+// depth (e.g., plan.Config.SubConfig.Field).
 func resolveFieldAttr(sel *ast.SelectorExpr, varSchemas map[string]map[string]*schemaparser.AttrInfo) *schemaparser.AttrInfo {
-	fieldName := sel.Sel.Name
-	attrName := toSnakeCase(fieldName)
+	// Build the full selector chain: plan.A.B.C → ["plan", "A", "B", "C"]
+	chain := buildSelectorChain(sel)
+	if len(chain) < 2 {
+		return nil
+	}
 
-	// Get the variable that owns this field.
-	switch x := sel.X.(type) {
-	case *ast.Ident:
-		if schema, ok := varSchemas[x.Name]; ok {
-			if attr, ok := schema[attrName]; ok {
-				return attr
-			}
-		}
-	case *ast.SelectorExpr:
-		// Nested: e.g., plan.Config.Metric → look up Config in plan's schema,
-		// then look up Metric in Config's NestedAttrs.
-		parentField := x.Sel.Name
-		parentAttrName := toSnakeCase(parentField)
+	// chain[0] is the root variable, chain[1:len-1] are intermediate fields,
+	// chain[len-1] is the leaf field we want the AttrInfo for.
+	rootVar := chain[0]
+	schema, ok := varSchemas[rootVar]
+	if !ok {
+		return nil
+	}
 
-		rootVar := ""
-		switch rx := x.X.(type) {
-		case *ast.Ident:
-			rootVar = rx.Name
-		case *ast.SelectorExpr:
-			rootVar, _ = resolveSelectorChain(rx)
-		}
-
-		if rootVar == "" {
+	// Navigate through intermediate fields via NestedAttrs.
+	for i := 1; i < len(chain)-1; i++ {
+		attrName := toSnakeCase(chain[i])
+		attr, ok := schema[attrName]
+		if !ok || attr.NestedAttrs == nil {
 			return nil
 		}
+		schema = attr.NestedAttrs
+	}
 
-		if schema, ok := varSchemas[rootVar]; ok {
-			parentAttr, ok := schema[parentAttrName]
-			if !ok || parentAttr.NestedAttrs == nil {
-				return nil
-			}
-			if attr, ok := parentAttr.NestedAttrs[attrName]; ok {
-				return attr
-			}
+	// Look up the leaf field.
+	leafAttr := toSnakeCase(chain[len(chain)-1])
+	if attr, ok := schema[leafAttr]; ok {
+		return attr
+	}
+	return nil
+}
+
+// buildSelectorChain converts a selector expression to an ordered list of names.
+// E.g., plan.Config.Metric → ["plan", "Config", "Metric"].
+func buildSelectorChain(expr ast.Expr) []string {
+	switch e := expr.(type) {
+	case *ast.Ident:
+		return []string{e.Name}
+	case *ast.SelectorExpr:
+		parent := buildSelectorChain(e.X)
+		if parent == nil {
+			return nil
 		}
+		return append(parent, e.Sel.Name)
 	}
 	return nil
 }
@@ -373,7 +380,7 @@ func selectorKey(expr ast.Expr) string {
 
 // checkRedundantGuards walks the function body and flags IsUnknown() calls
 // on fields that can never be Unknown.
-func checkRedundantGuards(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map[string]map[string]*schemaparser.AttrInfo, schema map[string]*schemaparser.AttrInfo) {
+func checkRedundantGuards(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map[string]map[string]*schemaparser.AttrInfo) {
 	ast.Inspect(body, func(n ast.Node) bool {
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
@@ -535,6 +542,8 @@ func extractStarTypeName(expr ast.Expr) string {
 
 // findSchemaCall searches the Schema() method body for a call to a
 // function whose name ends with "ResourceSchema" or "DataSourceSchema".
+// Supports both unqualified calls (AlertResourceSchema) and package-qualified
+// calls (resource_alert.AlertResourceSchema).
 func findSchemaCall(fn *ast.FuncDecl) string {
 	var schemaName string
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
@@ -542,12 +551,16 @@ func findSchemaCall(fn *ast.FuncDecl) string {
 		if !ok {
 			return true
 		}
-		if ident, ok := call.Fun.(*ast.Ident); ok {
-			name := ident.Name
-			if strings.HasSuffix(name, "ResourceSchema") || strings.HasSuffix(name, "DataSourceSchema") {
-				schemaName = name
-				return false
-			}
+		var name string
+		switch fun := call.Fun.(type) {
+		case *ast.Ident:
+			name = fun.Name
+		case *ast.SelectorExpr:
+			name = fun.Sel.Name
+		}
+		if name != "" && (strings.HasSuffix(name, "ResourceSchema") || strings.HasSuffix(name, "DataSourceSchema")) {
+			schemaName = name
+			return false
 		}
 		return true
 	})

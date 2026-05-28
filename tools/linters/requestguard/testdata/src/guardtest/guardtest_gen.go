@@ -60,6 +60,22 @@ func GuardTestResourceSchema(ctx context.Context) schema.Schema {
 						Optional: true,
 						Computed: true,
 					},
+					// 2-level nested attribute.
+					"filter": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							// Required at 2nd nesting level.
+							"operator": schema.StringAttribute{
+								Required: true,
+							},
+							// Optional+Computed without default at 2nd nesting level.
+							"mode": schema.StringAttribute{
+								Optional: true,
+								Computed: true,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -81,6 +97,13 @@ type ConfigValue struct {
 	Type             types.String
 	CaseInsensitive  types.Bool
 	Currency         types.String
+	Filter           FilterValue
+}
+
+// FilterValue is the 2nd-level nested model.
+type FilterValue struct {
+	Operator types.String
+	Mode     types.String
 }
 
 // guardTestResource is a mock resource.
@@ -105,4 +128,11 @@ type ConfigRequest struct {
 	Type            *string
 	CaseInsensitive *bool
 	Currency        *string
+	Filter          *FilterRequest
+}
+
+// FilterRequest is a mock 2nd-level nested request type.
+type FilterRequest struct {
+	Operator *string
+	Mode     *string
 }

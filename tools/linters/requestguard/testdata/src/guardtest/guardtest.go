@@ -117,3 +117,32 @@ func (plan *GuardTestModel) toInviteRequest() ApiRequest {
 
 	return req
 }
+
+// --- Deep nesting tests (2+ levels) ---
+
+// toFilterRequest tests resolution through 2 levels of nesting.
+func toFilterRequest(plan *GuardTestModel) *FilterRequest {
+	config := plan.Config
+	req := &FilterRequest{}
+
+	// BAD: Required at 2nd nesting level via variable chain — IsUnknown() is dead code.
+	if !config.Filter.Operator.IsNull() && !config.Filter.Operator.IsUnknown() { // want `IsUnknown\(\) on Required field "operator" is dead code \(Required fields are always Known\)`
+		req.Operator = config.Filter.Operator.ValueStringPointer()
+	}
+
+	// BAD: Optional+Computed without default at 2nd nesting level — missing guard.
+	val := config.Filter.Mode.ValueString() // want `ValueString\(\) on Optional\+Computed field "mode" without IsUnknown\(\) guard; field may be Unknown at plan time`
+	_ = val
+
+	// GOOD: Guarded Optional+Computed without default at 2nd nesting level.
+	if !config.Filter.Mode.IsUnknown() {
+		req.Mode = config.Filter.Mode.ValueStringPointer()
+	}
+
+	// BAD: Required at 2nd nesting level via inline 3-level chain — IsUnknown() is dead code.
+	if !plan.Config.Filter.Operator.IsUnknown() { // want `IsUnknown\(\) on Required field "operator" is dead code \(Required fields are always Known\)`
+		req.Operator = plan.Config.Filter.Operator.ValueStringPointer()
+	}
+
+	return req
+}
