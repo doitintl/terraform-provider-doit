@@ -764,6 +764,11 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 					"%s: Optional+Computed field %q is assigned unconditionally; "+
 						"must be guarded by IsUnknown() to preserve user-configured values",
 					fn.Name.Name, attrName)
+			} else if attrInfo.HasDefault {
+				pass.Reportf(assignment.pos,
+					"%s: Optional+Computed field %q has a schema Default and is never Unknown; "+
+						"remove the IsUnknown() guard (dead code)",
+					fn.Name.Name, attrName)
 			}
 		}
 	}
@@ -832,10 +837,15 @@ func enforceSubOverlayHelpers(
 }
 
 // nestedHasOverlayFields returns true if any attribute in the map is
-// Computed-only or Optional+Computed (i.e., fields that require overlay handling).
+// Computed-only or Optional+Computed WITHOUT a schema Default (i.e., fields
+// that may be Unknown and require overlay handling). Fields with a Default are
+// resolved at plan time and are never Unknown, so they don't need overlaying.
 func nestedHasOverlayFields(attrs map[string]*schemaparser.AttrInfo) bool {
 	for _, attr := range attrs {
-		if attr.Class == schemaparser.ComputedOnly || attr.Class == schemaparser.OptionalComputed {
+		if attr.Class == schemaparser.ComputedOnly {
+			return true
+		}
+		if attr.Class == schemaparser.OptionalComputed && !attr.HasDefault {
 			return true
 		}
 		// Recurse into deeper nested attrs.

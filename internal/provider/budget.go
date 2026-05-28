@@ -56,18 +56,11 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
 	}
-	if plan.Description.IsUnknown() {
-		plan.Description = resolved.Description
-	}
+
 	if plan.EndPeriod.IsUnknown() {
 		plan.EndPeriod = resolved.EndPeriod
 	}
-	if plan.GrowthPerPeriod.IsUnknown() {
-		plan.GrowthPerPeriod = resolved.GrowthPerPeriod
-	}
-	if plan.Metric.IsUnknown() {
-		plan.Metric = resolved.Metric
-	}
+
 	if plan.Name.IsUnknown() {
 		plan.Name = resolved.Name
 	}
@@ -82,9 +75,6 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	}
 	if plan.Type.IsUnknown() {
 		plan.Type = resolved.Type
-	}
-	if plan.UsePrevSpend.IsUnknown() {
-		plan.UsePrevSpend = resolved.UsePrevSpend
 	}
 
 	// ── List fields: resolve whole list when Unknown, overlay elements when Known ──
@@ -176,13 +166,7 @@ func overlayBudgetSlackChannel(_ context.Context, resolved, plan *resource_budge
 }
 
 func overlayBudgetScope(_ context.Context, resolved, plan *resource_budget.ScopesValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
 
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
 	}
