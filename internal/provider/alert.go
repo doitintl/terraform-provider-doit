@@ -109,21 +109,14 @@ func overlayAlertScope(_ context.Context, resolved, plan *resource_alert.ScopesV
 	if plan.CaseInsensitive.IsUnknown() {
 		plan.CaseInsensitive = resolved.CaseInsensitive
 	}
-	if plan.Id.IsUnknown() {
-		plan.Id = resolved.Id
-	}
+
 	if plan.IncludeNull.IsUnknown() {
 		plan.IncludeNull = resolved.IncludeNull
 	}
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
 	}
-	if plan.Mode.IsUnknown() {
-		plan.Mode = resolved.Mode
-	}
-	if plan.ScopesType.IsUnknown() {
-		plan.ScopesType = resolved.ScopesType
-	}
+
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}

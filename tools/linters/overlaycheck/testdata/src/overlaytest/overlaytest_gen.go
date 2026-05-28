@@ -162,8 +162,76 @@ type ConfigValue struct {
 func (c ConfigValue) IsUnknown() bool { return false }
 func (c ConfigValue) IsNull() bool    { return false }
 
+// ComputedOnlyNestedModel — tests that Computed-only nested objects don't require helpers.
+type ComputedOnlyNestedModel struct {
+	Id      types.String
+	Name    types.String
+	Summary SummaryValue
+}
+
+// SummaryValue is a Computed-only nested type.
+type SummaryValue struct {
+	Total types.Int64
+	Count types.Int64
+}
+
+func (s SummaryValue) IsUnknown() bool { return false }
+func (s SummaryValue) IsNull() bool    { return false }
+
+// ComputedOnlyNestedResourceSchema — Computed-only nested object (no helper needed).
+func ComputedOnlyNestedResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"summary": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"total": schema.Int64Attribute{
+						Computed: true,
+					},
+					"count": schema.Int64Attribute{
+						Computed: true,
+					},
+				},
+				Computed: true,
+			},
+		},
+	}
+}
+
 // RequiredNestedResourceSchema — Required nested object with Optional+Computed children.
 func RequiredNestedResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"config": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"mode": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+					"amount": schema.Float64Attribute{
+						Optional: true,
+						Computed: true,
+					},
+				},
+				Required: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+		},
+	}
+}
+
+// RequiredNestedInlineResourceSchema — same schema; tests inline handling (should be flagged).
+func RequiredNestedInlineResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -248,6 +316,243 @@ func DefaultResourceSchema(ctx context.Context) schema.Schema {
 				Optional: true,
 				Computed: true,
 				Default:  "root", // stringdefault.StaticString("root") in real code
+			},
+		},
+	}
+}
+
+// PrefixedTypeModel — tests the code-gen pattern where Go field names
+// are prefixed to avoid keyword collisions (e.g., DimensionsType → tfsdk:"type").
+type PrefixedTypeModel struct {
+	Id             types.String  `tfsdk:"id"`
+	Name           types.String  `tfsdk:"name"`
+	DimensionsType types.String  `tfsdk:"type"`
+	Amount         types.Float64 `tfsdk:"amount"`
+}
+
+// PrefixedTypeResourceSchema — the schema key is "type" but the Go field is DimensionsType.
+func PrefixedTypeResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"type": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"amount": schema.Float64Attribute{
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
+}
+
+// PrefixedTypeBadResourceSchema — same as PrefixedType; tests missing type field.
+func PrefixedTypeBadResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"type": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"amount": schema.Float64Attribute{
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
+}
+
+// NestedListModel — has a ListNestedAttribute with mixed nested fields.
+type NestedListModel struct {
+	Id     types.String
+	Name   types.String
+	Alerts types.List
+}
+
+// AlertsValue is the nested element type.
+type AlertsValue struct {
+	Percentage types.Float64
+	Triggered  types.Bool
+	Threshold  types.Float64
+}
+
+func (a AlertsValue) IsUnknown() bool { return false }
+func (a AlertsValue) IsNull() bool    { return false }
+
+// BadNestedMissingResourceSchema — same schema as NestedList; tests missing computed nested field.
+func BadNestedMissingResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"alerts": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"percentage": schema.Float64Attribute{
+							Optional: true,
+							Computed: true,
+						},
+						"triggered": schema.BoolAttribute{
+							Computed: true,
+						},
+						"threshold": schema.Float64Attribute{
+							Required: true,
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
+}
+
+// BadNestedUncondResourceSchema — same schema as NestedList; tests unconditional O+C nested field.
+func BadNestedUncondResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"alerts": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"percentage": schema.Float64Attribute{
+							Optional: true,
+							Computed: true,
+						},
+						"triggered": schema.BoolAttribute{
+							Computed: true,
+						},
+						"threshold": schema.Float64Attribute{
+							Required: true,
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
+}
+
+// NestedListResourceSchema — ListNestedAttribute with mixed nested fields.
+func NestedListResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"alerts": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"percentage": schema.Float64Attribute{
+							Optional: true,
+							Computed: true,
+						},
+						"triggered": schema.BoolAttribute{
+							Computed: true,
+						},
+						"threshold": schema.Float64Attribute{
+							Required: true,
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
+}
+
+// MultiLevelModel — has nested objects within nested objects.
+type MultiLevelModel struct {
+	Id    types.String
+	Name  types.String
+	Rules types.List
+}
+
+// RulesValue is the top-level nested element.
+type RulesValue struct {
+	Action     types.String
+	Components types.List
+}
+
+func (r RulesValue) IsUnknown() bool { return false }
+func (r RulesValue) IsNull() bool    { return false }
+
+// ComponentsValue is the deeply nested element.
+type ComponentsValue struct {
+	Key            types.String
+	CaseInsensitive types.Bool
+	Mode           types.String
+}
+
+func (c ComponentsValue) IsUnknown() bool { return false }
+func (c ComponentsValue) IsNull() bool    { return false }
+
+// MultiLevelResourceSchema — nested objects within nested objects.
+func MultiLevelResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"rules": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"action": schema.StringAttribute{
+							Optional: true,
+							Computed: true,
+						},
+						"components": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"key": schema.StringAttribute{
+										Required: true,
+									},
+									"case_insensitive": schema.BoolAttribute{
+										Optional: true,
+										Computed: true,
+									},
+									"mode": schema.StringAttribute{
+										Optional: true,
+										Computed: true,
+									},
+								},
+							},
+							Optional: true,
+							Computed: true,
+						},
+					},
+				},
+				Optional: true,
+				Computed: true,
 			},
 		},
 	}
