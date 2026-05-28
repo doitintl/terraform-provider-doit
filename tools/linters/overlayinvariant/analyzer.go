@@ -190,13 +190,20 @@ func needsOverlay(fn *ast.FuncDecl, facts *schemaparser.SchemaFacts, schemaMetho
 		return true // schema exists but not parsed, assume needed
 	}
 
-	// Check if any field is Computed-only or Optional+Computed.
-	for _, attr := range schemaInfo.Attrs {
+	return hasOverlayFields(schemaInfo.Attrs)
+}
+
+// hasOverlayFields recursively checks whether any attribute (at any nesting
+// level) is Computed-only or Optional+Computed, which would require an overlay.
+func hasOverlayFields(attrs map[string]*schemaparser.AttrInfo) bool {
+	for _, attr := range attrs {
 		if attr.Class == schemaparser.ComputedOnly || attr.Class == schemaparser.OptionalComputed {
 			return true
 		}
+		if attr.NestedAttrs != nil && hasOverlayFields(attr.NestedAttrs) {
+			return true
+		}
 	}
-
 	return false
 }
 

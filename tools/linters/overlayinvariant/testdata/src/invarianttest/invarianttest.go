@@ -166,3 +166,36 @@ func (r *inlineSchemaResource) Create(ctx context.Context, req createRequest, re
 	var plan myModel
 	resp.State.Set(ctx, &plan)
 }
+
+// --- BAD: Create without overlay when nested attrs have Optional+Computed ---
+// Even though no top-level field is Optional+Computed, the nested "config.mode"
+// is, so an overlay is required.
+
+type nestedOnlyOCResource struct{}
+
+func overlayNestedOnlyOCComputedFields(m *myModel) {}
+
+func (r *nestedOnlyOCResource) Schema(ctx context.Context, req schemaRequest, resp *schemaResponse) {
+	s := NestedOnlyOCResourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (r *nestedOnlyOCResource) Create(ctx context.Context, req createRequest, resp *createResponse) { // want "Create must call an overlay function"
+	var plan myModel
+	resp.State.Set(ctx, &plan)
+}
+
+// --- GOOD: Create with overlay when nested attrs have Optional+Computed ---
+
+type nestedOnlyOCGoodResource struct{}
+
+func (r *nestedOnlyOCGoodResource) Schema(ctx context.Context, req schemaRequest, resp *schemaResponse) {
+	s := NestedOnlyOCResourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (r *nestedOnlyOCGoodResource) Create(ctx context.Context, req createRequest, resp *createResponse) {
+	var plan myModel
+	overlayNestedOnlyOCComputedFields(&plan)
+	resp.State.Set(ctx, &plan)
+}

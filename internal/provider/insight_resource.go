@@ -224,9 +224,21 @@ func overlayInsightComputedFields(ctx context.Context, apiResp *models.InsightRe
 	}
 	if plan.DismissalDetails.IsUnknown() {
 		plan.DismissalDetails = resolved.DismissalDetails
+	} else if !plan.DismissalDetails.IsNull() {
+		overlayInsightDismissalDetails(&resolved.DismissalDetails, &plan.DismissalDetails)
 	}
 
 	return diags
+}
+
+// overlayInsightDismissalDetails resolves Unknown subfields in the "dismissal_details" SingleNestedAttribute.
+func overlayInsightDismissalDetails(resolved, plan *resource_insight.DismissalDetailsValue) {
+	if plan.Comment.IsUnknown() {
+		plan.Comment = resolved.Comment
+	}
+	if plan.Reason.IsUnknown() {
+		plan.Reason = resolved.Reason
+	}
 }
 
 func (r *insightResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

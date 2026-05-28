@@ -67,3 +67,24 @@ func AllRequiredResourceSchema(ctx context.Context) schema.Schema {
 		},
 	}
 }
+
+// NestedOnlyOCResourceSchema — Optional+Computed fields exist only inside a
+// nested object, not at the top level. The overlay should still be required.
+func NestedOnlyOCResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"config": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"mode": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+				},
+				Required: true,
+			},
+		},
+	}
+}
