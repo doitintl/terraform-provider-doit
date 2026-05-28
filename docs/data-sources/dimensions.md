@@ -76,7 +76,4 @@ Read-Only:
 
 - `id` (String) The identifier of the dimension.
 - `label` (String) The label of the dimension.
-- `type` (String) Enumeration of supported dimension/filter types.
-"allocation" is an alias for "attribution_group".
-"allocation_rule" is an alias for "attribution".
-"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.

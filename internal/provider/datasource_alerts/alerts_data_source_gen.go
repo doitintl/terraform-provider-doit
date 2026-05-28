@@ -34,8 +34,8 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"condition": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Condition key or expression used in alert configurations.",
-									MarkdownDescription: "Condition key or expression used in alert configurations.",
+									Description:         "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.",
+									MarkdownDescription: "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.",
 								},
 								"currency": schema.StringAttribute{
 									Computed:            true,
@@ -43,12 +43,14 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "Currency code for monetary values.",
 								},
 								"data_source": schema.StringAttribute{
-									Computed: true,
+									Computed:            true,
+									Description:         "Data source used to query data for the alert. Affects which dimensions and metrics are available.",
+									MarkdownDescription: "Data source used to query data for the alert. Affects which dimensions and metrics are available.",
 								},
 								"evaluate_for_each": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\".",
-									MarkdownDescription: "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\".",
+									Description:         "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.",
+									MarkdownDescription: "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.",
 								},
 								"metric": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -72,8 +74,8 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"operator": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Text/operator used to filter metric values in metric filters.",
-									MarkdownDescription: "Text/operator used to filter metric values in metric filters.",
+									Description:         "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).",
+									MarkdownDescription: "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).",
 								},
 								"scopes": schema.ListNestedAttribute{
 									NestedObject: schema.NestedAttributeObject{
@@ -85,34 +87,34 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											"id": schema.StringAttribute{
 												Computed:            true,
-												Description:         "The field to filter on",
-												MarkdownDescription: "The field to filter on",
+												Description:         "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.",
+												MarkdownDescription: "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.",
 											},
 											"include_null": schema.BoolAttribute{
 												Computed:            true,
-												Description:         "Include null value.",
-												MarkdownDescription: "Include null value.",
+												Description:         "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.",
+												MarkdownDescription: "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.",
 											},
 											"inverse": schema.BoolAttribute{
 												Computed:            true,
-												Description:         "Set to `true` to exclude the values.",
-												MarkdownDescription: "Set to `true` to exclude the values.",
+												Description:         "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.",
+												MarkdownDescription: "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.",
 											},
 											"mode": schema.StringAttribute{
 												Computed:            true,
-												Description:         "Filter mode to apply",
-												MarkdownDescription: "Filter mode to apply",
+												Description:         "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.",
+												MarkdownDescription: "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.",
 											},
 											"type": schema.StringAttribute{
 												Computed:            true,
-												Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
-												MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+												Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
+												MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
 											},
 											"values": schema.ListAttribute{
 												ElementType:         types.StringType,
 												Computed:            true,
-												Description:         "Values to filter on.",
-												MarkdownDescription: "Values to filter on.",
+												Description:         "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.",
+												MarkdownDescription: "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.",
 											},
 										},
 										CustomType: ScopesType{
@@ -122,16 +124,18 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									Computed:            true,
-									Description:         "The filters selected define the scope of the alert.",
-									MarkdownDescription: "The filters selected define the scope of the alert.",
+									Description:         "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
+									MarkdownDescription: "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
 								},
 								"time_interval": schema.StringAttribute{
 									Computed:            true,
-									Description:         "The time interval to evaluate the condition.",
-									MarkdownDescription: "The time interval to evaluate the condition.",
+									Description:         "The period each evaluation looks at.",
+									MarkdownDescription: "The period each evaluation looks at.",
 								},
 								"value": schema.Float64Attribute{
-									Computed: true,
+									Computed:            true,
+									Description:         "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.",
+									MarkdownDescription: "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.",
 								},
 							},
 							CustomType: ConfigType{

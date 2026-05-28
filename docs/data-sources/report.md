@@ -125,10 +125,7 @@ Read-Only:
 Read-Only:
 
 - `id` (String) The identifier of the dimension.
-- `type` (String) Enumeration of supported dimension/filter types.
-"allocation" is an alias for "attribution_group".
-"allocation_rule" is an alias for "attribution".
-"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 
 
 <a id="nestedatt--config--filters"></a>
@@ -137,15 +134,12 @@ Read-Only:
 Read-Only:
 
 - `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
-- `id` (String) The field to filter on
-- `include_null` (Boolean) Include null value.
-- `inverse` (Boolean) Set to `true` to exclude the values.
-- `mode` (String) Filter mode to apply
-- `type` (String) Enumeration of supported dimension/filter types.
-"allocation" is an alias for "attribution_group".
-"allocation_rule" is an alias for "attribution".
-"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
-- `values` (List of String) Values to filter on.
+- `id` (String) Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
+- `include_null` (Boolean) Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
+- `inverse` (Boolean) Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
+- `mode` (String) Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
+- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+- `values` (List of String) List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
 
 
 <a id="nestedatt--config--group"></a>
@@ -155,10 +149,7 @@ Read-Only:
 
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
-- `type` (String) Enumeration of supported dimension/filter types.
-"allocation" is an alias for "attribution_group".
-"allocation_rule" is an alias for "attribution".
-"attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
