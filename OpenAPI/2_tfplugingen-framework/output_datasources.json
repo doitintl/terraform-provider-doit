@@ -80,7 +80,7 @@
 									"name": "condition",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Condition key or expression used in alert configurations."
+										"description": "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`."
 									}
 								},
 								{
@@ -93,14 +93,15 @@
 								{
 									"name": "data_source",
 									"string": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available."
 									}
 								},
 								{
 									"name": "evaluate_for_each",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
 									}
 								},
 								{
@@ -129,7 +130,7 @@
 									"name": "operator",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Text/operator used to filter metric values in metric filters."
+										"description": "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than)."
 									}
 								},
 								{
@@ -149,35 +150,35 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "The field to filter on"
+														"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 													}
 												},
 												{
 													"name": "include_null",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Include null value."
+														"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Set to `true` to exclude the values."
+														"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Filter mode to apply"
+														"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 													}
 												},
 												{
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												},
 												{
@@ -187,25 +188,26 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 													}
 												}
 											]
 										},
-										"description": "The filters selected define the scope of the alert."
+										"description": "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert."
 									}
 								},
 								{
 									"name": "time_interval",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "The time interval to evaluate the condition."
+										"description": "The period each evaluation looks at."
 									}
 								},
 								{
 									"name": "value",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition."
 									}
 								}
 							],
@@ -344,7 +346,7 @@
 													"name": "condition",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Condition key or expression used in alert configurations."
+														"description": "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`."
 													}
 												},
 												{
@@ -357,14 +359,15 @@
 												{
 													"name": "data_source",
 													"string": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available."
 													}
 												},
 												{
 													"name": "evaluate_for_each",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+														"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
 													}
 												},
 												{
@@ -393,7 +396,7 @@
 													"name": "operator",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Text/operator used to filter metric values in metric filters."
+														"description": "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than)."
 													}
 												},
 												{
@@ -413,35 +416,35 @@
 																	"name": "id",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "The field to filter on"
+																		"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 																	}
 																},
 																{
 																	"name": "include_null",
 																	"bool": {
 																		"computed_optional_required": "computed",
-																		"description": "Include null value."
+																		"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 																	}
 																},
 																{
 																	"name": "inverse",
 																	"bool": {
 																		"computed_optional_required": "computed",
-																		"description": "Set to `true` to exclude the values."
+																		"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 																	}
 																},
 																{
 																	"name": "mode",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "Filter mode to apply"
+																		"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 																	}
 																},
 																{
 																	"name": "type",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+																		"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 																	}
 																},
 																{
@@ -451,25 +454,26 @@
 																		"element_type": {
 																			"string": {}
 																		},
-																		"description": "Values to filter on."
+																		"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 																	}
 																}
 															]
 														},
-														"description": "The filters selected define the scope of the alert."
+														"description": "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert."
 													}
 												},
 												{
 													"name": "time_interval",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "The time interval to evaluate the condition."
+														"description": "The period each evaluation looks at."
 													}
 												},
 												{
 													"name": "value",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition."
 													}
 												}
 											],
@@ -649,7 +653,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types for allocation components."
+														"description": "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types."
 													}
 												},
 												{
@@ -744,7 +748,7 @@
 														"name": "type",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Enumeration of supported dimension/filter types for allocation components."
+															"description": "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types."
 														}
 													},
 													{
@@ -2297,35 +2301,35 @@
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The field to filter on"
+											"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 										}
 									},
 									{
 										"name": "include_null",
 										"bool": {
 											"computed_optional_required": "computed",
-											"description": "Include null value."
+											"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 										}
 									},
 									{
 										"name": "inverse",
 										"bool": {
 											"computed_optional_required": "computed",
-											"description": "Set to `true` to exclude the values."
+											"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 										}
 									},
 									{
 										"name": "mode",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Filter mode to apply"
+											"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 										}
 									},
 									{
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+											"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 										}
 									},
 									{
@@ -2335,7 +2339,7 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "Values to filter on."
+											"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 										}
 									}
 								]
@@ -2542,35 +2546,35 @@
 														"name": "id",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "The field to filter on"
+															"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 														}
 													},
 													{
 														"name": "include_null",
 														"bool": {
 															"computed_optional_required": "computed",
-															"description": "Include null value."
+															"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 														}
 													},
 													{
 														"name": "inverse",
 														"bool": {
 															"computed_optional_required": "computed",
-															"description": "Set to `true` to exclude the values."
+															"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 														}
 													},
 													{
 														"name": "mode",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Filter mode to apply"
+															"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 														}
 													},
 													{
 														"name": "type",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+															"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 														}
 													},
 													{
@@ -2580,7 +2584,7 @@
 															"element_type": {
 																"string": {}
 															},
-															"description": "Values to filter on."
+															"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 														}
 													}
 												]
@@ -3498,7 +3502,7 @@
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+											"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 										}
 									}
 								]
@@ -5137,7 +5141,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												}
 											]
@@ -5169,35 +5173,35 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "The field to filter on"
+														"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 													}
 												},
 												{
 													"name": "include_null",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Include null value."
+														"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Set to `true` to exclude the values."
+														"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Filter mode to apply"
+														"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 													}
 												},
 												{
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												},
 												{
@@ -5207,7 +5211,7 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 													}
 												}
 											]
@@ -5278,7 +5282,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												}
 											]

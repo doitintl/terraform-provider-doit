@@ -114,8 +114,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
-									MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+									Description:         "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -232,8 +232,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"type": schema.StringAttribute{
 										Required:            true,
-										Description:         "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
-										MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+										Description:         "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+										MarkdownDescription: "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"datetime",

@@ -91,8 +91,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Enumeration of supported dimension/filter types for allocation components.",
-									MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.",
+									Description:         "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.",
+									MarkdownDescription: "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.",
 								},
 								"values": schema.ListAttribute{
 									ElementType:         types.StringType,
@@ -170,8 +170,8 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"type": schema.StringAttribute{
 										Computed:            true,
-										Description:         "Enumeration of supported dimension/filter types for allocation components.",
-										MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.",
+										Description:         "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.",
+										MarkdownDescription: "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.",
 									},
 									"values": schema.ListAttribute{
 										ElementType:         types.StringType,
