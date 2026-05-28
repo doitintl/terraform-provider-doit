@@ -101,18 +101,10 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 	if plan.IncludePromotionalCredits.IsUnknown() {
 		plan.IncludePromotionalCredits = resolved.IncludePromotionalCredits
 	}
-	if plan.IncludeSubtotals.IsUnknown() {
-		plan.IncludeSubtotals = resolved.IncludeSubtotals
-	}
 	if plan.Layout.IsUnknown() {
 		plan.Layout = resolved.Layout
 	}
-	if plan.SortDimensions.IsUnknown() {
-		plan.SortDimensions = resolved.SortDimensions
-	}
-	if plan.SortGroups.IsUnknown() {
-		plan.SortGroups = resolved.SortGroups
-	}
+
 	if plan.TimeInterval.IsUnknown() {
 		plan.TimeInterval = resolved.TimeInterval
 	}
@@ -351,13 +343,7 @@ func overlayDimension(_ context.Context, resolved, plan *resource_report.Dimensi
 }
 
 func overlayFilter(_ context.Context, resolved, plan *resource_report.FiltersValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
 
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
 	}

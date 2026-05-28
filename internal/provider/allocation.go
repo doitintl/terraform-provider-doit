@@ -63,7 +63,10 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	if plan.Rule.IsUnknown() {
 		plan.Rule = resolved.Rule
 	} else if !plan.Rule.IsNull() {
-		diags.Append(overlayAllocationRuleFields(ctx, &resolved.Rule, &plan.Rule)...)
+		// Components is the only Optional+Computed subfield; formula is Required.
+		if plan.Rule.Components.IsUnknown() {
+			plan.Rule.Components = resolved.Rule.Components
+		}
 	}
 
 	// ── Rules (list): resolve whole list when Unknown, overlay elements when Known ──
@@ -76,24 +79,11 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	return diags
 }
 
-// overlayAllocationRuleFields overlays the "components" subfield of the "rule"
-// SingleNestedAttribute. The only other subfield, "formula", is Required and
-// never Unknown at overlay time.
-func overlayAllocationRuleFields(ctx context.Context, resolved, plan *resource_allocation.RuleValue) diag.Diagnostics {
-	if plan.Components.IsUnknown() {
-		plan.Components = resolved.Components
-	} else if !plan.Components.IsNull() {
-		return overlayListElements(ctx, &resolved.Components, &plan.Components, overlayAllocationComponent)
-	}
-	return nil
-}
-
 // ── Allocation list element overlay helpers ──
 // Each helper resolves Unknown subfields from the resolved element.
 // Known values are never touched — the user's plan is the source of truth.
 
-func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
-
+func overlayAllocationRule(_ context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
 	if plan.Description.IsUnknown() {
 		plan.Description = resolved.Description
 	}
@@ -106,29 +96,9 @@ func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocat
 	if plan.Name.IsUnknown() {
 		plan.Name = resolved.Name
 	}
-	// Components: overlay subfields when the list is Known
 	if plan.Components.IsUnknown() {
 		plan.Components = resolved.Components
-	} else if !plan.Components.IsNull() {
-		return overlayListElements(ctx, &resolved.Components, &plan.Components, overlayAllocationComponent)
 	}
-	return nil
-}
-
-func overlayAllocationComponent(_ context.Context, resolved, plan *resource_allocation.ComponentsValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
-	if plan.Inverse.IsUnknown() {
-		plan.Inverse = resolved.Inverse
-	}
-	if plan.InverseSelection.IsUnknown() {
-		plan.InverseSelection = resolved.InverseSelection
-	}
-
 	return nil
 }
 

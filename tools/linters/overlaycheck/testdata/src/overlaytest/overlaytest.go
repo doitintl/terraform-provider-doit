@@ -224,6 +224,23 @@ func overlayDefaultComputedFields(apiResp *ApiResponse, plan *DefaultModel) {
 	// No IsUnknown() guard needed.
 }
 
+// --- BAD: Redundant IsUnknown() guard on field with schema Default ---
+
+func mapDefaultGuardToModel(apiResp *ApiResponse, m *DefaultGuardModel) {}
+
+func overlayDefaultGuardComputedFields(apiResp *ApiResponse, plan *DefaultGuardModel) {
+	resolved := *plan
+	mapDefaultGuardToModel(apiResp, &resolved)
+
+	// Computed-only: unconditional. ✓
+	plan.Id = resolved.Id
+
+	// folder_id has a Default — IsUnknown() guard is dead code.
+	if plan.FolderId.IsUnknown() {
+		plan.FolderId = resolved.FolderId // want `overlayDefaultGuardComputedFields: Optional\+Computed field "folder_id" has a schema Default and is never Unknown; remove the IsUnknown\(\) guard \(dead code\)`
+	}
+}
+
 // --- GOOD: Prefixed Go field name (DimensionsType → tfsdk:"type") ---
 // The code generator prefixes "type" with the parent struct name because
 // "type" is a Go keyword. The overlay correctly handles it via DimensionsType.

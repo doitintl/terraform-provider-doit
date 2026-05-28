@@ -82,9 +82,6 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 	if plan.Operator.IsUnknown() {
 		plan.Operator = resolved.Operator
 	}
-	if plan.TimeInterval.IsUnknown() {
-		plan.TimeInterval = resolved.TimeInterval
-	}
 
 	// ── Metric: Required nested — subfields are both Required, never Unknown ──
 	// Defensive: overlay if Unknown.
@@ -106,13 +103,7 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 
 // overlayAlertScope resolves Unknown subfields in alert scope elements.
 func overlayAlertScope(_ context.Context, resolved, plan *resource_alert.ScopesValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
 
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
 	}
