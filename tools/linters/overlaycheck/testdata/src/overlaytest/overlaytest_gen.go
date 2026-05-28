@@ -321,6 +321,32 @@ func DefaultResourceSchema(ctx context.Context) schema.Schema {
 	}
 }
 
+// DefaultGuardModel used to test BAD: redundant IsUnknown() guard on field with Default.
+type DefaultGuardModel struct {
+	Id       types.String
+	Name     types.String
+	FolderId types.String
+}
+
+// DefaultGuardResourceSchema — same as DefaultResourceSchema but used for the BAD test case.
+func DefaultGuardResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"folder_id": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  "root",
+			},
+		},
+	}
+}
+
 // PrefixedTypeModel — tests the code-gen pattern where Go field names
 // are prefixed to avoid keyword collisions (e.g., DimensionsType → tfsdk:"type").
 type PrefixedTypeModel struct {
