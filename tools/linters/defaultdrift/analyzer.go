@@ -1,20 +1,15 @@
-// Package listnullread flags types.ListNull() usage in Read-path mapping
-// functions (mapXxxToModel / populateState) for list attributes that are
-// Optional or Optional+Computed.
+// Package defaultdrift flags PointerValue usage on fields with schema defaults
+// in mapToModel/populateState functions. When a field has a Default (e.g.,
+// stringdefault.StaticString("cost")), using PointerValue maps nil → null,
+// which silently drifts against the default value causing perpetual plan changes.
 //
-// The overlay resolves unknown lists to
-// empty [], so the Read path must also return [] (not null) for empty/nil
-// API responses. Using ListNull() here causes state churn (null↔[] flip)
-// on every apply.
-//
-// This analyzer uses schemaparser to know which attributes are lists and
-// their classification. It scopes the check to the specific schema
-// associated with the mapping function's receiver type, preventing false
-// positives when the same attribute name has different classifications
-// across resource and data source schemas.
-package listnullread
+// This analyzer uses schemaparser to know which fields have defaults and their
+// values, and scopes the check to mapping functions via receiver type → schema
+// association (same pattern as listnullread).
+package defaultdrift
 
 import (
+	"fmt"
 	"go/ast"
 	"strings"
 
@@ -24,12 +19,18 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer is the go/analysis Analyzer for listnullread.
+// Analyzer is the go/analysis Analyzer for defaultdrift.
 var Analyzer = &analysis.Analyzer{
-	Name:     "listnullread",
-	Doc:      "Flags types.ListNull() in Read paths for Optional/Optional+Computed list attributes.",
+	Name:     "defaultdrift",
+	Doc:      "Flags PointerValue usage on fields with schema defaults in Read-path mapping functions.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer, schemaparser.Analyzer},
+}
+
+// defaultedField records a field with a schema default and its value.
+type defaultedField struct {
+	name         string // snake_case schema name
+	defaultValue any    // extracted default value (string, float64, bool, int64)
 }
 
 func run(pass *analysis.Pass) (any, error) {
@@ -42,27 +43,25 @@ func run(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Build per-schema maps of user-configurable list attributes.
-	perSchemaLists := map[string]map[string]bool{}
+	// Build per-schema maps of defaulted fields (including nested).
+	// Key: schema name, Value: map of snake_case field name → default value.
+	type fieldDefaults map[string]defaultedField
+	perSchemaDefaults := map[string]fieldDefaults{}
 	for schemaName, schemaInfo := range schemaResult.Schemas {
-		lists := map[string]bool{}
-		for fieldName, info := range schemaInfo.Attrs {
-			if info.IsList && (info.Class == schemaparser.Optional || info.Class == schemaparser.OptionalComputed) {
-				lists[fieldName] = true
-			}
-		}
-		if len(lists) > 0 {
-			perSchemaLists[schemaName] = lists
+		defaults := fieldDefaults{}
+		collectDefaultedFields(schemaInfo.Attrs, defaults, "")
+		if len(defaults) > 0 {
+			perSchemaDefaults[schemaName] = defaults
 		}
 	}
 
-	if len(perSchemaLists) == 0 {
+	if len(perSchemaDefaults) == 0 {
 		return nil, nil
 	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Step 1: Map receiver types to their schema names via Schema() methods.
+	// Step 1: Map receiver types → schema names via Schema() methods.
 	receiverToSchema := map[string]string{}
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
@@ -87,8 +86,7 @@ func run(pass *analysis.Pass) (any, error) {
 		receiverToSchema[recvType] = schemaName
 	})
 
-	// Step 2: Find mapping functions and check ListNull calls against
-	// the schema associated with the function's resource/data source type.
+	// Step 2: Find mapping functions and check PointerValue calls.
 	// Mapping functions may be methods (with a receiver) or free functions.
 	// For methods, we use the receiver type → schema mapping.
 	// For free functions, we look at the parameter types for a model type
@@ -119,14 +117,13 @@ func run(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		lists, ok := perSchemaLists[schemaName]
+		defaults, ok := perSchemaDefaults[schemaName]
 		if !ok {
 			return
 		}
 
-		// Find ListNull calls in the function body and check if they're
-		// assigned to user-configurable list fields for THIS schema.
-		findListNullAssignments(pass, fn.Body, lists)
+		// Find PointerValue assignments on defaulted fields.
+		findPointerValueAssignments(pass, fn, defaults)
 	})
 
 	return nil, nil
@@ -153,8 +150,10 @@ func resolveSchemaFromParams(fn *ast.FuncDecl, receiverToSchema map[string]strin
 		if strings.HasSuffix(typeName, "ResourceModel") {
 			resourceType = strings.TrimSuffix(typeName, "Model")
 		} else if strings.HasSuffix(typeName, "Model") {
+			// e.g., DriftTestModel → DriftTest → look for driftTestResource
 			base := strings.TrimSuffix(typeName, "Model")
 			resourceType = base + "Resource"
+			// Try lowercase first letter for private types.
 			if len(resourceType) > 0 {
 				resourceType = strings.ToLower(resourceType[:1]) + resourceType[1:]
 			}
@@ -179,6 +178,27 @@ func extractStarTypeName(expr ast.Expr) string {
 		return ident.Name
 	}
 	return ""
+}
+
+// collectDefaultedFields recursively collects fields with HasDefault into the map.
+// The prefix is used for nested attributes (e.g., "config." for config.enabled).
+// For the top level and for each nested level, field names are stored WITHOUT
+// the prefix so that they match the Go struct field names in assignments.
+func collectDefaultedFields(attrs map[string]*schemaparser.AttrInfo, out map[string]defaultedField, prefix string) {
+	for name, info := range attrs {
+		fullName := prefix + name
+		if info.HasDefault {
+			out[fullName] = defaultedField{
+				name:         fullName,
+				defaultValue: info.DefaultValue,
+			}
+		}
+		if info.NestedAttrs != nil {
+			// For nested attrs, also register the nested fields directly
+			// (without prefix) so they match in nested mapping functions.
+			collectDefaultedFields(info.NestedAttrs, out, "")
+		}
+	}
 }
 
 // isMappingFunction returns true if the function name matches the Read-path
@@ -213,18 +233,19 @@ func extractReceiverTypeName(fn *ast.FuncDecl) string {
 }
 
 // findSchemaCall finds the generated schema function call in a Schema() body.
-// Matches both resource and data source schema calls:
-//   - resource_xxx.XxxResourceSchema(ctx)
-//   - datasource_xxx.XxxDataSourceSchema(ctx)
 func findSchemaCall(fn *ast.FuncDecl) string {
-	for _, stmt := range fn.Body.List {
-		assign, ok := stmt.(*ast.AssignStmt)
+	var schemaName string
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		if schemaName != "" {
+			return false
+		}
+		assign, ok := n.(*ast.AssignStmt)
 		if !ok || len(assign.Rhs) != 1 {
-			continue
+			return true
 		}
 		call, ok := assign.Rhs[0].(*ast.CallExpr)
 		if !ok {
-			continue
+			return true
 		}
 		var name string
 		switch f := call.Fun.(type) {
@@ -233,36 +254,47 @@ func findSchemaCall(fn *ast.FuncDecl) string {
 		case *ast.Ident:
 			name = f.Name
 		default:
-			continue
+			return true
 		}
 		if strings.HasSuffix(name, "ResourceSchema") || strings.HasSuffix(name, "DataSourceSchema") {
-			return name
+			schemaName = name
 		}
-	}
-	return ""
+		return true
+	})
+	return schemaName
 }
 
-// findListNullAssignments finds assignments like:
+// pointerValueFuncs maps PointerValue function names to their type description.
+var pointerValueFuncs = map[string]bool{
+	"StringPointerValue":  true,
+	"Float64PointerValue": true,
+	"BoolPointerValue":    true,
+	"Int64PointerValue":   true,
+}
+
+// findPointerValueAssignments scans a function body for assignments like:
 //
-//	state.Scopes = types.ListNull(...)
+//	state.X = types.StringPointerValue(resp.X)
 //
-// and flags them if the field is a user-configurable list.
-func findListNullAssignments(pass *analysis.Pass, body *ast.BlockStmt, userConfigLists map[string]bool) {
-	ast.Inspect(body, func(n ast.Node) bool {
+// and flags them if X maps to a field with a schema default. Each finding is
+// reported at the assignment position to avoid golangci-lint --uniq-by-line
+// deduplication.
+func findPointerValueAssignments(pass *analysis.Pass, fn *ast.FuncDecl, defaults map[string]defaultedField) {
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
 		assign, ok := n.(*ast.AssignStmt)
 		if !ok {
 			return true
 		}
 
 		for i, rhs := range assign.Rhs {
-			if !isListNullCall(rhs) {
+			if !isPointerValueCall(rhs) {
 				continue
 			}
 			if i >= len(assign.Lhs) {
 				continue
 			}
 
-			// Check if the LHS is state.FieldName
+			// Check if the LHS is state.FieldName.
 			fieldName := extractFieldName(assign.Lhs[i])
 			if fieldName == "" {
 				continue
@@ -270,12 +302,10 @@ func findListNullAssignments(pass *analysis.Pass, body *ast.BlockStmt, userConfi
 
 			// Convert PascalCase to snake_case for schema lookup.
 			snakeName := toSnakeCase(fieldName)
-			if userConfigLists[snakeName] {
+			if df, ok := defaults[snakeName]; ok {
 				pass.Reportf(assign.Pos(),
-					"types.ListNull() used for Optional/Optional+Computed list field %q in Read path; "+
-						"use types.ListValueMust() with empty slice instead to avoid null↔[] state churn "+
-						"(use empty list for null/[] consistency)",
-					snakeName)
+					"PointerValue on field %q with schema default %v; use nil-fallback pattern",
+					snakeName, formatDefault(df.defaultValue))
 			}
 		}
 
@@ -283,8 +313,8 @@ func findListNullAssignments(pass *analysis.Pass, body *ast.BlockStmt, userConfi
 	})
 }
 
-// isListNullCall checks if an expression is types.ListNull(...).
-func isListNullCall(expr ast.Expr) bool {
+// isPointerValueCall checks if an expression is types.XxxPointerValue(...).
+func isPointerValueCall(expr ast.Expr) bool {
 	call, ok := expr.(*ast.CallExpr)
 	if !ok {
 		return false
@@ -293,10 +323,10 @@ func isListNullCall(expr ast.Expr) bool {
 	if !ok {
 		return false
 	}
-	if sel.Sel.Name != "ListNull" {
+	if !pointerValueFuncs[sel.Sel.Name] {
 		return false
 	}
-	// Verify it's the types package (or at least a package, not a method).
+	// Verify it's the types package.
 	if ident, ok := sel.X.(*ast.Ident); ok {
 		return ident.Name == "types"
 	}
@@ -309,7 +339,6 @@ func extractFieldName(expr ast.Expr) string {
 	if !ok {
 		return ""
 	}
-	// Verify it's a simple x.Field access.
 	if _, ok := sel.X.(*ast.Ident); !ok {
 		return ""
 	}
@@ -330,4 +359,26 @@ func toSnakeCase(s string) string {
 		}
 	}
 	return string(result)
+}
+
+// formatDefault formats a default value for display in diagnostics.
+func formatDefault(v any) string {
+	if v == nil {
+		return "<unknown>"
+	}
+	switch val := v.(type) {
+	case string:
+		return fmt.Sprintf("%q", val)
+	case bool:
+		return fmt.Sprintf("%t", val)
+	case float64:
+		if val == float64(int64(val)) {
+			return fmt.Sprintf("%g", val)
+		}
+		return fmt.Sprintf("%g", val)
+	case int64:
+		return fmt.Sprintf("%d", val)
+	default:
+		return fmt.Sprintf("%v", val)
+	}
 }

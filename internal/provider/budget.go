@@ -452,7 +452,11 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	}
 
 	state.Currency = types.StringValue(string(resp.Currency))
-	state.Description = types.StringPointerValue(resp.Description)
+	if resp.Description != nil {
+		state.Description = types.StringValue(*resp.Description)
+	} else {
+		state.Description = types.StringValue("")
+	}
 
 	if resp.EndPeriod != nil && *resp.EndPeriod > 0 {
 		state.EndPeriod = types.Int64PointerValue(resp.EndPeriod)
@@ -460,8 +464,16 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		state.EndPeriod = types.Int64Null()
 	}
 
-	state.GrowthPerPeriod = types.Float64PointerValue(resp.GrowthPerPeriod)
-	state.Metric = types.StringPointerValue(resp.Metric)
+	if resp.GrowthPerPeriod != nil {
+		state.GrowthPerPeriod = types.Float64Value(*resp.GrowthPerPeriod)
+	} else {
+		state.GrowthPerPeriod = types.Float64Value(0)
+	}
+	if resp.Metric != nil {
+		state.Metric = types.StringValue(*resp.Metric)
+	} else {
+		state.Metric = types.StringValue("cost")
+	}
 	state.Name = types.StringValue(resp.Name)
 
 	if resp.Public != nil && *resp.Public != "" {
@@ -643,7 +655,11 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	state.StartPeriod = types.Int64Value(resp.StartPeriod)
 	state.TimeInterval = types.StringValue(resp.TimeInterval)
 	state.Type = types.StringValue(resp.Type)
-	state.UsePrevSpend = types.BoolPointerValue(resp.UsePrevSpend)
+	if resp.UsePrevSpend != nil {
+		state.UsePrevSpend = types.BoolValue(*resp.UsePrevSpend)
+	} else {
+		state.UsePrevSpend = types.BoolValue(false)
+	}
 
 	// Populate read-only fields
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
