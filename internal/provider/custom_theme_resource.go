@@ -45,7 +45,7 @@ func (r *customThemeResource) Configure(_ context.Context, req resource.Configur
 	client, ok := req.ProviderData.(*models.ClientWithResponses)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *models.ClientWithResponses, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
@@ -250,9 +250,8 @@ func (r *customThemeResource) Update(ctx context.Context, req resource.UpdateReq
 	// All fields are Required in the schema, so they will always be present.
 	// We use pointers because UpdateCustomThemeRequest uses pointer types
 	// for PATCH semantics, but we always send all fields.
-	name := plan.Name.ValueString()
 	apiReq := models.UpdateCustomThemeRequest{
-		Name:         &name,
+		Name:         new(plan.Name.ValueString()),
 		PrimaryColor: hexColorPtr(plan.PrimaryColor),
 		Colors:       colorsPtr,
 	}

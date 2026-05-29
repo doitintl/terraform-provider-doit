@@ -142,6 +142,5 @@ func colorsFromPlanPtr(ctx context.Context, colors resource_custom_theme.ColorsV
 
 // hexColorPtr returns a pointer to a HexColor value, for use in Update requests.
 func hexColorPtr(v basetypes.StringValue) *models.HexColor {
-	hc := v.ValueString()
-	return &hc
+	return new(v.ValueString())
 }
