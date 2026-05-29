@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -13,8 +14,38 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
+// populateState fetches the custom theme from the API and populates the Terraform state.
+// On 404, state.Id is set to null to signal Terraform to remove the resource from state.
+func (r *customThemeResource) populateState(ctx context.Context, state *customThemeResourceModel) diag.Diagnostics {
+	themeResp, err := r.client.GetCustomThemeWithResponse(ctx, state.Id.ValueString())
+	if err != nil {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading Custom Theme", "Could not read custom theme ID "+state.Id.ValueString()+": "+err.Error()),
+		}
+	}
+
+	if themeResp.StatusCode() == 404 {
+		state.Id = types.StringNull()
+		return nil
+	}
+
+	if themeResp.StatusCode() != 200 {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading Custom Theme", fmt.Sprintf("Unexpected status code %d for custom theme ID %s: %s", themeResp.StatusCode(), state.Id.ValueString(), string(themeResp.Body))),
+		}
+	}
+
+	if themeResp.JSON200 == nil {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading Custom Theme", "Received empty response body for custom theme ID "+state.Id.ValueString()),
+		}
+	}
+
+	return mapCustomThemeToModel(ctx, themeResp.JSON200, state)
+}
+
 // mapCustomThemeToModel maps the API response to the Terraform model.
-// Used by Read and ImportState (and internally by the overlay as Phase 1).
+// Used by populateState (Read/ImportState) and as Phase 1 of overlay.
 func mapCustomThemeToModel(ctx context.Context, resp *models.CustomTheme, state *customThemeResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -71,6 +102,41 @@ func overlayCustomThemeComputedFields(ctx context.Context, apiResp *models.Custo
 	return diags
 }
 
+// toCreateRequest converts the TF model to a CreateCustomThemeRequest.
+func (plan *customThemeResourceModel) toCreateRequest(ctx context.Context) (models.CreateCustomThemeRequest, diag.Diagnostics) {
+	colors, diags := colorsFromPlan(ctx, plan.Colors)
+	if diags.HasError() {
+		return models.CreateCustomThemeRequest{}, diags
+	}
+
+	req := models.CreateCustomThemeRequest{
+		Name:         plan.Name.ValueString(),
+		PrimaryColor: plan.PrimaryColor.ValueString(),
+		Colors:       colors,
+	}
+
+	return req, diags
+}
+
+// toUpdateRequest converts the TF model to an UpdateCustomThemeRequest.
+// All fields are Required in the schema, so they will always be present.
+// We use pointers because UpdateCustomThemeRequest uses pointer types
+// for PATCH semantics, but we always send all fields.
+func (plan *customThemeResourceModel) toUpdateRequest(ctx context.Context) (models.UpdateCustomThemeRequest, diag.Diagnostics) {
+	colorsPtr, diags := colorsFromPlanPtr(ctx, plan.Colors)
+	if diags.HasError() {
+		return models.UpdateCustomThemeRequest{}, diags
+	}
+
+	req := models.UpdateCustomThemeRequest{
+		Name:         new(plan.Name.ValueString()),
+		PrimaryColor: hexColorPtr(plan.PrimaryColor),
+		Colors:       colorsPtr,
+	}
+
+	return req, diags
+}
+
 // colorsToModel converts an API ThemeColors response into the generated ColorsValue type.
 func colorsToModel(ctx context.Context, tc models.ThemeColors) (resource_custom_theme.ColorsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
@@ -124,10 +190,12 @@ func colorsFromPlan(ctx context.Context, colors resource_custom_theme.ColorsValu
 	darkHex := make([]models.HexColor, len(dark))
 	copy(darkHex, dark)
 
-	return models.ThemeColors{
+	tc := models.ThemeColors{
 		Light: lightHex,
 		Dark:  darkHex,
-	}, diags
+	}
+
+	return tc, diags
 }
 
 // colorsFromPlanPtr is like colorsFromPlan but returns a pointer for the

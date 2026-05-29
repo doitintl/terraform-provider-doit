@@ -3,11 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_custom_theme"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -62,6 +65,10 @@ func (r *customThemeResource) ImportState(ctx context.Context, req resource.Impo
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+// hexColorPattern is the regex from the OpenAPI HexColor type.
+// Accepts #RGB, #RRGGBB, or #RRGGBBAA.
+var hexColorPattern = regexp.MustCompile(`^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$`)
+
 func (r *customThemeResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_custom_theme.CustomThemeResourceSchema(ctx)
 
@@ -74,6 +81,25 @@ func (r *customThemeResource) Schema(ctx context.Context, _ resource.SchemaReque
 	if attr, ok := s.Attributes["create_time"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["create_time"] = attr
+	}
+
+	// Add hex color element validation to the colors.light and colors.dark
+	// lists. The codegen validates list size but not element format; the
+	// OpenAPI spec defines HexColor with a pattern that we replicate here.
+	if colorsAttr, ok := s.Attributes["colors"].(schema.SingleNestedAttribute); ok {
+		hexElementValidator := listvalidator.ValueStringsAre(
+			stringvalidator.RegexMatches(hexColorPattern, "must be a hex color (#RGB, #RRGGBB, or #RRGGBBAA)"),
+		)
+
+		if dark, ok := colorsAttr.Attributes["dark"].(schema.ListAttribute); ok {
+			dark.Validators = append(dark.Validators, hexElementValidator)
+			colorsAttr.Attributes["dark"] = dark
+		}
+		if light, ok := colorsAttr.Attributes["light"].(schema.ListAttribute); ok {
+			light.Validators = append(light.Validators, hexElementValidator)
+			colorsAttr.Attributes["light"] = light
+		}
+		s.Attributes["colors"] = colorsAttr
 	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
@@ -103,18 +129,11 @@ func (r *customThemeResource) Create(ctx context.Context, req resource.CreateReq
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	// Build colors from plan
-	colors, colorsDiags := colorsFromPlan(ctx, plan.Colors)
-	resp.Diagnostics.Append(colorsDiags...)
+	// Convert model to API request type
+	apiReq, reqDiags := plan.toCreateRequest(ctx)
+	resp.Diagnostics.Append(reqDiags...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	// Convert model to API request type
-	apiReq := models.CreateCustomThemeRequest{
-		Name:         plan.Name.ValueString(),
-		PrimaryColor: plan.PrimaryColor.ValueString(),
-		Colors:       colors,
 	}
 
 	// Create new custom theme via API
@@ -171,42 +190,14 @@ func (r *customThemeResource) Read(ctx context.Context, req resource.ReadRequest
 	defer cancel()
 
 	// Get refreshed custom theme from API
-	themeResp, err := r.client.GetCustomThemeWithResponse(ctx, state.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Custom Theme",
-			"Could not read custom theme ID "+state.Id.ValueString()+": "+err.Error(),
-		)
-		return
-	}
-
-	// Handle externally deleted resource - remove from state
-	if themeResp.StatusCode() == 404 {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	// Check for successful response
-	if themeResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading Custom Theme",
-			fmt.Sprintf("Unexpected status code %d for custom theme ID %s: %s", themeResp.StatusCode(), state.Id.ValueString(), string(themeResp.Body)),
-		)
-		return
-	}
-
-	if themeResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Custom Theme",
-			"Received empty response body for custom theme ID "+state.Id.ValueString(),
-		)
-		return
-	}
-
-	// Map response to state
-	mapDiags := mapCustomThemeToModel(ctx, themeResp.JSON200, &state)
-	resp.Diagnostics.Append(mapDiags...)
+	resp.Diagnostics.Append(r.populateState(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Handle externally deleted resource
+	if state.Id.IsNull() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -239,21 +230,11 @@ func (r *customThemeResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	themeID := state.Id.ValueString()
 
-	// Build colors from plan
-	colorsPtr, colorsDiags := colorsFromPlanPtr(ctx, plan.Colors)
-	resp.Diagnostics.Append(colorsDiags...)
+	// Convert model to API request type
+	apiReq, reqDiags := plan.toUpdateRequest(ctx)
+	resp.Diagnostics.Append(reqDiags...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	// Convert model to API request type.
-	// All fields are Required in the schema, so they will always be present.
-	// We use pointers because UpdateCustomThemeRequest uses pointer types
-	// for PATCH semantics, but we always send all fields.
-	apiReq := models.UpdateCustomThemeRequest{
-		Name:         new(plan.Name.ValueString()),
-		PrimaryColor: hexColorPtr(plan.PrimaryColor),
-		Colors:       colorsPtr,
 	}
 
 	// Update custom theme via API
