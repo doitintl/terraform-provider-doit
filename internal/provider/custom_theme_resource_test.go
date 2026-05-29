@@ -183,6 +183,7 @@ func TestAccCustomTheme_InvalidColor(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
+			// Invalid primary_color
 			{
 				Config: fmt.Sprintf(`
 resource "doit_custom_theme" "invalid" {
@@ -196,6 +197,21 @@ resource "doit_custom_theme" "invalid" {
 }
 `, rName),
 				ExpectError: regexp.MustCompile(`value must match regular expression`),
+			},
+			// Valid primary_color but invalid hex in colors.dark
+			{
+				Config: fmt.Sprintf(`
+resource "doit_custom_theme" "invalid" {
+  name          = %q
+  primary_color = "#FF0000"
+
+  colors = {
+    light = ["#FF0000"]
+    dark  = ["not-a-hex"]
+  }
+}
+`, rName),
+				ExpectError: regexp.MustCompile(`must be a hex color`),
 			},
 		},
 	})
