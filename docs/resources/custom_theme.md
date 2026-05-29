@@ -3,12 +3,12 @@
 page_title: "doit_custom_theme Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
-
+  Manages a custom color theme for Cloud Analytics reports. Custom themes define light and dark mode color palettes that can be applied to reports.
 ---
 
 # doit_custom_theme (Resource)
 
-
+Manages a custom color theme for Cloud Analytics reports. Custom themes define light and dark mode color palettes that can be applied to reports.
 
 ## Example Usage
 
@@ -69,29 +69,5 @@ Import is supported using the following syntax:
 The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
-terraform {
-  required_providers {
-    doit = {
-      source = "registry.terraform.io/doitintl/doit"
-    }
-  }
-}
-
-provider "doit" {}
-
-# Import an existing custom theme by ID
-import {
-  to = doit_custom_theme.existing
-  id = "theme-abc123"
-}
-
-resource "doit_custom_theme" "existing" {
-  name          = "Imported Theme"
-  primary_color = "#FF5722"
-
-  colors = {
-    light = ["#FF5722", "#FF9800", "#FFC107"]
-    dark  = ["#FF8A65", "#FFB74D", "#FFD54F"]
-  }
-}
+terraform import doit_custom_theme.example [id]
 ```

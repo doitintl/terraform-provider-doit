@@ -102,6 +102,10 @@ func (r *customThemeResource) Schema(ctx context.Context, _ resource.SchemaReque
 		s.Attributes["colors"] = colorsAttr
 	}
 
+	s.Description = "Manages a custom color theme for Cloud Analytics reports. " +
+		"Custom themes define light and dark mode color palettes that can be applied to reports."
+	s.MarkdownDescription = s.Description
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
