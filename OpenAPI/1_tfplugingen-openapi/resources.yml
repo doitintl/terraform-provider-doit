@@ -53,6 +53,16 @@ resources:
     delete:
       path: /analytics/v1/settings/themes/{id}
       method: DELETE
+  active_theme:
+    create:
+      path: /analytics/v1/settings/active-theme
+      method: PUT
+    read:
+      path: /analytics/v1/settings/active-theme
+      method: GET
+    update:
+      path: /analytics/v1/settings/active-theme
+      method: PUT
   budget:
     create:
       path: /analytics/v1/budgets

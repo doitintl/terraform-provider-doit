@@ -317,5 +317,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewSharingResource,
 		NewUserResource,
 		NewCustomThemeResource,
+		NewActiveThemeResource,
 	}
 }

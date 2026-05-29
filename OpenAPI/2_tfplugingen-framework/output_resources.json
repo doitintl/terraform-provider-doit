@@ -4,6 +4,23 @@
 	},
 	"resources": [
 		{
+			"name": "active_theme",
+			"schema": {
+				"attributes": [
+					{
+						"name": "theme_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "default"
+							},
+							"description": "Identifier of the theme to activate. Send the reserved sentinel\n`\"default\"` to clear the active theme and fall back to the built-in\ndefault."
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "alert",
 			"schema": {
 				"attributes": [
