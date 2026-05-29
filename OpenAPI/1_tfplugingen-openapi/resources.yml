@@ -40,6 +40,19 @@ resources:
     delete:
       path: /analytics/v1/folders/{id}
       method: DELETE
+  custom_theme:
+    create:
+      path: /analytics/v1/settings/themes
+      method: POST
+    read:
+      path: /analytics/v1/settings/themes/{id}
+      method: GET
+    update:
+      path: /analytics/v1/settings/themes/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/settings/themes/{id}
+      method: DELETE
   budget:
     create:
       path: /analytics/v1/budgets
