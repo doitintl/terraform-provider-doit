@@ -876,6 +876,25 @@ paths:
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
   "/analytics/v1/settings/themes":
+    get:
+      tags:
+        - Settings
+      summary: List custom themes
+      description: Returns the list of custom color themes defined for your account.
+      operationId: listCustomThemes
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCustomThemes200Response'
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
     post:
       tags:
         - Settings
@@ -6119,6 +6138,16 @@ components:
           type: integer
           description: Budgets rows count
           format: int64
+    ListCustomThemes200Response:
+      type: object
+      properties:
+        rowCount:
+          type: integer
+          description: Total number of custom themes in the result set.
+        themes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomTheme"
     ListDatahubDatasets200Response:
       type: object
       properties:
