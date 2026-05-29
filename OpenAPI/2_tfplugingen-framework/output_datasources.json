@@ -3255,6 +3255,165 @@
 			}
 		},
 		{
+			"name": "custom_theme",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Custom theme ID"
+						}
+					},
+					{
+						"name": "colors",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "dark",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Colors used when the report is displayed in dark mode."
+									}
+								},
+								{
+									"name": "light",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Colors used when the report is displayed in light mode."
+									}
+								}
+							],
+							"description": "Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors."
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The creation time of the custom theme."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The display name of the custom theme."
+						}
+					},
+					{
+						"name": "primary_color",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the custom theme was last updated."
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "custom_themes",
+			"schema": {
+				"attributes": [
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of custom themes in the result set."
+						}
+					},
+					{
+						"name": "themes",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "colors",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "dark",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Colors used when the report is displayed in dark mode."
+													}
+												},
+												{
+													"name": "light",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Colors used when the report is displayed in light mode."
+													}
+												}
+											],
+											"description": "Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors."
+										}
+									},
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The creation time of the custom theme."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique identifier of the custom theme."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The display name of the custom theme."
+										}
+									},
+									{
+										"name": "primary_color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`."
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the custom theme was last updated."
+										}
+									}
+								]
+							}
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [

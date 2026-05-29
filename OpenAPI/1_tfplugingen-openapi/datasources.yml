@@ -77,7 +77,15 @@ data_sources:
     read:
       path: /iam/v1/users
       method: GET
+  custom_theme:
+    read:
+      path: /analytics/v1/settings/themes/{id}
+      method: GET
   # List data sources
+  custom_themes:
+    read:
+      path: /analytics/v1/settings/themes
+      method: GET
   budgets:
     read:
       path: /analytics/v1/budgets

@@ -4594,6 +4594,13 @@ type ListBudgets200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ListCustomThemes200Response defines model for ListCustomThemes200Response.
+type ListCustomThemes200Response struct {
+	// RowCount Total number of custom themes in the result set.
+	RowCount *int           `json:"rowCount,omitempty"`
+	Themes   *[]CustomTheme `json:"themes,omitempty"`
+}
+
 // ListDatahubDatasets200Response defines model for ListDatahubDatasets200Response.
 type ListDatahubDatasets200Response struct {
 	Datasets *[]ListDatahubDatasets200ResponseDatasetsItem `json:"datasets,omitempty"`
@@ -6433,6 +6440,9 @@ type ClientInterface interface {
 	// GetReportConfig request
 	GetReportConfig(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListCustomThemes request
+	ListCustomThemes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateCustomThemeWithBody request with any body
 	CreateCustomThemeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -7279,6 +7289,18 @@ func (c *Client) UpdateReport(ctx context.Context, id ReportId, body UpdateRepor
 
 func (c *Client) GetReportConfig(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetReportConfigRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCustomThemes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCustomThemesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -10190,6 +10212,33 @@ func NewGetReportConfigRequest(server string, id ReportId) (*http.Request, error
 	return req, nil
 }
 
+// NewListCustomThemesRequest generates requests for ListCustomThemes
+func NewListCustomThemesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateCustomThemeRequest calls the generic CreateCustomTheme builder with application/json body
 func NewCreateCustomThemeRequest(server string, body CreateCustomThemeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -12478,6 +12527,9 @@ type ClientWithResponsesInterface interface {
 	// GetReportConfigWithResponse request
 	GetReportConfigWithResponse(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*GetReportConfigResp, error)
 
+	// ListCustomThemesWithResponse request
+	ListCustomThemesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCustomThemesResp, error)
+
 	// CreateCustomThemeWithBodyWithResponse request with any body
 	CreateCustomThemeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error)
 
@@ -14080,6 +14132,39 @@ func (r GetReportConfigResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetReportConfigResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListCustomThemesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListCustomThemes200Response
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCustomThemesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCustomThemesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCustomThemesResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -15991,6 +16076,15 @@ func (c *ClientWithResponses) GetReportConfigWithResponse(ctx context.Context, i
 		return nil, err
 	}
 	return ParseGetReportConfigResp(rsp)
+}
+
+// ListCustomThemesWithResponse request returning *ListCustomThemesResp
+func (c *ClientWithResponses) ListCustomThemesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCustomThemesResp, error) {
+	rsp, err := c.ListCustomThemes(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCustomThemesResp(rsp)
 }
 
 // CreateCustomThemeWithBodyWithResponse request with arbitrary body returning *CreateCustomThemeResp
@@ -18760,6 +18854,53 @@ func ParseGetReportConfigResp(rsp *http.Response) (*GetReportConfigResp, error) 
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCustomThemesResp parses an HTTP response from a ListCustomThemesWithResponse call
+func ParseListCustomThemesResp(rsp *http.Response) (*ListCustomThemesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCustomThemesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListCustomThemes200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 

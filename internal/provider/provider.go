@@ -270,6 +270,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewDatahubDatasetDataSource,
 		NewAvaDataSource,
 		NewInsightDataSource,
+		NewCustomThemeDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
@@ -289,6 +290,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewOrganizationsDataSource,
 		NewDatahubDatasetsDataSource,
 		NewFoldersDataSource,
+		NewCustomThemesDataSource,
 		NewCloudDiagramsDataSource,
 		NewSharingDataSource,
 		NewInsightsDataSource,
