@@ -141,6 +141,7 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 	for _, p := range ctrPaths {
 		var ctr resource_report.CustomTimeRangeValue
 		diags := req.Config.GetAttribute(ctx, p, &ctr)
+		resp.Diagnostics.Append(diags...)
 		if diags.HasError() || ctr.IsNull() || ctr.IsUnknown() {
 			continue
 		}

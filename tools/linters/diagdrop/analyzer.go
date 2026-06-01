@@ -1,6 +1,8 @@
-// Package diagdrop detects leaked diagnostics: functions that capture
-// diag.Diagnostics into a named variable but return nil on some paths,
-// silently dropping non-error diagnostics (e.g. warnings).
+// Package diagdrop detects leaked diagnostics in two directions:
+//
+// Direction 1 (return nil): functions that capture diag.Diagnostics into a
+// named variable but return nil on some paths, silently dropping non-error
+// diagnostics (e.g. warnings).
 //
 // Bad:
 //
@@ -23,6 +25,26 @@
 //
 // Early-return nil guards that precede any diag variable assignment are also
 // excluded (e.g. `if x == nil { return NullValue(), nil }`).
+//
+// Direction 2 (unappended diags): in functions that take a resp parameter with
+// a Diagnostics field (CRUD methods, validators), captured diag.Diagnostics
+// variables that are never appended to resp.Diagnostics or passed to another
+// function are flagged.
+//
+// Bad:
+//
+//	func (v myValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+//	    diags := req.Config.GetAttribute(ctx, p, &val)
+//	    if diags.HasError() { return }  // ← diags never appended to resp.Diagnostics
+//	}
+//
+// Good:
+//
+//	func (v myValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+//	    diags := req.Config.GetAttribute(ctx, p, &val)
+//	    resp.Diagnostics.Append(diags...)  // ← properly propagated
+//	    if diags.HasError() { return }
+//	}
 package diagdrop
 
 import (
@@ -61,11 +83,15 @@ func run(pass *analysis.Pass) (any, error) {
 		switch fn := n.(type) {
 		case *ast.FuncDecl:
 			if fn.Body != nil && fn.Type != nil {
+				// Direction 1: return nil drops captured diags.
 				checkFunc(pass, fn.Type, fn.Body)
+				// Direction 2: captured diags never appended to resp.Diagnostics.
+				checkUnappendedDiags(pass, fn.Type, fn.Body)
 			}
 		case *ast.FuncLit:
 			if fn.Body != nil && fn.Type != nil {
 				checkFunc(pass, fn.Type, fn.Body)
+				checkUnappendedDiags(pass, fn.Type, fn.Body)
 			}
 		}
 	})
@@ -301,4 +327,124 @@ func isDiagnosticsType(t types.Type) bool {
 		return false
 	}
 	return obj.Pkg().Path()+"."+obj.Name() == diagType
+}
+
+// --- Direction 2: unappended diagnostics ---
+
+// checkUnappendedDiags flags captured diag.Diagnostics variables that are never
+// appended to resp.Diagnostics (or passed to another function) in functions
+// that take a resp parameter with a Diagnostics field.
+func checkUnappendedDiags(pass *analysis.Pass, funcType *ast.FuncType, body *ast.BlockStmt) {
+	// Only applies to functions with a resp-style parameter.
+	if !hasRespDiagnosticsParam(pass, funcType) {
+		return
+	}
+
+	// Collect all captured diag.Diagnostics variables in the body.
+	allVars := collectDiagVars(pass, funcType, body)
+	if len(allVars) == 0 {
+		return
+	}
+
+	// Find which variable objects are propagated (appended, passed, or returned).
+	// Uses types.Object identity, not names, to handle same-name variables in
+	// different scopes (e.g., two loops both declaring diags := ...).
+	propagated := collectPropagatedObjects(pass, body)
+
+	// Flag variables that are captured but never propagated.
+	for _, v := range allVars {
+		// Skip named return params — they are implicitly returned.
+		if v.isAccumulator && v.pos == 0 {
+			continue
+		}
+		if v.obj != nil && propagated[v.obj] {
+			continue
+		}
+		pass.Reportf(v.pos,
+			"captured diag.Diagnostics variable %q is never appended to resp.Diagnostics",
+			v.name)
+	}
+}
+
+// hasRespDiagnosticsParam checks if a function has a parameter whose underlying
+// type contains a Diagnostics field of type diag.Diagnostics. This matches
+// resource.CreateResponse, resource.ValidateConfigResponse, etc.
+func hasRespDiagnosticsParam(pass *analysis.Pass, funcType *ast.FuncType) bool {
+	if funcType.Params == nil {
+		return false
+	}
+	for _, field := range funcType.Params.List {
+		typ := pass.TypesInfo.TypeOf(field.Type)
+		if typ == nil {
+			continue
+		}
+		// Unwrap pointer.
+		if ptr, ok := typ.(*types.Pointer); ok {
+			typ = ptr.Elem()
+		}
+		// Check if the struct has a Diagnostics field of type diag.Diagnostics.
+		st, ok := typ.Underlying().(*types.Struct)
+		if !ok {
+			continue
+		}
+		for i := 0; i < st.NumFields(); i++ {
+			f := st.Field(i)
+			if f.Name() == "Diagnostics" && isDiagnosticsType(f.Type()) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// collectPropagatedObjects walks a function body and returns the set of
+// types.Object identities that are propagated via:
+//   - *.Append(varName...) calls
+//   - someFunc(varName) or someFunc(varName...) calls (passed as argument)
+//   - return statements that include the variable
+//
+// Using types.Object instead of names ensures that same-name variables in
+// different scopes (e.g., loop iterations) are tracked independently.
+func collectPropagatedObjects(pass *analysis.Pass, body *ast.BlockStmt) map[types.Object]bool {
+	result := map[types.Object]bool{}
+
+	ast.Inspect(body, func(n ast.Node) bool {
+		// Skip nested function literals.
+		if _, ok := n.(*ast.FuncLit); ok {
+			return false
+		}
+
+		switch node := n.(type) {
+		case *ast.CallExpr:
+			// Check all arguments (covers both Append and general function calls).
+			for _, arg := range node.Args {
+				if ident, ok := arg.(*ast.Ident); ok {
+					if obj := resolveObject(pass, ident); obj != nil {
+						result[obj] = true
+					}
+				}
+			}
+
+		case *ast.ReturnStmt:
+			for _, expr := range node.Results {
+				if ident, ok := expr.(*ast.Ident); ok {
+					if obj := resolveObject(pass, ident); obj != nil {
+						result[obj] = true
+					}
+				}
+			}
+		}
+
+		return true
+	})
+
+	return result
+}
+
+// resolveObject returns the types.Object for an identifier, preferring Uses over Defs.
+func resolveObject(pass *analysis.Pass, ident *ast.Ident) types.Object {
+	if obj := pass.TypesInfo.Uses[ident]; obj != nil {
+		return obj
+	}
+	return pass.TypesInfo.Defs[ident]
 }

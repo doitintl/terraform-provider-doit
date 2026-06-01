@@ -1,7 +1,10 @@
 package diagdroptest
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
 // Stub helpers to simulate Terraform framework calls.
@@ -208,4 +211,108 @@ func goodInnerBlockScope() diag.Diagnostics {
 		}
 	}
 	return nil // Should NOT be flagged
+}
+
+// ============================================================================
+// Direction 2: unappended diagnostics in resp-parameter functions
+// ============================================================================
+
+// Stub to simulate GetAttribute returning diags.
+func getAttribute() diag.Diagnostics {
+	return nil
+}
+
+// Stub to simulate a helper that propagates diags.
+func propagateHelper(d diag.Diagnostics) {}
+
+type myValidator struct{}
+
+// --- BAD: captured diags never appended ---
+
+// badUnappendedDiags captures diags but only uses HasError(), never appends.
+func (v *myValidator) ValidateResource(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	diags := getAttribute() // want `captured diag.Diagnostics variable "diags" is never appended to resp.Diagnostics`
+	if diags.HasError() {
+		return
+	}
+	_ = "do something"
+}
+
+// badUnappendedDiagsInLoop captures diags in a loop without appending.
+func badUnappendedDiagsInLoop(_ resource.CreateRequest, resp *resource.CreateResponse) {
+	paths := []string{"a", "b"}
+	for range paths {
+		diags := getAttribute() // want `captured diag.Diagnostics variable "diags" is never appended to resp.Diagnostics`
+		if diags.HasError() {
+			continue
+		}
+	}
+}
+
+// --- GOOD: diags properly appended ---
+
+// goodAppendedDiags appends diags before checking.
+func goodAppendedDiags(_ resource.ReadRequest, resp *resource.ReadResponse) {
+	diags := getAttribute()
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+}
+
+// goodDiagsPassedToHelper passes diags to another function.
+func goodDiagsPassedToHelper(_ resource.UpdateRequest, resp *resource.UpdateResponse) {
+	diags := getAttribute()
+	propagateHelper(diags)
+	if diags.HasError() {
+		return
+	}
+	_ = resp
+}
+
+// goodDiagsReturned is a function that also returns diags (direction 1 territory).
+func goodDiagsReturned(_ resource.DeleteRequest, _ *resource.DeleteResponse) diag.Diagnostics {
+	diags := getAttribute()
+	if diags.HasError() {
+		return diags
+	}
+	return diags
+}
+
+// goodNoCapture has a resp parameter but never captures diags.
+func goodNoCapture(_ resource.CreateRequest, resp *resource.CreateResponse) {
+	resp.Diagnostics.Append(diag.Diagnostics{}...)
+}
+
+// badMixedLoopsSameName has two loops using the same variable name "diags".
+// Loop 1 does NOT append, loop 2 DOES append. Object-based tracking ensures
+// only loop 1's capture is flagged despite the shared name.
+func badMixedLoopsSameName(_ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	paths1 := []string{"a", "b"}
+	for range paths1 {
+		diags := getAttribute() // want `captured diag.Diagnostics variable "diags" is never appended to resp.Diagnostics`
+		if diags.HasError() {
+			continue
+		}
+	}
+
+	paths2 := []string{"c", "d"}
+	for range paths2 {
+		diags := getAttribute()
+		resp.Diagnostics.Append(diags...)
+		if diags.HasError() {
+			continue
+		}
+	}
+}
+
+// --- Scope guard: Direction 2 should NOT fire for non-resp functions ---
+
+// goodNotRespFunction captures diags but has no resp parameter — only Direction 1 applies.
+func goodNotRespFunction() diag.Diagnostics {
+	diags := getAttribute()
+	if diags.HasError() {
+		return diags
+	}
+	return nil // want "return nil drops captured diag.Diagnostics variable \"diags\"; return diags instead"
 }
