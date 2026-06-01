@@ -1526,7 +1526,9 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			"data_label_font_size": types.StringNull(),
 			"decimal_precision":    types.Int64Null(),
 			"number_scale":         types.StringNull(),
-			"theme_id":             types.StringNull(),
+			// Defend against API returning nil: fall back to "default" to match
+			// the schema default and prevent perpetual plan drift.
+			"theme_id": types.StringValue("default"),
 		}
 		if config.DisplaySettings.AxisLabelFontSize != nil {
 			dsMap["axis_label_font_size"] = types.StringValue(string(*config.DisplaySettings.AxisLabelFontSize))
