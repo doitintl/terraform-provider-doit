@@ -1033,6 +1033,58 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  "/analytics/v1/settings/active-theme":
+    get:
+      tags:
+        - Settings
+      summary: Get the active theme
+      description: |-
+        Returns the theme currently active for the authenticated user.
+        `themeId` is the reserved sentinel `"default"` when no custom or
+        preset theme is selected and the user is on the built-in default.
+      operationId: getActiveTheme
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveTheme"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+    put:
+      tags:
+        - Settings
+      summary: Set the active theme
+      description: |-
+        Sets the theme active for the authenticated user. Send the reserved
+        sentinel `themeId: "default"` to clear the active theme and fall back
+        to the built-in default. Returns the updated active theme.
+      operationId: setActiveTheme
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetActiveThemeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK - Active theme updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveTheme"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
   /analytics/v1/budgets:
     get:
       tags:
@@ -3213,6 +3265,19 @@ components:
           type: string
         calendlyLink:
           type: string
+    ActiveTheme:
+      type: object
+      required:
+        - themeId
+      description: The theme currently active for the authenticated user.
+      properties:
+        themeId:
+          type: string
+          default: "default"
+          description: |-
+            Identifier of the active theme. The reserved sentinel `"default"` is
+            returned when the user is using the built-in default (no custom or
+            preset theme stored).
     AdvancedAnalysis:
       type: object
       description: Advanced analysis options. Each can be set independently.
@@ -6798,6 +6863,19 @@ components:
           type: integer
           description: The number of committed seats. Applies to annual commitment plans.
           format: int64
+    SetActiveThemeRequest:
+      type: object
+      required:
+        - themeId
+      description: Request body for setting the active custom or preset theme for the authenticated user.
+      properties:
+        themeId:
+          type: string
+          default: "default"
+          description: |-
+            Identifier of the theme to activate. Send the reserved sentinel
+            `"default"` to clear the active theme and fall back to the built-in
+            default.
     SlackChannel:
       type: object
       description: Information of a Slack channel for notifications.
