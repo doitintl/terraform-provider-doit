@@ -62,7 +62,7 @@ data "doit_active_theme" "test" {
 }
 
 func TestAccActiveThemeDataSource_Default(t *testing.T) {
-	// Read without setting an active theme — should return "default".
+	// Explicitly reset to built-in default, then verify the data source reads "default".
 	// Singleton resource — cannot run in parallel with other active theme tests.
 	resource.Test(t, resource.TestCase{ //nolint:paralleltest // singleton: parallel tests interfere via shared active theme
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -72,7 +72,7 @@ func TestAccActiveThemeDataSource_Default(t *testing.T) {
 			{
 				Config: testAccActiveThemeDataSourceDefaultConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_active_theme.current", "theme_id"),
+					resource.TestCheckResourceAttr("data.doit_active_theme.current", "theme_id", "default"),
 				),
 			},
 		},
@@ -81,6 +81,12 @@ func TestAccActiveThemeDataSource_Default(t *testing.T) {
 
 func testAccActiveThemeDataSourceDefaultConfig() string {
 	return `
-data "doit_active_theme" "current" {}
+resource "doit_active_theme" "reset" {
+  theme_id = "default"
+}
+
+data "doit_active_theme" "current" {
+  depends_on = [doit_active_theme.reset]
+}
 `
 }
