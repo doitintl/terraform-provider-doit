@@ -5,10 +5,11 @@
 // never be Unknown (Required, Optional without Computed, Optional+Computed with
 // Default). These guards are dead code.
 //
-// Direction 2 (missing guard): flags non-pointer value accessors (ValueString,
-// ValueBool, ValueFloat64, ValueInt64) on Optional+Computed fields without
-// Default when not guarded by IsUnknown(). Pointer accessors (ValueStringPointer
-// etc.) are excluded because they return nil for Unknown, which is often acceptable.
+// Direction 2 (missing guard): flags value accessors (ValueString, ValueBool,
+// ValueFloat64, ValueInt64, and their Pointer variants) on Optional+Computed
+// fields without Default when not guarded by IsUnknown(). Both pointer and
+// non-pointer accessors return zero values for Unknown (pointers return *zero,
+// not nil).
 //
 // The analyzer propagates schema context across function call boundaries:
 // when a builder calls a helper with plan.X as an argument, the helper's
@@ -40,13 +41,19 @@ var neverUnknownClasses = map[schemaparser.FieldClass]string{
 	schemaparser.Optional: "Optional (not Computed)",
 }
 
-// nonPointerAccessors are value accessors that return zero values for Unknown
-// (not nil), making them unsafe without an IsUnknown() guard.
-var nonPointerAccessors = map[string]bool{
-	"ValueString":  true,
-	"ValueBool":    true,
-	"ValueFloat64": true,
-	"ValueInt64":   true,
+// unsafeAccessors are value accessors that return zero values for Unknown,
+// making them unsafe without an IsUnknown() guard. This includes both
+// non-pointer accessors (which return the zero value directly) and pointer
+// accessors (which return a pointer to the zero value, not nil).
+var unsafeAccessors = map[string]bool{
+	"ValueString":         true,
+	"ValueBool":           true,
+	"ValueFloat64":        true,
+	"ValueInt64":          true,
+	"ValueStringPointer":  true,
+	"ValueBoolPointer":    true,
+	"ValueFloat64Pointer": true,
+	"ValueInt64Pointer":   true,
 }
 
 // attrMap is a convenience alias for field name → AttrInfo maps.
@@ -143,7 +150,7 @@ func analyzeFunction(pass *analysis.Pass, fn *ast.FuncDecl, varSchemas map[strin
 	// Direction 1: Find redundant IsUnknown() guards.
 	checkRedundantGuards(pass, fn.Body, varSchemas)
 
-	// Direction 2: Find missing guards on non-pointer value accessors.
+	// Direction 2: Find missing guards on value accessors.
 	checkMissingGuards(pass, fn.Body, varSchemas)
 
 	// Propagate schema context into helper functions called from this body.
@@ -587,9 +594,9 @@ func checkRedundantGuards(pass *analysis.Pass, body *ast.BlockStmt, varSchemas m
 	})
 }
 
-// checkMissingGuards walks the function body and flags non-pointer value
-// accessors on Optional+Computed fields without Default when not guarded
-// by an enclosing if-condition with IsUnknown().
+// checkMissingGuards walks the function body and flags value accessors
+// (both pointer and non-pointer) on Optional+Computed fields without Default
+// when not guarded by an enclosing if-condition with IsUnknown().
 func checkMissingGuards(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map[string]map[string]*schemaparser.AttrInfo) {
 	// Build a map from position ranges of if-bodies to the fields they guard.
 	// This allows us to check if a value accessor is inside a guarded scope.
@@ -627,8 +634,8 @@ func checkMissingGuards(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map
 			return true
 		}
 
-		// Check if it's a non-pointer accessor.
-		if !nonPointerAccessors[sel.Sel.Name] {
+		// Check if it's an unsafe accessor.
+		if !unsafeAccessors[sel.Sel.Name] {
 			return true
 		}
 
