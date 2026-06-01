@@ -1,4 +1,5 @@
-// Package requestguard validates IsUnknown() usage in request builder functions.
+// Package requestguard validates IsUnknown() usage in request builder functions
+// and helper functions they call.
 //
 // Direction 1 (redundant guard): flags IsUnknown() checks on fields that can
 // never be Unknown (Required, Optional without Computed, Optional+Computed with
@@ -8,6 +9,10 @@
 // ValueBool, ValueFloat64, ValueInt64) on Optional+Computed fields without
 // Default when not guarded by IsUnknown(). Pointer accessors (ValueStringPointer
 // etc.) are excluded because they return nil for Unknown, which is often acceptable.
+//
+// The analyzer propagates schema context across function call boundaries:
+// when a builder calls a helper with plan.X as an argument, the helper's
+// corresponding parameter inherits the nested schema context.
 package requestguard
 
 import (
@@ -44,6 +49,9 @@ var nonPointerAccessors = map[string]bool{
 	"ValueInt64":   true,
 }
 
+// attrMap is a convenience alias for field name → AttrInfo maps.
+type attrMap = map[string]*schemaparser.AttrInfo
+
 func run(pass *analysis.Pass) (any, error) {
 	result := pass.ResultOf[schemaparser.Analyzer]
 	if result == nil {
@@ -57,7 +65,6 @@ func run(pass *analysis.Pass) (any, error) {
 	// Index schemas by function name. Each schema's Attrs map contains
 	// only top-level attributes; nested attrs live in AttrInfo.NestedAttrs.
 	// This avoids name collisions between top-level and nested attrs.
-	type attrMap = map[string]*schemaparser.AttrInfo
 	perSchema := map[string]attrMap{}
 	for name, info := range schemaResult.Schemas {
 		perSchema[name] = info.Attrs
@@ -65,12 +72,19 @@ func run(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Step 1: Map receiver types → schema names via Schema() methods.
+	// Pass 1: Index all FuncDecls by name and map receiver types → schema names.
+	allFuncs := map[string]*ast.FuncDecl{}
 	receiverToSchema := map[string]string{}
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
-		if fn.Name == nil || fn.Name.Name != "Schema" || fn.Body == nil {
+		if fn.Name == nil || fn.Body == nil {
+			return
+		}
+		allFuncs[fn.Name.Name] = fn
+
+		// Check if this is a Schema() method.
+		if fn.Name.Name != "Schema" {
 			return
 		}
 		if fn.Recv == nil || len(fn.Recv.List) == 0 {
@@ -87,44 +101,189 @@ func run(pass *analysis.Pass) (any, error) {
 		receiverToSchema[recvType] = schemaName
 	})
 
-	// Step 2: Find request builder functions and check guards.
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		fn := n.(*ast.FuncDecl)
-		if fn.Name == nil || fn.Body == nil {
-			return
-		}
+	// Pass 2: Find request builder functions, check guards, and propagate
+	// schema context into helper functions they call.
+	for _, fn := range allFuncs {
 		if !isRequestBuilder(fn.Name.Name) {
-			return
+			continue
 		}
 
 		// Resolve schema: try receiver, then parameter types.
 		schema := resolveSchema(fn, receiverToSchema, perSchema)
 		if schema == nil {
-			return
+			continue
 		}
 
-		// Build variable → schema path mapping for nested field tracking.
-		// Initialize with the plan parameter name.
 		planParam := findPlanParam(fn)
 		if planParam == "" {
-			return
+			continue
 		}
 
-		// varSchemas maps variable names to their nested schema context.
-		// The plan parameter maps to the top-level schema.
 		varSchemas := map[string]attrMap{planParam: schema}
-
-		// Track variable assignments to nested types.
-		trackVariableAssignments(fn.Body, varSchemas)
-
-		// Direction 1: Find redundant IsUnknown() guards.
-		checkRedundantGuards(pass, fn.Body, varSchemas)
-
-		// Direction 2: Find missing guards on non-pointer value accessors.
-		checkMissingGuards(pass, fn.Body, varSchemas)
-	})
+		seen := map[string]bool{fn.Name.Name: true}
+		analyzeFunction(pass, fn, varSchemas, allFuncs, seen)
+	}
 
 	return nil, nil
+}
+
+// analyzeFunction checks guards within a function body and recursively
+// propagates schema context into helper functions it calls.
+func analyzeFunction(pass *analysis.Pass, fn *ast.FuncDecl, varSchemas map[string]attrMap, allFuncs map[string]*ast.FuncDecl, seen map[string]bool) {
+	// Track variable assignments to nested types (e.g., config := plan.Config).
+	trackVariableAssignments(fn.Body, varSchemas)
+
+	// Direction 1: Find redundant IsUnknown() guards.
+	checkRedundantGuards(pass, fn.Body, varSchemas)
+
+	// Direction 2: Find missing guards on non-pointer value accessors.
+	checkMissingGuards(pass, fn.Body, varSchemas)
+
+	// Propagate schema context into helper functions called from this body.
+	propagateToCallees(pass, fn.Body, varSchemas, allFuncs, seen)
+}
+
+// propagateToCallees scans the function body for call expressions that pass
+// tracked variables (or their fields) as arguments. For each such call, it
+// resolves the nested schema and recursively analyzes the callee.
+func propagateToCallees(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map[string]attrMap, allFuncs map[string]*ast.FuncDecl, seen map[string]bool) {
+	ast.Inspect(body, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+
+		// Resolve the callee function name.
+		calleeName := calleeIdent(call)
+		if calleeName == "" {
+			return true
+		}
+
+		// Skip if already visited (prevent infinite recursion).
+		if seen[calleeName] {
+			return true
+		}
+
+		// Look up the callee's FuncDecl.
+		calleeFn, ok := allFuncs[calleeName]
+		if !ok || calleeFn.Body == nil {
+			return true
+		}
+
+		// Match arguments to parameters: for each argument that is a field
+		// access on a tracked variable, propagate the nested schema to the
+		// corresponding parameter.
+		calleeSchemas := resolveCalleeSchemas(call, calleeFn, varSchemas)
+		if len(calleeSchemas) == 0 {
+			return true
+		}
+
+		seen[calleeName] = true
+		analyzeFunction(pass, calleeFn, calleeSchemas, allFuncs, seen)
+
+		return true
+	})
+}
+
+// calleeIdent extracts the function name from a call expression.
+// Handles both unqualified (foo()) and ignored-receiver calls.
+func calleeIdent(call *ast.CallExpr) string {
+	switch fun := call.Fun.(type) {
+	case *ast.Ident:
+		return fun.Name
+	case *ast.SelectorExpr:
+		// Method calls (obj.Method) — skip, we only propagate into
+		// free functions. Package-qualified calls are in a different
+		// package and won't be in allFuncs.
+		return ""
+	}
+	return ""
+}
+
+// resolveCalleeSchemas builds a varSchemas map for a callee function by
+// matching call arguments to the callee's parameters. When an argument
+// is a field access on a tracked variable (e.g., plan.Config), the
+// corresponding parameter inherits the field's nested schema.
+func resolveCalleeSchemas(call *ast.CallExpr, callee *ast.FuncDecl, callerSchemas map[string]attrMap) map[string]attrMap {
+	if callee.Type == nil || callee.Type.Params == nil {
+		return nil
+	}
+
+	result := map[string]attrMap{}
+
+	// Build a flat list of (paramIndex, paramName) from the callee's params.
+	type paramEntry struct {
+		index int
+		name  string
+	}
+	var params []paramEntry
+	idx := 0
+	for _, field := range callee.Type.Params.List {
+		for _, name := range field.Names {
+			params = append(params, paramEntry{index: idx, name: name.Name})
+			idx++
+		}
+		if len(field.Names) == 0 {
+			idx++ // unnamed parameter
+		}
+	}
+
+	// For each call argument, check if it's a field access on a tracked var.
+	for argIdx, arg := range call.Args {
+		nestedSchema := resolveArgSchema(arg, callerSchemas)
+		if nestedSchema == nil {
+			continue
+		}
+
+		// Find the corresponding parameter name.
+		for _, p := range params {
+			if p.index == argIdx {
+				result[p.name] = nestedSchema
+				break
+			}
+		}
+	}
+
+	return result
+}
+
+// resolveArgSchema resolves a call argument to a nested schema.
+// Handles direct field access (plan.Config), chained access (plan.Config.Sub),
+// and tracked variable references (config where config := plan.Config).
+func resolveArgSchema(arg ast.Expr, callerSchemas map[string]attrMap) attrMap {
+	switch a := arg.(type) {
+	case *ast.Ident:
+		// Direct variable reference (e.g., passing "config" where config
+		// is already tracked). Return its schema context.
+		if schema, ok := callerSchemas[a.Name]; ok {
+			return schema
+		}
+	case *ast.SelectorExpr:
+		// Field access: plan.Config or config.Filter etc.
+		// Walk the chain to resolve the nested schema.
+		chain := buildSelectorChain(a)
+		if len(chain) < 2 {
+			return nil
+		}
+
+		rootVar := chain[0]
+		schema, ok := callerSchemas[rootVar]
+		if !ok {
+			return nil
+		}
+
+		// Walk through all fields in the chain to reach the leaf's NestedAttrs.
+		for i := 1; i < len(chain); i++ {
+			attrName := toSnakeCase(chain[i])
+			attr, ok := schema[attrName]
+			if !ok || attr.NestedAttrs == nil {
+				return nil
+			}
+			schema = attr.NestedAttrs
+		}
+		return schema
+	}
+	return nil
 }
 
 
@@ -525,17 +684,17 @@ func extractReceiverTypeName(fn *ast.FuncDecl) string {
 	return extractStarTypeName(fn.Recv.List[0].Type)
 }
 
-// extractStarTypeName extracts the type name from *T.
+// extractStarTypeName extracts the type name from T, *T, pkg.T, or *pkg.T.
 func extractStarTypeName(expr ast.Expr) string {
-	star, ok := expr.(*ast.StarExpr)
-	if !ok {
-		if ident, ok := expr.(*ast.Ident); ok {
-			return ident.Name
-		}
-		return ""
+	// Unwrap pointer if present.
+	if star, ok := expr.(*ast.StarExpr); ok {
+		expr = star.X
 	}
-	if ident, ok := star.X.(*ast.Ident); ok {
-		return ident.Name
+	switch e := expr.(type) {
+	case *ast.Ident:
+		return e.Name
+	case *ast.SelectorExpr:
+		return e.Sel.Name // pkg.Type → Type
 	}
 	return ""
 }
