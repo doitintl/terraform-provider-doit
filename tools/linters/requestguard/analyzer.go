@@ -103,26 +103,33 @@ func run(pass *analysis.Pass) (any, error) {
 
 	// Pass 2: Find request builder functions, check guards, and propagate
 	// schema context into helper functions they call.
-	for _, fn := range allFuncs {
+	// This uses insp.Preorder (not allFuncs iteration) because multiple
+	// receiver types can define the same method name (e.g., toCreateRequest
+	// on 10+ resources) — the map only keeps the last one written.
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		fn := n.(*ast.FuncDecl)
+		if fn.Name == nil || fn.Body == nil {
+			return
+		}
 		if !isRequestBuilder(fn.Name.Name) {
-			continue
+			return
 		}
 
 		// Resolve schema: try receiver, then parameter types.
 		schema := resolveSchema(fn, receiverToSchema, perSchema)
 		if schema == nil {
-			continue
+			return
 		}
 
 		planParam := findPlanParam(fn)
 		if planParam == "" {
-			continue
+			return
 		}
 
 		varSchemas := map[string]attrMap{planParam: schema}
 		seen := map[string]bool{fn.Name.Name: true}
 		analyzeFunction(pass, fn, varSchemas, allFuncs, seen)
-	}
+	})
 
 	return nil, nil
 }

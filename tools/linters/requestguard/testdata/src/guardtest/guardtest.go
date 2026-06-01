@@ -165,7 +165,7 @@ func (plan *GuardTestModel) toHelperTestRequest() ApiRequest {
 }
 
 // fillFromConfig is a helper function taking a ConfigValue directly.
-// Schema context is propagated from toCreateRequest's call with plan.Config.
+// Schema context is propagated from toHelperTestRequest's call with plan.Config.
 func fillFromConfig(req *ApiRequest, config ConfigValue) {
 	// BAD: Required nested field — IsUnknown() is dead code.
 	if !config.Type.IsNull() && !config.Type.IsUnknown() { // want `IsUnknown\(\) on Required field "type" is dead code \(Required fields are always Known\)`
@@ -199,7 +199,7 @@ func fillFilterFromConfig(filter FilterValue) {
 }
 
 // fillDisplaySettings is a helper taking a DisplaySettingsValue.
-// Schema context propagated from toCreateRequest via config.DisplaySettings.
+// Schema context propagated from toHelperTestRequest via config.DisplaySettings.
 func fillDisplaySettings(req *ApiRequest, ds DisplaySettingsValue) {
 	// BAD: Optional+Computed WITH default — IsUnknown() is dead code.
 	if !ds.ThemeId.IsNull() && !ds.ThemeId.IsUnknown() { // want `IsUnknown\(\) on field "theme_id" with schema Default is dead code \(defaults are resolved at plan time\)`
