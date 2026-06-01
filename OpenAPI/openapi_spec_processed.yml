@@ -5015,6 +5015,8 @@ components:
           description: The splits to use in the report.
           items:
             $ref: "#/components/schemas/ExternalSplit"
+        displaySettings:
+          $ref: "#/components/schemas/ExternalDisplaySettings"
         customTimeRange:
           description: Required when the time range is set to "custom".
           allOf:
@@ -5181,6 +5183,48 @@ components:
         operator: gt
         values:
           - 50
+    ExternalDisplaySettings:
+      type: object
+      description: Display settings for the report.
+      properties:
+        themeId:
+          type: string
+          default: "default"
+          description: |-
+            Identifier of the theme applied to the report. The reserved
+            sentinel `"default"` is returned on GET when no theme is stored
+            and clears the stored value on PATCH. Omit the field on PATCH
+            to leave the stored value unchanged.
+        dataLabelFontSize:
+          type: string
+          description: Font size used for data labels on charts.
+          enum:
+            - auto
+            - small
+            - medium
+            - large
+        axisLabelFontSize:
+          type: string
+          description: Font size used for axis labels on charts.
+          enum:
+            - auto
+            - small
+            - medium
+            - large
+        numberScale:
+          type: string
+          description: Scale applied to numeric values when rendering the report.
+          enum:
+            - auto
+            - thousands
+            - millions
+            - billions
+            - raw
+        decimalPrecision:
+          type: integer
+          minimum: 0
+          maximum: 8
+          description: Number of decimal places shown for numeric values.
     ExternalMetric:
       description: Metric selector used in reports and filters.
       type: object

@@ -2514,6 +2514,101 @@
 									}
 								},
 								{
+									"name": "display_settings",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "axis_label_font_size",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Font size used for axis labels on charts.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"auto\",\n\"small\",\n\"medium\",\n\"large\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "data_label_font_size",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Font size used for data labels on charts.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"auto\",\n\"small\",\n\"medium\",\n\"large\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "decimal_precision",
+												"int64": {
+													"computed_optional_required": "computed_optional",
+													"description": "Number of decimal places shown for numeric values.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																	}
+																],
+																"schema_definition": "int64validator.Between(0, 8)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "number_scale",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Scale applied to numeric values when rendering the report.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"auto\",\n\"thousands\",\n\"millions\",\n\"billions\",\n\"raw\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "theme_id",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"default": {
+														"static": "default"
+													},
+													"description": "Identifier of the theme applied to the report. The reserved\nsentinel `\"default\"` is returned on GET when no theme is stored\nand clears the stored value on PATCH. Omit the field on PATCH\nto leave the stored value unchanged."
+												}
+											}
+										],
+										"description": "Display settings for the report."
+									}
+								},
+								{
 									"name": "display_values",
 									"string": {
 										"computed_optional_required": "computed_optional",

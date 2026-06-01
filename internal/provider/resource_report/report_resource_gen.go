@@ -185,6 +185,78 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						Description:         "See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).",
 						MarkdownDescription: "See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).",
 					},
+					"display_settings": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"axis_label_font_size": schema.StringAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Font size used for axis labels on charts.\nPossible values: `auto`, `small`, `medium`, `large`",
+								MarkdownDescription: "Font size used for axis labels on charts.\nPossible values: `auto`, `small`, `medium`, `large`",
+								Validators: []validator.String{
+									stringvalidator.OneOf(
+										"auto",
+										"small",
+										"medium",
+										"large",
+									),
+								},
+							},
+							"data_label_font_size": schema.StringAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Font size used for data labels on charts.\nPossible values: `auto`, `small`, `medium`, `large`",
+								MarkdownDescription: "Font size used for data labels on charts.\nPossible values: `auto`, `small`, `medium`, `large`",
+								Validators: []validator.String{
+									stringvalidator.OneOf(
+										"auto",
+										"small",
+										"medium",
+										"large",
+									),
+								},
+							},
+							"decimal_precision": schema.Int64Attribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Number of decimal places shown for numeric values.",
+								MarkdownDescription: "Number of decimal places shown for numeric values.",
+								Validators: []validator.Int64{
+									int64validator.Between(0, 8),
+								},
+							},
+							"number_scale": schema.StringAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Scale applied to numeric values when rendering the report.\nPossible values: `auto`, `thousands`, `millions`, `billions`, `raw`",
+								MarkdownDescription: "Scale applied to numeric values when rendering the report.\nPossible values: `auto`, `thousands`, `millions`, `billions`, `raw`",
+								Validators: []validator.String{
+									stringvalidator.OneOf(
+										"auto",
+										"thousands",
+										"millions",
+										"billions",
+										"raw",
+									),
+								},
+							},
+							"theme_id": schema.StringAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Identifier of the theme applied to the report. The reserved\nsentinel `\"default\"` is returned on GET when no theme is stored\nand clears the stored value on PATCH. Omit the field on PATCH\nto leave the stored value unchanged.",
+								MarkdownDescription: "Identifier of the theme applied to the report. The reserved\nsentinel `\"default\"` is returned on GET when no theme is stored\nand clears the stored value on PATCH. Omit the field on PATCH\nto leave the stored value unchanged.",
+								Default:             stringdefault.StaticString("default"),
+							},
+						},
+						CustomType: DisplaySettingsType{
+							ObjectType: types.ObjectType{
+								AttrTypes: DisplaySettingsValue{}.AttributeTypes(ctx),
+							},
+						},
+						Optional:            true,
+						Computed:            true,
+						Description:         "Display settings for the report.",
+						MarkdownDescription: "Display settings for the report.",
+					},
 					"display_values": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
@@ -1076,6 +1148,24 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`dimensions expected to be basetypes.ListValue, was: %T`, dimensionsAttribute))
 	}
 
+	displaySettingsAttribute, ok := attributes["display_settings"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`display_settings is missing from object`)
+
+		return nil, diags
+	}
+
+	displaySettingsVal, ok := displaySettingsAttribute.(DisplaySettingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`display_settings expected to be DisplaySettingsValue, was: %T`, displaySettingsAttribute))
+	}
+
 	displayValuesAttribute, ok := attributes["display_values"]
 
 	if !ok {
@@ -1357,6 +1447,7 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		CustomTimeRange:           customTimeRangeVal,
 		DataSource:                dataSourceVal,
 		Dimensions:                dimensionsVal,
+		DisplaySettings:           displaySettingsVal,
 		DisplayValues:             displayValuesVal,
 		Filters:                   filtersVal,
 		Group:                     groupVal,
@@ -1547,6 +1638,24 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`dimensions expected to be basetypes.ListValue, was: %T`, dimensionsAttribute))
 	}
 
+	displaySettingsAttribute, ok := attributes["display_settings"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`display_settings is missing from object`)
+
+		return NewConfigValueUnknown(), diags
+	}
+
+	displaySettingsVal, ok := displaySettingsAttribute.(DisplaySettingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`display_settings expected to be DisplaySettingsValue, was: %T`, displaySettingsAttribute))
+	}
+
 	displayValuesAttribute, ok := attributes["display_values"]
 
 	if !ok {
@@ -1828,6 +1937,7 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		CustomTimeRange:           customTimeRangeVal,
 		DataSource:                dataSourceVal,
 		Dimensions:                dimensionsVal,
+		DisplaySettings:           displaySettingsVal,
 		DisplayValues:             displayValuesVal,
 		Filters:                   filtersVal,
 		Group:                     groupVal,
@@ -1921,6 +2031,7 @@ type ConfigValue struct {
 	CustomTimeRange           CustomTimeRangeValue    `tfsdk:"custom_time_range"`
 	DataSource                basetypes.StringValue   `tfsdk:"data_source"`
 	Dimensions                basetypes.ListValue     `tfsdk:"dimensions"`
+	DisplaySettings           DisplaySettingsValue    `tfsdk:"display_settings"`
 	DisplayValues             basetypes.StringValue   `tfsdk:"display_values"`
 	Filters                   basetypes.ListValue     `tfsdk:"filters"`
 	Group                     basetypes.ListValue     `tfsdk:"group"`
@@ -1940,7 +2051,7 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 21)
+	attrTypes := make(map[string]tftypes.Type, 22)
 
 	var val tftypes.Value
 	var err error
@@ -1960,6 +2071,11 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["data_source"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["dimensions"] = basetypes.ListType{
 		ElemType: DimensionsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["display_settings"] = DisplaySettingsType{
+		basetypes.ObjectType{
+			AttrTypes: DisplaySettingsValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["display_values"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["filters"] = basetypes.ListType{
@@ -2005,7 +2121,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 21)
+		vals := make(map[string]tftypes.Value, 22)
 
 		val, err = v.AdvancedAnalysis.ToTerraformValue(ctx)
 
@@ -2054,6 +2170,14 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["dimensions"] = val
+
+		val, err = v.DisplaySettings.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["display_settings"] = val
 
 		val, err = v.DisplayValues.ToTerraformValue(ctx)
 
@@ -2222,6 +2346,12 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		dimensions = v.Dimensions
 	}
 
+	var displaySettings attr.Value
+
+	{
+		displaySettings = v.DisplaySettings
+	}
+
 	var filters attr.Value
 
 	{
@@ -2287,6 +2417,11 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"dimensions": basetypes.ListType{
 			ElemType: DimensionsValue{}.Type(ctx),
 		},
+		"display_settings": DisplaySettingsType{
+			basetypes.ObjectType{
+				AttrTypes: DisplaySettingsValue{}.AttributeTypes(ctx),
+			},
+		},
 		"display_values": basetypes.StringType{},
 		"filters": basetypes.ListType{
 			ElemType: FiltersValue{}.Type(ctx),
@@ -2345,6 +2480,7 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"custom_time_range":           customTimeRange,
 			"data_source":                 v.DataSource,
 			"dimensions":                  dimensions,
+			"display_settings":            displaySettings,
 			"display_values":              v.DisplayValues,
 			"filters":                     filters,
 			"group":                       group,
@@ -2401,6 +2537,10 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Dimensions.Equal(other.Dimensions) {
+		return false
+	}
+
+	if !v.DisplaySettings.Equal(other.DisplaySettings) {
 		return false
 	}
 
@@ -2492,6 +2632,11 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"data_source": basetypes.StringType{},
 		"dimensions": basetypes.ListType{
 			ElemType: DimensionsValue{}.Type(ctx),
+		},
+		"display_settings": DisplaySettingsType{
+			basetypes.ObjectType{
+				AttrTypes: DisplaySettingsValue{}.AttributeTypes(ctx),
+			},
 		},
 		"display_values": basetypes.StringType{},
 		"filters": basetypes.ListType{
@@ -3779,6 +3924,550 @@ func (v DimensionsValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 	return map[string]attr.Type{
 		"id":   basetypes.StringType{},
 		"type": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = DisplaySettingsType{}
+
+type DisplaySettingsType struct {
+	basetypes.ObjectType
+}
+
+func (t DisplaySettingsType) Equal(o attr.Type) bool {
+	other, ok := o.(DisplaySettingsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t DisplaySettingsType) String() string {
+	return "DisplaySettingsType"
+}
+
+func (t DisplaySettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	axisLabelFontSizeAttribute, ok := attributes["axis_label_font_size"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`axis_label_font_size is missing from object`)
+
+		return nil, diags
+	}
+
+	axisLabelFontSizeVal, ok := axisLabelFontSizeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`axis_label_font_size expected to be basetypes.StringValue, was: %T`, axisLabelFontSizeAttribute))
+	}
+
+	dataLabelFontSizeAttribute, ok := attributes["data_label_font_size"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`data_label_font_size is missing from object`)
+
+		return nil, diags
+	}
+
+	dataLabelFontSizeVal, ok := dataLabelFontSizeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`data_label_font_size expected to be basetypes.StringValue, was: %T`, dataLabelFontSizeAttribute))
+	}
+
+	decimalPrecisionAttribute, ok := attributes["decimal_precision"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`decimal_precision is missing from object`)
+
+		return nil, diags
+	}
+
+	decimalPrecisionVal, ok := decimalPrecisionAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`decimal_precision expected to be basetypes.Int64Value, was: %T`, decimalPrecisionAttribute))
+	}
+
+	numberScaleAttribute, ok := attributes["number_scale"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`number_scale is missing from object`)
+
+		return nil, diags
+	}
+
+	numberScaleVal, ok := numberScaleAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`number_scale expected to be basetypes.StringValue, was: %T`, numberScaleAttribute))
+	}
+
+	themeIdAttribute, ok := attributes["theme_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`theme_id is missing from object`)
+
+		return nil, diags
+	}
+
+	themeIdVal, ok := themeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`theme_id expected to be basetypes.StringValue, was: %T`, themeIdAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return DisplaySettingsValue{
+		AxisLabelFontSize: axisLabelFontSizeVal,
+		DataLabelFontSize: dataLabelFontSizeVal,
+		DecimalPrecision:  decimalPrecisionVal,
+		NumberScale:       numberScaleVal,
+		ThemeId:           themeIdVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDisplaySettingsValueNull() DisplaySettingsValue {
+	return DisplaySettingsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewDisplaySettingsValueUnknown() DisplaySettingsValue {
+	return DisplaySettingsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewDisplaySettingsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (DisplaySettingsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing DisplaySettingsValue Attribute Value",
+				"While creating a DisplaySettingsValue value, a missing attribute value was detected. "+
+					"A DisplaySettingsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DisplaySettingsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid DisplaySettingsValue Attribute Type",
+				"While creating a DisplaySettingsValue value, an invalid attribute value was detected. "+
+					"A DisplaySettingsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DisplaySettingsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("DisplaySettingsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra DisplaySettingsValue Attribute Value",
+				"While creating a DisplaySettingsValue value, an extra attribute value was detected. "+
+					"A DisplaySettingsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra DisplaySettingsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	axisLabelFontSizeAttribute, ok := attributes["axis_label_font_size"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`axis_label_font_size is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	axisLabelFontSizeVal, ok := axisLabelFontSizeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`axis_label_font_size expected to be basetypes.StringValue, was: %T`, axisLabelFontSizeAttribute))
+	}
+
+	dataLabelFontSizeAttribute, ok := attributes["data_label_font_size"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`data_label_font_size is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	dataLabelFontSizeVal, ok := dataLabelFontSizeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`data_label_font_size expected to be basetypes.StringValue, was: %T`, dataLabelFontSizeAttribute))
+	}
+
+	decimalPrecisionAttribute, ok := attributes["decimal_precision"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`decimal_precision is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	decimalPrecisionVal, ok := decimalPrecisionAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`decimal_precision expected to be basetypes.Int64Value, was: %T`, decimalPrecisionAttribute))
+	}
+
+	numberScaleAttribute, ok := attributes["number_scale"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`number_scale is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	numberScaleVal, ok := numberScaleAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`number_scale expected to be basetypes.StringValue, was: %T`, numberScaleAttribute))
+	}
+
+	themeIdAttribute, ok := attributes["theme_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`theme_id is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	themeIdVal, ok := themeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`theme_id expected to be basetypes.StringValue, was: %T`, themeIdAttribute))
+	}
+
+	if diags.HasError() {
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	return DisplaySettingsValue{
+		AxisLabelFontSize: axisLabelFontSizeVal,
+		DataLabelFontSize: dataLabelFontSizeVal,
+		DecimalPrecision:  decimalPrecisionVal,
+		NumberScale:       numberScaleVal,
+		ThemeId:           themeIdVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDisplaySettingsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) DisplaySettingsValue {
+	object, diags := NewDisplaySettingsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewDisplaySettingsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t DisplaySettingsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewDisplaySettingsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewDisplaySettingsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewDisplaySettingsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewDisplaySettingsValueMust(DisplaySettingsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t DisplaySettingsType) ValueType(ctx context.Context) attr.Value {
+	return DisplaySettingsValue{}
+}
+
+var _ basetypes.ObjectValuable = DisplaySettingsValue{}
+
+type DisplaySettingsValue struct {
+	AxisLabelFontSize basetypes.StringValue `tfsdk:"axis_label_font_size"`
+	DataLabelFontSize basetypes.StringValue `tfsdk:"data_label_font_size"`
+	DecimalPrecision  basetypes.Int64Value  `tfsdk:"decimal_precision"`
+	NumberScale       basetypes.StringValue `tfsdk:"number_scale"`
+	ThemeId           basetypes.StringValue `tfsdk:"theme_id"`
+	state             attr.ValueState
+}
+
+func (v DisplaySettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["axis_label_font_size"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["data_label_font_size"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["decimal_precision"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["number_scale"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["theme_id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.AxisLabelFontSize.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["axis_label_font_size"] = val
+
+		val, err = v.DataLabelFontSize.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["data_label_font_size"] = val
+
+		val, err = v.DecimalPrecision.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["decimal_precision"] = val
+
+		val, err = v.NumberScale.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["number_scale"] = val
+
+		val, err = v.ThemeId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["theme_id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v DisplaySettingsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v DisplaySettingsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v DisplaySettingsValue) String() string {
+	return "DisplaySettingsValue"
+}
+
+func (v DisplaySettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"axis_label_font_size": basetypes.StringType{},
+		"data_label_font_size": basetypes.StringType{},
+		"decimal_precision":    basetypes.Int64Type{},
+		"number_scale":         basetypes.StringType{},
+		"theme_id":             basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"axis_label_font_size": v.AxisLabelFontSize,
+			"data_label_font_size": v.DataLabelFontSize,
+			"decimal_precision":    v.DecimalPrecision,
+			"number_scale":         v.NumberScale,
+			"theme_id":             v.ThemeId,
+		})
+
+	return objVal, diags
+}
+
+func (v DisplaySettingsValue) Equal(o attr.Value) bool {
+	other, ok := o.(DisplaySettingsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.AxisLabelFontSize.Equal(other.AxisLabelFontSize) {
+		return false
+	}
+
+	if !v.DataLabelFontSize.Equal(other.DataLabelFontSize) {
+		return false
+	}
+
+	if !v.DecimalPrecision.Equal(other.DecimalPrecision) {
+		return false
+	}
+
+	if !v.NumberScale.Equal(other.NumberScale) {
+		return false
+	}
+
+	if !v.ThemeId.Equal(other.ThemeId) {
+		return false
+	}
+
+	return true
+}
+
+func (v DisplaySettingsValue) Type(ctx context.Context) attr.Type {
+	return DisplaySettingsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v DisplaySettingsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"axis_label_font_size": basetypes.StringType{},
+		"data_label_font_size": basetypes.StringType{},
+		"decimal_precision":    basetypes.Int64Type{},
+		"number_scale":         basetypes.StringType{},
+		"theme_id":             basetypes.StringType{},
 	}
 }
 

@@ -893,6 +893,81 @@ func (e ExternalConfigMetricFilterOperator) Valid() bool {
 	}
 }
 
+// Defines values for ExternalDisplaySettingsAxisLabelFontSize.
+const (
+	ExternalDisplaySettingsAxisLabelFontSizeAuto   ExternalDisplaySettingsAxisLabelFontSize = "auto"
+	ExternalDisplaySettingsAxisLabelFontSizeLarge  ExternalDisplaySettingsAxisLabelFontSize = "large"
+	ExternalDisplaySettingsAxisLabelFontSizeMedium ExternalDisplaySettingsAxisLabelFontSize = "medium"
+	ExternalDisplaySettingsAxisLabelFontSizeSmall  ExternalDisplaySettingsAxisLabelFontSize = "small"
+)
+
+// Valid indicates whether the value is a known member of the ExternalDisplaySettingsAxisLabelFontSize enum.
+func (e ExternalDisplaySettingsAxisLabelFontSize) Valid() bool {
+	switch e {
+	case ExternalDisplaySettingsAxisLabelFontSizeAuto:
+		return true
+	case ExternalDisplaySettingsAxisLabelFontSizeLarge:
+		return true
+	case ExternalDisplaySettingsAxisLabelFontSizeMedium:
+		return true
+	case ExternalDisplaySettingsAxisLabelFontSizeSmall:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalDisplaySettingsDataLabelFontSize.
+const (
+	ExternalDisplaySettingsDataLabelFontSizeAuto   ExternalDisplaySettingsDataLabelFontSize = "auto"
+	ExternalDisplaySettingsDataLabelFontSizeLarge  ExternalDisplaySettingsDataLabelFontSize = "large"
+	ExternalDisplaySettingsDataLabelFontSizeMedium ExternalDisplaySettingsDataLabelFontSize = "medium"
+	ExternalDisplaySettingsDataLabelFontSizeSmall  ExternalDisplaySettingsDataLabelFontSize = "small"
+)
+
+// Valid indicates whether the value is a known member of the ExternalDisplaySettingsDataLabelFontSize enum.
+func (e ExternalDisplaySettingsDataLabelFontSize) Valid() bool {
+	switch e {
+	case ExternalDisplaySettingsDataLabelFontSizeAuto:
+		return true
+	case ExternalDisplaySettingsDataLabelFontSizeLarge:
+		return true
+	case ExternalDisplaySettingsDataLabelFontSizeMedium:
+		return true
+	case ExternalDisplaySettingsDataLabelFontSizeSmall:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalDisplaySettingsNumberScale.
+const (
+	Auto      ExternalDisplaySettingsNumberScale = "auto"
+	Billions  ExternalDisplaySettingsNumberScale = "billions"
+	Millions  ExternalDisplaySettingsNumberScale = "millions"
+	Raw       ExternalDisplaySettingsNumberScale = "raw"
+	Thousands ExternalDisplaySettingsNumberScale = "thousands"
+)
+
+// Valid indicates whether the value is a known member of the ExternalDisplaySettingsNumberScale enum.
+func (e ExternalDisplaySettingsNumberScale) Valid() bool {
+	switch e {
+	case Auto:
+		return true
+	case Billions:
+		return true
+	case Millions:
+		return true
+	case Raw:
+		return true
+	case Thousands:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalMetricType.
 const (
 	ExternalMetricTypeBasic    ExternalMetricType = "basic"
@@ -3737,6 +3812,9 @@ type ExternalConfig struct {
 	// Dimensions See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).
 	Dimensions *[]Dimension `json:"dimensions,omitempty"`
 
+	// DisplaySettings Display settings for the report.
+	DisplaySettings *ExternalDisplaySettings `json:"displaySettings,omitempty"`
+
 	// DisplayValues See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 	DisplayValues *ExternalConfigDisplayValues `json:"displayValues,omitempty"`
 
@@ -3855,6 +3933,36 @@ type ExternalConfigMetricFilter struct {
 
 // ExternalConfigMetricFilterOperator Comparison operator for filtering metric values.
 type ExternalConfigMetricFilterOperator string
+
+// ExternalDisplaySettings Display settings for the report.
+type ExternalDisplaySettings struct {
+	// AxisLabelFontSize Font size used for axis labels on charts.
+	AxisLabelFontSize *ExternalDisplaySettingsAxisLabelFontSize `json:"axisLabelFontSize,omitempty"`
+
+	// DataLabelFontSize Font size used for data labels on charts.
+	DataLabelFontSize *ExternalDisplaySettingsDataLabelFontSize `json:"dataLabelFontSize,omitempty"`
+
+	// DecimalPrecision Number of decimal places shown for numeric values.
+	DecimalPrecision *int `json:"decimalPrecision,omitempty"`
+
+	// NumberScale Scale applied to numeric values when rendering the report.
+	NumberScale *ExternalDisplaySettingsNumberScale `json:"numberScale,omitempty"`
+
+	// ThemeId Identifier of the theme applied to the report. The reserved
+	// sentinel `"default"` is returned on GET when no theme is stored
+	// and clears the stored value on PATCH. Omit the field on PATCH
+	// to leave the stored value unchanged.
+	ThemeId *string `json:"themeId,omitempty"`
+}
+
+// ExternalDisplaySettingsAxisLabelFontSize Font size used for axis labels on charts.
+type ExternalDisplaySettingsAxisLabelFontSize string
+
+// ExternalDisplaySettingsDataLabelFontSize Font size used for data labels on charts.
+type ExternalDisplaySettingsDataLabelFontSize string
+
+// ExternalDisplaySettingsNumberScale Scale applied to numeric values when rendering the report.
+type ExternalDisplaySettingsNumberScale string
 
 // ExternalMetric Metric selector used in reports and filters.
 type ExternalMetric struct {

@@ -109,6 +109,13 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 		plan.TimeInterval = resolved.TimeInterval
 	}
 
+	// ── Nested object: DisplaySettings ──
+	if plan.DisplaySettings.IsUnknown() {
+		plan.DisplaySettings = resolved.DisplaySettings
+	} else if !plan.DisplaySettings.IsNull() {
+		overlayDisplaySettings(&resolved.DisplaySettings, &plan.DisplaySettings)
+	}
+
 	// ── Nested objects: resolve entire object when Unknown, or walk subfields ──
 	if plan.AdvancedAnalysis.IsUnknown() {
 		plan.AdvancedAnalysis = resolved.AdvancedAnalysis
@@ -198,6 +205,23 @@ func overlayAdvancedAnalysis(resolved, plan *resource_report.AdvancedAnalysisVal
 	if plan.TrendingUp.IsUnknown() {
 		plan.TrendingUp = resolved.TrendingUp
 	}
+}
+
+func overlayDisplaySettings(resolved, plan *resource_report.DisplaySettingsValue) {
+	if plan.AxisLabelFontSize.IsUnknown() {
+		plan.AxisLabelFontSize = resolved.AxisLabelFontSize
+	}
+	if plan.DataLabelFontSize.IsUnknown() {
+		plan.DataLabelFontSize = resolved.DataLabelFontSize
+	}
+	if plan.DecimalPrecision.IsUnknown() {
+		plan.DecimalPrecision = resolved.DecimalPrecision
+	}
+	if plan.NumberScale.IsUnknown() {
+		plan.NumberScale = resolved.NumberScale
+	}
+
+	// theme_id: Optional+Computed with Default "default" — never Unknown at plan time.
 }
 
 func overlayCustomTimeRange(resolved, plan *resource_report.CustomTimeRangeValue) {
@@ -880,6 +904,31 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		externalConfig.SecondaryTimeRange = secondaryTimeRange
 	}
 
+	if !config.DisplaySettings.IsNull() && !config.DisplaySettings.IsUnknown() {
+		ds := &models.ExternalDisplaySettings{}
+		if !config.DisplaySettings.AxisLabelFontSize.IsNull() && !config.DisplaySettings.AxisLabelFontSize.IsUnknown() {
+			v := models.ExternalDisplaySettingsAxisLabelFontSize(config.DisplaySettings.AxisLabelFontSize.ValueString())
+			ds.AxisLabelFontSize = &v
+		}
+		if !config.DisplaySettings.DataLabelFontSize.IsNull() && !config.DisplaySettings.DataLabelFontSize.IsUnknown() {
+			v := models.ExternalDisplaySettingsDataLabelFontSize(config.DisplaySettings.DataLabelFontSize.ValueString())
+			ds.DataLabelFontSize = &v
+		}
+		if !config.DisplaySettings.DecimalPrecision.IsNull() && !config.DisplaySettings.DecimalPrecision.IsUnknown() {
+			v := int(config.DisplaySettings.DecimalPrecision.ValueInt64())
+			ds.DecimalPrecision = &v
+		}
+		if !config.DisplaySettings.NumberScale.IsNull() && !config.DisplaySettings.NumberScale.IsUnknown() {
+			v := models.ExternalDisplaySettingsNumberScale(config.DisplaySettings.NumberScale.ValueString())
+			ds.NumberScale = &v
+		}
+		if !config.DisplaySettings.ThemeId.IsNull() && !config.DisplaySettings.ThemeId.IsUnknown() {
+			v := config.DisplaySettings.ThemeId.ValueString()
+			ds.ThemeId = &v
+		}
+		externalConfig.DisplaySettings = ds
+	}
+
 	return externalConfig, diags
 }
 
@@ -1468,6 +1517,37 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		configMap["secondary_time_range"] = strVal
 	} else {
 		configMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+	}
+
+	// Nested Object: DisplaySettings
+	if config.DisplaySettings != nil {
+		dsMap := map[string]attr.Value{
+			"axis_label_font_size": types.StringNull(),
+			"data_label_font_size": types.StringNull(),
+			"decimal_precision":    types.Int64Null(),
+			"number_scale":         types.StringNull(),
+			"theme_id":             types.StringNull(),
+		}
+		if config.DisplaySettings.AxisLabelFontSize != nil {
+			dsMap["axis_label_font_size"] = types.StringValue(string(*config.DisplaySettings.AxisLabelFontSize))
+		}
+		if config.DisplaySettings.DataLabelFontSize != nil {
+			dsMap["data_label_font_size"] = types.StringValue(string(*config.DisplaySettings.DataLabelFontSize))
+		}
+		if config.DisplaySettings.DecimalPrecision != nil {
+			dsMap["decimal_precision"] = types.Int64Value(int64(*config.DisplaySettings.DecimalPrecision))
+		}
+		if config.DisplaySettings.NumberScale != nil {
+			dsMap["number_scale"] = types.StringValue(string(*config.DisplaySettings.NumberScale))
+		}
+		if config.DisplaySettings.ThemeId != nil {
+			dsMap["theme_id"] = types.StringValue(*config.DisplaySettings.ThemeId)
+		}
+		dsVal, dsDiags := resource_report.NewDisplaySettingsValue(resource_report.DisplaySettingsValue{}.AttributeTypes(ctx), dsMap)
+		diags.Append(dsDiags...)
+		configMap["display_settings"] = dsVal
+	} else {
+		configMap["display_settings"] = resource_report.NewDisplaySettingsValueNull()
 	}
 
 	state.Config, d = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
