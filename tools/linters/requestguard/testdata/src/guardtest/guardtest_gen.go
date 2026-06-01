@@ -76,6 +76,19 @@ func GuardTestResourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 					},
+					// 2-level nested attribute with a defaulted field.
+					"display_settings": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							// Optional+Computed WITH default at 2nd nesting level.
+							"theme_id": schema.StringAttribute{
+								Optional: true,
+								Computed: true,
+								Default:  stringdefault.StaticString("default"),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -98,6 +111,7 @@ type ConfigValue struct {
 	CaseInsensitive  types.Bool
 	Currency         types.String
 	Filter           FilterValue
+	DisplaySettings  DisplaySettingsValue
 }
 
 // FilterValue is the 2nd-level nested model.
@@ -105,6 +119,13 @@ type FilterValue struct {
 	Operator types.String
 	Mode     types.String
 }
+
+// DisplaySettingsValue is the 2nd-level nested model for display settings.
+type DisplaySettingsValue struct {
+	ThemeId types.String
+}
+
+
 
 // guardTestResource is a mock resource.
 type guardTestResource struct{}
@@ -135,4 +156,9 @@ type ConfigRequest struct {
 type FilterRequest struct {
 	Operator *string
 	Mode     *string
+}
+
+// DisplaySettingsRequest is a mock 2nd-level nested request type.
+type DisplaySettingsRequest struct {
+	ThemeId *string
 }

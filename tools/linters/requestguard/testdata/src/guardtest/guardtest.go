@@ -146,3 +146,74 @@ func toFilterRequest(plan *GuardTestModel) *FilterRequest {
 
 	return req
 }
+
+// --- Cross-function schema propagation tests ---
+
+// toHelperTestRequest is a builder that calls helper functions with plan fields.
+// The linter should propagate schema context into the helpers.
+func (plan *GuardTestModel) toHelperTestRequest() ApiRequest {
+	req := ApiRequest{}
+
+	// Call a helper function with plan.Config as argument.
+	fillFromConfig(&req, plan.Config)
+
+	// Call a helper with a tracked variable.
+	config := plan.Config
+	fillDisplaySettings(&req, config.DisplaySettings)
+
+	return req
+}
+
+// fillFromConfig is a helper function taking a ConfigValue directly.
+// Schema context is propagated from toHelperTestRequest's call with plan.Config.
+func fillFromConfig(req *ApiRequest, config ConfigValue) {
+	// BAD: Required nested field — IsUnknown() is dead code.
+	if !config.Type.IsNull() && !config.Type.IsUnknown() { // want `IsUnknown\(\) on Required field "type" is dead code \(Required fields are always Known\)`
+		req.Name = config.Type.ValueStringPointer()
+	}
+
+	// BAD: Optional+Computed WITH default — IsUnknown() is dead code.
+	if !config.CaseInsensitive.IsUnknown() { // want `IsUnknown\(\) on field "case_insensitive" with schema Default is dead code \(defaults are resolved at plan time\)`
+		_ = config.CaseInsensitive.ValueBool()
+	}
+
+	// BAD: Optional+Computed WITHOUT default — missing guard.
+	val := config.Currency.ValueString() // want `ValueString\(\) on Optional\+Computed field "currency" without IsUnknown\(\) guard; field may be Unknown at plan time`
+	_ = val
+
+	// Transitive call: pass a nested field to another helper.
+	fillFilterFromConfig(config.Filter)
+}
+
+// fillFilterFromConfig is called transitively from fillFromConfig.
+// Schema context propagates: builder → fillFromConfig → fillFilterFromConfig.
+func fillFilterFromConfig(filter FilterValue) {
+	// BAD: Required at 2nd nesting level — IsUnknown() is dead code.
+	if !filter.Operator.IsUnknown() { // want `IsUnknown\(\) on Required field "operator" is dead code \(Required fields are always Known\)`
+		_ = filter.Operator.ValueStringPointer()
+	}
+
+	// BAD: Optional+Computed without default — missing guard.
+	val := filter.Mode.ValueString() // want `ValueString\(\) on Optional\+Computed field "mode" without IsUnknown\(\) guard; field may be Unknown at plan time`
+	_ = val
+}
+
+// fillDisplaySettings is a helper taking a DisplaySettingsValue.
+// Schema context propagated from toHelperTestRequest via config.DisplaySettings.
+func fillDisplaySettings(req *ApiRequest, ds DisplaySettingsValue) {
+	// BAD: Optional+Computed WITH default — IsUnknown() is dead code.
+	if !ds.ThemeId.IsNull() && !ds.ThemeId.IsUnknown() { // want `IsUnknown\(\) on field "theme_id" with schema Default is dead code \(defaults are resolved at plan time\)`
+		req.Metric = ds.ThemeId.ValueStringPointer()
+	}
+}
+
+// --- Non-builder standalone function (should NOT be analyzed) ---
+
+// standaloneHelper is not called from any builder. The linter should not
+// analyze it, so these patterns should NOT produce diagnostics.
+func standaloneHelper(config ConfigValue) {
+	_ = config.Currency.ValueString() // no diagnostic — not reachable from a builder
+	if !config.Type.IsUnknown() {     // no diagnostic — not reachable from a builder
+		_ = config.Type.ValueStringPointer()
+	}
+}

@@ -650,11 +650,11 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		layout := models.ExternalRenderer(config.Layout.ValueString())
 		externalConfig.Layout = &layout
 	}
-	if !config.SortDimensions.IsNull() && !config.SortDimensions.IsUnknown() {
+	if !config.SortDimensions.IsNull() {
 		sortDimensions := models.ExternalConfigSortDimensions(config.SortDimensions.ValueString())
 		externalConfig.SortDimensions = &sortDimensions
 	}
-	if !config.SortGroups.IsNull() && !config.SortGroups.IsUnknown() {
+	if !config.SortGroups.IsNull() {
 		sortGroups := models.ExternalConfigSortGroups(config.SortGroups.ValueString())
 		externalConfig.SortGroups = &sortGroups
 	}
@@ -678,20 +678,22 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.CustomTimeRange.IsNull() && !config.CustomTimeRange.IsUnknown() {
-		fromTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.From.ValueString())
-		if err != nil {
-			diags.AddError("Invalid From Time", "Could not parse CustomTimeRange.From as RFC3339: "+err.Error())
-		}
-		toTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.To.ValueString())
-		if err != nil {
-			diags.AddError("Invalid To Time", "Could not parse CustomTimeRange.To as RFC3339: "+err.Error())
-		}
-
-		if !diags.HasError() {
-			customTimeRange := models.ExternalConfigCustomTimeRange{
-				From: &fromTime,
-				To:   &toTime,
+		customTimeRange := models.ExternalConfigCustomTimeRange{}
+		if !config.CustomTimeRange.From.IsNull() && !config.CustomTimeRange.From.IsUnknown() {
+			fromTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.From.ValueString())
+			if err != nil {
+				diags.AddError("Invalid From Time", "Could not parse CustomTimeRange.From as RFC3339: "+err.Error())
 			}
+			customTimeRange.From = &fromTime
+		}
+		if !config.CustomTimeRange.To.IsNull() && !config.CustomTimeRange.To.IsUnknown() {
+			toTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.To.ValueString())
+			if err != nil {
+				diags.AddError("Invalid To Time", "Could not parse CustomTimeRange.To as RFC3339: "+err.Error())
+			}
+			customTimeRange.To = &toTime
+		}
+		if !diags.HasError() {
 			externalConfig.CustomTimeRange = &customTimeRange
 		}
 	}
@@ -865,14 +867,19 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.TimeRange.IsNull() && !config.TimeRange.IsUnknown() {
-		timeSettingsMode := models.TimeSettingsMode(config.TimeRange.Mode.ValueString())
-		timeSettingsUnit := models.TimeSettingsUnit(config.TimeRange.Unit.ValueString())
-		externalConfig.TimeRange = &models.TimeSettings{
+		ts := &models.TimeSettings{
 			Amount:         config.TimeRange.Amount.ValueInt64Pointer(),
 			IncludeCurrent: config.TimeRange.IncludeCurrent.ValueBoolPointer(),
-			Mode:           &timeSettingsMode,
-			Unit:           &timeSettingsUnit,
 		}
+		if !config.TimeRange.Mode.IsNull() && !config.TimeRange.Mode.IsUnknown() {
+			mode := models.TimeSettingsMode(config.TimeRange.Mode.ValueString())
+			ts.Mode = &mode
+		}
+		if !config.TimeRange.Unit.IsNull() && !config.TimeRange.Unit.IsUnknown() {
+			unit := models.TimeSettingsUnit(config.TimeRange.Unit.ValueString())
+			ts.Unit = &unit
+		}
+		externalConfig.TimeRange = ts
 	}
 
 	if !config.SecondaryTimeRange.IsNull() && !config.SecondaryTimeRange.IsUnknown() {
@@ -885,19 +892,22 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			secondaryTimeRange.Unit = &unit
 		}
 		if !config.SecondaryTimeRange.CustomTimeRange.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.IsUnknown() {
-			fromTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.From.ValueString())
-			if err != nil {
-				diags.AddError("Invalid From Time", "Could not parse SecondaryTimeRange.CustomTimeRange.From as RFC3339: "+err.Error())
+			ctr := models.TimeSettingsSecondaryCustomTimeRange{}
+			if !config.SecondaryTimeRange.CustomTimeRange.From.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.From.IsUnknown() {
+				fromTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.From.ValueString())
+				if err != nil {
+					diags.AddError("Invalid From Time", "Could not parse SecondaryTimeRange.CustomTimeRange.From as RFC3339: "+err.Error())
+				}
+				ctr.From = &fromTime
 			}
-			toTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.To.ValueString())
-			if err != nil {
-				diags.AddError("Invalid To Time", "Could not parse SecondaryTimeRange.CustomTimeRange.To as RFC3339: "+err.Error())
+			if !config.SecondaryTimeRange.CustomTimeRange.To.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.To.IsUnknown() {
+				toTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.To.ValueString())
+				if err != nil {
+					diags.AddError("Invalid To Time", "Could not parse SecondaryTimeRange.CustomTimeRange.To as RFC3339: "+err.Error())
+				}
+				ctr.To = &toTime
 			}
 			if !diags.HasError() {
-				ctr := models.TimeSettingsSecondaryCustomTimeRange{
-					From: &fromTime,
-					To:   &toTime,
-				}
 				secondaryTimeRange.CustomTimeRange = &ctr
 			}
 		}
@@ -1564,7 +1574,7 @@ func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue
 		tString := models.ExternalMetricType(metricValue.MetricType.ValueString())
 		metric.Type = &tString
 	}
-	if !metricValue.Value.IsNull() {
+	if !metricValue.Value.IsNull() && !metricValue.Value.IsUnknown() {
 		vString := metricValue.Value.ValueString()
 		metric.Value = &vString
 	}
