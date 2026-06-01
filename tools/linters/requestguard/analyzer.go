@@ -40,13 +40,19 @@ var neverUnknownClasses = map[schemaparser.FieldClass]string{
 	schemaparser.Optional: "Optional (not Computed)",
 }
 
-// nonPointerAccessors are value accessors that return zero values for Unknown
-// (not nil), making them unsafe without an IsUnknown() guard.
-var nonPointerAccessors = map[string]bool{
-	"ValueString":  true,
-	"ValueBool":    true,
-	"ValueFloat64": true,
-	"ValueInt64":   true,
+// unsafeAccessors are value accessors that return zero values for Unknown,
+// making them unsafe without an IsUnknown() guard. This includes both
+// non-pointer accessors (which return the zero value directly) and pointer
+// accessors (which return a pointer to the zero value, not nil).
+var unsafeAccessors = map[string]bool{
+	"ValueString":         true,
+	"ValueBool":           true,
+	"ValueFloat64":        true,
+	"ValueInt64":          true,
+	"ValueStringPointer":  true,
+	"ValueBoolPointer":    true,
+	"ValueFloat64Pointer": true,
+	"ValueInt64Pointer":   true,
 }
 
 // attrMap is a convenience alias for field name → AttrInfo maps.
@@ -627,8 +633,8 @@ func checkMissingGuards(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map
 			return true
 		}
 
-		// Check if it's a non-pointer accessor.
-		if !nonPointerAccessors[sel.Sel.Name] {
+		// Check if it's an unsafe accessor.
+		if !unsafeAccessors[sel.Sel.Name] {
 			return true
 		}
 

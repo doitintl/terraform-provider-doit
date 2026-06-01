@@ -55,9 +55,9 @@ func (plan *GuardTestModel) toUpdateRequest() ApiRequest {
 	name := plan.FolderId.ValueString() // want `ValueString\(\) on Optional\+Computed field "folder_id" without IsUnknown\(\) guard; field may be Unknown at plan time`
 	_ = name
 
-	// GOOD: Optional+Computed WITHOUT default, ValueStringPointer without guard.
-	// Pointer accessors return nil for Unknown, which is often acceptable.
-	req.FolderId = plan.FolderId.ValueStringPointer()
+	// BAD: Optional+Computed WITHOUT default, ValueStringPointer without guard.
+	// Pointer accessors return a pointer to the zero value for Unknown (*""), not nil.
+	req.FolderId = plan.FolderId.ValueStringPointer() // want `ValueStringPointer\(\) on Optional\+Computed field "folder_id" without IsUnknown\(\) guard; field may be Unknown at plan time`
 
 	// GOOD: Optional+Computed WITH default — no guard needed, ValueString is safe.
 	metric := plan.Metric.ValueString()
