@@ -5323,6 +5323,50 @@
 									}
 								},
 								{
+									"name": "display_settings",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "axis_label_font_size",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Font size used for axis labels on charts."
+												}
+											},
+											{
+												"name": "data_label_font_size",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Font size used for data labels on charts."
+												}
+											},
+											{
+												"name": "decimal_precision",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "Number of decimal places shown for numeric values."
+												}
+											},
+											{
+												"name": "number_scale",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Scale applied to numeric values when rendering the report."
+												}
+											},
+											{
+												"name": "theme_id",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Identifier of the theme applied to the report. The reserved\nsentinel `\"default\"` is returned on GET when no theme is stored\nand clears the stored value on PATCH. Omit the field on PATCH\nto leave the stored value unchanged."
+												}
+											}
+										],
+										"description": "Display settings for the report."
+									}
+								},
+								{
 									"name": "display_values",
 									"string": {
 										"computed_optional_required": "computed",

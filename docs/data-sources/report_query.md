@@ -110,6 +110,7 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 - `data_source` (String) Data source of the report.
 Possible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
+- `display_settings` (Attributes) Display settings for the report. (see [below for nested schema](#nestedatt--config--display_settings))
 - `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 Possible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolute_and_percentage`
 - `filters` (Attributes List) The filters to apply to the report. (see [below for nested schema](#nestedatt--config--filters))
@@ -162,6 +163,24 @@ Optional:
 - `id` (String) The identifier of the dimension.
 - `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
+
+
+<a id="nestedatt--config--display_settings"></a>
+### Nested Schema for `config.display_settings`
+
+Optional:
+
+- `axis_label_font_size` (String) Font size used for axis labels on charts.
+Possible values: `auto`, `small`, `medium`, `large`
+- `data_label_font_size` (String) Font size used for data labels on charts.
+Possible values: `auto`, `small`, `medium`, `large`
+- `decimal_precision` (Number) Number of decimal places shown for numeric values.
+- `number_scale` (String) Scale applied to numeric values when rendering the report.
+Possible values: `auto`, `thousands`, `millions`, `billions`, `raw`
+- `theme_id` (String) Identifier of the theme applied to the report. The reserved
+sentinel `"default"` is returned on GET when no theme is stored
+and clears the stored value on PATCH. Omit the field on PATCH
+to leave the stored value unchanged.
 
 
 <a id="nestedatt--config--filters"></a>

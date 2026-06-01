@@ -527,6 +527,37 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		configMap["secondary_time_range"] = datasource_report.NewSecondaryTimeRangeValueNull()
 	}
 
+	// Nested Object: DisplaySettings
+	if config.DisplaySettings != nil {
+		dsMap := map[string]attr.Value{
+			"axis_label_font_size": types.StringNull(),
+			"data_label_font_size": types.StringNull(),
+			"decimal_precision":    types.Int64Null(),
+			"number_scale":         types.StringNull(),
+			"theme_id":             types.StringNull(),
+		}
+		if config.DisplaySettings.AxisLabelFontSize != nil {
+			dsMap["axis_label_font_size"] = types.StringValue(string(*config.DisplaySettings.AxisLabelFontSize))
+		}
+		if config.DisplaySettings.DataLabelFontSize != nil {
+			dsMap["data_label_font_size"] = types.StringValue(string(*config.DisplaySettings.DataLabelFontSize))
+		}
+		if config.DisplaySettings.DecimalPrecision != nil {
+			dsMap["decimal_precision"] = types.Int64Value(int64(*config.DisplaySettings.DecimalPrecision))
+		}
+		if config.DisplaySettings.NumberScale != nil {
+			dsMap["number_scale"] = types.StringValue(string(*config.DisplaySettings.NumberScale))
+		}
+		if config.DisplaySettings.ThemeId != nil {
+			dsMap["theme_id"] = types.StringValue(*config.DisplaySettings.ThemeId)
+		}
+		dsVal, dsDiags := datasource_report.NewDisplaySettingsValue(datasource_report.DisplaySettingsValue{}.AttributeTypes(ctx), dsMap)
+		diags.Append(dsDiags...)
+		configMap["display_settings"] = dsVal
+	} else {
+		configMap["display_settings"] = datasource_report.NewDisplaySettingsValueNull()
+	}
+
 	var configDiags diag.Diagnostics
 	state.Config, configDiags = datasource_report.NewConfigValue(datasource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
 	diags.Append(configDiags...)

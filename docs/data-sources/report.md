@@ -80,6 +80,7 @@ Read-Only:
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
+- `display_settings` (Attributes) Display settings for the report. (see [below for nested schema](#nestedatt--config--display_settings))
 - `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 - `filters` (Attributes List) The filters to apply to the report. (see [below for nested schema](#nestedatt--config--filters))
 - `group` (Attributes List) The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by). (see [below for nested schema](#nestedatt--config--group))
@@ -126,6 +127,21 @@ Read-Only:
 
 - `id` (String) The identifier of the dimension.
 - `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+
+
+<a id="nestedatt--config--display_settings"></a>
+### Nested Schema for `config.display_settings`
+
+Read-Only:
+
+- `axis_label_font_size` (String) Font size used for axis labels on charts.
+- `data_label_font_size` (String) Font size used for data labels on charts.
+- `decimal_precision` (Number) Number of decimal places shown for numeric values.
+- `number_scale` (String) Scale applied to numeric values when rendering the report.
+- `theme_id` (String) Identifier of the theme applied to the report. The reserved
+sentinel `"default"` is returned on GET when no theme is stored
+and clears the stored value on PATCH. Omit the field on PATCH
+to leave the stored value unchanged.
 
 
 <a id="nestedatt--config--filters"></a>

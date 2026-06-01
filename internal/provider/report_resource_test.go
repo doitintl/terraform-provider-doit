@@ -2709,3 +2709,162 @@ resource "doit_report" "folder_test" {
 }
 `, i)
 }
+
+// TestAccReport_DisplaySettings verifies that the display_settings block
+// (including theme_id) round-trips without drift on create and update.
+func TestAccReport_DisplaySettings(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with display_settings (default theme)
+			{
+				Config: testAccReportWithDisplaySettings(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.ds_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.ds_test",
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("axis_label_font_size"),
+						knownvalue.StringExact("large")),
+					statecheck.ExpectKnownValue(
+						"doit_report.ds_test",
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("data_label_font_size"),
+						knownvalue.StringExact("small")),
+					statecheck.ExpectKnownValue(
+						"doit_report.ds_test",
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("decimal_precision"),
+						knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue(
+						"doit_report.ds_test",
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("number_scale"),
+						knownvalue.StringExact("millions")),
+					statecheck.ExpectKnownValue(
+						"doit_report.ds_test",
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("theme_id"),
+						knownvalue.StringExact("default")),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccReportWithDisplaySettings(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithDisplaySettings(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ds_test" {
+    name        = "test-display-settings-%d"
+    description = "Report testing display_settings block"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        display_settings = {
+            axis_label_font_size = "large"
+            data_label_font_size = "small"
+            decimal_precision    = 2
+            number_scale         = "millions"
+        }
+    }
+}
+`, i)
+}
+
+// TestAccReport_DisplaySettingsWithTheme verifies that a custom theme can be
+// applied to a report via display_settings.theme_id and that the value
+// round-trips without drift. Uses a custom_theme resource as the source.
+func TestAccReport_DisplaySettingsWithTheme(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithTheme(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.themed",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"doit_report.themed", "config.display_settings.theme_id",
+						"doit_custom_theme.report_theme", "id"),
+				),
+			},
+			// Drift check
+			{
+				Config: testAccReportWithTheme(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithTheme(i int) string {
+	return fmt.Sprintf(`
+resource "doit_custom_theme" "report_theme" {
+  name          = "tf-acc-report-theme-%d"
+  primary_color = "#FF5733"
+  colors = {
+    light = ["#FF5733", "#33FF57", "#3357FF"]
+    dark  = ["#C70039", "#900C3F", "#581845"]
+  }
+}
+
+resource "doit_report" "themed" {
+    name        = "test-report-themed-%d"
+    description = "Report with a custom theme applied"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        display_settings = {
+            theme_id = doit_custom_theme.report_theme.id
+        }
+    }
+}
+`, i, i)
+}
