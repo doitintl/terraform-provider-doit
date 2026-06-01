@@ -50,6 +50,20 @@
 			}
 		},
 		{
+			"name": "active_theme",
+			"schema": {
+				"attributes": [
+					{
+						"name": "theme_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the active theme. The reserved sentinel `\"default\"` is\nreturned when the user is using the built-in default (no custom or\npreset theme stored)."
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "alert",
 			"schema": {
 				"attributes": [

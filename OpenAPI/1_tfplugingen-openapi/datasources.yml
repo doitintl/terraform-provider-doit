@@ -81,6 +81,10 @@ data_sources:
     read:
       path: /analytics/v1/settings/themes/{id}
       method: GET
+  active_theme:
+    read:
+      path: /analytics/v1/settings/active-theme
+      method: GET
   # List data sources
   custom_themes:
     read:
