@@ -574,8 +574,12 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 }
 
 func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req models.CreateReportJSONRequestBody, diags diag.Diagnostics) {
-	req.Name = plan.Name.ValueStringPointer()
-	req.Description = plan.Description.ValueStringPointer()
+	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+		req.Name = plan.Name.ValueStringPointer()
+	}
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		req.Description = plan.Description.ValueStringPointer()
+	}
 	req.FolderId = plan.FolderId.ValueStringPointer()
 
 	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
@@ -598,8 +602,12 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 }
 
 func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateReportJSONRequestBody, diags diag.Diagnostics) {
-	req.Name = plan.Name.ValueStringPointer()
-	req.Description = plan.Description.ValueStringPointer()
+	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+		req.Name = plan.Name.ValueStringPointer()
+	}
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		req.Description = plan.Description.ValueStringPointer()
+	}
 	req.FolderId = plan.FolderId.ValueStringPointer()
 
 	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
@@ -669,12 +677,20 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.AdvancedAnalysis.IsNull() && !config.AdvancedAnalysis.IsUnknown() {
-		externalConfig.AdvancedAnalysis = &models.AdvancedAnalysis{
-			Forecast:     config.AdvancedAnalysis.Forecast.ValueBoolPointer(),
-			NotTrending:  config.AdvancedAnalysis.NotTrending.ValueBoolPointer(),
-			TrendingDown: config.AdvancedAnalysis.TrendingDown.ValueBoolPointer(),
-			TrendingUp:   config.AdvancedAnalysis.TrendingUp.ValueBoolPointer(),
+		aa := &models.AdvancedAnalysis{}
+		if !config.AdvancedAnalysis.Forecast.IsNull() && !config.AdvancedAnalysis.Forecast.IsUnknown() {
+			aa.Forecast = config.AdvancedAnalysis.Forecast.ValueBoolPointer()
 		}
+		if !config.AdvancedAnalysis.NotTrending.IsNull() && !config.AdvancedAnalysis.NotTrending.IsUnknown() {
+			aa.NotTrending = config.AdvancedAnalysis.NotTrending.ValueBoolPointer()
+		}
+		if !config.AdvancedAnalysis.TrendingDown.IsNull() && !config.AdvancedAnalysis.TrendingDown.IsUnknown() {
+			aa.TrendingDown = config.AdvancedAnalysis.TrendingDown.ValueBoolPointer()
+		}
+		if !config.AdvancedAnalysis.TrendingUp.IsNull() && !config.AdvancedAnalysis.TrendingUp.IsUnknown() {
+			aa.TrendingUp = config.AdvancedAnalysis.TrendingUp.ValueBoolPointer()
+		}
+		externalConfig.AdvancedAnalysis = aa
 	}
 
 	if !config.CustomTimeRange.IsNull() && !config.CustomTimeRange.IsUnknown() {
@@ -867,9 +883,12 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.TimeRange.IsNull() && !config.TimeRange.IsUnknown() {
-		ts := &models.TimeSettings{
-			Amount:         config.TimeRange.Amount.ValueInt64Pointer(),
-			IncludeCurrent: config.TimeRange.IncludeCurrent.ValueBoolPointer(),
+		ts := &models.TimeSettings{}
+		if !config.TimeRange.Amount.IsNull() && !config.TimeRange.Amount.IsUnknown() {
+			ts.Amount = config.TimeRange.Amount.ValueInt64Pointer()
+		}
+		if !config.TimeRange.IncludeCurrent.IsNull() && !config.TimeRange.IncludeCurrent.IsUnknown() {
+			ts.IncludeCurrent = config.TimeRange.IncludeCurrent.ValueBoolPointer()
 		}
 		if !config.TimeRange.Mode.IsNull() && !config.TimeRange.Mode.IsUnknown() {
 			mode := models.TimeSettingsMode(config.TimeRange.Mode.ValueString())
@@ -883,9 +902,12 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.SecondaryTimeRange.IsNull() && !config.SecondaryTimeRange.IsUnknown() {
-		secondaryTimeRange := &models.TimeSettingsSecondary{
-			Amount:         config.SecondaryTimeRange.Amount.ValueInt64Pointer(),
-			IncludeCurrent: config.SecondaryTimeRange.IncludeCurrent.ValueBoolPointer(),
+		secondaryTimeRange := &models.TimeSettingsSecondary{}
+		if !config.SecondaryTimeRange.Amount.IsNull() && !config.SecondaryTimeRange.Amount.IsUnknown() {
+			secondaryTimeRange.Amount = config.SecondaryTimeRange.Amount.ValueInt64Pointer()
+		}
+		if !config.SecondaryTimeRange.IncludeCurrent.IsNull() && !config.SecondaryTimeRange.IncludeCurrent.IsUnknown() {
+			secondaryTimeRange.IncludeCurrent = config.SecondaryTimeRange.IncludeCurrent.ValueBoolPointer()
 		}
 		if !config.SecondaryTimeRange.Unit.IsNull() && !config.SecondaryTimeRange.Unit.IsUnknown() {
 			unit := models.TimeSettingsSecondaryUnit(config.SecondaryTimeRange.Unit.ValueString())

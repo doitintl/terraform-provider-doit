@@ -217,7 +217,9 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 	}
 
 	// Simple fields
-	req.Amount = plan.Amount.ValueFloat64Pointer()
+	if !plan.Amount.IsNull() && !plan.Amount.IsUnknown() {
+		req.Amount = plan.Amount.ValueFloat64Pointer()
+	}
 	if !plan.Currency.IsNull() && !plan.Currency.IsUnknown() {
 		currency := models.Currency(plan.Currency.ValueString())
 		req.Currency = &currency
@@ -234,7 +236,9 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		metric := models.BudgetCreateUpdateRequestMetric(plan.Metric.ValueString())
 		req.Metric = &metric
 	}
-	req.Name = plan.Name.ValueStringPointer()
+	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+		req.Name = plan.Name.ValueStringPointer()
+	}
 
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
 		public := models.BudgetCreateUpdateRequestPublic(plan.Public.ValueString())
@@ -327,8 +331,12 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		req.StartPeriod = plan.StartPeriod.ValueInt64Pointer()
 	}
 
-	req.TimeInterval = plan.TimeInterval.ValueStringPointer()
-	req.Type = plan.Type.ValueStringPointer()
+	if !plan.TimeInterval.IsNull() && !plan.TimeInterval.IsUnknown() {
+		req.TimeInterval = plan.TimeInterval.ValueStringPointer()
+	}
+	if !plan.Type.IsNull() && !plan.Type.IsUnknown() {
+		req.Type = plan.Type.ValueStringPointer()
+	}
 	req.UsePrevSpend = plan.UsePrevSpend.ValueBoolPointer()
 
 	return req, diags
