@@ -922,7 +922,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			v := models.ExternalDisplaySettingsNumberScale(config.DisplaySettings.NumberScale.ValueString())
 			ds.NumberScale = &v
 		}
-		if !config.DisplaySettings.ThemeId.IsNull() && !config.DisplaySettings.ThemeId.IsUnknown() {
+		if !config.DisplaySettings.ThemeId.IsNull() {
 			v := config.DisplaySettings.ThemeId.ValueString()
 			ds.ThemeId = &v
 		}
