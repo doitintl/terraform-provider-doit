@@ -2735,12 +2735,20 @@ func TestAccReport_DisplaySettings(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_report.ds_test",
-						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("number_scale"),
-						knownvalue.StringExact("millions")),
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("axis_label_font_size"),
+						knownvalue.StringExact("large")),
+					statecheck.ExpectKnownValue(
+						"doit_report.ds_test",
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("data_label_font_size"),
+						knownvalue.StringExact("small")),
 					statecheck.ExpectKnownValue(
 						"doit_report.ds_test",
 						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("decimal_precision"),
 						knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue(
+						"doit_report.ds_test",
+						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("number_scale"),
+						knownvalue.StringExact("millions")),
 					statecheck.ExpectKnownValue(
 						"doit_report.ds_test",
 						tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("theme_id"),
@@ -2777,8 +2785,10 @@ resource "doit_report" "ds_test" {
         currency       = "USD"
         layout         = "table"
         display_settings = {
-            number_scale      = "millions"
-            decimal_precision = 2
+            axis_label_font_size = "large"
+            data_label_font_size = "small"
+            decimal_precision    = 2
+            number_scale         = "millions"
         }
     }
 }
