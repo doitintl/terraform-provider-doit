@@ -271,6 +271,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewAvaDataSource,
 		NewInsightDataSource,
 		NewCustomThemeDataSource,
+		NewActiveThemeDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
