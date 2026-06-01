@@ -2935,3 +2935,42 @@ resource "doit_report" "this" {
 }
 `, i)
 }
+
+// TestAccReport_EmptyCustomTimeRange verifies that setting custom_time_range = {}
+// (both from and to omitted) is rejected at plan time by the config validator.
+func TestAccReport_EmptyCustomTimeRange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportEmptyCustomTimeRange(n),
+				ExpectError: regexp.MustCompile(`Empty Custom Time Range`),
+			},
+		},
+	})
+}
+
+func testAccReportEmptyCustomTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-empty-ctr-%d"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        custom_time_range = {}
+    }
+}
+`, i)
+}
