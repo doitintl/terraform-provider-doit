@@ -193,7 +193,8 @@ func propagateToCallees(pass *analysis.Pass, body *ast.BlockStmt, varSchemas map
 }
 
 // calleeIdent extracts the function name from a call expression.
-// Handles both unqualified (foo()) and ignored-receiver calls.
+// Only unqualified calls (foo()) are considered for propagation;
+// selector calls (obj.Method(), pkg.Func()) are skipped.
 func calleeIdent(call *ast.CallExpr) string {
 	switch fun := call.Fun.(type) {
 	case *ast.Ident:
