@@ -2868,3 +2868,70 @@ resource "doit_report" "themed" {
 }
 `, i, i)
 }
+
+// TestAccReport_PartialTimeRange verifies that omitting Optional+Computed
+// subfields (here include_current) within a user-specified time_range object
+// does not cause errors on Create and does not produce drift on re-apply.
+func TestAccReport_PartialTimeRange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportPartialTimeRange(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("mode"),
+						knownvalue.StringExact("last")),
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("amount"),
+						knownvalue.Int64Exact(3)),
+					// include_current is omitted — verify it resolves to a known value.
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("include_current"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Drift check: re-apply same config, expect no changes.
+			{
+				Config: testAccReportPartialTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportPartialTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-partial-tr-%d"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode   = "last"
+          amount = 3
+          unit   = "month"
+        }
+    }
+}
+`, i)
+}
