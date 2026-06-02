@@ -2648,6 +2648,276 @@
 			}
 		},
 		{
+			"name": "cloud_diagram_search",
+			"schema": {
+				"attributes": [
+					{
+						"name": "component",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component ID."
+										}
+									},
+									{
+										"name": "account_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account name."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component color."
+										}
+									},
+									{
+										"name": "group_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group type (for group components)."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component icon identifier."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "node_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Node type."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "service_type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Cloud service type (e.g. AWS::EC2::Instance)."
+													}
+												}
+											],
+											"description": "Component properties. For the \"prop\" category contains the matched property key-value pairs."
+										}
+									},
+									{
+										"name": "scheme_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram ID."
+										}
+									},
+									{
+										"name": "ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component type."
+										}
+									}
+								]
+							},
+							"description": "Components matching the query by name."
+						}
+					},
+					{
+						"name": "prop",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component ID."
+										}
+									},
+									{
+										"name": "account_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account name."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component color."
+										}
+									},
+									{
+										"name": "group_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group type (for group components)."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component icon identifier."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "node_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Node type."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "service_type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Cloud service type (e.g. AWS::EC2::Instance)."
+													}
+												}
+											],
+											"description": "Component properties. For the \"prop\" category contains the matched property key-value pairs."
+										}
+									},
+									{
+										"name": "scheme_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram ID."
+										}
+									},
+									{
+										"name": "ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component type."
+										}
+									}
+								]
+							},
+							"description": "Components matching the query by property values."
+						}
+					},
+					{
+						"name": "scheme",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID."
+										}
+									},
+									{
+										"name": "account_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account name."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer name."
+										}
+									},
+									{
+										"name": "scheme",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram name."
+										}
+									},
+									{
+										"name": "scheme_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram ID."
+										}
+									},
+									{
+										"name": "ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID (same as _id)."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Import/sync status."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component type — always \"statussheet\" for this category."
+										}
+									}
+								]
+							},
+							"description": "Diagram layers (cloud accounts) matching the query."
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_diagrams",
 			"schema": {
 				"attributes": [

@@ -2806,6 +2806,35 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /clouddiagrams/v1/scheme/search:
+    post:
+      tags:
+        - Cloud Diagrams
+      summary: Search diagrams and components
+      description: |-
+        Full-text search across diagram layers, components by name, and components
+        by property values. Returns three result categories: diagram (matching layers), component
+        (matching components by name), and prop (matching components by property values).
+      operationId: searchCloudDiagrams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudDiagramsSearchRequest"
+      responses:
+        "200":
+          description: OK - Search results returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramsSearchResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
   /analytics/v1/commitment-manager:
     get:
       tags:
@@ -4225,6 +4254,143 @@ components:
       type: string
       description: The insight category.
       enum: ["FinOps", "Operational excellence", "Performance efficiency", "Reliability", "Security", "Sustainability"]
+    CloudDiagramComponentSearchItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: A component matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        icon:
+          type: string
+          description: Component icon identifier.
+        color:
+          type: string
+          description: Component color.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID.
+        name:
+          type: string
+          description: Component name.
+        type:
+          type: string
+          enum:
+            - attachment
+            - combiner
+            - element
+            - group
+            - link
+            - node
+            - note
+          description: Component type.
+        node_type:
+          type: string
+          enum:
+            - app_component
+            - app_group
+            - app_link
+            - attachment
+            - group
+            - host
+            - link
+            - service
+          description: Node type.
+        group_type:
+          type: string
+          description: Group type (for group components).
+        props:
+          description: Component properties. For the "prop" category contains the matched property key-value pairs.
+          allOf:
+            - $ref: '#/components/schemas/CloudDiagramComponentSearchItemProps'
+    CloudDiagramComponentSearchItemProps:
+      type: object
+      description: Component properties. For the "prop" category contains the matched property key-value pairs.
+      properties:
+        service_type:
+          type: string
+          description: Cloud service type (e.g. AWS::EC2::Instance).
+    CloudDiagramSchemeSearchItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: A diagram layer (cloud account) matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Layer ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID (same as _id).
+        scheme:
+          type: string
+          description: Parent diagram name.
+        status:
+          type: string
+          description: Import/sync status.
+        name:
+          type: string
+          description: Layer name.
+        type:
+          type: string
+          enum:
+            - statussheet
+          description: Component type — always "statussheet" for this category.
+    CloudDiagramsSearchRequest:
+      type: object
+      required:
+        - query
+      description: Request body for searching diagrams and components.
+      properties:
+        query:
+          type: string
+          description: Search query string.
+        ss_id:
+          type: string
+          description: Limit search to components within this layer.
+        from:
+          type: integer
+          minimum: 0
+          description: Pagination offset (default 0).
+        size:
+          type: integer
+          minimum: 1
+          description: Maximum number of results per category (default 20).
+    CloudDiagramsSearchResponse:
+      type: object
+      description: Search results grouped into three categories.
+      properties:
+        scheme:
+          type: array
+          description: Diagram layers (cloud accounts) matching the query.
+          items:
+            $ref: "#/components/schemas/CloudDiagramSchemeSearchItem"
+        component:
+          type: array
+          description: Components matching the query by name.
+          items:
+            $ref: "#/components/schemas/CloudDiagramComponentSearchItem"
+        prop:
+          type: array
+          description: Components matching the query by property values.
+          items:
+            $ref: "#/components/schemas/CloudDiagramComponentSearchItem"
     CloudIncidentListItem:
       type: object
       description: Summary information for a cloud incident.

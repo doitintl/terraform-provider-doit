@@ -299,6 +299,90 @@ func (e Category) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramComponentSearchItemNodeType.
+const (
+	CloudDiagramComponentSearchItemNodeTypeAppComponent CloudDiagramComponentSearchItemNodeType = "app_component"
+	CloudDiagramComponentSearchItemNodeTypeAppGroup     CloudDiagramComponentSearchItemNodeType = "app_group"
+	CloudDiagramComponentSearchItemNodeTypeAppLink      CloudDiagramComponentSearchItemNodeType = "app_link"
+	CloudDiagramComponentSearchItemNodeTypeAttachment   CloudDiagramComponentSearchItemNodeType = "attachment"
+	CloudDiagramComponentSearchItemNodeTypeGroup        CloudDiagramComponentSearchItemNodeType = "group"
+	CloudDiagramComponentSearchItemNodeTypeHost         CloudDiagramComponentSearchItemNodeType = "host"
+	CloudDiagramComponentSearchItemNodeTypeLink         CloudDiagramComponentSearchItemNodeType = "link"
+	CloudDiagramComponentSearchItemNodeTypeService      CloudDiagramComponentSearchItemNodeType = "service"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemNodeType enum.
+func (e CloudDiagramComponentSearchItemNodeType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemNodeTypeAppComponent:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeHost:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeService:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentSearchItemType.
+const (
+	CloudDiagramComponentSearchItemTypeAttachment CloudDiagramComponentSearchItemType = "attachment"
+	CloudDiagramComponentSearchItemTypeCombiner   CloudDiagramComponentSearchItemType = "combiner"
+	CloudDiagramComponentSearchItemTypeElement    CloudDiagramComponentSearchItemType = "element"
+	CloudDiagramComponentSearchItemTypeGroup      CloudDiagramComponentSearchItemType = "group"
+	CloudDiagramComponentSearchItemTypeLink       CloudDiagramComponentSearchItemType = "link"
+	CloudDiagramComponentSearchItemTypeNode       CloudDiagramComponentSearchItemType = "node"
+	CloudDiagramComponentSearchItemTypeNote       CloudDiagramComponentSearchItemType = "note"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemType enum.
+func (e CloudDiagramComponentSearchItemType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemTypeCombiner:
+		return true
+	case CloudDiagramComponentSearchItemTypeElement:
+		return true
+	case CloudDiagramComponentSearchItemTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemTypeNode:
+		return true
+	case CloudDiagramComponentSearchItemTypeNote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramSchemeSearchItemType.
+const (
+	Statussheet CloudDiagramSchemeSearchItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramSchemeSearchItemType enum.
+func (e CloudDiagramSchemeSearchItemType) Valid() bool {
+	switch e {
+	case Statussheet:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudIncidentListItemPlatform.
 const (
 	CloudIncidentListItemPlatformAmazonWebServices CloudIncidentListItemPlatform = "amazon-web-services"
@@ -3347,6 +3431,111 @@ type BudgetListItem struct {
 // Category The insight category.
 type Category string
 
+// CloudDiagramComponentSearchItem A component matching the search query.
+type CloudDiagramComponentSearchItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Color Component color.
+	Color *string `json:"color,omitempty"`
+
+	// GroupType Group type (for group components).
+	GroupType *string `json:"group_type,omitempty"`
+
+	// Icon Component icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// NodeType Node type.
+	NodeType *CloudDiagramComponentSearchItemNodeType `json:"node_type,omitempty"`
+
+	// Props Component properties. For the "prop" category contains the matched property key-value pairs.
+	Props *CloudDiagramComponentSearchItemProps `json:"props,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Layer ID.
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Type Component type.
+	Type CloudDiagramComponentSearchItemType `json:"type"`
+}
+
+// CloudDiagramComponentSearchItemNodeType Node type.
+type CloudDiagramComponentSearchItemNodeType string
+
+// CloudDiagramComponentSearchItemType Component type.
+type CloudDiagramComponentSearchItemType string
+
+// CloudDiagramComponentSearchItemProps Component properties. For the "prop" category contains the matched property key-value pairs.
+type CloudDiagramComponentSearchItemProps struct {
+	// ServiceType Cloud service type (e.g. AWS::EC2::Instance).
+	ServiceType *string `json:"service_type,omitempty"`
+}
+
+// CloudDiagramSchemeSearchItem A diagram layer (cloud account) matching the search query.
+type CloudDiagramSchemeSearchItem struct {
+	// UnderscoreId Layer ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Name Layer name.
+	Name *string `json:"name,omitempty"`
+
+	// Scheme Parent diagram name.
+	Scheme *string `json:"scheme,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Layer ID (same as _id).
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Status Import/sync status.
+	Status *string `json:"status,omitempty"`
+
+	// Type Component type — always "statussheet" for this category.
+	Type CloudDiagramSchemeSearchItemType `json:"type"`
+}
+
+// CloudDiagramSchemeSearchItemType Component type — always "statussheet" for this category.
+type CloudDiagramSchemeSearchItemType string
+
+// CloudDiagramsSearchRequest Request body for searching diagrams and components.
+type CloudDiagramsSearchRequest struct {
+	// From Pagination offset (default 0).
+	From *int `json:"from,omitempty"`
+
+	// Query Search query string.
+	Query string `json:"query"`
+
+	// Size Maximum number of results per category (default 20).
+	Size *int `json:"size,omitempty"`
+
+	// SsId Limit search to components within this layer.
+	SsId *string `json:"ss_id,omitempty"`
+}
+
+// CloudDiagramsSearchResponse Search results grouped into three categories.
+type CloudDiagramsSearchResponse struct {
+	// Component Components matching the query by name.
+	Component *[]CloudDiagramComponentSearchItem `json:"component,omitempty"`
+
+	// Prop Components matching the query by property values.
+	Prop *[]CloudDiagramComponentSearchItem `json:"prop,omitempty"`
+
+	// Scheme Diagram layers (cloud accounts) matching the query.
+	Scheme *[]CloudDiagramSchemeSearchItem `json:"scheme,omitempty"`
+}
+
 // CloudIncidentListItem Summary information for a cloud incident.
 type CloudIncidentListItem struct {
 	// CreateTime The creation time of this cloud incident, in milliseconds since the epoch.
@@ -6224,6 +6413,9 @@ type IdOfAssetJSONRequestBody = IdOfAssetRequestBody
 // FindCloudDiagramsJSONRequestBody defines body for FindCloudDiagrams for application/json ContentType.
 type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
 
+// SearchCloudDiagramsJSONRequestBody defines body for SearchCloudDiagrams for application/json ContentType.
+type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
+
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
 
@@ -6629,6 +6821,11 @@ type ClientInterface interface {
 	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchCloudDiagramsWithBody request with any body
+	SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7700,6 +7897,30 @@ func (c *Client) FindCloudDiagramsWithBody(ctx context.Context, contentType stri
 
 func (c *Client) FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindCloudDiagramsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11170,6 +11391,46 @@ func NewFindCloudDiagramsRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewSearchCloudDiagramsRequest calls the generic SearchCloudDiagrams builder with application/json body
+func NewSearchCloudDiagramsRequest(server string, body SearchCloudDiagramsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSearchCloudDiagramsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSearchCloudDiagramsRequestWithBody generates requests for SearchCloudDiagrams with any type of body
+func NewSearchCloudDiagramsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/search")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListKnownIssuesRequest generates requests for ListKnownIssues
 func NewListKnownIssuesRequest(server string, params *ListKnownIssuesParams) (*http.Request, error) {
 	var err error
@@ -12827,6 +13088,11 @@ type ClientWithResponsesInterface interface {
 	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
 	FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
+
+	// SearchCloudDiagramsWithBodyWithResponse request with any body
+	SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
+
+	SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -14957,6 +15223,39 @@ func (r FindCloudDiagramsResp) ContentType() string {
 	return ""
 }
 
+type SearchCloudDiagramsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramsSearchResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchCloudDiagramsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchCloudDiagramsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SearchCloudDiagramsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListKnownIssuesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -16589,6 +16888,23 @@ func (c *ClientWithResponses) FindCloudDiagramsWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseFindCloudDiagramsResp(rsp)
+}
+
+// SearchCloudDiagramsWithBodyWithResponse request with arbitrary body returning *SearchCloudDiagramsResp
+func (c *ClientWithResponses) SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagramsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
+}
+
+func (c *ClientWithResponses) SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagrams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -20050,6 +20366,53 @@ func ParseFindCloudDiagramsResp(rsp *http.Response) (*FindCloudDiagramsResp, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest FindCloudDiagramsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSearchCloudDiagramsResp parses an HTTP response from a SearchCloudDiagramsWithResponse call
+func ParseSearchCloudDiagramsResp(rsp *http.Response) (*SearchCloudDiagramsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchCloudDiagramsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramsSearchResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

@@ -293,6 +293,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewFoldersDataSource,
 		NewCustomThemesDataSource,
 		NewCloudDiagramsDataSource,
+		NewCloudDiagramSearchDataSource,
 		NewSharingDataSource,
 		NewInsightsDataSource,
 		NewInsightResourceResultsDataSource,
