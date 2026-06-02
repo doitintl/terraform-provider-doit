@@ -639,41 +639,32 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	// function works both in the resource context (where defaults populate
 	// these fields) and in the data source context (where they may be omitted).
 	if !config.Aggregation.IsNull() && !config.Aggregation.IsUnknown() {
-		aggregation := models.ExternalConfigAggregation(config.Aggregation.ValueString())
-		externalConfig.Aggregation = &aggregation
+		externalConfig.Aggregation = new(models.ExternalConfigAggregation(config.Aggregation.ValueString()))
 	}
 	if !config.Currency.IsNull() && !config.Currency.IsUnknown() {
-		currency := models.Currency(config.Currency.ValueString())
-		externalConfig.Currency = &currency
+		externalConfig.Currency = new(models.Currency(config.Currency.ValueString()))
 	}
 	if !config.DisplayValues.IsNull() && !config.DisplayValues.IsUnknown() {
-		displayValues := models.ExternalConfigDisplayValues(config.DisplayValues.ValueString())
-		externalConfig.DisplayValues = &displayValues
+		externalConfig.DisplayValues = new(models.ExternalConfigDisplayValues(config.DisplayValues.ValueString()))
 	}
 	if !config.IncludePromotionalCredits.IsNull() && !config.IncludePromotionalCredits.IsUnknown() {
-		includePromotionalCredits := config.IncludePromotionalCredits.ValueBool()
-		externalConfig.IncludePromotionalCredits = &includePromotionalCredits
+		externalConfig.IncludePromotionalCredits = new(config.IncludePromotionalCredits.ValueBool())
 	}
 	if !config.Layout.IsNull() && !config.Layout.IsUnknown() {
-		layout := models.ExternalRenderer(config.Layout.ValueString())
-		externalConfig.Layout = &layout
+		externalConfig.Layout = new(models.ExternalRenderer(config.Layout.ValueString()))
 	}
 	if !config.SortDimensions.IsNull() {
-		sortDimensions := models.ExternalConfigSortDimensions(config.SortDimensions.ValueString())
-		externalConfig.SortDimensions = &sortDimensions
+		externalConfig.SortDimensions = new(models.ExternalConfigSortDimensions(config.SortDimensions.ValueString()))
 	}
 	if !config.SortGroups.IsNull() {
-		sortGroups := models.ExternalConfigSortGroups(config.SortGroups.ValueString())
-		externalConfig.SortGroups = &sortGroups
+		externalConfig.SortGroups = new(models.ExternalConfigSortGroups(config.SortGroups.ValueString()))
 	}
 	if !config.TimeInterval.IsNull() && !config.TimeInterval.IsUnknown() {
-		timeInterval := models.ExternalConfigTimeInterval(config.TimeInterval.ValueString())
-		externalConfig.TimeInterval = &timeInterval
+		externalConfig.TimeInterval = new(models.ExternalConfigTimeInterval(config.TimeInterval.ValueString()))
 	}
 
 	if !config.DataSource.IsNull() && !config.DataSource.IsUnknown() {
-		dataSource := models.ExternalConfigDataSource(config.DataSource.ValueString())
-		externalConfig.DataSource = &dataSource
+		externalConfig.DataSource = new(models.ExternalConfigDataSource(config.DataSource.ValueString()))
 	}
 
 	if !config.AdvancedAnalysis.IsNull() && !config.AdvancedAnalysis.IsUnknown() {
@@ -720,10 +711,9 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalDimensions := make([]models.Dimension, len(dimensions))
 			for i, d := range dimensions {
-				dimType := models.DimensionsTypes(d.DimensionsType.ValueString())
 				externalDimensions[i] = models.Dimension{
 					Id:   d.Id.ValueStringPointer(),
-					Type: &dimType,
+					Type: new(models.DimensionsTypes(d.DimensionsType.ValueString())),
 				}
 			}
 			externalConfig.Dimensions = &externalDimensions
@@ -764,16 +754,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalGroups := make([]models.Group, len(groups))
 			for i, g := range groups {
-				groupType := models.DimensionsTypes(g.GroupType.ValueString())
 				externalGroups[i] = models.Group{
 					Id:   g.Id.ValueStringPointer(),
-					Type: &groupType,
+					Type: new(models.DimensionsTypes(g.GroupType.ValueString())),
 				}
 				if !g.Limit.IsNull() && !g.Limit.IsUnknown() {
 					limit := models.Limit{}
 					if !g.Limit.Sort.IsNull() && !g.Limit.Sort.IsUnknown() {
-						sort := models.LimitSort(g.Limit.Sort.ValueString())
-						limit.Sort = &sort
+						limit.Sort = new(models.LimitSort(g.Limit.Sort.ValueString()))
 					}
 					if !g.Limit.Value.IsNull() && !g.Limit.Value.IsUnknown() {
 						limit.Value = g.Limit.Value.ValueInt64Pointer()
@@ -807,8 +795,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			for i, m := range metricsValues {
 				externalMetrics[i] = models.ExternalMetric{}
 				if !m.MetricsType.IsNull() && !m.MetricsType.IsUnknown() {
-					mType := models.ExternalMetricType(m.MetricsType.ValueString())
-					externalMetrics[i].Type = &mType
+					externalMetrics[i].Type = new(models.ExternalMetricType(m.MetricsType.ValueString()))
 				}
 				if !m.Value.IsNull() && !m.Value.IsUnknown() {
 					externalMetrics[i].Value = m.Value.ValueStringPointer()
@@ -834,8 +821,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			externalConfig.MetricFilter.Values = &values
 		}
 		if !config.MetricFilter.Operator.IsNull() && !config.MetricFilter.Operator.IsUnknown() {
-			operator := models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString())
-			externalConfig.MetricFilter.Operator = &operator
+			externalConfig.MetricFilter.Operator = new(models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString()))
 		}
 	}
 
@@ -845,19 +831,16 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalSplits := make([]models.ExternalSplit, len(splits))
 			for i, s := range splits {
-				splitMode := models.ExternalSplitMode(s.Mode.ValueString())
-				splitType := models.ExternalSplitType(s.SplitsType.ValueString())
 				externalSplits[i] = models.ExternalSplit{
 					Id:            s.Id.ValueStringPointer(),
 					IncludeOrigin: s.IncludeOrigin.ValueBoolPointer(),
-					Mode:          &splitMode,
-					Type:          &splitType,
+					Mode:          new(models.ExternalSplitMode(s.Mode.ValueString())),
+					Type:          new(models.ExternalSplitType(s.SplitsType.ValueString())),
 				}
 				if !s.Origin.IsNull() && !s.Origin.IsUnknown() {
-					originType := models.ExternalOriginType(s.Origin.OriginType.ValueString())
 					externalSplits[i].Origin = &models.ExternalOrigin{
 						Id:   s.Origin.Id.ValueStringPointer(),
-						Type: &originType,
+						Type: new(models.ExternalOriginType(s.Origin.OriginType.ValueString())),
 					}
 				}
 				if !s.Targets.IsNull() && !s.Targets.IsUnknown() {
@@ -868,10 +851,9 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					}
 					externalTargets := make([]models.ExternalSplitTarget, len(targets))
 					for j, t := range targets {
-						targetType := models.ExternalSplitTargetType(t.TargetsType.ValueString())
 						externalTargets[j] = models.ExternalSplitTarget{
 							Id:    t.Id.ValueStringPointer(),
-							Type:  &targetType,
+							Type:  new(models.ExternalSplitTargetType(t.TargetsType.ValueString())),
 							Value: t.Value.ValueFloat64Pointer(),
 						}
 					}
@@ -891,12 +873,10 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			ts.IncludeCurrent = config.TimeRange.IncludeCurrent.ValueBoolPointer()
 		}
 		if !config.TimeRange.Mode.IsNull() && !config.TimeRange.Mode.IsUnknown() {
-			mode := models.TimeSettingsMode(config.TimeRange.Mode.ValueString())
-			ts.Mode = &mode
+			ts.Mode = new(models.TimeSettingsMode(config.TimeRange.Mode.ValueString()))
 		}
 		if !config.TimeRange.Unit.IsNull() && !config.TimeRange.Unit.IsUnknown() {
-			unit := models.TimeSettingsUnit(config.TimeRange.Unit.ValueString())
-			ts.Unit = &unit
+			ts.Unit = new(models.TimeSettingsUnit(config.TimeRange.Unit.ValueString()))
 		}
 		externalConfig.TimeRange = ts
 	}
@@ -910,8 +890,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			secondaryTimeRange.IncludeCurrent = config.SecondaryTimeRange.IncludeCurrent.ValueBoolPointer()
 		}
 		if !config.SecondaryTimeRange.Unit.IsNull() && !config.SecondaryTimeRange.Unit.IsUnknown() {
-			unit := models.TimeSettingsSecondaryUnit(config.SecondaryTimeRange.Unit.ValueString())
-			secondaryTimeRange.Unit = &unit
+			secondaryTimeRange.Unit = new(models.TimeSettingsSecondaryUnit(config.SecondaryTimeRange.Unit.ValueString()))
 		}
 		if !config.SecondaryTimeRange.CustomTimeRange.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.IsUnknown() {
 			ctr := models.TimeSettingsSecondaryCustomTimeRange{}
@@ -939,24 +918,19 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	if !config.DisplaySettings.IsNull() && !config.DisplaySettings.IsUnknown() {
 		ds := &models.ExternalDisplaySettings{}
 		if !config.DisplaySettings.AxisLabelFontSize.IsNull() && !config.DisplaySettings.AxisLabelFontSize.IsUnknown() {
-			v := models.ExternalDisplaySettingsAxisLabelFontSize(config.DisplaySettings.AxisLabelFontSize.ValueString())
-			ds.AxisLabelFontSize = &v
+			ds.AxisLabelFontSize = new(models.ExternalDisplaySettingsAxisLabelFontSize(config.DisplaySettings.AxisLabelFontSize.ValueString()))
 		}
 		if !config.DisplaySettings.DataLabelFontSize.IsNull() && !config.DisplaySettings.DataLabelFontSize.IsUnknown() {
-			v := models.ExternalDisplaySettingsDataLabelFontSize(config.DisplaySettings.DataLabelFontSize.ValueString())
-			ds.DataLabelFontSize = &v
+			ds.DataLabelFontSize = new(models.ExternalDisplaySettingsDataLabelFontSize(config.DisplaySettings.DataLabelFontSize.ValueString()))
 		}
 		if !config.DisplaySettings.DecimalPrecision.IsNull() && !config.DisplaySettings.DecimalPrecision.IsUnknown() {
-			v := int(config.DisplaySettings.DecimalPrecision.ValueInt64())
-			ds.DecimalPrecision = &v
+			ds.DecimalPrecision = new(int(config.DisplaySettings.DecimalPrecision.ValueInt64()))
 		}
 		if !config.DisplaySettings.NumberScale.IsNull() && !config.DisplaySettings.NumberScale.IsUnknown() {
-			v := models.ExternalDisplaySettingsNumberScale(config.DisplaySettings.NumberScale.ValueString())
-			ds.NumberScale = &v
+			ds.NumberScale = new(models.ExternalDisplaySettingsNumberScale(config.DisplaySettings.NumberScale.ValueString()))
 		}
 		if !config.DisplaySettings.ThemeId.IsNull() {
-			v := config.DisplaySettings.ThemeId.ValueString()
-			ds.ThemeId = &v
+			ds.ThemeId = new(config.DisplaySettings.ThemeId.ValueString())
 		}
 		externalConfig.DisplaySettings = ds
 	}
@@ -1301,8 +1275,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 				groupType = normalizeDimensionsType(groupType, existingGroupTypes[i])
 			}
 			if groupID != nil && i < len(existingGroupIDs) {
-				normalized := normalizeDimensionsType(*groupID, existingGroupIDs[i])
-				groupID = &normalized
+				groupID = new(normalizeDimensionsType(*groupID, existingGroupIDs[i]))
 			}
 			m := map[string]attr.Value{
 				"id":   types.StringPointerValue(groupID),
@@ -1593,12 +1566,10 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric) {
 	metric = &models.ExternalMetric{}
 	if !metricValue.MetricType.IsNull() {
-		tString := models.ExternalMetricType(metricValue.MetricType.ValueString())
-		metric.Type = &tString
+		metric.Type = new(models.ExternalMetricType(metricValue.MetricType.ValueString()))
 	}
 	if !metricValue.Value.IsNull() && !metricValue.Value.IsUnknown() {
-		vString := metricValue.Value.ValueString()
-		metric.Value = &vString
+		metric.Value = new(metricValue.Value.ValueString())
 	}
 	return metric
 }
