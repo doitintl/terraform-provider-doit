@@ -68,21 +68,22 @@ data "doit_cloud_incidents" "recent" {
 
 The following table shows which data sources support pagination:
 
-| Data Source             | Auto-Pagination | Manual Pagination |
-| ----------------------- | --------------- | ----------------- |
-| `doit_alerts`           | ✓               | ✓                 |
-| `doit_allocations`      | ✓               | ✓                 |
-| `doit_annotations`      | ✓               | ✓                 |
-| `doit_anomalies`        | ✓               | ✓                 |
-| `doit_assets`           | ✓               | ✓                 |
-| `doit_budgets`          | ✓               | ✓                 |
-| `doit_cloud_incidents`  | ✗               | ✓                 |
-| `doit_commitments`      | ✓               | ✓                 |
-| `doit_dimensions`       | ✓               | ✓                 |
-| `doit_invoices`         | ✓               | ✓                 |
-| `doit_labels`           | ✓               | ✓                 |
-| `doit_reports`          | ✓               | ✓                 |
-| `doit_support_requests` | ✓               | ✓                 |
+| Data Source                 | Auto-Pagination | Manual Pagination |
+| --------------------------- | --------------- | ----------------- |
+| `doit_alerts`               | ✓               | ✓                 |
+| `doit_allocations`          | ✓               | ✓                 |
+| `doit_annotations`          | ✓               | ✓                 |
+| `doit_anomalies`            | ✓               | ✓                 |
+| `doit_assets`               | ✓               | ✓                 |
+| `doit_budgets`              | ✓               | ✓                 |
+| `doit_cloud_diagram_search` | ✓               | ✓                 |
+| `doit_cloud_incidents`      | ✗               | ✓                 |
+| `doit_commitments`          | ✓               | ✓                 |
+| `doit_dimensions`           | ✓               | ✓                 |
+| `doit_invoices`             | ✓               | ✓                 |
+| `doit_labels`               | ✓               | ✓                 |
+| `doit_reports`              | ✓               | ✓                 |
+| `doit_support_requests`     | ✓               | ✓                 |
 
 ## Filtering vs Pagination
 
