@@ -3,9 +3,11 @@ package provider_test
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccCloudDiagramSearchDataSource_Basic(t *testing.T) {
@@ -42,8 +44,7 @@ func TestAccCloudDiagramSearchDataSource_WithMatch(t *testing.T) {
 				Config: testAccCloudDiagramSearchDataSourceConfig(query),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagram_search.test", "id"),
-					// The query is a known resource ID that should match at least one result
-					// across any of the three categories.
+					testCheckAtLeastOneSearchResult("data.doit_cloud_diagram_search.test"),
 				),
 			},
 		},
@@ -81,4 +82,31 @@ data "doit_cloud_diagram_search" "test" {
   size  = %d
 }
 `, query, size)
+}
+
+// testCheckAtLeastOneSearchResult verifies that the search returned at least
+// one result in any of the three categories (scheme, component, prop).
+func testCheckAtLeastOneSearchResult(name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("data source not found: %s", name)
+		}
+
+		for _, attr := range []string{"scheme.#", "component.#", "prop.#"} {
+			val, ok := rs.Primary.Attributes[attr]
+			if !ok {
+				continue
+			}
+			count, err := strconv.Atoi(val)
+			if err != nil {
+				continue
+			}
+			if count > 0 {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("expected at least one result in scheme, component, or prop, but all were empty")
+	}
 }

@@ -10,10 +10,12 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -73,11 +75,17 @@ func (d *cloudDiagramSearchDataSource) Schema(ctx context.Context, _ datasource.
 		Optional:            true,
 		Description:         "Pagination offset (default 0). In auto-pagination mode, sets the starting offset.",
 		MarkdownDescription: "Pagination offset (default 0). In auto-pagination mode, sets the starting offset.",
+		Validators: []validator.Int64{
+			int64validator.AtLeast(0),
+		},
 	}
 	genSchema.Attributes["size"] = schema.Int64Attribute{
 		Optional:            true,
 		Description:         "Maximum number of results per category. When set, disables auto-pagination and returns a single page.",
 		MarkdownDescription: "Maximum number of results per category. When set, disables auto-pagination and returns a single page.",
+		Validators: []validator.Int64{
+			int64validator.AtLeast(1),
+		},
 	}
 
 	genSchema.Attributes["timeouts"] = timeouts.Attributes(ctx)
