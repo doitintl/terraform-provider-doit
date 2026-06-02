@@ -191,6 +191,7 @@ data_sources:
   cloud_diagram_snapshots:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/snapshots
+      method: GET
   # Insight data sources
   insight:
     read:
