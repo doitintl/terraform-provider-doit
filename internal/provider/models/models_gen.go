@@ -23,10 +23,27 @@ const (
 	CustomerContextScopes customerContextContextKey = "customerContext.Scopes"
 )
 
+// Defines values for AlertConfigDataSource.
+const (
+	AlertConfigDataSourceBilling        AlertConfigDataSource = "billing"
+	AlertConfigDataSourceBillingDatahub AlertConfigDataSource = "billing-datahub"
+)
+
+// Valid indicates whether the value is a known member of the AlertConfigDataSource enum.
+func (e AlertConfigDataSource) Valid() bool {
+	switch e {
+	case AlertConfigDataSourceBilling:
+		return true
+	case AlertConfigDataSourceBillingDatahub:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AlertConfigTimeInterval.
 const (
 	AlertConfigTimeIntervalDay     AlertConfigTimeInterval = "day"
-	AlertConfigTimeIntervalHour    AlertConfigTimeInterval = "hour"
 	AlertConfigTimeIntervalMonth   AlertConfigTimeInterval = "month"
 	AlertConfigTimeIntervalQuarter AlertConfigTimeInterval = "quarter"
 	AlertConfigTimeIntervalWeek    AlertConfigTimeInterval = "week"
@@ -37,8 +54,6 @@ const (
 func (e AlertConfigTimeInterval) Valid() bool {
 	switch e {
 	case AlertConfigTimeIntervalDay:
-		return true
-	case AlertConfigTimeIntervalHour:
 		return true
 	case AlertConfigTimeIntervalMonth:
 		return true
@@ -284,6 +299,90 @@ func (e Category) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramComponentSearchItemNodeType.
+const (
+	CloudDiagramComponentSearchItemNodeTypeAppComponent CloudDiagramComponentSearchItemNodeType = "app_component"
+	CloudDiagramComponentSearchItemNodeTypeAppGroup     CloudDiagramComponentSearchItemNodeType = "app_group"
+	CloudDiagramComponentSearchItemNodeTypeAppLink      CloudDiagramComponentSearchItemNodeType = "app_link"
+	CloudDiagramComponentSearchItemNodeTypeAttachment   CloudDiagramComponentSearchItemNodeType = "attachment"
+	CloudDiagramComponentSearchItemNodeTypeGroup        CloudDiagramComponentSearchItemNodeType = "group"
+	CloudDiagramComponentSearchItemNodeTypeHost         CloudDiagramComponentSearchItemNodeType = "host"
+	CloudDiagramComponentSearchItemNodeTypeLink         CloudDiagramComponentSearchItemNodeType = "link"
+	CloudDiagramComponentSearchItemNodeTypeService      CloudDiagramComponentSearchItemNodeType = "service"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemNodeType enum.
+func (e CloudDiagramComponentSearchItemNodeType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemNodeTypeAppComponent:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAppLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeHost:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemNodeTypeService:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramComponentSearchItemType.
+const (
+	CloudDiagramComponentSearchItemTypeAttachment CloudDiagramComponentSearchItemType = "attachment"
+	CloudDiagramComponentSearchItemTypeCombiner   CloudDiagramComponentSearchItemType = "combiner"
+	CloudDiagramComponentSearchItemTypeElement    CloudDiagramComponentSearchItemType = "element"
+	CloudDiagramComponentSearchItemTypeGroup      CloudDiagramComponentSearchItemType = "group"
+	CloudDiagramComponentSearchItemTypeLink       CloudDiagramComponentSearchItemType = "link"
+	CloudDiagramComponentSearchItemTypeNode       CloudDiagramComponentSearchItemType = "node"
+	CloudDiagramComponentSearchItemTypeNote       CloudDiagramComponentSearchItemType = "note"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentSearchItemType enum.
+func (e CloudDiagramComponentSearchItemType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentSearchItemTypeAttachment:
+		return true
+	case CloudDiagramComponentSearchItemTypeCombiner:
+		return true
+	case CloudDiagramComponentSearchItemTypeElement:
+		return true
+	case CloudDiagramComponentSearchItemTypeGroup:
+		return true
+	case CloudDiagramComponentSearchItemTypeLink:
+		return true
+	case CloudDiagramComponentSearchItemTypeNode:
+		return true
+	case CloudDiagramComponentSearchItemTypeNote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudDiagramSchemeSearchItemType.
+const (
+	Statussheet CloudDiagramSchemeSearchItemType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramSchemeSearchItemType enum.
+func (e CloudDiagramSchemeSearchItemType) Valid() bool {
+	switch e {
+	case Statussheet:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudIncidentListItemPlatform.
 const (
 	CloudIncidentListItemPlatformAmazonWebServices CloudIncidentListItemPlatform = "amazon-web-services"
@@ -380,6 +479,27 @@ func (e CommitmentExternalListItemCloudProvider) Valid() bool {
 	case CommitmentExternalListItemCloudProviderGoogleCloud:
 		return true
 	case CommitmentExternalListItemCloudProviderMicrosoftAzure:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Condition.
+const (
+	ConditionForecast         Condition = "forecast"
+	ConditionPercentageChange Condition = "percentage-change"
+	ConditionValue            Condition = "value"
+)
+
+// Valid indicates whether the value is a known member of the Condition enum.
+func (e Condition) Valid() bool {
+	switch e {
+	case ConditionForecast:
+		return true
+	case ConditionPercentageChange:
+		return true
+	case ConditionValue:
 		return true
 	default:
 		return false
@@ -667,22 +787,22 @@ func (e ExternalConfigAggregation) Valid() bool {
 
 // Defines values for ExternalConfigDataSource.
 const (
-	Billing               ExternalConfigDataSource = "billing"
-	BillingDatahub        ExternalConfigDataSource = "billing-datahub"
-	Bqlens                ExternalConfigDataSource = "bqlens"
-	KubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
+	ExternalConfigDataSourceBilling               ExternalConfigDataSource = "billing"
+	ExternalConfigDataSourceBillingDatahub        ExternalConfigDataSource = "billing-datahub"
+	ExternalConfigDataSourceBqlens                ExternalConfigDataSource = "bqlens"
+	ExternalConfigDataSourceKubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigDataSource enum.
 func (e ExternalConfigDataSource) Valid() bool {
 	switch e {
-	case Billing:
+	case ExternalConfigDataSourceBilling:
 		return true
-	case BillingDatahub:
+	case ExternalConfigDataSourceBillingDatahub:
 		return true
-	case Bqlens:
+	case ExternalConfigDataSourceBqlens:
 		return true
-	case KubernetesUtilization:
+	case ExternalConfigDataSourceKubernetesUtilization:
 		return true
 	default:
 		return false
@@ -691,22 +811,22 @@ func (e ExternalConfigDataSource) Valid() bool {
 
 // Defines values for ExternalConfigDisplayValues.
 const (
-	AbsoluteAndPercentage ExternalConfigDisplayValues = "absolute_and_percentage"
-	AbsoluteChange        ExternalConfigDisplayValues = "absolute_change"
-	ActualsOnly           ExternalConfigDisplayValues = "actuals_only"
-	PercentageChange      ExternalConfigDisplayValues = "percentage_change"
+	ExternalConfigDisplayValuesAbsoluteAndPercentage ExternalConfigDisplayValues = "absolute_and_percentage"
+	ExternalConfigDisplayValuesAbsoluteChange        ExternalConfigDisplayValues = "absolute_change"
+	ExternalConfigDisplayValuesActualsOnly           ExternalConfigDisplayValues = "actuals_only"
+	ExternalConfigDisplayValuesPercentageChange      ExternalConfigDisplayValues = "percentage_change"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigDisplayValues enum.
 func (e ExternalConfigDisplayValues) Valid() bool {
 	switch e {
-	case AbsoluteAndPercentage:
+	case ExternalConfigDisplayValuesAbsoluteAndPercentage:
 		return true
-	case AbsoluteChange:
+	case ExternalConfigDisplayValuesAbsoluteChange:
 		return true
-	case ActualsOnly:
+	case ExternalConfigDisplayValuesActualsOnly:
 		return true
-	case PercentageChange:
+	case ExternalConfigDisplayValuesPercentageChange:
 		return true
 	default:
 		return false
@@ -851,6 +971,81 @@ func (e ExternalConfigMetricFilterOperator) Valid() bool {
 	case ExternalConfigMetricFilterOperatorNb:
 		return true
 	case ExternalConfigMetricFilterOperatorNe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalDisplaySettingsAxisLabelFontSize.
+const (
+	ExternalDisplaySettingsAxisLabelFontSizeAuto   ExternalDisplaySettingsAxisLabelFontSize = "auto"
+	ExternalDisplaySettingsAxisLabelFontSizeLarge  ExternalDisplaySettingsAxisLabelFontSize = "large"
+	ExternalDisplaySettingsAxisLabelFontSizeMedium ExternalDisplaySettingsAxisLabelFontSize = "medium"
+	ExternalDisplaySettingsAxisLabelFontSizeSmall  ExternalDisplaySettingsAxisLabelFontSize = "small"
+)
+
+// Valid indicates whether the value is a known member of the ExternalDisplaySettingsAxisLabelFontSize enum.
+func (e ExternalDisplaySettingsAxisLabelFontSize) Valid() bool {
+	switch e {
+	case ExternalDisplaySettingsAxisLabelFontSizeAuto:
+		return true
+	case ExternalDisplaySettingsAxisLabelFontSizeLarge:
+		return true
+	case ExternalDisplaySettingsAxisLabelFontSizeMedium:
+		return true
+	case ExternalDisplaySettingsAxisLabelFontSizeSmall:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalDisplaySettingsDataLabelFontSize.
+const (
+	ExternalDisplaySettingsDataLabelFontSizeAuto   ExternalDisplaySettingsDataLabelFontSize = "auto"
+	ExternalDisplaySettingsDataLabelFontSizeLarge  ExternalDisplaySettingsDataLabelFontSize = "large"
+	ExternalDisplaySettingsDataLabelFontSizeMedium ExternalDisplaySettingsDataLabelFontSize = "medium"
+	ExternalDisplaySettingsDataLabelFontSizeSmall  ExternalDisplaySettingsDataLabelFontSize = "small"
+)
+
+// Valid indicates whether the value is a known member of the ExternalDisplaySettingsDataLabelFontSize enum.
+func (e ExternalDisplaySettingsDataLabelFontSize) Valid() bool {
+	switch e {
+	case ExternalDisplaySettingsDataLabelFontSizeAuto:
+		return true
+	case ExternalDisplaySettingsDataLabelFontSizeLarge:
+		return true
+	case ExternalDisplaySettingsDataLabelFontSizeMedium:
+		return true
+	case ExternalDisplaySettingsDataLabelFontSizeSmall:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalDisplaySettingsNumberScale.
+const (
+	Auto      ExternalDisplaySettingsNumberScale = "auto"
+	Billions  ExternalDisplaySettingsNumberScale = "billions"
+	Millions  ExternalDisplaySettingsNumberScale = "millions"
+	Raw       ExternalDisplaySettingsNumberScale = "raw"
+	Thousands ExternalDisplaySettingsNumberScale = "thousands"
+)
+
+// Valid indicates whether the value is a known member of the ExternalDisplaySettingsNumberScale enum.
+func (e ExternalDisplaySettingsNumberScale) Valid() bool {
+	switch e {
+	case Auto:
+		return true
+	case Billions:
+		return true
+	case Millions:
+		return true
+	case Raw:
+		return true
+	case Thousands:
 		return true
 	default:
 		return false
@@ -2591,6 +2786,14 @@ type AccountManagerListItem struct {
 	Role         *string `json:"role,omitempty"`
 }
 
+// ActiveTheme The theme currently active for the authenticated user.
+type ActiveTheme struct {
+	// ThemeId Identifier of the active theme. The reserved sentinel `"default"` is
+	// returned when the user is using the built-in default (no custom or
+	// preset theme stored).
+	ThemeId string `json:"themeId"`
+}
+
 // AdvancedAnalysis Advanced analysis options. Each can be set independently.
 type AdvancedAnalysis struct {
 	Forecast     *bool `json:"forecast,omitempty"`
@@ -2629,31 +2832,38 @@ type AlertConfig struct {
 	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Attributions *[]string `json:"attributions,omitempty"`
 
-	// Condition Condition key or expression used in alert configurations.
+	// Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 	Condition *Condition `json:"condition,omitempty"`
 
 	// Currency Currency code for monetary values.
-	Currency   *Currency `json:"currency,omitempty"`
-	DataSource *string   `json:"dataSource,omitempty"`
+	Currency *Currency `json:"currency,omitempty"`
 
-	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
+	// DataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
+	DataSource *AlertConfigDataSource `json:"dataSource,omitempty"`
+
+	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 	EvaluateForEach *string `json:"evaluateForEach,omitempty"`
 
 	// Metric Define how metrics are selected and filtered in reports.
 	Metric MetricConfig `json:"metric"`
 
-	// Operator Text/operator used to filter metric values in metric filters.
+	// Operator Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
 	Operator *MetricFilterText `json:"operator,omitempty"`
 
-	// Scopes The filters selected define the scope of the alert.
+	// Scopes The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
 	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
-	// TimeInterval The time interval to evaluate the condition.
+	// TimeInterval The period each evaluation looks at.
 	TimeInterval AlertConfigTimeInterval `json:"timeInterval"`
-	Value        float64                 `json:"value"`
+
+	// Value The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
+	Value float64 `json:"value"`
 }
 
-// AlertConfigTimeInterval The time interval to evaluate the condition.
+// AlertConfigDataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
+type AlertConfigDataSource string
+
+// AlertConfigTimeInterval The period each evaluation looks at.
 type AlertConfigTimeInterval string
 
 // AlertRequest Request body for creating a new alert.
@@ -2661,10 +2871,10 @@ type AlertRequest struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config AlertConfig `json:"config"`
 
-	// Name Name of the alert.
+	// Name Name of the alert (max 64 characters).
 	Name string `json:"name"`
 
-	// Recipients List of emails to notify when the alert is triggered.
+	// Recipients List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
 	Recipients *[]string `json:"recipients,omitempty"`
 }
 
@@ -2750,7 +2960,7 @@ type AllocationComponent struct {
 	// Mode Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 	Mode AllocationComponentMode `json:"mode"`
 
-	// Type Enumeration of supported dimension/filter types for allocation components.
+	// Type Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 	Type AllocationDimensionsTypes `json:"type"`
 
 	// Values Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
@@ -2778,7 +2988,7 @@ type AllocationDeleteValidation struct {
 // AllocationDeleteValidationType Type of allocation.
 type AllocationDeleteValidationType string
 
-// AllocationDimensionsTypes Enumeration of supported dimension/filter types for allocation components.
+// AllocationDimensionsTypes Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 type AllocationDimensionsTypes string
 
 // AllocationListItem Summary information for an allocation.
@@ -3221,6 +3431,111 @@ type BudgetListItem struct {
 // Category The insight category.
 type Category string
 
+// CloudDiagramComponentSearchItem A component matching the search query.
+type CloudDiagramComponentSearchItem struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Color Component color.
+	Color *string `json:"color,omitempty"`
+
+	// GroupType Group type (for group components).
+	GroupType *string `json:"group_type,omitempty"`
+
+	// Icon Component icon identifier.
+	Icon *string `json:"icon,omitempty"`
+
+	// Name Component name.
+	Name *string `json:"name,omitempty"`
+
+	// NodeType Node type.
+	NodeType *CloudDiagramComponentSearchItemNodeType `json:"node_type,omitempty"`
+
+	// Props Component properties. For the "prop" category contains the matched property key-value pairs.
+	Props *CloudDiagramComponentSearchItemProps `json:"props,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Layer ID.
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Type Component type.
+	Type CloudDiagramComponentSearchItemType `json:"type"`
+}
+
+// CloudDiagramComponentSearchItemNodeType Node type.
+type CloudDiagramComponentSearchItemNodeType string
+
+// CloudDiagramComponentSearchItemType Component type.
+type CloudDiagramComponentSearchItemType string
+
+// CloudDiagramComponentSearchItemProps Component properties. For the "prop" category contains the matched property key-value pairs.
+type CloudDiagramComponentSearchItemProps struct {
+	// ServiceType Cloud service type (e.g. AWS::EC2::Instance).
+	ServiceType *string `json:"service_type,omitempty"`
+}
+
+// CloudDiagramSchemeSearchItem A diagram layer (cloud account) matching the search query.
+type CloudDiagramSchemeSearchItem struct {
+	// UnderscoreId Layer ID.
+	UnderscoreId string `json:"_id"`
+
+	// AccountName Cloud account name.
+	AccountName *string `json:"account_name,omitempty"`
+
+	// Name Layer name.
+	Name *string `json:"name,omitempty"`
+
+	// Scheme Parent diagram name.
+	Scheme *string `json:"scheme,omitempty"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId *string `json:"scheme_id,omitempty"`
+
+	// SsId Layer ID (same as _id).
+	SsId *string `json:"ss_id,omitempty"`
+
+	// Status Import/sync status.
+	Status *string `json:"status,omitempty"`
+
+	// Type Component type — always "statussheet" for this category.
+	Type CloudDiagramSchemeSearchItemType `json:"type"`
+}
+
+// CloudDiagramSchemeSearchItemType Component type — always "statussheet" for this category.
+type CloudDiagramSchemeSearchItemType string
+
+// CloudDiagramsSearchRequest Request body for searching diagrams and components.
+type CloudDiagramsSearchRequest struct {
+	// From Pagination offset (default 0).
+	From *int `json:"from,omitempty"`
+
+	// Query Search query string.
+	Query string `json:"query"`
+
+	// Size Maximum number of results per category (default 20).
+	Size *int `json:"size,omitempty"`
+
+	// SsId Limit search to components within this layer.
+	SsId *string `json:"ss_id,omitempty"`
+}
+
+// CloudDiagramsSearchResponse Search results grouped into three categories.
+type CloudDiagramsSearchResponse struct {
+	// Component Components matching the query by name.
+	Component *[]CloudDiagramComponentSearchItem `json:"component,omitempty"`
+
+	// Prop Components matching the query by property values.
+	Prop *[]CloudDiagramComponentSearchItem `json:"prop,omitempty"`
+
+	// Scheme Diagram layers (cloud accounts) matching the query.
+	Scheme *[]CloudDiagramSchemeSearchItem `json:"scheme,omitempty"`
+}
+
 // CloudIncidentListItem Summary information for a cloud incident.
 type CloudIncidentListItem struct {
 	// CreateTime The creation time of this cloud incident, in milliseconds since the epoch.
@@ -3416,8 +3731,8 @@ type CommitmentPeriod struct {
 	StartDate *time.Time `json:"startDate,omitempty"`
 }
 
-// Condition Condition key or expression used in alert configurations.
-type Condition = string
+// Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
+type Condition string
 
 // CreateAllocationRequest Request body for creating an allocation.
 type CreateAllocationRequest struct {
@@ -3455,6 +3770,18 @@ type CreateAnnotationRequest struct {
 
 // CreateCategory Allowed categories when creating insights via the public API.
 type CreateCategory string
+
+// CreateCustomThemeRequest Request body for creating a custom theme.
+type CreateCustomThemeRequest struct {
+	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+	Colors ThemeColors `json:"colors"`
+
+	// Name The display name of the custom theme.
+	Name string `json:"name"`
+
+	// PrimaryColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+	PrimaryColor HexColor `json:"primaryColor"`
+}
 
 // CreateDatahubDataset201Response defines model for CreateDatahubDataset201Response.
 type CreateDatahubDataset201Response struct {
@@ -3534,6 +3861,27 @@ type CreateResourceResultsBody struct {
 // Currency Currency code for monetary values.
 type Currency string
 
+// CustomTheme A custom color theme applied to Cloud Analytics reports.
+type CustomTheme struct {
+	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+	Colors ThemeColors `json:"colors"`
+
+	// CreateTime The creation time of the custom theme.
+	CreateTime *time.Time `json:"createTime,omitempty"`
+
+	// Id The unique identifier of the custom theme.
+	Id string `json:"id"`
+
+	// Name The display name of the custom theme.
+	Name string `json:"name"`
+
+	// PrimaryColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+	PrimaryColor HexColor `json:"primaryColor"`
+
+	// UpdateTime The time when the custom theme was last updated.
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
+
 // DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
 type DeleteDatahubDataset200Response struct {
 	Message *string `json:"message,omitempty"`
@@ -3550,10 +3898,7 @@ type Dimension struct {
 	// Id The identifier of the dimension.
 	Id *string `json:"id,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3565,10 +3910,7 @@ type DimensionExternalAPIListItem struct {
 	// Label The label of the dimension.
 	Label *string `json:"label,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -3577,10 +3919,7 @@ type DimensionsExternalAPIGetResponse struct {
 	Id    *string `json:"id,omitempty"`
 	Label *string `json:"label,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type   *DimensionsTypes       `json:"type,omitempty"`
 	Values *[]ExternalAPIGetValue `json:"values,omitempty"`
 }
@@ -3593,10 +3932,7 @@ type DimensionsExternalAPIListResponse struct {
 	RowCount   *int64                          `json:"rowCount,omitempty"`
 }
 
-// DimensionsTypes Enumeration of supported dimension/filter types.
-// "allocation" is an alias for "attribution_group".
-// "allocation_rule" is an alias for "attribution".
-// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+// DimensionsTypes Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 type DimensionsTypes string
 
 // DismissalDetails Details for why an insight was dismissed.
@@ -3664,6 +4000,9 @@ type ExternalConfig struct {
 
 	// Dimensions See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).
 	Dimensions *[]Dimension `json:"dimensions,omitempty"`
+
+	// DisplaySettings Display settings for the report.
+	DisplaySettings *ExternalDisplaySettings `json:"displaySettings,omitempty"`
 
 	// DisplayValues See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 	DisplayValues *ExternalConfigDisplayValues `json:"displayValues,omitempty"`
@@ -3749,29 +4088,26 @@ type ExternalConfigFilter struct {
 	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
 	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
 
-	// Id The field to filter on
+	// Id Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
 	Id string `json:"id"`
 
-	// IncludeNull Include null value.
+	// IncludeNull Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
 	IncludeNull *bool `json:"includeNull,omitempty"`
 
-	// Inverse Set to `true` to exclude the values.
+	// Inverse Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
 	Inverse *bool `json:"inverse,omitempty"`
 
-	// Mode Filter mode to apply
+	// Mode Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 	Mode ExternalConfigFilterMode `json:"mode"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type DimensionsTypes `json:"type"`
 
-	// Values Values to filter on.
+	// Values List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
 	Values *[]string `json:"values,omitempty"`
 }
 
-// ExternalConfigFilterMode Filter mode to apply
+// ExternalConfigFilterMode Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 type ExternalConfigFilterMode string
 
 // ExternalConfigMetricFilter Metric filter to limit report rows by metric value.
@@ -3786,6 +4122,36 @@ type ExternalConfigMetricFilter struct {
 
 // ExternalConfigMetricFilterOperator Comparison operator for filtering metric values.
 type ExternalConfigMetricFilterOperator string
+
+// ExternalDisplaySettings Display settings for the report.
+type ExternalDisplaySettings struct {
+	// AxisLabelFontSize Font size used for axis labels on charts.
+	AxisLabelFontSize *ExternalDisplaySettingsAxisLabelFontSize `json:"axisLabelFontSize,omitempty"`
+
+	// DataLabelFontSize Font size used for data labels on charts.
+	DataLabelFontSize *ExternalDisplaySettingsDataLabelFontSize `json:"dataLabelFontSize,omitempty"`
+
+	// DecimalPrecision Number of decimal places shown for numeric values.
+	DecimalPrecision *int `json:"decimalPrecision,omitempty"`
+
+	// NumberScale Scale applied to numeric values when rendering the report.
+	NumberScale *ExternalDisplaySettingsNumberScale `json:"numberScale,omitempty"`
+
+	// ThemeId Identifier of the theme applied to the report. The reserved
+	// sentinel `"default"` is returned on GET when no theme is stored
+	// and clears the stored value on PATCH. Omit the field on PATCH
+	// to leave the stored value unchanged.
+	ThemeId *string `json:"themeId,omitempty"`
+}
+
+// ExternalDisplaySettingsAxisLabelFontSize Font size used for axis labels on charts.
+type ExternalDisplaySettingsAxisLabelFontSize string
+
+// ExternalDisplaySettingsDataLabelFontSize Font size used for data labels on charts.
+type ExternalDisplaySettingsDataLabelFontSize string
+
+// ExternalDisplaySettingsNumberScale Scale applied to numeric values when rendering the report.
+type ExternalDisplaySettingsNumberScale string
 
 // ExternalMetric Metric selector used in reports and filters.
 type ExternalMetric struct {
@@ -4141,10 +4507,7 @@ type Group struct {
 	// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 	Limit *Limit `json:"limit,omitempty"`
 
-	// Type Enumeration of supported dimension/filter types.
-	// "allocation" is an alias for "attribution_group".
-	// "allocation_rule" is an alias for "attribution".
-	// "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
@@ -4171,6 +4534,9 @@ type GroupAllocationRule struct {
 
 // GroupAllocationRuleAction Action to perform with this rule.
 type GroupAllocationRuleAction string
+
+// HexColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+type HexColor = string
 
 // IdOfAsset200Response defines model for IdOfAsset200Response.
 type IdOfAsset200Response struct {
@@ -4533,6 +4899,13 @@ type ListBudgets200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ListCustomThemes200Response defines model for ListCustomThemes200Response.
+type ListCustomThemes200Response struct {
+	// RowCount Total number of custom themes in the result set.
+	RowCount *int           `json:"rowCount,omitempty"`
+	Themes   *[]CustomTheme `json:"themes,omitempty"`
+}
+
 // ListDatahubDatasets200Response defines model for ListDatahubDatasets200Response.
 type ListDatahubDatasets200Response struct {
 	Datasets *[]ListDatahubDatasets200ResponseDatasetsItem `json:"datasets,omitempty"`
@@ -4638,7 +5011,7 @@ type MetricConfig struct {
 	Value string     `json:"value"`
 }
 
-// MetricFilterText Text/operator used to filter metric values in metric filters.
+// MetricFilterText Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
 type MetricFilterText string
 
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
@@ -5028,6 +5401,14 @@ type Seats struct {
 	NumberOfSeats *int64 `json:"numberOfSeats,omitempty"`
 }
 
+// SetActiveThemeRequest Request body for setting the active custom or preset theme for the authenticated user.
+type SetActiveThemeRequest struct {
+	// ThemeId Identifier of the theme to activate. Send the reserved sentinel
+	// `"default"` to clear the active theme and fall back to the built-in
+	// default.
+	ThemeId string `json:"themeId"`
+}
+
 // SlackChannel Information of a Slack channel for notifications.
 type SlackChannel struct {
 	CustomerId *string `json:"customerId,omitempty"`
@@ -5096,6 +5477,15 @@ type SubscriptionPlanCommitmentInterval struct {
 
 	// StartTime The start time of the commitment interval, in milliseconds since the epoch.
 	StartTime *int64 `json:"startTime,omitempty"`
+}
+
+// ThemeColors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+type ThemeColors struct {
+	// Dark Colors used when the report is displayed in dark mode.
+	Dark []HexColor `json:"dark"`
+
+	// Light Colors used when the report is displayed in light mode.
+	Light []HexColor `json:"light"`
 }
 
 // TicketDetailExtAPI Detailed information about a single support ticket.
@@ -5284,6 +5674,18 @@ type UpdateAnnotationRequest struct {
 
 	// Timestamp The date associated with the annotation.
 	Timestamp *time.Time `json:"timestamp,omitempty"`
+}
+
+// UpdateCustomThemeRequest Request body for updating a custom theme. Only provided fields are modified.
+type UpdateCustomThemeRequest struct {
+	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+	Colors *ThemeColors `json:"colors,omitempty"`
+
+	// Name The display name of the custom theme.
+	Name *string `json:"name,omitempty"`
+
+	// PrimaryColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+	PrimaryColor *HexColor `json:"primaryColor,omitempty"`
 }
 
 // UpdateDatahubDataset200Response defines model for UpdateDatahubDataset200Response.
@@ -5993,6 +6395,15 @@ type QueryJSONRequestBody = QueryRequestBody
 // UpdateReportJSONRequestBody defines body for UpdateReport for application/json ContentType.
 type UpdateReportJSONRequestBody = ExternalUpdateReport
 
+// SetActiveThemeJSONRequestBody defines body for SetActiveTheme for application/json ContentType.
+type SetActiveThemeJSONRequestBody = SetActiveThemeRequest
+
+// CreateCustomThemeJSONRequestBody defines body for CreateCustomTheme for application/json ContentType.
+type CreateCustomThemeJSONRequestBody = CreateCustomThemeRequest
+
+// UpdateCustomThemeJSONRequestBody defines body for UpdateCustomTheme for application/json ContentType.
+type UpdateCustomThemeJSONRequestBody = UpdateCustomThemeRequest
+
 // AskAvaSyncJSONRequestBody defines body for AskAvaSync for application/json ContentType.
 type AskAvaSyncJSONRequestBody = AvaAskSyncRequest
 
@@ -6001,6 +6412,9 @@ type IdOfAssetJSONRequestBody = IdOfAssetRequestBody
 
 // FindCloudDiagramsJSONRequestBody defines body for FindCloudDiagrams for application/json ContentType.
 type FindCloudDiagramsJSONRequestBody = FindCloudDiagramsRequest
+
+// SearchCloudDiagramsJSONRequestBody defines body for SearchCloudDiagrams for application/json ContentType.
+type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
 
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
@@ -6345,6 +6759,33 @@ type ClientInterface interface {
 	// GetReportConfig request
 	GetReportConfig(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetActiveTheme request
+	GetActiveTheme(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetActiveThemeWithBody request with any body
+	SetActiveThemeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SetActiveTheme(ctx context.Context, body SetActiveThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCustomThemes request
+	ListCustomThemes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCustomThemeWithBody request with any body
+	CreateCustomThemeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateCustomTheme(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteCustomTheme request
+	DeleteCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCustomTheme request
+	GetCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomThemeWithBody request with any body
+	UpdateCustomThemeWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateCustomTheme(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListAnomalies request
 	ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -6380,6 +6821,11 @@ type ClientInterface interface {
 	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchCloudDiagramsWithBody request with any body
+	SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7185,6 +7631,126 @@ func (c *Client) GetReportConfig(ctx context.Context, id ReportId, reqEditors ..
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetActiveTheme(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetActiveThemeRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetActiveThemeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetActiveThemeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetActiveTheme(ctx context.Context, body SetActiveThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetActiveThemeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCustomThemes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCustomThemesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateCustomThemeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomThemeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateCustomTheme(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomThemeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCustomThemeRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCustomTheme(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomThemeRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCustomThemeWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomThemeRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCustomTheme(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomThemeRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListAnomaliesRequest(c.Server, params)
 	if err != nil {
@@ -7331,6 +7897,30 @@ func (c *Client) FindCloudDiagramsWithBody(ctx context.Context, contentType stri
 
 func (c *Client) FindCloudDiagrams(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindCloudDiagramsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchCloudDiagramsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10023,6 +10613,255 @@ func NewGetReportConfigRequest(server string, id ReportId) (*http.Request, error
 	return req, nil
 }
 
+// NewGetActiveThemeRequest generates requests for GetActiveTheme
+func NewGetActiveThemeRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/active-theme")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSetActiveThemeRequest calls the generic SetActiveTheme builder with application/json body
+func NewSetActiveThemeRequest(server string, body SetActiveThemeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetActiveThemeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSetActiveThemeRequestWithBody generates requests for SetActiveTheme with any type of body
+func NewSetActiveThemeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/active-theme")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListCustomThemesRequest generates requests for ListCustomThemes
+func NewListCustomThemesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateCustomThemeRequest calls the generic CreateCustomTheme builder with application/json body
+func NewCreateCustomThemeRequest(server string, body CreateCustomThemeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateCustomThemeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateCustomThemeRequestWithBody generates requests for CreateCustomTheme with any type of body
+func NewCreateCustomThemeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteCustomThemeRequest generates requests for DeleteCustomTheme
+func NewDeleteCustomThemeRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCustomThemeRequest generates requests for GetCustomTheme
+func NewGetCustomThemeRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateCustomThemeRequest calls the generic UpdateCustomTheme builder with application/json body
+func NewUpdateCustomThemeRequest(server string, id string, body UpdateCustomThemeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCustomThemeRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateCustomThemeRequestWithBody generates requests for UpdateCustomTheme with any type of body
+func NewUpdateCustomThemeRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/settings/themes/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListAnomaliesRequest generates requests for ListAnomalies
 func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.Request, error) {
 	var err error
@@ -10542,6 +11381,46 @@ func NewFindCloudDiagramsRequestWithBody(server string, contentType string, body
 	}
 
 	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/find")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSearchCloudDiagramsRequest calls the generic SearchCloudDiagrams builder with application/json body
+func NewSearchCloudDiagramsRequest(server string, body SearchCloudDiagramsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSearchCloudDiagramsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSearchCloudDiagramsRequestWithBody generates requests for SearchCloudDiagrams with any type of body
+func NewSearchCloudDiagramsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/scheme/search")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -12156,6 +13035,33 @@ type ClientWithResponsesInterface interface {
 	// GetReportConfigWithResponse request
 	GetReportConfigWithResponse(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*GetReportConfigResp, error)
 
+	// GetActiveThemeWithResponse request
+	GetActiveThemeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetActiveThemeResp, error)
+
+	// SetActiveThemeWithBodyWithResponse request with any body
+	SetActiveThemeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetActiveThemeResp, error)
+
+	SetActiveThemeWithResponse(ctx context.Context, body SetActiveThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*SetActiveThemeResp, error)
+
+	// ListCustomThemesWithResponse request
+	ListCustomThemesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCustomThemesResp, error)
+
+	// CreateCustomThemeWithBodyWithResponse request with any body
+	CreateCustomThemeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error)
+
+	CreateCustomThemeWithResponse(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error)
+
+	// DeleteCustomThemeWithResponse request
+	DeleteCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteCustomThemeResp, error)
+
+	// GetCustomThemeWithResponse request
+	GetCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomThemeResp, error)
+
+	// UpdateCustomThemeWithBodyWithResponse request with any body
+	UpdateCustomThemeWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error)
+
+	UpdateCustomThemeWithResponse(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error)
+
 	// ListAnomaliesWithResponse request
 	ListAnomaliesWithResponse(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*ListAnomaliesResp, error)
 
@@ -12191,6 +13097,11 @@ type ClientWithResponsesInterface interface {
 	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
 	FindCloudDiagramsWithResponse(ctx context.Context, body FindCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
+
+	// SearchCloudDiagramsWithBodyWithResponse request with any body
+	SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
+
+	SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -13746,6 +14657,240 @@ func (r GetReportConfigResp) ContentType() string {
 	return ""
 }
 
+type GetActiveThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ActiveTheme
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r GetActiveThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetActiveThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetActiveThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SetActiveThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ActiveTheme
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r SetActiveThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetActiveThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SetActiveThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListCustomThemesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListCustomThemes200Response
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCustomThemesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCustomThemesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCustomThemesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *CustomTheme
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateCustomThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteCustomThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomTheme
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCustomThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateCustomThemeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomTheme
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCustomThemeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCustomThemeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateCustomThemeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListAnomaliesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -14079,6 +15224,39 @@ func (r FindCloudDiagramsResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r FindCloudDiagramsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SearchCloudDiagramsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramsSearchResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchCloudDiagramsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchCloudDiagramsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SearchCloudDiagramsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -15518,6 +16696,93 @@ func (c *ClientWithResponses) GetReportConfigWithResponse(ctx context.Context, i
 	return ParseGetReportConfigResp(rsp)
 }
 
+// GetActiveThemeWithResponse request returning *GetActiveThemeResp
+func (c *ClientWithResponses) GetActiveThemeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetActiveThemeResp, error) {
+	rsp, err := c.GetActiveTheme(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetActiveThemeResp(rsp)
+}
+
+// SetActiveThemeWithBodyWithResponse request with arbitrary body returning *SetActiveThemeResp
+func (c *ClientWithResponses) SetActiveThemeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetActiveThemeResp, error) {
+	rsp, err := c.SetActiveThemeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetActiveThemeResp(rsp)
+}
+
+func (c *ClientWithResponses) SetActiveThemeWithResponse(ctx context.Context, body SetActiveThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*SetActiveThemeResp, error) {
+	rsp, err := c.SetActiveTheme(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetActiveThemeResp(rsp)
+}
+
+// ListCustomThemesWithResponse request returning *ListCustomThemesResp
+func (c *ClientWithResponses) ListCustomThemesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCustomThemesResp, error) {
+	rsp, err := c.ListCustomThemes(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCustomThemesResp(rsp)
+}
+
+// CreateCustomThemeWithBodyWithResponse request with arbitrary body returning *CreateCustomThemeResp
+func (c *ClientWithResponses) CreateCustomThemeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error) {
+	rsp, err := c.CreateCustomThemeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomThemeResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateCustomThemeWithResponse(ctx context.Context, body CreateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomThemeResp, error) {
+	rsp, err := c.CreateCustomTheme(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomThemeResp(rsp)
+}
+
+// DeleteCustomThemeWithResponse request returning *DeleteCustomThemeResp
+func (c *ClientWithResponses) DeleteCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteCustomThemeResp, error) {
+	rsp, err := c.DeleteCustomTheme(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteCustomThemeResp(rsp)
+}
+
+// GetCustomThemeWithResponse request returning *GetCustomThemeResp
+func (c *ClientWithResponses) GetCustomThemeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomThemeResp, error) {
+	rsp, err := c.GetCustomTheme(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomThemeResp(rsp)
+}
+
+// UpdateCustomThemeWithBodyWithResponse request with arbitrary body returning *UpdateCustomThemeResp
+func (c *ClientWithResponses) UpdateCustomThemeWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error) {
+	rsp, err := c.UpdateCustomThemeWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomThemeResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateCustomThemeWithResponse(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error) {
+	rsp, err := c.UpdateCustomTheme(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomThemeResp(rsp)
+}
+
 // ListAnomaliesWithResponse request returning *ListAnomaliesResp
 func (c *ClientWithResponses) ListAnomaliesWithResponse(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*ListAnomaliesResp, error) {
 	rsp, err := c.ListAnomalies(ctx, params, reqEditors...)
@@ -15630,6 +16895,23 @@ func (c *ClientWithResponses) FindCloudDiagramsWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseFindCloudDiagramsResp(rsp)
+}
+
+// SearchCloudDiagramsWithBodyWithResponse request with arbitrary body returning *SearchCloudDiagramsResp
+func (c *ClientWithResponses) SearchCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagramsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
+}
+
+func (c *ClientWithResponses) SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error) {
+	rsp, err := c.SearchCloudDiagrams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchCloudDiagramsResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -18239,6 +19521,356 @@ func ParseGetReportConfigResp(rsp *http.Response) (*GetReportConfigResp, error) 
 	return response, nil
 }
 
+// ParseGetActiveThemeResp parses an HTTP response from a GetActiveThemeWithResponse call
+func ParseGetActiveThemeResp(rsp *http.Response) (*GetActiveThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetActiveThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ActiveTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSetActiveThemeResp parses an HTTP response from a SetActiveThemeWithResponse call
+func ParseSetActiveThemeResp(rsp *http.Response) (*SetActiveThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetActiveThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ActiveTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCustomThemesResp parses an HTTP response from a ListCustomThemesWithResponse call
+func ParseListCustomThemesResp(rsp *http.Response) (*ListCustomThemesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCustomThemesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListCustomThemes200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateCustomThemeResp parses an HTTP response from a CreateCustomThemeWithResponse call
+func ParseCreateCustomThemeResp(rsp *http.Response) (*CreateCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CustomTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteCustomThemeResp parses an HTTP response from a DeleteCustomThemeWithResponse call
+func ParseDeleteCustomThemeResp(rsp *http.Response) (*DeleteCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCustomThemeResp parses an HTTP response from a GetCustomThemeWithResponse call
+func ParseGetCustomThemeResp(rsp *http.Response) (*GetCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCustomThemeResp parses an HTTP response from a UpdateCustomThemeWithResponse call
+func ParseUpdateCustomThemeResp(rsp *http.Response) (*UpdateCustomThemeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCustomThemeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomTheme
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListAnomaliesResp parses an HTTP response from a ListAnomaliesWithResponse call
 func ParseListAnomaliesResp(rsp *http.Response) (*ListAnomaliesResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -18741,6 +20373,53 @@ func ParseFindCloudDiagramsResp(rsp *http.Response) (*FindCloudDiagramsResp, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest FindCloudDiagramsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSearchCloudDiagramsResp parses an HTTP response from a SearchCloudDiagramsWithResponse call
+func ParseSearchCloudDiagramsResp(rsp *http.Response) (*SearchCloudDiagramsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchCloudDiagramsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramsSearchResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

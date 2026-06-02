@@ -67,23 +67,14 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 	if plan.Attributions.IsUnknown() {
 		plan.Attributions = resolved.Attributions
 	}
-	if plan.Condition.IsUnknown() {
-		plan.Condition = resolved.Condition
-	}
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
-	}
-	if plan.DataSource.IsUnknown() {
-		plan.DataSource = resolved.DataSource
 	}
 	if plan.EvaluateForEach.IsUnknown() {
 		plan.EvaluateForEach = resolved.EvaluateForEach
 	}
 	if plan.Operator.IsUnknown() {
 		plan.Operator = resolved.Operator
-	}
-	if plan.TimeInterval.IsUnknown() {
-		plan.TimeInterval = resolved.TimeInterval
 	}
 
 	// ── Metric: Required nested — subfields are both Required, never Unknown ──
@@ -106,24 +97,11 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 
 // overlayAlertScope resolves Unknown subfields in alert scope elements.
 func overlayAlertScope(_ context.Context, resolved, plan *resource_alert.ScopesValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
-	if plan.Id.IsUnknown() {
-		plan.Id = resolved.Id
-	}
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
+
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
 	}
-	if plan.Mode.IsUnknown() {
-		plan.Mode = resolved.Mode
-	}
-	if plan.ScopesType.IsUnknown() {
-		plan.ScopesType = resolved.ScopesType
-	}
+
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}
@@ -174,7 +152,7 @@ func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req m
 
 // toAlertConfig converts the Terraform config object to the API AlertConfig.
 func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config models.AlertConfig, diags diag.Diagnostics) {
-	if plan.Config.IsNull() || plan.Config.IsUnknown() {
+	if plan.Config.IsNull() {
 		diags.AddError("Config Required", "Alert config is required")
 		return config, diags
 	}
@@ -187,7 +165,7 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 	config.TimeInterval = models.AlertConfigTimeInterval(configVal.TimeInterval.ValueString())
 
 	// Metric (required nested object)
-	if !configVal.Metric.IsNull() && !configVal.Metric.IsUnknown() {
+	if !configVal.Metric.IsNull() {
 		metricVal := configVal.Metric
 		config.Metric = models.MetricConfig{
 			Type:  metricVal.MetricType.ValueString(),
@@ -196,29 +174,24 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 	}
 
 	// Optional fields
-	if !configVal.Condition.IsNull() && !configVal.Condition.IsUnknown() {
-		condition := configVal.Condition.ValueString()
-		config.Condition = &condition
+	if !configVal.Condition.IsNull() {
+		config.Condition = new(models.Condition(configVal.Condition.ValueString()))
 	}
 
 	if !configVal.Currency.IsNull() && !configVal.Currency.IsUnknown() {
-		currency := models.Currency(configVal.Currency.ValueString())
-		config.Currency = &currency
+		config.Currency = new(models.Currency(configVal.Currency.ValueString()))
 	}
 
-	if !configVal.DataSource.IsNull() && !configVal.DataSource.IsUnknown() {
-		dataSource := configVal.DataSource.ValueString()
-		config.DataSource = &dataSource
+	if !configVal.DataSource.IsNull() {
+		config.DataSource = new(models.AlertConfigDataSource(configVal.DataSource.ValueString()))
 	}
 
 	if !configVal.EvaluateForEach.IsNull() && !configVal.EvaluateForEach.IsUnknown() {
-		evaluateForEach := configVal.EvaluateForEach.ValueString()
-		config.EvaluateForEach = &evaluateForEach
+		config.EvaluateForEach = new(configVal.EvaluateForEach.ValueString())
 	}
 
 	if !configVal.Operator.IsNull() && !configVal.Operator.IsUnknown() {
-		operator := models.MetricFilterText(configVal.Operator.ValueString())
-		config.Operator = &operator
+		config.Operator = new(models.MetricFilterText(configVal.Operator.ValueString()))
 	}
 
 	// Attributions
@@ -472,9 +445,9 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 	// Build config value
 	configAttrs := map[string]attr.Value{
 		"attributions":      attributionsVal,
-		"condition":         types.StringPointerValue(config.Condition),
+		"condition":         types.StringPointerValue((*string)(config.Condition)),
 		"currency":          types.StringPointerValue((*string)(config.Currency)),
-		"data_source":       types.StringPointerValue(config.DataSource),
+		"data_source":       types.StringPointerValue((*string)(config.DataSource)),
 		"evaluate_for_each": types.StringPointerValue(config.EvaluateForEach),
 		"metric":            metricVal,
 		"operator":          types.StringPointerValue((*string)(config.Operator)),

@@ -279,7 +279,7 @@ Required:
 Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+- `type` (String) Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`
 - `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
 
@@ -317,7 +317,7 @@ Required:
 Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
 - `mode` (String) Filter mode to apply. When type is "allocation_rule", only "is" and "contains" modes are supported.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
-- `type` (String) Enumeration of supported dimension/filter types for allocation components.
+- `type` (String) Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`
 - `values` (List of String) Values to filter on. When type is "allocation_rule", the values are IDs of existing allocation rules.
 

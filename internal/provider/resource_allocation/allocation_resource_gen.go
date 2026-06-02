@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -46,6 +47,7 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
 				MarkdownDescription: "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder).",
+				Default:             stringdefault.StaticString("root"),
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -112,8 +114,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
-									MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+									Description:         "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -230,8 +232,8 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 									},
 									"type": schema.StringAttribute{
 										Required:            true,
-										Description:         "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
-										MarkdownDescription: "Enumeration of supported dimension/filter types for allocation components.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+										Description:         "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
+										MarkdownDescription: "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `allocation_rule`, `gke`, `gke_label`",
 										Validators: []validator.String{
 											stringvalidator.OneOf(
 												"datetime",

@@ -50,6 +50,20 @@
 			}
 		},
 		{
+			"name": "active_theme",
+			"schema": {
+				"attributes": [
+					{
+						"name": "theme_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the active theme. The reserved sentinel `\"default\"` is\nreturned when the user is using the built-in default (no custom or\npreset theme stored)."
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "alert",
 			"schema": {
 				"attributes": [
@@ -80,7 +94,7 @@
 									"name": "condition",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Condition key or expression used in alert configurations."
+										"description": "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`."
 									}
 								},
 								{
@@ -93,14 +107,15 @@
 								{
 									"name": "data_source",
 									"string": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available."
 									}
 								},
 								{
 									"name": "evaluate_for_each",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
 									}
 								},
 								{
@@ -129,7 +144,7 @@
 									"name": "operator",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Text/operator used to filter metric values in metric filters."
+										"description": "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than)."
 									}
 								},
 								{
@@ -149,35 +164,35 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "The field to filter on"
+														"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 													}
 												},
 												{
 													"name": "include_null",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Include null value."
+														"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Set to `true` to exclude the values."
+														"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Filter mode to apply"
+														"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 													}
 												},
 												{
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												},
 												{
@@ -187,25 +202,26 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 													}
 												}
 											]
 										},
-										"description": "The filters selected define the scope of the alert."
+										"description": "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert."
 									}
 								},
 								{
 									"name": "time_interval",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "The time interval to evaluate the condition."
+										"description": "The period each evaluation looks at."
 									}
 								},
 								{
 									"name": "value",
 									"float64": {
-										"computed_optional_required": "computed"
+										"computed_optional_required": "computed",
+										"description": "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition."
 									}
 								}
 							],
@@ -344,7 +360,7 @@
 													"name": "condition",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Condition key or expression used in alert configurations."
+														"description": "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`."
 													}
 												},
 												{
@@ -357,14 +373,15 @@
 												{
 													"name": "data_source",
 													"string": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available."
 													}
 												},
 												{
 													"name": "evaluate_for_each",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+														"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
 													}
 												},
 												{
@@ -393,7 +410,7 @@
 													"name": "operator",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Text/operator used to filter metric values in metric filters."
+														"description": "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than)."
 													}
 												},
 												{
@@ -413,35 +430,35 @@
 																	"name": "id",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "The field to filter on"
+																		"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 																	}
 																},
 																{
 																	"name": "include_null",
 																	"bool": {
 																		"computed_optional_required": "computed",
-																		"description": "Include null value."
+																		"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 																	}
 																},
 																{
 																	"name": "inverse",
 																	"bool": {
 																		"computed_optional_required": "computed",
-																		"description": "Set to `true` to exclude the values."
+																		"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 																	}
 																},
 																{
 																	"name": "mode",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "Filter mode to apply"
+																		"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 																	}
 																},
 																{
 																	"name": "type",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+																		"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 																	}
 																},
 																{
@@ -451,25 +468,26 @@
 																		"element_type": {
 																			"string": {}
 																		},
-																		"description": "Values to filter on."
+																		"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 																	}
 																}
 															]
 														},
-														"description": "The filters selected define the scope of the alert."
+														"description": "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert."
 													}
 												},
 												{
 													"name": "time_interval",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "The time interval to evaluate the condition."
+														"description": "The period each evaluation looks at."
 													}
 												},
 												{
 													"name": "value",
 													"float64": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition."
 													}
 												}
 											],
@@ -649,7 +667,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types for allocation components."
+														"description": "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types."
 													}
 												},
 												{
@@ -744,7 +762,7 @@
 														"name": "type",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Enumeration of supported dimension/filter types for allocation components."
+															"description": "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types."
 														}
 													},
 													{
@@ -2297,35 +2315,35 @@
 										"name": "id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The field to filter on"
+											"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 										}
 									},
 									{
 										"name": "include_null",
 										"bool": {
 											"computed_optional_required": "computed",
-											"description": "Include null value."
+											"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 										}
 									},
 									{
 										"name": "inverse",
 										"bool": {
 											"computed_optional_required": "computed",
-											"description": "Set to `true` to exclude the values."
+											"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 										}
 									},
 									{
 										"name": "mode",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Filter mode to apply"
+											"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 										}
 									},
 									{
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+											"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 										}
 									},
 									{
@@ -2335,7 +2353,7 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "Values to filter on."
+											"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 										}
 									}
 								]
@@ -2542,35 +2560,35 @@
 														"name": "id",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "The field to filter on"
+															"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 														}
 													},
 													{
 														"name": "include_null",
 														"bool": {
 															"computed_optional_required": "computed",
-															"description": "Include null value."
+															"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 														}
 													},
 													{
 														"name": "inverse",
 														"bool": {
 															"computed_optional_required": "computed",
-															"description": "Set to `true` to exclude the values."
+															"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 														}
 													},
 													{
 														"name": "mode",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Filter mode to apply"
+															"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 														}
 													},
 													{
 														"name": "type",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+															"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 														}
 													},
 													{
@@ -2580,7 +2598,7 @@
 															"element_type": {
 																"string": {}
 															},
-															"description": "Values to filter on."
+															"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 														}
 													}
 												]
@@ -2630,64 +2648,12 @@
 			}
 		},
 		{
-			"name": "cloud_diagram_snapshots",
+			"name": "cloud_diagram_search",
 			"schema": {
 				"attributes": [
 					{
-						"name": "id",
-						"string": {
-							"computed_optional_required": "required",
-							"description": "Layer ID."
-						}
-					},
-					{
-						"name": "offset",
-						"int64": {
-							"computed_optional_required": "computed_optional",
-							"description": "Number of snapshots to skip (default 0).",
-							"validators": [
-								{
-									"custom": {
-										"imports": [
-											{
-												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-											}
-										],
-										"schema_definition": "int64validator.AtLeast(0)"
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "limit",
-						"int64": {
-							"computed_optional_required": "computed_optional",
-							"description": "Maximum number of snapshots to return (default 10).",
-							"validators": [
-								{
-									"custom": {
-										"imports": [
-											{
-												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-											}
-										],
-										"schema_definition": "int64validator.AtLeast(1)"
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "sort",
-						"string": {
-							"computed_optional_required": "computed_optional",
-							"description": "Sort expression (e.g. \"-createdAt\" for descending)."
-						}
-					},
-					{
-						"name": "cloud_diagram_snapshots",
-						"set_nested": {
+						"name": "component",
+						"list_nested": {
 							"computed_optional_required": "computed",
 							"nested_object": {
 								"attributes": [
@@ -2695,32 +2661,255 @@
 										"name": "_id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Snapshot ID."
+											"description": "Component ID."
 										}
 									},
 									{
-										"name": "created_at",
+										"name": "account_name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Timestamp when the snapshot was created."
+											"description": "Cloud account name."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component color."
+										}
+									},
+									{
+										"name": "group_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group type (for group components)."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component icon identifier."
 										}
 									},
 									{
 										"name": "name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Snapshot name."
+											"description": "Component name."
 										}
 									},
 									{
-										"name": "prev_state",
+										"name": "node_type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "ID of the previous snapshot in the chain."
+											"description": "Node type."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "service_type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Cloud service type (e.g. AWS::EC2::Instance)."
+													}
+												}
+											],
+											"description": "Component properties. For the \"prop\" category contains the matched property key-value pairs."
+										}
+									},
+									{
+										"name": "scheme_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram ID."
+										}
+									},
+									{
+										"name": "ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component type."
 										}
 									}
 								]
-							}
+							},
+							"description": "Components matching the query by name."
+						}
+					},
+					{
+						"name": "prop",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component ID."
+										}
+									},
+									{
+										"name": "account_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account name."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component color."
+										}
+									},
+									{
+										"name": "group_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group type (for group components)."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component icon identifier."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "node_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Node type."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "service_type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Cloud service type (e.g. AWS::EC2::Instance)."
+													}
+												}
+											],
+											"description": "Component properties. For the \"prop\" category contains the matched property key-value pairs."
+										}
+									},
+									{
+										"name": "scheme_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram ID."
+										}
+									},
+									{
+										"name": "ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component type."
+										}
+									}
+								]
+							},
+							"description": "Components matching the query by property values."
+						}
+					},
+					{
+						"name": "scheme",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID."
+										}
+									},
+									{
+										"name": "account_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account name."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer name."
+										}
+									},
+									{
+										"name": "scheme",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram name."
+										}
+									},
+									{
+										"name": "scheme_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent diagram ID."
+										}
+									},
+									{
+										"name": "ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID (same as _id)."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Import/sync status."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component type — always \"statussheet\" for this category."
+										}
+									}
+								]
+							},
+							"description": "Diagram layers (cloud accounts) matching the query."
 						}
 					}
 				],
@@ -3350,6 +3539,165 @@
 			}
 		},
 		{
+			"name": "custom_theme",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Custom theme ID"
+						}
+					},
+					{
+						"name": "colors",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "dark",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Colors used when the report is displayed in dark mode."
+									}
+								},
+								{
+									"name": "light",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Colors used when the report is displayed in light mode."
+									}
+								}
+							],
+							"description": "Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors."
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The creation time of the custom theme."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The display name of the custom theme."
+						}
+					},
+					{
+						"name": "primary_color",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the custom theme was last updated."
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "custom_themes",
+			"schema": {
+				"attributes": [
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of custom themes in the result set."
+						}
+					},
+					{
+						"name": "themes",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "colors",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "dark",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Colors used when the report is displayed in dark mode."
+													}
+												},
+												{
+													"name": "light",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Colors used when the report is displayed in light mode."
+													}
+												}
+											],
+											"description": "Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors."
+										}
+									},
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The creation time of the custom theme."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique identifier of the custom theme."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The display name of the custom theme."
+										}
+									},
+									{
+										"name": "primary_color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`."
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the custom theme was last updated."
+										}
+									}
+								]
+							}
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [
@@ -3597,7 +3945,7 @@
 										"name": "type",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+											"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 										}
 									}
 								]
@@ -5236,12 +5584,56 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												}
 											]
 										},
 										"description": "See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions)."
+									}
+								},
+								{
+									"name": "display_settings",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "axis_label_font_size",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Font size used for axis labels on charts."
+												}
+											},
+											{
+												"name": "data_label_font_size",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Font size used for data labels on charts."
+												}
+											},
+											{
+												"name": "decimal_precision",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "Number of decimal places shown for numeric values."
+												}
+											},
+											{
+												"name": "number_scale",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Scale applied to numeric values when rendering the report."
+												}
+											},
+											{
+												"name": "theme_id",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Identifier of the theme applied to the report. The reserved\nsentinel `\"default\"` is returned on GET when no theme is stored\nand clears the stored value on PATCH. Omit the field on PATCH\nto leave the stored value unchanged."
+												}
+											}
+										],
+										"description": "Display settings for the report."
 									}
 								},
 								{
@@ -5268,35 +5660,35 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "The field to filter on"
+														"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 													}
 												},
 												{
 													"name": "include_null",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Include null value."
+														"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed",
-														"description": "Set to `true` to exclude the values."
+														"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Filter mode to apply"
+														"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is."
 													}
 												},
 												{
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												},
 												{
@@ -5306,7 +5698,7 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 													}
 												}
 											]
@@ -5377,7 +5769,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead."
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`."
 													}
 												}
 											]

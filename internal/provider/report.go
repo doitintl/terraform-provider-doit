@@ -67,11 +67,6 @@ func overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalRe
 		plan.Labels = resolved.Labels
 	}
 
-	// folder_id: use plan if known, otherwise resolved
-	if plan.FolderId.IsUnknown() {
-		plan.FolderId = resolved.FolderId
-	}
-
 	// ── Config block ──
 	// Walk each field: if the plan value is Known, keep it (user's source of truth).
 	// If Unknown, use the API-resolved value.
@@ -106,20 +101,19 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 	if plan.IncludePromotionalCredits.IsUnknown() {
 		plan.IncludePromotionalCredits = resolved.IncludePromotionalCredits
 	}
-	if plan.IncludeSubtotals.IsUnknown() {
-		plan.IncludeSubtotals = resolved.IncludeSubtotals
-	}
 	if plan.Layout.IsUnknown() {
 		plan.Layout = resolved.Layout
 	}
-	if plan.SortDimensions.IsUnknown() {
-		plan.SortDimensions = resolved.SortDimensions
-	}
-	if plan.SortGroups.IsUnknown() {
-		plan.SortGroups = resolved.SortGroups
-	}
+
 	if plan.TimeInterval.IsUnknown() {
 		plan.TimeInterval = resolved.TimeInterval
+	}
+
+	// ── Nested object: DisplaySettings ──
+	if plan.DisplaySettings.IsUnknown() {
+		plan.DisplaySettings = resolved.DisplaySettings
+	} else if !plan.DisplaySettings.IsNull() {
+		overlayDisplaySettings(&resolved.DisplaySettings, &plan.DisplaySettings)
 	}
 
 	// ── Nested objects: resolve entire object when Unknown, or walk subfields ──
@@ -211,6 +205,23 @@ func overlayAdvancedAnalysis(resolved, plan *resource_report.AdvancedAnalysisVal
 	if plan.TrendingUp.IsUnknown() {
 		plan.TrendingUp = resolved.TrendingUp
 	}
+}
+
+func overlayDisplaySettings(resolved, plan *resource_report.DisplaySettingsValue) {
+	if plan.AxisLabelFontSize.IsUnknown() {
+		plan.AxisLabelFontSize = resolved.AxisLabelFontSize
+	}
+	if plan.DataLabelFontSize.IsUnknown() {
+		plan.DataLabelFontSize = resolved.DataLabelFontSize
+	}
+	if plan.DecimalPrecision.IsUnknown() {
+		plan.DecimalPrecision = resolved.DecimalPrecision
+	}
+	if plan.NumberScale.IsUnknown() {
+		plan.NumberScale = resolved.NumberScale
+	}
+
+	// theme_id: Optional+Computed with Default "default" — never Unknown at plan time.
 }
 
 func overlayCustomTimeRange(resolved, plan *resource_report.CustomTimeRangeValue) {
@@ -356,24 +367,11 @@ func overlayDimension(_ context.Context, resolved, plan *resource_report.Dimensi
 }
 
 func overlayFilter(_ context.Context, resolved, plan *resource_report.FiltersValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
-	if plan.Id.IsUnknown() {
-		plan.Id = resolved.Id
-	}
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
+
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
 	}
-	if plan.Mode.IsUnknown() {
-		plan.Mode = resolved.Mode
-	}
-	if plan.FiltersType.IsUnknown() {
-		plan.FiltersType = resolved.FiltersType
-	}
+
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}
@@ -576,8 +574,12 @@ func (r *reportResource) populateState(ctx context.Context, state *reportResourc
 }
 
 func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req models.CreateReportJSONRequestBody, diags diag.Diagnostics) {
-	req.Name = plan.Name.ValueStringPointer()
-	req.Description = plan.Description.ValueStringPointer()
+	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+		req.Name = plan.Name.ValueStringPointer()
+	}
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		req.Description = plan.Description.ValueStringPointer()
+	}
 	req.FolderId = plan.FolderId.ValueStringPointer()
 
 	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
@@ -600,8 +602,12 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 }
 
 func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req models.UpdateReportJSONRequestBody, diags diag.Diagnostics) {
-	req.Name = plan.Name.ValueStringPointer()
-	req.Description = plan.Description.ValueStringPointer()
+	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+		req.Name = plan.Name.ValueStringPointer()
+	}
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		req.Description = plan.Description.ValueStringPointer()
+	}
 	req.FolderId = plan.FolderId.ValueStringPointer()
 
 	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
@@ -633,67 +639,68 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	// function works both in the resource context (where defaults populate
 	// these fields) and in the data source context (where they may be omitted).
 	if !config.Aggregation.IsNull() && !config.Aggregation.IsUnknown() {
-		aggregation := models.ExternalConfigAggregation(config.Aggregation.ValueString())
-		externalConfig.Aggregation = &aggregation
+		externalConfig.Aggregation = new(models.ExternalConfigAggregation(config.Aggregation.ValueString()))
 	}
 	if !config.Currency.IsNull() && !config.Currency.IsUnknown() {
-		currency := models.Currency(config.Currency.ValueString())
-		externalConfig.Currency = &currency
+		externalConfig.Currency = new(models.Currency(config.Currency.ValueString()))
 	}
 	if !config.DisplayValues.IsNull() && !config.DisplayValues.IsUnknown() {
-		displayValues := models.ExternalConfigDisplayValues(config.DisplayValues.ValueString())
-		externalConfig.DisplayValues = &displayValues
+		externalConfig.DisplayValues = new(models.ExternalConfigDisplayValues(config.DisplayValues.ValueString()))
 	}
 	if !config.IncludePromotionalCredits.IsNull() && !config.IncludePromotionalCredits.IsUnknown() {
-		includePromotionalCredits := config.IncludePromotionalCredits.ValueBool()
-		externalConfig.IncludePromotionalCredits = &includePromotionalCredits
+		externalConfig.IncludePromotionalCredits = new(config.IncludePromotionalCredits.ValueBool())
 	}
 	if !config.Layout.IsNull() && !config.Layout.IsUnknown() {
-		layout := models.ExternalRenderer(config.Layout.ValueString())
-		externalConfig.Layout = &layout
+		externalConfig.Layout = new(models.ExternalRenderer(config.Layout.ValueString()))
 	}
-	if !config.SortDimensions.IsNull() && !config.SortDimensions.IsUnknown() {
-		sortDimensions := models.ExternalConfigSortDimensions(config.SortDimensions.ValueString())
-		externalConfig.SortDimensions = &sortDimensions
+	if !config.SortDimensions.IsNull() {
+		externalConfig.SortDimensions = new(models.ExternalConfigSortDimensions(config.SortDimensions.ValueString()))
 	}
-	if !config.SortGroups.IsNull() && !config.SortGroups.IsUnknown() {
-		sortGroups := models.ExternalConfigSortGroups(config.SortGroups.ValueString())
-		externalConfig.SortGroups = &sortGroups
+	if !config.SortGroups.IsNull() {
+		externalConfig.SortGroups = new(models.ExternalConfigSortGroups(config.SortGroups.ValueString()))
 	}
 	if !config.TimeInterval.IsNull() && !config.TimeInterval.IsUnknown() {
-		timeInterval := models.ExternalConfigTimeInterval(config.TimeInterval.ValueString())
-		externalConfig.TimeInterval = &timeInterval
+		externalConfig.TimeInterval = new(models.ExternalConfigTimeInterval(config.TimeInterval.ValueString()))
 	}
 
 	if !config.DataSource.IsNull() && !config.DataSource.IsUnknown() {
-		dataSource := models.ExternalConfigDataSource(config.DataSource.ValueString())
-		externalConfig.DataSource = &dataSource
+		externalConfig.DataSource = new(models.ExternalConfigDataSource(config.DataSource.ValueString()))
 	}
 
 	if !config.AdvancedAnalysis.IsNull() && !config.AdvancedAnalysis.IsUnknown() {
-		externalConfig.AdvancedAnalysis = &models.AdvancedAnalysis{
-			Forecast:     config.AdvancedAnalysis.Forecast.ValueBoolPointer(),
-			NotTrending:  config.AdvancedAnalysis.NotTrending.ValueBoolPointer(),
-			TrendingDown: config.AdvancedAnalysis.TrendingDown.ValueBoolPointer(),
-			TrendingUp:   config.AdvancedAnalysis.TrendingUp.ValueBoolPointer(),
+		aa := &models.AdvancedAnalysis{}
+		if !config.AdvancedAnalysis.Forecast.IsNull() && !config.AdvancedAnalysis.Forecast.IsUnknown() {
+			aa.Forecast = config.AdvancedAnalysis.Forecast.ValueBoolPointer()
 		}
+		if !config.AdvancedAnalysis.NotTrending.IsNull() && !config.AdvancedAnalysis.NotTrending.IsUnknown() {
+			aa.NotTrending = config.AdvancedAnalysis.NotTrending.ValueBoolPointer()
+		}
+		if !config.AdvancedAnalysis.TrendingDown.IsNull() && !config.AdvancedAnalysis.TrendingDown.IsUnknown() {
+			aa.TrendingDown = config.AdvancedAnalysis.TrendingDown.ValueBoolPointer()
+		}
+		if !config.AdvancedAnalysis.TrendingUp.IsNull() && !config.AdvancedAnalysis.TrendingUp.IsUnknown() {
+			aa.TrendingUp = config.AdvancedAnalysis.TrendingUp.ValueBoolPointer()
+		}
+		externalConfig.AdvancedAnalysis = aa
 	}
 
 	if !config.CustomTimeRange.IsNull() && !config.CustomTimeRange.IsUnknown() {
-		fromTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.From.ValueString())
-		if err != nil {
-			diags.AddError("Invalid From Time", "Could not parse CustomTimeRange.From as RFC3339: "+err.Error())
-		}
-		toTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.To.ValueString())
-		if err != nil {
-			diags.AddError("Invalid To Time", "Could not parse CustomTimeRange.To as RFC3339: "+err.Error())
-		}
-
-		if !diags.HasError() {
-			customTimeRange := models.ExternalConfigCustomTimeRange{
-				From: &fromTime,
-				To:   &toTime,
+		customTimeRange := models.ExternalConfigCustomTimeRange{}
+		if !config.CustomTimeRange.From.IsNull() && !config.CustomTimeRange.From.IsUnknown() {
+			fromTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.From.ValueString())
+			if err != nil {
+				diags.AddError("Invalid From Time", "Could not parse CustomTimeRange.From as RFC3339: "+err.Error())
 			}
+			customTimeRange.From = &fromTime
+		}
+		if !config.CustomTimeRange.To.IsNull() && !config.CustomTimeRange.To.IsUnknown() {
+			toTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.To.ValueString())
+			if err != nil {
+				diags.AddError("Invalid To Time", "Could not parse CustomTimeRange.To as RFC3339: "+err.Error())
+			}
+			customTimeRange.To = &toTime
+		}
+		if !diags.HasError() {
 			externalConfig.CustomTimeRange = &customTimeRange
 		}
 	}
@@ -704,10 +711,9 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalDimensions := make([]models.Dimension, len(dimensions))
 			for i, d := range dimensions {
-				dimType := models.DimensionsTypes(d.DimensionsType.ValueString())
 				externalDimensions[i] = models.Dimension{
 					Id:   d.Id.ValueStringPointer(),
-					Type: &dimType,
+					Type: new(models.DimensionsTypes(d.DimensionsType.ValueString())),
 				}
 			}
 			externalConfig.Dimensions = &externalDimensions
@@ -748,16 +754,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalGroups := make([]models.Group, len(groups))
 			for i, g := range groups {
-				groupType := models.DimensionsTypes(g.GroupType.ValueString())
 				externalGroups[i] = models.Group{
 					Id:   g.Id.ValueStringPointer(),
-					Type: &groupType,
+					Type: new(models.DimensionsTypes(g.GroupType.ValueString())),
 				}
 				if !g.Limit.IsNull() && !g.Limit.IsUnknown() {
 					limit := models.Limit{}
 					if !g.Limit.Sort.IsNull() && !g.Limit.Sort.IsUnknown() {
-						sort := models.LimitSort(g.Limit.Sort.ValueString())
-						limit.Sort = &sort
+						limit.Sort = new(models.LimitSort(g.Limit.Sort.ValueString()))
 					}
 					if !g.Limit.Value.IsNull() && !g.Limit.Value.IsUnknown() {
 						limit.Value = g.Limit.Value.ValueInt64Pointer()
@@ -791,8 +795,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			for i, m := range metricsValues {
 				externalMetrics[i] = models.ExternalMetric{}
 				if !m.MetricsType.IsNull() && !m.MetricsType.IsUnknown() {
-					mType := models.ExternalMetricType(m.MetricsType.ValueString())
-					externalMetrics[i].Type = &mType
+					externalMetrics[i].Type = new(models.ExternalMetricType(m.MetricsType.ValueString()))
 				}
 				if !m.Value.IsNull() && !m.Value.IsUnknown() {
 					externalMetrics[i].Value = m.Value.ValueStringPointer()
@@ -818,8 +821,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			externalConfig.MetricFilter.Values = &values
 		}
 		if !config.MetricFilter.Operator.IsNull() && !config.MetricFilter.Operator.IsUnknown() {
-			operator := models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString())
-			externalConfig.MetricFilter.Operator = &operator
+			externalConfig.MetricFilter.Operator = new(models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString()))
 		}
 	}
 
@@ -829,19 +831,16 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalSplits := make([]models.ExternalSplit, len(splits))
 			for i, s := range splits {
-				splitMode := models.ExternalSplitMode(s.Mode.ValueString())
-				splitType := models.ExternalSplitType(s.SplitsType.ValueString())
 				externalSplits[i] = models.ExternalSplit{
 					Id:            s.Id.ValueStringPointer(),
 					IncludeOrigin: s.IncludeOrigin.ValueBoolPointer(),
-					Mode:          &splitMode,
-					Type:          &splitType,
+					Mode:          new(models.ExternalSplitMode(s.Mode.ValueString())),
+					Type:          new(models.ExternalSplitType(s.SplitsType.ValueString())),
 				}
 				if !s.Origin.IsNull() && !s.Origin.IsUnknown() {
-					originType := models.ExternalOriginType(s.Origin.OriginType.ValueString())
 					externalSplits[i].Origin = &models.ExternalOrigin{
 						Id:   s.Origin.Id.ValueStringPointer(),
-						Type: &originType,
+						Type: new(models.ExternalOriginType(s.Origin.OriginType.ValueString())),
 					}
 				}
 				if !s.Targets.IsNull() && !s.Targets.IsUnknown() {
@@ -852,10 +851,9 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					}
 					externalTargets := make([]models.ExternalSplitTarget, len(targets))
 					for j, t := range targets {
-						targetType := models.ExternalSplitTargetType(t.TargetsType.ValueString())
 						externalTargets[j] = models.ExternalSplitTarget{
 							Id:    t.Id.ValueStringPointer(),
-							Type:  &targetType,
+							Type:  new(models.ExternalSplitTargetType(t.TargetsType.ValueString())),
 							Value: t.Value.ValueFloat64Pointer(),
 						}
 					}
@@ -867,43 +865,74 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.TimeRange.IsNull() && !config.TimeRange.IsUnknown() {
-		timeSettingsMode := models.TimeSettingsMode(config.TimeRange.Mode.ValueString())
-		timeSettingsUnit := models.TimeSettingsUnit(config.TimeRange.Unit.ValueString())
-		externalConfig.TimeRange = &models.TimeSettings{
-			Amount:         config.TimeRange.Amount.ValueInt64Pointer(),
-			IncludeCurrent: config.TimeRange.IncludeCurrent.ValueBoolPointer(),
-			Mode:           &timeSettingsMode,
-			Unit:           &timeSettingsUnit,
+		ts := &models.TimeSettings{}
+		if !config.TimeRange.Amount.IsNull() && !config.TimeRange.Amount.IsUnknown() {
+			ts.Amount = config.TimeRange.Amount.ValueInt64Pointer()
 		}
+		if !config.TimeRange.IncludeCurrent.IsNull() && !config.TimeRange.IncludeCurrent.IsUnknown() {
+			ts.IncludeCurrent = config.TimeRange.IncludeCurrent.ValueBoolPointer()
+		}
+		if !config.TimeRange.Mode.IsNull() && !config.TimeRange.Mode.IsUnknown() {
+			ts.Mode = new(models.TimeSettingsMode(config.TimeRange.Mode.ValueString()))
+		}
+		if !config.TimeRange.Unit.IsNull() && !config.TimeRange.Unit.IsUnknown() {
+			ts.Unit = new(models.TimeSettingsUnit(config.TimeRange.Unit.ValueString()))
+		}
+		externalConfig.TimeRange = ts
 	}
 
 	if !config.SecondaryTimeRange.IsNull() && !config.SecondaryTimeRange.IsUnknown() {
-		secondaryTimeRange := &models.TimeSettingsSecondary{
-			Amount:         config.SecondaryTimeRange.Amount.ValueInt64Pointer(),
-			IncludeCurrent: config.SecondaryTimeRange.IncludeCurrent.ValueBoolPointer(),
+		secondaryTimeRange := &models.TimeSettingsSecondary{}
+		if !config.SecondaryTimeRange.Amount.IsNull() && !config.SecondaryTimeRange.Amount.IsUnknown() {
+			secondaryTimeRange.Amount = config.SecondaryTimeRange.Amount.ValueInt64Pointer()
+		}
+		if !config.SecondaryTimeRange.IncludeCurrent.IsNull() && !config.SecondaryTimeRange.IncludeCurrent.IsUnknown() {
+			secondaryTimeRange.IncludeCurrent = config.SecondaryTimeRange.IncludeCurrent.ValueBoolPointer()
 		}
 		if !config.SecondaryTimeRange.Unit.IsNull() && !config.SecondaryTimeRange.Unit.IsUnknown() {
-			unit := models.TimeSettingsSecondaryUnit(config.SecondaryTimeRange.Unit.ValueString())
-			secondaryTimeRange.Unit = &unit
+			secondaryTimeRange.Unit = new(models.TimeSettingsSecondaryUnit(config.SecondaryTimeRange.Unit.ValueString()))
 		}
 		if !config.SecondaryTimeRange.CustomTimeRange.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.IsUnknown() {
-			fromTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.From.ValueString())
-			if err != nil {
-				diags.AddError("Invalid From Time", "Could not parse SecondaryTimeRange.CustomTimeRange.From as RFC3339: "+err.Error())
+			ctr := models.TimeSettingsSecondaryCustomTimeRange{}
+			if !config.SecondaryTimeRange.CustomTimeRange.From.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.From.IsUnknown() {
+				fromTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.From.ValueString())
+				if err != nil {
+					diags.AddError("Invalid From Time", "Could not parse SecondaryTimeRange.CustomTimeRange.From as RFC3339: "+err.Error())
+				}
+				ctr.From = &fromTime
 			}
-			toTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.To.ValueString())
-			if err != nil {
-				diags.AddError("Invalid To Time", "Could not parse SecondaryTimeRange.CustomTimeRange.To as RFC3339: "+err.Error())
+			if !config.SecondaryTimeRange.CustomTimeRange.To.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.To.IsUnknown() {
+				toTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.To.ValueString())
+				if err != nil {
+					diags.AddError("Invalid To Time", "Could not parse SecondaryTimeRange.CustomTimeRange.To as RFC3339: "+err.Error())
+				}
+				ctr.To = &toTime
 			}
 			if !diags.HasError() {
-				ctr := models.TimeSettingsSecondaryCustomTimeRange{
-					From: &fromTime,
-					To:   &toTime,
-				}
 				secondaryTimeRange.CustomTimeRange = &ctr
 			}
 		}
 		externalConfig.SecondaryTimeRange = secondaryTimeRange
+	}
+
+	if !config.DisplaySettings.IsNull() && !config.DisplaySettings.IsUnknown() {
+		ds := &models.ExternalDisplaySettings{}
+		if !config.DisplaySettings.AxisLabelFontSize.IsNull() && !config.DisplaySettings.AxisLabelFontSize.IsUnknown() {
+			ds.AxisLabelFontSize = new(models.ExternalDisplaySettingsAxisLabelFontSize(config.DisplaySettings.AxisLabelFontSize.ValueString()))
+		}
+		if !config.DisplaySettings.DataLabelFontSize.IsNull() && !config.DisplaySettings.DataLabelFontSize.IsUnknown() {
+			ds.DataLabelFontSize = new(models.ExternalDisplaySettingsDataLabelFontSize(config.DisplaySettings.DataLabelFontSize.ValueString()))
+		}
+		if !config.DisplaySettings.DecimalPrecision.IsNull() && !config.DisplaySettings.DecimalPrecision.IsUnknown() {
+			ds.DecimalPrecision = new(int(config.DisplaySettings.DecimalPrecision.ValueInt64()))
+		}
+		if !config.DisplaySettings.NumberScale.IsNull() && !config.DisplaySettings.NumberScale.IsUnknown() {
+			ds.NumberScale = new(models.ExternalDisplaySettingsNumberScale(config.DisplaySettings.NumberScale.ValueString()))
+		}
+		if !config.DisplaySettings.ThemeId.IsNull() {
+			ds.ThemeId = new(config.DisplaySettings.ThemeId.ValueString())
+		}
+		externalConfig.DisplaySettings = ds
 	}
 
 	return externalConfig, diags
@@ -915,7 +944,13 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Name = types.StringValue(resp.Name)
 	state.Description = types.StringPointerValue(resp.Description)
-	state.FolderId = types.StringPointerValue(resp.FolderId)
+	// Defend against API returning nil: fall back to "root" to match the
+	// schema default and prevent perpetual plan drift.
+	if resp.FolderId != nil {
+		state.FolderId = types.StringValue(*resp.FolderId)
+	} else {
+		state.FolderId = types.StringValue("root")
+	}
 	if resp.Type != nil {
 		state.Type = types.StringValue(string(*resp.Type))
 	} else {
@@ -1240,8 +1275,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 				groupType = normalizeDimensionsType(groupType, existingGroupTypes[i])
 			}
 			if groupID != nil && i < len(existingGroupIDs) {
-				normalized := normalizeDimensionsType(*groupID, existingGroupIDs[i])
-				groupID = &normalized
+				groupID = new(normalizeDimensionsType(*groupID, existingGroupIDs[i]))
 			}
 			m := map[string]attr.Value{
 				"id":   types.StringPointerValue(groupID),
@@ -1490,6 +1524,39 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		configMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
 	}
 
+	// Nested Object: DisplaySettings
+	if config.DisplaySettings != nil {
+		dsMap := map[string]attr.Value{
+			"axis_label_font_size": types.StringNull(),
+			"data_label_font_size": types.StringNull(),
+			"decimal_precision":    types.Int64Null(),
+			"number_scale":         types.StringNull(),
+			// Defend against API returning nil: fall back to "default" to match
+			// the schema default and prevent perpetual plan drift.
+			"theme_id": types.StringValue("default"),
+		}
+		if config.DisplaySettings.AxisLabelFontSize != nil {
+			dsMap["axis_label_font_size"] = types.StringValue(string(*config.DisplaySettings.AxisLabelFontSize))
+		}
+		if config.DisplaySettings.DataLabelFontSize != nil {
+			dsMap["data_label_font_size"] = types.StringValue(string(*config.DisplaySettings.DataLabelFontSize))
+		}
+		if config.DisplaySettings.DecimalPrecision != nil {
+			dsMap["decimal_precision"] = types.Int64Value(int64(*config.DisplaySettings.DecimalPrecision))
+		}
+		if config.DisplaySettings.NumberScale != nil {
+			dsMap["number_scale"] = types.StringValue(string(*config.DisplaySettings.NumberScale))
+		}
+		if config.DisplaySettings.ThemeId != nil {
+			dsMap["theme_id"] = types.StringValue(*config.DisplaySettings.ThemeId)
+		}
+		dsVal, dsDiags := resource_report.NewDisplaySettingsValue(resource_report.DisplaySettingsValue{}.AttributeTypes(ctx), dsMap)
+		diags.Append(dsDiags...)
+		configMap["display_settings"] = dsVal
+	} else {
+		configMap["display_settings"] = resource_report.NewDisplaySettingsValueNull()
+	}
+
 	state.Config, d = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
 	diags.Append(d...)
 
@@ -1499,12 +1566,10 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric) {
 	metric = &models.ExternalMetric{}
 	if !metricValue.MetricType.IsNull() {
-		tString := models.ExternalMetricType(metricValue.MetricType.ValueString())
-		metric.Type = &tString
+		metric.Type = new(models.ExternalMetricType(metricValue.MetricType.ValueString()))
 	}
-	if !metricValue.Value.IsNull() {
-		vString := metricValue.Value.ValueString()
-		metric.Value = &vString
+	if !metricValue.Value.IsNull() && !metricValue.Value.IsUnknown() {
+		metric.Value = new(metricValue.Value.ValueString())
 	}
 	return metric
 }

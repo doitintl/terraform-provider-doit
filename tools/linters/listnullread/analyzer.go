@@ -88,7 +88,11 @@ func run(pass *analysis.Pass) (any, error) {
 	})
 
 	// Step 2: Find mapping functions and check ListNull calls against
-	// the schema associated with the method's receiver type.
+	// the schema associated with the function's resource/data source type.
+	// Mapping functions may be methods (with a receiver) or free functions.
+	// For methods, we use the receiver type → schema mapping.
+	// For free functions, we look at the parameter types for a model type
+	// (e.g., *budgetResourceModel) and derive the resource type from it.
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
 		if fn.Name == nil || fn.Body == nil {
@@ -99,14 +103,19 @@ func run(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Determine which schema this mapping function belongs to.
+		// Try method receiver first.
 		recvType := extractReceiverTypeName(fn)
-		if recvType == "" {
-			return
+		var schemaName string
+		if recvType != "" {
+			schemaName = receiverToSchema[recvType]
 		}
 
-		schemaName, ok := receiverToSchema[recvType]
-		if !ok {
+		// If no receiver or no schema mapping, try free function parameter types.
+		if schemaName == "" {
+			schemaName = resolveSchemaFromParams(fn, receiverToSchema)
+		}
+
+		if schemaName == "" {
 			return
 		}
 
@@ -121,6 +130,55 @@ func run(pass *analysis.Pass) (any, error) {
 	})
 
 	return nil, nil
+}
+
+// resolveSchemaFromParams derives the schema name from function parameter types.
+// For free functions like:
+//
+//	func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budgetResourceModel)
+//
+// it finds *budgetResourceModel → strips "Model" suffix → "budgetResource" → looks
+// up in receiverToSchema → "BudgetResourceSchema".
+func resolveSchemaFromParams(fn *ast.FuncDecl, receiverToSchema map[string]string) string {
+	if fn.Type == nil || fn.Type.Params == nil {
+		return ""
+	}
+	for _, field := range fn.Type.Params.List {
+		typeName := extractStarTypeName(field.Type)
+		if typeName == "" {
+			continue
+		}
+		// Check if it's a model type: xxxResourceModel or xxxModel.
+		resourceType := ""
+		if strings.HasSuffix(typeName, "ResourceModel") {
+			resourceType = strings.TrimSuffix(typeName, "Model")
+		} else if strings.HasSuffix(typeName, "Model") {
+			base := strings.TrimSuffix(typeName, "Model")
+			resourceType = base + "Resource"
+			if len(resourceType) > 0 {
+				resourceType = strings.ToLower(resourceType[:1]) + resourceType[1:]
+			}
+		}
+		if resourceType == "" {
+			continue
+		}
+		if schema, ok := receiverToSchema[resourceType]; ok {
+			return schema
+		}
+	}
+	return ""
+}
+
+// extractStarTypeName extracts the type name from *T (pointer to named type).
+func extractStarTypeName(expr ast.Expr) string {
+	star, ok := expr.(*ast.StarExpr)
+	if !ok {
+		return ""
+	}
+	if ident, ok := star.X.(*ast.Ident); ok {
+		return ident.Name
+	}
+	return ""
 }
 
 // isMappingFunction returns true if the function name matches the Read-path

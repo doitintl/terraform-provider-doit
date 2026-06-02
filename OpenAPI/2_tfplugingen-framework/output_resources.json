@@ -4,6 +4,23 @@
 	},
 	"resources": [
 		{
+			"name": "active_theme",
+			"schema": {
+				"attributes": [
+					{
+						"name": "theme_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "default"
+							},
+							"description": "Identifier of the theme to activate. Send the reserved sentinel\n`\"default\"` to clear the active theme and fall back to the built-in\ndefault."
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "alert",
 			"schema": {
 				"attributes": [
@@ -27,7 +44,22 @@
 									"name": "condition",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "Condition key or expression used in alert configurations."
+										"default": {
+											"static": "percentage-change"
+										},
+										"description": "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"value\",\n\"percentage-change\",\n\"forecast\",\n)"
+												}
+											}
+										]
 									}
 								},
 								{
@@ -52,14 +84,30 @@
 								{
 									"name": "data_source",
 									"string": {
-										"computed_optional_required": "computed_optional"
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": "billing"
+										},
+										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"billing-datahub\",\n)"
+												}
+											}
+										]
 									}
 								},
 								{
 									"name": "evaluate_for_each",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\"."
+										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
 									}
 								},
 								{
@@ -88,7 +136,7 @@
 									"name": "operator",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "Text/operator used to filter metric values in metric filters.",
+										"description": "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).",
 										"validators": [
 											{
 												"custom": {
@@ -123,7 +171,7 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "The field to filter on"
+														"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 													}
 												},
 												{
@@ -133,21 +181,21 @@
 														"default": {
 															"static": false
 														},
-														"description": "Include null value."
+														"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed_optional",
-														"description": "Set to `true` to exclude the values."
+														"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Filter mode to apply",
+														"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.",
 														"validators": [
 															{
 																"custom": {
@@ -166,7 +214,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
 														"validators": [
 															{
 																"custom": {
@@ -188,12 +236,12 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 													}
 												}
 											]
 										},
-										"description": "The filters selected define the scope of the alert."
+										"description": "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert."
 									}
 								},
 								{
@@ -203,7 +251,7 @@
 										"default": {
 											"static": "year"
 										},
-										"description": "The time interval to evaluate the condition.",
+										"description": "The period each evaluation looks at.",
 										"validators": [
 											{
 												"custom": {
@@ -212,7 +260,7 @@
 															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 														}
 													],
-													"schema_definition": "stringvalidator.OneOf(\n\"hour\",\n\"day\",\n\"week\",\n\"month\",\n\"quarter\",\n\"year\",\n)"
+													"schema_definition": "stringvalidator.OneOf(\n\"day\",\n\"week\",\n\"month\",\n\"quarter\",\n\"year\",\n)"
 												}
 											}
 										]
@@ -221,7 +269,8 @@
 								{
 									"name": "value",
 									"float64": {
-										"computed_optional_required": "required"
+										"computed_optional_required": "required",
+										"description": "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition."
 									}
 								}
 							],
@@ -232,7 +281,7 @@
 						"name": "name",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "Name of the alert."
+							"description": "Name of the alert (max 64 characters)."
 						}
 					},
 					{
@@ -242,7 +291,7 @@
 							"element_type": {
 								"string": {}
 							},
-							"description": "List of emails to notify when the alert is triggered."
+							"description": "List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains."
 						}
 					},
 					{
@@ -293,6 +342,9 @@
 						"name": "folder_id",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "root"
+							},
 							"description": "Identifier of the folder that contains the allocation. Set to \"root\" if the allocation is at the top level (not in a folder)."
 						}
 					},
@@ -385,7 +437,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Enumeration of supported dimension/filter types for allocation components.",
+														"description": "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.",
 														"validators": [
 															{
 																"custom": {
@@ -528,7 +580,7 @@
 														"name": "type",
 														"string": {
 															"computed_optional_required": "required",
-															"description": "Enumeration of supported dimension/filter types for allocation components.",
+															"description": "Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.",
 															"validators": [
 																{
 																	"custom": {
@@ -1203,7 +1255,7 @@
 										"name": "id",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "The field to filter on"
+											"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 										}
 									},
 									{
@@ -1213,21 +1265,21 @@
 											"default": {
 												"static": false
 											},
-											"description": "Include null value."
+											"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 										}
 									},
 									{
 										"name": "inverse",
 										"bool": {
 											"computed_optional_required": "computed_optional",
-											"description": "Set to `true` to exclude the values."
+											"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 										}
 									},
 									{
 										"name": "mode",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "Filter mode to apply",
+											"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.",
 											"validators": [
 												{
 													"custom": {
@@ -1246,7 +1298,7 @@
 										"name": "type",
 										"string": {
 											"computed_optional_required": "required",
-											"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+											"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
 											"validators": [
 												{
 													"custom": {
@@ -1268,7 +1320,7 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "Values to filter on."
+											"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 										}
 									}
 								]
@@ -1356,6 +1408,128 @@
 			}
 		},
 		{
+			"name": "custom_theme",
+			"schema": {
+				"attributes": [
+					{
+						"name": "colors",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "dark",
+									"list": {
+										"computed_optional_required": "required",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Colors used when the report is displayed in dark mode.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+														}
+													],
+													"schema_definition": "listvalidator.SizeBetween(1, 32)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "light",
+									"list": {
+										"computed_optional_required": "required",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Colors used when the report is displayed in light mode.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+														}
+													],
+													"schema_definition": "listvalidator.SizeBetween(1, 32)"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The display name of the custom theme.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(200)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "primary_color",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The creation time of the custom theme."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the custom theme."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the custom theme was last updated."
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [
@@ -1436,6 +1610,9 @@
 						"name": "parent_folder_id",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "root"
+							},
 							"description": "Identifier of the parent folder. Use \"root\" or omit to place the folder at the top level."
 						}
 					},
@@ -2316,7 +2493,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
 														"validators": [
 															{
 																"custom": {
@@ -2334,6 +2511,101 @@
 											]
 										},
 										"description": "See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions)."
+									}
+								},
+								{
+									"name": "display_settings",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "axis_label_font_size",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Font size used for axis labels on charts.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"auto\",\n\"small\",\n\"medium\",\n\"large\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "data_label_font_size",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Font size used for data labels on charts.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"auto\",\n\"small\",\n\"medium\",\n\"large\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "decimal_precision",
+												"int64": {
+													"computed_optional_required": "computed_optional",
+													"description": "Number of decimal places shown for numeric values.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																	}
+																],
+																"schema_definition": "int64validator.Between(0, 8)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "number_scale",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Scale applied to numeric values when rendering the report.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"auto\",\n\"thousands\",\n\"millions\",\n\"billions\",\n\"raw\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "theme_id",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"default": {
+														"static": "default"
+													},
+													"description": "Identifier of the theme applied to the report. The reserved\nsentinel `\"default\"` is returned on GET when no theme is stored\nand clears the stored value on PATCH. Omit the field on PATCH\nto leave the stored value unchanged."
+												}
+											}
+										],
+										"description": "Display settings for the report."
 									}
 								},
 								{
@@ -2375,7 +2647,7 @@
 													"name": "id",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "The field to filter on"
+														"description": "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`."
 													}
 												},
 												{
@@ -2385,21 +2657,21 @@
 														"default": {
 															"static": false
 														},
-														"description": "Include null value."
+														"description": "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "inverse",
 													"bool": {
 														"computed_optional_required": "computed_optional",
-														"description": "Set to `true` to exclude the values."
+														"description": "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`."
 													}
 												},
 												{
 													"name": "mode",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Filter mode to apply",
+														"description": "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.",
 														"validators": [
 															{
 																"custom": {
@@ -2418,7 +2690,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "required",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
 														"validators": [
 															{
 																"custom": {
@@ -2440,7 +2712,7 @@
 														"element_type": {
 															"string": {}
 														},
-														"description": "Values to filter on."
+														"description": "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs."
 													}
 												}
 											]
@@ -2535,7 +2807,7 @@
 													"name": "type",
 													"string": {
 														"computed_optional_required": "computed_optional",
-														"description": "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.",
+														"description": "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
 														"validators": [
 															{
 																"custom": {
@@ -3092,6 +3364,9 @@
 						"name": "folder_id",
 						"string": {
 							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "root"
+							},
 							"description": "Identifier of the folder that contains the report. Set to \"root\" if the report is at the top level (not in a folder)."
 						}
 					},

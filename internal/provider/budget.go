@@ -56,18 +56,11 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
 	}
-	if plan.Description.IsUnknown() {
-		plan.Description = resolved.Description
-	}
+
 	if plan.EndPeriod.IsUnknown() {
 		plan.EndPeriod = resolved.EndPeriod
 	}
-	if plan.GrowthPerPeriod.IsUnknown() {
-		plan.GrowthPerPeriod = resolved.GrowthPerPeriod
-	}
-	if plan.Metric.IsUnknown() {
-		plan.Metric = resolved.Metric
-	}
+
 	if plan.Name.IsUnknown() {
 		plan.Name = resolved.Name
 	}
@@ -82,9 +75,6 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	}
 	if plan.Type.IsUnknown() {
 		plan.Type = resolved.Type
-	}
-	if plan.UsePrevSpend.IsUnknown() {
-		plan.UsePrevSpend = resolved.UsePrevSpend
 	}
 
 	// ── List fields: resolve whole list when Unknown, overlay elements when Known ──
@@ -176,24 +166,11 @@ func overlayBudgetSlackChannel(_ context.Context, resolved, plan *resource_budge
 }
 
 func overlayBudgetScope(_ context.Context, resolved, plan *resource_budget.ScopesValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
-	if plan.Id.IsUnknown() {
-		plan.Id = resolved.Id
-	}
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
+
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
 	}
-	if plan.Mode.IsUnknown() {
-		plan.Mode = resolved.Mode
-	}
-	if plan.ScopesType.IsUnknown() {
-		plan.ScopesType = resolved.ScopesType
-	}
+
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}
@@ -230,20 +207,20 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 
 		reqCollaborators := make([]models.Collaborator, len(collaborators))
 		for i, collaborator := range collaborators {
-			role := models.CollaboratorRole(collaborator.Role.ValueString())
 			reqCollaborators[i] = models.Collaborator{
 				Email: collaborator.Email.ValueStringPointer(),
-				Role:  &role,
+				Role:  new(models.CollaboratorRole(collaborator.Role.ValueString())),
 			}
 		}
 		req.Collaborators = &reqCollaborators
 	}
 
 	// Simple fields
-	req.Amount = plan.Amount.ValueFloat64Pointer()
+	if !plan.Amount.IsNull() && !plan.Amount.IsUnknown() {
+		req.Amount = plan.Amount.ValueFloat64Pointer()
+	}
 	if !plan.Currency.IsNull() && !plan.Currency.IsUnknown() {
-		currency := models.Currency(plan.Currency.ValueString())
-		req.Currency = &currency
+		req.Currency = new(models.Currency(plan.Currency.ValueString()))
 	}
 	req.Description = plan.Description.ValueStringPointer()
 
@@ -253,15 +230,15 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 	}
 
 	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
-	if !plan.Metric.IsNull() && !plan.Metric.IsUnknown() {
-		metric := models.BudgetCreateUpdateRequestMetric(plan.Metric.ValueString())
-		req.Metric = &metric
+	if !plan.Metric.IsNull() {
+		req.Metric = new(models.BudgetCreateUpdateRequestMetric(plan.Metric.ValueString()))
 	}
-	req.Name = plan.Name.ValueStringPointer()
+	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+		req.Name = plan.Name.ValueStringPointer()
+	}
 
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
-		public := models.BudgetCreateUpdateRequestPublic(plan.Public.ValueString())
-		req.Public = &public
+		req.Public = new(models.BudgetCreateUpdateRequestPublic(plan.Public.ValueString()))
 	}
 
 	if !plan.Recipients.IsNull() && !plan.Recipients.IsUnknown() {
@@ -350,8 +327,12 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		req.StartPeriod = plan.StartPeriod.ValueInt64Pointer()
 	}
 
-	req.TimeInterval = plan.TimeInterval.ValueStringPointer()
-	req.Type = plan.Type.ValueStringPointer()
+	if !plan.TimeInterval.IsNull() && !plan.TimeInterval.IsUnknown() {
+		req.TimeInterval = plan.TimeInterval.ValueStringPointer()
+	}
+	if !plan.Type.IsNull() && !plan.Type.IsUnknown() {
+		req.Type = plan.Type.ValueStringPointer()
+	}
 	req.UsePrevSpend = plan.UsePrevSpend.ValueBoolPointer()
 
 	return req, diags
@@ -459,7 +440,11 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	}
 
 	state.Currency = types.StringValue(string(resp.Currency))
-	state.Description = types.StringPointerValue(resp.Description)
+	if resp.Description != nil {
+		state.Description = types.StringValue(*resp.Description)
+	} else {
+		state.Description = types.StringValue("")
+	}
 
 	if resp.EndPeriod != nil && *resp.EndPeriod > 0 {
 		state.EndPeriod = types.Int64PointerValue(resp.EndPeriod)
@@ -467,8 +452,16 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		state.EndPeriod = types.Int64Null()
 	}
 
-	state.GrowthPerPeriod = types.Float64PointerValue(resp.GrowthPerPeriod)
-	state.Metric = types.StringPointerValue(resp.Metric)
+	if resp.GrowthPerPeriod != nil {
+		state.GrowthPerPeriod = types.Float64Value(*resp.GrowthPerPeriod)
+	} else {
+		state.GrowthPerPeriod = types.Float64Value(0)
+	}
+	if resp.Metric != nil {
+		state.Metric = types.StringValue(*resp.Metric)
+	} else {
+		state.Metric = types.StringValue("cost")
+	}
 	state.Name = types.StringValue(resp.Name)
 
 	if resp.Public != nil && *resp.Public != "" {
@@ -650,7 +643,11 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	state.StartPeriod = types.Int64Value(resp.StartPeriod)
 	state.TimeInterval = types.StringValue(resp.TimeInterval)
 	state.Type = types.StringValue(resp.Type)
-	state.UsePrevSpend = types.BoolPointerValue(resp.UsePrevSpend)
+	if resp.UsePrevSpend != nil {
+		state.UsePrevSpend = types.BoolValue(*resp.UsePrevSpend)
+	} else {
+		state.UsePrevSpend = types.BoolValue(false)
+	}
 
 	// Populate read-only fields
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)

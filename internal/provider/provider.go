@@ -270,6 +270,8 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewDatahubDatasetDataSource,
 		NewAvaDataSource,
 		NewInsightDataSource,
+		NewCustomThemeDataSource,
+		NewActiveThemeDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
@@ -289,8 +291,10 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewOrganizationsDataSource,
 		NewDatahubDatasetsDataSource,
 		NewFoldersDataSource,
+		NewCustomThemesDataSource,
 		NewCloudDiagramsDataSource,
 		NewCloudDiagramSnapshotsDataSource,
+		NewCloudDiagramSearchDataSource,
 		NewSharingDataSource,
 		NewInsightsDataSource,
 		NewInsightResourceResultsDataSource,
@@ -315,5 +319,7 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewInsightResourceResultsResource,
 		NewSharingResource,
 		NewUserResource,
+		NewCustomThemeResource,
+		NewActiveThemeResource,
 	}
 }

@@ -16,6 +16,8 @@ tags:
     description: Custom notes added to cost data to provide contextual information.
   - name: Labels
     description: Create and manage labels to organize and categorize your cloud resources.
+  - name: Reports Settings
+    description: Configure presentation settings for Cloud Analytics reports, including custom color themes.
   - name: Allocations
     description: Define how costs are distributed across your organization.
   - name: Folders
@@ -864,6 +866,216 @@ paths:
       responses:
         "200":
           description: OK - Objects assigned/unassigned successfully.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/settings/themes":
+    get:
+      tags:
+        - Settings
+      summary: List custom themes
+      description: Returns the list of custom color themes defined for your account.
+      operationId: listCustomThemes
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCustomThemes200Response'
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Settings
+      summary: Create a custom theme
+      description: Creates a new custom color theme. Requires Cloud Analytics Admin permission.
+      operationId: createCustomTheme
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomThemeRequest"
+        required: true
+      responses:
+        "201":
+          description: Created - Custom theme created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomTheme"
+          links:
+            getCustomTheme:
+              operationId: getCustomTheme
+              parameters:
+                id: $response.body#/id
+            updateCustomTheme:
+              operationId: updateCustomTheme
+              parameters:
+                id: $response.body#/id
+            deleteCustomTheme:
+              operationId: deleteCustomTheme
+              parameters:
+                id: $response.body#/id
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/settings/themes/{id}":
+    get:
+      tags:
+        - Settings
+      summary: Retrieve a custom theme
+      description: Returns a custom theme by the specified Id.
+      operationId: getCustomTheme
+      parameters:
+        - name: id
+          in: path
+          description: Custom theme ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Custom theme returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomTheme"
+          links:
+            updateCustomTheme:
+              operationId: updateCustomTheme
+              parameters:
+                id: $request.path.id
+            deleteCustomTheme:
+              operationId: deleteCustomTheme
+              parameters:
+                id: $request.path.id
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      tags:
+        - Settings
+      summary: Update a custom theme
+      description: Updates the custom theme specified by the Id. Requires Cloud Analytics Admin permission.
+      operationId: updateCustomTheme
+      parameters:
+        - name: id
+          in: path
+          description: Custom theme ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomThemeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK - Custom theme updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomTheme"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+    delete:
+      tags:
+        - Settings
+      summary: Delete a custom theme
+      description: Deletes the custom theme specified by the Id. Requires Cloud Analytics Admin permission.
+      operationId: deleteCustomTheme
+      parameters:
+        - name: id
+          in: path
+          description: Custom theme ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Custom theme deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+  "/analytics/v1/settings/active-theme":
+    get:
+      tags:
+        - Settings
+      summary: Get the active theme
+      description: |-
+        Returns the theme currently active for the authenticated user.
+        `themeId` is the reserved sentinel `"default"` when no custom or
+        preset theme is selected and the user is on the built-in default.
+      operationId: getActiveTheme
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveTheme"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+    put:
+      tags:
+        - Settings
+      summary: Set the active theme
+      description: |-
+        Sets the theme active for the authenticated user. Send the reserved
+        sentinel `themeId: "default"` to clear the active theme and fall back
+        to the built-in default. Returns the updated active theme.
+      operationId: setActiveTheme
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetActiveThemeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK - Active theme updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveTheme"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2594,6 +2806,35 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /clouddiagrams/v1/scheme/search:
+    post:
+      tags:
+        - Cloud Diagrams
+      summary: Search diagrams and components
+      description: |-
+        Full-text search across diagram layers, components by name, and components
+        by property values. Returns three result categories: diagram (matching layers), component
+        (matching components by name), and prop (matching components by property values).
+      operationId: searchCloudDiagrams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudDiagramsSearchRequest"
+      responses:
+        "200":
+          description: OK - Search results returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramsSearchResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
   /analytics/v1/commitment-manager:
     get:
       tags:
@@ -3053,6 +3294,19 @@ components:
           type: string
         calendlyLink:
           type: string
+    ActiveTheme:
+      type: object
+      required:
+        - themeId
+      description: The theme currently active for the authenticated user.
+      properties:
+        themeId:
+          type: string
+          default: "default"
+          description: |-
+            Identifier of the active theme. The reserved sentinel `"default"` is
+            returned when the user is using the built-in default (no custom or
+            preset theme stored).
     AdvancedAnalysis:
       type: object
       description: Advanced analysis options. Each can be set independently.
@@ -3128,45 +3382,53 @@ components:
         - timeInterval
         - value
       properties:
-        condition:
-          $ref: "#/components/schemas/Condition"
-        currency:
-          $ref: "#/components/schemas/Currency"
+        dataSource:
+          type: string
+          description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
+          default: billing
+          enum:
+            - billing
+            - billing-datahub
+          x-enumDescriptions:
+            billing: Standard Cloud Analytics billing data only.
+            billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        scopes:
+          type: array
+          description: The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
+          items:
+            $ref: "#/components/schemas/ExternalConfigFilter"
         metric:
           $ref: "#/components/schemas/MetricConfig"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        timeInterval:
+          type: string
+          description: The period each evaluation looks at.
+          default: year
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+        condition:
+          $ref: "#/components/schemas/Condition"
         operator:
           $ref: "#/components/schemas/MetricFilterText"
+        value:
+          type: number
+          format: double
+          description: The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
         evaluateForEach:
           type: string
           description: >-
-            Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service".
+            Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
         attributions:
           type: array
           deprecated: true
           description: Use 'scopes' instead. The attributions selected define the scope to monitor.
           items:
             type: string
-        scopes:
-          type: array
-          description: The filters selected define the scope of the alert.
-          items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
-        timeInterval:
-          type: string
-          description: The time interval to evaluate the condition.
-          default: year
-          enum:
-            - hour
-            - day
-            - week
-            - month
-            - quarter
-            - year
-        dataSource:
-          type: string
-        value:
-          type: number
-          format: double
     AlertRequest:
       required:
         - config
@@ -3174,14 +3436,14 @@ components:
       type: object
       description: Request body for creating a new alert.
       properties:
-        config:
-          $ref: "#/components/schemas/AlertConfig"
         name:
           type: string
-          description: Name of the alert.
+          description: Name of the alert (max 64 characters).
+        config:
+          $ref: "#/components/schemas/AlertConfig"
         recipients:
           type: array
-          description: List of emails to notify when the alert is triggered.
+          description: List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
           items:
             type: string
       example:
@@ -3216,11 +3478,11 @@ components:
       type: object
       description: Request body for modifying an existing alert.
       properties:
-        config:
-          $ref: "#/components/schemas/AlertConfig"
         name:
           type: string
           description: Alert name
+        config:
+          $ref: "#/components/schemas/AlertConfig"
         recipients:
           type: array
           description: List of emails to notify when the alert is triggered.
@@ -3273,6 +3535,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     AllocationComponent:
       required:
@@ -3348,7 +3611,8 @@ components:
             items:
               $ref: "#/components/schemas/ResourceReference"
     AllocationDimensionsTypes:
-      description: Enumeration of supported dimension/filter types for allocation components.
+      description: |-
+        Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
       type: string
       enum:
         - datetime
@@ -3361,6 +3625,17 @@ components:
         - allocation_rule
         - gke
         - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions.
+        label: Customer-defined resource labels; key is the label key.
+        tag: AWS cost allocation tags; key is the tag key.
+        project_label: Google Cloud project-level labels.
+        system_label: DoiT- or provider-generated system labels.
+        optional: Console grouping for label/tag keys; use a concrete subtype in filters.
+        datetime: Time dimensions for date-based filtering.
+        allocation_rule: Reference another allocation rule by ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels.
     AllocationListItem:
       type: object
       description: Summary information for an allocation.
@@ -3400,6 +3675,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     AllocationRule:
       required:
@@ -3978,6 +4254,143 @@ components:
       type: string
       description: The insight category.
       enum: ["FinOps", "Operational excellence", "Performance efficiency", "Reliability", "Security", "Sustainability"]
+    CloudDiagramComponentSearchItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: A component matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        icon:
+          type: string
+          description: Component icon identifier.
+        color:
+          type: string
+          description: Component color.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID.
+        name:
+          type: string
+          description: Component name.
+        type:
+          type: string
+          enum:
+            - attachment
+            - combiner
+            - element
+            - group
+            - link
+            - node
+            - note
+          description: Component type.
+        node_type:
+          type: string
+          enum:
+            - app_component
+            - app_group
+            - app_link
+            - attachment
+            - group
+            - host
+            - link
+            - service
+          description: Node type.
+        group_type:
+          type: string
+          description: Group type (for group components).
+        props:
+          description: Component properties. For the "prop" category contains the matched property key-value pairs.
+          allOf:
+            - $ref: '#/components/schemas/CloudDiagramComponentSearchItemProps'
+    CloudDiagramComponentSearchItemProps:
+      type: object
+      description: Component properties. For the "prop" category contains the matched property key-value pairs.
+      properties:
+        service_type:
+          type: string
+          description: Cloud service type (e.g. AWS::EC2::Instance).
+    CloudDiagramSchemeSearchItem:
+      type: object
+      required:
+        - _id
+        - type
+      description: A diagram layer (cloud account) matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Layer ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID (same as _id).
+        scheme:
+          type: string
+          description: Parent diagram name.
+        status:
+          type: string
+          description: Import/sync status.
+        name:
+          type: string
+          description: Layer name.
+        type:
+          type: string
+          enum:
+            - statussheet
+          description: Component type — always "statussheet" for this category.
+    CloudDiagramsSearchRequest:
+      type: object
+      required:
+        - query
+      description: Request body for searching diagrams and components.
+      properties:
+        query:
+          type: string
+          description: Search query string.
+        ss_id:
+          type: string
+          description: Limit search to components within this layer.
+        from:
+          type: integer
+          minimum: 0
+          description: Pagination offset (default 0).
+        size:
+          type: integer
+          minimum: 1
+          description: Maximum number of results per category (default 20).
+    CloudDiagramsSearchResponse:
+      type: object
+      description: Search results grouped into three categories.
+      properties:
+        scheme:
+          type: array
+          description: Diagram layers (cloud accounts) matching the query.
+          items:
+            $ref: "#/components/schemas/CloudDiagramSchemeSearchItem"
+        component:
+          type: array
+          description: Components matching the query by name.
+          items:
+            $ref: "#/components/schemas/CloudDiagramComponentSearchItem"
+        prop:
+          type: array
+          description: Components matching the query by property values.
+          items:
+            $ref: "#/components/schemas/CloudDiagramComponentSearchItem"
     CloudIncidentListItem:
       type: object
       description: Summary information for a cloud incident.
@@ -4239,7 +4652,17 @@ components:
           description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
     Condition:
       type: string
-      description: Condition key or expression used in alert configurations.
+      description: >-
+        Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
+      default: percentage-change
+      enum:
+        - value
+        - percentage-change
+        - forecast
+      x-enumDescriptions:
+        value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
+        percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
+        forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
     CreateAllocationRequest:
       required:
         - name
@@ -4266,6 +4689,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     CreateAnnotationRequest:
       required:
@@ -4295,6 +4719,22 @@ components:
       type: string
       description: Allowed categories when creating insights via the public API.
       enum: ["FinOps", "Security"]
+    CreateCustomThemeRequest:
+      required:
+        - name
+        - primaryColor
+        - colors
+      type: object
+      description: Request body for creating a custom theme.
+      properties:
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
     CreateDatahubDataset201Response:
       type: object
       properties:
@@ -4349,6 +4789,7 @@ components:
         parentFolderId:
           type: string
           description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
+          default: root
           example: root
     CreateLabelRequest:
       required:
@@ -4396,6 +4837,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
           example: root
     CreateResourceResultsBody:
       type: object
@@ -4431,6 +4873,34 @@ components:
         - AED
         - THB
         - COP
+    CustomTheme:
+      required:
+        - id
+        - name
+        - primaryColor
+        - colors
+      type: object
+      description: A custom color theme applied to Cloud Analytics reports.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the custom theme.
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
+        createTime:
+          type: string
+          format: date-time
+          description: The creation time of the custom theme.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the custom theme was last updated.
     DeleteDatahubDataset200Response:
       type: object
       properties:
@@ -4498,10 +4968,7 @@ components:
           format: int64
     DimensionsTypes:
       description: |-
-        Enumeration of supported dimension/filter types.
-        "allocation" is an alias for "attribution_group".
-        "allocation_rule" is an alias for "attribution".
-        "attribution" and "attribution_group" are deprecated. Use "allocation_rule" and "allocation" instead.
+        Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
       type: string
       enum:
         - datetime
@@ -4517,6 +4984,20 @@ components:
         - allocation_rule
         - gke
         - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: "Deprecated. Use allocation_rule."
+        attribution_group: "Deprecated. Use allocation."
     DismissalDetails:
       type: object
       description: Details for why an insight was dismissed.
@@ -4700,6 +5181,8 @@ components:
           description: The splits to use in the report.
           items:
             $ref: "#/components/schemas/ExternalSplit"
+        displaySettings:
+          $ref: "#/components/schemas/ExternalDisplaySettings"
         customTimeRange:
           description: Required when the time range is set to "custom".
           allOf:
@@ -4794,33 +5277,41 @@ components:
       properties:
         id:
           type: string
-          description: The field to filter on
+          description: >-
+            Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
         type:
           $ref: "#/components/schemas/DimensionsTypes"
+        values:
+          type: array
+          description: >-
+            List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+          items:
+            type: string
         mode:
           type: string
-          description: Filter mode to apply
+          description: Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
           enum:
             - is
             - starts_with
             - ends_with
             - contains
             - regexp
+          x-enumDescriptions:
+            is: Exact match on one or more values.
+            starts_with: Value starts with the given string(s).
+            ends_with: Value ends with the given string(s).
+            contains: Value contains the given string(s).
+            regexp: Value matches the regular expression in `values` (exactly one pattern).
         inverse:
           type: boolean
-          description: Set to `true` to exclude the values.
+          description: Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
         caseInsensitive:
           type: boolean
           description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
           default: false
-        values:
-          type: array
-          description: Values to filter on.
-          items:
-            type: string
         includeNull:
           type: boolean
-          description: Include null value.
+          description: Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
           default: false
       example:
         id: cloud_provider
@@ -4858,6 +5349,48 @@ components:
         operator: gt
         values:
           - 50
+    ExternalDisplaySettings:
+      type: object
+      description: Display settings for the report.
+      properties:
+        themeId:
+          type: string
+          default: "default"
+          description: |-
+            Identifier of the theme applied to the report. The reserved
+            sentinel `"default"` is returned on GET when no theme is stored
+            and clears the stored value on PATCH. Omit the field on PATCH
+            to leave the stored value unchanged.
+        dataLabelFontSize:
+          type: string
+          description: Font size used for data labels on charts.
+          enum:
+            - auto
+            - small
+            - medium
+            - large
+        axisLabelFontSize:
+          type: string
+          description: Font size used for axis labels on charts.
+          enum:
+            - auto
+            - small
+            - medium
+            - large
+        numberScale:
+          type: string
+          description: Scale applied to numeric values when rendering the report.
+          enum:
+            - auto
+            - thousands
+            - millions
+            - billions
+            - raw
+        decimalPrecision:
+          type: integer
+          minimum: 0
+          maximum: 8
+          description: Number of decimal places shown for numeric values.
     ExternalMetric:
       description: Metric selector used in reports and filters.
       type: object
@@ -4955,6 +5488,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
           example: root
     ExternalSplit:
       type: object
@@ -5046,6 +5580,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
           example: root
       example:
         config:
@@ -5107,6 +5642,7 @@ components:
         parentFolderId:
           type: string
           description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
+          default: root
           example: root
     GetAnomaly200Response:
       required:
@@ -5412,6 +5948,11 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.)
           example: "A AND B"
+    HexColor:
+      type: string
+      description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+      pattern: "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+      example: "#1A73E8"
     IdOfAsset200Response:
       type: object
       properties:
@@ -5872,6 +6413,16 @@ components:
           type: integer
           description: Budgets rows count
           format: int64
+    ListCustomThemes200Response:
+      type: object
+      properties:
+        rowCount:
+          type: integer
+          description: Total number of custom themes in the result set.
+        themes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomTheme"
     ListDatahubDatasets200Response:
       type: object
       properties:
@@ -6022,7 +6573,7 @@ components:
           type: string
     MetricFilterText:
       type: string
-      description: Text/operator used to filter metric values in metric filters.
+      description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
       enum:
         - gt
         - lt
@@ -6522,6 +7073,19 @@ components:
           type: integer
           description: The number of committed seats. Applies to annual commitment plans.
           format: int64
+    SetActiveThemeRequest:
+      type: object
+      required:
+        - themeId
+      description: Request body for setting the active custom or preset theme for the authenticated user.
+      properties:
+        themeId:
+          type: string
+          default: "default"
+          description: |-
+            Identifier of the theme to activate. Send the reserved sentinel
+            `"default"` to clear the active theme and fall back to the built-in
+            default.
     SlackChannel:
       type: object
       description: Information of a Slack channel for notifications.
@@ -6601,6 +7165,28 @@ components:
           type: integer
           description: The start time of the commitment interval, in milliseconds since the epoch.
           format: int64
+    ThemeColors:
+      type: object
+      required:
+        - light
+        - dark
+      description: |-
+        Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+      properties:
+        light:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: "#/components/schemas/HexColor"
+          description: Colors used when the report is displayed in light mode.
+        dark:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: "#/components/schemas/HexColor"
+          description: Colors used when the report is displayed in dark mode.
     TicketDetailExtAPI:
       type: object
       description: Detailed information about a single support ticket.
@@ -6830,6 +7416,7 @@ components:
         folderId:
           type: string
           description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
           example: root
     UpdateAnnotationRequest:
       type: object
@@ -6856,6 +7443,19 @@ components:
             type: string
           description: List of label IDs to associate with the annotation. Labels must already exist.
           nullable: true
+    UpdateCustomThemeRequest:
+      type: object
+      description: Request body for updating a custom theme. Only provided fields are modified.
+      properties:
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+          nullable: true
+        primaryColor:
+          $ref: "#/components/schemas/HexColor"
+        colors:
+          $ref: "#/components/schemas/ThemeColors"
     UpdateDatahubDataset200Response:
       type: object
       properties:
@@ -6909,6 +7509,7 @@ components:
           type: string
           description: >-
             Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
+          default: root
           example: root
     UpdateLabelRequest:
       type: object

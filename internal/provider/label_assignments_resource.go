@@ -160,9 +160,8 @@ func (r *labelAssignmentsResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	if len(assignments) > 0 {
-		apiObjs := toAPIAssignments(assignments)
 		apiReq := models.AssignObjectsToLabelJSONRequestBody{
-			Add: &apiObjs,
+			Add: new(toAPIAssignments(assignments)),
 		}
 
 		assignResp, err := r.client.AssignObjectsToLabelWithResponse(ctx, plan.LabelId.ValueString(), apiReq)
@@ -274,12 +273,10 @@ func (r *labelAssignmentsResource) Update(ctx context.Context, req resource.Upda
 		apiReq := models.AssignObjectsToLabelJSONRequestBody{}
 
 		if len(toAdd) > 0 {
-			addObjs := toAPIAssignments(toAdd)
-			apiReq.Add = &addObjs
+			apiReq.Add = new(toAPIAssignments(toAdd))
 		}
 		if len(toRemove) > 0 {
-			removeObjs := toAPIAssignments(toRemove)
-			apiReq.Remove = &removeObjs
+			apiReq.Remove = new(toAPIAssignments(toRemove))
 		}
 
 		updateResp, err := r.client.AssignObjectsToLabelWithResponse(ctx, plan.LabelId.ValueString(), apiReq)
@@ -327,9 +324,8 @@ func (r *labelAssignmentsResource) Delete(ctx context.Context, req resource.Dele
 	}
 
 	if len(assignments) > 0 {
-		apiObjs := toAPIAssignments(assignments)
 		apiReq := models.AssignObjectsToLabelJSONRequestBody{
-			Remove: &apiObjs,
+			Remove: new(toAPIAssignments(assignments)),
 		}
 
 		removeResp, err := r.client.AssignObjectsToLabelWithResponse(ctx, state.LabelId.ValueString(), apiReq)

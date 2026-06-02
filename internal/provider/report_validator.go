@@ -113,23 +113,50 @@ func (v reportMetricsLengthValidator) ValidateResource(ctx context.Context, req 
 	}
 }
 
-// reportTimestampValidator validates that custom_time_range.from/to values are valid
-// RFC3339 timestamps at plan time. This is a ConfigValidator because attribute-level
-// validators do not fire on attributes inside SingleNestedAttribute with CustomType
-// (which the code generator adds to all nested objects).
+// reportTimestampValidator validates custom_time_range objects:
+// 1. When set, at least one of from/to must be specified (rejects empty `{}`).
+// 2. Any provided from/to values must be valid RFC3339 timestamps.
+//
+// This is a ConfigValidator because attribute-level validators do not fire on
+// attributes inside SingleNestedAttribute with CustomType (which the code
+// generator adds to all nested objects).
 type reportTimestampValidator struct{}
 
 var _ resource.ConfigValidator = reportTimestampValidator{}
 
 func (v reportTimestampValidator) Description(_ context.Context) string {
-	return "Validates RFC3339 timestamps in custom_time_range and secondary_time_range.custom_time_range"
+	return "Validates custom_time_range objects are non-empty and contain valid RFC3339 timestamps"
 }
 
 func (v reportTimestampValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates RFC3339 timestamps in `custom_time_range` and `secondary_time_range.custom_time_range`"
+	return "Validates `custom_time_range` objects are non-empty and contain valid RFC3339 timestamps"
 }
 
 func (v reportTimestampValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	// Reject empty custom_time_range objects (set but both from and to are null).
+	ctrPaths := []path.Path{
+		path.Root("config").AtName("custom_time_range"),
+		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range"),
+	}
+	for _, p := range ctrPaths {
+		var ctr resource_report.CustomTimeRangeValue
+		diags := req.Config.GetAttribute(ctx, p, &ctr)
+		resp.Diagnostics.Append(diags...)
+		if diags.HasError() || ctr.IsNull() || ctr.IsUnknown() {
+			continue
+		}
+		fromEmpty := ctr.From.IsNull() || ctr.From.IsUnknown()
+		toEmpty := ctr.To.IsNull() || ctr.To.IsUnknown()
+		if fromEmpty && toEmpty {
+			resp.Diagnostics.AddAttributeError(
+				p,
+				"Empty Custom Time Range",
+				"custom_time_range requires at least one of `from` or `to` to be set.",
+			)
+		}
+	}
+
+	// Validate individual timestamp formats.
 	timestampPaths := []path.Path{
 		path.Root("config").AtName("custom_time_range").AtName("from"),
 		path.Root("config").AtName("custom_time_range").AtName("to"),

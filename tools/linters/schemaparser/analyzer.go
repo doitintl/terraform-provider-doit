@@ -13,6 +13,7 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -57,6 +58,14 @@ type AttrInfo struct {
 	Class FieldClass
 	// IsList is true if the attribute is a ListAttribute or ListNestedAttribute.
 	IsList bool
+	// HasDefault is true if the attribute has a Default value in the schema.
+	// Fields with defaults are resolved at plan time and are never Unknown,
+	// so they don't need IsUnknown() guards in overlay functions.
+	HasDefault bool
+	// DefaultValue holds the extracted static default value (string, float64,
+	// bool, or int64). It is nil when HasDefault is false or when the default
+	// expression could not be parsed (e.g., a dynamic default).
+	DefaultValue any
 	// NestedAttrs holds classifications for nested attributes (if any).
 	NestedAttrs map[string]*AttrInfo
 }
@@ -271,6 +280,13 @@ func classifyAttributeLit(lit *ast.CompositeLit) *AttrInfo {
 			hasOptional = isTrueLiteral(kv.Value)
 		case "Required":
 			hasRequired = isTrueLiteral(kv.Value)
+		case "Default":
+			// A non-nil Default means the field is resolved at plan time.
+			// Exclude `Default: nil` which is effectively no default.
+			if !isNilLiteral(kv.Value) {
+				info.HasDefault = true
+				info.DefaultValue = extractStaticDefault(kv.Value)
+			}
 		case "NestedObject":
 			// Recurse into nested attributes (ListNestedAttribute, SetNestedAttribute).
 			nestedLit, ok := kv.Value.(*ast.CompositeLit)
@@ -329,6 +345,15 @@ func isTrueLiteral(expr ast.Expr) bool {
 		return false
 	}
 	return ident.Name == "true" && ident.Obj == nil
+}
+
+// isNilLiteral checks if an expression is the `nil` literal.
+func isNilLiteral(expr ast.Expr) bool {
+	ident, ok := expr.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	return ident.Name == "nil" && ident.Obj == nil
 }
 
 // unquote extracts a string from a basic literal, removing quotes.
@@ -588,8 +613,10 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 
 	info := &AttrInfo{}
 	if exists {
-		// Copy nested attrs from existing.
+		// Copy existing metadata that isn't affected by classification changes.
 		info.IsList = existing.IsList
+		info.HasDefault = existing.HasDefault
+		info.DefaultValue = existing.DefaultValue
 		info.NestedAttrs = existing.NestedAttrs
 	}
 
@@ -772,8 +799,10 @@ func cloneSchemaInfo(src *SchemaInfo) *SchemaInfo {
 // cloneAttrInfo creates a deep copy of an AttrInfo.
 func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 	dst := &AttrInfo{
-		Class:  src.Class,
-		IsList: src.IsList,
+		Class:        src.Class,
+		IsList:       src.IsList,
+		HasDefault:   src.HasDefault,
+		DefaultValue: src.DefaultValue,
 	}
 	if src.NestedAttrs != nil {
 		dst.NestedAttrs = make(map[string]*AttrInfo, len(src.NestedAttrs))
@@ -782,4 +811,82 @@ func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 		}
 	}
 	return dst
+}
+
+// extractStaticDefault attempts to extract the static default value from
+// a Default field expression. It recognizes these patterns:
+//
+//   - stringdefault.StaticString("value") → string
+//   - float64default.StaticFloat64(0)     → float64
+//   - booldefault.StaticBool(false)       → bool
+//   - int64default.StaticInt64(1000)      → int64
+//
+// Returns nil if the expression does not match a known static default pattern.
+func extractStaticDefault(expr ast.Expr) any {
+	call, ok := expr.(*ast.CallExpr)
+	if !ok || len(call.Args) != 1 {
+		return nil
+	}
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return nil
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	arg := call.Args[0]
+
+	switch {
+	case pkg.Name == "stringdefault" && sel.Sel.Name == "StaticString":
+		if lit, ok := arg.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+			s, err := strconv.Unquote(lit.Value)
+			if err == nil {
+				return s
+			}
+		}
+	case pkg.Name == "float64default" && sel.Sel.Name == "StaticFloat64":
+		if lit, ok := arg.(*ast.BasicLit); ok && (lit.Kind == token.INT || lit.Kind == token.FLOAT) {
+			f, err := strconv.ParseFloat(lit.Value, 64)
+			if err == nil {
+				return f
+			}
+		}
+		// Handle negative: -X (unary minus)
+		if unary, ok := arg.(*ast.UnaryExpr); ok && unary.Op == token.SUB {
+			if lit, ok := unary.X.(*ast.BasicLit); ok && (lit.Kind == token.INT || lit.Kind == token.FLOAT) {
+				f, err := strconv.ParseFloat(lit.Value, 64)
+				if err == nil {
+					return -f
+				}
+			}
+		}
+	case pkg.Name == "booldefault" && sel.Sel.Name == "StaticBool":
+		if ident, ok := arg.(*ast.Ident); ok {
+			switch ident.Name {
+			case "true":
+				return true
+			case "false":
+				return false
+			}
+		}
+	case pkg.Name == "int64default" && sel.Sel.Name == "StaticInt64":
+		if lit, ok := arg.(*ast.BasicLit); ok && lit.Kind == token.INT {
+			i, err := strconv.ParseInt(lit.Value, 10, 64)
+			if err == nil {
+				return i
+			}
+		}
+		// Handle negative: -X (unary minus)
+		if unary, ok := arg.(*ast.UnaryExpr); ok && unary.Op == token.SUB {
+			if lit, ok := unary.X.(*ast.BasicLit); ok && lit.Kind == token.INT {
+				i, err := strconv.ParseInt(lit.Value, 10, 64)
+				if err == nil {
+					return -i
+				}
+			}
+		}
+	}
+	return nil
 }

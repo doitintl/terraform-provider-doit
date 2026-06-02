@@ -35,8 +35,16 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 					"condition": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Condition key or expression used in alert configurations.",
-						MarkdownDescription: "Condition key or expression used in alert configurations.",
+						Description:         "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.\nPossible values: `value`, `percentage-change`, `forecast`",
+						MarkdownDescription: "Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.\nPossible values: `value`, `percentage-change`, `forecast`",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"value",
+								"percentage-change",
+								"forecast",
+							),
+						},
+						Default: stringdefault.StaticString("percentage-change"),
 					},
 					"currency": schema.StringAttribute{
 						Optional:            true,
@@ -71,14 +79,23 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 					"data_source": schema.StringAttribute{
-						Optional: true,
-						Computed: true,
+						Optional:            true,
+						Computed:            true,
+						Description:         "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nPossible values: `billing`, `billing-datahub`",
+						MarkdownDescription: "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nPossible values: `billing`, `billing-datahub`",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"billing",
+								"billing-datahub",
+							),
+						},
+						Default: stringdefault.StaticString("billing"),
 					},
 					"evaluate_for_each": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\".",
-						MarkdownDescription: "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\".",
+						Description:         "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.",
+						MarkdownDescription: "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.",
 					},
 					"metric": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
@@ -103,8 +120,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 					"operator": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Text/operator used to filter metric values in metric filters.\nPossible values: `gt`, `lt`",
-						MarkdownDescription: "Text/operator used to filter metric values in metric filters.\nPossible values: `gt`, `lt`",
+						Description:         "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).\nPossible values: `gt`, `lt`",
+						MarkdownDescription: "Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).\nPossible values: `gt`, `lt`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"gt",
@@ -124,26 +141,26 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"id": schema.StringAttribute{
 									Required:            true,
-									Description:         "The field to filter on",
-									MarkdownDescription: "The field to filter on",
+									Description:         "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.",
+									MarkdownDescription: "Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.",
 								},
 								"include_null": schema.BoolAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Include null value.",
-									MarkdownDescription: "Include null value.",
+									Description:         "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.",
+									MarkdownDescription: "Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.",
 									Default:             booldefault.StaticBool(false),
 								},
 								"inverse": schema.BoolAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Set to `true` to exclude the values.",
-									MarkdownDescription: "Set to `true` to exclude the values.",
+									Description:         "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.",
+									MarkdownDescription: "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.",
 								},
 								"mode": schema.StringAttribute{
 									Required:            true,
-									Description:         "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
-									MarkdownDescription: "Filter mode to apply\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									Description:         "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
+									MarkdownDescription: "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"is",
@@ -156,8 +173,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
-									MarkdownDescription: "Enumeration of supported dimension/filter types.\n\"allocation\" is an alias for \"attribution_group\".\n\"allocation_rule\" is an alias for \"attribution\".\n\"attribution\" and \"attribution_group\" are deprecated. Use \"allocation_rule\" and \"allocation\" instead.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -180,8 +197,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 									ElementType:         types.StringType,
 									Optional:            true,
 									Computed:            true,
-									Description:         "Values to filter on.",
-									MarkdownDescription: "Values to filter on.",
+									Description:         "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.",
+									MarkdownDescription: "List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.",
 								},
 							},
 							CustomType: ScopesType{
@@ -192,17 +209,16 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 						},
 						Optional:            true,
 						Computed:            true,
-						Description:         "The filters selected define the scope of the alert.",
-						MarkdownDescription: "The filters selected define the scope of the alert.",
+						Description:         "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
+						MarkdownDescription: "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
 					},
 					"time_interval": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "The time interval to evaluate the condition.\nPossible values: `hour`, `day`, `week`, `month`, `quarter`, `year`",
-						MarkdownDescription: "The time interval to evaluate the condition.\nPossible values: `hour`, `day`, `week`, `month`, `quarter`, `year`",
+						Description:         "The period each evaluation looks at.\nPossible values: `day`, `week`, `month`, `quarter`, `year`",
+						MarkdownDescription: "The period each evaluation looks at.\nPossible values: `day`, `week`, `month`, `quarter`, `year`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
-								"hour",
 								"day",
 								"week",
 								"month",
@@ -213,7 +229,9 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 						Default: stringdefault.StaticString("year"),
 					},
 					"value": schema.Float64Attribute{
-						Required: true,
+						Required:            true,
+						Description:         "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.",
+						MarkdownDescription: "The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.",
 					},
 				},
 				CustomType: ConfigType{
@@ -242,15 +260,15 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Name of the alert.",
-				MarkdownDescription: "Name of the alert.",
+				Description:         "Name of the alert (max 64 characters).",
+				MarkdownDescription: "Name of the alert (max 64 characters).",
 			},
 			"recipients": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of emails to notify when the alert is triggered.",
-				MarkdownDescription: "List of emails to notify when the alert is triggered.",
+				Description:         "List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.",
+				MarkdownDescription: "List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.",
 			},
 			"update_time": schema.Int64Attribute{
 				Computed:            true,

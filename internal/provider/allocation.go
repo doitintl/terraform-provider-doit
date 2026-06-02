@@ -30,8 +30,8 @@ import (
 // NOT used by: Read, ImportState (which use populateState → mapAllocationToModel).
 //
 // NOTE: Unlike most resources, this overlay retains the receiver because
-// mapAllocationToModel makes additional API calls (r.client.GetAllocationWithResponse)
-// to fetch full allocation rule details for multi-rule allocations.
+// mapAllocationToModel needs the API client to fetch full allocation rule
+// details for multi-rule allocations.
 func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context, apiResp *models.Allocation, plan *allocationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -39,7 +39,7 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	// Copy the plan so that mapAllocationToModel's sentinel restoration and alias
 	// normalization can compare against user-configured values in the existing state.
 	resolved := *plan
-	diags.Append(r.mapAllocationToModel(ctx, apiResp, &resolved)...)
+	diags.Append(mapAllocationToModel(ctx, r.client, apiResp, &resolved)...)
 	if diags.HasError() {
 		return diags
 	}
@@ -58,21 +58,14 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	if plan.UnallocatedCosts.IsUnknown() {
 		plan.UnallocatedCosts = resolved.UnallocatedCosts
 	}
-	if plan.FolderId.IsUnknown() {
-		plan.FolderId = resolved.FolderId
-	}
 
 	// ── Rule (single nested object): use resolved when Unknown, overlay subfields when Known ──
 	if plan.Rule.IsUnknown() {
 		plan.Rule = resolved.Rule
 	} else if !plan.Rule.IsNull() {
-		if plan.Rule.Formula.IsUnknown() {
-			plan.Rule.Formula = resolved.Rule.Formula
-		}
+		// Components is the only Optional+Computed subfield; formula is Required.
 		if plan.Rule.Components.IsUnknown() {
 			plan.Rule.Components = resolved.Rule.Components
-		} else if !plan.Rule.Components.IsNull() {
-			diags.Append(overlayListElements(ctx, &resolved.Rule.Components, &plan.Rule.Components, overlayAllocationComponent)...)
 		}
 	}
 
@@ -90,10 +83,7 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 // Each helper resolves Unknown subfields from the resolved element.
 // Known values are never touched — the user's plan is the source of truth.
 
-func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
-	if plan.Action.IsUnknown() {
-		plan.Action = resolved.Action
-	}
+func overlayAllocationRule(_ context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
 	if plan.Description.IsUnknown() {
 		plan.Description = resolved.Description
 	}
@@ -106,39 +96,8 @@ func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocat
 	if plan.Name.IsUnknown() {
 		plan.Name = resolved.Name
 	}
-	// Components: overlay subfields when the list is Known
 	if plan.Components.IsUnknown() {
 		plan.Components = resolved.Components
-	} else if !plan.Components.IsNull() {
-		return overlayListElements(ctx, &resolved.Components, &plan.Components, overlayAllocationComponent)
-	}
-	return nil
-}
-
-func overlayAllocationComponent(_ context.Context, resolved, plan *resource_allocation.ComponentsValue) diag.Diagnostics {
-	if plan.CaseInsensitive.IsUnknown() {
-		plan.CaseInsensitive = resolved.CaseInsensitive
-	}
-	if plan.IncludeNull.IsUnknown() {
-		plan.IncludeNull = resolved.IncludeNull
-	}
-	if plan.Inverse.IsUnknown() {
-		plan.Inverse = resolved.Inverse
-	}
-	if plan.InverseSelection.IsUnknown() {
-		plan.InverseSelection = resolved.InverseSelection
-	}
-	if plan.ComponentsType.IsUnknown() {
-		plan.ComponentsType = resolved.ComponentsType
-	}
-	if plan.Key.IsUnknown() {
-		plan.Key = resolved.Key
-	}
-	if plan.Mode.IsUnknown() {
-		plan.Mode = resolved.Mode
-	}
-	if plan.Values.IsUnknown() {
-		plan.Values = resolved.Values
 	}
 	return nil
 }
@@ -217,8 +176,10 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 	req.Name = plan.Name.ValueStringPointer()
 	req.FolderId = plan.FolderId.ValueStringPointer()
 	// UnallocatedCosts is only sent if not empty because it is invalid for "single" allocations.
-	if v := plan.UnallocatedCosts.ValueString(); v != "" {
-		req.UnallocatedCosts = &v
+	if !plan.UnallocatedCosts.IsNull() && !plan.UnallocatedCosts.IsUnknown() {
+		if v := plan.UnallocatedCosts.ValueString(); v != "" {
+			req.UnallocatedCosts = &v
+		}
 	}
 
 	// Populate single Rule if present
@@ -325,13 +286,13 @@ func (r *allocationResource) populateState(ctx context.Context, state *allocatio
 		return
 	}
 
-	return r.mapAllocationToModel(ctx, httpResp.JSON200, state)
+	return mapAllocationToModel(ctx, r.client, httpResp.JSON200, state)
 }
 
 // mapAllocationToModel maps an Allocation API response to the Terraform resource model.
 // This is used by both populateState (for Read) and directly by Create/Update
 // when the API returns the full object in the response.
-func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *models.Allocation, state *allocationResourceModel) (diags diag.Diagnostics) {
+func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponses, resp *models.Allocation, state *allocationResourceModel) (diags diag.Diagnostics) {
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
 	state.Description = types.StringPointerValue(resp.Description)
@@ -340,7 +301,13 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
 	state.Name = types.StringPointerValue(resp.Name)
 	state.UnallocatedCosts = types.StringPointerValue(resp.UnallocatedCosts)
-	state.FolderId = types.StringPointerValue(resp.FolderId)
+	// Defend against API returning nil: fall back to "root" to match the
+	// schema default and prevent perpetual plan drift.
+	if resp.FolderId != nil {
+		state.FolderId = types.StringValue(*resp.FolderId)
+	} else {
+		state.FolderId = types.StringValue("root")
+	}
 
 	if resp.AllocationType != nil {
 		state.AllocationType = types.StringValue(string(*resp.AllocationType))
@@ -440,7 +407,7 @@ func (r *allocationResource) mapAllocationToModel(ctx context.Context, resp *mod
 
 			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
 				// Fetch full allocation to get formula and components
-				respHTTPFullAlloc, err := r.client.GetAllocationWithResponse(ctx, *rule.Id)
+				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
 				if err == nil && respHTTPFullAlloc.JSON200 != nil {
 					fullAlloc := respHTTPFullAlloc.JSON200
 					if fullAlloc.Rule != nil {
