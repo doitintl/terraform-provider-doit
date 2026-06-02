@@ -108,3 +108,38 @@ func goodUsedElsewhereNested() {
 	}
 	_ = p
 }
+
+// BAD: temp var in else block
+func badInsideElse() {
+	var p params
+	var d data
+	if false {
+		_ = d
+	} else {
+		filter := d.ValueString() // want `use new\(d.ValueString\(\.\.\.\)\) instead of temp variable "filter" then \&filter`
+		p.Filter = &filter
+	}
+	_ = p
+}
+
+// BAD: temp var in switch case
+func badInsideSwitch(x int) {
+	var p params
+	switch x {
+	case 1:
+		name := "hello" // want `use new\(expr\) instead of temp variable "name" then \&name`
+		p.Name = &name
+	}
+	_ = p
+}
+
+// BAD: temp var in type switch case
+func badInsideTypeSwitch(v any) {
+	var p params
+	switch v.(type) {
+	case string:
+		name := "typed" // want `use new\(expr\) instead of temp variable "name" then \&name`
+		p.Name = &name
+	}
+	_ = p
+}

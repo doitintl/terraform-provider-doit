@@ -4,6 +4,7 @@ package guardtest
 import (
 	"context"
 
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -161,4 +162,43 @@ type FilterRequest struct {
 // DisplaySettingsRequest is a mock 2nd-level nested request type.
 type DisplaySettingsRequest struct {
 	ThemeId *string
+}
+
+// --- Data source fixtures ---
+
+// searchDataSourceModel is a data source model (not a resource model).
+// It tests the DataSourceModel → DataSourceSchema derivation path.
+type searchDataSourceModel struct {
+	Query types.String
+	SsId  types.String
+}
+
+// searchDataSource is a non-model service struct (data source type).
+type searchDataSource struct{}
+
+// SearchDataSourceSchema defines the data source schema (simulated _gen.go).
+func SearchDataSourceSchema(ctx context.Context) dsschema.Schema {
+	return dsschema.Schema{
+		Attributes: map[string]dsschema.Attribute{
+			"query": dsschema.StringAttribute{
+				Required: true,
+			},
+		},
+	}
+}
+
+// Schema wires the data source type to the schema.
+func (d *searchDataSource) Schema(ctx context.Context) dsschema.Schema {
+	s := SearchDataSourceSchema(ctx)
+	// Add a manual attribute (simulates runtime override like cloud_diagram_search).
+	s.Attributes["ss_id"] = dsschema.StringAttribute{
+		Optional: true,
+	}
+	return s
+}
+
+// SearchRequest is a mock API request for the data source.
+type SearchRequest struct {
+	Query *string
+	SsId  *string
 }

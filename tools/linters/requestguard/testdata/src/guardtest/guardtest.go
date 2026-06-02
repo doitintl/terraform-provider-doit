@@ -217,3 +217,31 @@ func standaloneHelper(config ConfigValue) {
 		_ = config.Type.ValueStringPointer()
 	}
 }
+
+// --- Data source builder tests ---
+// Tests that requestguard works when:
+// 1. The receiver is a non-model service type (searchDataSource)
+// 2. The model is passed as a parameter (data searchDataSourceModel)
+// 3. The schema is derived via DataSourceModel → DataSourceSchema
+
+// buildSearchRequest is a data source request builder with a non-model receiver.
+func (d *searchDataSource) buildSearchRequest(data searchDataSourceModel) SearchRequest {
+	req := SearchRequest{}
+
+	// BAD: Required field — IsUnknown() guard is dead code.
+	if !data.Query.IsNull() && !data.Query.IsUnknown() { // want `IsUnknown\(\) on Required field "query" is dead code \(Required fields are always Known\)`
+		req.Query = data.Query.ValueStringPointer()
+	}
+
+	// BAD: Optional field — IsUnknown() guard is dead code.
+	if !data.SsId.IsNull() && !data.SsId.IsUnknown() { // want `IsUnknown\(\) on Optional \(not Computed\) field "ss_id" is dead code \(Optional \(not Computed\) fields are always Known\)`
+		req.SsId = data.SsId.ValueStringPointer()
+	}
+
+	// GOOD: Optional field with only IsNull() guard — correct pattern.
+	if !data.SsId.IsNull() {
+		req.SsId = data.SsId.ValueStringPointer()
+	}
+
+	return req
+}
