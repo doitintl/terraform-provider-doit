@@ -192,20 +192,17 @@ func (d *cloudDiagramSearchDataSource) Read(ctx context.Context, req datasource.
 		pageSize := defaultAutoPageSize
 
 		offset := 0
-		if !data.From.IsNull() && !data.From.IsUnknown() {
+		if !data.From.IsNull() {
 			offset = int(data.From.ValueInt64())
 		}
 		for {
-			from := offset
-			size := pageSize
 			body := models.SearchCloudDiagramsJSONRequestBody{
 				Query: data.Query.ValueString(),
-				From:  &from,
-				Size:  &size,
+				From:  new(offset),
+				Size:  new(pageSize),
 			}
-			if !data.SsId.IsNull() && !data.SsId.IsUnknown() {
-				ssID := data.SsId.ValueString()
-				body.SsId = &ssID
+			if !data.SsId.IsNull() {
+				body.SsId = new(data.SsId.ValueString())
 			}
 
 			apiResp, err := d.client.SearchCloudDiagramsWithResponse(ctx, body)
@@ -268,8 +265,14 @@ func (d *cloudDiagramSearchDataSource) Read(ctx context.Context, req datasource.
 
 	// Set a deterministic ID based on query parameters.
 	idInput := data.Query.ValueString()
-	if !data.SsId.IsNull() && !data.SsId.IsUnknown() {
-		idInput += "\n" + data.SsId.ValueString()
+	if !data.SsId.IsNull() {
+		idInput += "\nss_id:" + data.SsId.ValueString()
+	}
+	if !data.From.IsNull() {
+		idInput += fmt.Sprintf("\nfrom:%d", data.From.ValueInt64())
+	}
+	if !data.Size.IsNull() {
+		idInput += fmt.Sprintf("\nsize:%d", data.Size.ValueInt64())
 	}
 	hash := sha256.Sum256([]byte(idInput))
 	data.Id = types.StringValue(fmt.Sprintf("%x", hash))
@@ -283,19 +286,16 @@ func (d *cloudDiagramSearchDataSource) buildRequestBody(data cloudDiagramSearchD
 		Query: data.Query.ValueString(),
 	}
 
-	if !data.SsId.IsNull() && !data.SsId.IsUnknown() {
-		ssID := data.SsId.ValueString()
-		body.SsId = &ssID
+	if !data.SsId.IsNull() {
+		body.SsId = new(data.SsId.ValueString())
 	}
 
-	if !data.From.IsNull() && !data.From.IsUnknown() {
-		from := int(data.From.ValueInt64())
-		body.From = &from
+	if !data.From.IsNull() {
+		body.From = new(int(data.From.ValueInt64()))
 	}
 
-	if !data.Size.IsNull() && !data.Size.IsUnknown() {
-		size := int(data.Size.ValueInt64())
-		body.Size = &size
+	if !data.Size.IsNull() {
+		body.Size = new(int(data.Size.ValueInt64()))
 	}
 
 	return body

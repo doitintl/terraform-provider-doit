@@ -20,10 +20,14 @@ func TestAccCloudDiagramSearchDataSource_Basic(t *testing.T) {
 				Config: testAccCloudDiagramSearchDataSourceConfig("nonexistent-resource-12345"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagram_search.test", "id"),
-					resource.TestCheckResourceAttrSet("data.doit_cloud_diagram_search.test", "scheme.#"),
-					resource.TestCheckResourceAttrSet("data.doit_cloud_diagram_search.test", "component.#"),
-					resource.TestCheckResourceAttrSet("data.doit_cloud_diagram_search.test", "prop.#"),
+					resource.TestCheckResourceAttr("data.doit_cloud_diagram_search.test", "scheme.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_cloud_diagram_search.test", "component.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_cloud_diagram_search.test", "prop.#", "0"),
 				),
+			},
+			{
+				Config:   testAccCloudDiagramSearchDataSourceConfig("nonexistent-resource-12345"),
+				PlanOnly: true,
 			},
 		},
 	})
@@ -47,6 +51,10 @@ func TestAccCloudDiagramSearchDataSource_WithMatch(t *testing.T) {
 					testCheckAtLeastOneSearchResult("data.doit_cloud_diagram_search.test"),
 				),
 			},
+			{
+				Config:   testAccCloudDiagramSearchDataSourceConfig(query),
+				PlanOnly: true,
+			},
 		},
 	})
 }
@@ -62,6 +70,10 @@ func TestAccCloudDiagramSearchDataSource_WithSize(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagram_search.test", "id"),
 				),
+			},
+			{
+				Config:   testAccCloudDiagramSearchDataSourceConfigWithSize("test", 5),
+				PlanOnly: true,
 			},
 		},
 	})
