@@ -245,10 +245,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	if config.Dimensions != nil {
 		dims := make([]attr.Value, len(*config.Dimensions))
 		for i, dim := range *config.Dimensions {
-			dType := string(*dim.Type)
 			m := map[string]attr.Value{
 				"id":   types.StringPointerValue(dim.Id),
-				"type": types.StringPointerValue(&dType),
+				"type": types.StringPointerValue(new(string(*dim.Type))),
 			}
 			dimVal, dimDiags := datasource_report.NewDimensionsValue(datasource_report.DimensionsValue{}.AttributeTypes(ctx), m)
 			diags.Append(dimDiags...)
@@ -303,10 +302,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	if config.Group != nil {
 		groups := make([]attr.Value, len(*config.Group))
 		for i, g := range *config.Group {
-			groupType := string(*g.Type)
 			m := map[string]attr.Value{
 				"id":   types.StringPointerValue(g.Id),
-				"type": types.StringPointerValue(&groupType),
+				"type": types.StringPointerValue(new(string(*g.Type))),
 			}
 			m["limit"] = datasource_report.NewLimitValueNull()
 

@@ -348,10 +348,13 @@ func resolveSchema(fn *ast.FuncDecl, receiverToSchema map[string]string, perSche
 }
 
 // modelTypeToSchema derives the schema function name from a model type name.
-// E.g., "budgetResourceModel" → "BudgetResourceSchema".
+// E.g., "budgetResourceModel" → "BudgetResourceSchema",
+//       "cloudDiagramSearchDataSourceModel" → "CloudDiagramSearchDataSourceSchema".
 func modelTypeToSchema(typeName string) string {
 	base := ""
 	if strings.HasSuffix(typeName, "ResourceModel") {
+		base = strings.TrimSuffix(typeName, "Model")
+	} else if strings.HasSuffix(typeName, "DataSourceModel") {
 		base = strings.TrimSuffix(typeName, "Model")
 	} else if strings.HasSuffix(typeName, "Model") {
 		base = strings.TrimSuffix(typeName, "Model") + "Resource"
@@ -364,12 +367,18 @@ func modelTypeToSchema(typeName string) string {
 }
 
 // findPlanParam returns the name of the plan parameter in a request builder.
-// It looks for a parameter named "plan" or a receiver (method on model).
+// It looks for a receiver that is a model type, a parameter named "plan", or
+// a parameter whose type name ends in "Model" or "Value".
+// When the receiver is a non-model type (e.g., a service struct), it falls
+// through to check parameters instead.
 func findPlanParam(fn *ast.FuncDecl) string {
-	// If method, the receiver acts as the plan.
+	// If method, use the receiver only if it's a Model/Value type.
 	if fn.Recv != nil && len(fn.Recv.List) > 0 {
-		for _, name := range fn.Recv.List[0].Names {
-			return name.Name
+		recvType := extractStarTypeName(fn.Recv.List[0].Type)
+		if recvType != "" && (strings.HasSuffix(recvType, "Model") || strings.HasSuffix(recvType, "Value")) {
+			for _, name := range fn.Recv.List[0].Names {
+				return name.Name
+			}
 		}
 	}
 	// Look for a parameter named "plan" or a *XxxModel parameter.

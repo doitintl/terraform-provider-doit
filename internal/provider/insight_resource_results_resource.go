@@ -144,56 +144,44 @@ func (plan *insightResourceResultsModel) toResourceResultsRequest(ctx context.Co
 		}
 
 		if !elem.Location.IsNull() && !elem.Location.IsUnknown() {
-			v := elem.Location.ValueString()
-			apiResult.Location = &v
+			apiResult.Location = new(elem.Location.ValueString())
 		}
 		if !elem.ExternalId.IsNull() && !elem.ExternalId.IsUnknown() {
-			v := elem.ExternalId.ValueString()
-			apiResult.ExternalId = &v
+			apiResult.ExternalId = new(elem.ExternalId.ValueString())
 		}
 		if !elem.ExternalUrl.IsNull() && !elem.ExternalUrl.IsUnknown() {
-			v := elem.ExternalUrl.ValueString()
-			apiResult.ExternalUrl = &v
+			apiResult.ExternalUrl = new(elem.ExternalUrl.ValueString())
 		}
 		if !elem.ResourceType.IsNull() && !elem.ResourceType.IsUnknown() {
-			v := elem.ResourceType.ValueString()
-			apiResult.ResourceType = &v
+			apiResult.ResourceType = new(elem.ResourceType.ValueString())
 		}
 
 		// Result object
 		if !elem.Result.IsNull() && !elem.Result.IsUnknown() {
 			result := &models.ResourceResultRequestResult{}
 			if !elem.Result.Value.IsNull() && !elem.Result.Value.IsUnknown() {
-				val64 := elem.Result.Value.ValueFloat64()
-				result.Value = &val64
+				result.Value = new(elem.Result.Value.ValueFloat64())
 			}
 			if !elem.Result.Current.IsNull() && !elem.Result.Current.IsUnknown() {
-				v := elem.Result.Current.ValueString()
-				result.Current = &v
+				result.Current = new(elem.Result.Current.ValueString())
 			}
 			if !elem.Result.Recommendation.IsNull() && !elem.Result.Recommendation.IsUnknown() {
-				v := elem.Result.Recommendation.ValueString()
-				result.Recommendation = &v
+				result.Recommendation = new(elem.Result.Recommendation.ValueString())
 			}
 			if !elem.Result.AgentInstalled.IsNull() && !elem.Result.AgentInstalled.IsUnknown() {
-				v := elem.Result.AgentInstalled.ValueBool()
-				result.AgentInstalled = &v
+				result.AgentInstalled = new(elem.Result.AgentInstalled.ValueBool())
 			}
 			if !elem.Result.Critical.IsNull() && !elem.Result.Critical.IsUnknown() {
-				v := int(elem.Result.Critical.ValueInt64())
-				result.Critical = &v
+				result.Critical = new(int(elem.Result.Critical.ValueInt64()))
 			}
 			if !elem.Result.High.IsNull() && !elem.Result.High.IsUnknown() {
-				v := int(elem.Result.High.ValueInt64())
-				result.High = &v
+				result.High = new(int(elem.Result.High.ValueInt64()))
 			}
 			if !elem.Result.Medium.IsNull() && !elem.Result.Medium.IsUnknown() {
-				v := int(elem.Result.Medium.ValueInt64())
-				result.Medium = &v
+				result.Medium = new(int(elem.Result.Medium.ValueInt64()))
 			}
 			if !elem.Result.Low.IsNull() && !elem.Result.Low.IsUnknown() {
-				v := int(elem.Result.Low.ValueInt64())
-				result.Low = &v
+				result.Low = new(int(elem.Result.Low.ValueInt64()))
 			}
 			apiResult.Result = result
 		}

@@ -130,7 +130,6 @@ linters:
           - usestatefunknown
           - crudnaming
           - methodreceiver
-          - requestguard
       # Provider config — not a resource, no plan modifiers
       - path: provider\.go
         linters:

@@ -183,8 +183,7 @@ func (r *assetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	// Build the update request body
 	updateBody := models.IdOfAssetJSONRequestBody{}
 	if !plan.Quantity.IsNull() && !plan.Quantity.IsUnknown() {
-		q := plan.Quantity.ValueInt64()
-		updateBody.Quantity = &q
+		updateBody.Quantity = new(plan.Quantity.ValueInt64())
 	}
 
 	// Call PATCH
