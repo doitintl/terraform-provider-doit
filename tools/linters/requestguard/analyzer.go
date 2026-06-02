@@ -348,10 +348,13 @@ func resolveSchema(fn *ast.FuncDecl, receiverToSchema map[string]string, perSche
 }
 
 // modelTypeToSchema derives the schema function name from a model type name.
-// E.g., "budgetResourceModel" → "BudgetResourceSchema".
+// E.g., "budgetResourceModel" → "BudgetResourceSchema",
+//       "cloudDiagramSearchDataSourceModel" → "CloudDiagramSearchDataSourceSchema".
 func modelTypeToSchema(typeName string) string {
 	base := ""
 	if strings.HasSuffix(typeName, "ResourceModel") {
+		base = strings.TrimSuffix(typeName, "Model")
+	} else if strings.HasSuffix(typeName, "DataSourceModel") {
 		base = strings.TrimSuffix(typeName, "Model")
 	} else if strings.HasSuffix(typeName, "Model") {
 		base = strings.TrimSuffix(typeName, "Model") + "Resource"

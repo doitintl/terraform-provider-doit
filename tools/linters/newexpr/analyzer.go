@@ -54,7 +54,8 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// checkBlock scans a block's statements for the temp-var-then-address pattern.
+// checkBlock scans a block's statements for the temp-var-then-address pattern
+// and recurses into nested blocks (if, for, switch, etc.).
 func checkBlock(pass *analysis.Pass, block *ast.BlockStmt) {
 	for i := 0; i < len(block.List); i++ {
 		// Match: x := expr (short var decl, single LHS, single RHS)
@@ -105,6 +106,69 @@ func checkBlock(pass *analysis.Pass, block *ast.BlockStmt) {
 				exprString(assign.Rhs[0]), ident.Name, ident.Name)
 		}
 	}
+
+	// Recurse into nested blocks (if, for, switch, range, select).
+	for _, stmt := range block.List {
+		for _, child := range childBlocks(stmt) {
+			checkBlock(pass, child)
+		}
+	}
+}
+
+// childBlocks extracts nested BlockStmt nodes from control-flow statements.
+func childBlocks(stmt ast.Stmt) []*ast.BlockStmt {
+	var blocks []*ast.BlockStmt
+	switch s := stmt.(type) {
+	case *ast.IfStmt:
+		if s.Body != nil {
+			blocks = append(blocks, s.Body)
+		}
+		if s.Else != nil {
+			// else if or else block.
+			if elseBlock, ok := s.Else.(*ast.BlockStmt); ok {
+				blocks = append(blocks, elseBlock)
+			} else if elseIf, ok := s.Else.(*ast.IfStmt); ok {
+				blocks = append(blocks, childBlocks(elseIf)...)
+			}
+		}
+	case *ast.ForStmt:
+		if s.Body != nil {
+			blocks = append(blocks, s.Body)
+		}
+	case *ast.RangeStmt:
+		if s.Body != nil {
+			blocks = append(blocks, s.Body)
+		}
+	case *ast.SwitchStmt:
+		if s.Body != nil {
+			for _, clause := range s.Body.List {
+				if cc, ok := clause.(*ast.CaseClause); ok {
+					// Case clauses don't have a BlockStmt, but their Body is []Stmt.
+					// Wrap in a synthetic block for scanning.
+					blocks = append(blocks, &ast.BlockStmt{List: cc.Body})
+				}
+			}
+		}
+	case *ast.TypeSwitchStmt:
+		if s.Body != nil {
+			for _, clause := range s.Body.List {
+				if cc, ok := clause.(*ast.CaseClause); ok {
+					blocks = append(blocks, &ast.BlockStmt{List: cc.Body})
+				}
+			}
+		}
+	case *ast.SelectStmt:
+		if s.Body != nil {
+			for _, clause := range s.Body.List {
+				if cc, ok := clause.(*ast.CommClause); ok {
+					blocks = append(blocks, &ast.BlockStmt{List: cc.Body})
+				}
+			}
+		}
+	case *ast.BlockStmt:
+		blocks = append(blocks, s)
+	}
+	return blocks
 }
 
 // exprString returns a short human-readable representation of an expression.

@@ -207,10 +207,9 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 
 		reqCollaborators := make([]models.Collaborator, len(collaborators))
 		for i, collaborator := range collaborators {
-			role := models.CollaboratorRole(collaborator.Role.ValueString())
 			reqCollaborators[i] = models.Collaborator{
 				Email: collaborator.Email.ValueStringPointer(),
-				Role:  &role,
+				Role:  new(models.CollaboratorRole(collaborator.Role.ValueString())),
 			}
 		}
 		req.Collaborators = &reqCollaborators
@@ -221,8 +220,7 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		req.Amount = plan.Amount.ValueFloat64Pointer()
 	}
 	if !plan.Currency.IsNull() && !plan.Currency.IsUnknown() {
-		currency := models.Currency(plan.Currency.ValueString())
-		req.Currency = &currency
+		req.Currency = new(models.Currency(plan.Currency.ValueString()))
 	}
 	req.Description = plan.Description.ValueStringPointer()
 
@@ -233,16 +231,14 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 
 	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
 	if !plan.Metric.IsNull() {
-		metric := models.BudgetCreateUpdateRequestMetric(plan.Metric.ValueString())
-		req.Metric = &metric
+		req.Metric = new(models.BudgetCreateUpdateRequestMetric(plan.Metric.ValueString()))
 	}
 	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
 		req.Name = plan.Name.ValueStringPointer()
 	}
 
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
-		public := models.BudgetCreateUpdateRequestPublic(plan.Public.ValueString())
-		req.Public = &public
+		req.Public = new(models.BudgetCreateUpdateRequestPublic(plan.Public.ValueString()))
 	}
 
 	if !plan.Recipients.IsNull() && !plan.Recipients.IsUnknown() {

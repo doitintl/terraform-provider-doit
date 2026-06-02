@@ -175,28 +175,23 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 
 	// Optional fields
 	if !configVal.Condition.IsNull() {
-		condition := models.Condition(configVal.Condition.ValueString())
-		config.Condition = &condition
+		config.Condition = new(models.Condition(configVal.Condition.ValueString()))
 	}
 
 	if !configVal.Currency.IsNull() && !configVal.Currency.IsUnknown() {
-		currency := models.Currency(configVal.Currency.ValueString())
-		config.Currency = &currency
+		config.Currency = new(models.Currency(configVal.Currency.ValueString()))
 	}
 
 	if !configVal.DataSource.IsNull() {
-		dataSource := models.AlertConfigDataSource(configVal.DataSource.ValueString())
-		config.DataSource = &dataSource
+		config.DataSource = new(models.AlertConfigDataSource(configVal.DataSource.ValueString()))
 	}
 
 	if !configVal.EvaluateForEach.IsNull() && !configVal.EvaluateForEach.IsUnknown() {
-		evaluateForEach := configVal.EvaluateForEach.ValueString()
-		config.EvaluateForEach = &evaluateForEach
+		config.EvaluateForEach = new(configVal.EvaluateForEach.ValueString())
 	}
 
 	if !configVal.Operator.IsNull() && !configVal.Operator.IsUnknown() {
-		operator := models.MetricFilterText(configVal.Operator.ValueString())
-		config.Operator = &operator
+		config.Operator = new(models.MetricFilterText(configVal.Operator.ValueString()))
 	}
 
 	// Attributions

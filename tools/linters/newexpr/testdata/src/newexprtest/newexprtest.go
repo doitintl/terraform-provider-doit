@@ -51,3 +51,60 @@ func goodCompositeLit() {
 	s := myStruct{}
 	_ = &s
 }
+
+// BAD: temp var inside if block
+func badInsideIf() {
+	var p params
+	var d data
+	if true {
+		filter := d.ValueString() // want `use new\(d.ValueString\(\.\.\.\)\) instead of temp variable "filter" then \&filter`
+		p.Filter = &filter
+	}
+	_ = p
+}
+
+// BAD: temp var inside for loop
+func badInsideFor() {
+	var p params
+	var d data
+	for i := 0; i < 1; i++ {
+		sortBy := d.ValueString() // want `use new\(d.ValueString\(\.\.\.\)\) instead of temp variable "sortBy" then \&sortBy`
+		p.SortBy = &sortBy
+	}
+	_ = p
+}
+
+// BAD: temp var inside range loop
+func badInsideRange() {
+	var p params
+	for range []int{1} {
+		name := "hello" // want `use new\(expr\) instead of temp variable "name" then \&name`
+		p.Name = &name
+	}
+	_ = p
+}
+
+// BAD: temp var in deeply nested blocks
+func badDeeplyNested() {
+	var p params
+	var d data
+	if true {
+		if true {
+			filter := d.ValueString() // want `use new\(d.ValueString\(\.\.\.\)\) instead of temp variable "filter" then \&filter`
+			p.Filter = &filter
+		}
+	}
+	_ = p
+}
+
+// GOOD: variable used elsewhere inside nested block
+func goodUsedElsewhereNested() {
+	var p params
+	var d data
+	if true {
+		filter := d.ValueString()
+		_ = filter // used here
+		p.Filter = &filter
+	}
+	_ = p
+}

@@ -139,38 +139,31 @@ func (plan *insightResourceModel) toInsightRequest(ctx context.Context) (*models
 
 	// Optional fields
 	if !plan.DetailedDescriptionMdx.IsNull() && !plan.DetailedDescriptionMdx.IsUnknown() {
-		v := plan.DetailedDescriptionMdx.ValueString()
-		req.DetailedDescriptionMdx = &v
+		req.DetailedDescriptionMdx = new(plan.DetailedDescriptionMdx.ValueString())
 	}
 	if !plan.EasyWinDescription.IsNull() && !plan.EasyWinDescription.IsUnknown() {
-		v := plan.EasyWinDescription.ValueString()
-		req.EasyWinDescription = &v
+		req.EasyWinDescription = new(plan.EasyWinDescription.ValueString())
 	}
 	if !plan.ReportUrl.IsNull() && !plan.ReportUrl.IsUnknown() {
-		v := plan.ReportUrl.ValueString()
-		req.ReportUrl = &v
+		req.ReportUrl = new(plan.ReportUrl.ValueString())
 	}
 	if !plan.CloudFlowTemplateId.IsNull() && !plan.CloudFlowTemplateId.IsUnknown() {
-		v := plan.CloudFlowTemplateId.ValueString()
-		req.CloudFlowTemplateId = &v
+		req.CloudFlowTemplateId = new(plan.CloudFlowTemplateId.ValueString())
 	}
 
 	// Status (Optional+Computed) — sets the display status inline
 	if !plan.Status.IsNull() && !plan.Status.IsUnknown() {
-		v := models.DisplayStatus(plan.Status.ValueString())
-		req.Status = &v
+		req.Status = new(models.DisplayStatus(plan.Status.ValueString()))
 	}
 
 	// DismissalDetails (Optional+Computed) — required when status is "dismissed"
 	if !plan.DismissalDetails.IsNull() && !plan.DismissalDetails.IsUnknown() {
 		dd := models.DismissalDetails{}
 		if !plan.DismissalDetails.Comment.IsNull() && !plan.DismissalDetails.Comment.IsUnknown() {
-			v := plan.DismissalDetails.Comment.ValueString()
-			dd.Comment = &v
+			dd.Comment = new(plan.DismissalDetails.Comment.ValueString())
 		}
 		if !plan.DismissalDetails.Reason.IsNull() && !plan.DismissalDetails.Reason.IsUnknown() {
-			v := models.DismissalDetailsReason(plan.DismissalDetails.Reason.ValueString())
-			dd.Reason = &v
+			dd.Reason = new(models.DismissalDetailsReason(plan.DismissalDetails.Reason.ValueString()))
 		}
 		req.DismissalDetails = &dd
 	}
