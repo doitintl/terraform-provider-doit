@@ -271,7 +271,7 @@ func (t ComponentType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 
 	attributes := in.Attributes()
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -281,12 +281,12 @@ func (t ComponentType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		return nil, diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	accountNameAttribute, ok := attributes["account_name"]
@@ -474,7 +474,7 @@ func (t ComponentType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	}
 
 	return ComponentValue{
-		Id:            idVal,
+		UnderscoreId:  underscoreIdVal,
 		AccountName:   accountNameVal,
 		Color:         colorVal,
 		GroupType:     groupTypeVal,
@@ -552,7 +552,7 @@ func NewComponentValue(attributeTypes map[string]attr.Type, attributes map[strin
 		return NewComponentValueUnknown(), diags
 	}
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -562,12 +562,12 @@ func NewComponentValue(attributeTypes map[string]attr.Type, attributes map[strin
 		return NewComponentValueUnknown(), diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	accountNameAttribute, ok := attributes["account_name"]
@@ -755,7 +755,7 @@ func NewComponentValue(attributeTypes map[string]attr.Type, attributes map[strin
 	}
 
 	return ComponentValue{
-		Id:            idVal,
+		UnderscoreId:  underscoreIdVal,
 		AccountName:   accountNameVal,
 		Color:         colorVal,
 		GroupType:     groupTypeVal,
@@ -838,7 +838,7 @@ func (t ComponentType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ComponentValue{}
 
 type ComponentValue struct {
-	Id            basetypes.StringValue `tfsdk:"_id"`
+	UnderscoreId  basetypes.StringValue `tfsdk:"_id"`
 	AccountName   basetypes.StringValue `tfsdk:"account_name"`
 	Color         basetypes.StringValue `tfsdk:"color"`
 	GroupType     basetypes.StringValue `tfsdk:"group_type"`
@@ -880,7 +880,7 @@ func (v ComponentValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 	case attr.ValueStateKnown:
 		vals := make(map[string]tftypes.Value, 11)
 
-		val, err = v.Id.ToTerraformValue(ctx)
+		val, err = v.UnderscoreId.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -1032,7 +1032,7 @@ func (v ComponentValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"_id":          v.Id,
+			"_id":          v.UnderscoreId,
 			"account_name": v.AccountName,
 			"color":        v.Color,
 			"group_type":   v.GroupType,
@@ -1063,7 +1063,7 @@ func (v ComponentValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.Id.Equal(other.Id) {
+	if !v.UnderscoreId.Equal(other.UnderscoreId) {
 		return false
 	}
 
@@ -1487,7 +1487,7 @@ func (t PropType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 
 	attributes := in.Attributes()
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -1497,12 +1497,12 @@ func (t PropType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	accountNameAttribute, ok := attributes["account_name"]
@@ -1690,18 +1690,18 @@ func (t PropType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 	}
 
 	return PropValue{
-		Id:          idVal,
-		AccountName: accountNameVal,
-		Color:       colorVal,
-		GroupType:   groupTypeVal,
-		Icon:        iconVal,
-		Name:        nameVal,
-		NodeType:    nodeTypeVal,
-		Props:       propsVal,
-		SchemeId:    schemeIdVal,
-		SsId:        ssIdVal,
-		PropType:    typeVal,
-		state:       attr.ValueStateKnown,
+		UnderscoreId: underscoreIdVal,
+		AccountName:  accountNameVal,
+		Color:        colorVal,
+		GroupType:    groupTypeVal,
+		Icon:         iconVal,
+		Name:         nameVal,
+		NodeType:     nodeTypeVal,
+		Props:        propsVal,
+		SchemeId:     schemeIdVal,
+		SsId:         ssIdVal,
+		PropType:     typeVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1768,7 +1768,7 @@ func NewPropValue(attributeTypes map[string]attr.Type, attributes map[string]att
 		return NewPropValueUnknown(), diags
 	}
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -1778,12 +1778,12 @@ func NewPropValue(attributeTypes map[string]attr.Type, attributes map[string]att
 		return NewPropValueUnknown(), diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	accountNameAttribute, ok := attributes["account_name"]
@@ -1971,18 +1971,18 @@ func NewPropValue(attributeTypes map[string]attr.Type, attributes map[string]att
 	}
 
 	return PropValue{
-		Id:          idVal,
-		AccountName: accountNameVal,
-		Color:       colorVal,
-		GroupType:   groupTypeVal,
-		Icon:        iconVal,
-		Name:        nameVal,
-		NodeType:    nodeTypeVal,
-		Props:       propsVal,
-		SchemeId:    schemeIdVal,
-		SsId:        ssIdVal,
-		PropType:    typeVal,
-		state:       attr.ValueStateKnown,
+		UnderscoreId: underscoreIdVal,
+		AccountName:  accountNameVal,
+		Color:        colorVal,
+		GroupType:    groupTypeVal,
+		Icon:         iconVal,
+		Name:         nameVal,
+		NodeType:     nodeTypeVal,
+		Props:        propsVal,
+		SchemeId:     schemeIdVal,
+		SsId:         ssIdVal,
+		PropType:     typeVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2054,18 +2054,18 @@ func (t PropType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = PropValue{}
 
 type PropValue struct {
-	Id          basetypes.StringValue `tfsdk:"_id"`
-	AccountName basetypes.StringValue `tfsdk:"account_name"`
-	Color       basetypes.StringValue `tfsdk:"color"`
-	GroupType   basetypes.StringValue `tfsdk:"group_type"`
-	Icon        basetypes.StringValue `tfsdk:"icon"`
-	Name        basetypes.StringValue `tfsdk:"name"`
-	NodeType    basetypes.StringValue `tfsdk:"node_type"`
-	Props       PropsValue            `tfsdk:"props"`
-	SchemeId    basetypes.StringValue `tfsdk:"scheme_id"`
-	SsId        basetypes.StringValue `tfsdk:"ss_id"`
-	PropType    basetypes.StringValue `tfsdk:"type"`
-	state       attr.ValueState
+	UnderscoreId basetypes.StringValue `tfsdk:"_id"`
+	AccountName  basetypes.StringValue `tfsdk:"account_name"`
+	Color        basetypes.StringValue `tfsdk:"color"`
+	GroupType    basetypes.StringValue `tfsdk:"group_type"`
+	Icon         basetypes.StringValue `tfsdk:"icon"`
+	Name         basetypes.StringValue `tfsdk:"name"`
+	NodeType     basetypes.StringValue `tfsdk:"node_type"`
+	Props        PropsValue            `tfsdk:"props"`
+	SchemeId     basetypes.StringValue `tfsdk:"scheme_id"`
+	SsId         basetypes.StringValue `tfsdk:"ss_id"`
+	PropType     basetypes.StringValue `tfsdk:"type"`
+	state        attr.ValueState
 }
 
 func (v PropValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
@@ -2096,7 +2096,7 @@ func (v PropValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) 
 	case attr.ValueStateKnown:
 		vals := make(map[string]tftypes.Value, 11)
 
-		val, err = v.Id.ToTerraformValue(ctx)
+		val, err = v.UnderscoreId.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -2248,7 +2248,7 @@ func (v PropValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"_id":          v.Id,
+			"_id":          v.UnderscoreId,
 			"account_name": v.AccountName,
 			"color":        v.Color,
 			"group_type":   v.GroupType,
@@ -2279,7 +2279,7 @@ func (v PropValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.Id.Equal(other.Id) {
+	if !v.UnderscoreId.Equal(other.UnderscoreId) {
 		return false
 	}
 
@@ -2379,7 +2379,7 @@ func (t SchemeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 
 	attributes := in.Attributes()
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -2389,12 +2389,12 @@ func (t SchemeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	accountNameAttribute, ok := attributes["account_name"]
@@ -2528,15 +2528,15 @@ func (t SchemeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	}
 
 	return SchemeValue{
-		Id:          idVal,
-		AccountName: accountNameVal,
-		Name:        nameVal,
-		Scheme:      schemeVal,
-		SchemeId:    schemeIdVal,
-		SsId:        ssIdVal,
-		Status:      statusVal,
-		SchemeType:  typeVal,
-		state:       attr.ValueStateKnown,
+		UnderscoreId: underscoreIdVal,
+		AccountName:  accountNameVal,
+		Name:         nameVal,
+		Scheme:       schemeVal,
+		SchemeId:     schemeIdVal,
+		SsId:         ssIdVal,
+		Status:       statusVal,
+		SchemeType:   typeVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2603,7 +2603,7 @@ func NewSchemeValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewSchemeValueUnknown(), diags
 	}
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -2613,12 +2613,12 @@ func NewSchemeValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewSchemeValueUnknown(), diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	accountNameAttribute, ok := attributes["account_name"]
@@ -2752,15 +2752,15 @@ func NewSchemeValue(attributeTypes map[string]attr.Type, attributes map[string]a
 	}
 
 	return SchemeValue{
-		Id:          idVal,
-		AccountName: accountNameVal,
-		Name:        nameVal,
-		Scheme:      schemeVal,
-		SchemeId:    schemeIdVal,
-		SsId:        ssIdVal,
-		Status:      statusVal,
-		SchemeType:  typeVal,
-		state:       attr.ValueStateKnown,
+		UnderscoreId: underscoreIdVal,
+		AccountName:  accountNameVal,
+		Name:         nameVal,
+		Scheme:       schemeVal,
+		SchemeId:     schemeIdVal,
+		SsId:         ssIdVal,
+		Status:       statusVal,
+		SchemeType:   typeVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2832,15 +2832,15 @@ func (t SchemeType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = SchemeValue{}
 
 type SchemeValue struct {
-	Id          basetypes.StringValue `tfsdk:"_id"`
-	AccountName basetypes.StringValue `tfsdk:"account_name"`
-	Name        basetypes.StringValue `tfsdk:"name"`
-	Scheme      basetypes.StringValue `tfsdk:"scheme"`
-	SchemeId    basetypes.StringValue `tfsdk:"scheme_id"`
-	SsId        basetypes.StringValue `tfsdk:"ss_id"`
-	Status      basetypes.StringValue `tfsdk:"status"`
-	SchemeType  basetypes.StringValue `tfsdk:"type"`
-	state       attr.ValueState
+	UnderscoreId basetypes.StringValue `tfsdk:"_id"`
+	AccountName  basetypes.StringValue `tfsdk:"account_name"`
+	Name         basetypes.StringValue `tfsdk:"name"`
+	Scheme       basetypes.StringValue `tfsdk:"scheme"`
+	SchemeId     basetypes.StringValue `tfsdk:"scheme_id"`
+	SsId         basetypes.StringValue `tfsdk:"ss_id"`
+	Status       basetypes.StringValue `tfsdk:"status"`
+	SchemeType   basetypes.StringValue `tfsdk:"type"`
+	state        attr.ValueState
 }
 
 func (v SchemeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
@@ -2864,7 +2864,7 @@ func (v SchemeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	case attr.ValueStateKnown:
 		vals := make(map[string]tftypes.Value, 8)
 
-		val, err = v.Id.ToTerraformValue(ctx)
+		val, err = v.UnderscoreId.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -2979,7 +2979,7 @@ func (v SchemeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"_id":          v.Id,
+			"_id":          v.UnderscoreId,
 			"account_name": v.AccountName,
 			"name":         v.Name,
 			"scheme":       v.Scheme,
@@ -3007,7 +3007,7 @@ func (v SchemeValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.Id.Equal(other.Id) {
+	if !v.UnderscoreId.Equal(other.UnderscoreId) {
 		return false
 	}
 

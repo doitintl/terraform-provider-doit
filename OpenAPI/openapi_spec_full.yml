@@ -4031,7 +4031,7 @@ paths:
           description: Layer ID.
           schema:
             type: string
-        - name: _id
+        - name: snapshot_id
           in: query
           required: true
           description: Snapshot ID.
@@ -8837,10 +8837,15 @@ components:
         ss_id:
           type: string
           description: Parent layer ID.
-    CloudDiagramComponentBase:
+    CloudDiagramNode:
       type: object
-      description: Common fields shared by all layer component types.
+      required:
+        - _id
+      description: A node component (host, service, or application component).
       properties:
+        _id:
+          type: string
+          description: Node ID.
         name:
           type: string
           description: Component name.
@@ -8869,64 +8874,79 @@ components:
           description: Tags assigned to the component.
           items:
             type: string
-    CloudDiagramNode:
-      allOf:
-        - $ref: "#/components/schemas/CloudDiagramComponentBase"
-        - type: object
-          required:
-            - _id
-          description: A node component (host, service, or application component).
-          properties:
-            _id:
-              type: string
-              description: Node ID.
-            color:
-              type: string
-              description: Node color.
-            icon:
-              type: string
-              description: Node icon identifier.
-            parent:
-              type: string
-              description: Parent node ID.
-            infra_node:
-              $ref: "#/components/schemas/CloudDiagramInfraNodeRef"
-            instance_count:
-              type: integer
-              description: Number of instances represented by this node.
-            running:
-              type: boolean
-              description: Whether the node is currently running.
-            issues:
-              type: array
-              description: Issues associated with this node.
-              items:
-                $ref: "#/components/schemas/CloudDiagramIssue"
+        color:
+          type: string
+          description: Node color.
+        icon:
+          type: string
+          description: Node icon identifier.
+        parent:
+          type: string
+          description: Parent node ID.
+        infra_node:
+          $ref: "#/components/schemas/CloudDiagramInfraNodeRef"
+        instance_count:
+          type: integer
+          description: Number of instances represented by this node.
+        running:
+          type: boolean
+          description: Whether the node is currently running.
+        issues:
+          type: array
+          description: Issues associated with this node.
+          items:
+            $ref: "#/components/schemas/CloudDiagramIssue"
     CloudDiagramElement:
-      allOf:
-        - $ref: "#/components/schemas/CloudDiagramComponentBase"
-        - type: object
-          required:
-            - _id
-          description: An element component (application-layer component).
-          properties:
-            _id:
-              type: string
-              description: Element ID.
-            color:
-              type: string
-              description: Element color.
-            icon:
-              type: string
-              description: Element icon identifier.
-            parent:
-              type: string
-              description: Parent element ID.
-            issues:
-              type: array
-              description: Issues associated with this element.
-              items:
-                $ref: "#/components/schemas/CloudDiagramIssue"
+      type: object
+      required:
+        - _id
+      description: An element component (application-layer component).
+      properties:
+        _id:
+          type: string
+          description: Element ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+            - AWS
+            - GCP
+            - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        color:
+          type: string
+          description: Element color.
+        icon:
+          type: string
+          description: Element icon identifier.
+        parent:
+          type: string
+          description: Parent element ID.
+        issues:
+          type: array
+          description: Issues associated with this element.
+          items:
+            $ref: "#/components/schemas/CloudDiagramIssue"
     CloudDiagramGroupItem:
       type: object
       required:
@@ -8951,121 +8971,199 @@ components:
             - statussheet
           description: Component type.
     CloudDiagramGroup:
-      allOf:
-        - $ref: "#/components/schemas/CloudDiagramComponentBase"
-        - type: object
-          required:
-            - _id
-          description: A group component (VPC, subnet, region, cluster, etc.).
-          properties:
-            _id:
-              type: string
-              description: Group ID.
-            group_type:
-              type: string
-              enum:
-                - account
-                - az
-                - azure_subscription
-                - customer_gateway
-                - ecs
-                - eks
-                - aks
-                - k8s_namespace
-                - k8s_pod
-                - k8s_deployment
-                - k8s_daemon_set
-                - k8s_replica_set
-                - k8s_stateful_set
-                - project
-                - region
-                - security_group
-                - subnet
-                - vpc
-                - gcp_instance_group
-                - gcp_managed_zone
-                - gke_cluster
-                - azure_dns_zone
-                - azure_cdn_profile
-                - azure_resource_group
-              description: Group type.
-            color:
-              type: string
-              description: Group color.
-            icon:
-              type: string
-              description: Group icon identifier.
-            items:
-              type: array
-              description: Components contained in the group.
-              items:
-                $ref: "#/components/schemas/CloudDiagramGroupItem"
-            issues:
-              type: array
-              description: Issues associated with this group.
-              items:
-                $ref: "#/components/schemas/CloudDiagramIssue"
+      type: object
+      required:
+        - _id
+      description: A group component (VPC, subnet, region, cluster, etc.).
+      properties:
+        _id:
+          type: string
+          description: Group ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+            - AWS
+            - GCP
+            - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        group_type:
+          type: string
+          enum:
+            - account
+            - az
+            - azure_subscription
+            - customer_gateway
+            - ecs
+            - eks
+            - aks
+            - k8s_namespace
+            - k8s_pod
+            - k8s_deployment
+            - k8s_daemon_set
+            - k8s_replica_set
+            - k8s_stateful_set
+            - project
+            - region
+            - security_group
+            - subnet
+            - vpc
+            - gcp_instance_group
+            - gcp_managed_zone
+            - gke_cluster
+            - azure_dns_zone
+            - azure_cdn_profile
+            - azure_resource_group
+          description: Group type.
+        color:
+          type: string
+          description: Group color.
+        icon:
+          type: string
+          description: Group icon identifier.
+        items:
+          type: array
+          description: Components contained in the group.
+          items:
+            $ref: "#/components/schemas/CloudDiagramGroupItem"
+        issues:
+          type: array
+          description: Issues associated with this group.
+          items:
+            $ref: "#/components/schemas/CloudDiagramIssue"
     CloudDiagramLink:
-      allOf:
-        - $ref: "#/components/schemas/CloudDiagramComponentBase"
-        - type: object
-          required:
-            - _id
-          description: A link component connecting two nodes or groups.
-          properties:
-            _id:
-              type: string
-              description: Link ID.
-            connection_type:
-              type: string
-              enum:
-                - normal
-                - tunnel
-                - private
-                - VPN
-                - VPC Peering
-                - Network Connectivity Center
-                - Private Service Connect
-                - Private Google Access
-                - Serverless VPC
-                - Serverless VPC Access Connector
-                - Cross Cloud Interconnect
-                - Partner Interconnect
-                - Dedicated Interconnect
-              description: Link connection type.
-            owner_ss_id:
-              type: string
-              description: Owner layer ID for cross-diagram links.
-            issues:
-              type: array
-              description: Issues associated with this link.
-              items:
-                $ref: "#/components/schemas/CloudDiagramIssue"
+      type: object
+      required:
+        - _id
+      description: A link component connecting two nodes or groups.
+      properties:
+        _id:
+          type: string
+          description: Link ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+            - AWS
+            - GCP
+            - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        connection_type:
+          type: string
+          enum:
+            - normal
+            - tunnel
+            - private
+            - VPN
+            - VPC Peering
+            - Network Connectivity Center
+            - Private Service Connect
+            - Private Google Access
+            - Serverless VPC
+            - Serverless VPC Access Connector
+            - Cross Cloud Interconnect
+            - Partner Interconnect
+            - Dedicated Interconnect
+          description: Link connection type.
+        owner_ss_id:
+          type: string
+          description: Owner layer ID for cross-diagram links.
+        issues:
+          type: array
+          description: Issues associated with this link.
+          items:
+            $ref: "#/components/schemas/CloudDiagramIssue"
     CloudDiagramAttachment:
-      allOf:
-        - $ref: "#/components/schemas/CloudDiagramComponentBase"
-        - type: object
-          required:
-            - _id
-          description: An attachment component added to a group.
-          properties:
-            _id:
-              type: string
-              description: Attachment ID.
-            color:
-              type: string
-              description: Attachment color.
-            icon:
-              type: string
-              description: Attachment icon identifier.
-            group:
-              type: string
-              description: Parent group ID.
-            issues:
-              type: array
-              description: Issues associated with this attachment.
-              items:
-                $ref: "#/components/schemas/CloudDiagramIssue"
+      type: object
+      required:
+        - _id
+      description: An attachment component added to a group.
+      properties:
+        _id:
+          type: string
+          description: Attachment ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+            - AWS
+            - GCP
+            - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        color:
+          type: string
+          description: Attachment color.
+        icon:
+          type: string
+          description: Attachment icon identifier.
+        group:
+          type: string
+          description: Parent group ID.
+        issues:
+          type: array
+          description: Issues associated with this attachment.
+          items:
+            $ref: "#/components/schemas/CloudDiagramIssue"
     CloudDiagramCombinerItem:
       type: object
       required:
@@ -9191,15 +9289,48 @@ components:
           type: integer
           description: Links version counter, incremented on every link change.
     CloudDiagramStatussheetData:
-      allOf:
-        - $ref: "#/components/schemas/CloudDiagramStatussheetComponents"
-        - type: object
-          required:
-            - statussheet
-          description: A layer entry with projected metadata and component collections.
-          properties:
-            statussheet:
-              $ref: "#/components/schemas/CloudDiagramStatussheetMeta"
+      type: object
+      required:
+        - statussheet
+      description: A layer entry with projected metadata and component collections.
+      properties:
+        statussheet:
+          $ref: "#/components/schemas/CloudDiagramStatussheetMeta"
+        node:
+          type: object
+          description: Map of node ID to node component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramNode"
+        element:
+          type: object
+          description: Map of element ID to element component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramElement"
+        group:
+          type: object
+          description: Map of group ID to group component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramGroup"
+        link:
+          type: object
+          description: Map of link ID to link component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramLink"
+        attachment:
+          type: object
+          description: Map of attachment ID to attachment component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramAttachment"
+        combiner:
+          type: object
+          description: Map of combiner ID to combiner component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramCombiner"
+        note:
+          type: object
+          description: Map of note ID to note component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramNote"
     CloudDiagramSchemeStatussheetInfo:
       type: object
       required:

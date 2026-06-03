@@ -20,7 +20,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/Kunde21/markdownfmt/v3 v3.1.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
@@ -32,7 +32,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
 	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
-	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260415083141-d81f9d43b2e3 // indirect
+	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260603110311-08310878ef67 // indirect
 	github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260415075232-f4fc304812c4 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/fatih/color v1.19.0 // indirect
@@ -103,12 +103,12 @@ require (
 	go.abhg.dev/goldmark/frontmatter v0.2.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.4 // indirect
-	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/net v0.54.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
