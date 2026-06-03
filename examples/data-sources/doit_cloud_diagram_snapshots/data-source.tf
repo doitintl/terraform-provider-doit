@@ -1,12 +1,14 @@
-# Look up snapshots for a specific Cloud Diagram layer
-data "doit_cloud_diagram_snapshots" "example" {
-  id = "your-cloud-diagram-layer-id"
+# Discover a layer ID from the schemes endpoint.
+# Each diagram has layers (statussheet entries) with an "ssid" field
+# that serves as the layer ID for other Cloud Diagram data sources.
+data "doit_cloud_diagram_schemes" "all" {}
+
+locals {
+  first_scheme_key = keys(data.doit_cloud_diagram_schemes.all.scheme)[0]
+  first_layer_id   = data.doit_cloud_diagram_schemes.all.scheme[local.first_scheme_key].statussheet[0].ssid
 }
 
-# Look up snapshots with pagination and custom sorting
-data "doit_cloud_diagram_snapshots" "example_paginated" {
-  id     = "your-cloud-diagram-layer-id"
-  limit  = 10
-  offset = 0
-  sort   = "-createdAt"
+# Look up snapshots for the discovered layer.
+data "doit_cloud_diagram_snapshots" "example" {
+  id = local.first_layer_id
 }
