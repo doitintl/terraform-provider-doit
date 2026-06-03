@@ -120,7 +120,7 @@ func (t CloudDiagramSnapshotsType) ValueFromObject(ctx context.Context, in baset
 
 	attributes := in.Attributes()
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -130,12 +130,12 @@ func (t CloudDiagramSnapshotsType) ValueFromObject(ctx context.Context, in baset
 		return nil, diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	createdAtAttribute, ok := attributes["created_at"]
@@ -197,11 +197,11 @@ func (t CloudDiagramSnapshotsType) ValueFromObject(ctx context.Context, in baset
 	}
 
 	return CloudDiagramSnapshotsValue{
-		Id:        idVal,
-		CreatedAt: createdAtVal,
-		Name:      nameVal,
-		PrevState: prevStateVal,
-		state:     attr.ValueStateKnown,
+		UnderscoreId: underscoreIdVal,
+		CreatedAt:    createdAtVal,
+		Name:         nameVal,
+		PrevState:    prevStateVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -268,7 +268,7 @@ func NewCloudDiagramSnapshotsValue(attributeTypes map[string]attr.Type, attribut
 		return NewCloudDiagramSnapshotsValueUnknown(), diags
 	}
 
-	idAttribute, ok := attributes["_id"]
+	underscoreIdAttribute, ok := attributes["_id"]
 
 	if !ok {
 		diags.AddError(
@@ -278,12 +278,12 @@ func NewCloudDiagramSnapshotsValue(attributeTypes map[string]attr.Type, attribut
 		return NewCloudDiagramSnapshotsValueUnknown(), diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.StringValue)
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, idAttribute))
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
 	}
 
 	createdAtAttribute, ok := attributes["created_at"]
@@ -345,11 +345,11 @@ func NewCloudDiagramSnapshotsValue(attributeTypes map[string]attr.Type, attribut
 	}
 
 	return CloudDiagramSnapshotsValue{
-		Id:        idVal,
-		CreatedAt: createdAtVal,
-		Name:      nameVal,
-		PrevState: prevStateVal,
-		state:     attr.ValueStateKnown,
+		UnderscoreId: underscoreIdVal,
+		CreatedAt:    createdAtVal,
+		Name:         nameVal,
+		PrevState:    prevStateVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -421,11 +421,11 @@ func (t CloudDiagramSnapshotsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = CloudDiagramSnapshotsValue{}
 
 type CloudDiagramSnapshotsValue struct {
-	Id        basetypes.StringValue `tfsdk:"_id"`
-	CreatedAt basetypes.StringValue `tfsdk:"created_at"`
-	Name      basetypes.StringValue `tfsdk:"name"`
-	PrevState basetypes.StringValue `tfsdk:"prev_state"`
-	state     attr.ValueState
+	UnderscoreId basetypes.StringValue `tfsdk:"_id"`
+	CreatedAt    basetypes.StringValue `tfsdk:"created_at"`
+	Name         basetypes.StringValue `tfsdk:"name"`
+	PrevState    basetypes.StringValue `tfsdk:"prev_state"`
+	state        attr.ValueState
 }
 
 func (v CloudDiagramSnapshotsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
@@ -445,7 +445,7 @@ func (v CloudDiagramSnapshotsValue) ToTerraformValue(ctx context.Context) (tftyp
 	case attr.ValueStateKnown:
 		vals := make(map[string]tftypes.Value, 4)
 
-		val, err = v.Id.ToTerraformValue(ctx)
+		val, err = v.UnderscoreId.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -524,7 +524,7 @@ func (v CloudDiagramSnapshotsValue) ToObjectValue(ctx context.Context) (basetype
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"_id":        v.Id,
+			"_id":        v.UnderscoreId,
 			"created_at": v.CreatedAt,
 			"name":       v.Name,
 			"prev_state": v.PrevState,
@@ -548,7 +548,7 @@ func (v CloudDiagramSnapshotsValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.Id.Equal(other.Id) {
+	if !v.UnderscoreId.Equal(other.UnderscoreId) {
 		return false
 	}
 

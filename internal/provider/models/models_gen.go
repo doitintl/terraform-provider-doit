@@ -4172,6 +4172,21 @@ type CloudDiagramIssue struct {
 	Snoozed *float32 `json:"snoozed,omitempty"`
 }
 
+// CloudDiagramLayerSnapshot A saved snapshot of a diagram layer's state.
+type CloudDiagramLayerSnapshot struct {
+	// UnderscoreId Snapshot ID.
+	UnderscoreId string `json:"_id"`
+
+	// CreatedAt Timestamp when the snapshot was created.
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Name Snapshot name.
+	Name *string `json:"name,omitempty"`
+
+	// PrevState ID of the previous snapshot in the chain.
+	PrevState *string `json:"prevState,omitempty"`
+}
+
 // CloudDiagramLink A link component connecting two nodes or groups.
 type CloudDiagramLink struct {
 	// UnderscoreId Link ID.
@@ -6861,6 +6876,9 @@ type N401 = Error
 // N403 Standard error response structure.
 type N403 = Error
 
+// N403ResourceOrForbidden Standard error response structure.
+type N403ResourceOrForbidden = Error
+
 // N404 Standard error response structure.
 type N404 = Error
 
@@ -7198,6 +7216,18 @@ type GetCloudDiagramComponentsParamsType string
 
 // GetCloudDiagramComponentsParamsNodeType defines parameters for GetCloudDiagramComponents.
 type GetCloudDiagramComponentsParamsNodeType string
+
+// ListCloudDiagramLayerSnapshotsParams defines parameters for ListCloudDiagramLayerSnapshots.
+type ListCloudDiagramLayerSnapshotsParams struct {
+	// Offset Number of snapshots to skip (default 0).
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Limit Maximum number of snapshots to return (default 10).
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Sort Sort expression (e.g. "-createdAt" for descending).
+	Sort *string `form:"sort,omitempty" json:"sort,omitempty"`
+}
 
 // ListKnownIssuesParams defines parameters for ListKnownIssues.
 type ListKnownIssuesParams struct {
@@ -7874,6 +7904,9 @@ type ClientInterface interface {
 	SearchCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCloudDiagramLayerSnapshots request
+	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -8993,6 +9026,18 @@ func (c *Client) SearchCloudDiagramsWithBody(ctx context.Context, contentType st
 
 func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSearchCloudDiagramsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCloudDiagramLayerSnapshotsRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -10177,19 +10222,10 @@ func NewUpdateAnnotationRequestWithBody(server string, id string, contentType st
 		return nil, err
 	}
 
-		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ss_id", params.SsId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
-				}
-			}
-		}
+	req.Header.Add("Content-Type", contentType)
 
-		if params.Limit != nil {
+	return req, nil
+}
 
 // NewListBudgetsRequest generates requests for ListBudgets
 func NewListBudgetsRequest(server string, params *ListBudgetsParams) (*http.Request, error) {
@@ -12735,6 +12771,91 @@ func NewSearchCloudDiagramsRequestWithBody(server string, contentType string, bo
 	return req, nil
 }
 
+// NewListCloudDiagramLayerSnapshotsRequest generates requests for ListCloudDiagramLayerSnapshots
+func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *ListCloudDiagramLayerSnapshotsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/snapshots", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "offset", *params.Offset, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Sort != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sort", *params.Sort, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListKnownIssuesRequest generates requests for ListKnownIssues
 func NewListKnownIssuesRequest(server string, params *ListKnownIssuesParams) (*http.Request, error) {
 	var err error
@@ -14403,6 +14524,9 @@ type ClientWithResponsesInterface interface {
 
 	SearchCloudDiagramsWithResponse(ctx context.Context, body SearchCloudDiagramsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchCloudDiagramsResp, error)
 
+	// ListCloudDiagramLayerSnapshotsWithResponse request
+	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
+
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
 
@@ -14506,6 +14630,7 @@ type ListAlertsResp struct {
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -14605,7 +14730,8 @@ type GetAlertResp struct {
 	JSON200      *Alert
 	JSON400      *N400
 	JSON401      *N401
-	JSON403      *N403ResourceOrForbidden
+	JSON403      *N403
+	JSON404      *N404
 }
 
 // Status returns HTTPResponse.Status
@@ -16596,6 +16722,39 @@ func (r SearchCloudDiagramsResp) ContentType() string {
 	return ""
 }
 
+type ListCloudDiagramLayerSnapshotsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CloudDiagramLayerSnapshot
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCloudDiagramLayerSnapshotsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCloudDiagramLayerSnapshotsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListKnownIssuesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18262,6 +18421,15 @@ func (c *ClientWithResponses) SearchCloudDiagramsWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseSearchCloudDiagramsResp(rsp)
+}
+
+// ListCloudDiagramLayerSnapshotsWithResponse request returning *ListCloudDiagramLayerSnapshotsResp
+func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error) {
+	rsp, err := c.ListCloudDiagramLayerSnapshots(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCloudDiagramLayerSnapshotsResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -20731,7 +20899,7 @@ func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403ResourceOrForbidden
+		var dest N403
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -20792,7 +20960,7 @@ func ParseUpdateReportResp(rsp *http.Response) (*UpdateReportResp, error) {
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403ResourceOrForbidden
+		var dest N403
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -21838,6 +22006,53 @@ func ParseSearchCloudDiagramsResp(rsp *http.Response) (*SearchCloudDiagramsResp,
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
 		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCloudDiagramLayerSnapshotsResp parses an HTTP response from a ListCloudDiagramLayerSnapshotsWithResponse call
+func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiagramLayerSnapshotsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCloudDiagramLayerSnapshotsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CloudDiagramLayerSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

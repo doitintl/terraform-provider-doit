@@ -2951,6 +2951,52 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /clouddiagrams/v1/statussheet/{id}/snapshots:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: List layer snapshots
+      description: Returns the list of saved snapshots for the specified diagram layer.
+      operationId: listCloudDiagramLayerSnapshots
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: Number of snapshots to skip (default 0).
+          schema:
+            type: integer
+            minimum: 0
+        - name: limit
+          in: query
+          description: Maximum number of snapshots to return (default 10).
+          schema:
+            type: integer
+            minimum: 1
+        - name: sort
+          in: query
+          description: Sort expression (e.g. "-createdAt" for descending).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Snapshots returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramLayerSnapshot"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /analytics/v1/commitment-manager:
     get:
       tags:
@@ -4752,6 +4798,26 @@ components:
         jira:
           type: string
           description: Linked Jira ticket key or URL.
+    CloudDiagramLayerSnapshot:
+      type: object
+      required:
+        - _id
+        - createdAt
+      description: A saved snapshot of a diagram layer's state.
+      properties:
+        _id:
+          type: string
+          description: Snapshot ID.
+        name:
+          type: string
+          description: Snapshot name.
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the snapshot was created.
+        prevState:
+          type: string
+          description: ID of the previous snapshot in the chain.
     CloudDiagramLink:
       type: object
       required:
