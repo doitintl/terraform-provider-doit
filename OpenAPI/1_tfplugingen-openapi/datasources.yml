@@ -210,3 +210,8 @@ data_sources:
     read:
       path: /clouddiagrams/v1/scheme/search
       method: POST
+  # Cloud Diagrams schemes data source
+  cloud_diagram_schemes:
+    read:
+      path: /clouddiagrams/v1/scheme/get
+      method: POST
