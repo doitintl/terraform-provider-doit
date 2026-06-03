@@ -20,10 +20,9 @@ data "doit_cloud_diagram_schemes" "detailed" {
   skip_empty = true
 }
 
-# Retrieve specific layers only.
+# Retrieve specific layers with components and links.
 data "doit_cloud_diagram_schemes" "layers" {
   layer_ids  = ["layer-id-1"]
   components = true
-  node       = true
   link       = true
 }

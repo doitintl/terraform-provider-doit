@@ -23,7 +23,7 @@ output "diagrams" {
     key => {
       name   = diagram.name
       type   = diagram.type
-      layers = [for layer in diagram.statussheet : layer.name]
+      layers = [for layer in diagram.statussheet : layer.account_name]
     }
   }
 }
@@ -35,11 +35,10 @@ data "doit_cloud_diagram_schemes" "detailed" {
   skip_empty = true
 }
 
-# Retrieve specific layers only.
+# Retrieve specific layers with components and links.
 data "doit_cloud_diagram_schemes" "layers" {
   layer_ids  = ["layer-id-1"]
   components = true
-  node       = true
   link       = true
 }
 ```
