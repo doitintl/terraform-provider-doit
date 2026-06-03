@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -138,8 +139,9 @@ func testCheckAtLeastOneDiagramWithLayers(name string) resource.TestCheckFunc {
 		}
 
 		// Scan all attributes for scheme.*.statussheet.# > 0.
+		const suffix = ".statussheet.#"
 		for key, val := range rs.Primary.Attributes {
-			if len(key) > len("scheme.") && key[len(key)-len(".statussheet.#"):] == ".statussheet.#" {
+			if strings.HasSuffix(key, suffix) {
 				if val != "0" {
 					return nil // Found a diagram with at least one layer.
 				}

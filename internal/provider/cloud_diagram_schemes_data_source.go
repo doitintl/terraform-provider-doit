@@ -234,14 +234,35 @@ func computeSchemesID(data cloudDiagramSchemesDataSourceModel) string {
 	if !data.LayerIds.IsNull() {
 		input += fmt.Sprintf("\nlayer_ids:%s", data.LayerIds.String())
 	}
-	if !data.Components.IsNull() {
-		input += fmt.Sprintf("\ncomponents:%v", data.Components.ValueBool())
+
+	// Include all boolean query params in the hash.
+	for _, p := range []struct {
+		name string
+		val  types.Bool
+	}{
+		{"alarms_count", data.AlarmsCount},
+		{"combiner", data.Combiner},
+		{"components", data.Components},
+		{"element", data.Element},
+		{"exclude_default_vpc", data.ExcludeDefaultVpc},
+		{"exclude_empty_subnets", data.ExcludeEmptySubnets},
+		{"external", data.External},
+		{"group", data.Group},
+		{"issues_count", data.IssuesCount},
+		{"link", data.Link},
+		{"note", data.Note},
+		{"skip_empty", data.SkipEmpty},
+	} {
+		if !p.val.IsNull() {
+			input += fmt.Sprintf("\n%s:%v", p.name, p.val.ValueBool())
+		}
 	}
-	if !data.SkipEmpty.IsNull() {
-		input += fmt.Sprintf("\nskip_empty:%v", data.SkipEmpty.ValueBool())
-	}
+
 	if !data.NodeType.IsNull() {
 		input += fmt.Sprintf("\nnode_type:%s", data.NodeType.ValueString())
+	}
+	if !data.Type.IsNull() {
+		input += fmt.Sprintf("\ntype:%s", data.Type.String())
 	}
 	hash := sha256.Sum256([]byte(input))
 	return fmt.Sprintf("%x", hash)
