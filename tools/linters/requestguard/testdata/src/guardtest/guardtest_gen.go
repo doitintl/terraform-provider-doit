@@ -190,7 +190,7 @@ func SearchDataSourceSchema(ctx context.Context) dsschema.Schema {
 // Schema wires the data source type to the schema.
 func (d *searchDataSource) Schema(ctx context.Context) dsschema.Schema {
 	s := SearchDataSourceSchema(ctx)
-	// Add a manual attribute (simulates runtime override like cloud_diagram_search).
+	// Add a manual attribute (simulates runtime override like cloud_diagrams_search).
 	s.Attributes["ss_id"] = dsschema.StringAttribute{
 		Optional: true,
 	}

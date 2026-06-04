@@ -7374,6 +7374,12 @@ type GetStatussheetComponentsParams struct {
 	P *string `form:"p,omitempty" json:"p,omitempty"`
 }
 
+// GetCloudDiagramLayerSnapshotParams defines parameters for GetCloudDiagramLayerSnapshot.
+type GetCloudDiagramLayerSnapshotParams struct {
+	// SnapshotId Snapshot ID.
+	SnapshotId string `form:"snapshot_id" json:"snapshot_id"`
+}
+
 // ListCloudDiagramLayerSnapshotsParams defines parameters for ListCloudDiagramLayerSnapshots.
 type ListCloudDiagramLayerSnapshotsParams struct {
 	// Offset Number of snapshots to skip (default 0).
@@ -8072,6 +8078,9 @@ type ClientInterface interface {
 	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudDiagramLayerSnapshot request
+	GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListCloudDiagramLayerSnapshots request
 	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9230,6 +9239,18 @@ func (c *Client) GetStatussheetComponentsWithBody(ctx context.Context, id string
 
 func (c *Client) GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStatussheetComponentsRequest(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramLayerSnapshotRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -13107,6 +13128,63 @@ func NewGetStatussheetComponentsRequestWithBody(server string, id string, params
 	return req, nil
 }
 
+// NewGetCloudDiagramLayerSnapshotRequest generates requests for GetCloudDiagramLayerSnapshot
+func NewGetCloudDiagramLayerSnapshotRequest(server string, id string, params *GetCloudDiagramLayerSnapshotParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/snapshot", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "snapshot_id", params.SnapshotId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListCloudDiagramLayerSnapshotsRequest generates requests for ListCloudDiagramLayerSnapshots
 func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *ListCloudDiagramLayerSnapshotsParams) (*http.Request, error) {
 	var err error
@@ -14867,6 +14945,9 @@ type ClientWithResponsesInterface interface {
 	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
 
 	GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
+	// GetCloudDiagramLayerSnapshotWithResponse request
+	GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error)
 
 	// ListCloudDiagramLayerSnapshotsWithResponse request
 	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
@@ -17132,6 +17213,39 @@ func (r GetStatussheetComponentsResp) ContentType() string {
 	return ""
 }
 
+type GetCloudDiagramLayerSnapshotResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramLayerSnapshot
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramLayerSnapshotResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramLayerSnapshotResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCloudDiagramLayerSnapshotResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListCloudDiagramLayerSnapshotsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18857,6 +18971,15 @@ func (c *ClientWithResponses) GetStatussheetComponentsWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParseGetStatussheetComponentsResp(rsp)
+}
+
+// GetCloudDiagramLayerSnapshotWithResponse request returning *GetCloudDiagramLayerSnapshotResp
+func (c *ClientWithResponses) GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error) {
+	rsp, err := c.GetCloudDiagramLayerSnapshot(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramLayerSnapshotResp(rsp)
 }
 
 // ListCloudDiagramLayerSnapshotsWithResponse request returning *ListCloudDiagramLayerSnapshotsResp
@@ -22515,6 +22638,53 @@ func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetCompo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest CloudDiagramStatussheetComponents
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramLayerSnapshotResp parses an HTTP response from a GetCloudDiagramLayerSnapshotWithResponse call
+func ParseGetCloudDiagramLayerSnapshotResp(rsp *http.Response) (*GetCloudDiagramLayerSnapshotResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramLayerSnapshotResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramLayerSnapshot
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
