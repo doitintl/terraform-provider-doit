@@ -10,10 +10,12 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
@@ -21,6 +23,7 @@ import (
 // Compile-time interface checks.
 var _ datasource.DataSource = (*cloudDiagramsStatussheetDataSource)(nil)
 var _ datasource.DataSourceWithConfigure = (*cloudDiagramsStatussheetDataSource)(nil)
+var _ datasource.DataSourceWithConfigValidators = (*cloudDiagramsStatussheetDataSource)(nil)
 
 // NewCloudDiagramsStatussheetDataSource creates a new instance of the data source.
 func NewCloudDiagramsStatussheetDataSource() datasource.DataSource {
@@ -85,6 +88,9 @@ func (d *cloudDiagramsStatussheetDataSource) Schema(ctx context.Context, _ datas
 			ElementType:         types.StringType,
 			Description:         idAttr.desc,
 			MarkdownDescription: idAttr.desc,
+			Validators: []validator.List{
+				listvalidator.SizeAtLeast(1),
+			},
 		}
 	}
 
@@ -113,6 +119,12 @@ func (d *cloudDiagramsStatussheetDataSource) Configure(_ context.Context, req da
 	d.client = client
 }
 
+func (d *cloudDiagramsStatussheetDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
+	return []datasource.ConfigValidator{
+		statussheetComponentIDsValidator{},
+	}
+}
+
 func (d *cloudDiagramsStatussheetDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data cloudDiagramsStatussheetDataSourceModel
 
@@ -139,18 +151,6 @@ func (d *cloudDiagramsStatussheetDataSource) Read(ctx context.Context, req datas
 		data.Combiner = types.MapUnknown(datasource_cloud_diagrams_statussheet.CombinerValue{}.Type(ctx))
 		data.Note = types.MapUnknown(datasource_cloud_diagrams_statussheet.NoteValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-		return
-	}
-
-	// Validate that at least one component ID list is provided.
-	allEmpty := data.NodeIds.IsNull() && data.ElementIds.IsNull() && data.GroupIds.IsNull() &&
-		data.LinkIds.IsNull() && data.AttachmentIds.IsNull() && data.CombinerIds.IsNull() && data.NoteIds.IsNull()
-	if allEmpty {
-		resp.Diagnostics.AddError(
-			"Missing Component IDs",
-			"At least one component ID list (node_ids, element_ids, group_ids, link_ids, attachment_ids, combiner_ids, or note_ids) must be provided. "+
-				"Use doit_cloud_diagrams_schemes with statussheet IDs to discover component IDs.",
-		)
 		return
 	}
 
