@@ -76,7 +76,7 @@ The following table shows which data sources support pagination:
 | `doit_anomalies`            | ✓               | ✓                 |
 | `doit_assets`               | ✓               | ✓                 |
 | `doit_budgets`              | ✓               | ✓                 |
-| `doit_cloud_diagram_search` | ✓               | ✓                 |
+| `doit_cloud_diagrams_search` | ✓               | ✓                 |
 | `doit_cloud_incidents`      | ✗               | ✓                 |
 | `doit_commitments`          | ✓               | ✓                 |
 | `doit_dimensions`           | ✓               | ✓                 |
