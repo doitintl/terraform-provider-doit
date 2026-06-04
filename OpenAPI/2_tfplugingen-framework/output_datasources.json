@@ -4046,6 +4046,57 @@
 			}
 		},
 		{
+			"name": "cloud_diagram_snapshot",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Layer ID."
+						}
+					},
+					{
+						"name": "snapshot_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Snapshot ID."
+						}
+					},
+					{
+						"name": "_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Snapshot ID."
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Timestamp when the snapshot was created."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Snapshot name."
+						}
+					},
+					{
+						"name": "prev_state",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the previous snapshot in the chain."
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_diagram_snapshots",
 			"schema": {
 				"attributes": [
