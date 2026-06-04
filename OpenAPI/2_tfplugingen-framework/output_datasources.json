@@ -2648,7 +2648,41 @@
 			}
 		},
 		{
-			"name": "cloud_diagram_schemes",
+			"name": "cloud_diagrams",
+			"schema": {
+				"attributes": [
+					{
+						"name": "cloud_diagrams",
+						"set_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "diagram_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to the diagram viewer."
+										}
+									},
+									{
+										"name": "image_url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "URL to the diagram image."
+										}
+									}
+								]
+							},
+							"description": "List of diagram URLs matching the criteria."
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
+			"name": "cloud_diagrams_schemes",
 			"schema": {
 				"attributes": [
 					{
@@ -3776,7 +3810,7 @@
 			}
 		},
 		{
-			"name": "cloud_diagram_search",
+			"name": "cloud_diagrams_search",
 			"schema": {
 				"attributes": [
 					{
@@ -4046,7 +4080,7 @@
 			}
 		},
 		{
-			"name": "cloud_diagram_snapshot",
+			"name": "cloud_diagrams_snapshot",
 			"schema": {
 				"attributes": [
 					{
@@ -4097,7 +4131,7 @@
 			}
 		},
 		{
-			"name": "cloud_diagram_snapshots",
+			"name": "cloud_diagrams_snapshots",
 			"schema": {
 				"attributes": [
 					{
@@ -4153,7 +4187,7 @@
 						}
 					},
 					{
-						"name": "cloud_diagram_snapshots",
+						"name": "cloud_diagrams_snapshots",
 						"set_nested": {
 							"computed_optional_required": "computed",
 							"nested_object": {
@@ -4196,7 +4230,7 @@
 			}
 		},
 		{
-			"name": "cloud_diagram_stats",
+			"name": "cloud_diagrams_stats",
 			"schema": {
 				"attributes": [
 					{
@@ -4214,7 +4248,7 @@
 						}
 					},
 					{
-						"name": "cloud_diagram_stats",
+						"name": "cloud_diagrams_stats",
 						"set_nested": {
 							"computed_optional_required": "computed",
 							"nested_object": {
@@ -4353,40 +4387,6 @@
 									}
 								]
 							}
-						}
-					}
-				],
-				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
-				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
-			}
-		},
-		{
-			"name": "cloud_diagrams",
-			"schema": {
-				"attributes": [
-					{
-						"name": "cloud_diagrams",
-						"set_nested": {
-							"computed_optional_required": "computed",
-							"nested_object": {
-								"attributes": [
-									{
-										"name": "diagram_url",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "URL to the diagram viewer."
-										}
-									},
-									{
-										"name": "image_url",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "URL to the diagram image."
-										}
-									}
-								]
-							},
-							"description": "List of diagram URLs matching the criteria."
 						}
 					}
 				],

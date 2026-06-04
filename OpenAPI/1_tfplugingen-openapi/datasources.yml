@@ -188,23 +188,23 @@ data_sources:
     read:
       path: /clouddiagrams/v1/scheme/find
       method: POST
-  cloud_diagram_snapshot:
+  cloud_diagrams_snapshot:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/snapshot
       method: GET
-  cloud_diagram_snapshots:
+  cloud_diagrams_snapshots:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/snapshots
       method: GET
-  cloud_diagram_schemes:
+  cloud_diagrams_schemes:
     read:
       path: /clouddiagrams/v1/scheme/get
       method: POST
-  cloud_diagram_search:
+  cloud_diagrams_search:
     read:
       path: /clouddiagrams/v1/scheme/search
       method: POST
-  cloud_diagram_stats:
+  cloud_diagrams_stats:
     read:
       path: /clouddiagrams/v1/scheme/stats
       method: GET
