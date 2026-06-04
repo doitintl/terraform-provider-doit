@@ -54,6 +54,16 @@ func (d *cloudDiagramStatsDataSource) Schema(ctx context.Context, _ datasource.S
 		MarkdownDescription: "A deterministic hash of the query parameters, used as the data source identifier.",
 	}
 
+	// Add RFC3339 validators for timestamp inputs.
+	if startAttr, ok := genSchema.Attributes["start"].(schema.StringAttribute); ok {
+		startAttr.Validators = append(startAttr.Validators, rfc3339Validator{})
+		genSchema.Attributes["start"] = startAttr
+	}
+	if endAttr, ok := genSchema.Attributes["end"].(schema.StringAttribute); ok {
+		endAttr.Validators = append(endAttr.Validators, rfc3339Validator{})
+		genSchema.Attributes["end"] = endAttr
+	}
+
 	genSchema.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = genSchema
