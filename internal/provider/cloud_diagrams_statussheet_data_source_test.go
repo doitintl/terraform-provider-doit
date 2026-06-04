@@ -9,6 +9,8 @@ import (
 func TestAccCloudDiagramsStatussheetDataSource_Basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
 				// Chain: schemes → layer ID → discover component IDs → statussheet
@@ -36,6 +38,8 @@ data "doit_cloud_diagrams_statussheet" "test" {
 func TestAccCloudDiagramsStatussheetDataSource_MultipleComponentTypes(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudDiagramsStatussheetDiscovery() + `
@@ -55,6 +59,8 @@ data "doit_cloud_diagrams_statussheet" "test" {
 func TestAccCloudDiagramsStatussheetDataSource_WithProjection(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudDiagramsStatussheetDiscovery() + `
@@ -72,7 +78,8 @@ data "doit_cloud_diagrams_statussheet" "test" {
 }
 
 // testAccCloudDiagramsStatussheetDiscovery chains from schemes to discover
-// component IDs for the first available layer.
+// component IDs for the first available layer. Uses null instead of [] for
+// empty lists to avoid triggering listvalidator.SizeAtLeast(1).
 func testAccCloudDiagramsStatussheetDiscovery() string {
 	return `
 # Step 1: Get an overview of all diagrams.
@@ -90,10 +97,12 @@ data "doit_cloud_diagrams_schemes" "with_components" {
 }
 
 # Step 4: Extract component IDs from the statussheet data.
+# Use null (not []) when no IDs are found, so the SizeAtLeast(1) validator
+# is not triggered on empty lists.
 locals {
   ss_data   = data.doit_cloud_diagrams_schemes.with_components.statussheet[local.first_layer_id]
-  node_ids  = local.ss_data != null && local.ss_data.node != null ? keys(local.ss_data.node) : []
-  group_ids = local.ss_data != null && local.ss_data.group != null ? keys(local.ss_data.group) : []
+  node_ids  = local.ss_data != null && local.ss_data.node != null && length(keys(local.ss_data.node)) > 0 ? keys(local.ss_data.node) : null
+  group_ids = local.ss_data != null && local.ss_data.group != null && length(keys(local.ss_data.group)) > 0 ? keys(local.ss_data.group) : null
 }
 `
 }

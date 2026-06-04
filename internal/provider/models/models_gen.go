@@ -4512,8 +4512,8 @@ type CloudDiagramStatussheetData struct {
 	Statussheet CloudDiagramStatussheetMeta `json:"statussheet"`
 }
 
-// CloudDiagramStatussheetGetRequest Request body for getting layer components.
-// Omit or send an empty object to retrieve all components.
+// CloudDiagramStatussheetGetRequest Request body for getting layer components. At least one component type must be
+// provided with one or more IDs.
 type CloudDiagramStatussheetGetRequest struct {
 	// Attachment Attachment IDs to fetch.
 	Attachment *[]string `json:"attachment,omitempty"`

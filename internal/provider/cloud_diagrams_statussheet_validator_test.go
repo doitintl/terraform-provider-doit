@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -164,16 +163,16 @@ func TestStatussheetComponentIDsValidator(t *testing.T) {
 		{
 			name: "non-empty note_ids only - should pass",
 			values: map[string]tftypes.Value{
-				"id":          tftypes.NewValue(tftypes.String, "layer-123"),
-				"node_ids":    tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
-				"element_ids": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
-				"group_ids":   tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
-				"link_ids":    tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
-				"attachment_ids": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
-					tftypes.NewValue(tftypes.String, "att-1"),
+				"id":             tftypes.NewValue(tftypes.String, "layer-123"),
+				"node_ids":       tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
+				"element_ids":    tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
+				"group_ids":      tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
+				"link_ids":       tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
+				"attachment_ids": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
+				"combiner_ids":   tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
+				"note_ids": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
+					tftypes.NewValue(tftypes.String, "note-1"),
 				}),
-				"combiner_ids": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
-				"note_ids":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, nil),
 			},
 			expectErr: false,
 		},
@@ -187,12 +186,9 @@ func TestStatussheetComponentIDsValidator(t *testing.T) {
 
 			raw := tftypes.NewValue(tfSchema, tc.values)
 
-			config, cfgDiags := tfsdk.Config{
+			config := tfsdk.Config{
 				Schema: testSchema,
 				Raw:    raw,
-			}, diag.Diagnostics{}
-			if cfgDiags.HasError() {
-				t.Fatalf("unexpected config error: %s", cfgDiags)
 			}
 
 			req := datasource.ValidateConfigRequest{Config: config}
