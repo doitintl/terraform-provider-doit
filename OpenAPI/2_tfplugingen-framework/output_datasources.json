@@ -4046,6 +4046,105 @@
 			}
 		},
 		{
+			"name": "cloud_diagram_snapshots",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Layer ID."
+						}
+					},
+					{
+						"name": "offset",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Number of snapshots to skip (default 0).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(0)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "limit",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of snapshots to return (default 10).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort expression (e.g. \"-createdAt\" for descending)."
+						}
+					},
+					{
+						"name": "cloud_diagram_snapshots",
+						"set_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Snapshot ID."
+										}
+									},
+									{
+										"name": "created_at",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Timestamp when the snapshot was created."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Snapshot name."
+										}
+									},
+									{
+										"name": "prev_state",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the previous snapshot in the chain."
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_diagrams",
 			"schema": {
 				"attributes": [
