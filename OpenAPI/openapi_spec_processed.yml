@@ -3069,6 +3069,57 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/activity:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: List activity groups for a layer
+      description: |-
+        Returns snapshot activity groups for the specified diagram layer,
+        ordered by timestamp descending. Each group contains a snapshot reference
+        and the individual activity records that belong to it.
+      operationId: listCloudDiagramActivityGroups
+      parameters:
+        - name: ss_id
+          in: query
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of groups to return (default 10).
+          schema:
+            type: integer
+            minimum: 1
+        - name: offset
+          in: query
+          description: Number of groups to skip (default 0).
+          schema:
+            type: integer
+            minimum: 0
+        - name: tags
+          in: query
+          description: Filter by tags.
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK - Activity groups returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramSnapshotActivityGroup"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
   /analytics/v1/commitment-manager:
     get:
       tags:
@@ -4488,6 +4539,56 @@ components:
       type: string
       description: The insight category.
       enum: ["FinOps", "Operational excellence", "Performance efficiency", "Reliability", "Security", "Sustainability"]
+    CloudDiagramActivityItem:
+      type: object
+      required:
+        - _id
+        - group
+        - activity
+        - timestamp
+      description: An individual activity record within an activity group.
+      properties:
+        _id:
+          type: string
+          description: Activity record ID.
+        group:
+          type: string
+          description: ID of the activity group this record belongs to.
+        activity:
+          type: string
+          enum:
+            - NODE_CREATE
+            - NODE_UPDATE
+            - NODE_DELETE
+            - LINK_CREATE
+            - LINK_UPDATE
+            - LINK_DELETE
+            - GROUP_CREATE
+            - GROUP_UPDATE
+            - GROUP_DELETE
+            - ATTACHMENT_CREATE
+            - ATTACHMENT_UPDATE
+            - ATTACHMENT_DELETE
+          description: Activity type.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Activity-specific payload (structure varies by activity type).
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity.
+        service_type:
+          type: string
+          description: Cloud service type the activity applies to.
+        group_type:
+          type: string
+          description: Activity group sub-type.
+        tags:
+          type: array
+          description: Tags associated with the activity.
+          items:
+            type: string
     CloudDiagramAttachment:
       type: object
       required:
@@ -5122,6 +5223,38 @@ components:
         color:
           type: string
           description: Layer color.
+    CloudDiagramSnapshotActivityGroup:
+      type: object
+      required:
+        - _id
+        - statussheet
+        - timestamp
+        - snapshot
+      description: A snapshot activity group containing the individual activity records that produced it.
+      properties:
+        _id:
+          type: string
+          description: Activity group ID.
+        statussheet:
+          type: string
+          description: Layer ID this group belongs to.
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity group.
+        tags:
+          type: array
+          description: Tags associated with the group.
+          items:
+            type: string
+        snapshot:
+          type: string
+          description: ID of the associated snapshot (equal to the group ID).
+        items:
+          type: array
+          description: Individual activity records within this group.
+          items:
+            $ref: "#/components/schemas/CloudDiagramActivityItem"
     CloudDiagramStats:
       type: object
       description: Diagram with activity stats for a given time period.

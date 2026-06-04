@@ -2682,6 +2682,188 @@
 			}
 		},
 		{
+			"name": "cloud_diagrams_activity_groups",
+			"schema": {
+				"attributes": [
+					{
+						"name": "ss_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Layer ID."
+						}
+					},
+					{
+						"name": "limit",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of groups to return (default 10).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "offset",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Number of groups to skip (default 0).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(0)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "tags",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Filter by tags."
+						}
+					},
+					{
+						"name": "cloud_diagrams_activity_groups",
+						"set_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Activity group ID."
+										}
+									},
+									{
+										"name": "items",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Activity record ID."
+														}
+													},
+													{
+														"name": "activity",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Activity type."
+														}
+													},
+													{
+														"name": "group",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "ID of the activity group this record belongs to."
+														}
+													},
+													{
+														"name": "group_type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Activity group sub-type."
+														}
+													},
+													{
+														"name": "metadata",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"description": "Activity-specific payload (structure varies by activity type)."
+														}
+													},
+													{
+														"name": "service_type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Cloud service type the activity applies to."
+														}
+													},
+													{
+														"name": "tags",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															},
+															"description": "Tags associated with the activity."
+														}
+													},
+													{
+														"name": "timestamp",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Timestamp of the activity."
+														}
+													}
+												]
+											},
+											"description": "Individual activity records within this group."
+										}
+									},
+									{
+										"name": "snapshot",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the associated snapshot (equal to the group ID)."
+										}
+									},
+									{
+										"name": "statussheet",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Layer ID this group belongs to."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Tags associated with the group."
+										}
+									},
+									{
+										"name": "timestamp",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Timestamp of the activity group."
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_diagrams_schemes",
 			"schema": {
 				"attributes": [
