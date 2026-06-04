@@ -183,7 +183,7 @@ data_sources:
     read:
       path: /sharing/v1/{resourceType}/{resourceId}
       method: GET
-  # Cloud Diagrams data source
+  # Cloud Diagrams data sources
   cloud_diagrams:
     read:
       path: /clouddiagrams/v1/scheme/find
@@ -191,6 +191,18 @@ data_sources:
   cloud_diagram_snapshots:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/snapshots
+      method: GET
+  cloud_diagram_schemes:
+    read:
+      path: /clouddiagrams/v1/scheme/get
+      method: POST
+  cloud_diagram_search:
+    read:
+      path: /clouddiagrams/v1/scheme/search
+      method: POST
+  cloud_diagram_stats:
+    read:
+      path: /clouddiagrams/v1/scheme/stats
       method: GET
   # Insight data sources
   insight:
@@ -205,13 +217,3 @@ data_sources:
     read:
       path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
       method: GET
-  # Cloud Diagrams search data source
-  cloud_diagram_search:
-    read:
-      path: /clouddiagrams/v1/scheme/search
-      method: POST
-  # Cloud Diagrams schemes data source
-  cloud_diagram_schemes:
-    read:
-      path: /clouddiagrams/v1/scheme/get
-      method: POST

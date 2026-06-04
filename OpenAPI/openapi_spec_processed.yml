@@ -2806,6 +2806,45 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /clouddiagrams/v1/scheme/stats:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Get diagrams with stats
+      description: Returns a list of all diagrams with activity stats for the given time period.
+      operationId: getCloudDiagramsStats
+      parameters:
+        - name: start
+          in: query
+          required: true
+          description: Start of the period.
+          example: "2026-04-01T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          description: End of the period.
+          example: "2026-04-28T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: OK - List of diagrams with stats returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramStats"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
   /clouddiagrams/v1/scheme/get:
     post:
       tags:
@@ -5050,6 +5089,60 @@ components:
         color:
           type: string
           description: Layer color.
+    CloudDiagramStats:
+      type: object
+      description: Diagram with activity stats for a given time period.
+      properties:
+        _id:
+          type: string
+          description: ID of the diagram.
+        ss_id:
+          type: string
+          description: ID of the layer the diagram belongs to.
+        name:
+          type: string
+          description: Name of the diagram.
+        type:
+          type: string
+          enum:
+            - application
+            - infrastructure
+            - network
+            - template
+          description: Type of the diagram.
+        account_name:
+          type: string
+          description: Cloud account name.
+        account_id:
+          type: string
+          description: Cloud account ID.
+        account_type:
+          type: string
+          description: Cloud account type.
+        changes:
+          type: array
+          description: Activity changes within the period.
+          items:
+            $ref: "#/components/schemas/CloudDiagramStatsChange"
+        import:
+          $ref: "#/components/schemas/CloudDiagramImportState"
+    CloudDiagramStatsChange:
+      type: object
+      description: A single activity change entry in a diagram stats record.
+      properties:
+        type:
+          type: string
+          enum:
+            - NODE_CREATE
+            - NODE_UPDATE
+            - NODE_DELETE
+          description: Type of the change.
+        service:
+          type: string
+          description: Cloud service the change applies to.
+        count:
+          type: integer
+          description: Number of occurrences of this change type.
     CloudDiagramStatussheetData:
       type: object
       required:
