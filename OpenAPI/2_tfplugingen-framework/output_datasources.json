@@ -4145,6 +4145,171 @@
 			}
 		},
 		{
+			"name": "cloud_diagram_stats",
+			"schema": {
+				"attributes": [
+					{
+						"name": "start",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Start of the period."
+						}
+					},
+					{
+						"name": "end",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "End of the period."
+						}
+					},
+					{
+						"name": "cloud_diagram_stats",
+						"set_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the diagram."
+										}
+									},
+									{
+										"name": "account_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account ID."
+										}
+									},
+									{
+										"name": "account_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account name."
+										}
+									},
+									{
+										"name": "account_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account type."
+										}
+									},
+									{
+										"name": "changes",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "count",
+														"int64": {
+															"computed_optional_required": "computed",
+															"description": "Number of occurrences of this change type."
+														}
+													},
+													{
+														"name": "service",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Cloud service the change applies to."
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Type of the change."
+														}
+													}
+												]
+											},
+											"description": "Activity changes within the period."
+										}
+									},
+									{
+										"name": "import",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "account",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Connected account ID."
+													}
+												},
+												{
+													"name": "cloud_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Cloud account ID."
+													}
+												},
+												{
+													"name": "error_message",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Error message if the import failed."
+													}
+												},
+												{
+													"name": "status",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Import status."
+													}
+												},
+												{
+													"name": "synced_at",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Timestamp of the last successful sync."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Connected cloud account type."
+													}
+												}
+											],
+											"description": "Current import/sync state for a cloud-connected diagram."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Name of the diagram."
+										}
+									},
+									{
+										"name": "ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the layer the diagram belongs to."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Type of the diagram."
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_diagrams",
 			"schema": {
 				"attributes": [
