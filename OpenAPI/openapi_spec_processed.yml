@@ -2990,6 +2990,46 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /clouddiagrams/v1/statussheet/{id}/get:
+    post:
+      tags:
+        - Cloud Diagrams
+      summary: Get layer components
+      description: |-
+        Returns the components of the specified diagram layer, optionally filtered to specific
+        component IDs. Omit the request body (or send an empty object) to retrieve all components.
+      operationId: getStatussheetComponents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: p
+          in: query
+          description: Space-separated projection fields for component documents.
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudDiagramStatussheetGetRequest"
+      responses:
+        "200":
+          description: OK - Layer components returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramStatussheetComponents"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /clouddiagrams/v1/statussheet/{id}/snapshots:
     get:
       tags:
@@ -5143,6 +5183,45 @@ components:
         count:
           type: integer
           description: Number of occurrences of this change type.
+    CloudDiagramStatussheetComponents:
+      type: object
+      description: Component collections of a diagram layer, keyed by component ID.
+      properties:
+        node:
+          type: object
+          description: Map of node ID to node component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramNode"
+        element:
+          type: object
+          description: Map of element ID to element component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramElement"
+        group:
+          type: object
+          description: Map of group ID to group component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramGroup"
+        link:
+          type: object
+          description: Map of link ID to link component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramLink"
+        attachment:
+          type: object
+          description: Map of attachment ID to attachment component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramAttachment"
+        combiner:
+          type: object
+          description: Map of combiner ID to combiner component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramCombiner"
+        note:
+          type: object
+          description: Map of note ID to note component.
+          additionalProperties:
+            $ref: "#/components/schemas/CloudDiagramNote"
     CloudDiagramStatussheetData:
       type: object
       required:
@@ -5186,6 +5265,47 @@ components:
           description: Map of note ID to note component.
           additionalProperties:
             $ref: "#/components/schemas/CloudDiagramNote"
+    CloudDiagramStatussheetGetRequest:
+      type: object
+      description: |-
+        Request body for getting layer components.
+        Omit or send an empty object to retrieve all components.
+      properties:
+        node:
+          type: array
+          description: Node IDs to fetch.
+          items:
+            type: string
+        element:
+          type: array
+          description: Element IDs to fetch.
+          items:
+            type: string
+        link:
+          type: array
+          description: Link IDs to fetch.
+          items:
+            type: string
+        group:
+          type: array
+          description: Group IDs to fetch.
+          items:
+            type: string
+        attachment:
+          type: array
+          description: Attachment IDs to fetch.
+          items:
+            type: string
+        note:
+          type: array
+          description: Note IDs to fetch.
+          items:
+            type: string
+        combiner:
+          type: array
+          description: Combiner IDs to fetch.
+          items:
+            type: string
     CloudDiagramStatussheetMeta:
       type: object
       required:

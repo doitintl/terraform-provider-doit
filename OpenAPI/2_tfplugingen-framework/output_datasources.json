@@ -4310,6 +4310,844 @@
 			}
 		},
 		{
+			"name": "cloud_diagram_statussheet",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Layer ID."
+						}
+					},
+					{
+						"name": "p",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Space-separated projection fields for component documents."
+						}
+					},
+					{
+						"name": "attachment",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Attachment ID."
+										}
+									},
+									{
+										"name": "cld_account",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account ID."
+										}
+									},
+									{
+										"name": "cld_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud resource ID (set on cloud-imported components)."
+										}
+									},
+									{
+										"name": "cld_sync",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether this component is synced with cloud."
+										}
+									},
+									{
+										"name": "cld_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account type."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Attachment color."
+										}
+									},
+									{
+										"name": "group",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent group ID."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Attachment icon identifier."
+										}
+									},
+									{
+										"name": "issues",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Issue reference ID."
+														}
+													},
+													{
+														"name": "comment",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Optional comment on the issue."
+														}
+													},
+													{
+														"name": "jira",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Linked Jira ticket key or URL."
+														}
+													},
+													{
+														"name": "snoozed",
+														"number": {
+															"computed_optional_required": "computed",
+															"description": "Snooze duration in seconds."
+														}
+													}
+												]
+											},
+											"description": "Issues associated with this attachment."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"description": "Custom component properties (key-value pairs)."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Tags assigned to the component."
+										}
+									}
+								]
+							},
+							"description": "Map of attachment ID to attachment component."
+						}
+					},
+					{
+						"name": "combiner",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Combiner ID."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Combiner color."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Combiner icon identifier."
+										}
+									},
+									{
+										"name": "items",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Component ID."
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Component type."
+														}
+													}
+												]
+											},
+											"description": "Components contained in the combiner."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Combiner name."
+										}
+									}
+								]
+							},
+							"description": "Map of combiner ID to combiner component."
+						}
+					},
+					{
+						"name": "element",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Element ID."
+										}
+									},
+									{
+										"name": "cld_account",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account ID."
+										}
+									},
+									{
+										"name": "cld_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud resource ID (set on cloud-imported components)."
+										}
+									},
+									{
+										"name": "cld_sync",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether this component is synced with cloud."
+										}
+									},
+									{
+										"name": "cld_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account type."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Element color."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Element icon identifier."
+										}
+									},
+									{
+										"name": "issues",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Issue reference ID."
+														}
+													},
+													{
+														"name": "comment",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Optional comment on the issue."
+														}
+													},
+													{
+														"name": "jira",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Linked Jira ticket key or URL."
+														}
+													},
+													{
+														"name": "snoozed",
+														"number": {
+															"computed_optional_required": "computed",
+															"description": "Snooze duration in seconds."
+														}
+													}
+												]
+											},
+											"description": "Issues associated with this element."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "parent",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent element ID."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"description": "Custom component properties (key-value pairs)."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Tags assigned to the component."
+										}
+									}
+								]
+							},
+							"description": "Map of element ID to element component."
+						}
+					},
+					{
+						"name": "group",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group ID."
+										}
+									},
+									{
+										"name": "cld_account",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account ID."
+										}
+									},
+									{
+										"name": "cld_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud resource ID (set on cloud-imported components)."
+										}
+									},
+									{
+										"name": "cld_sync",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether this component is synced with cloud."
+										}
+									},
+									{
+										"name": "cld_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account type."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group color."
+										}
+									},
+									{
+										"name": "group_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group type."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Group icon identifier."
+										}
+									},
+									{
+										"name": "issues",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Issue reference ID."
+														}
+													},
+													{
+														"name": "comment",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Optional comment on the issue."
+														}
+													},
+													{
+														"name": "jira",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Linked Jira ticket key or URL."
+														}
+													},
+													{
+														"name": "snoozed",
+														"number": {
+															"computed_optional_required": "computed",
+															"description": "Snooze duration in seconds."
+														}
+													}
+												]
+											},
+											"description": "Issues associated with this group."
+										}
+									},
+									{
+										"name": "items",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Component ID."
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Component type."
+														}
+													}
+												]
+											},
+											"description": "Components contained in the group."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"description": "Custom component properties (key-value pairs)."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Tags assigned to the component."
+										}
+									}
+								]
+							},
+							"description": "Map of group ID to group component."
+						}
+					},
+					{
+						"name": "link",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Link ID."
+										}
+									},
+									{
+										"name": "cld_account",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account ID."
+										}
+									},
+									{
+										"name": "cld_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud resource ID (set on cloud-imported components)."
+										}
+									},
+									{
+										"name": "cld_sync",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether this component is synced with cloud."
+										}
+									},
+									{
+										"name": "cld_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account type."
+										}
+									},
+									{
+										"name": "connection_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Link connection type."
+										}
+									},
+									{
+										"name": "issues",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Issue reference ID."
+														}
+													},
+													{
+														"name": "comment",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Optional comment on the issue."
+														}
+													},
+													{
+														"name": "jira",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Linked Jira ticket key or URL."
+														}
+													},
+													{
+														"name": "snoozed",
+														"number": {
+															"computed_optional_required": "computed",
+															"description": "Snooze duration in seconds."
+														}
+													}
+												]
+											},
+											"description": "Issues associated with this link."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "owner_ss_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Owner layer ID for cross-diagram links."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"description": "Custom component properties (key-value pairs)."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Tags assigned to the component."
+										}
+									}
+								]
+							},
+							"description": "Map of link ID to link component."
+						}
+					},
+					{
+						"name": "node",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Node ID."
+										}
+									},
+									{
+										"name": "cld_account",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account ID."
+										}
+									},
+									{
+										"name": "cld_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud resource ID (set on cloud-imported components)."
+										}
+									},
+									{
+										"name": "cld_sync",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether this component is synced with cloud."
+										}
+									},
+									{
+										"name": "cld_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account type."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Node color."
+										}
+									},
+									{
+										"name": "icon",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Node icon identifier."
+										}
+									},
+									{
+										"name": "infra_node",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Infrastructure node ID."
+													}
+												},
+												{
+													"name": "scheme_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent diagram ID."
+													}
+												},
+												{
+													"name": "ss_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent layer ID."
+													}
+												}
+											],
+											"description": "Reference to a linked infrastructure node in another diagram."
+										}
+									},
+									{
+										"name": "instance_count",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Number of instances represented by this node."
+										}
+									},
+									{
+										"name": "issues",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Issue reference ID."
+														}
+													},
+													{
+														"name": "comment",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Optional comment on the issue."
+														}
+													},
+													{
+														"name": "jira",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Linked Jira ticket key or URL."
+														}
+													},
+													{
+														"name": "snoozed",
+														"number": {
+															"computed_optional_required": "computed",
+															"description": "Snooze duration in seconds."
+														}
+													}
+												]
+											},
+											"description": "Issues associated with this node."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component name."
+										}
+									},
+									{
+										"name": "parent",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Parent node ID."
+										}
+									},
+									{
+										"name": "props",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"description": "Custom component properties (key-value pairs)."
+										}
+									},
+									{
+										"name": "running",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the node is currently running."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Tags assigned to the component."
+										}
+									}
+								]
+							},
+							"description": "Map of node ID to node component."
+						}
+					},
+					{
+						"name": "note",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Note ID."
+										}
+									},
+									{
+										"name": "color",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Note background color."
+										}
+									},
+									{
+										"name": "font_size",
+										"number": {
+											"computed_optional_required": "computed",
+											"description": "Note font size."
+										}
+									},
+									{
+										"name": "text",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Note text content."
+										}
+									}
+								]
+							},
+							"description": "Map of note ID to note component."
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_diagrams",
 			"schema": {
 				"attributes": [
