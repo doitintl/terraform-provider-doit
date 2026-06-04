@@ -3036,6 +3036,39 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/statussheet/{id}/snapshot:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Get a layer snapshot
+      description: Returns a single snapshot of the specified diagram layer identified by its ID.
+      operationId: getCloudDiagramLayerSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: snapshot_id
+          in: query
+          required: true
+          description: Snapshot ID.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Snapshot returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramLayerSnapshot"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /analytics/v1/commitment-manager:
     get:
       tags:
