@@ -16,8 +16,9 @@ func TestAccCloudDiagramsStatussheetDataSource_Basic(t *testing.T) {
 				// Chain: schemes → layer ID → discover component IDs → statussheet
 				Config: testAccCloudDiagramsStatussheetDiscovery() + `
 data "doit_cloud_diagrams_statussheet" "test" {
-  id       = local.first_layer_id
-  node_ids = local.node_ids
+  id        = local.first_layer_id
+  node_ids  = local.node_ids
+  group_ids = local.group_ids
 }`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_statussheet.test", "id"),
@@ -26,8 +27,9 @@ data "doit_cloud_diagrams_statussheet" "test" {
 			{
 				Config: testAccCloudDiagramsStatussheetDiscovery() + `
 data "doit_cloud_diagrams_statussheet" "test" {
-  id       = local.first_layer_id
-  node_ids = local.node_ids
+  id        = local.first_layer_id
+  node_ids  = local.node_ids
+  group_ids = local.group_ids
 }`,
 				PlanOnly: true,
 			},
@@ -65,9 +67,10 @@ func TestAccCloudDiagramsStatussheetDataSource_WithProjection(t *testing.T) {
 			{
 				Config: testAccCloudDiagramsStatussheetDiscovery() + `
 data "doit_cloud_diagrams_statussheet" "test" {
-  id       = local.first_layer_id
-  node_ids = local.node_ids
-  p        = "name icon color"
+  id        = local.first_layer_id
+  node_ids  = local.node_ids
+  group_ids = local.group_ids
+  p         = "name icon color"
 }`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_statussheet.test", "id"),
