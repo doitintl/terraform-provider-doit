@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -45,22 +44,9 @@ func (d *cloudDiagramSnapshotDataSource) Metadata(_ context.Context, req datasou
 func (d *cloudDiagramSnapshotDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	genSchema := datasource_cloud_diagram_snapshot.CloudDiagramSnapshotDataSourceSchema(ctx)
 
-	// Override id to be required input (layer ID).
-	genSchema.Attributes["id"] = schema.StringAttribute{
-		Required:            true,
-		Description:         "Layer ID.",
-		MarkdownDescription: "Layer ID.",
-	}
-
-	// Override snapshot_id to be required input.
-	genSchema.Attributes["snapshot_id"] = schema.StringAttribute{
-		Required:            true,
-		Description:         "Snapshot ID.",
-		MarkdownDescription: "Snapshot ID.",
-	}
-
-	// Remove _id — it equals snapshot_id and its leading underscore is
-	// invalid as a top-level tfsdk struct tag.
+	// Remove _id — redundant with the snapshot_id input, and its leading
+	// underscore is rejected by the framework for top-level model struct
+	// tags (tags must start with a letter).
 	delete(genSchema.Attributes, "_id")
 
 	genSchema.Attributes["timeouts"] = timeouts.Attributes(ctx)
@@ -148,7 +134,7 @@ func (d *cloudDiagramSnapshotDataSource) Read(ctx context.Context, req datasourc
 	snapshot := apiResp.JSON200
 
 	// Map API response to Terraform state.
-	data.CreatedAt = types.StringValue(snapshot.CreatedAt.Format(time.RFC3339))
+	data.CreatedAt = types.StringValue(snapshot.CreatedAt.UTC().Format(time.RFC3339))
 	data.Name = types.StringPointerValue(snapshot.Name)
 	data.PrevState = types.StringPointerValue(snapshot.PrevState)
 
