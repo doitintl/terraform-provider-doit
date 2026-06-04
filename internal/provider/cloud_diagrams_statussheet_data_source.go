@@ -34,16 +34,23 @@ type cloudDiagramsStatussheetDataSource struct {
 
 // cloudDiagramsStatussheetDataSourceModel is the Terraform state model.
 type cloudDiagramsStatussheetDataSourceModel struct {
-	Id         types.String   `tfsdk:"id"`
-	P          types.String   `tfsdk:"p"`
-	Node       types.Map      `tfsdk:"node"`
-	Element    types.Map      `tfsdk:"element"`
-	Group      types.Map      `tfsdk:"group"`
-	Link       types.Map      `tfsdk:"link"`
-	Attachment types.Map      `tfsdk:"attachment"`
-	Combiner   types.Map      `tfsdk:"combiner"`
-	Note       types.Map      `tfsdk:"note"`
-	Timeouts   timeouts.Value `tfsdk:"timeouts"`
+	Id            types.String   `tfsdk:"id"`
+	P             types.String   `tfsdk:"p"`
+	NodeIds       types.List     `tfsdk:"node_ids"`
+	ElementIds    types.List     `tfsdk:"element_ids"`
+	GroupIds      types.List     `tfsdk:"group_ids"`
+	LinkIds       types.List     `tfsdk:"link_ids"`
+	AttachmentIds types.List     `tfsdk:"attachment_ids"`
+	CombinerIds   types.List     `tfsdk:"combiner_ids"`
+	NoteIds       types.List     `tfsdk:"note_ids"`
+	Node          types.Map      `tfsdk:"node"`
+	Element       types.Map      `tfsdk:"element"`
+	Group         types.Map      `tfsdk:"group"`
+	Link          types.Map      `tfsdk:"link"`
+	Attachment    types.Map      `tfsdk:"attachment"`
+	Combiner      types.Map      `tfsdk:"combiner"`
+	Note          types.Map      `tfsdk:"note"`
+	Timeouts      timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *cloudDiagramsStatussheetDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -60,10 +67,31 @@ func (d *cloudDiagramsStatussheetDataSource) Schema(ctx context.Context, _ datas
 		MarkdownDescription: "Layer ID to retrieve components for.",
 	}
 
+	// Add input fields for component IDs to filter the response.
+	for _, idAttr := range []struct {
+		name string
+		desc string
+	}{
+		{"node_ids", "Node component IDs to fetch."},
+		{"element_ids", "Element component IDs to fetch."},
+		{"group_ids", "Group component IDs to fetch."},
+		{"link_ids", "Link component IDs to fetch."},
+		{"attachment_ids", "Attachment component IDs to fetch."},
+		{"combiner_ids", "Combiner component IDs to fetch."},
+		{"note_ids", "Note component IDs to fetch."},
+	} {
+		genSchema.Attributes[idAttr.name] = schema.ListAttribute{
+			Optional:            true,
+			ElementType:         types.StringType,
+			Description:         idAttr.desc,
+			MarkdownDescription: idAttr.desc,
+		}
+	}
+
 	genSchema.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
-	genSchema.Description = "Retrieves the components of a specific Cloud Diagram layer."
-	genSchema.MarkdownDescription = "Retrieves the components of a specific Cloud Diagram layer."
+	genSchema.Description = "Retrieves the components of a specific Cloud Diagram layer. At least one component ID list must be provided."
+	genSchema.MarkdownDescription = "Retrieves the components of a specific Cloud Diagram layer. At least one component ID list must be provided."
 
 	resp.Schema = genSchema
 }
@@ -114,6 +142,18 @@ func (d *cloudDiagramsStatussheetDataSource) Read(ctx context.Context, req datas
 		return
 	}
 
+	// Validate that at least one component ID list is provided.
+	allEmpty := data.NodeIds.IsNull() && data.ElementIds.IsNull() && data.GroupIds.IsNull() &&
+		data.LinkIds.IsNull() && data.AttachmentIds.IsNull() && data.CombinerIds.IsNull() && data.NoteIds.IsNull()
+	if allEmpty {
+		resp.Diagnostics.AddError(
+			"Missing Component IDs",
+			"At least one component ID list (node_ids, element_ids, group_ids, link_ids, attachment_ids, combiner_ids, or note_ids) must be provided. "+
+				"Use doit_cloud_diagrams_schemes with statussheet IDs to discover component IDs.",
+		)
+		return
+	}
+
 	layerID := data.Id.ValueString()
 
 	// Build query params.
@@ -122,8 +162,64 @@ func (d *cloudDiagramsStatussheetDataSource) Read(ctx context.Context, req datas
 		params.P = data.P.ValueStringPointer()
 	}
 
-	// Send empty request body (retrieve all components).
+	// Populate the request body with component IDs.
 	body := models.GetStatussheetComponentsJSONRequestBody{}
+	if !data.NodeIds.IsNull() {
+		var ids []string
+		resp.Diagnostics.Append(data.NodeIds.ElementsAs(ctx, &ids, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		body.Node = &ids
+	}
+	if !data.ElementIds.IsNull() {
+		var ids []string
+		resp.Diagnostics.Append(data.ElementIds.ElementsAs(ctx, &ids, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		body.Element = &ids
+	}
+	if !data.GroupIds.IsNull() {
+		var ids []string
+		resp.Diagnostics.Append(data.GroupIds.ElementsAs(ctx, &ids, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		body.Group = &ids
+	}
+	if !data.LinkIds.IsNull() {
+		var ids []string
+		resp.Diagnostics.Append(data.LinkIds.ElementsAs(ctx, &ids, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		body.Link = &ids
+	}
+	if !data.AttachmentIds.IsNull() {
+		var ids []string
+		resp.Diagnostics.Append(data.AttachmentIds.ElementsAs(ctx, &ids, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		body.Attachment = &ids
+	}
+	if !data.CombinerIds.IsNull() {
+		var ids []string
+		resp.Diagnostics.Append(data.CombinerIds.ElementsAs(ctx, &ids, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		body.Combiner = &ids
+	}
+	if !data.NoteIds.IsNull() {
+		var ids []string
+		resp.Diagnostics.Append(data.NoteIds.ElementsAs(ctx, &ids, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		body.Note = &ids
+	}
 
 	apiResp, err := d.client.GetStatussheetComponentsWithResponse(ctx, layerID, params, body)
 	if err != nil {
