@@ -1121,3 +1121,482 @@ resource "doit_insight_resource_results" "test" {
 }
 `, key)
 }
+
+// TestAccInsightResourceResults_MetadataOmitThenAdd tests the lifecycle:
+// 1. Create without metadata (omitted) → metadata is null → empty plan
+// 2. Update to add metadata → metadata is set → empty plan.
+func TestAccInsightResourceResults_MetadataOmitThenAdd(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create without metadata
+			{
+				Config: testAccInsightWithResults(rName, "Metadata Omit-Add Test", "Test omitting then adding metadata"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 2: Drift check — no metadata, should be stable
+			{
+				Config: testAccInsightWithResults(rName, "Metadata Omit-Add Test", "Test omitting then adding metadata"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Add metadata via update
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"region":"us-east-1","tier":"gold"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Step 4: Drift check — metadata should be stable
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"region":"us-east-1","tier":"gold"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResourceResults_MetadataAddThenRemove tests the lifecycle:
+// 1. Create with metadata → metadata is set → empty plan
+// 2. Update to remove metadata (explicit null) → metadata is null → empty plan.
+func TestAccInsightResourceResults_MetadataAddThenRemove(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with metadata
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"region":"us-east-1","tier":"gold"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Step 2: Drift check — metadata should be stable
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"region":"us-east-1","tier":"gold"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Remove metadata by setting it to null explicitly
+			{
+				Config: testAccInsightResultsWithNullMetadata(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 4: Drift check — null metadata should be stable
+			{
+				Config: testAccInsightResultsWithNullMetadata(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResourceResults_MetadataCreateWithValue tests creating a
+// resource with metadata from the start (not added via update).
+func TestAccInsightResourceResults_MetadataCreateWithValue(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with metadata
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"env":"production","cost_center":"eng"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Step 2: Drift check — metadata should be stable
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"env":"production","cost_center":"eng"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResourceResults_MetadataCreateWithoutValue tests creating a
+// resource without metadata and verifying the null value is stable.
+func TestAccInsightResourceResults_MetadataCreateWithoutValue(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create without metadata
+			{
+				Config: testAccInsightWithResults(rName, "Metadata None Test", "Test creating without metadata"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 2: Drift check — null metadata should be stable
+			{
+				Config: testAccInsightWithResults(rName, "Metadata None Test", "Test creating without metadata"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResourceResults_MetadataImport verifies that importing a
+// resource with metadata preserves the JSON value in state.
+func TestAccInsightResourceResults_MetadataImport(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with metadata
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"importKey":"importVal"}`),
+			},
+			// Step 2: Import
+			{
+				ResourceName:                         "doit_insight_resource_results.test",
+				ImportState:                          true,
+				ImportStateId:                        fmt.Sprintf("public-api/%s", rName),
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "insight_key",
+				ImportStateVerifyIgnore: []string{
+					"timeouts",
+				},
+			},
+			// Step 3: Drift check after import
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"importKey":"importVal"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccInsightResultsWithMetadata(key, metadataJSON string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Metadata RR Test"
+  short_description = "Test metadata round-trip"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+}
+
+resource "doit_insight_resource_results" "test" {
+  source_id   = "public-api"
+  insight_key = doit_insight.test.key
+
+  resource_results = [{
+    resource_id    = "i-acc-%[1]s-1"
+    account        = "111111111111"
+    cloud_provider = "aws"
+    result_type    = "potential_daily_savings"
+    metadata       = jsonencode(jsondecode(%[2]q))
+
+    result = {
+      value = 5.42
+    }
+  }]
+}
+`, key, metadataJSON)
+}
+
+// testAccInsightResultsWithNullMetadata explicitly sets metadata = null.
+// With the useNullForUnknownWhenConfigNull plan modifier, omitting the
+// attribute has the same effect — both clear the prior value.
+func testAccInsightResultsWithNullMetadata(key string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Metadata RR Test"
+  short_description = "Test metadata round-trip"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+}
+
+resource "doit_insight_resource_results" "test" {
+  source_id   = "public-api"
+  insight_key = doit_insight.test.key
+
+  resource_results = [{
+    resource_id    = "i-acc-%[1]s-1"
+    account        = "111111111111"
+    cloud_provider = "aws"
+    result_type    = "potential_daily_savings"
+    metadata       = null
+
+    result = {
+      value = 5.42
+    }
+  }]
+}
+`, key)
+}
+
+// TestAccInsightResourceResults_ExternalIdAddThenRemove tests clearing
+// external_id (a plain types.String Optional+Computed attribute) as a control
+// group for the metadata clearing test. If this test passes but the metadata
+// variant fails, the bug is specific to jsontypes.Normalized.
+func TestAccInsightResourceResults_ExternalIdAddThenRemove(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with external_id
+			{
+				Config: testAccInsightResultsWithExternalId(rName, "ext-abc-123"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_id"),
+						knownvalue.StringExact("ext-abc-123")),
+				},
+			},
+			// Step 2: Drift check — external_id should be stable
+			{
+				Config: testAccInsightResultsWithExternalId(rName, "ext-abc-123"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Remove external_id by setting it to null explicitly
+			{
+				Config: testAccInsightResultsWithNullExternalId(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("external_id"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 4: Drift check — null external_id should be stable
+			{
+				Config: testAccInsightResultsWithNullExternalId(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccInsightResultsWithExternalId(key, externalId string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "ExternalId RR Test"
+  short_description = "Test external_id round-trip"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+}
+
+resource "doit_insight_resource_results" "test" {
+  source_id   = "public-api"
+  insight_key = doit_insight.test.key
+
+  resource_results = [{
+    resource_id    = "i-acc-%[1]s-1"
+    account        = "111111111111"
+    cloud_provider = "aws"
+    result_type    = "potential_daily_savings"
+    external_id    = %[2]q
+
+    result = {
+      value = 5.42
+    }
+  }]
+}
+`, key, externalId)
+}
+
+func testAccInsightResultsWithNullExternalId(key string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "ExternalId RR Test"
+  short_description = "Test external_id round-trip"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+}
+
+resource "doit_insight_resource_results" "test" {
+  source_id   = "public-api"
+  insight_key = doit_insight.test.key
+
+  resource_results = [{
+    resource_id    = "i-acc-%[1]s-1"
+    account        = "111111111111"
+    cloud_provider = "aws"
+    result_type    = "potential_daily_savings"
+    external_id    = null
+
+    result = {
+      value = 5.42
+    }
+  }]
+}
+`, key)
+}
+
+// TestAccInsightResourceResults_MetadataEmptyObject verifies that the API
+// normalizes an empty JSON object ({}) to null/absent. Setting metadata to
+// jsonencode({}) sends {} to the API, but the API stores nothing and returns
+// null. The provider maps this back to null, so the effective behavior is
+// identical to metadata = null.
+func TestAccInsightResourceResults_MetadataEmptyObject(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with real metadata.
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"keep":"this"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Step 2: Clear metadata with null — API clears it.
+			{
+				Config: testAccInsightResultsWithNullMetadata(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 3: Drift check — null metadata should be stable.
+			{
+				Config: testAccInsightResultsWithNullMetadata(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}

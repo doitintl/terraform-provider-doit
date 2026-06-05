@@ -9,6 +9,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_diagrams_statussheet"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -357,12 +358,9 @@ func mapSSTagsList(ctx context.Context, tags *[]string) (basetypes.ListValue, di
 	return types.ListValueFrom(ctx, types.StringType, *tags)
 }
 
-// mapSSPropsValue maps the free-form props map to a known empty PropsValue.
-func mapSSPropsValue(ctx context.Context) datasource_cloud_diagrams_statussheet.PropsValue {
-	return datasource_cloud_diagrams_statussheet.NewPropsValueMust(
-		datasource_cloud_diagrams_statussheet.PropsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{},
-	)
+// mapSSPropsValue serializes the free-form props map as a JSON string.
+func mapSSPropsValue(props *map[string]interface{}) jsontypes.Normalized {
+	return mapFreeformJSON(props)
 }
 
 // ssFloat32PtrToBigFloat converts a *float32 to a NumberValue via big.Float.
@@ -429,7 +427,7 @@ func mapSSNodeMap(ctx context.Context, nodes *map[string]models.CloudDiagramNode
 				"issues":         issues,
 				"name":           types.StringPointerValue(n.Name),
 				"parent":         types.StringPointerValue(n.Parent),
-				"props":          mapSSPropsValue(ctx),
+				"props":          mapSSPropsValue(n.Props),
 				"running":        types.BoolPointerValue(n.Running),
 				"tags":           tags,
 			},
@@ -483,7 +481,7 @@ func mapSSElementMap(ctx context.Context, elements *map[string]models.CloudDiagr
 				"issues":      issues,
 				"name":        types.StringPointerValue(e.Name),
 				"parent":      types.StringPointerValue(e.Parent),
-				"props":       mapSSPropsValue(ctx),
+				"props":       mapSSPropsValue(e.Props),
 				"tags":        tags,
 			},
 		)
@@ -543,7 +541,7 @@ func mapSSGroupMap(ctx context.Context, groups *map[string]models.CloudDiagramGr
 				"issues":      issues,
 				"items":       items,
 				"name":        types.StringPointerValue(g.Name),
-				"props":       mapSSPropsValue(ctx),
+				"props":       mapSSPropsValue(g.Props),
 				"tags":        tags,
 			},
 		)
@@ -624,7 +622,7 @@ func mapSSLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink
 				"issues":          issues,
 				"name":            types.StringPointerValue(l.Name),
 				"owner_ss_id":     types.StringPointerValue(l.OwnerSsId),
-				"props":           mapSSPropsValue(ctx),
+				"props":           mapSSPropsValue(l.Props),
 				"tags":            tags,
 			},
 		)
@@ -677,7 +675,7 @@ func mapSSAttachmentMap(ctx context.Context, attachments *map[string]models.Clou
 				"icon":        types.StringPointerValue(a.Icon),
 				"issues":      issues,
 				"name":        types.StringPointerValue(a.Name),
-				"props":       mapSSPropsValue(ctx),
+				"props":       mapSSPropsValue(a.Props),
 				"tags":        tags,
 			},
 		)

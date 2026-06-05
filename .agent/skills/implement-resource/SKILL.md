@@ -152,6 +152,31 @@ Add `UseStateForUnknown()` plan modifiers to Computed-only fields that never cha
 
 > **Linter:** `usestatefunknown` — flags stable Computed-only fields missing this modifier.
 
+### Clearing Optional+Computed Attributes
+
+For `Optional+Computed` attributes, Terraform Core copies the prior state value into the `ProposedNewState` when the config value is null. The framework then skips its `MarkComputedNilsAsUnknown` phase because `ProposedNewState` already equals `PriorState`. This makes it **impossible for users to clear** the attribute by setting it to `null` or omitting it — the plan silently preserves the old value.
+
+Apply the `useNullForUnknownWhenConfigNull()` plan modifier to any `Optional+Computed` attribute that users should be able to clear:
+
+```go
+// In Schema():
+if nested, ok := rrAttr.NestedObject.Attributes["metadata"].(schema.StringAttribute); ok {
+    nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+    rrAttr.NestedObject.Attributes["metadata"] = nested
+}
+```
+
+**When to use:**
+- ✅ User-provided fields where absent/null means "clear" (e.g. `metadata`, `external_id`, `description`)
+- ✅ Resources with PUT (full-replacement) semantics
+- ❌ Fields where the API computes a server-side default when the field is absent — the modifier would clear the computed value on every plan
+
+**Important:** Terraform does not distinguish "attribute omitted" from "attribute explicitly set to null." Both result in a null config value. With this modifier, omitting an attribute from config will clear it rather than preserve the prior value.
+
+The overlay (`IsUnknown()` check) correctly interacts with this modifier: when the modifier sets the plan to null (not unknown), the overlay leaves it as null.
+
+See: [`planmodifier_null_on_config_null.go`](internal/provider/planmodifier_null_on_config_null.go) and [framework issue #603](https://github.com/hashicorp/terraform-plugin-framework/issues/603).
+
 ### RFC3339 Timestamp Validation
 
 Use the `rfc3339Validator` for schema-level validation of timestamp attributes. This provides early feedback at plan time instead of apply time.

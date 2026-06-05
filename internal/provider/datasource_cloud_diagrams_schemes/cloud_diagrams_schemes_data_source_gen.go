@@ -5,6 +5,7 @@ package datasource_cloud_diagrams_schemes
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -273,16 +274,11 @@ func CloudDiagramsSchemesDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "Component name.",
 										MarkdownDescription: "Component name.",
 									},
-									"props": schema.SingleNestedAttribute{
-										Attributes: map[string]schema.Attribute{},
-										CustomType: PropsType{
-											ObjectType: types.ObjectType{
-												AttrTypes: PropsValue{}.AttributeTypes(ctx),
-											},
-										},
+									"props": schema.StringAttribute{
+										CustomType:          jsontypes.NormalizedType{},
 										Computed:            true,
-										Description:         "Custom component properties (key-value pairs).",
-										MarkdownDescription: "Custom component properties (key-value pairs).",
+										Description:         "Custom component properties (key-value pairs). Value is JSON-encoded.",
+										MarkdownDescription: "Custom component properties (key-value pairs). Value is JSON-encoded.",
 									},
 									"tags": schema.ListAttribute{
 										ElementType:         types.StringType,
@@ -441,16 +437,11 @@ func CloudDiagramsSchemesDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "Parent element ID.",
 										MarkdownDescription: "Parent element ID.",
 									},
-									"props": schema.SingleNestedAttribute{
-										Attributes: map[string]schema.Attribute{},
-										CustomType: PropsType{
-											ObjectType: types.ObjectType{
-												AttrTypes: PropsValue{}.AttributeTypes(ctx),
-											},
-										},
+									"props": schema.StringAttribute{
+										CustomType:          jsontypes.NormalizedType{},
 										Computed:            true,
-										Description:         "Custom component properties (key-value pairs).",
-										MarkdownDescription: "Custom component properties (key-value pairs).",
+										Description:         "Custom component properties (key-value pairs). Value is JSON-encoded.",
+										MarkdownDescription: "Custom component properties (key-value pairs). Value is JSON-encoded.",
 									},
 									"tags": schema.ListAttribute{
 										ElementType:         types.StringType,
@@ -575,16 +566,11 @@ func CloudDiagramsSchemesDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "Component name.",
 										MarkdownDescription: "Component name.",
 									},
-									"props": schema.SingleNestedAttribute{
-										Attributes: map[string]schema.Attribute{},
-										CustomType: PropsType{
-											ObjectType: types.ObjectType{
-												AttrTypes: PropsValue{}.AttributeTypes(ctx),
-											},
-										},
+									"props": schema.StringAttribute{
+										CustomType:          jsontypes.NormalizedType{},
 										Computed:            true,
-										Description:         "Custom component properties (key-value pairs).",
-										MarkdownDescription: "Custom component properties (key-value pairs).",
+										Description:         "Custom component properties (key-value pairs). Value is JSON-encoded.",
+										MarkdownDescription: "Custom component properties (key-value pairs). Value is JSON-encoded.",
 									},
 									"tags": schema.ListAttribute{
 										ElementType:         types.StringType,
@@ -680,16 +666,11 @@ func CloudDiagramsSchemesDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "Owner layer ID for cross-diagram links.",
 										MarkdownDescription: "Owner layer ID for cross-diagram links.",
 									},
-									"props": schema.SingleNestedAttribute{
-										Attributes: map[string]schema.Attribute{},
-										CustomType: PropsType{
-											ObjectType: types.ObjectType{
-												AttrTypes: PropsValue{}.AttributeTypes(ctx),
-											},
-										},
+									"props": schema.StringAttribute{
+										CustomType:          jsontypes.NormalizedType{},
 										Computed:            true,
-										Description:         "Custom component properties (key-value pairs).",
-										MarkdownDescription: "Custom component properties (key-value pairs).",
+										Description:         "Custom component properties (key-value pairs). Value is JSON-encoded.",
+										MarkdownDescription: "Custom component properties (key-value pairs). Value is JSON-encoded.",
 									},
 									"tags": schema.ListAttribute{
 										ElementType:         types.StringType,
@@ -822,16 +803,11 @@ func CloudDiagramsSchemesDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "Parent node ID.",
 										MarkdownDescription: "Parent node ID.",
 									},
-									"props": schema.SingleNestedAttribute{
-										Attributes: map[string]schema.Attribute{},
-										CustomType: PropsType{
-											ObjectType: types.ObjectType{
-												AttrTypes: PropsValue{}.AttributeTypes(ctx),
-											},
-										},
+									"props": schema.StringAttribute{
+										CustomType:          jsontypes.NormalizedType{},
 										Computed:            true,
-										Description:         "Custom component properties (key-value pairs).",
-										MarkdownDescription: "Custom component properties (key-value pairs).",
+										Description:         "Custom component properties (key-value pairs). Value is JSON-encoded.",
+										MarkdownDescription: "Custom component properties (key-value pairs). Value is JSON-encoded.",
 									},
 									"running": schema.BoolAttribute{
 										Computed:            true,
@@ -969,16 +945,11 @@ func CloudDiagramsSchemesDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Map of layer ID to layer metadata and component collections.\nComponents are projected to key display and cloud fields by default.",
 				MarkdownDescription: "Map of layer ID to layer metadata and component collections.\nComponents are projected to key display and cloud fields by default.",
 			},
-			"template": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{},
-				CustomType: TemplateType{
-					ObjectType: types.ObjectType{
-						AttrTypes: TemplateValue{}.AttributeTypes(ctx),
-					},
-				},
+			"template": schema.StringAttribute{
+				CustomType:          jsontypes.NormalizedType{},
 				Computed:            true,
-				Description:         "Map of template layer ID to template data.",
-				MarkdownDescription: "Map of template layer ID to template data.",
+				Description:         "Map of template layer ID to template data. Value is JSON-encoded.",
+				MarkdownDescription: "Map of template layer ID to template data. Value is JSON-encoded.",
 			},
 			"type": schema.ListAttribute{
 				ElementType:         types.StringType,
@@ -994,23 +965,23 @@ func CloudDiagramsSchemesDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type CloudDiagramsSchemesModel struct {
-	AlarmsCount         types.Bool    `tfsdk:"alarms_count"`
-	Combiner            types.Bool    `tfsdk:"combiner"`
-	Components          types.Bool    `tfsdk:"components"`
-	Element             types.Bool    `tfsdk:"element"`
-	ExcludeDefaultVpc   types.Bool    `tfsdk:"exclude_default_vpc"`
-	ExcludeEmptySubnets types.Bool    `tfsdk:"exclude_empty_subnets"`
-	External            types.Bool    `tfsdk:"external"`
-	Group               types.Bool    `tfsdk:"group"`
-	IssuesCount         types.Bool    `tfsdk:"issues_count"`
-	Link                types.Bool    `tfsdk:"link"`
-	NodeType            types.String  `tfsdk:"node_type"`
-	Note                types.Bool    `tfsdk:"note"`
-	Scheme              types.Map     `tfsdk:"scheme"`
-	SkipEmpty           types.Bool    `tfsdk:"skip_empty"`
-	Statussheet         types.Map     `tfsdk:"statussheet"`
-	Template            TemplateValue `tfsdk:"template"`
-	Type                types.List    `tfsdk:"type"`
+	AlarmsCount         types.Bool           `tfsdk:"alarms_count"`
+	Combiner            types.Bool           `tfsdk:"combiner"`
+	Components          types.Bool           `tfsdk:"components"`
+	Element             types.Bool           `tfsdk:"element"`
+	ExcludeDefaultVpc   types.Bool           `tfsdk:"exclude_default_vpc"`
+	ExcludeEmptySubnets types.Bool           `tfsdk:"exclude_empty_subnets"`
+	External            types.Bool           `tfsdk:"external"`
+	Group               types.Bool           `tfsdk:"group"`
+	IssuesCount         types.Bool           `tfsdk:"issues_count"`
+	Link                types.Bool           `tfsdk:"link"`
+	NodeType            types.String         `tfsdk:"node_type"`
+	Note                types.Bool           `tfsdk:"note"`
+	Scheme              types.Map            `tfsdk:"scheme"`
+	SkipEmpty           types.Bool           `tfsdk:"skip_empty"`
+	Statussheet         types.Map            `tfsdk:"statussheet"`
+	Template            jsontypes.Normalized `tfsdk:"template"`
+	Type                types.List           `tfsdk:"type"`
 }
 
 var _ basetypes.ObjectTypable = SchemeType{}
@@ -3194,12 +3165,12 @@ func (t AttachmentType) ValueFromObject(ctx context.Context, in basetypes.Object
 		return nil, diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -3494,12 +3465,12 @@ func NewAttachmentValue(attributeTypes map[string]attr.Type, attributes map[stri
 		return NewAttachmentValueUnknown(), diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -3619,7 +3590,7 @@ type AttachmentValue struct {
 	Icon         basetypes.StringValue `tfsdk:"icon"`
 	Issues       basetypes.ListValue   `tfsdk:"issues"`
 	Name         basetypes.StringValue `tfsdk:"name"`
-	Props        PropsValue            `tfsdk:"props"`
+	Props        jsontypes.Normalized  `tfsdk:"props"`
 	Tags         basetypes.ListValue   `tfsdk:"tags"`
 	state        attr.ValueState
 }
@@ -3642,11 +3613,7 @@ func (v AttachmentValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 		ElemType: IssuesValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["props"] = PropsType{
-		basetypes.ObjectType{
-			AttrTypes: PropsValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
+	attrTypes["props"] = jsontypes.NormalizedType{}.TerraformType(ctx)
 	attrTypes["tags"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
@@ -3788,12 +3755,6 @@ func (v AttachmentValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		issues = v.Issues
 	}
 
-	var props attr.Value
-
-	{
-		props = v.Props
-	}
-
 	var tagsVal basetypes.ListValue
 	switch {
 	case v.Tags.IsUnknown():
@@ -3819,12 +3780,8 @@ func (v AttachmentValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 			"issues": basetypes.ListType{
 				ElemType: IssuesValue{}.Type(ctx),
 			},
-			"name": basetypes.StringType{},
-			"props": PropsType{
-				basetypes.ObjectType{
-					AttrTypes: PropsValue{}.AttributeTypes(ctx),
-				},
-			},
+			"name":  basetypes.StringType{},
+			"props": jsontypes.NormalizedType{},
 			"tags": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -3843,12 +3800,8 @@ func (v AttachmentValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		"issues": basetypes.ListType{
 			ElemType: IssuesValue{}.Type(ctx),
 		},
-		"name": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"name":  basetypes.StringType{},
+		"props": jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -3875,7 +3828,7 @@ func (v AttachmentValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 			"icon":        v.Icon,
 			"issues":      issues,
 			"name":        v.Name,
-			"props":       props,
+			"props":       v.Props,
 			"tags":        tagsVal,
 		})
 
@@ -3969,12 +3922,8 @@ func (v AttachmentValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 		"issues": basetypes.ListType{
 			ElemType: IssuesValue{}.Type(ctx),
 		},
-		"name": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"name":  basetypes.StringType{},
+		"props": jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -4468,266 +4417,6 @@ func (v IssuesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"jira":    basetypes.StringType{},
 		"snoozed": basetypes.NumberType{},
 	}
-}
-
-var _ basetypes.ObjectTypable = PropsType{}
-
-type PropsType struct {
-	basetypes.ObjectType
-}
-
-func (t PropsType) Equal(o attr.Type) bool {
-	other, ok := o.(PropsType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t PropsType) String() string {
-	return "PropsType"
-}
-
-func (t PropsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return PropsValue{
-		state: attr.ValueStateKnown,
-	}, diags
-}
-
-func NewPropsValueNull() PropsValue {
-	return PropsValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewPropsValueUnknown() PropsValue {
-	return PropsValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewPropsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (PropsValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing PropsValue Attribute Value",
-				"While creating a PropsValue value, a missing attribute value was detected. "+
-					"A PropsValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("PropsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid PropsValue Attribute Type",
-				"While creating a PropsValue value, an invalid attribute value was detected. "+
-					"A PropsValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("PropsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("PropsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra PropsValue Attribute Value",
-				"While creating a PropsValue value, an extra attribute value was detected. "+
-					"A PropsValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra PropsValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewPropsValueUnknown(), diags
-	}
-
-	if diags.HasError() {
-		return NewPropsValueUnknown(), diags
-	}
-
-	return PropsValue{
-		state: attr.ValueStateKnown,
-	}, diags
-}
-
-func NewPropsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) PropsValue {
-	object, diags := NewPropsValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewPropsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t PropsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewPropsValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewPropsValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewPropsValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewPropsValueMust(PropsValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t PropsType) ValueType(ctx context.Context) attr.Value {
-	return PropsValue{}
-}
-
-var _ basetypes.ObjectValuable = PropsValue{}
-
-type PropsValue struct {
-	state attr.ValueState
-}
-
-func (v PropsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 0)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 0)
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v PropsValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v PropsValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v PropsValue) String() string {
-	return "PropsValue"
-}
-
-func (v PropsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := map[string]attr.Type{}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{})
-
-	return objVal, diags
-}
-
-func (v PropsValue) Equal(o attr.Value) bool {
-	other, ok := o.(PropsValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	return true
-}
-
-func (v PropsValue) Type(ctx context.Context) attr.Type {
-	return PropsType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v PropsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{}
 }
 
 var _ basetypes.ObjectTypable = CombinerType{}
@@ -5880,12 +5569,12 @@ func (t ElementType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -6180,12 +5869,12 @@ func NewElementValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewElementValueUnknown(), diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -6305,7 +5994,7 @@ type ElementValue struct {
 	Issues       basetypes.ListValue   `tfsdk:"issues"`
 	Name         basetypes.StringValue `tfsdk:"name"`
 	Parent       basetypes.StringValue `tfsdk:"parent"`
-	Props        PropsValue            `tfsdk:"props"`
+	Props        jsontypes.Normalized  `tfsdk:"props"`
 	Tags         basetypes.ListValue   `tfsdk:"tags"`
 	state        attr.ValueState
 }
@@ -6328,11 +6017,7 @@ func (v ElementValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 	}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["parent"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["props"] = PropsType{
-		basetypes.ObjectType{
-			AttrTypes: PropsValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
+	attrTypes["props"] = jsontypes.NormalizedType{}.TerraformType(ctx)
 	attrTypes["tags"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
@@ -6474,12 +6159,6 @@ func (v ElementValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		issues = v.Issues
 	}
 
-	var props attr.Value
-
-	{
-		props = v.Props
-	}
-
 	var tagsVal basetypes.ListValue
 	switch {
 	case v.Tags.IsUnknown():
@@ -6506,11 +6185,7 @@ func (v ElementValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			},
 			"name":   basetypes.StringType{},
 			"parent": basetypes.StringType{},
-			"props": PropsType{
-				basetypes.ObjectType{
-					AttrTypes: PropsValue{}.AttributeTypes(ctx),
-				},
-			},
+			"props":  jsontypes.NormalizedType{},
 			"tags": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -6530,11 +6205,7 @@ func (v ElementValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		},
 		"name":   basetypes.StringType{},
 		"parent": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"props":  jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -6561,7 +6232,7 @@ func (v ElementValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			"issues":      issues,
 			"name":        v.Name,
 			"parent":      v.Parent,
-			"props":       props,
+			"props":       v.Props,
 			"tags":        tagsVal,
 		})
 
@@ -6656,11 +6327,7 @@ func (v ElementValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		},
 		"name":   basetypes.StringType{},
 		"parent": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"props":  jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -6900,12 +6567,12 @@ func (t GroupType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -7219,12 +6886,12 @@ func NewGroupValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewGroupValueUnknown(), diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -7346,7 +7013,7 @@ type GroupValue struct {
 	Issues       basetypes.ListValue   `tfsdk:"issues"`
 	Items        basetypes.ListValue   `tfsdk:"items"`
 	Name         basetypes.StringValue `tfsdk:"name"`
-	Props        PropsValue            `tfsdk:"props"`
+	Props        jsontypes.Normalized  `tfsdk:"props"`
 	Tags         basetypes.ListValue   `tfsdk:"tags"`
 	state        attr.ValueState
 }
@@ -7372,11 +7039,7 @@ func (v GroupValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		ElemType: ItemsValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["props"] = PropsType{
-		basetypes.ObjectType{
-			AttrTypes: PropsValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
+	attrTypes["props"] = jsontypes.NormalizedType{}.TerraformType(ctx)
 	attrTypes["tags"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
@@ -7532,12 +7195,6 @@ func (v GroupValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		items = v.Items
 	}
 
-	var props attr.Value
-
-	{
-		props = v.Props
-	}
-
 	var tagsVal basetypes.ListValue
 	switch {
 	case v.Tags.IsUnknown():
@@ -7566,12 +7223,8 @@ func (v GroupValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"items": basetypes.ListType{
 				ElemType: ItemsValue{}.Type(ctx),
 			},
-			"name": basetypes.StringType{},
-			"props": PropsType{
-				basetypes.ObjectType{
-					AttrTypes: PropsValue{}.AttributeTypes(ctx),
-				},
-			},
+			"name":  basetypes.StringType{},
+			"props": jsontypes.NormalizedType{},
 			"tags": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -7593,12 +7246,8 @@ func (v GroupValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"items": basetypes.ListType{
 			ElemType: ItemsValue{}.Type(ctx),
 		},
-		"name": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"name":  basetypes.StringType{},
+		"props": jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -7626,7 +7275,7 @@ func (v GroupValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"issues":      issues,
 			"items":       items,
 			"name":        v.Name,
-			"props":       props,
+			"props":       v.Props,
 			"tags":        tagsVal,
 		})
 
@@ -7727,12 +7376,8 @@ func (v GroupValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"items": basetypes.ListType{
 			ElemType: ItemsValue{}.Type(ctx),
 		},
-		"name": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"name":  basetypes.StringType{},
+		"props": jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -7936,12 +7581,12 @@ func (t LinkType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -8217,12 +7862,12 @@ func NewLinkValue(attributeTypes map[string]attr.Type, attributes map[string]att
 		return NewLinkValueUnknown(), diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -8340,7 +7985,7 @@ type LinkValue struct {
 	Issues         basetypes.ListValue   `tfsdk:"issues"`
 	Name           basetypes.StringValue `tfsdk:"name"`
 	OwnerSsId      basetypes.StringValue `tfsdk:"owner_ss_id"`
-	Props          PropsValue            `tfsdk:"props"`
+	Props          jsontypes.Normalized  `tfsdk:"props"`
 	Tags           basetypes.ListValue   `tfsdk:"tags"`
 	state          attr.ValueState
 }
@@ -8362,11 +8007,7 @@ func (v LinkValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) 
 	}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["owner_ss_id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["props"] = PropsType{
-		basetypes.ObjectType{
-			AttrTypes: PropsValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
+	attrTypes["props"] = jsontypes.NormalizedType{}.TerraformType(ctx)
 	attrTypes["tags"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
@@ -8500,12 +8141,6 @@ func (v LinkValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 		issues = v.Issues
 	}
 
-	var props attr.Value
-
-	{
-		props = v.Props
-	}
-
 	var tagsVal basetypes.ListValue
 	switch {
 	case v.Tags.IsUnknown():
@@ -8531,11 +8166,7 @@ func (v LinkValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 			},
 			"name":        basetypes.StringType{},
 			"owner_ss_id": basetypes.StringType{},
-			"props": PropsType{
-				basetypes.ObjectType{
-					AttrTypes: PropsValue{}.AttributeTypes(ctx),
-				},
-			},
+			"props":       jsontypes.NormalizedType{},
 			"tags": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -8554,11 +8185,7 @@ func (v LinkValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 		},
 		"name":        basetypes.StringType{},
 		"owner_ss_id": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"props":       jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -8584,7 +8211,7 @@ func (v LinkValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 			"issues":          issues,
 			"name":            v.Name,
 			"owner_ss_id":     v.OwnerSsId,
-			"props":           props,
+			"props":           v.Props,
 			"tags":            tagsVal,
 		})
 
@@ -8674,11 +8301,7 @@ func (v LinkValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		},
 		"name":        basetypes.StringType{},
 		"owner_ss_id": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"props":       jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -8936,12 +8559,12 @@ func (t NodeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	runningAttribute, ok := attributes["running"]
@@ -9293,12 +8916,12 @@ func NewNodeValue(attributeTypes map[string]attr.Type, attributes map[string]att
 		return NewNodeValueUnknown(), diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsVal, ok := propsAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be jsontypes.Normalized, was: %T`, propsAttribute))
 	}
 
 	runningAttribute, ok := attributes["running"]
@@ -9441,7 +9064,7 @@ type NodeValue struct {
 	Issues        basetypes.ListValue   `tfsdk:"issues"`
 	Name          basetypes.StringValue `tfsdk:"name"`
 	Parent        basetypes.StringValue `tfsdk:"parent"`
-	Props         PropsValue            `tfsdk:"props"`
+	Props         jsontypes.Normalized  `tfsdk:"props"`
 	Running       basetypes.BoolValue   `tfsdk:"running"`
 	Tags          basetypes.ListValue   `tfsdk:"tags"`
 	state         attr.ValueState
@@ -9471,11 +9094,7 @@ func (v NodeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) 
 	}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["parent"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["props"] = PropsType{
-		basetypes.ObjectType{
-			AttrTypes: PropsValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
+	attrTypes["props"] = jsontypes.NormalizedType{}.TerraformType(ctx)
 	attrTypes["running"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["tags"] = basetypes.ListType{
 		ElemType: types.StringType,
@@ -9648,12 +9267,6 @@ func (v NodeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 		issues = v.Issues
 	}
 
-	var props attr.Value
-
-	{
-		props = v.Props
-	}
-
 	var tagsVal basetypes.ListValue
 	switch {
 	case v.Tags.IsUnknown():
@@ -9684,13 +9297,9 @@ func (v NodeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 			"issues": basetypes.ListType{
 				ElemType: IssuesValue{}.Type(ctx),
 			},
-			"name":   basetypes.StringType{},
-			"parent": basetypes.StringType{},
-			"props": PropsType{
-				basetypes.ObjectType{
-					AttrTypes: PropsValue{}.AttributeTypes(ctx),
-				},
-			},
+			"name":    basetypes.StringType{},
+			"parent":  basetypes.StringType{},
+			"props":   jsontypes.NormalizedType{},
 			"running": basetypes.BoolType{},
 			"tags": basetypes.ListType{
 				ElemType: types.StringType,
@@ -9715,13 +9324,9 @@ func (v NodeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 		"issues": basetypes.ListType{
 			ElemType: IssuesValue{}.Type(ctx),
 		},
-		"name":   basetypes.StringType{},
-		"parent": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"name":    basetypes.StringType{},
+		"parent":  basetypes.StringType{},
+		"props":   jsontypes.NormalizedType{},
 		"running": basetypes.BoolType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
@@ -9751,7 +9356,7 @@ func (v NodeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 			"issues":         issues,
 			"name":           v.Name,
 			"parent":         v.Parent,
-			"props":          props,
+			"props":          v.Props,
 			"running":        v.Running,
 			"tags":           tagsVal,
 		})
@@ -9863,13 +9468,9 @@ func (v NodeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"issues": basetypes.ListType{
 			ElemType: IssuesValue{}.Type(ctx),
 		},
-		"name":   basetypes.StringType{},
-		"parent": basetypes.StringType{},
-		"props": PropsType{
-			basetypes.ObjectType{
-				AttrTypes: PropsValue{}.AttributeTypes(ctx),
-			},
-		},
+		"name":    basetypes.StringType{},
+		"parent":  basetypes.StringType{},
+		"props":   jsontypes.NormalizedType{},
 		"running": basetypes.BoolType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
@@ -11904,264 +11505,4 @@ func (v ImportValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"synced_at":     basetypes.StringType{},
 		"type":          basetypes.StringType{},
 	}
-}
-
-var _ basetypes.ObjectTypable = TemplateType{}
-
-type TemplateType struct {
-	basetypes.ObjectType
-}
-
-func (t TemplateType) Equal(o attr.Type) bool {
-	other, ok := o.(TemplateType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t TemplateType) String() string {
-	return "TemplateType"
-}
-
-func (t TemplateType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return TemplateValue{
-		state: attr.ValueStateKnown,
-	}, diags
-}
-
-func NewTemplateValueNull() TemplateValue {
-	return TemplateValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewTemplateValueUnknown() TemplateValue {
-	return TemplateValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewTemplateValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (TemplateValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing TemplateValue Attribute Value",
-				"While creating a TemplateValue value, a missing attribute value was detected. "+
-					"A TemplateValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("TemplateValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid TemplateValue Attribute Type",
-				"While creating a TemplateValue value, an invalid attribute value was detected. "+
-					"A TemplateValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("TemplateValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("TemplateValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra TemplateValue Attribute Value",
-				"While creating a TemplateValue value, an extra attribute value was detected. "+
-					"A TemplateValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra TemplateValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewTemplateValueUnknown(), diags
-	}
-
-	if diags.HasError() {
-		return NewTemplateValueUnknown(), diags
-	}
-
-	return TemplateValue{
-		state: attr.ValueStateKnown,
-	}, diags
-}
-
-func NewTemplateValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) TemplateValue {
-	object, diags := NewTemplateValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewTemplateValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t TemplateType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewTemplateValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewTemplateValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewTemplateValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewTemplateValueMust(TemplateValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t TemplateType) ValueType(ctx context.Context) attr.Value {
-	return TemplateValue{}
-}
-
-var _ basetypes.ObjectValuable = TemplateValue{}
-
-type TemplateValue struct {
-	state attr.ValueState
-}
-
-func (v TemplateValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 0)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 0)
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v TemplateValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v TemplateValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v TemplateValue) String() string {
-	return "TemplateValue"
-}
-
-func (v TemplateValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := map[string]attr.Type{}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{})
-
-	return objVal, diags
-}
-
-func (v TemplateValue) Equal(o attr.Value) bool {
-	other, ok := o.(TemplateValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	return true
-}
-
-func (v TemplateValue) Type(ctx context.Context) attr.Type {
-	return TemplateType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v TemplateValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{}
 }
