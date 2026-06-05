@@ -10,6 +10,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_diagrams_schemes"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -117,7 +118,7 @@ func (d *cloudDiagramsSchemesDataSource) Read(ctx context.Context, req datasourc
 		data.Id = types.StringUnknown()
 		data.Scheme = types.MapUnknown(datasource_cloud_diagrams_schemes.SchemeValue{}.Type(ctx))
 		data.Statussheet = types.MapUnknown(datasource_cloud_diagrams_schemes.StatussheetValue{}.Type(ctx))
-		data.Template = datasource_cloud_diagrams_schemes.NewTemplateValueUnknown()
+		data.Template = mapFreeformJSON(nil)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -288,8 +289,8 @@ func mapSchemesResponse(
 		return diags
 	}
 
-	// Template is a free-form map; set to null if absent.
-	data.Template = datasource_cloud_diagrams_schemes.NewTemplateValueNull()
+	// Template is a free-form map; serialize as JSON.
+	data.Template = mapFreeformJSON(apiResp.Template)
 
 	return diags
 }
@@ -558,14 +559,10 @@ func mapTagsList(ctx context.Context, tags *[]string) (basetypes.ListValue, diag
 	return types.ListValueFrom(ctx, types.StringType, *tags)
 }
 
-// mapPropsValue maps the free-form props map to a Terraform PropsValue (always empty object).
-func mapSchemesPropsValue(ctx context.Context) datasource_cloud_diagrams_schemes.PropsValue {
-	// Props is defined as additionalProperties: true in the spec, which produces
-	// an empty SingleNestedAttribute. We return an empty known value.
-	return datasource_cloud_diagrams_schemes.NewPropsValueMust(
-		datasource_cloud_diagrams_schemes.PropsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{},
-	)
+// mapSchemesPropsValue serializes the free-form props map as a JSON string.
+// Props is additionalProperties: true, generated as a StringAttribute with jsontypes.NormalizedType.
+func mapSchemesPropsValue(props *map[string]interface{}) jsontypes.Normalized {
+	return mapFreeformJSON(props)
 }
 
 // --- Node ---
@@ -624,7 +621,7 @@ func mapNodeMap(ctx context.Context, nodes *map[string]models.CloudDiagramNode) 
 				"issues":         issues,
 				"name":           types.StringPointerValue(n.Name),
 				"parent":         types.StringPointerValue(n.Parent),
-				"props":          mapSchemesPropsValue(ctx),
+				"props":          mapSchemesPropsValue(n.Props),
 				"running":        types.BoolPointerValue(n.Running),
 				"tags":           tags,
 			},
@@ -678,7 +675,7 @@ func mapElementMap(ctx context.Context, elements *map[string]models.CloudDiagram
 				"issues":      issues,
 				"name":        types.StringPointerValue(e.Name),
 				"parent":      types.StringPointerValue(e.Parent),
-				"props":       mapSchemesPropsValue(ctx),
+				"props":       mapSchemesPropsValue(e.Props),
 				"tags":        tags,
 			},
 		)
@@ -738,7 +735,7 @@ func mapGroupMap(ctx context.Context, groups *map[string]models.CloudDiagramGrou
 				"issues":      issues,
 				"items":       items,
 				"name":        types.StringPointerValue(g.Name),
-				"props":       mapSchemesPropsValue(ctx),
+				"props":       mapSchemesPropsValue(g.Props),
 				"tags":        tags,
 			},
 		)
@@ -820,7 +817,7 @@ func mapLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink) 
 				"issues":          issues,
 				"name":            types.StringPointerValue(l.Name),
 				"owner_ss_id":     types.StringPointerValue(l.OwnerSsId),
-				"props":           mapSchemesPropsValue(ctx),
+				"props":           mapSchemesPropsValue(l.Props),
 				"tags":            tags,
 			},
 		)
@@ -873,7 +870,7 @@ func mapAttachmentMap(ctx context.Context, attachments *map[string]models.CloudD
 				"icon":        types.StringPointerValue(a.Icon),
 				"issues":      issues,
 				"name":        types.StringPointerValue(a.Name),
-				"props":       mapSchemesPropsValue(ctx),
+				"props":       mapSchemesPropsValue(a.Props),
 				"tags":        tags,
 			},
 		)

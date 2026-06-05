@@ -272,8 +272,8 @@ func mapResourceResultToValue(ctx context.Context, rr *models.ResourceResult) (d
 		resultVal = datasource_insight_resource_results.NewResultValueNull()
 	}
 
-	// Metadata — empty object type, always set to null since we can't map dynamic keys
-	metadataVal := datasource_insight_resource_results.NewMetadataValueNull()
+	// Metadata — free-form JSON, serialized from API response.
+	metadataVal := mapFreeformJSON(rr.Metadata)
 
 	// Severity
 	var severityVal types.String

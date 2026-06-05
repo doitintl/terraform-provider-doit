@@ -5,6 +5,7 @@ package resource_insight_resource_results
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -124,17 +125,12 @@ func InsightResourceResultsResourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.\n",
 							MarkdownDescription: "Represents the region/zone of the resource in AWS, or equivalent for other providers. Immutable after creation — updates to this field are silently ignored.\n",
 						},
-						"metadata": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{},
-							CustomType: MetadataType{
-								ObjectType: types.ObjectType{
-									AttrTypes: MetadataValue{}.AttributeTypes(ctx),
-								},
-							},
+						"metadata": schema.StringAttribute{
+							CustomType:          jsontypes.NormalizedType{},
 							Optional:            true,
 							Computed:            true,
-							Description:         "contains any additional information for the resource results",
-							MarkdownDescription: "contains any additional information for the resource results",
+							Description:         "contains any additional information for the resource results. Value is JSON-encoded.",
+							MarkdownDescription: "contains any additional information for the resource results. Value is JSON-encoded.",
 						},
 						"resolved": schema.BoolAttribute{
 							Computed:            true,
@@ -409,12 +405,12 @@ func (t ResourceResultsType) ValueFromObject(ctx context.Context, in basetypes.O
 		return nil, diags
 	}
 
-	metadataVal, ok := metadataAttribute.(MetadataValue)
+	metadataVal, ok := metadataAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metadata expected to be MetadataValue, was: %T`, metadataAttribute))
+			fmt.Sprintf(`metadata expected to be jsontypes.Normalized, was: %T`, metadataAttribute))
 	}
 
 	resolvedAttribute, ok := attributes["resolved"]
@@ -728,12 +724,12 @@ func NewResourceResultsValue(attributeTypes map[string]attr.Type, attributes map
 		return NewResourceResultsValueUnknown(), diags
 	}
 
-	metadataVal, ok := metadataAttribute.(MetadataValue)
+	metadataVal, ok := metadataAttribute.(jsontypes.Normalized)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metadata expected to be MetadataValue, was: %T`, metadataAttribute))
+			fmt.Sprintf(`metadata expected to be jsontypes.Normalized, was: %T`, metadataAttribute))
 	}
 
 	resolvedAttribute, ok := attributes["resolved"]
@@ -940,7 +936,7 @@ type ResourceResultsValue struct {
 	ExternalId    basetypes.StringValue `tfsdk:"external_id"`
 	ExternalUrl   basetypes.StringValue `tfsdk:"external_url"`
 	Location      basetypes.StringValue `tfsdk:"location"`
-	Metadata      MetadataValue         `tfsdk:"metadata"`
+	Metadata      jsontypes.Normalized  `tfsdk:"metadata"`
 	Resolved      basetypes.BoolValue   `tfsdk:"resolved"`
 	ResourceId    basetypes.StringValue `tfsdk:"resource_id"`
 	ResourceType  basetypes.StringValue `tfsdk:"resource_type"`
@@ -966,11 +962,7 @@ func (v ResourceResultsValue) ToTerraformValue(ctx context.Context) (tftypes.Val
 	attrTypes["external_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["external_url"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["location"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["metadata"] = MetadataType{
-		basetypes.ObjectType{
-			AttrTypes: MetadataValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
+	attrTypes["metadata"] = jsontypes.NormalizedType{}.TerraformType(ctx)
 	attrTypes["resolved"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["resource_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["resource_type"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1127,12 +1119,6 @@ func (v ResourceResultsValue) ToObjectValue(ctx context.Context) (basetypes.Obje
 		enhancement = v.Enhancement
 	}
 
-	var metadata attr.Value
-
-	{
-		metadata = v.Metadata
-	}
-
 	var result attr.Value
 
 	{
@@ -1147,14 +1133,10 @@ func (v ResourceResultsValue) ToObjectValue(ctx context.Context) (basetypes.Obje
 				AttrTypes: EnhancementValue{}.AttributeTypes(ctx),
 			},
 		},
-		"external_id":  basetypes.StringType{},
-		"external_url": basetypes.StringType{},
-		"location":     basetypes.StringType{},
-		"metadata": MetadataType{
-			basetypes.ObjectType{
-				AttrTypes: MetadataValue{}.AttributeTypes(ctx),
-			},
-		},
+		"external_id":   basetypes.StringType{},
+		"external_url":  basetypes.StringType{},
+		"location":      basetypes.StringType{},
+		"metadata":      jsontypes.NormalizedType{},
 		"resolved":      basetypes.BoolType{},
 		"resource_id":   basetypes.StringType{},
 		"resource_type": basetypes.StringType{},
@@ -1184,7 +1166,7 @@ func (v ResourceResultsValue) ToObjectValue(ctx context.Context) (basetypes.Obje
 			"external_id":    v.ExternalId,
 			"external_url":   v.ExternalUrl,
 			"location":       v.Location,
-			"metadata":       metadata,
+			"metadata":       v.Metadata,
 			"resolved":       v.Resolved,
 			"resource_id":    v.ResourceId,
 			"resource_type":  v.ResourceType,
@@ -1283,14 +1265,10 @@ func (v ResourceResultsValue) AttributeTypes(ctx context.Context) map[string]att
 				AttrTypes: EnhancementValue{}.AttributeTypes(ctx),
 			},
 		},
-		"external_id":  basetypes.StringType{},
-		"external_url": basetypes.StringType{},
-		"location":     basetypes.StringType{},
-		"metadata": MetadataType{
-			basetypes.ObjectType{
-				AttrTypes: MetadataValue{}.AttributeTypes(ctx),
-			},
-		},
+		"external_id":   basetypes.StringType{},
+		"external_url":  basetypes.StringType{},
+		"location":      basetypes.StringType{},
+		"metadata":      jsontypes.NormalizedType{},
 		"resolved":      basetypes.BoolType{},
 		"resource_id":   basetypes.StringType{},
 		"resource_type": basetypes.StringType{},
@@ -2221,266 +2199,6 @@ func (v PriorityValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 		"priority_score": basetypes.Float64Type{},
 		"value":          basetypes.StringType{},
 	}
-}
-
-var _ basetypes.ObjectTypable = MetadataType{}
-
-type MetadataType struct {
-	basetypes.ObjectType
-}
-
-func (t MetadataType) Equal(o attr.Type) bool {
-	other, ok := o.(MetadataType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t MetadataType) String() string {
-	return "MetadataType"
-}
-
-func (t MetadataType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return MetadataValue{
-		state: attr.ValueStateKnown,
-	}, diags
-}
-
-func NewMetadataValueNull() MetadataValue {
-	return MetadataValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewMetadataValueUnknown() MetadataValue {
-	return MetadataValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewMetadataValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (MetadataValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing MetadataValue Attribute Value",
-				"While creating a MetadataValue value, a missing attribute value was detected. "+
-					"A MetadataValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("MetadataValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid MetadataValue Attribute Type",
-				"While creating a MetadataValue value, an invalid attribute value was detected. "+
-					"A MetadataValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("MetadataValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("MetadataValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra MetadataValue Attribute Value",
-				"While creating a MetadataValue value, an extra attribute value was detected. "+
-					"A MetadataValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra MetadataValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewMetadataValueUnknown(), diags
-	}
-
-	if diags.HasError() {
-		return NewMetadataValueUnknown(), diags
-	}
-
-	return MetadataValue{
-		state: attr.ValueStateKnown,
-	}, diags
-}
-
-func NewMetadataValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) MetadataValue {
-	object, diags := NewMetadataValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewMetadataValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t MetadataType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewMetadataValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewMetadataValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewMetadataValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewMetadataValueMust(MetadataValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t MetadataType) ValueType(ctx context.Context) attr.Value {
-	return MetadataValue{}
-}
-
-var _ basetypes.ObjectValuable = MetadataValue{}
-
-type MetadataValue struct {
-	state attr.ValueState
-}
-
-func (v MetadataValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 0)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 0)
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v MetadataValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v MetadataValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v MetadataValue) String() string {
-	return "MetadataValue"
-}
-
-func (v MetadataValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := map[string]attr.Type{}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{})
-
-	return objVal, diags
-}
-
-func (v MetadataValue) Equal(o attr.Value) bool {
-	other, ok := o.(MetadataValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	return true
-}
-
-func (v MetadataValue) Type(ctx context.Context) attr.Type {
-	return MetadataType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v MetadataValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{}
 }
 
 var _ basetypes.ObjectTypable = ResultType{}

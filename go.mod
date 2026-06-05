@@ -5,6 +5,7 @@ go 1.26.3
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
+	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.7.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
@@ -30,10 +31,10 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bgentry/speakeasy v0.2.0 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
-	github.com/buger/jsonparser v1.1.2 // indirect
+	github.com/buger/jsonparser v1.2.0 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
-	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260603110311-08310878ef67 // indirect
-	github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260415075232-f4fc304812c4 // indirect
+	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260605110253-bd13bae94021 // indirect
+	github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260605111443-a72258dfe4c6 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/getkin/kin-openapi v0.135.0 // indirect
@@ -81,7 +82,7 @@ require (
 	github.com/oasdiff/yaml3 v0.0.9 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/pb33f/jsonpath v0.8.2 // indirect
-	github.com/pb33f/libopenapi v0.36.1 // indirect
+	github.com/pb33f/libopenapi v0.37.2 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/posener/complete v1.2.3 // indirect

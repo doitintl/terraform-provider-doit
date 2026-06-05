@@ -1944,9 +1944,16 @@
 									},
 									{
 										"name": "metadata",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed_optional",
-											"description": "contains any additional information for the resource results"
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "contains any additional information for the resource results. Value is JSON-encoded."
 										}
 									},
 									{

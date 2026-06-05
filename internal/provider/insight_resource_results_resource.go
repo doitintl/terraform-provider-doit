@@ -9,6 +9,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	rr "github.com/doitintl/terraform-provider-doit/internal/provider/resource_insight_resource_results"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -110,6 +111,20 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 				rrAttr.NestedObject.Attributes[field] = nested
 			}
 		}
+
+		// Allow clearing Optional+Computed string attributes by setting null in config.
+		// Without this modifier, Terraform Core copies the prior state value into the
+		// ProposedNewState for Optional+Computed attributes inside nested objects, making
+		// it impossible to detect that the user removed the attribute from their config.
+		// See: https://github.com/hashicorp/terraform-plugin-framework/issues/603
+		clearableFields := []string{"metadata", "external_id", "external_url"}
+		for _, field := range clearableFields {
+			if nested, ok := rrAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+				rrAttr.NestedObject.Attributes[field] = nested
+			}
+		}
+
 		s.Attributes["resource_results"] = rrAttr
 	}
 
@@ -184,6 +199,10 @@ func (plan *insightResourceResultsModel) toResourceResultsRequest(ctx context.Co
 				result.Low = new(int(elem.Result.Low.ValueInt64()))
 			}
 			apiResult.Result = result
+		}
+
+		if !elem.Metadata.IsNull() && !elem.Metadata.IsUnknown() {
+			apiResult.Metadata = freeformJSONToMap(elem.Metadata)
 		}
 
 		apiResults = append(apiResults, apiResult)
@@ -279,8 +298,8 @@ func mapRRResponseToModel(ctx context.Context, results []models.ResourceResult, 
 			diags.Append(enhDiags...)
 		}
 
-		// Build metadata (empty object)
-		metadataObj := rr.NewMetadataValueNull()
+		// Build metadata (free-form JSON)
+		metadataObj := mapFreeformJSON(apiRR.Metadata)
 
 		// Severity
 		severity := types.StringNull()
@@ -463,7 +482,7 @@ func resolveUnknownResourceResult(p *rr.ResourceResultsValue) {
 		p.ResourceType = types.StringNull()
 	}
 	if p.Metadata.IsUnknown() {
-		p.Metadata = rr.NewMetadataValueNull()
+		p.Metadata = jsontypes.NewNormalizedNull()
 	}
 
 	// Nested result object
