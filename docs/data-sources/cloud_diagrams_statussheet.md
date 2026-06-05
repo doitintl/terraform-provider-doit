@@ -102,7 +102,7 @@ Read-Only:
 - `icon` (String) Attachment icon identifier.
 - `issues` (Attributes List) Issues associated with this attachment. (see [below for nested schema](#nestedatt--attachment--issues))
 - `name` (String) Component name.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--attachment--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--attachment--issues"></a>
@@ -114,10 +114,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--attachment--props"></a>
-### Nested Schema for `attachment.props`
 
 
 
@@ -157,7 +153,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this element. (see [below for nested schema](#nestedatt--element--issues))
 - `name` (String) Component name.
 - `parent` (String) Parent element ID.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--element--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--element--issues"></a>
@@ -169,10 +165,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--element--props"></a>
-### Nested Schema for `element.props`
 
 
 
@@ -192,7 +184,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this group. (see [below for nested schema](#nestedatt--group--issues))
 - `items` (Attributes List) Components contained in the group. (see [below for nested schema](#nestedatt--group--items))
 - `name` (String) Component name.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--group--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--group--issues"></a>
@@ -215,10 +207,6 @@ Read-Only:
 - `type` (String) Component type.
 
 
-<a id="nestedatt--group--props"></a>
-### Nested Schema for `group.props`
-
-
 
 <a id="nestedatt--link"></a>
 ### Nested Schema for `link`
@@ -234,7 +222,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this link. (see [below for nested schema](#nestedatt--link--issues))
 - `name` (String) Component name.
 - `owner_ss_id` (String) Owner layer ID for cross-diagram links.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--link--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--link--issues"></a>
@@ -246,10 +234,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--link--props"></a>
-### Nested Schema for `link.props`
 
 
 
@@ -270,7 +254,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this node. (see [below for nested schema](#nestedatt--node--issues))
 - `name` (String) Component name.
 - `parent` (String) Parent node ID.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--node--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `running` (Boolean) Whether the node is currently running.
 - `tags` (List of String) Tags assigned to the component.
 
@@ -293,10 +277,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--node--props"></a>
-### Nested Schema for `node.props`
 
 
 

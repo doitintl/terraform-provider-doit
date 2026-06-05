@@ -119,7 +119,7 @@ Read-Only:
 - `external_id` (String) the external ID of the resource in the provider's system for the resource
 - `external_url` (String) the URL to the resource-level issue in the provider's system
 - `location` (String) represents the region/zone of the resource in AWS, or equivalent for other providers
-- `metadata` (Attributes) contains any additional information for the resource results (see [below for nested schema](#nestedatt--resource_results--metadata))
+- `metadata` (String) contains any additional information for the resource results. Value is JSON-encoded.
 - `resolved` (Boolean) Whether this resource-level issue has been resolved. Computed server-side.
 - `resource_id` (String) The cloud resource identifier.
 - `resource_type` (String) What the resource actually is, eg. for an EC2 resource ID, this field would be `instance`
@@ -145,10 +145,6 @@ Read-Only:
 - `priority_score` (Number) Numeric priority score.
 - `value` (String) The priority level (e.g. Low, Medium, High).
 
-
-
-<a id="nestedatt--resource_results--metadata"></a>
-### Nested Schema for `resource_results.metadata`
 
 
 <a id="nestedatt--resource_results--result"></a>
