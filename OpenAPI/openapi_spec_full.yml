@@ -3908,8 +3908,8 @@ paths:
         - Cloud Diagrams
       summary: Get layer components
       description: |-
-        Returns the components of the specified diagram layer, optionally filtered to specific
-        component IDs. Omit the request body (or send an empty object) to retrieve all components.
+        Returns the specified components of a diagram layer. Provide at least one component
+        type with one or more IDs in the request body (for example, `node` or `element`).
       operationId: getStatussheetComponents
       parameters:
         - name: id
@@ -3924,7 +3924,7 @@ paths:
           schema:
             type: string
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -9577,41 +9577,49 @@ components:
     CloudDiagramStatussheetGetRequest:
       type: object
       description: |-
-        Request body for getting layer components.
-        Omit or send an empty object to retrieve all components.
+        Request body for getting layer components. At least one component type must be
+        provided with one or more IDs.
+      minProperties: 1
       properties:
         node:
           type: array
+          minItems: 1
           description: Node IDs to fetch.
           items:
             type: string
         element:
           type: array
+          minItems: 1
           description: Element IDs to fetch.
           items:
             type: string
         link:
           type: array
+          minItems: 1
           description: Link IDs to fetch.
           items:
             type: string
         group:
           type: array
+          minItems: 1
           description: Group IDs to fetch.
           items:
             type: string
         attachment:
           type: array
+          minItems: 1
           description: Attachment IDs to fetch.
           items:
             type: string
         note:
           type: array
+          minItems: 1
           description: Note IDs to fetch.
           items:
             type: string
         combiner:
           type: array
+          minItems: 1
           description: Combiner IDs to fetch.
           items:
             type: string

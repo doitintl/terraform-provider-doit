@@ -208,6 +208,11 @@ data_sources:
     read:
       path: /clouddiagrams/v1/scheme/stats
       method: GET
+  # Cloud Diagrams statussheet data source
+  cloud_diagrams_statussheet:
+    read:
+      path: /clouddiagrams/v1/statussheet/{id}/get
+      method: POST
   # Insight data sources
   insight:
     read:

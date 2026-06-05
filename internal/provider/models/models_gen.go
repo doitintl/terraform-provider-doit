@@ -4460,6 +4460,30 @@ type CloudDiagramStatsChange struct {
 // CloudDiagramStatsChangeType Type of the change.
 type CloudDiagramStatsChangeType string
 
+// CloudDiagramStatussheetComponents Component collections of a diagram layer, keyed by component ID.
+type CloudDiagramStatussheetComponents struct {
+	// Attachment Map of attachment ID to attachment component.
+	Attachment *map[string]CloudDiagramAttachment `json:"attachment,omitempty"`
+
+	// Combiner Map of combiner ID to combiner component.
+	Combiner *map[string]CloudDiagramCombiner `json:"combiner,omitempty"`
+
+	// Element Map of element ID to element component.
+	Element *map[string]CloudDiagramElement `json:"element,omitempty"`
+
+	// Group Map of group ID to group component.
+	Group *map[string]CloudDiagramGroup `json:"group,omitempty"`
+
+	// Link Map of link ID to link component.
+	Link *map[string]CloudDiagramLink `json:"link,omitempty"`
+
+	// Node Map of node ID to node component.
+	Node *map[string]CloudDiagramNode `json:"node,omitempty"`
+
+	// Note Map of note ID to note component.
+	Note *map[string]CloudDiagramNote `json:"note,omitempty"`
+}
+
 // CloudDiagramStatussheetData A layer entry with projected metadata and component collections.
 type CloudDiagramStatussheetData struct {
 	// Attachment Map of attachment ID to attachment component.
@@ -4486,6 +4510,31 @@ type CloudDiagramStatussheetData struct {
 	// Statussheet Projected layer metadata returned inside each layer entry.
 	// Contains import state, last updated timestamp, and links version.
 	Statussheet CloudDiagramStatussheetMeta `json:"statussheet"`
+}
+
+// CloudDiagramStatussheetGetRequest Request body for getting layer components. At least one component type must be
+// provided with one or more IDs.
+type CloudDiagramStatussheetGetRequest struct {
+	// Attachment Attachment IDs to fetch.
+	Attachment *[]string `json:"attachment,omitempty"`
+
+	// Combiner Combiner IDs to fetch.
+	Combiner *[]string `json:"combiner,omitempty"`
+
+	// Element Element IDs to fetch.
+	Element *[]string `json:"element,omitempty"`
+
+	// Group Group IDs to fetch.
+	Group *[]string `json:"group,omitempty"`
+
+	// Link Link IDs to fetch.
+	Link *[]string `json:"link,omitempty"`
+
+	// Node Node IDs to fetch.
+	Node *[]string `json:"node,omitempty"`
+
+	// Note Note IDs to fetch.
+	Note *[]string `json:"note,omitempty"`
 }
 
 // CloudDiagramStatussheetMeta Projected layer metadata returned inside each layer entry.
@@ -7319,6 +7368,12 @@ type GetCloudDiagramsStatsParams struct {
 	End time.Time `form:"end" json:"end"`
 }
 
+// GetStatussheetComponentsParams defines parameters for GetStatussheetComponents.
+type GetStatussheetComponentsParams struct {
+	// P Space-separated projection fields for component documents.
+	P *string `form:"p,omitempty" json:"p,omitempty"`
+}
+
 // GetCloudDiagramLayerSnapshotParams defines parameters for GetCloudDiagramLayerSnapshot.
 type GetCloudDiagramLayerSnapshotParams struct {
 	// SnapshotId Snapshot ID.
@@ -7534,6 +7589,9 @@ type GetCloudDiagramComponentsJSONRequestBody = CloudDiagramsGetRequest
 
 // SearchCloudDiagramsJSONRequestBody defines body for SearchCloudDiagrams for application/json ContentType.
 type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
+
+// GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
+type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
@@ -8015,6 +8073,11 @@ type ClientInterface interface {
 
 	// GetCloudDiagramsStats request
 	GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetStatussheetComponentsWithBody request with any body
+	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCloudDiagramLayerSnapshot request
 	GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9152,6 +9215,30 @@ func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagra
 
 func (c *Client) GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCloudDiagramsStatsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequest(c.Server, id, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -12967,6 +13054,80 @@ func NewGetCloudDiagramsStatsRequest(server string, params *GetCloudDiagramsStat
 	return req, nil
 }
 
+// NewGetStatussheetComponentsRequest calls the generic GetStatussheetComponents builder with application/json body
+func NewGetStatussheetComponentsRequest(server string, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetStatussheetComponentsRequestWithBody(server, id, params, "application/json", bodyReader)
+}
+
+// NewGetStatussheetComponentsRequestWithBody generates requests for GetStatussheetComponents with any type of body
+func NewGetStatussheetComponentsRequestWithBody(server string, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/get", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.P != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "p", *params.P, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetCloudDiagramLayerSnapshotRequest generates requests for GetCloudDiagramLayerSnapshot
 func NewGetCloudDiagramLayerSnapshotRequest(server string, id string, params *GetCloudDiagramLayerSnapshotParams) (*http.Request, error) {
 	var err error
@@ -14779,6 +14940,11 @@ type ClientWithResponsesInterface interface {
 
 	// GetCloudDiagramsStatsWithResponse request
 	GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error)
+
+	// GetStatussheetComponentsWithBodyWithResponse request with any body
+	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
+	GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
 
 	// GetCloudDiagramLayerSnapshotWithResponse request
 	GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error)
@@ -17014,6 +17180,39 @@ func (r GetCloudDiagramsStatsResp) ContentType() string {
 	return ""
 }
 
+type GetStatussheetComponentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramStatussheetComponents
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r GetStatussheetComponentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetStatussheetComponentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetStatussheetComponentsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetCloudDiagramLayerSnapshotResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18755,6 +18954,23 @@ func (c *ClientWithResponses) GetCloudDiagramsStatsWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseGetCloudDiagramsStatsResp(rsp)
+}
+
+// GetStatussheetComponentsWithBodyWithResponse request with arbitrary body returning *GetStatussheetComponentsResp
+func (c *ClientWithResponses) GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponentsWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
+}
+
+func (c *ClientWithResponses) GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponents(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
 }
 
 // GetCloudDiagramLayerSnapshotWithResponse request returning *GetCloudDiagramLayerSnapshotResp
@@ -22396,6 +22612,53 @@ func ParseGetCloudDiagramsStatsResp(rsp *http.Response) (*GetCloudDiagramsStatsR
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
 		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetStatussheetComponentsResp parses an HTTP response from a GetStatussheetComponentsWithResponse call
+func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetComponentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetStatussheetComponentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramStatussheetComponents
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
