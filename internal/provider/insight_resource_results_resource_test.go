@@ -1392,9 +1392,8 @@ resource "doit_insight_resource_results" "test" {
 }
 
 // testAccInsightResultsWithNullMetadata explicitly sets metadata = null.
-// This is distinct from omitting the attribute entirely — for Optional+Computed
-// fields, omission causes the overlay to preserve the prior API value, while
-// explicit null signals intent to clear the field.
+// With the useNullForUnknownWhenConfigNull plan modifier, omitting the
+// attribute has the same effect — both clear the prior value.
 func testAccInsightResultsWithNullMetadata(key string) string {
 	return fmt.Sprintf(`
 resource "doit_insight" "test" {
@@ -1544,4 +1543,60 @@ resource "doit_insight_resource_results" "test" {
   }]
 }
 `, key)
+}
+
+// TestAccInsightResourceResults_MetadataEmptyObject verifies that the API
+// normalizes an empty JSON object ({}) to null/absent. Setting metadata to
+// jsonencode({}) sends {} to the API, but the API stores nothing and returns
+// null. The provider maps this back to null, so the effective behavior is
+// identical to metadata = null.
+func TestAccInsightResourceResults_MetadataEmptyObject(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-irr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with real metadata.
+			{
+				Config: testAccInsightResultsWithMetadata(rName, `{"keep":"this"}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.NotNull()),
+				},
+			},
+			// Step 2: Clear metadata with null — API clears it.
+			{
+				Config: testAccInsightResultsWithNullMetadata(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight_resource_results.test",
+						tfjsonpath.New("resource_results").AtSliceIndex(0).AtMapKey("metadata"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 3: Drift check — null metadata should be stable.
+			{
+				Config: testAccInsightResultsWithNullMetadata(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
 }

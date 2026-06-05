@@ -118,7 +118,7 @@ func (d *cloudDiagramsSchemesDataSource) Read(ctx context.Context, req datasourc
 		data.Id = types.StringUnknown()
 		data.Scheme = types.MapUnknown(datasource_cloud_diagrams_schemes.SchemeValue{}.Type(ctx))
 		data.Statussheet = types.MapUnknown(datasource_cloud_diagrams_schemes.StatussheetValue{}.Type(ctx))
-		data.Template = mapFreeformJSON(nil)
+		data.Template = jsontypes.NewNormalizedUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}

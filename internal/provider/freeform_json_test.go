@@ -63,10 +63,11 @@ func TestFreeformJSONToMap(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		input   jsontypes.Normalized
-		wantNil bool
-		wantKey string
-		wantVal interface{}
+		input     jsontypes.Normalized
+		wantNil   bool
+		wantError bool
+		wantKey   string
+		wantVal   interface{}
 	}{
 		"null-value": {
 			input:   jsontypes.NewNormalizedNull(),
@@ -81,8 +82,9 @@ func TestFreeformJSONToMap(t *testing.T) {
 			wantNil: true,
 		},
 		"invalid-json": {
-			input:   jsontypes.NewNormalizedValue("not json"),
-			wantNil: true,
+			input:     jsontypes.NewNormalizedValue("not json"),
+			wantNil:   true,
+			wantError: true,
 		},
 		"valid-json": {
 			input:   jsontypes.NewNormalizedValue(`{"key":"value"}`),
@@ -90,12 +92,24 @@ func TestFreeformJSONToMap(t *testing.T) {
 			wantKey: "key",
 			wantVal: "value",
 		},
+		"empty-object": {
+			input:   jsontypes.NewNormalizedValue(`{}`),
+			wantNil: false,
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			got := freeformJSONToMap(tc.input)
+			got, diags := freeformJSONToMap(tc.input)
+
+			if tc.wantError {
+				if !diags.HasError() {
+					t.Error("expected diagnostic error, got none")
+				}
+			} else if diags.HasError() {
+				t.Errorf("unexpected diagnostic error: %s", diags.Errors()[0].Detail())
+			}
 
 			if tc.wantNil {
 				if got != nil {
@@ -108,8 +122,10 @@ func TestFreeformJSONToMap(t *testing.T) {
 				t.Fatal("expected non-nil map, got nil")
 			}
 
-			if val, ok := (*got)[tc.wantKey]; !ok || val != tc.wantVal {
-				t.Errorf("expected [%s]=%v, got %v", tc.wantKey, tc.wantVal, *got)
+			if tc.wantKey != "" {
+				if val, ok := (*got)[tc.wantKey]; !ok || val != tc.wantVal {
+					t.Errorf("expected [%s]=%v, got %v", tc.wantKey, tc.wantVal, *got)
+				}
 			}
 		})
 	}
@@ -123,19 +139,22 @@ func TestFreeformJSON_RoundTrip(t *testing.T) {
 		"instanceType": "m5.large",
 	}
 
-	// Serialize to TF value
+	// Serialize to TF value.
 	normalized := mapFreeformJSON(original)
 	if normalized.IsNull() {
 		t.Fatal("expected known value after serialization")
 	}
 
-	// Deserialize back to map
-	restored := freeformJSONToMap(normalized)
+	// Deserialize back to map.
+	restored, diags := freeformJSONToMap(normalized)
+	if diags.HasError() {
+		t.Fatalf("unexpected error: %s", diags.Errors()[0].Detail())
+	}
 	if restored == nil {
 		t.Fatal("expected non-nil map after deserialization")
 	}
 
-	// Verify values
+	// Verify values.
 	for k, v := range *original {
 		got, ok := (*restored)[k]
 		if !ok {
@@ -144,5 +163,18 @@ func TestFreeformJSON_RoundTrip(t *testing.T) {
 		if got != v {
 			t.Errorf("key %q: expected %v, got %v", k, v, got)
 		}
+	}
+}
+
+func TestFreeformJSON_EmptyObjectRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	// The API normalizes empty objects to null in responses, so mapFreeformJSON
+	// collapses {} to null to prevent drift.
+	original := &map[string]interface{}{}
+
+	normalized := mapFreeformJSON(original)
+	if !normalized.IsNull() {
+		t.Fatalf("expected null for empty object (API normalizes {} to null), got %q", normalized.ValueString())
 	}
 }

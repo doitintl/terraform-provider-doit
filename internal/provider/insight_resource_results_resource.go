@@ -202,7 +202,12 @@ func (plan *insightResourceResultsModel) toResourceResultsRequest(ctx context.Co
 		}
 
 		if !elem.Metadata.IsNull() && !elem.Metadata.IsUnknown() {
-			apiResult.Metadata = freeformJSONToMap(elem.Metadata)
+			metadataMap, metaDiags := freeformJSONToMap(elem.Metadata)
+			diags.Append(metaDiags...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			apiResult.Metadata = metadataMap
 		}
 
 		apiResults = append(apiResults, apiResult)
