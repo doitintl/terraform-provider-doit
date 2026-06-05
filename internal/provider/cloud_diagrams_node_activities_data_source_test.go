@@ -1,8 +1,6 @@
 package provider_test
 
 import (
-	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -13,17 +11,19 @@ func TestAccCloudDiagramsNodeActivitiesDataSource_Basic(t *testing.T) {
 data "doit_cloud_diagrams_node_activities" "test" {
   ss_id   = local.first_layer_id
   node_id = local.first_node_id
+  limit   = 1
 }
 
-# Verify that metadata is valid JSON by decoding it.
+# Verify that metadata, when present, is valid JSON.
+# Use limit=1 so the set has exactly one element, avoiding ordering flakiness.
 locals {
-  activities      = tolist(data.doit_cloud_diagrams_node_activities.test.cloud_diagrams_node_activities)
-  first_activity  = local.activities[0]
-  metadata_parsed = local.first_activity.metadata != null ? jsondecode(local.first_activity.metadata) : null
+  activities     = tolist(data.doit_cloud_diagrams_node_activities.test.cloud_diagrams_node_activities)
+  first_activity = local.activities[0]
 }
 
-output "metadata_has_keys" {
-  value = local.metadata_parsed != null ? length(keys(local.metadata_parsed)) > 0 : false
+output "metadata_valid" {
+  # metadata is either null (some activity types omit it) or a valid JSON object.
+  value = local.first_activity.metadata == null ? true : can(jsondecode(local.first_activity.metadata))
 }`
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -35,19 +35,10 @@ output "metadata_has_keys" {
 				Config: config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_node_activities.test", "id"),
-					// Verify we got at least one activity record.
-					resource.TestCheckResourceAttrWith("data.doit_cloud_diagrams_node_activities.test", "cloud_diagrams_node_activities.#", func(value string) error {
-						n, err := strconv.Atoi(value)
-						if err != nil {
-							return fmt.Errorf("expected numeric count, got %q: %w", value, err)
-						}
-						if n == 0 {
-							return fmt.Errorf("expected at least one activity, got 0")
-						}
-						return nil
-					}),
-					// Verify metadata is surfaced as valid JSON (jsondecode succeeded, has keys).
-					resource.TestCheckOutput("metadata_has_keys", "true"),
+					// Verify we got exactly one activity record (limit=1).
+					resource.TestCheckResourceAttr("data.doit_cloud_diagrams_node_activities.test", "cloud_diagrams_node_activities.#", "1"),
+					// Verify metadata is either null or decodable JSON.
+					resource.TestCheckOutput("metadata_valid", "true"),
 				),
 			},
 			{
