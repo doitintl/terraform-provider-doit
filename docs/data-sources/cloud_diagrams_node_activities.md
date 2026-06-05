@@ -78,10 +78,7 @@ Read-Only:
 
 - `_id` (String) Activity record ID.
 - `activity` (String) Activity type.
-- `metadata` (Attributes) Activity-specific payload (structure varies by activity type). (see [below for nested schema](#nestedatt--cloud_diagrams_node_activities--metadata))
+- `metadata` (String) Activity-specific payload (structure varies by activity type). Value is JSON-encoded.
 - `statussheet` (String) Layer ID where the activity occurred.
 - `timestamp` (String) Timestamp of the activity.
 - `user` (String) ID of the user who performed the activity.
-
-<a id="nestedatt--cloud_diagrams_node_activities--metadata"></a>
-### Nested Schema for `cloud_diagrams_node_activities.metadata`

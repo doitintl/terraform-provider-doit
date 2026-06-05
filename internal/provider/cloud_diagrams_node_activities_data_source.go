@@ -147,7 +147,8 @@ func (d *cloudDiagramsNodeActivitiesDataSource) Read(ctx context.Context, req da
 	}
 
 	// Set a deterministic ID based on query parameters.
-	idInput := fmt.Sprintf("cloud_diagrams_node_activities\nss_id:%s\nnode_id:%s", data.SsId.ValueString(), data.NodeId.ValueString())
+	idInput := fmt.Sprintf("cloud_diagrams_node_activities\nss_id:%s\nnode_id:%s\nlimit:%s\noffset:%s",
+		data.SsId.ValueString(), data.NodeId.ValueString(), data.Limit.String(), data.Offset.String())
 	hash := sha256.Sum256([]byte(idInput))
 	data.Id = types.StringValue(fmt.Sprintf("%x", hash))
 
@@ -169,7 +170,7 @@ func mapNodeActivitiesToState(
 			map[string]attr.Value{
 				"_id":         types.StringValue(a.UnderscoreId),
 				"activity":    types.StringValue(string(a.Activity)),
-				"metadata":    datasource_cloud_diagrams_node_activities.NewMetadataValueNull(),
+				"metadata":    mapFreeformJSON(a.Metadata),
 				"statussheet": types.StringValue(a.Statussheet),
 				"timestamp":   types.StringValue(a.Timestamp.Format(time.RFC3339)),
 				"user":        types.StringValue(a.User),

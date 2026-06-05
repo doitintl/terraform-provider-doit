@@ -2759,9 +2759,16 @@
 									},
 									{
 										"name": "metadata",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "Activity-specific payload (structure varies by activity type)."
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Activity-specific payload (structure varies by activity type). Value is JSON-encoded."
 										}
 									},
 									{
