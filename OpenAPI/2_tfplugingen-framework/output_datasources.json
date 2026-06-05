@@ -3119,9 +3119,16 @@
 													},
 													{
 														"name": "props",
-														"single_nested": {
+														"string": {
 															"computed_optional_required": "computed",
-															"description": "Custom component properties (key-value pairs)."
+															"custom_type": {
+																"import": {
+																	"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+																},
+																"type": "jsontypes.NormalizedType{}",
+																"value_type": "jsontypes.Normalized"
+															},
+															"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 														}
 													},
 													{
@@ -3313,9 +3320,16 @@
 													},
 													{
 														"name": "props",
-														"single_nested": {
+														"string": {
 															"computed_optional_required": "computed",
-															"description": "Custom component properties (key-value pairs)."
+															"custom_type": {
+																"import": {
+																	"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+																},
+																"type": "jsontypes.NormalizedType{}",
+																"value_type": "jsontypes.Normalized"
+															},
+															"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 														}
 													},
 													{
@@ -3468,9 +3482,16 @@
 													},
 													{
 														"name": "props",
-														"single_nested": {
+														"string": {
 															"computed_optional_required": "computed",
-															"description": "Custom component properties (key-value pairs)."
+															"custom_type": {
+																"import": {
+																	"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+																},
+																"type": "jsontypes.NormalizedType{}",
+																"value_type": "jsontypes.Normalized"
+															},
+															"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 														}
 													},
 													{
@@ -3591,9 +3612,16 @@
 													},
 													{
 														"name": "props",
-														"single_nested": {
+														"string": {
 															"computed_optional_required": "computed",
-															"description": "Custom component properties (key-value pairs)."
+															"custom_type": {
+																"import": {
+																	"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+																},
+																"type": "jsontypes.NormalizedType{}",
+																"value_type": "jsontypes.Normalized"
+															},
+															"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 														}
 													},
 													{
@@ -3758,9 +3786,16 @@
 													},
 													{
 														"name": "props",
-														"single_nested": {
+														"string": {
 															"computed_optional_required": "computed",
-															"description": "Custom component properties (key-value pairs)."
+															"custom_type": {
+																"import": {
+																	"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+																},
+																"type": "jsontypes.NormalizedType{}",
+																"value_type": "jsontypes.Normalized"
+															},
+															"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 														}
 													},
 													{
@@ -3912,9 +3947,16 @@
 					},
 					{
 						"name": "template",
-						"single_nested": {
+						"string": {
 							"computed_optional_required": "computed",
-							"description": "Map of template layer ID to template data."
+							"custom_type": {
+								"import": {
+									"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+								},
+								"type": "jsontypes.NormalizedType{}",
+								"value_type": "jsontypes.Normalized"
+							},
+							"description": "Map of template layer ID to template data. Value is JSON-encoded."
 						}
 					}
 				],
@@ -4635,9 +4677,16 @@
 									},
 									{
 										"name": "props",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "Custom component properties (key-value pairs)."
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 										}
 									},
 									{
@@ -4829,9 +4878,16 @@
 									},
 									{
 										"name": "props",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "Custom component properties (key-value pairs)."
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 										}
 									},
 									{
@@ -4984,9 +5040,16 @@
 									},
 									{
 										"name": "props",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "Custom component properties (key-value pairs)."
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 										}
 									},
 									{
@@ -5107,9 +5170,16 @@
 									},
 									{
 										"name": "props",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "Custom component properties (key-value pairs)."
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 										}
 									},
 									{
@@ -5274,9 +5344,16 @@
 									},
 									{
 										"name": "props",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "Custom component properties (key-value pairs)."
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
 										}
 									},
 									{
@@ -6822,9 +6899,16 @@
 									},
 									{
 										"name": "metadata",
-										"single_nested": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "contains any additional information for the resource results"
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "contains any additional information for the resource results. Value is JSON-encoded."
 										}
 									},
 									{

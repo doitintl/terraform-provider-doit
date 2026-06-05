@@ -203,7 +203,7 @@ Optional:
 - `external_id` (String) the external ID of the resource in the provider's system for the resource
 - `external_url` (String) the URL to the resource-level issue in the provider's system
 - `location` (String) The region/zone of the resource (e.g. `eu-west-2`). **Immutable after creation** — changing this value will destroy and recreate the resource.
-- `metadata` (Attributes) contains any additional information for the resource results (see [below for nested schema](#nestedatt--resource_results--metadata))
+- `metadata` (String) contains any additional information for the resource results. Value is JSON-encoded.
 - `resource_type` (String) What the resource actually is, e.g. `instance`, `disk`, `cache`. **Immutable after creation** — changing this value will destroy and recreate the resource.
 - `result` (Attributes) The result data for this resource. Which fields are populated depends on the resultType. For security_risk: critical, high, medium, low. For potential_daily_savings: value. For potential_daily_savings_with_recommendation: value, current, recommendation. For potential_daily_savings_with_cluster_agent: value, agentInstalled. (see [below for nested schema](#nestedatt--resource_results--result))
 
@@ -212,10 +212,6 @@ Read-Only:
 - `enhancement` (Attributes) DoiT-managed metadata associated with a resource result. (see [below for nested schema](#nestedatt--resource_results--enhancement))
 - `resolved` (Boolean) Whether this resource-level issue has been resolved. Computed server-side.
 - `severity` (String) The severity level of the finding. Computed server-side from the security risk counts.
-
-<a id="nestedatt--resource_results--metadata"></a>
-### Nested Schema for `resource_results.metadata`
-
 
 <a id="nestedatt--resource_results--result"></a>
 ### Nested Schema for `resource_results.result`
