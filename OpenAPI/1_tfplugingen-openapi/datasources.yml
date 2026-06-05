@@ -213,6 +213,11 @@ data_sources:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/get
       method: POST
+  # Cloud Diagrams node activities data source
+  cloud_diagrams_node_activities:
+    read:
+      path: /clouddiagrams/v1/activity/node-activities
+      method: GET
   # Insight data sources
   insight:
     read:

@@ -731,6 +731,27 @@ func (e CloudDiagramNodeCldType) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramNodeActivityActivity.
+const (
+	CloudDiagramNodeActivityActivityNODECREATE CloudDiagramNodeActivityActivity = "NODE_CREATE"
+	CloudDiagramNodeActivityActivityNODEDELETE CloudDiagramNodeActivityActivity = "NODE_DELETE"
+	CloudDiagramNodeActivityActivityNODEUPDATE CloudDiagramNodeActivityActivity = "NODE_UPDATE"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramNodeActivityActivity enum.
+func (e CloudDiagramNodeActivityActivity) Valid() bool {
+	switch e {
+	case CloudDiagramNodeActivityActivityNODECREATE:
+		return true
+	case CloudDiagramNodeActivityActivityNODEDELETE:
+		return true
+	case CloudDiagramNodeActivityActivityNODEUPDATE:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudDiagramSchemeResultType.
 const (
 	CloudDiagramSchemeResultTypeApplication    CloudDiagramSchemeResultType = "application"
@@ -796,19 +817,19 @@ func (e CloudDiagramStatsType) Valid() bool {
 
 // Defines values for CloudDiagramStatsChangeType.
 const (
-	NODECREATE CloudDiagramStatsChangeType = "NODE_CREATE"
-	NODEDELETE CloudDiagramStatsChangeType = "NODE_DELETE"
-	NODEUPDATE CloudDiagramStatsChangeType = "NODE_UPDATE"
+	CloudDiagramStatsChangeTypeNODECREATE CloudDiagramStatsChangeType = "NODE_CREATE"
+	CloudDiagramStatsChangeTypeNODEDELETE CloudDiagramStatsChangeType = "NODE_DELETE"
+	CloudDiagramStatsChangeTypeNODEUPDATE CloudDiagramStatsChangeType = "NODE_UPDATE"
 )
 
 // Valid indicates whether the value is a known member of the CloudDiagramStatsChangeType enum.
 func (e CloudDiagramStatsChangeType) Valid() bool {
 	switch e {
-	case NODECREATE:
+	case CloudDiagramStatsChangeTypeNODECREATE:
 		return true
-	case NODEDELETE:
+	case CloudDiagramStatsChangeTypeNODEDELETE:
 		return true
-	case NODEUPDATE:
+	case CloudDiagramStatsChangeTypeNODEUPDATE:
 		return true
 	default:
 		return false
@@ -4325,6 +4346,30 @@ type CloudDiagramNode struct {
 // CloudDiagramNodeCldType Cloud account type.
 type CloudDiagramNodeCldType string
 
+// CloudDiagramNodeActivity An individual activity record scoped to a specific component node.
+type CloudDiagramNodeActivity struct {
+	// UnderscoreId Activity record ID.
+	UnderscoreId string `json:"_id"`
+
+	// Activity Activity type.
+	Activity CloudDiagramNodeActivityActivity `json:"activity"`
+
+	// Metadata Activity-specific payload (structure varies by activity type).
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+
+	// Statussheet Layer ID where the activity occurred.
+	Statussheet string `json:"statussheet"`
+
+	// Timestamp Timestamp of the activity.
+	Timestamp time.Time `json:"timestamp"`
+
+	// User ID of the user who performed the activity.
+	User string `json:"user"`
+}
+
+// CloudDiagramNodeActivityActivity Activity type.
+type CloudDiagramNodeActivityActivity string
+
 // CloudDiagramNote A text note placed on the diagram.
 type CloudDiagramNote struct {
 	// UnderscoreId Note ID.
@@ -7308,6 +7353,21 @@ type ListInvoicesParams struct {
 	MaxCreationTime *int64 `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
+// ListCloudDiagramNodeActivitiesParams defines parameters for ListCloudDiagramNodeActivities.
+type ListCloudDiagramNodeActivitiesParams struct {
+	// SsId Layer ID.
+	SsId string `form:"ss_id" json:"ss_id"`
+
+	// NodeId Node component ID.
+	NodeId string `form:"nodeId" json:"nodeId"`
+
+	// Limit Maximum number of records to return (default 50).
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of records to skip (default 0).
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // GetCloudDiagramComponentsParams defines parameters for GetCloudDiagramComponents.
 type GetCloudDiagramComponentsParams struct {
 	// Components Include components in the layer response.
@@ -8055,6 +8115,9 @@ type ClientInterface interface {
 
 	// GetInvoice request
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCloudDiagramNodeActivities request
+	ListCloudDiagramNodeActivities(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindCloudDiagramsWithBody request with any body
 	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9131,6 +9194,18 @@ func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, r
 
 func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInvoiceRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCloudDiagramNodeActivities(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCloudDiagramNodeActivitiesRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -12693,6 +12768,88 @@ func NewGetInvoiceRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListCloudDiagramNodeActivitiesRequest generates requests for ListCloudDiagramNodeActivities
+func NewListCloudDiagramNodeActivitiesRequest(server string, params *ListCloudDiagramNodeActivitiesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/activity/node-activities")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ss_id", params.SsId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nodeId", params.NodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "offset", *params.Offset, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewFindCloudDiagramsRequest calls the generic FindCloudDiagrams builder with application/json body
 func NewFindCloudDiagramsRequest(server string, body FindCloudDiagramsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -14923,6 +15080,9 @@ type ClientWithResponsesInterface interface {
 	// GetInvoiceWithResponse request
 	GetInvoiceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoiceResp, error)
 
+	// ListCloudDiagramNodeActivitiesWithResponse request
+	ListCloudDiagramNodeActivitiesWithResponse(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramNodeActivitiesResp, error)
+
 	// FindCloudDiagramsWithBodyWithResponse request with any body
 	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
 
@@ -17048,6 +17208,39 @@ func (r GetInvoiceResp) ContentType() string {
 	return ""
 }
 
+type ListCloudDiagramNodeActivitiesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]CloudDiagramNodeActivity
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCloudDiagramNodeActivitiesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCloudDiagramNodeActivitiesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCloudDiagramNodeActivitiesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type FindCloudDiagramsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18894,6 +19087,15 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseGetInvoiceResp(rsp)
+}
+
+// ListCloudDiagramNodeActivitiesWithResponse request returning *ListCloudDiagramNodeActivitiesResp
+func (c *ClientWithResponses) ListCloudDiagramNodeActivitiesWithResponse(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramNodeActivitiesResp, error) {
+	rsp, err := c.ListCloudDiagramNodeActivities(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCloudDiagramNodeActivitiesResp(rsp)
 }
 
 // FindCloudDiagramsWithBodyWithResponse request with arbitrary body returning *FindCloudDiagramsResp
@@ -22428,6 +22630,53 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCloudDiagramNodeActivitiesResp parses an HTTP response from a ListCloudDiagramNodeActivitiesWithResponse call
+func ParseListCloudDiagramNodeActivitiesResp(rsp *http.Response) (*ListCloudDiagramNodeActivitiesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCloudDiagramNodeActivitiesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CloudDiagramNodeActivity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	}
 
