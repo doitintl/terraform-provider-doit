@@ -86,5 +86,13 @@ locals {
   first_layer_id = local.nodes[0].ss_id
   first_node_id  = local.nodes[0]._id
 }
+
+# Guard: fail with a clear message if the search returned no nodes.
+check "has_nodes" {
+  assert {
+    condition     = length(local.nodes) > 0
+    error_message = "Search for 'peer' returned no node components; cannot run node_activities tests."
+  }
+}
 `
 }

@@ -147,8 +147,16 @@ func (d *cloudDiagramsNodeActivitiesDataSource) Read(ctx context.Context, req da
 	}
 
 	// Set a deterministic ID based on query parameters.
-	idInput := fmt.Sprintf("cloud_diagrams_node_activities\nss_id:%s\nnode_id:%s\nlimit:%s\noffset:%s",
-		data.SsId.ValueString(), data.NodeId.ValueString(), data.Limit.String(), data.Offset.String())
+	// Only include optional fields when set, matching the pattern in
+	// cloud_diagrams_search_data_source.go.
+	idInput := fmt.Sprintf("cloud_diagrams_node_activities\nss_id:%s\nnode_id:%s",
+		data.SsId.ValueString(), data.NodeId.ValueString())
+	if !data.Limit.IsNull() && !data.Limit.IsUnknown() {
+		idInput += fmt.Sprintf("\nlimit:%d", data.Limit.ValueInt64())
+	}
+	if !data.Offset.IsNull() && !data.Offset.IsUnknown() {
+		idInput += fmt.Sprintf("\noffset:%d", data.Offset.ValueInt64())
+	}
 	hash := sha256.Sum256([]byte(idInput))
 	data.Id = types.StringValue(fmt.Sprintf("%x", hash))
 
