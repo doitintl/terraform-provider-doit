@@ -49,6 +49,7 @@ linters:
     - defaultdrift
     - methodreceiver
     - requestguard
+    - clearableattr
   exclusions:
     generated: lax
     presets:
@@ -98,6 +99,7 @@ linters:
           - defaultdrift
           - methodreceiver
           - requestguard
+          - clearableattr
       # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
@@ -119,6 +121,7 @@ linters:
           - defaultdrift
           - methodreceiver
           - requestguard
+          - clearableattr
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -130,10 +133,11 @@ linters:
           - usestatefunknown
           - crudnaming
           - methodreceiver
-      # Provider config — not a resource, no plan modifiers
+          - clearableattr
       - path: provider\.go
         linters:
           - usestatefunknown
+          - clearableattr
   settings:
     depguard:
       rules:
@@ -235,6 +239,9 @@ linters:
       requestguard:
         type: "module"
         description: "Validates IsUnknown() guards in request builder functions."
+      clearableattr:
+        type: "module"
+        description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

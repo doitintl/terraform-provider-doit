@@ -68,6 +68,11 @@ type AttrInfo struct {
 	DefaultValue any
 	// NestedAttrs holds classifications for nested attributes (if any).
 	NestedAttrs map[string]*AttrInfo
+	// PlanModifiers holds the names of plan modifier functions detected in
+	// the Schema() method (e.g., "UseStateForUnknown",
+	// "useNullForUnknownWhenConfigNull"). Populated during Schema() override
+	// merging in applySchemaOverrides.
+	PlanModifiers []string
 }
 
 // SchemaInfo holds the parsed schema for a single resource or data source.
@@ -565,6 +570,9 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 	// Also check for nested attribute overrides.
 	var nestedOverrides []nestedOverride
 
+	// Track plan modifiers detected in this block.
+	var modifiers []string
+
 	// Walk the if body looking for attr.Required = true/false, etc.
 	for _, bodyStmt := range ifStmt.Body.List {
 		bodyAssign, ok := bodyStmt.(*ast.AssignStmt)
@@ -575,6 +583,10 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 				if no != nil {
 					nestedOverrides = append(nestedOverrides, *no)
 				}
+			}
+			// Check for range loops that inject modifiers on nested attributes.
+			if rangeStmt, ok := bodyStmt.(*ast.RangeStmt); ok {
+				parseRangeModifiers(rangeStmt, ifStmt.Body, schema, fieldName)
 			}
 			continue
 		}
@@ -592,22 +604,27 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 			continue
 		}
 
-		val := isTrueLiteral(bodyAssign.Rhs[0])
 		switch sel.Sel.Name {
 		case "Required":
+			val := isTrueLiteral(bodyAssign.Rhs[0])
 			hasRequired = true
 			reqVal = val
 		case "Optional":
+			val := isTrueLiteral(bodyAssign.Rhs[0])
 			hasOptional = true
 			optVal = val
 		case "Computed":
+			val := isTrueLiteral(bodyAssign.Rhs[0])
 			hasComputed = true
 			compVal = val
+		case "PlanModifiers":
+			// attr.PlanModifiers = append(attr.PlanModifiers, xxx())
+			modifiers = append(modifiers, extractModifierNames(bodyAssign.Rhs[0])...)
 		}
 	}
 
-	// Only re-classify if any classification flags were changed.
-	if !hasRequired && !hasOptional && !hasComputed && len(nestedOverrides) == 0 {
+	// Only update if any classification flags or modifiers were found.
+	if !hasRequired && !hasOptional && !hasComputed && len(nestedOverrides) == 0 && len(modifiers) == 0 {
 		return
 	}
 
@@ -618,7 +635,10 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 		info.HasDefault = existing.HasDefault
 		info.DefaultValue = existing.DefaultValue
 		info.NestedAttrs = existing.NestedAttrs
+		info.PlanModifiers = existing.PlanModifiers
 	}
+	// Merge newly detected modifiers.
+	info.PlanModifiers = appendUnique(info.PlanModifiers, modifiers...)
 
 	// Re-classify based on the (potentially modified) flags.
 	switch {
@@ -641,14 +661,27 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 		if info.NestedAttrs == nil {
 			info.NestedAttrs = make(map[string]*AttrInfo)
 		}
-		info.NestedAttrs[no.fieldName] = &AttrInfo{Class: no.class}
+		existing, exists := info.NestedAttrs[no.fieldName]
+		if exists {
+			// Merge: update classification only if changed, always merge modifiers.
+			if no.class != Unknown {
+				existing.Class = no.class
+			}
+			existing.PlanModifiers = appendUnique(existing.PlanModifiers, no.planModifiers...)
+		} else {
+			info.NestedAttrs[no.fieldName] = &AttrInfo{
+				Class:         no.class,
+				PlanModifiers: no.planModifiers,
+			}
+		}
 	}
 }
 
-// nestedOverride represents a classification change for a nested attribute.
+// nestedOverride represents a classification or modifier change for a nested attribute.
 type nestedOverride struct {
-	fieldName string
-	class     FieldClass
+	fieldName     string
+	class         FieldClass
+	planModifiers []string
 }
 
 // parseNestedIfOverride handles nested attribute overrides like:
@@ -687,6 +720,7 @@ func parseNestedIfOverride(ifStmt *ast.IfStmt, parentAttrVar string) *nestedOver
 
 	hasRequired, hasOptional, hasComputed := false, false, false
 	reqVal, optVal, compVal := false, false, false
+	var modifiers []string
 
 	for _, bodyStmt := range ifStmt.Body.List {
 		bodyAssign, ok := bodyStmt.(*ast.AssignStmt)
@@ -701,21 +735,25 @@ func parseNestedIfOverride(ifStmt *ast.IfStmt, parentAttrVar string) *nestedOver
 		if !ok || ident.Name != nestedVar.Name {
 			continue
 		}
-		val := isTrueLiteral(bodyAssign.Rhs[0])
 		switch sel.Sel.Name {
 		case "Required":
+			val := isTrueLiteral(bodyAssign.Rhs[0])
 			hasRequired = true
 			reqVal = val
 		case "Optional":
+			val := isTrueLiteral(bodyAssign.Rhs[0])
 			hasOptional = true
 			optVal = val
 		case "Computed":
+			val := isTrueLiteral(bodyAssign.Rhs[0])
 			hasComputed = true
 			compVal = val
+		case "PlanModifiers":
+			modifiers = append(modifiers, extractModifierNames(bodyAssign.Rhs[0])...)
 		}
 	}
 
-	if !hasRequired && !hasOptional && !hasComputed {
+	if !hasRequired && !hasOptional && !hasComputed && len(modifiers) == 0 {
 		return nil
 	}
 
@@ -731,7 +769,11 @@ func parseNestedIfOverride(ifStmt *ast.IfStmt, parentAttrVar string) *nestedOver
 		class = Optional
 	}
 
-	return &nestedOverride{fieldName: fieldName, class: class}
+	return &nestedOverride{
+		fieldName:     fieldName,
+		class:         class,
+		planModifiers: modifiers,
+	}
 }
 
 // isSchemaAttributes checks if an expression is schemaVar.Attributes
@@ -768,20 +810,22 @@ func extractNestedAttributeField(expr ast.Expr, parentAttrVar string) string {
 	if !ok {
 		return ""
 	}
-	// X should be attr.NestedObject.Attributes
+	// X should be attr.NestedObject.Attributes or attr.Attributes
 	sel1, ok := indexExpr.X.(*ast.SelectorExpr)
 	if !ok || sel1.Sel.Name != "Attributes" {
 		return ""
 	}
-	sel2, ok := sel1.X.(*ast.SelectorExpr)
-	if !ok || sel2.Sel.Name != "NestedObject" {
-		return ""
+	// Case 1: attr.NestedObject.Attributes["field"] (ListNestedAttribute)
+	if sel2, ok := sel1.X.(*ast.SelectorExpr); ok && sel2.Sel.Name == "NestedObject" {
+		if ident, ok := sel2.X.(*ast.Ident); ok && ident.Name == parentAttrVar {
+			return unquote(indexExpr.Index)
+		}
 	}
-	ident, ok := sel2.X.(*ast.Ident)
-	if !ok || ident.Name != parentAttrVar {
-		return ""
+	// Case 2: attr.Attributes["field"] (SingleNestedAttribute)
+	if ident, ok := sel1.X.(*ast.Ident); ok && ident.Name == parentAttrVar {
+		return unquote(indexExpr.Index)
 	}
-	return unquote(indexExpr.Index)
+	return ""
 }
 
 // cloneSchemaInfo creates a deep copy of a SchemaInfo.
@@ -803,6 +847,10 @@ func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 		IsList:       src.IsList,
 		HasDefault:   src.HasDefault,
 		DefaultValue: src.DefaultValue,
+	}
+	if len(src.PlanModifiers) > 0 {
+		dst.PlanModifiers = make([]string, len(src.PlanModifiers))
+		copy(dst.PlanModifiers, src.PlanModifiers)
 	}
 	if src.NestedAttrs != nil {
 		dst.NestedAttrs = make(map[string]*AttrInfo, len(src.NestedAttrs))
@@ -889,4 +937,160 @@ func extractStaticDefault(expr ast.Expr) any {
 		}
 	}
 	return nil
+}
+
+// --- Plan modifier extraction ---
+
+// extractModifierNames walks an expression tree (typically an append() call)
+// and returns the names of all plan modifier function calls found.
+//
+// Matches:
+//   - stringplanmodifier.UseStateForUnknown()  → "UseStateForUnknown"
+//   - useNullForUnknownWhenConfigNull()         → "useNullForUnknownWhenConfigNull"
+func extractModifierNames(expr ast.Expr) []string {
+	var names []string
+	ast.Inspect(expr, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		switch fn := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			// pkg.FuncName() — e.g., stringplanmodifier.UseStateForUnknown()
+			names = append(names, fn.Sel.Name)
+		case *ast.Ident:
+			// localFunc() — e.g., useNullForUnknownWhenConfigNull()
+			// Exclude "append" itself.
+			if fn.Name != "append" {
+				names = append(names, fn.Name)
+			}
+		}
+		return true
+	})
+	return names
+}
+
+// parseRangeModifiers handles loop-based plan modifier injection:
+//
+//	clearableFields := []string{"metadata", "external_id", "external_url"}
+//	for _, field := range clearableFields {
+//	    if nested, ok := rrAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
+//	        nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+//	        rrAttr.NestedObject.Attributes[field] = nested
+//	    }
+//	}
+//
+// It extracts the static field names from the range source and maps each to the
+// detected modifiers, updating the nested AttrInfo entries in the parent schema.
+func parseRangeModifiers(rangeStmt *ast.RangeStmt, enclosingBody *ast.BlockStmt, schema *SchemaInfo, parentFieldName string) {
+	if rangeStmt.Body == nil {
+		return
+	}
+
+	// Find the range source — could be a variable name or an inline literal.
+	rangeSourceVar := ""
+	if ident, ok := rangeStmt.X.(*ast.Ident); ok {
+		rangeSourceVar = ident.Name
+	}
+	// If not a named variable and not an inline literal, skip.
+	if rangeSourceVar == "" {
+		if _, ok := rangeStmt.X.(*ast.CompositeLit); !ok {
+			return
+		}
+	}
+
+	// Detect plan modifier calls inside the loop body.
+	var modifiers []string
+	ast.Inspect(rangeStmt.Body, func(n ast.Node) bool {
+		assign, ok := n.(*ast.AssignStmt)
+		if !ok {
+			return true
+		}
+		if len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			return true
+		}
+		sel, ok := assign.Lhs[0].(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != "PlanModifiers" {
+			return true
+		}
+		modifiers = append(modifiers, extractModifierNames(assign.Rhs[0])...)
+		return true
+	})
+
+	if len(modifiers) == 0 {
+		return
+	}
+
+	// Find the static string slice that feeds the loop.
+	// Search both the range statement itself (inline literal) and the
+	// enclosing block for a variable definition matching the source.
+	fieldNames := findSliceLiteralFields(rangeStmt, enclosingBody, rangeSourceVar)
+	if len(fieldNames) == 0 {
+		return
+	}
+
+	// Apply modifiers to each nested attribute.
+	parentAttr, ok := schema.Attrs[parentFieldName]
+	if !ok || parentAttr.NestedAttrs == nil {
+		return
+	}
+	for _, fn := range fieldNames {
+		if nested, ok := parentAttr.NestedAttrs[fn]; ok {
+			nested.PlanModifiers = appendUnique(nested.PlanModifiers, modifiers...)
+		}
+	}
+}
+
+// findSliceLiteralFields finds the string literals from the range source.
+// It handles two cases:
+//  1. Inline literal:  for _, f := range []string{"a", "b"} { ... }
+//  2. Named variable:  fields := []string{"a", "b"}; for _, f := range fields { ... }
+func findSliceLiteralFields(rangeStmt *ast.RangeStmt, enclosingBody *ast.BlockStmt, sourceVar string) []string {
+	// Case 1: inline composite literal.
+	if comp, ok := rangeStmt.X.(*ast.CompositeLit); ok {
+		return extractStringLiteralElts(comp)
+	}
+	// Case 2: named variable — search enclosing block for definition.
+	for _, stmt := range enclosingBody.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			continue
+		}
+		ident, ok := assign.Lhs[0].(*ast.Ident)
+		if !ok || ident.Name != sourceVar {
+			continue
+		}
+		comp, ok := assign.Rhs[0].(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+		return extractStringLiteralElts(comp)
+	}
+	return nil
+}
+
+// extractStringLiteralElts extracts string values from a []string{...} composite literal.
+func extractStringLiteralElts(comp *ast.CompositeLit) []string {
+	var result []string
+	for _, elt := range comp.Elts {
+		if lit, ok := elt.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+			result = append(result, unquote(elt))
+		}
+	}
+	return result
+}
+
+// appendUnique appends values to a slice, skipping duplicates.
+func appendUnique(dst []string, values ...string) []string {
+	seen := make(map[string]bool, len(dst))
+	for _, v := range dst {
+		seen[v] = true
+	}
+	for _, v := range values {
+		if !seen[v] {
+			dst = append(dst, v)
+			seen[v] = true
+		}
+	}
+	return dst
 }
