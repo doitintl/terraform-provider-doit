@@ -536,8 +536,13 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 		return
 	}
 
-	// The assertion target must be s.Attributes["field"].
+	// The assertion target must be schemaVar.Attributes["field"] or
+	// schemaVar.NestedObject.Attributes["field"]. The first form is used
+	// by top-level and SingleNestedAttribute, the second by ListNestedAttribute.
 	fieldName := extractAttributeIndexField(typeAssert.X, schemaVar)
+	if fieldName == "" {
+		fieldName = extractNestedAttributeField(typeAssert.X, schemaVar)
+	}
 	if fieldName == "" {
 		return
 	}
@@ -567,9 +572,6 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 		compVal = existing.Class == ComputedOnly || existing.Class == OptionalComputed
 	}
 
-	// Also check for nested attribute overrides.
-	var nestedOverrides []nestedOverride
-
 	// Track plan modifiers detected in this block.
 	var modifiers []string
 
@@ -578,10 +580,16 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 		bodyAssign, ok := bodyStmt.(*ast.AssignStmt)
 		if !ok {
 			// Check for nested if blocks (e.g., nested attribute overrides).
+			// Recurse by wrapping the parent's nested attrs into a synthetic
+			// SchemaInfo. This supports arbitrary nesting depth.
 			if nestedIf, ok := bodyStmt.(*ast.IfStmt); ok {
-				no := parseNestedIfOverride(nestedIf, attrVar)
-				if no != nil {
-					nestedOverrides = append(nestedOverrides, *no)
+				nestedFieldName := extractNestedIfFieldName(nestedIf, attrVar)
+				if nestedFieldName != "" {
+					// Build a synthetic SchemaInfo from the current attribute's
+					// nested attrs so we can recurse with the same function.
+					targetAttrs := getOrCreateNestedAttrs(schema, fieldName)
+					nestedSchema := &SchemaInfo{Attrs: targetAttrs}
+					applyIfBlockOverride(nestedIf, attrVar, nestedSchema)
 				}
 			}
 			// Check for range loops that inject modifiers on nested attributes.
@@ -624,7 +632,7 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 	}
 
 	// Only update if any classification flags or modifiers were found.
-	if !hasRequired && !hasOptional && !hasComputed && len(nestedOverrides) == 0 && len(modifiers) == 0 {
+	if !hasRequired && !hasOptional && !hasComputed && len(modifiers) == 0 {
 		return
 	}
 
@@ -655,125 +663,43 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 	}
 
 	schema.Attrs[fieldName] = info
-
-	// Apply nested attribute overrides.
-	for _, no := range nestedOverrides {
-		if info.NestedAttrs == nil {
-			info.NestedAttrs = make(map[string]*AttrInfo)
-		}
-		existing, exists := info.NestedAttrs[no.fieldName]
-		if exists {
-			// Merge: update classification only if changed, always merge modifiers.
-			if no.class != Unknown {
-				existing.Class = no.class
-			}
-			existing.PlanModifiers = appendUnique(existing.PlanModifiers, no.planModifiers...)
-		} else {
-			info.NestedAttrs[no.fieldName] = &AttrInfo{
-				Class:         no.class,
-				PlanModifiers: no.planModifiers,
-			}
-		}
-	}
 }
 
-// nestedOverride represents a classification or modifier change for a nested attribute.
-type nestedOverride struct {
-	fieldName     string
-	class         FieldClass
-	planModifiers []string
-}
-
-// parseNestedIfOverride handles nested attribute overrides like:
-//
-//	if userAttr, uOk := attr.NestedObject.Attributes["user"].(schema.StringAttribute); uOk {
-//	    userAttr.Required = true
-//	    userAttr.Optional = false
-//	    userAttr.Computed = false
-//	    attr.NestedObject.Attributes["user"] = userAttr
-//	}
-func parseNestedIfOverride(ifStmt *ast.IfStmt, parentAttrVar string) *nestedOverride {
-	if ifStmt.Init == nil || ifStmt.Body == nil {
-		return nil
+// extractNestedIfFieldName extracts the attribute field name from a nested
+// if-block's init statement. It checks both parentVar.Attributes["field"] and
+// parentVar.NestedObject.Attributes["field"] patterns.
+func extractNestedIfFieldName(ifStmt *ast.IfStmt, parentAttrVar string) string {
+	if ifStmt.Init == nil {
+		return ""
 	}
-
 	assign, ok := ifStmt.Init.(*ast.AssignStmt)
-	if !ok || len(assign.Lhs) < 1 || len(assign.Rhs) != 1 {
-		return nil
+	if !ok || len(assign.Rhs) != 1 {
+		return ""
 	}
-
 	typeAssert, ok := assign.Rhs[0].(*ast.TypeAssertExpr)
 	if !ok {
-		return nil
+		return ""
 	}
-
-	// Extract field name from attr.NestedObject.Attributes["user"]
-	fieldName := extractNestedAttributeField(typeAssert.X, parentAttrVar)
-	if fieldName == "" {
-		return nil
+	name := extractNestedAttributeField(typeAssert.X, parentAttrVar)
+	if name == "" {
+		// Also try direct .Attributes["field"] (SingleNestedAttribute child).
+		name = extractAttributeIndexField(typeAssert.X, parentAttrVar)
 	}
+	return name
+}
 
-	nestedVar, ok := assign.Lhs[0].(*ast.Ident)
+// getOrCreateNestedAttrs returns the nested attributes map for a parent
+// attribute in the schema, creating it if necessary.
+func getOrCreateNestedAttrs(schema *SchemaInfo, parentFieldName string) map[string]*AttrInfo {
+	parent, ok := schema.Attrs[parentFieldName]
 	if !ok {
-		return nil
+		parent = &AttrInfo{}
+		schema.Attrs[parentFieldName] = parent
 	}
-
-	hasRequired, hasOptional, hasComputed := false, false, false
-	reqVal, optVal, compVal := false, false, false
-	var modifiers []string
-
-	for _, bodyStmt := range ifStmt.Body.List {
-		bodyAssign, ok := bodyStmt.(*ast.AssignStmt)
-		if !ok || len(bodyAssign.Lhs) != 1 || len(bodyAssign.Rhs) != 1 {
-			continue
-		}
-		sel, ok := bodyAssign.Lhs[0].(*ast.SelectorExpr)
-		if !ok {
-			continue
-		}
-		ident, ok := sel.X.(*ast.Ident)
-		if !ok || ident.Name != nestedVar.Name {
-			continue
-		}
-		switch sel.Sel.Name {
-		case "Required":
-			val := isTrueLiteral(bodyAssign.Rhs[0])
-			hasRequired = true
-			reqVal = val
-		case "Optional":
-			val := isTrueLiteral(bodyAssign.Rhs[0])
-			hasOptional = true
-			optVal = val
-		case "Computed":
-			val := isTrueLiteral(bodyAssign.Rhs[0])
-			hasComputed = true
-			compVal = val
-		case "PlanModifiers":
-			modifiers = append(modifiers, extractModifierNames(bodyAssign.Rhs[0])...)
-		}
+	if parent.NestedAttrs == nil {
+		parent.NestedAttrs = make(map[string]*AttrInfo)
 	}
-
-	if !hasRequired && !hasOptional && !hasComputed && len(modifiers) == 0 {
-		return nil
-	}
-
-	var class FieldClass
-	switch {
-	case reqVal:
-		class = Required
-	case compVal && optVal:
-		class = OptionalComputed
-	case compVal:
-		class = ComputedOnly
-	case optVal:
-		class = Optional
-	}
-
-	return &nestedOverride{
-		fieldName:     fieldName,
-		class:         class,
-		planModifiers: modifiers,
-	}
+	return parent.NestedAttrs
 }
 
 // isSchemaAttributes checks if an expression is schemaVar.Attributes
