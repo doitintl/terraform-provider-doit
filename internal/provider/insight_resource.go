@@ -103,6 +103,52 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		s.Attributes["key"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+
+	// Category B: API-assigned identity fields — not clearable.
+	// source_id already has UseStateForUnknown above.
+	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned import identity
+		s.Attributes["source_id"] = attr
+	}
+	if attr, ok := s.Attributes["insight_key"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned identity
+		s.Attributes["insight_key"] = attr
+	}
+
+	// Category A: user-authored values — clearable.
+	if attr, ok := s.Attributes["cloud_flow_template_id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["cloud_flow_template_id"] = attr
+	}
+	if attr, ok := s.Attributes["report_url"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["report_url"] = attr
+	}
+	if attr, ok := s.Attributes["detailed_description_mdx"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["detailed_description_mdx"] = attr
+	}
+	if attr, ok := s.Attributes["easy_win_description"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["easy_win_description"] = attr
+	}
+	if attr, ok := s.Attributes["status"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to "dismissed" on create; lifecycle state
+		s.Attributes["status"] = attr
+	}
+
+	// Category A: nested dismissal_details — user-authored fields.
+	if ddAttr, ok := s.Attributes["dismissal_details"].(schema.SingleNestedAttribute); ok {
+		if attr, ok := ddAttr.Attributes["reason"].(schema.StringAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+			ddAttr.Attributes["reason"] = attr
+		}
+		if attr, ok := ddAttr.Attributes["comment"].(schema.StringAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+			ddAttr.Attributes["comment"] = attr
+		}
+		s.Attributes["dismissal_details"] = ddAttr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
