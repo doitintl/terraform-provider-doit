@@ -403,8 +403,8 @@ resource "doit_annotation" "empty_lists" {
 }
 
 // TestAccAnnotation_WithOmittedLists tests that omitted lists are handled correctly.
-// Note: The API returns empty arrays even when labels/reports are not sent, so the
-// state will contain empty lists rather than null.
+// With the useNullForUnknownListWhenConfigNull modifier, omitted lists resolve to null
+// rather than empty []. This is the "config is source of truth" behavior.
 func TestAccAnnotation_WithOmittedLists(t *testing.T) {
 	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
@@ -426,15 +426,16 @@ func TestAccAnnotation_WithOmittedLists(t *testing.T) {
 						"doit_annotation.omitted_lists",
 						tfjsonpath.New("content"),
 						knownvalue.StringExact(fmt.Sprintf("Annotation with omitted lists %d", n))),
-					// API returns empty arrays even when lists are not sent
+					// Omitted clearable lists resolve to [] via
+					// the useNullForUnknownListWhenConfigNull modifier.
 					statecheck.ExpectKnownValue(
 						"doit_annotation.omitted_lists",
 						tfjsonpath.New("labels"),
-						knownvalue.ListSizeExact(0)),
+						knownvalue.ListExact([]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(
 						"doit_annotation.omitted_lists",
 						tfjsonpath.New("reports"),
-						knownvalue.ListSizeExact(0)),
+						knownvalue.ListExact([]knownvalue.Check{})),
 				},
 			},
 		},
@@ -564,4 +565,175 @@ func TestAccAnnotation_Disappears(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestAccAnnotation_ClearLabels tests that setting labels and then removing them
+// from config results in no drift. This is a diagnostic test for
+// https://github.com/doitintl/terraform-provider-doit/issues/233.
+func TestAccAnnotation_ClearLabels(t *testing.T) {
+	n := acctest.RandInt()
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with a label attached
+			{
+				Config: testAccAnnotationWithLabel(n, timestamp),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.this",
+						tfjsonpath.New("labels"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccAnnotationWithLabel(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear labels by omitting from annotation config
+			// (keep the label resource so the plan isn't polluted by its destruction)
+			{
+				Config: testAccAnnotationClearLabels(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						// Check specifically that the annotation is updated.
+						// If issue #233 is real for lists, the annotation will
+						// have no planned change (old labels value sticks).
+						plancheck.ExpectResourceAction(
+							"doit_annotation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 4: Drift check — cleared config should produce no drift
+			{
+				Config: testAccAnnotationClearLabels(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAnnotation_ClearReports tests that setting reports and then removing them
+// from config results in no drift. This is a diagnostic test for issue #233.
+func TestAccAnnotation_ClearReports(t *testing.T) {
+	n := acctest.RandInt()
+	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with a report attached
+			{
+				Config: testAccAnnotationWithReport(n, timestamp),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_annotation.with_report",
+						tfjsonpath.New("reports"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccAnnotationWithReport(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear reports by omitting from config
+			{
+				Config: testAccAnnotationClearReports(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						// If issue #233 is real, the annotation will have
+						// no planned change (old reports value sticks).
+						plancheck.ExpectResourceAction(
+							"doit_annotation.with_report",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 4: Drift check
+			{
+				Config: testAccAnnotationClearReports(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnnotationWithLabel(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_label" "test" {
+  name  = "test-label-for-annotation-clear-%d"
+  color = "blue"
+}
+
+resource "doit_annotation" "this" {
+  content   = "Test annotation content %d"
+  timestamp = "%s"
+  labels    = [doit_label.test.id]
+}
+`, i, i, timestamp)
+}
+
+func testAccAnnotationClearLabels(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_label" "test" {
+  name  = "test-label-for-annotation-clear-%d"
+  color = "blue"
+}
+
+resource "doit_annotation" "this" {
+  content   = "Test annotation content %d"
+  timestamp = "%s"
+}
+`, i, i, timestamp)
+}
+
+func testAccAnnotationClearReports(i int, timestamp string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-report-for-annotation-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation    = "total"
+    time_interval  = "month"
+    data_source    = "billing"
+    display_values = "actuals_only"
+    currency       = "USD"
+    layout         = "table"
+  }
+}
+
+resource "doit_annotation" "with_report" {
+  content   = "Annotation with report %d"
+  timestamp = "%s"
+}
+`, i, i, timestamp)
 }

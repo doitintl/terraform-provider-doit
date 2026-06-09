@@ -84,6 +84,18 @@ func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["create_time"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	// Category A: user-authored associations — clearable.
+	if attr, ok := s.Attributes["labels"].(schema.ListAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+		s.Attributes["labels"] = attr
+	}
+	if attr, ok := s.Attributes["reports"].(schema.ListAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+		s.Attributes["reports"] = attr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
