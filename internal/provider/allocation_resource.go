@@ -126,6 +126,29 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["type"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	if rulesAttr, ok := s.Attributes["rules"].(schema.ListNestedAttribute); ok {
+		// Category B: dual-purpose ID (user-ref for select/update, API-assigned for create).
+		if attr, ok := rulesAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // reference ID, not clearable
+			rulesAttr.NestedObject.Attributes["id"] = attr
+		}
+		// Category A: user-authored rule metadata — clearable.
+		for _, field := range []string{"name", "description", "formula"} {
+			if attr, ok := rulesAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
+				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+				rulesAttr.NestedObject.Attributes[field] = attr
+			}
+		}
+		s.Attributes["rules"] = rulesAttr
+	}
+
+	// Category A: user-authored label for unallocated costs in group allocations.
+	if attr, ok := s.Attributes["unallocated_costs"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["unallocated_costs"] = attr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
