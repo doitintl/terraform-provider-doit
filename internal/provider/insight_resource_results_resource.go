@@ -117,19 +117,82 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 		// ProposedNewState for Optional+Computed attributes inside nested objects, making
 		// it impossible to detect that the user removed the attribute from their config.
 		// See: https://github.com/hashicorp/terraform-plugin-framework/issues/603
-		clearableFields := []string{"metadata", "external_id", "external_url"}
+		//
+		// Uses the null-based typed modifier (not the "" modifier) because the POST API
+		// replaces results — omitting the field clears it, and the API returns nil (not "").
+		clearableFields := []string{"external_id", "external_url"}
 		for _, field := range clearableFields {
 			if nested, ok := rrAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
-				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownStringWhenConfigNull())
 				rrAttr.NestedObject.Attributes[field] = nested
 			}
+		}
+
+		// metadata uses jsontypes.NormalizedType — must use a jsontypes-aware modifier.
+		if nested, ok := rrAttr.NestedObject.Attributes["metadata"].(schema.StringAttribute); ok {
+			nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownNormalizedWhenConfigNull())
+			rrAttr.NestedObject.Attributes["metadata"] = nested
+		}
+
+		// Classify remaining Optional+Computed attributes (clearableattr).
+		// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+
+		// Category B: API-provided resource classification — not clearable.
+		if nested, ok := rrAttr.NestedObject.Attributes["resource_type"].(schema.StringAttribute); ok { //nolint:clearableattr // API classification
+			rrAttr.NestedObject.Attributes["resource_type"] = nested
+		}
+		// Category B: immutable after creation (RequiresReplace above, but still O+C).
+		if nested, ok := rrAttr.NestedObject.Attributes["location"].(schema.StringAttribute); ok { //nolint:clearableattr // immutable identity field
+			rrAttr.NestedObject.Attributes["location"] = nested
+		}
+
+		// Category A: user-authored result fields — clearable.
+		if resultAttr, ok := rrAttr.NestedObject.Attributes["result"].(schema.SingleNestedAttribute); ok {
+			if nested, ok := resultAttr.Attributes["recommendation"].(schema.StringAttribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+				resultAttr.Attributes["recommendation"] = nested
+			}
+			if nested, ok := resultAttr.Attributes["current"].(schema.StringAttribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+				resultAttr.Attributes["current"] = nested
+			}
+			if nested, ok := resultAttr.Attributes["value"].(schema.Float64Attribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownFloat64WhenConfigNull())
+				resultAttr.Attributes["value"] = nested
+			}
+			if nested, ok := resultAttr.Attributes["agent_installed"].(schema.BoolAttribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownBoolWhenConfigNull())
+				resultAttr.Attributes["agent_installed"] = nested
+			}
+			if nested, ok := resultAttr.Attributes["critical"].(schema.Int64Attribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
+				resultAttr.Attributes["critical"] = nested
+			}
+			if nested, ok := resultAttr.Attributes["high"].(schema.Int64Attribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
+				resultAttr.Attributes["high"] = nested
+			}
+			if nested, ok := resultAttr.Attributes["medium"].(schema.Int64Attribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
+				resultAttr.Attributes["medium"] = nested
+			}
+			if nested, ok := resultAttr.Attributes["low"].(schema.Int64Attribute); ok {
+				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
+				resultAttr.Attributes["low"] = nested
+			}
+			rrAttr.NestedObject.Attributes["result"] = resultAttr
 		}
 
 		s.Attributes["resource_results"] = rrAttr
 	}
 
+	// Category B: API-assigned identity fields — not clearable.
+	if attr, ok := s.Attributes["insight_key"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned identity
+		s.Attributes["insight_key"] = attr
+	}
+
 	// Validate source_id — the API only accepts "public-api" today
-	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok {
+	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned identity
 		attr.Validators = append(attr.Validators, stringvalidator.OneOf(
 			string(models.PublicApi),
 		))
@@ -306,8 +369,11 @@ func mapRRResponseToModel(ctx context.Context, results []models.ResourceResult, 
 		// Build metadata (free-form JSON)
 		metadataObj := mapFreeformJSON(apiRR.Metadata)
 
-		// Severity
-		severity := types.StringNull()
+		// Severity: the API always computes severity as a string ("" for non-security
+		// result types, an enum like "critical" for security types). A nil value means
+		// the API hasn't computed it yet (eventual consistency). Default to "" to avoid
+		// nil↔"" drift between Create and immediate Read.
+		severity := types.StringValue("")
 		if apiRR.Severity != nil {
 			severity = types.StringValue(string(*apiRR.Severity))
 		}
@@ -719,7 +785,60 @@ func (r *insightResourceResultsResource) Read(ctx context.Context, req resource.
 		return
 	}
 
+	// Preserve prior severity when the API returns nil (eventual consistency).
+	// severity is Computed server-side and may lag the Create/Update response.
+	preservePriorSeverity(ctx, priorElems, &state, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+}
+
+// preservePriorSeverity overlays the prior state's severity onto the refreshed
+// state when the API returns nil. The API computes severity asynchronously; a
+// Read immediately after Create/Update may return nil even though the Create
+// response had a value. Without this, the post-apply refresh sees a nil/""
+// mismatch and the test (or real plan) detects spurious drift.
+func preservePriorSeverity(ctx context.Context, priorElems []rr.ResourceResultsValue, state *insightResourceResultsModel, diags *diag.Diagnostics) {
+	if len(priorElems) == 0 || state.ResourceResults.IsNull() || state.ResourceResults.IsUnknown() {
+		return
+	}
+
+	// Build a lookup of prior severity by resource_id.
+	priorSev := make(map[string]types.String, len(priorElems))
+	for _, pe := range priorElems {
+		if !pe.Severity.IsNull() && !pe.Severity.IsUnknown() {
+			priorSev[pe.ResourceId.ValueString()] = pe.Severity
+		}
+	}
+	if len(priorSev) == 0 {
+		return
+	}
+
+	var newElems []rr.ResourceResultsValue
+	diags.Append(state.ResourceResults.ElementsAs(ctx, &newElems, true)...)
+	if diags.HasError() {
+		return
+	}
+
+	changed := false
+	for i := range newElems {
+		if newElems[i].Severity.IsNull() {
+			if prior, ok := priorSev[newElems[i].ResourceId.ValueString()]; ok {
+				newElems[i].Severity = prior
+				changed = true
+			}
+		}
+	}
+
+	if changed {
+		rrList, listDiags := types.ListValueFrom(ctx, rr.ResourceResultsType{
+			ObjectType: types.ObjectType{AttrTypes: rr.ResourceResultsValue{}.AttributeTypes(ctx)},
+		}, newElems)
+		diags.Append(listDiags...)
+		state.ResourceResults = rrList
+	}
 }
 
 func (r *insightResourceResultsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
