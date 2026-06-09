@@ -101,7 +101,9 @@ Every plan-first resource must have these test categories:
 | **Update + drift check** | Create, modify, then re-apply with `ExpectEmptyPlan()` |
 | **Import + drift check** | Create, import, then re-apply with `ExpectEmptyPlan()` |
 | **Omitted Optional+Computed** | Omit each field, verify no drift after API assigns defaults |
-| **null↔[] consistency** | Omit list fields, assert `ListSizeExact(0)` on Create AND drift-check |
+| **null↔[] consistency (non-clearable)** | Omit list fields, assert `ListSizeExact(0)` on Create AND drift-check |
+| **null↔[] consistency (clearable)** | Omit clearable list fields, assert `knownvalue.Null()` on Create AND drift-check |
+| **Clearing lifecycle** | Set a clearable attribute → drift check → clear it → drift check (see [Clearing Optional+Computed Attributes](../implement-resource/SKILL.md#clearing-optionalcomputed-attributes)) |
 | **API normalization** | Use values the API will normalize, verify user value preserved |
 | **Value with boolean flags** | Omit booleans, verify they resolve to `false` not `Unknown` |
 

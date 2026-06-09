@@ -14,17 +14,21 @@ DoIT APIs return complete objects in Create and Update responses, but frequently
 
 | Category | Schema | Overlay Behavior | Example |
 |----------|--------|-------------------|---------|
-| **Computed-only** | `Computed: true` only | Always set from API response | `id`, `create_time`, `update_time` |
+| **Computed-only (stable)** | `Computed: true` only | Always set from API response | `id`, `create_time` |
+| **Computed-only (volatile)** | `Computed: true` only | Guard with `IsUnknown()` — set from API on Create, preserve plan on Update | `update_time`, `last_alerted` |
 | **Required** | `Required: true` | Never touch — preserve plan value | `name` |
 | **Optional** | `Optional: true` | Never touch — preserve plan value | `description` |
 | **Optional+Computed** | `Optional: true, Computed: true` | Resolve only when `IsUnknown()` | `formula`, boolean flags |
+| **Optional+Computed clearable list** | `Optional: true, Computed: true` + list modifier | Resolve `IsUnknown()` to `null` (not API response) | `labels`, `reports` |
 | **Optional+Computed with Default** | `Optional: true, Computed: true, Default: ...` | Never touch — default resolves at plan time | `metric`, `case_insensitive` |
 
 Key rules:
 
-- **Computed-only**: always overwrite with API value
+- **Computed-only (stable)**: always overwrite with API value (`id`, `create_time`)
+- **Computed-only (volatile)**: guard with `IsUnknown()` — set from API on Create (where the field IS Unknown), preserve the plan value on Update (where the field is Known from prior state). This prevents "inconsistent result" errors when Updates are triggered by plan modifiers. The next Read fetches the updated value.
 - **Required / Optional**: never overwrite — user's plan wins
 - **Optional+Computed when `IsUnknown()`**: user omitted the field — resolve from API response, fall back to null/false
+- **Optional+Computed clearable list when `IsUnknown()`**: user omitted the field — resolve to `types.ListNull()` (not API response) to match the `useNullForUnknownListWhenConfigNull` modifier semantics
 - **Optional+Computed when known**: user explicitly set it — never overwrite
 - **Optional+Computed with Default**: always known — the framework resolves the default at plan time, so the field is never Unknown. **Do not add `IsUnknown()` guards** — they are dead code
 
@@ -36,18 +40,28 @@ Always include the resource name in the function name (e.g. `overlayReportComput
 func overlayMyResourceComputedFields(ctx context.Context, apiResp *models.MyResource, plan *myResourceModel) diag.Diagnostics {
     var diags diag.Diagnostics
 
-    // 1. Computed-only fields: ALWAYS set from API response.
+    // 1. Computed-only stable fields: ALWAYS set from API response.
     plan.Id = types.StringPointerValue(apiResp.Id)
     plan.CreateTime = types.Int64PointerValue(apiResp.CreateTime)
-    plan.UpdateTime = types.Int64PointerValue(apiResp.UpdateTime)
 
-    // 2. Optional+Computed scalars: resolve ONLY when unknown.
+    // 2. Computed-only volatile fields: guard with IsUnknown().
+    //    On Create (Unknown) → set from API. On Update (Known) → preserve plan.
+    if plan.UpdateTime.IsUnknown() {
+        plan.UpdateTime = types.Int64PointerValue(apiResp.UpdateTime)
+    }
+
+    // 3. Optional+Computed scalars: resolve ONLY when unknown.
     if plan.Formula.IsUnknown() {
         plan.Formula = types.StringPointerValue(apiResp.Formula)
     }
     // If plan.Formula is known, leave it untouched — user's value wins.
 
-    // 3. Optional+Computed booleans: resolve when unknown, default to false.
+    // 4. Optional+Computed clearable lists: resolve to null, not API response.
+    if plan.Labels.IsUnknown() {
+        plan.Labels = types.ListNull(types.StringType)
+    }
+
+    // 5. Optional+Computed booleans: resolve when unknown, default to false.
     if !plan.Components.IsNull() && !plan.Components.IsUnknown() {
         resolved, compDiags := resolveComponentUnknowns(ctx, &plan.Components)
         diags.Append(compDiags...)
@@ -132,14 +146,16 @@ The Read path detects **real** external changes while ignoring API normalization
 
 2. **Rebuilding nested values after modification.** When modifying fields inside a list element, rebuild the parent list with `types.ListValueFrom()`. List elements are immutable in the framework.
 
-3. **null↔[] consistency between overlay and Read.** When the user omits an Optional+Computed list, the overlay must resolve `IsUnknown()` to the **same representation** the Read path uses. If Read returns `[]`, overlay must also resolve to `[]` — using `ListNull()` causes state churn. Only use `null` if Read also returns `null` for that field.
+3. **null↔[] consistency between overlay and Read.** When the user omits an Optional+Computed list, the overlay and Read path must agree on the representation. For **non-clearable lists** (Category B): both must use `[]`. For **clearable lists** (Category A with `useNullForUnknownListWhenConfigNull`): overlay must resolve Unknown to `null`, and Read must preserve null when prior state was null. See [Clearable List Attributes](../implement-resource/SKILL.md#clearable-list-attributes).
 
 4. **Not testing the Update path separately.** Create and Update can have different API behaviors. Always test both.
 
 5. **Mixing overlay and full mapping.** Never call `mapXxxToModel`/`populateState` directly from Create/Update — always go through the overlay wrapper. Conversely, never use `overlayXxxComputedFields` in Read/ImportState.
 
-6. **API-defaulted lists need API response, not null.** Some lists are auto-populated by the API when omitted (e.g. `collaborators` adds creator as owner). Resolving `IsUnknown()` to `null` causes drift. Resolve from the API response instead.
+6. **API-defaulted lists need Category B classification.** Lists that are auto-populated by the API when omitted (e.g. `recipients` defaults to creator's email, `collaborators` adds creator as owner) must be classified as Category B (not clearable). Applying the clearing modifier to these causes perpetual drift because the API always repopulates the default.
 
-7. **Test for null↔[] flips explicitly.** When omitting Optional+Computed list fields, add `ListSizeExact(0)` checks on both Create and drift-check steps.
+7. **Test for null vs [] based on clearability.** For non-clearable lists (Category B), add `ListSizeExact(0)` checks on omitted list state. For clearable lists (Category A), add `knownvalue.Null()` checks instead — omitted clearable lists resolve to null.
 
 8. **Don't add IsUnknown() guards for fields with Defaults.** When a field has `Default: stringdefault.StaticString(...)` (or similar), the framework resolves it at plan time — the field is never Unknown. An `IsUnknown()` guard is dead code and can mask legitimate changes from cross-resource references. The `overlaycheck` linter flags these automatically.
+
+9. **Guard volatile Computed-only fields with IsUnknown().** Fields like `update_time` that change on every API write must be guarded in the overlay. Without the guard, modifier-triggered Updates write a new value that mismatches the plan's prior-state value, causing "inconsistent result" errors.
