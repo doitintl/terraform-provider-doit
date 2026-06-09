@@ -78,6 +78,40 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		s.Attributes["create_time"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	// Category B: API-computed defaults — not clearable.
+	if attr, ok := s.Attributes["recipients"].(schema.ListAttribute); ok { //nolint:clearableattr // API defaults to creator's email
+		s.Attributes["recipients"] = attr
+	}
+
+	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
+		if attr, ok := configAttr.Attributes["currency"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to org currency
+			configAttr.Attributes["currency"] = attr
+		}
+		if attr, ok := configAttr.Attributes["operator"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults comparison operator
+			configAttr.Attributes["operator"] = attr
+		}
+		if attr, ok := configAttr.Attributes["evaluate_for_each"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to false
+			configAttr.Attributes["evaluate_for_each"] = attr
+		}
+		if attr, ok := configAttr.Attributes["attributions"].(schema.ListAttribute); ok { //nolint:clearableattr // deprecated legacy alias for scopes
+			configAttr.Attributes["attributions"] = attr
+		}
+
+		if scopesAttr, ok := configAttr.Attributes["scopes"].(schema.ListNestedAttribute); ok {
+			if attr, ok := scopesAttr.NestedObject.Attributes["inverse"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
+				scopesAttr.NestedObject.Attributes["inverse"] = attr
+			}
+			if attr, ok := scopesAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok { //nolint:clearableattr // API defaults scope values
+				scopesAttr.NestedObject.Attributes["values"] = attr
+			}
+			configAttr.Attributes["scopes"] = scopesAttr
+		}
+
+		s.Attributes["config"] = configAttr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
