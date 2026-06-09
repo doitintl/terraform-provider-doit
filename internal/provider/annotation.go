@@ -129,8 +129,8 @@ func overlayAnnotationComputedFields(ctx context.Context, apiResp *models.Annota
 	// On Update the framework copies the prior state (Known) into the plan.
 	// Unconditional assignment would cause "inconsistent result" because the
 	// provider would return a newer timestamp than what was in the plan.
-	if plan.UpdateTime.IsUnknown() { //nolint:overlaycheck // guarded to avoid inconsistent result on Update
-		plan.UpdateTime = resolved.UpdateTime
+	if plan.UpdateTime.IsUnknown() {
+		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
 	}
 
 	// ── Content, Timestamp: Required — never touch ──
