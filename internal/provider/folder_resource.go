@@ -81,6 +81,13 @@ func (r *folderResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["parent_folder_id"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["description"] = attr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
