@@ -194,3 +194,16 @@ resources:
     delete:
       path: /iam/v1/users/{id}
       method: DELETE
+  cloudconnect_aws_account:
+    create:
+      path: /core/v1/cloudconnect/aws/accounts
+      method: POST
+    read:
+      path: /core/v1/cloudconnect/aws/accounts/{accountID}
+      method: GET
+    update:
+      path: /core/v1/cloudconnect/aws/accounts/{accountID}
+      method: PUT
+    delete:
+      path: /core/v1/cloudconnect/aws/accounts/{accountID}
+      method: DELETE

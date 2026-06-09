@@ -212,6 +212,10 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `TEST_ASSET_ID_AWS`           | AWS asset ID for asset data source tests               |
 | `TEST_CLOUD_DIAGRAM_RESOURCE` | Cloud resource ID for cloud diagrams data source tests |
 | `TEST_INVITE_EMAIL`           | Email address for user invite resource tests           |
+| `TEST_AWS_ACCOUNT_ID`         | AWS account ID for CloudConnect resource tests         |
+| `TEST_AWS_ROLE_ARN`           | IAM role ARN for CloudConnect resource tests           |
+| `TEST_AWS_S3_BUCKET`          | S3 bucket name for CloudConnect resource tests         |
+| `TEST_AWS_S3_BUCKET_REGION`   | S3 bucket region for CloudConnect resource tests       |
 
 </details>
 

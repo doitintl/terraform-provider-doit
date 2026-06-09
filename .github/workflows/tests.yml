@@ -92,4 +92,8 @@ jobs:
           TEST_CLOUD_DIAGRAM_RESOURCE: ${{ vars.TEST_CLOUD_DIAGRAM_RESOURCE }}
           TEST_USER_2: ${{ vars.TEST_USER_2 }}
           TEST_INVITE_EMAIL: ${{ vars.TEST_INVITE_EMAIL }}
+          TEST_AWS_ACCOUNT_ID: ${{ vars.TEST_AWS_ACCOUNT_ID }}
+          TEST_AWS_ROLE_ARN: ${{ vars.TEST_AWS_ROLE_ARN }}
+          TEST_AWS_S3_BUCKET: ${{ vars.TEST_AWS_S3_BUCKET }}
+          TEST_AWS_S3_BUCKET_REGION: ${{ vars.TEST_AWS_S3_BUCKET_REGION }}
         run: go test -v -timeout 120m ./...

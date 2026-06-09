@@ -324,6 +324,7 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewInsightResourceResultsResource,
 		NewSharingResource,
 		NewUserResource,
+		NewCloudconnectAwsAccountResource,
 		NewCustomThemeResource,
 		NewActiveThemeResource,
 	}

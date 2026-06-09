@@ -21,6 +21,10 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # export TEST_ASSET_ID_AWS="your-aws-asset-id"
 # export TEST_CLOUD_DIAGRAM_RESOURCE="//compute.googleapis.com/projects/your-project/global/networks/your-network"
 # export TEST_INVITE_EMAIL="user+ci-test@example.com"
+# export TEST_AWS_ACCOUNT_ID="your-aws-account-id"
+# export TEST_AWS_ROLE_ARN="arn:aws:iam::your-account-id:role/your-role-name"
+# export TEST_AWS_S3_BUCKET="your-s3-bucket-name"
+# export TEST_AWS_S3_BUCKET_REGION="us-east-1"
 
 # DoiT employees only - uncomment the following line:
 # export DOIT_CUSTOMER_CONTEXT="$TEST_CUSTOMER_ID"
