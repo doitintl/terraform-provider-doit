@@ -63,272 +63,107 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["description"] = attr
 	}
 
-	// Category B: API may asynchronously assign preset labels (e.g. "Cached").
-	if attr, ok := s.Attributes["labels"].(schema.ListAttribute); ok { //nolint:clearableattr // preset labels are API-assigned
-		s.Attributes["labels"] = attr
-	}
-
-	// Category B: API always provides a value.
-	if attr, ok := s.Attributes["name"].(schema.StringAttribute); ok { //nolint:clearableattr // API generates default name
-		s.Attributes["name"] = attr
-	}
-
-	// Category B: nested config fields — API-computed defaults.
+	// Category A: nested clearable filter/metric_filter values.
 	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
-		if attr, ok := configAttr.Attributes["currency"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to org currency
-			configAttr.Attributes["currency"] = attr
-		}
-		if attr, ok := configAttr.Attributes["time_interval"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults time interval
-			configAttr.Attributes["time_interval"] = attr
-		}
-		if attr, ok := configAttr.Attributes["data_source"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults data source
-			configAttr.Attributes["data_source"] = attr
-		}
-
-		// Nested dimensions.
-		if dimsAttr, ok := configAttr.Attributes["dimensions"].(schema.ListNestedAttribute); ok {
-			if attr, ok := dimsAttr.NestedObject.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-				dimsAttr.NestedObject.Attributes["type"] = attr
-			}
-			configAttr.Attributes["dimensions"] = dimsAttr
-		}
-
-		// Nested filters.
 		if filtersAttr, ok := configAttr.Attributes["filters"].(schema.ListNestedAttribute); ok {
-			if attr, ok := filtersAttr.NestedObject.Attributes["inverse"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				filtersAttr.NestedObject.Attributes["inverse"] = attr
-			}
 			if attr, ok := filtersAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
 				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
 				filtersAttr.NestedObject.Attributes["values"] = attr
 			}
 			configAttr.Attributes["filters"] = filtersAttr
 		}
-
-		// Nested metrics.
-		if metricsAttr, ok := configAttr.Attributes["metrics"].(schema.ListNestedAttribute); ok {
-			if attr, ok := metricsAttr.NestedObject.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-				metricsAttr.NestedObject.Attributes["type"] = attr
-			}
-			if attr, ok := metricsAttr.NestedObject.Attributes["value"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default value
-				metricsAttr.NestedObject.Attributes["value"] = attr
-			}
-			configAttr.Attributes["metrics"] = metricsAttr
-		}
-
-		// Nested metric_filter.
 		if mfAttr, ok := configAttr.Attributes["metric_filter"].(schema.SingleNestedAttribute); ok {
 			if attr, ok := mfAttr.Attributes["values"].(schema.ListAttribute); ok {
 				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
 				mfAttr.Attributes["values"] = attr
 			}
-			if attr, ok := mfAttr.Attributes["operator"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults operator
-				mfAttr.Attributes["operator"] = attr
-			}
-			if metricAttr, ok := mfAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
-				if attr, ok := metricAttr.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-					metricAttr.Attributes["type"] = attr
-				}
-				if attr, ok := metricAttr.Attributes["value"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default value
-					metricAttr.Attributes["value"] = attr
-				}
-				mfAttr.Attributes["metric"] = metricAttr
-			}
 			configAttr.Attributes["metric_filter"] = mfAttr
 		}
-
-		// Nested group.
-		if groupAttr, ok := configAttr.Attributes["group"].(schema.ListNestedAttribute); ok {
-			if attr, ok := groupAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned group ID
-				groupAttr.NestedObject.Attributes["id"] = attr
-			}
-			if attr, ok := groupAttr.NestedObject.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-				groupAttr.NestedObject.Attributes["type"] = attr
-			}
-			if limitAttr, ok := groupAttr.NestedObject.Attributes["limit"].(schema.SingleNestedAttribute); ok {
-				if attr, ok := limitAttr.Attributes["sort"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults sort direction
-					limitAttr.Attributes["sort"] = attr
-				}
-				if attr, ok := limitAttr.Attributes["value"].(schema.Int64Attribute); ok { //nolint:clearableattr // API defaults limit value
-					limitAttr.Attributes["value"] = attr
-				}
-				if metricAttr, ok := limitAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
-					if attr, ok := metricAttr.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-						metricAttr.Attributes["type"] = attr
-					}
-					if attr, ok := metricAttr.Attributes["value"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default value
-						metricAttr.Attributes["value"] = attr
-					}
-					limitAttr.Attributes["metric"] = metricAttr
-				}
-				groupAttr.NestedObject.Attributes["limit"] = limitAttr
-			}
-			configAttr.Attributes["group"] = groupAttr
-		}
-
-		// Nested advanced_analysis.
-		if aaAttr, ok := configAttr.Attributes["advanced_analysis"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := aaAttr.Attributes["forecast"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				aaAttr.Attributes["forecast"] = attr
-			}
-			if attr, ok := aaAttr.Attributes["not_trending"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				aaAttr.Attributes["not_trending"] = attr
-			}
-			if attr, ok := aaAttr.Attributes["trending_up"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				aaAttr.Attributes["trending_up"] = attr
-			}
-			if attr, ok := aaAttr.Attributes["trending_down"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				aaAttr.Attributes["trending_down"] = attr
-			}
-			configAttr.Attributes["advanced_analysis"] = aaAttr
-		}
-
-		// Nested display_settings.
-		if dsAttr, ok := configAttr.Attributes["display_settings"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := dsAttr.Attributes["number_scale"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults number scale
-				dsAttr.Attributes["number_scale"] = attr
-			}
-			if attr, ok := dsAttr.Attributes["axis_label_font_size"].(schema.Int64Attribute); ok { //nolint:clearableattr // API defaults font size
-				dsAttr.Attributes["axis_label_font_size"] = attr
-			}
-			if attr, ok := dsAttr.Attributes["data_label_font_size"].(schema.Int64Attribute); ok { //nolint:clearableattr // API defaults font size
-				dsAttr.Attributes["data_label_font_size"] = attr
-			}
-			if attr, ok := dsAttr.Attributes["decimal_precision"].(schema.Int64Attribute); ok { //nolint:clearableattr // API defaults precision
-				dsAttr.Attributes["decimal_precision"] = attr
-			}
-			configAttr.Attributes["display_settings"] = dsAttr
-		}
-
-		// Nested time_range.
-		if trAttr, ok := configAttr.Attributes["time_range"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := trAttr.Attributes["mode"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults mode
-				trAttr.Attributes["mode"] = attr
-			}
-			if attr, ok := trAttr.Attributes["unit"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults unit
-				trAttr.Attributes["unit"] = attr
-			}
-			if attr, ok := trAttr.Attributes["amount"].(schema.Int64Attribute); ok { //nolint:clearableattr // API defaults amount
-				trAttr.Attributes["amount"] = attr
-			}
-			if attr, ok := trAttr.Attributes["include_current"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				trAttr.Attributes["include_current"] = attr
-			}
-			configAttr.Attributes["time_range"] = trAttr
-		}
-
-		// Nested custom_time_range.
-		if ctrAttr, ok := configAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := ctrAttr.Attributes["from"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults from date
-				ctrAttr.Attributes["from"] = attr
-			}
-			if attr, ok := ctrAttr.Attributes["to"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to date
-				ctrAttr.Attributes["to"] = attr
-			}
-			configAttr.Attributes["custom_time_range"] = ctrAttr
-		}
-
-		if attr, ok := configAttr.Attributes["aggregation"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults aggregation
-			configAttr.Attributes["aggregation"] = attr
-		}
-		if attr, ok := configAttr.Attributes["display_values"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults display values
-			configAttr.Attributes["display_values"] = attr
-		}
-
-		// Nested splits.
-		if splitsAttr, ok := configAttr.Attributes["splits"].(schema.ListNestedAttribute); ok {
-			if attr, ok := splitsAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned split ID
-				splitsAttr.NestedObject.Attributes["id"] = attr
-			}
-			if attr, ok := splitsAttr.NestedObject.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-				splitsAttr.NestedObject.Attributes["type"] = attr
-			}
-			if attr, ok := splitsAttr.NestedObject.Attributes["mode"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default mode
-				splitsAttr.NestedObject.Attributes["mode"] = attr
-			}
-			if originAttr, ok := splitsAttr.NestedObject.Attributes["origin"].(schema.SingleNestedAttribute); ok {
-				if attr, ok := originAttr.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-					originAttr.Attributes["type"] = attr
-				}
-				if attr, ok := originAttr.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned origin ID
-					originAttr.Attributes["id"] = attr
-				}
-				splitsAttr.NestedObject.Attributes["origin"] = originAttr
-			}
-			if targetsAttr, ok := splitsAttr.NestedObject.Attributes["targets"].(schema.ListNestedAttribute); ok {
-				if attr, ok := targetsAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned target ID
-					targetsAttr.NestedObject.Attributes["id"] = attr
-				}
-				if attr, ok := targetsAttr.NestedObject.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-					targetsAttr.NestedObject.Attributes["type"] = attr
-				}
-				if attr, ok := targetsAttr.NestedObject.Attributes["value"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default value
-					targetsAttr.NestedObject.Attributes["value"] = attr
-				}
-				splitsAttr.NestedObject.Attributes["targets"] = targetsAttr
-			}
-			configAttr.Attributes["splits"] = splitsAttr
-		}
-
-		if attr, ok := configAttr.Attributes["include_promotional_credits"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-			configAttr.Attributes["include_promotional_credits"] = attr
-		}
-		if attr, ok := configAttr.Attributes["layout"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults layout
-			configAttr.Attributes["layout"] = attr
-		}
-
-		// Nested dimensions — id field.
-		if dimsAttr, ok := configAttr.Attributes["dimensions"].(schema.ListNestedAttribute); ok {
-			if attr, ok := dimsAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned dimension ID
-				dimsAttr.NestedObject.Attributes["id"] = attr
-			}
-			configAttr.Attributes["dimensions"] = dimsAttr
-		}
-
-		// Nested metric (top-level config.metric).
-		if metricAttr, ok := configAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := metricAttr.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default type
-				metricAttr.Attributes["type"] = attr
-			}
-			if attr, ok := metricAttr.Attributes["value"].(schema.StringAttribute); ok { //nolint:clearableattr // API provides default value
-				metricAttr.Attributes["value"] = attr
-			}
-			configAttr.Attributes["metric"] = metricAttr
-		}
-
-		// Nested splits — include_origin.
-		if splitsAttr, ok := configAttr.Attributes["splits"].(schema.ListNestedAttribute); ok {
-			if attr, ok := splitsAttr.NestedObject.Attributes["include_origin"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				splitsAttr.NestedObject.Attributes["include_origin"] = attr
-			}
-			configAttr.Attributes["splits"] = splitsAttr
-		}
-
-		// Nested secondary_time_range.
-		if strAttr, ok := configAttr.Attributes["secondary_time_range"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := strAttr.Attributes["unit"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults unit
-				strAttr.Attributes["unit"] = attr
-			}
-			if attr, ok := strAttr.Attributes["amount"].(schema.Int64Attribute); ok { //nolint:clearableattr // API defaults amount
-				strAttr.Attributes["amount"] = attr
-			}
-			if attr, ok := strAttr.Attributes["include_current"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
-				strAttr.Attributes["include_current"] = attr
-			}
-			if ctrAttr, ok := strAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
-				if attr, ok := ctrAttr.Attributes["from"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults from date
-					ctrAttr.Attributes["from"] = attr
-				}
-				if attr, ok := ctrAttr.Attributes["to"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to date
-					ctrAttr.Attributes["to"] = attr
-				}
-				strAttr.Attributes["custom_time_range"] = ctrAttr
-			}
-			configAttr.Attributes["secondary_time_range"] = strAttr
-		}
-
 		s.Attributes["config"] = configAttr
 	}
+
+	// Category B: API-computed defaults — not clearable.
+	acknowledgeNotClearable(s,
+		"name",   // API generates default name
+		"labels", // preset labels are API-assigned
+
+		// config top-level
+		"config.currency",                    // API defaults to org currency
+		"config.time_interval",               // API defaults time interval
+		"config.data_source",                 // API defaults data source
+		"config.aggregation",                 // API defaults aggregation
+		"config.display_values",              // API defaults display values
+		"config.include_promotional_credits", // API defaults to false
+		"config.layout",                      // API defaults layout
+
+		// config.dimensions
+		"config.dimensions[*].type", // API provides default type
+		"config.dimensions[*].id",   // API-assigned dimension ID
+
+		// config.filters
+		"config.filters[*].inverse", // API defaults to false
+
+		// config.metrics
+		"config.metrics[*].type",  // API provides default type
+		"config.metrics[*].value", // API provides default value
+
+		// config.metric_filter
+		"config.metric_filter.operator",     // API defaults operator
+		"config.metric_filter.metric.type",  // API provides default type
+		"config.metric_filter.metric.value", // API provides default value
+
+		// config.group
+		"config.group[*].id",                 // API-assigned group ID
+		"config.group[*].type",               // API provides default type
+		"config.group[*].limit.sort",         // API defaults sort direction
+		"config.group[*].limit.value",        // API defaults limit value
+		"config.group[*].limit.metric.type",  // API provides default type
+		"config.group[*].limit.metric.value", // API provides default value
+
+		// config.advanced_analysis
+		"config.advanced_analysis.forecast",      // API defaults to false
+		"config.advanced_analysis.not_trending",  // API defaults to false
+		"config.advanced_analysis.trending_up",   // API defaults to false
+		"config.advanced_analysis.trending_down", // API defaults to false
+
+		// config.display_settings
+		"config.display_settings.number_scale",         // API defaults number scale
+		"config.display_settings.axis_label_font_size", // API defaults font size
+		"config.display_settings.data_label_font_size", // API defaults font size
+		"config.display_settings.decimal_precision",    // API defaults precision
+
+		// config.time_range
+		"config.time_range.mode",            // API defaults mode
+		"config.time_range.unit",            // API defaults unit
+		"config.time_range.amount",          // API defaults amount
+		"config.time_range.include_current", // API defaults to false
+
+		// config.custom_time_range
+		"config.custom_time_range.from", // API defaults from date
+		"config.custom_time_range.to",   // API defaults to date
+
+		// config.splits
+		"config.splits[*].id",               // API-assigned split ID
+		"config.splits[*].type",             // API provides default type
+		"config.splits[*].mode",             // API provides default mode
+		"config.splits[*].include_origin",   // API defaults to false
+		"config.splits[*].origin.type",      // API provides default type
+		"config.splits[*].origin.id",        // API-assigned origin ID
+		"config.splits[*].targets[*].id",    // API-assigned target ID
+		"config.splits[*].targets[*].type",  // API provides default type
+		"config.splits[*].targets[*].value", // API provides default value
+
+		// config.metric (top-level)
+		"config.metric.type",  // API provides default type
+		"config.metric.value", // API provides default value
+
+		// config.secondary_time_range
+		"config.secondary_time_range.unit",                   // API defaults unit
+		"config.secondary_time_range.amount",                 // API defaults amount
+		"config.secondary_time_range.include_current",        // API defaults to false
+		"config.secondary_time_range.custom_time_range.from", // API defaults from date
+		"config.secondary_time_range.custom_time_range.to",   // API defaults to date
+	)
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,

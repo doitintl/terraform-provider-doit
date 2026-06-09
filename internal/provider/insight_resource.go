@@ -107,13 +107,11 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
 
 	// Category B: API-assigned identity fields — not clearable.
-	// source_id already has UseStateForUnknown above.
-	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned import identity
-		s.Attributes["source_id"] = attr
-	}
-	if attr, ok := s.Attributes["insight_key"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned identity
-		s.Attributes["insight_key"] = attr
-	}
+	acknowledgeNotClearable(s,
+		"source_id",   // API-assigned import identity (also has UseStateForUnknown above)
+		"insight_key", // API-assigned identity
+		"status",      // API defaults to "dismissed" on create; lifecycle state
+	)
 
 	// Category A: user-authored values — clearable.
 	if attr, ok := s.Attributes["cloud_flow_template_id"].(schema.StringAttribute); ok {
@@ -132,11 +130,6 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
 		s.Attributes["easy_win_description"] = attr
 	}
-	if attr, ok := s.Attributes["status"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to "dismissed" on create; lifecycle state
-		s.Attributes["status"] = attr
-	}
-
-	// Category A: nested dismissal_details — user-authored fields.
 	if ddAttr, ok := s.Attributes["dismissal_details"].(schema.SingleNestedAttribute); ok {
 		if attr, ok := ddAttr.Attributes["reason"].(schema.StringAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())

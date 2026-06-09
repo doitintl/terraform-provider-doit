@@ -103,6 +103,13 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 		"location":       "The region/zone of the resource (e.g. `eu-west-2`). **Immutable after creation** — changing this value will destroy and recreate the resource.",
 		"resource_type":  "What the resource actually is, e.g. `instance`, `disk`, `cache`. **Immutable after creation** — changing this value will destroy and recreate the resource.",
 	}
+
+	// Category B: API-provided classification / immutable identity — not clearable.
+	acknowledgeNotClearable(s,
+		"resource_results[*].resource_type", // API classification
+		"resource_results[*].location",      // immutable identity field
+	)
+
 	if rrAttr, ok := s.Attributes["resource_results"].(schema.ListNestedAttribute); ok {
 		for field, desc := range immutableFieldDescs {
 			if nested, ok := rrAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
@@ -132,18 +139,6 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 		if nested, ok := rrAttr.NestedObject.Attributes["metadata"].(schema.StringAttribute); ok {
 			nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownNormalizedWhenConfigNull())
 			rrAttr.NestedObject.Attributes["metadata"] = nested
-		}
-
-		// Classify remaining Optional+Computed attributes (clearableattr).
-		// See: https://github.com/doitintl/terraform-provider-doit/issues/233
-
-		// Category B: API-provided resource classification — not clearable.
-		if nested, ok := rrAttr.NestedObject.Attributes["resource_type"].(schema.StringAttribute); ok { //nolint:clearableattr // API classification
-			rrAttr.NestedObject.Attributes["resource_type"] = nested
-		}
-		// Category B: immutable after creation (RequiresReplace above, but still O+C).
-		if nested, ok := rrAttr.NestedObject.Attributes["location"].(schema.StringAttribute); ok { //nolint:clearableattr // immutable identity field
-			rrAttr.NestedObject.Attributes["location"] = nested
 		}
 
 		// Category A: user-authored result fields — clearable.
@@ -187,12 +182,13 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 	}
 
 	// Category B: API-assigned identity fields — not clearable.
-	if attr, ok := s.Attributes["insight_key"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned identity
-		s.Attributes["insight_key"] = attr
-	}
+	acknowledgeNotClearable(s,
+		"insight_key", // API-assigned identity
+		"source_id",   // API-assigned identity
+	)
 
 	// Validate source_id — the API only accepts "public-api" today
-	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-assigned identity
+	if attr, ok := s.Attributes["source_id"].(schema.StringAttribute); ok {
 		attr.Validators = append(attr.Validators, stringvalidator.OneOf(
 			string(models.PublicApi),
 		))

@@ -126,13 +126,12 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["type"] = attr
 	}
 
-	// Classify Optional+Computed attributes (clearableattr).
-	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	// Category B: dual-purpose ID (user-ref for select/update, API-assigned for create).
+	acknowledgeNotClearable(s,
+		"rules[*].id", // reference ID, not clearable
+	)
+
 	if rulesAttr, ok := s.Attributes["rules"].(schema.ListNestedAttribute); ok {
-		// Category B: dual-purpose ID (user-ref for select/update, API-assigned for create).
-		if attr, ok := rulesAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // reference ID, not clearable
-			rulesAttr.NestedObject.Attributes["id"] = attr
-		}
 		// Category A: user-authored rule metadata — clearable.
 		for _, field := range []string{"name", "description", "formula"} {
 			if attr, ok := rulesAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {

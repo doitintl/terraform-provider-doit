@@ -115,9 +115,9 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 
 	// Category B: API-assigned, not clearable.
 	acknowledgeNotClearable(s,
-		"first_name",      // API ignores "" PATCH — not clearable once set
-		"last_name",       // API ignores "" PATCH — not clearable once set
-		"job_title",       // API ignores "" PATCH — not clearable once set
+		"first_name", // API ignores "" PATCH — not clearable once set
+		"last_name",  // API ignores "" PATCH — not clearable once set
+		"job_title",  // API ignores "" PATCH — not clearable once set
 	)
 
 	// organization_id: RequiresReplace (immutable after invite) + UseStateForUnknown
