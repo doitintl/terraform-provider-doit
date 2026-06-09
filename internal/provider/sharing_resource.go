@@ -138,7 +138,7 @@ func (r *sharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 	// from config resolves to null, not to the prior state value.
 	if attr, ok := s.Attributes["public"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers,
-			useNullForUnknownWhenConfigNull(),
+			useNullForUnknownStringWhenConfigNull(),
 			stringplanmodifier.UseStateForUnknown(),
 		)
 		s.Attributes["public"] = attr
@@ -573,8 +573,6 @@ func buildSharingRequest(ctx context.Context, plan *sharingResourceModel, resour
 		// Allocations require the public field to be present in the request body.
 		// The API returns 500 if public is omitted or null. An empty string signals
 		// "no public access" and is the only accepted sentinel for allocations.
-		// Other resource types (reports, budgets, alerts) reject empty string as
-		// "invalid public access role" — so this workaround is allocation-specific.
 		reqBody.Public = new(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
 

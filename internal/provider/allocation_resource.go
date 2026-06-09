@@ -126,21 +126,19 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["type"] = attr
 	}
 
-	// Category B: dual-purpose ID (user-ref for select/update, API-assigned for create).
+	// Category B: rule nested attributes are rule-type-dependent.
+	// For "select" rules, name/description/formula are API-computed from the
+	// source allocation. For "create" rules, they are user-authored. Since
+	// schema-level modifiers fire at plan time and can't distinguish rule types,
+	// we must classify as Cat B to avoid drift on select rules. This means users
+	// cannot clear these fields on create rules via config removal — they must
+	// explicitly set them to "" instead.
 	acknowledgeNotClearable(s,
-		"rules[*].id", // reference ID, not clearable
+		"rules[*].id",          // reference ID, not clearable
+		"rules[*].name",        // API-computed for select rules
+		"rules[*].description", // API-computed for select rules
+		"rules[*].formula",     // API-computed for select rules
 	)
-
-	if rulesAttr, ok := s.Attributes["rules"].(schema.ListNestedAttribute); ok {
-		// Category A: user-authored rule metadata — clearable.
-		for _, field := range []string{"name", "description", "formula"} {
-			if attr, ok := rulesAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
-				rulesAttr.NestedObject.Attributes[field] = attr
-			}
-		}
-		s.Attributes["rules"] = rulesAttr
-	}
 
 	// Category A: user-authored label for unallocated costs in group allocations.
 	if attr, ok := s.Attributes["unallocated_costs"].(schema.StringAttribute); ok {
