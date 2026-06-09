@@ -60,22 +60,31 @@ func (r *datahubDatasetResource) ImportState(ctx context.Context, req resource.I
 }
 
 func (r *datahubDatasetResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_datahub_dataset.DatahubDatasetResourceSchema(ctx)
-	resp.Schema.Description = "Manages a DataHub dataset."
-	resp.Schema.MarkdownDescription = resp.Schema.Description
+	s := resource_datahub_dataset.DatahubDatasetResourceSchema(ctx)
+	s.Description = "Manages a DataHub dataset."
+	s.MarkdownDescription = s.Description
 
-	nameAttr, ok := resp.Schema.Attributes["name"].(schema.StringAttribute)
+	nameAttr, ok := s.Attributes["name"].(schema.StringAttribute)
 	if ok {
 		nameAttr.PlanModifiers = append(nameAttr.PlanModifiers, stringplanmodifier.RequiresReplace())
-		resp.Schema.Attributes["name"] = nameAttr
+		s.Attributes["name"] = nameAttr
 	}
 
-	resp.Schema.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["description"] = attr
+	}
+
+	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
 		Update: true,
 		Delete: true,
 	})
+
+	resp.Schema = s
 }
 
 func (r *datahubDatasetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
