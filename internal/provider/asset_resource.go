@@ -100,6 +100,12 @@ func (r *assetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		s.Attributes["create_time"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	if attr, ok := s.Attributes["quantity"].(schema.Int64Attribute); ok { //nolint:clearableattr // dangerous to clear — could remove all GWS licenses
+		s.Attributes["quantity"] = attr
+	}
+
 	s.Description = "Manages a DoiT asset (e.g., G Suite/Google Workspace licenses). " +
 		"This resource is import-only: assets must first be created through the DoiT Console " +
 		"and then imported into Terraform using `terraform import`. " +
