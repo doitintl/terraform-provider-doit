@@ -161,7 +161,7 @@ For `Optional+Computed` attributes, Terraform Core copies the prior state value 
 
 Not all Optional+Computed attributes should be clearable. **Every Optional+Computed attribute without a `Default` requires a conscious classification decision:**
 
-> **Linter:** `clearableattr` — flags Optional+Computed attributes without Default that are missing either the `useNullForUnknownWhenConfigNull()` modifier or a `//nolint:clearableattr` suppression.
+> **Linter:** `clearableattr` — flags Optional+Computed attributes without Default that are missing either the `useNullForUnknownWhenConfigNull()` modifier, an `acknowledgeNotClearable()` declaration, or a `//nolint:clearableattr` suppression.
 
 #### Category A: Clearable (user-controlled)
 
@@ -264,14 +264,27 @@ if plan.UpdateTime.IsUnknown() {
 
 #### Category B: Not clearable (API-computed default)
 
-**Do not add any plan modifier.** The default framework behavior (prior state sticks) is correct. Add an explicit `//nolint:clearableattr` block in the Schema() method to signal that this attribute was consciously classified:
+**Do not add any plan modifier.** The default framework behavior (prior state sticks) is correct. Use `acknowledgeNotClearable(s, paths...)` in the Schema() method to declare that these attributes were consciously classified:
 
 ```go
 // In Schema():
-if attr, ok := s.Attributes["currency"].(schema.StringAttribute); ok { //nolint:clearableattr // API-computed default (org currency)
-    s.Attributes["currency"] = attr
-}
+acknowledgeNotClearable(s,
+    "currency",                     // API defaults to org currency
+    "config.time_interval",         // API defaults time interval
+    "scopes[*].inverse",            // API defaults to false
+    "config.group[*].limit.value",  // API defaults limit value
+)
 ```
+
+**Path syntax:**
+- Top-level: `"currency"`
+- Nested (SingleNested): `"config.currency"`
+- List element (ListNested): `"scopes[*].inverse"`
+- Deeply nested: `"config.group[*].limit.metric.type"`
+
+**Placement:** `acknowledgeNotClearable` must be a **top-level statement** in Schema() — not inside an `if` block. The schemaparser only detects calls at function scope. If you also need an if-block for the same attribute container (e.g., to add Cat A modifiers), place the `acknowledgeNotClearable` call before or after the if-block.
+
+**When to use `//nolint:clearableattr` instead:** Use the inline nolint comment only when an attribute's if-block already adds a plan modifier (Cat A + needs nolint for a separate reason, e.g., `organization_id` has `RequiresReplace` + `UseStateForUnknown`).
 
 - Fields where the API assigns a meaningful default: `currency`, `time_interval`
 - Fields where the API always populates the field on Create: `recipients` (defaults to creator's email)
