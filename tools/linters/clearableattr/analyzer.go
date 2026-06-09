@@ -14,6 +14,7 @@ package clearableattr
 import (
 	"go/ast"
 	"go/token"
+	"slices"
 	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/tools/linters/schemaparser"
@@ -104,6 +105,9 @@ func run(pass *analysis.Pass) (any, error) {
 		for _, stmt := range fn.Body.List {
 			fallbackPositions = append(fallbackPositions, stmt.Pos())
 		}
+
+		// Sort for deterministic position assignment and output order.
+		slices.Sort(findings)
 
 		// Report each finding at a unique position.
 		fallbackIdx := 0
