@@ -92,6 +92,100 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["create_time"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+
+	// Category B: API-computed defaults or legacy fields — not clearable.
+	if attr, ok := s.Attributes["seasonal_amounts"].(schema.ListNestedAttribute); ok { //nolint:clearableattr // optional list, API returns empty list
+		s.Attributes["seasonal_amounts"] = attr
+	}
+	if attr, ok := s.Attributes["currency"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults to org currency
+		s.Attributes["currency"] = attr
+	}
+	if attr, ok := s.Attributes["scope"].(schema.ListAttribute); ok { //nolint:clearableattr // legacy alias list, API always returns a value
+		s.Attributes["scope"] = attr
+	}
+	if attr, ok := s.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults budget type
+		s.Attributes["type"] = attr
+	}
+	if attr, ok := s.Attributes["time_interval"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults time interval
+		s.Attributes["time_interval"] = attr
+	}
+	if attr, ok := s.Attributes["amount"].(schema.Float64Attribute); ok { //nolint:clearableattr // API-computed for use_prev_spend budgets
+		s.Attributes["amount"] = attr
+	}
+	if attr, ok := s.Attributes["public"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
+		s.Attributes["public"] = attr
+	}
+	if attr, ok := s.Attributes["start_period"].(schema.Int64Attribute); ok { //nolint:clearableattr // API defaults to current period
+		s.Attributes["start_period"] = attr
+	}
+
+	// Category B: nested recipients_slack_channels — API-populated Slack metadata.
+	if slackAttr, ok := s.Attributes["recipients_slack_channels"].(schema.ListNestedAttribute); ok {
+		if attr, ok := slackAttr.NestedObject.Attributes["customer_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-populated
+			slackAttr.NestedObject.Attributes["customer_id"] = attr
+		}
+		if attr, ok := slackAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-populated
+			slackAttr.NestedObject.Attributes["id"] = attr
+		}
+		if attr, ok := slackAttr.NestedObject.Attributes["name"].(schema.StringAttribute); ok { //nolint:clearableattr // API-populated
+			slackAttr.NestedObject.Attributes["name"] = attr
+		}
+		if attr, ok := slackAttr.NestedObject.Attributes["shared"].(schema.BoolAttribute); ok { //nolint:clearableattr // API-populated
+			slackAttr.NestedObject.Attributes["shared"] = attr
+		}
+		if attr, ok := slackAttr.NestedObject.Attributes["type"].(schema.StringAttribute); ok { //nolint:clearableattr // API-populated
+			slackAttr.NestedObject.Attributes["type"] = attr
+		}
+		if attr, ok := slackAttr.NestedObject.Attributes["workspace"].(schema.StringAttribute); ok { //nolint:clearableattr // API-populated
+			slackAttr.NestedObject.Attributes["workspace"] = attr
+		}
+		s.Attributes["recipients_slack_channels"] = slackAttr
+	}
+
+	// Category B: nested collaborators — identity/API defaults.
+	if collabAttr, ok := s.Attributes["collaborators"].(schema.ListNestedAttribute); ok {
+		if attr, ok := collabAttr.NestedObject.Attributes["email"].(schema.StringAttribute); ok { //nolint:clearableattr // identity field
+			collabAttr.NestedObject.Attributes["email"] = attr
+		}
+		if attr, ok := collabAttr.NestedObject.Attributes["role"].(schema.StringAttribute); ok { //nolint:clearableattr // API defaults role
+			collabAttr.NestedObject.Attributes["role"] = attr
+		}
+		s.Attributes["collaborators"] = collabAttr
+	}
+
+	// Category B: nested alerts — identity field.
+	if alertsAttr, ok := s.Attributes["alerts"].(schema.ListNestedAttribute); ok {
+		if attr, ok := alertsAttr.NestedObject.Attributes["percentage"].(schema.Float64Attribute); ok { //nolint:clearableattr // identity field within list
+			alertsAttr.NestedObject.Attributes["percentage"] = attr
+		}
+		s.Attributes["alerts"] = alertsAttr
+	}
+
+	// Category B: API-defaulted — not clearable.
+	if attr, ok := s.Attributes["name"].(schema.StringAttribute); ok { //nolint:clearableattr // API auto-generates name when omitted
+		s.Attributes["name"] = attr
+	}
+	if attr, ok := s.Attributes["end_period"].(schema.Int64Attribute); ok { //nolint:clearableattr // API rejects clearing (endPeriod=0/null); only clears implicitly via type→recurring
+		s.Attributes["end_period"] = attr
+	}
+	if attr, ok := s.Attributes["recipients"].(schema.ListAttribute); ok { //nolint:clearableattr // API auto-assigns creator's email on create
+		s.Attributes["recipients"] = attr
+	}
+
+	// Nested scopes classification.
+	if scopesAttr, ok := s.Attributes["scopes"].(schema.ListNestedAttribute); ok {
+		if attr, ok := scopesAttr.NestedObject.Attributes["inverse"].(schema.BoolAttribute); ok { //nolint:clearableattr // API defaults to false
+			scopesAttr.NestedObject.Attributes["inverse"] = attr
+		}
+		if attr, ok := scopesAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+			scopesAttr.NestedObject.Attributes["values"] = attr
+		}
+		s.Attributes["scopes"] = scopesAttr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
