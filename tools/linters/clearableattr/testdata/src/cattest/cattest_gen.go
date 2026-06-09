@@ -234,5 +234,67 @@ func OverrideResourceSchema(ctx context.Context) schema.Schema {
 	}
 }
 
+// AcknowledgedResourceSchema — same O+C fields, classified via acknowledgeNotClearable.
+func AcknowledgedResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"description": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"folder_id": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"public": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"config": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Required: true,
+					},
+					"currency": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+					},
+				},
+			},
+			"results": schema.ListNestedAttribute{
+				Optional: true,
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"account": schema.StringAttribute{
+							Required: true,
+						},
+						"external_id": schema.StringAttribute{
+							Optional: true,
+							Computed: true,
+						},
+						"external_url": schema.StringAttribute{
+							Optional: true,
+							Computed: true,
+						},
+						"metadata": schema.StringAttribute{
+							Optional: true,
+							Computed: true,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 var _ context.Context
 var _ = booldefault.StaticBool

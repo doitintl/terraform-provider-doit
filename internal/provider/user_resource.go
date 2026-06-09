@@ -114,6 +114,12 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
 
 	// Category B: API-assigned, not clearable.
+	acknowledgeNotClearable(s,
+		"first_name",      // API ignores "" PATCH — not clearable once set
+		"last_name",       // API ignores "" PATCH — not clearable once set
+		"job_title",       // API ignores "" PATCH — not clearable once set
+	)
+
 	// organization_id: RequiresReplace (immutable after invite) + UseStateForUnknown
 	if attr, ok := s.Attributes["organization_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-level org assignment
 		attr.PlanModifiers = append(attr.PlanModifiers,
@@ -126,18 +132,6 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	if attr, ok := s.Attributes["role_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API assigns default role on creation
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["role_id"] = attr
-	}
-
-	// first_name, last_name, job_title: API ignores empty-string PATCH values;
-	// once set, these fields cannot be cleared.
-	if attr, ok := s.Attributes["first_name"].(schema.StringAttribute); ok { //nolint:clearableattr // API ignores "" PATCH — not clearable once set
-		s.Attributes["first_name"] = attr
-	}
-	if attr, ok := s.Attributes["last_name"].(schema.StringAttribute); ok { //nolint:clearableattr // API ignores "" PATCH — not clearable once set
-		s.Attributes["last_name"] = attr
-	}
-	if attr, ok := s.Attributes["job_title"].(schema.StringAttribute); ok { //nolint:clearableattr // API ignores "" PATCH — not clearable once set
-		s.Attributes["job_title"] = attr
 	}
 
 	// --- Add attributes not present in the generated schema ---

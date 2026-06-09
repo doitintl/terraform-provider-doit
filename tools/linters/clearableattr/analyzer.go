@@ -146,7 +146,7 @@ func collectUnclassified(attrs map[string]*schemaparser.AttrInfo, prefix string,
 			// Skip container attributes — the clearable concern applies to
 			// their leaf children, not the container itself.
 			if info.NestedAttrs == nil {
-				if !hasClearableModifier(info.PlanModifiers) {
+				if !hasClearableModifier(info.PlanModifiers) && !info.NotClearable {
 					*out = append(*out, fullPath)
 				}
 			}

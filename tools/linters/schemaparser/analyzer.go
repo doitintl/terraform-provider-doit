@@ -73,6 +73,10 @@ type AttrInfo struct {
 	// "useNullForUnknownWhenConfigNull"). Populated during Schema() override
 	// merging in applySchemaOverrides.
 	PlanModifiers []string
+	// NotClearable is true when the attribute has been explicitly acknowledged
+	// as not user-clearable via acknowledgeNotClearable(). The clearableattr
+	// linter skips these attributes.
+	NotClearable bool
 }
 
 // SchemaInfo holds the parsed schema for a single resource or data source.
@@ -469,11 +473,27 @@ func findBaseSchemaCall(fn *ast.FuncDecl) (schemaName, varName string) {
 func applyStmtOverride(stmt ast.Stmt, schemaVar string, schema *SchemaInfo) {
 	switch s := stmt.(type) {
 	case *ast.ExprStmt:
-		// Check for delete(s.Attributes, "field")
 		call, ok := s.X.(*ast.CallExpr)
 		if !ok {
 			return
 		}
+
+		// Check for acknowledgeNotClearable(s, "path1", "path2", ...)
+		if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "acknowledgeNotClearable" {
+			if len(call.Args) >= 2 {
+				// First arg should be the schema variable.
+				if schemaIdent, ok := call.Args[0].(*ast.Ident); ok && schemaIdent.Name == schemaVar {
+					for _, arg := range call.Args[1:] {
+						if p := unquote(arg); p != "" {
+							markNotClearable(schema, p)
+						}
+					}
+				}
+			}
+			return
+		}
+
+		// Check for delete(s.Attributes, "field")
 		ident, ok := call.Fun.(*ast.Ident)
 		if !ok || ident.Name != "delete" || len(call.Args) != 2 {
 			return
@@ -702,6 +722,42 @@ func getOrCreateNestedAttrs(schema *SchemaInfo, parentFieldName string) map[stri
 	return parent.NestedAttrs
 }
 
+// markNotClearable walks a dotted attribute path (e.g., "config.currency",
+// "scopes[*].inverse") into the schema's nested AttrInfo tree and sets
+// NotClearable = true on the leaf attribute. Path segments separated by "."
+// navigate into NestedAttrs; "[*]" suffixes on segments are stripped (they
+// denote list element access).
+func markNotClearable(schema *SchemaInfo, path string) {
+	segments := strings.Split(path, ".")
+	attrs := schema.Attrs
+
+	for i, seg := range segments {
+		// Strip [*] suffix — it's a path convention, not an attribute name part.
+		seg = strings.TrimSuffix(seg, "[*]")
+
+		info, ok := attrs[seg]
+		if !ok {
+			// Attribute not found in the parsed schema. This can happen for
+			// attributes defined only in Schema() overrides or for typos.
+			// Create a stub so the clearableattr linter can see it.
+			info = &AttrInfo{}
+			attrs[seg] = info
+		}
+
+		if i == len(segments)-1 {
+			// Leaf: mark as not clearable.
+			info.NotClearable = true
+			return
+		}
+
+		// Intermediate: descend into nested attrs.
+		if info.NestedAttrs == nil {
+			info.NestedAttrs = make(map[string]*AttrInfo)
+		}
+		attrs = info.NestedAttrs
+	}
+}
+
 // isSchemaAttributes checks if an expression is schemaVar.Attributes
 // (e.g., s.Attributes).
 func isSchemaAttributes(expr ast.Expr, schemaVar string) bool {
@@ -773,6 +829,7 @@ func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 		IsList:       src.IsList,
 		HasDefault:   src.HasDefault,
 		DefaultValue: src.DefaultValue,
+		NotClearable: src.NotClearable,
 	}
 	if len(src.PlanModifiers) > 0 {
 		dst.PlanModifiers = make([]string, len(src.PlanModifiers))

@@ -112,7 +112,37 @@ func (r *overrideResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 	resp.Schema = s
 }
 
+// --- GOOD: Schema() with Cat B attributes acknowledged via allowlist ---
+
+type acknowledgedResource struct{}
+
+func (r *acknowledgedResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := AcknowledgedResourceSchema(ctx)
+
+	// Cat A: clearable via modifier.
+	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		s.Attributes["description"] = attr
+	}
+
+	// Cat B: acknowledged as not clearable — replaces no-op if-blocks.
+	acknowledgeNotClearable(s,
+		"folder_id",              // API-assigned
+		"public",                 // API defaults to false
+		"config.currency",        // API defaults to org currency
+		"results[*].external_id", // API-assigned identity
+		"results[*].external_url", // API-assigned
+		"results[*].metadata",    // API-assigned
+	)
+
+	resp.Schema = s
+}
+
 // useNullForUnknownWhenConfigNull is a stub for the plan modifier.
 func useNullForUnknownWhenConfigNull() stringplanmodifier.PlanModifier {
 	return stringplanmodifier.PlanModifier{}
 }
+
+// acknowledgeNotClearable is a stub for the runtime helper.
+func acknowledgeNotClearable(_ schema.Schema, _ ...string) {}
+
