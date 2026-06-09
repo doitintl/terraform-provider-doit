@@ -31,9 +31,9 @@ func (m useNullForUnknownListWhenConfigNullModifier) MarkdownDescription(ctx con
 	return m.Description(ctx)
 }
 
-func (m useNullForUnknownListWhenConfigNullModifier) PlanModifyList(_ context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
+func (m useNullForUnknownListWhenConfigNullModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if req.ConfigValue.IsNull() && !req.StateValue.IsNull() {
-		emptyList, diags := types.ListValue(req.StateValue.ElementType(context.Background()), []attr.Value{})
+		emptyList, diags := types.ListValue(req.StateValue.ElementType(ctx), []attr.Value{})
 		resp.Diagnostics.Append(diags...)
 		resp.PlanValue = emptyList
 	}

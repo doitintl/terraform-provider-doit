@@ -820,7 +820,7 @@ func preservePriorSeverity(ctx context.Context, priorElems []rr.ResourceResultsV
 
 	changed := false
 	for i := range newElems {
-		if newElems[i].Severity.IsNull() {
+		if newElems[i].Severity.IsNull() || newElems[i].Severity.ValueString() == "" {
 			if prior, ok := priorSev[newElems[i].ResourceId.ValueString()]; ok {
 				newElems[i].Severity = prior
 				changed = true
