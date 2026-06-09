@@ -1395,7 +1395,7 @@ resource "doit_insight_resource_results" "test" {
 }
 
 // testAccInsightResultsWithNullMetadata explicitly sets metadata = null.
-// With the useNullForUnknownWhenConfigNull plan modifier, omitting the
+// With the useEmptyForUnknownWhenConfigNull plan modifier, omitting the
 // attribute has the same effect — both clear the prior value.
 func testAccInsightResultsWithNullMetadata(key string) string {
 	return fmt.Sprintf(`

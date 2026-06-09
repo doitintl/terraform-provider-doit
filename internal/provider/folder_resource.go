@@ -84,7 +84,7 @@ func (r *folderResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	// Classify Optional+Computed attributes (clearableattr).
 	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
 	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["description"] = attr
 	}
 

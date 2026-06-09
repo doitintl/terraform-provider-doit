@@ -144,11 +144,11 @@ func (r *insightResourceResultsResource) Schema(ctx context.Context, _ resource.
 		// Category A: user-authored result fields — clearable.
 		if resultAttr, ok := rrAttr.NestedObject.Attributes["result"].(schema.SingleNestedAttribute); ok {
 			if nested, ok := resultAttr.Attributes["recommendation"].(schema.StringAttribute); ok {
-				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+				nested.PlanModifiers = append(nested.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 				resultAttr.Attributes["recommendation"] = nested
 			}
 			if nested, ok := resultAttr.Attributes["current"].(schema.StringAttribute); ok {
-				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+				nested.PlanModifiers = append(nested.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 				resultAttr.Attributes["current"] = nested
 			}
 			if nested, ok := resultAttr.Attributes["value"].(schema.Float64Attribute); ok {

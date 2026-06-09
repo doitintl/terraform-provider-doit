@@ -59,7 +59,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 
 	// Category A: user-authored content — clearable.
 	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["description"] = attr
 	}
 

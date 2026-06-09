@@ -2977,7 +2977,7 @@ resource "doit_report" "this" {
 
 // TestAccReport_ClearDescription tests that setting a description and then
 // removing it from config results in no drift. Validates the
-// useNullForUnknownWhenConfigNull() plan modifier for issue #233.
+// useEmptyForUnknownWhenConfigNull() plan modifier for issue #233.
 func TestAccReport_ClearDescription(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -3072,6 +3072,48 @@ resource "doit_report" "this" {
 		currency       = "USD"
 		layout         = "table"
 	}
+}
+`, i)
+}
+
+// TestAccReport_MetricToEmptyMetrics verifies that metrics = [] is rejected at
+// plan time. The API silently preserves existing metrics when given an empty
+// array, which would cause state inconsistency. The provider's validator
+// catches this and returns a clear error.
+func TestAccReport_MetricToEmptyMetrics(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithEmptyMetrics(n),
+				ExpectError: regexp.MustCompile(`Empty Metrics List Not Supported`),
+			},
+		},
+	})
+}
+
+func testAccReportWithEmptyMetrics(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_empty_test" {
+    name = "test-metric-empty-%d"
+    description = "Report to test metric to empty metrics transition"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        metrics        = []
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
 }
 `, i)
 }

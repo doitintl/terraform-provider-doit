@@ -134,7 +134,7 @@ func (r *sharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 
 	// public: allow clearing by setting null in config (workaround for framework issue #603),
 	// and preserve the prior value when the user doesn't change it (avoids "known after apply" noise).
-	// Order matters: useNullForUnknownWhenConfigNull must run first so that removing `public`
+	// Order matters: useEmptyForUnknownWhenConfigNull must run first so that removing `public`
 	// from config resolves to null, not to the prior state value.
 	if attr, ok := s.Attributes["public"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers,

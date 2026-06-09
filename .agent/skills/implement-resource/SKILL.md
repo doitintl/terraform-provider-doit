@@ -161,15 +161,15 @@ For `Optional+Computed` attributes, Terraform Core copies the prior state value 
 
 Not all Optional+Computed attributes should be clearable. **Every Optional+Computed attribute without a `Default` requires a conscious classification decision:**
 
-> **Linter:** `clearableattr` — flags Optional+Computed attributes without Default that are missing either the `useNullForUnknownWhenConfigNull()` modifier, an `acknowledgeNotClearable()` declaration, or a `//nolint:clearableattr` suppression.
+> **Linter:** `clearableattr` — flags Optional+Computed attributes without Default that are missing either the `useEmptyForUnknownWhenConfigNull()` modifier, an `acknowledgeNotClearable()` declaration, or a `//nolint:clearableattr` suppression.
 
 #### Category A: Clearable (user-controlled)
 
-Apply the `useNullForUnknownWhenConfigNull()` plan modifier. Null config means "clear this value." Use typed variants for non-string types:
+Apply the `useEmptyForUnknownWhenConfigNull()` plan modifier. Null config means "clear this value." Use typed variants for non-string types:
 
 | Type | Modifier |
 |------|----------|
-| `schema.StringAttribute` | `useNullForUnknownWhenConfigNull()` |
+| `schema.StringAttribute` | `useEmptyForUnknownWhenConfigNull()` |
 | `schema.BoolAttribute` | `useNullForUnknownBoolWhenConfigNull()` |
 | `schema.ListAttribute` / `schema.ListNestedAttribute` | `useNullForUnknownListWhenConfigNull()` |
 
@@ -181,7 +181,7 @@ Examples of clearable attributes:
 ```go
 // In Schema() — scalar attribute:
 if nested, ok := rrAttr.NestedObject.Attributes["metadata"].(schema.StringAttribute); ok {
-    nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+    nested.PlanModifiers = append(nested.PlanModifiers, useEmptyForUnknownWhenConfigNull())
     rrAttr.NestedObject.Attributes["metadata"] = nested
 }
 

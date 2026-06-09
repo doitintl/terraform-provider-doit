@@ -70,7 +70,7 @@ type AttrInfo struct {
 	NestedAttrs map[string]*AttrInfo
 	// PlanModifiers holds the names of plan modifier functions detected in
 	// the Schema() method (e.g., "UseStateForUnknown",
-	// "useNullForUnknownWhenConfigNull"). Populated during Schema() override
+	// "useEmptyForUnknownWhenConfigNull"). Populated during Schema() override
 	// merging in applySchemaOverrides.
 	PlanModifiers []string
 	// NotClearable is true when the attribute has been explicitly acknowledged
@@ -929,7 +929,7 @@ func extractStaticDefault(expr ast.Expr) any {
 //
 // Matches:
 //   - stringplanmodifier.UseStateForUnknown()  → "UseStateForUnknown"
-//   - useNullForUnknownWhenConfigNull()         → "useNullForUnknownWhenConfigNull"
+//   - useEmptyForUnknownWhenConfigNull()         → "useEmptyForUnknownWhenConfigNull"
 func extractModifierNames(expr ast.Expr) []string {
 	var names []string
 	ast.Inspect(expr, func(n ast.Node) bool {
@@ -942,7 +942,7 @@ func extractModifierNames(expr ast.Expr) []string {
 			// pkg.FuncName() — e.g., stringplanmodifier.UseStateForUnknown()
 			names = append(names, fn.Sel.Name)
 		case *ast.Ident:
-			// localFunc() — e.g., useNullForUnknownWhenConfigNull()
+			// localFunc() — e.g., useEmptyForUnknownWhenConfigNull()
 			// Exclude "append" itself.
 			if fn.Name != "append" {
 				names = append(names, fn.Name)
@@ -958,7 +958,7 @@ func extractModifierNames(expr ast.Expr) []string {
 //	clearableFields := []string{"metadata", "external_id", "external_url"}
 //	for _, field := range clearableFields {
 //	    if nested, ok := rrAttr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
-//	        nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+//	        nested.PlanModifiers = append(nested.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 //	        rrAttr.NestedObject.Attributes[field] = nested
 //	    }
 //	}

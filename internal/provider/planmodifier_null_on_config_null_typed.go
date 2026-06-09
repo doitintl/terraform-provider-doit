@@ -8,7 +8,7 @@ import (
 )
 
 // useNullForUnknownStringWhenConfigNull is a null-based String equivalent of
-// the clearing modifier. Unlike useNullForUnknownWhenConfigNull (which proposes ""),
+// the clearing modifier. Unlike useEmptyForUnknownWhenConfigNull (which proposes ""),
 // this modifier proposes StringNull. Use it when the API returns nil (not "")
 // after clearing, e.g. POST-replace endpoints that clear fields by omission.
 func useNullForUnknownStringWhenConfigNull() planmodifier.String {
@@ -33,7 +33,7 @@ func (m useNullForUnknownStringWhenConfigNullModifier) PlanModifyString(_ contex
 }
 
 // useNullForUnknownBoolWhenConfigNull is the Bool equivalent of
-// useNullForUnknownWhenConfigNull. See that function's documentation for details.
+// useEmptyForUnknownWhenConfigNull. See that function's documentation for details.
 func useNullForUnknownBoolWhenConfigNull() planmodifier.Bool {
 	return useNullForUnknownBoolWhenConfigNullModifier{}
 }
@@ -56,7 +56,7 @@ func (m useNullForUnknownBoolWhenConfigNullModifier) PlanModifyBool(_ context.Co
 }
 
 // useNullForUnknownInt64WhenConfigNull is the Int64 equivalent of
-// useNullForUnknownWhenConfigNull. See that function's documentation for details.
+// useEmptyForUnknownWhenConfigNull. See that function's documentation for details.
 func useNullForUnknownInt64WhenConfigNull() planmodifier.Int64 {
 	return useNullForUnknownInt64WhenConfigNullModifier{}
 }
@@ -79,7 +79,7 @@ func (m useNullForUnknownInt64WhenConfigNullModifier) PlanModifyInt64(_ context.
 }
 
 // useNullForUnknownFloat64WhenConfigNull is the Float64 equivalent of
-// useNullForUnknownWhenConfigNull. See that function's documentation for details.
+// useEmptyForUnknownWhenConfigNull. See that function's documentation for details.
 func useNullForUnknownFloat64WhenConfigNull() planmodifier.Float64 {
 	return useNullForUnknownFloat64WhenConfigNullModifier{}
 }

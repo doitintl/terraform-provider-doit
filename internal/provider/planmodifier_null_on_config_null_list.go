@@ -9,7 +9,7 @@ import (
 )
 
 // useNullForUnknownListWhenConfigNull is the List equivalent of
-// useNullForUnknownWhenConfigNull. See that function's documentation for details.
+// useEmptyForUnknownWhenConfigNull. See that function's documentation for details.
 //
 // Instead of proposing null (which would require state-aware Read paths to
 // avoid null↔[] drift), this modifier proposes an empty list. The empty list

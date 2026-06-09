@@ -12,7 +12,7 @@ import (
 // value is null and a prior state value exists, allowing the attribute to be
 // cleared.
 //
-// This is the jsontypes-aware equivalent of useNullForUnknownWhenConfigNull.
+// This is the jsontypes-aware equivalent of useEmptyForUnknownWhenConfigNull.
 // Using the standard string modifier with jsontypes.NormalizedType causes
 // "Semantic Equality Check Error: EOF" because the framework cannot compare
 // basetypes.StringValue against jsontypes.Normalized.

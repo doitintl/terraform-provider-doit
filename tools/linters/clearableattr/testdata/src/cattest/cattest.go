@@ -33,20 +33,20 @@ func (r *goodResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 
 	// description: clearable.
 	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["description"] = attr
 	}
 
 	// folder_id: clearable.
 	if attr, ok := s.Attributes["folder_id"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["folder_id"] = attr
 	}
 
 	// public: clearable + UseStateForUnknown.
 	if attr, ok := s.Attributes["public"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers,
-			useNullForUnknownWhenConfigNull(),
+			useEmptyForUnknownWhenConfigNull(),
 			stringplanmodifier.UseStateForUnknown(),
 		)
 		s.Attributes["public"] = attr
@@ -55,7 +55,7 @@ func (r *goodResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	// config.currency: clearable via direct nested modifier.
 	if attr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
 		if nested, ok := attr.Attributes["currency"].(schema.StringAttribute); ok {
-			nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+			nested.PlanModifiers = append(nested.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			attr.Attributes["currency"] = nested
 		}
 		s.Attributes["config"] = attr
@@ -65,7 +65,7 @@ func (r *goodResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	if attr, ok := s.Attributes["results"].(schema.ListNestedAttribute); ok {
 		for _, field := range []string{"external_id", "external_url", "metadata"} {
 			if nested, ok := attr.NestedObject.Attributes[field].(schema.StringAttribute); ok {
-				nested.PlanModifiers = append(nested.PlanModifiers, useNullForUnknownWhenConfigNull())
+				nested.PlanModifiers = append(nested.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 				attr.NestedObject.Attributes[field] = nested
 			}
 		}
@@ -121,7 +121,7 @@ func (r *acknowledgedResource) Schema(ctx context.Context, _ resource.SchemaRequ
 
 	// Cat A: clearable via modifier.
 	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["description"] = attr
 	}
 
@@ -138,11 +138,10 @@ func (r *acknowledgedResource) Schema(ctx context.Context, _ resource.SchemaRequ
 	resp.Schema = s
 }
 
-// useNullForUnknownWhenConfigNull is a stub for the plan modifier.
-func useNullForUnknownWhenConfigNull() stringplanmodifier.PlanModifier {
+// useEmptyForUnknownWhenConfigNull is a stub for the plan modifier.
+func useEmptyForUnknownWhenConfigNull() stringplanmodifier.PlanModifier {
 	return stringplanmodifier.PlanModifier{}
 }
 
 // acknowledgeNotClearable is a stub for the runtime helper.
 func acknowledgeNotClearable(_ schema.Schema, _ ...string) {}
-

@@ -142,7 +142,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 
 	// Category A: user-authored label for unallocated costs in group allocations.
 	if attr, ok := s.Attributes["unallocated_costs"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownWhenConfigNull())
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["unallocated_costs"] = attr
 	}
 

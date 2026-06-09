@@ -1,8 +1,8 @@
 // Package clearableattr ensures that every Optional+Computed attribute without
 // a Default in every resource's Schema() method is explicitly classified as
-// either clearable (has useNullForUnknownWhenConfigNull plan modifier) or
-// intentionally not clearable (suppressed via //nolint:clearableattr on the
-// attribute's override block).
+// either clearable (has useEmptyForUnknownWhenConfigNull plan modifier) or
+// intentionally not clearable (via acknowledgeNotClearable() or
+// //nolint:clearableattr on the attribute's override block).
 //
 // Without classification, Optional+Computed attributes silently preserve their
 // prior state value when a user removes them from config, making it impossible
@@ -31,17 +31,19 @@ var Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer, schemaparser.Analyzer},
 }
 
-// clearableModifierPrefix and clearableModifierSuffix define the naming
+// clearableModifierSuffix and clearableModifierPrefix* define the naming
 // convention for plan modifier functions that mark an attribute as clearable.
 // Typed variants exist for each Terraform type:
-//   - useNullForUnknownWhenConfigNull        (string)
+//   - useEmptyForUnknownWhenConfigNull        (string — proposes "")
 //   - useNullForUnknownBoolWhenConfigNull     (bool)
 //   - useNullForUnknownInt64WhenConfigNull    (int64)
 //   - useNullForUnknownFloat64WhenConfigNull  (float64)
 //   - useNullForUnknownListWhenConfigNull     (list)
+//   - useNullForUnknownStringWhenConfigNull   (string — proposes null)
 const (
-	clearableModifierPrefix = "useNullForUnknown"
-	clearableModifierSuffix = "WhenConfigNull"
+	clearableModifierPrefixEmpty = "useEmptyForUnknown"
+	clearableModifierPrefixNull  = "useNullForUnknown"
+	clearableModifierSuffix      = "WhenConfigNull"
 )
 
 func run(pass *analysis.Pass) (any, error) {
@@ -127,7 +129,7 @@ func run(pass *analysis.Pass) (any, error) {
 			}
 			pass.Reportf(pos,
 				"Optional+Computed attribute %q has no clearable classification.\n"+
-					"\tAdd useNullForUnknownWhenConfigNull() if the attribute should be clearable,\n"+
+					"\tAdd useEmptyForUnknownWhenConfigNull() if the attribute should be clearable,\n"+
 					"\tor acknowledgeNotClearable() if the prior value should be preserved.\n"+
 					"\tSee: https://github.com/doitintl/terraform-provider-doit/issues/233",
 				fullPath)
@@ -168,10 +170,11 @@ func collectUnclassified(attrs map[string]*schemaparser.AttrInfo, prefix string,
 }
 
 // hasClearableModifier returns true if any modifier in the list matches the
-// useNullForUnknown*WhenConfigNull naming convention.
+// use{Empty,Null}ForUnknown*WhenConfigNull naming convention.
 func hasClearableModifier(modifiers []string) bool {
 	for _, m := range modifiers {
-		if strings.HasPrefix(m, clearableModifierPrefix) && strings.HasSuffix(m, clearableModifierSuffix) {
+		if strings.HasSuffix(m, clearableModifierSuffix) &&
+			(strings.HasPrefix(m, clearableModifierPrefixEmpty) || strings.HasPrefix(m, clearableModifierPrefixNull)) {
 			return true
 		}
 	}
