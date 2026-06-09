@@ -103,6 +103,45 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		s.Attributes["key"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+
+	// Category B: API-assigned identity fields — not clearable.
+	acknowledgeNotClearable(s,
+		"source_id",   // API-assigned import identity (also has UseStateForUnknown above)
+		"insight_key", // API-assigned identity
+		"status",      // API defaults to "dismissed" on create; lifecycle state
+	)
+
+	// Category A: user-authored values — clearable.
+	if attr, ok := s.Attributes["cloud_flow_template_id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
+		s.Attributes["cloud_flow_template_id"] = attr
+	}
+	if attr, ok := s.Attributes["report_url"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
+		s.Attributes["report_url"] = attr
+	}
+	if attr, ok := s.Attributes["detailed_description_mdx"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
+		s.Attributes["detailed_description_mdx"] = attr
+	}
+	if attr, ok := s.Attributes["easy_win_description"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
+		s.Attributes["easy_win_description"] = attr
+	}
+	if ddAttr, ok := s.Attributes["dismissal_details"].(schema.SingleNestedAttribute); ok {
+		if attr, ok := ddAttr.Attributes["reason"].(schema.StringAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
+			ddAttr.Attributes["reason"] = attr
+		}
+		if attr, ok := ddAttr.Attributes["comment"].(schema.StringAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
+			ddAttr.Attributes["comment"] = attr
+		}
+		s.Attributes["dismissal_details"] = ddAttr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,

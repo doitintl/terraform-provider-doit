@@ -66,9 +66,8 @@ func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, 
 		state.UpdateTime = types.StringNull()
 	}
 
-	// Map labels - API returns []LabelInfo, but we store just the IDs
-	// Use resp.Labels != nil (not len check) to handle explicit empty lists correctly
-	if resp.Labels != nil {
+	// Map labels — API returns []LabelInfo, but we store just the IDs.
+	if resp.Labels != nil && len(*resp.Labels) > 0 {
 		labelIDs := make([]string, len(*resp.Labels))
 		for i, label := range *resp.Labels {
 			labelIDs[i] = label.Id
@@ -85,9 +84,8 @@ func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, 
 		diags.Append(emptyDiags...)
 	}
 
-	// Map reports
-	// Use resp.Reports != nil (not len check) to handle explicit empty lists correctly
-	if resp.Reports != nil {
+	// Map reports.
+	if resp.Reports != nil && len(*resp.Reports) > 0 {
 		reportsList, d := types.ListValueFrom(ctx, types.StringType, *resp.Reports)
 		diags.Append(d...)
 		if diags.HasError() {
@@ -126,16 +124,23 @@ func overlayAnnotationComputedFields(ctx context.Context, apiResp *models.Annota
 	// ── Computed-only fields: always from resolved ──
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
-	plan.UpdateTime = resolved.UpdateTime
+	// update_time: Computed-only but changes server-side on every Update.
+	// On Create the plan value is Unknown → overlay fills from API.
+	// On Update the framework copies the prior state (Known) into the plan.
+	// Unconditional assignment would cause "inconsistent result" because the
+	// provider would return a newer timestamp than what was in the plan.
+	if plan.UpdateTime.IsUnknown() {
+		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+	}
 
 	// ── Content, Timestamp: Required — never touch ──
 
-	// ── Labels: Optional+Computed list ──
+	// ── Labels: Optional+Computed clearable list ──
 	if plan.Labels.IsUnknown() {
 		plan.Labels = resolved.Labels
 	}
 
-	// ── Reports: Optional+Computed list ──
+	// ── Reports: Optional+Computed clearable list ──
 	if plan.Reports.IsUnknown() {
 		plan.Reports = resolved.Reports
 	}

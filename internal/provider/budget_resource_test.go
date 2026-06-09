@@ -2177,3 +2177,115 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i, public, testAttribution(), testUser(), testUser())
 }
+
+// TestAccBudget_ClearRecipients verifies that recipients is Category B
+// (API-defaulted): when explicitly set then omitted from config, the API-assigned
+// default is preserved and no drift occurs.
+func TestAccBudget_ClearRecipients(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with recipients explicitly set.
+			{
+				Config: testAccBudgetWithRecipients(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccBudgetWithRecipients(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Omit recipients — should produce no plan (Cat B: API-defaulted).
+			{
+				Config: testAccBudgetWithoutRecipients(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Drift check — recipients still populated from API.
+			{
+				Config: testAccBudgetWithoutRecipients(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-clear-rcpt-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  use_prev_spend = false
+  scope         = ["%s"]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+  recipients = ["%s"]
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser(), testUser())
+}
+
+func testAccBudgetWithoutRecipients(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-clear-rcpt-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  use_prev_spend = false
+  scope         = ["%s"]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+  # recipients intentionally omitted to test clearing
+}
+`, budgetStartPeriod(), i, testAttribution(), testUser())
+}

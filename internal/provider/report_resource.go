@@ -54,6 +54,117 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["type"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+
+	// Category A: user-authored content — clearable.
+	if attr, ok := s.Attributes["description"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
+		s.Attributes["description"] = attr
+	}
+
+	// Category A: nested clearable filter/metric_filter values.
+	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
+		if filtersAttr, ok := configAttr.Attributes["filters"].(schema.ListNestedAttribute); ok {
+			if attr, ok := filtersAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
+				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				filtersAttr.NestedObject.Attributes["values"] = attr
+			}
+			configAttr.Attributes["filters"] = filtersAttr
+		}
+		if mfAttr, ok := configAttr.Attributes["metric_filter"].(schema.SingleNestedAttribute); ok {
+			if attr, ok := mfAttr.Attributes["values"].(schema.ListAttribute); ok {
+				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				mfAttr.Attributes["values"] = attr
+			}
+			configAttr.Attributes["metric_filter"] = mfAttr
+		}
+		s.Attributes["config"] = configAttr
+	}
+
+	// Category B: API-computed defaults — not clearable.
+	acknowledgeNotClearable(s,
+		"name",   // API generates default name
+		"labels", // preset labels are API-assigned
+
+		// config top-level
+		"config.currency",                    // API defaults to org currency
+		"config.time_interval",               // API defaults time interval
+		"config.data_source",                 // API defaults data source
+		"config.aggregation",                 // API defaults aggregation
+		"config.display_values",              // API defaults display values
+		"config.include_promotional_credits", // API defaults to false
+		"config.layout",                      // API defaults layout
+
+		// config.dimensions
+		"config.dimensions[*].type", // API provides default type
+		"config.dimensions[*].id",   // API-assigned dimension ID
+
+		// config.filters
+		"config.filters[*].inverse", // API defaults to false
+
+		// config.metrics
+		"config.metrics[*].type",  // API provides default type
+		"config.metrics[*].value", // API provides default value
+
+		// config.metric_filter
+		"config.metric_filter.operator",     // API defaults operator
+		"config.metric_filter.metric.type",  // API provides default type
+		"config.metric_filter.metric.value", // API provides default value
+
+		// config.group
+		"config.group[*].id",                 // API-assigned group ID
+		"config.group[*].type",               // API provides default type
+		"config.group[*].limit.sort",         // API defaults sort direction
+		"config.group[*].limit.value",        // API defaults limit value
+		"config.group[*].limit.metric.type",  // API provides default type
+		"config.group[*].limit.metric.value", // API provides default value
+
+		// config.advanced_analysis
+		"config.advanced_analysis.forecast",      // API defaults to false
+		"config.advanced_analysis.not_trending",  // API defaults to false
+		"config.advanced_analysis.trending_up",   // API defaults to false
+		"config.advanced_analysis.trending_down", // API defaults to false
+
+		// config.display_settings
+		"config.display_settings.number_scale",         // API defaults number scale
+		"config.display_settings.axis_label_font_size", // API defaults font size
+		"config.display_settings.data_label_font_size", // API defaults font size
+		"config.display_settings.decimal_precision",    // API defaults precision
+
+		// config.time_range
+		"config.time_range.mode",            // API defaults mode
+		"config.time_range.unit",            // API defaults unit
+		"config.time_range.amount",          // API defaults amount
+		"config.time_range.include_current", // API defaults to false
+
+		// config.custom_time_range
+		"config.custom_time_range.from", // API defaults from date
+		"config.custom_time_range.to",   // API defaults to date
+
+		// config.splits
+		"config.splits[*].id",               // API-assigned split ID
+		"config.splits[*].type",             // API provides default type
+		"config.splits[*].mode",             // API provides default mode
+		"config.splits[*].include_origin",   // API defaults to false
+		"config.splits[*].origin.type",      // API provides default type
+		"config.splits[*].origin.id",        // API-assigned origin ID
+		"config.splits[*].targets[*].id",    // API-assigned target ID
+		"config.splits[*].targets[*].type",  // API provides default type
+		"config.splits[*].targets[*].value", // API provides default value
+
+		// config.metric (top-level)
+		"config.metric.type",  // API provides default type
+		"config.metric.value", // API provides default value
+
+		// config.secondary_time_range
+		"config.secondary_time_range.unit",                   // API defaults unit
+		"config.secondary_time_range.amount",                 // API defaults amount
+		"config.secondary_time_range.include_current",        // API defaults to false
+		"config.secondary_time_range.custom_time_range.from", // API defaults from date
+		"config.secondary_time_range.custom_time_range.to",   // API defaults to date
+	)
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,

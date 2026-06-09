@@ -110,17 +110,26 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 		s.Attributes["email"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+
+	// Category B: API-assigned, not clearable.
+	acknowledgeNotClearable(s,
+		"first_name", // API ignores "" PATCH — not clearable once set
+		"last_name",  // API ignores "" PATCH — not clearable once set
+		"job_title",  // API ignores "" PATCH — not clearable once set
+	)
+
 	// organization_id: RequiresReplace (immutable after invite) + UseStateForUnknown
-	if attr, ok := s.Attributes["organization_id"].(schema.StringAttribute); ok {
+	if attr, ok := s.Attributes["organization_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API-level org assignment
 		attr.PlanModifiers = append(attr.PlanModifiers,
 			stringplanmodifier.RequiresReplace(),
 			stringplanmodifier.UseStateForUnknown(),
 		)
 		s.Attributes["organization_id"] = attr
 	}
-
 	// role_id: UseStateForUnknown (preserve API default when user doesn't specify)
-	if attr, ok := s.Attributes["role_id"].(schema.StringAttribute); ok {
+	if attr, ok := s.Attributes["role_id"].(schema.StringAttribute); ok { //nolint:clearableattr // API assigns default role on creation
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["role_id"] = attr
 	}

@@ -113,8 +113,8 @@ func TestAccReport_OmittedOptionalComputed(t *testing.T) {
 	n := acctest.RandInt()
 
 	// Shared state checks for omitted list fields — they should resolve to empty lists
-	// or API-defaulted lists, not null. These checks run on both Create and drift-check
-	// steps to catch null↔[] inconsistencies between the overlay and Read paths.
+	// or API-defaulted lists, not null. The useNullForUnknownListWhenConfigNull modifier
+	// plans [] (not null) when config is omitted, so the overlay and Read paths stay simple.
 	// Note: dimensions and metrics are API-defaulted (the API populates defaults when
 	// omitted), so we don't assert their exact size — just that they exist (not null).
 	listSizeChecks := []statecheck.StateCheck{
@@ -2970,6 +2970,149 @@ resource "doit_report" "this" {
         currency       = "USD"
         layout         = "table"
         custom_time_range = {}
+    }
+}
+`, i)
+}
+
+// TestAccReport_ClearDescription tests that setting a description and then
+// removing it from config results in no drift. Validates the
+// useEmptyForUnknownWhenConfigNull() plan modifier for issue #233.
+func TestAccReport_ClearDescription(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with description set.
+			{
+				Config: testAccReportWithDescription(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact("initial description")),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccReportWithDescription(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear description by omitting from config.
+			{
+				Config: testAccReportClearedDescription(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 4: Drift check — cleared description should produce no drift.
+			{
+				Config: testAccReportClearedDescription(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithDescription(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name        = "test-minimal-%d"
+    description = "initial description"
+    labels      = []
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation    = "total"
+		time_interval  = "month"
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// testAccReportClearedDescription is the same as testAccReportWithDescription but
+// without the description field. All other fields remain identical to isolate the
+// clearing behavior to just description.
+func testAccReportClearedDescription(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name   = "test-minimal-%d"
+    labels = []
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation    = "total"
+		time_interval  = "month"
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// TestAccReport_MetricToEmptyMetrics verifies that metrics = [] is rejected at
+// plan time. The API silently preserves existing metrics when given an empty
+// array, which would cause state inconsistency. The provider's validator
+// catches this and returns a clear error.
+func TestAccReport_MetricToEmptyMetrics(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithEmptyMetrics(n),
+				ExpectError: regexp.MustCompile(`Empty Metrics List Not Supported`),
+			},
+		},
+	})
+}
+
+func testAccReportWithEmptyMetrics(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_empty_test" {
+    name = "test-metric-empty-%d"
+    description = "Report to test metric to empty metrics transition"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        metrics        = []
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
     }
 }
 `, i)

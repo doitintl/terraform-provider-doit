@@ -45,7 +45,11 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	// ── Computed-only fields: always from resolved ──
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
-	plan.UpdateTime = resolved.UpdateTime
+	// update_time: guard with IsUnknown() — on Update the framework copies
+	// the prior state (Known) into the plan, but the API returns a new timestamp.
+	if plan.UpdateTime.IsUnknown() {
+		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+	}
 	plan.CurrentUtilization = resolved.CurrentUtilization
 	plan.ForecastedUtilization = resolved.ForecastedUtilization
 

@@ -78,6 +78,19 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		s.Attributes["create_time"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	// Category B: API-computed defaults — not clearable.
+	acknowledgeNotClearable(s,
+		"recipients",               // API defaults to creator's email
+		"config.currency",          // API defaults to org currency
+		"config.operator",          // API defaults comparison operator
+		"config.evaluate_for_each", // API defaults to false
+		"config.attributions",      // deprecated legacy alias for scopes
+		"config.scopes[*].inverse", // API defaults to false
+		"config.scopes[*].values",  // API defaults scope values
+	)
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,

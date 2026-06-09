@@ -212,6 +212,7 @@ func TestAccInsightResourceResults_ImportState(t *testing.T) {
 					"resource_results.0.external_url",
 					"resource_results.0.location",
 					"resource_results.0.resource_type",
+					"resource_results.0.severity", // Computed; API returns nil vs "" inconsistently
 				},
 			},
 		},
@@ -568,6 +569,7 @@ func TestAccInsightResourceResults_AllFieldsImport(t *testing.T) {
 				ImportStateVerifyIdentifierAttribute: "insight_key",
 				ImportStateVerifyIgnore: []string{
 					"timeouts",
+					"resource_results.0.severity", // Computed; API returns nil vs "" inconsistently
 				},
 			},
 			// Step 3: Drift check after import — re-apply same config, expect no changes
@@ -1347,6 +1349,7 @@ func TestAccInsightResourceResults_MetadataImport(t *testing.T) {
 				ImportStateVerifyIdentifierAttribute: "insight_key",
 				ImportStateVerifyIgnore: []string{
 					"timeouts",
+					"resource_results.0.severity", // Computed; API returns nil vs "" inconsistently
 				},
 			},
 			// Step 3: Drift check after import
@@ -1392,7 +1395,7 @@ resource "doit_insight_resource_results" "test" {
 }
 
 // testAccInsightResultsWithNullMetadata explicitly sets metadata = null.
-// With the useNullForUnknownWhenConfigNull plan modifier, omitting the
+// With the useEmptyForUnknownWhenConfigNull plan modifier, omitting the
 // attribute has the same effect — both clear the prior value.
 func testAccInsightResultsWithNullMetadata(key string) string {
 	return fmt.Sprintf(`

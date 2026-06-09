@@ -84,6 +84,16 @@ func (r *annotationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["create_time"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+	// Category B: labels and reports can be managed externally via
+	// doit_label_assignments, so a clearing modifier would conflict with
+	// externally-assigned values. Users can still clear by setting labels = [].
+	acknowledgeNotClearable(s,
+		"labels",  // managed externally via doit_label_assignments
+		"reports", // managed externally via doit_label_assignments
+	)
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
