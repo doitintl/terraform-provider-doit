@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
@@ -68,12 +67,9 @@ func (r *cloudconnectAwsAccountResource) ImportState(ctx context.Context, req re
 func (r *cloudconnectAwsAccountResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_cloudconnect_aws_account.CloudconnectAwsAccountResourceSchema(ctx)
 
-	// account_id: Required, ForceNew, UseStateForUnknown (stable after create).
+	// account_id: Required, ForceNew.
 	if attr, ok := s.Attributes["account_id"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers,
-			stringplanmodifier.RequiresReplace(),
-			stringplanmodifier.UseStateForUnknown(),
-		)
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.RequiresReplace())
 		s.Attributes["account_id"] = attr
 	}
 
@@ -92,11 +88,9 @@ func (r *cloudconnectAwsAccountResource) Schema(ctx context.Context, _ resource.
 		s.Attributes["time_linked"] = attr
 	}
 
-	// supported_features: Computed-only list, UseStateForUnknown.
-	if attr, ok := s.Attributes["supported_features"].(schema.ListNestedAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, listplanmodifier.UseStateForUnknown())
-		s.Attributes["supported_features"] = attr
-	}
+	// supported_features: Computed-only list. No UseStateForUnknown — the field
+	// can change when IAM permissions are modified externally, and carrying stale
+	// values would risk "inconsistent result" errors after apply.
 
 	// s3bucket and s3bucket_region are mutually dependent — validate at plan time.
 	// Clearable (Category A): the user clears S3 by removing "real-time-data"
@@ -220,42 +214,15 @@ func (r *cloudconnectAwsAccountResource) Read(ctx context.Context, req resource.
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// Get refreshed AWS account from API.
-	accountResp, err := r.client.GetAwsAccountWithResponse(ctx, state.AccountId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading CloudConnect AWS Account",
-			"Could not read CloudConnect AWS account ID "+state.AccountId.ValueString()+": "+err.Error(),
-		)
-		return
-	}
-
-	// Handle externally deleted resource — remove from state.
-	if accountResp.StatusCode() == 404 {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	// Check for successful response.
-	if accountResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading CloudConnect AWS Account",
-			fmt.Sprintf("Unexpected status code %d for CloudConnect AWS account ID %s: %s", accountResp.StatusCode(), state.AccountId.ValueString(), string(accountResp.Body)),
-		)
-		return
-	}
-
-	if accountResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading CloudConnect AWS Account",
-			"Received empty response body for CloudConnect AWS account ID "+state.AccountId.ValueString(),
-		)
-		return
-	}
-
-	// Map response to state (full mapping — no overlay needed for Read).
-	resp.Diagnostics.Append(mapCloudConnectAwsAccountToModel(ctx, accountResp.JSON200, &state)...)
+	diags = r.populateState(ctx, &state)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Handle externally deleted resource (populateState sets AccountId to null on 404).
+	if state.AccountId.IsNull() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

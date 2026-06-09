@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -31,13 +30,24 @@ func (v cloudconnectAwsS3RealTimeValidator) ValidateResource(ctx context.Context
 		return
 	}
 
-	var features []string
+	// Use []types.String so individual unknown elements are preserved
+	// ([]string would error on unknown elements with allowUnhandled=false).
+	var features []types.String
 	resp.Diagnostics.Append(enabledFeatures.ElementsAs(ctx, &features, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	hasRealTime := slices.Contains(features, "real-time-data")
+	hasRealTime := false
+	for _, f := range features {
+		if f.IsUnknown() {
+			// Cannot safely validate S3 requirements if any feature is unknown.
+			return
+		}
+		if f.ValueString() == "real-time-data" {
+			hasRealTime = true
+		}
+	}
 
 	// Read s3bucket from config.
 	var s3bucket types.String
@@ -52,8 +62,10 @@ func (v cloudconnectAwsS3RealTimeValidator) ValidateResource(ctx context.Context
 		return
 	}
 
-	hasS3 := !s3bucket.IsNull() && !s3bucket.IsUnknown()
-	hasS3Region := !s3bucketRegion.IsNull() && !s3bucketRegion.IsUnknown()
+	// !IsNull() is sufficient — if the value is unknown the user configured
+	// something (e.g. a reference), so validation should not reject it.
+	hasS3 := !s3bucket.IsNull()
+	hasS3Region := !s3bucketRegion.IsNull()
 
 	if hasRealTime && (!hasS3 || !hasS3Region) {
 		resp.Diagnostics.AddError(

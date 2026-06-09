@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_cloudconnect_aws_account"
@@ -11,16 +12,64 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// populateState fetches the CloudConnect AWS account from the API and populates the
+// Terraform state. On 404, state.AccountId is set to null to signal Terraform to
+// remove the resource from state.
+func (r *cloudconnectAwsAccountResource) populateState(ctx context.Context, state *cloudconnectAwsAccountResourceModel) diag.Diagnostics {
+	accountResp, err := r.client.GetAwsAccountWithResponse(ctx, state.AccountId.ValueString())
+	if err != nil {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading CloudConnect AWS Account",
+				"Could not read CloudConnect AWS account ID "+state.AccountId.ValueString()+": "+err.Error()),
+		}
+	}
+
+	if accountResp.StatusCode() == 404 {
+		state.AccountId = types.StringNull()
+		return nil
+	}
+
+	if accountResp.StatusCode() != 200 {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading CloudConnect AWS Account",
+				fmt.Sprintf("Unexpected status code %d for CloudConnect AWS account ID %s: %s",
+					accountResp.StatusCode(), state.AccountId.ValueString(), string(accountResp.Body))),
+		}
+	}
+
+	if accountResp.JSON200 == nil {
+		return diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading CloudConnect AWS Account",
+				"Received empty response body for CloudConnect AWS account ID "+state.AccountId.ValueString()),
+		}
+	}
+
+	return mapCloudConnectAwsAccountToModel(ctx, accountResp.JSON200, state)
+}
+
 // mapCloudConnectAwsAccountToModel maps ALL fields from the API response to the
-// Terraform model. Used by Read and as Phase 1 of the overlay pattern.
+// Terraform model. Used by populateState (Read/ImportState) and as Phase 1 of the overlay pattern.
 func mapCloudConnectAwsAccountToModel(ctx context.Context, resp *models.AwsAccountResponse, state *cloudconnectAwsAccountResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	state.AccountId = types.StringPointerValue(resp.AccountID)
 	state.RoleArn = types.StringPointerValue(resp.RoleArn)
-	state.S3bucket = types.StringPointerValue(resp.S3Bucket)
-	state.S3bucketRegion = types.StringPointerValue(resp.S3BucketRegion)
 	state.TimeLinked = types.StringPointerValue(resp.TimeLinked)
+
+	// s3bucket and s3bucket_region are clearable (Category A): normalize nil → ""
+	// to match the useEmptyForUnknownWhenConfigNull() modifier's plan value.
+	// Without this, a nil API response would produce StringNull(), drifting
+	// against the "" proposed by the modifier when the user omits the field.
+	if resp.S3Bucket != nil {
+		state.S3bucket = types.StringValue(*resp.S3Bucket)
+	} else {
+		state.S3bucket = types.StringValue("")
+	}
+	if resp.S3BucketRegion != nil {
+		state.S3bucketRegion = types.StringValue(*resp.S3BucketRegion)
+	} else {
+		state.S3bucketRegion = types.StringValue("")
+	}
 
 	// Map enabled_features from API response.
 	if resp.EnabledFeatures != nil {

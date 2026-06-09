@@ -82,6 +82,10 @@ func TestAccCloudconnectAwsAccount_Basic(t *testing.T) {
 						knownvalue.StringExact(roleArn)),
 					statecheck.ExpectKnownValue(
 						"doit_cloudconnect_aws_account.this",
+						tfjsonpath.New("enabled_features"),
+						knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(
+						"doit_cloudconnect_aws_account.this",
 						tfjsonpath.New("supported_features"),
 						knownvalue.NotNull()),
 					statecheck.ExpectKnownValue(
@@ -216,7 +220,16 @@ func TestAccCloudconnectAwsAccount_Update(t *testing.T) {
 						knownvalue.StringExact(bucketRegion)),
 				},
 			},
-			// Step 2: Update to remove s3bucket + s3bucket_region
+			// Step 2: Drift check — verify S3-present state is stable.
+			{
+				Config: testAccCloudconnectAwsAccountConfig_withBucket(accountID, roleArn, bucket, bucketRegion),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Update to remove s3bucket + s3bucket_region
 			{
 				Config: testAccCloudconnectAwsAccountConfig_basic(accountID, roleArn),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -229,7 +242,7 @@ func TestAccCloudconnectAwsAccount_Update(t *testing.T) {
 					},
 				},
 			},
-			// Step 3: Drift check — re-apply same config, expect no changes.
+			// Step 4: Drift check — re-apply same config, expect no changes.
 			{
 				Config: testAccCloudconnectAwsAccountConfig_basic(accountID, roleArn),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -318,6 +331,55 @@ func TestAccCloudconnectAwsAccount_Disappears(t *testing.T) {
 				Config:             testAccCloudconnectAwsAccountConfig_basic(accountID, roleArn),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true, // Should detect deletion and plan to recreate
+			},
+		},
+	})
+}
+
+// testAccCloudconnectAwsAccountConfig_withUnknownS3 returns a config where
+// s3bucket and s3bucket_region come from terraform_data outputs, making them
+// unknown at plan time. This exercises the validator's unknown-handling.
+func testAccCloudconnectAwsAccountConfig_withUnknownS3(accountID, roleArn string) string {
+	return fmt.Sprintf(`
+resource "terraform_data" "s3" {
+  input = {
+    bucket = "my-test-bucket"
+    region = "us-east-1"
+  }
+}
+
+resource "doit_cloudconnect_aws_account" "this" {
+  account_id       = %q
+  role_arn         = %q
+  s3bucket         = terraform_data.s3.output.bucket
+  s3bucket_region  = terraform_data.s3.output.region
+  enabled_features = ["real-time-data"]
+}
+`, accountID, roleArn)
+}
+
+// TestAccCloudconnectAwsAccount_UnknownReferences verifies that the
+// ConfigValidator does not reject configs where s3bucket and s3bucket_region
+// are unknown at plan time (populated from another resource's output).
+// This is a PlanOnly test — no API call is made.
+func TestAccCloudconnectAwsAccount_UnknownReferences(t *testing.T) {
+	accountID := os.Getenv("TEST_AWS_ACCOUNT_ID")
+	roleArn := os.Getenv("TEST_AWS_ROLE_ARN")
+
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // sequential: shares TEST_AWS_ACCOUNT_ID
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccCloudconnectAwsAccount_preCheck(t)
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Plan-only: s3bucket and s3bucket_region are unknown at plan time
+			// because they reference terraform_data outputs. The validator must
+			// not reject this config.
+			{
+				Config:             testAccCloudconnectAwsAccountConfig_withUnknownS3(accountID, roleArn),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
