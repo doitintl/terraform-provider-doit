@@ -19,7 +19,7 @@ DoIT APIs return complete objects in Create and Update responses, but frequently
 | **Required** | `Required: true` | Never touch — preserve plan value | `name` |
 | **Optional** | `Optional: true` | Never touch — preserve plan value | `description` |
 | **Optional+Computed** | `Optional: true, Computed: true` | Resolve only when `IsUnknown()` | `formula`, boolean flags |
-| **Optional+Computed clearable list** | `Optional: true, Computed: true` + list modifier | Resolve `IsUnknown()` to `null` (not API response) | `labels`, `reports` |
+| **Optional+Computed clearable list** | `Optional: true, Computed: true` + list modifier | Resolve `IsUnknown()` from API response (typically mapped to `[]`) | `labels`, `reports` |
 | **Optional+Computed with Default** | `Optional: true, Computed: true, Default: ...` | Never touch — default resolves at plan time | `metric`, `case_insensitive` |
 
 Key rules:
@@ -28,7 +28,7 @@ Key rules:
 - **Computed-only (volatile)**: guard with `IsUnknown()` — set from API on Create (where the field IS Unknown), preserve the plan value on Update (where the field is Known from prior state). This prevents "inconsistent result" errors when Updates are triggered by plan modifiers. The next Read fetches the updated value.
 - **Required / Optional**: never overwrite — user's plan wins
 - **Optional+Computed when `IsUnknown()`**: user omitted the field — resolve from API response, fall back to null/false
-- **Optional+Computed clearable list when `IsUnknown()`**: user omitted the field — resolve to `types.ListNull()` (not API response) to match the `useNullForUnknownListWhenConfigNull` modifier semantics
+- **Optional+Computed clearable list when `IsUnknown()`**: user omitted the field — resolve from API response (which `mapXxxToModel` typically returns as `[]`), matching the `useNullForUnknownListWhenConfigNull` modifier which proposes `[]`
 - **Optional+Computed when known**: user explicitly set it — never overwrite
 - **Optional+Computed with Default**: always known — the framework resolves the default at plan time, so the field is never Unknown. **Do not add `IsUnknown()` guards** — they are dead code
 
@@ -56,9 +56,11 @@ func overlayMyResourceComputedFields(ctx context.Context, apiResp *models.MyReso
     }
     // If plan.Formula is known, leave it untouched — user's value wins.
 
-    // 4. Optional+Computed clearable lists: resolve to null, not API response.
+    // 4. Optional+Computed clearable lists: resolve from API response (standard pattern).
+    //    The list modifier proposes [] when config is null, and the API response
+    //    maps to [] when nil — so both agree without any null tracking.
     if plan.Labels.IsUnknown() {
-        plan.Labels = types.ListNull(types.StringType)
+        plan.Labels = resolved.Labels
     }
 
     // 5. Optional+Computed booleans: resolve when unknown, default to false.
@@ -146,7 +148,7 @@ The Read path detects **real** external changes while ignoring API normalization
 
 2. **Rebuilding nested values after modification.** When modifying fields inside a list element, rebuild the parent list with `types.ListValueFrom()`. List elements are immutable in the framework.
 
-3. **null↔[] consistency between overlay and Read.** When the user omits an Optional+Computed list, the overlay and Read path must agree on the representation. For **non-clearable lists** (Category B): both must use `[]`. For **clearable lists** (Category A with `useNullForUnknownListWhenConfigNull`): overlay must resolve Unknown to `null`, and Read must preserve null when prior state was null. See [Clearable List Attributes](../implement-resource/SKILL.md#clearable-list-attributes).
+3. **null↔[] consistency between overlay and Read.** When the user omits an Optional+Computed list, the overlay and Read path must agree on the representation. Both non-clearable (Category B) and clearable (Category A) lists use `[]` for omitted values. The `useNullForUnknownListWhenConfigNull` modifier proposes `[]`, the overlay resolves from the API response (which maps to `[]`), and Read maps nil to `[]`. See [Clearable List Attributes](../implement-resource/SKILL.md#clearable-list-attributes).
 
 4. **Not testing the Update path separately.** Create and Update can have different API behaviors. Always test both.
 
@@ -154,7 +156,7 @@ The Read path detects **real** external changes while ignoring API normalization
 
 6. **API-defaulted lists need Category B classification.** Lists that are auto-populated by the API when omitted (e.g. `recipients` defaults to creator's email, `collaborators` adds creator as owner) must be classified as Category B (not clearable). Applying the clearing modifier to these causes perpetual drift because the API always repopulates the default.
 
-7. **Test for null vs [] based on clearability.** For non-clearable lists (Category B), add `ListSizeExact(0)` checks on omitted list state. For clearable lists (Category A), add `knownvalue.Null()` checks instead — omitted clearable lists resolve to null.
+7. **Test for null vs [] based on clearability.** For both non-clearable (Category B) and clearable (Category A) lists, omitted lists resolve to `[]`. Use `ListSizeExact(0)` or `ListExact([]knownvalue.Check{})` for assertions.
 
 8. **Don't add IsUnknown() guards for fields with Defaults.** When a field has `Default: stringdefault.StaticString(...)` (or similar), the framework resolves it at plan time — the field is never Unknown. An `IsUnknown()` guard is dead code and can mask legitimate changes from cross-resource references. The `overlaycheck` linter flags these automatically.
 

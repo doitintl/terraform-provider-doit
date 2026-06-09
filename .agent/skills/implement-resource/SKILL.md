@@ -196,54 +196,44 @@ if attr, ok := s.Attributes["labels"].(schema.ListAttribute); ok {
 
 #### Clearable List Attributes
 
-List attributes with `useNullForUnknownListWhenConfigNull()` require a **three-part fix** across overlay, Read, and Update to maintain null↔[] consistency. All three changes are required — any one missing causes drift.
+The `useNullForUnknownListWhenConfigNull()` modifier simplifies clearable lists by proposing an **empty list `[]`** (not `null`) when the config value is null and a prior state exists. This signals "clear this field" to the Update handler.
 
-**Part 1: Overlay — resolve Unknown to null (not API response)**
+Because it proposes `[]`, the standard overlay and Read patterns work without any special `null` tracking:
 
-When the user omits a clearable list, the overlay must resolve Unknown to `null` (matching the modifier's semantics) instead of the API response (which would be `[]`):
+**Overlay — resolve from API response (standard pattern)**
 
 ```go
 // In overlayXxxComputedFields:
 // ── Labels: Optional+Computed clearable list ──
 if plan.Labels.IsUnknown() {
-    plan.Labels = types.ListNull(types.StringType)
+    plan.Labels = resolved.Labels
 }
 ```
 
-**Part 2: Read — state-aware nil mapping**
+The overlay resolves Unknown to the API response (which `mapXxxToModel` maps to `[]` when the API returns nil). This matches the `[]` proposed by the modifier, so no drift occurs.
 
-The Read path must preserve null when the prior state was null (from clearing). When the prior state was non-null, return `[]` as before:
+**Read — standard empty-list mapping**
+
+The standard Read path that maps nil API responses to `[]` works correctly:
 
 ```go
 // In mapXxxToModel:
 if resp.Labels != nil && len(*resp.Labels) > 0 {
-    // API has values — map normally
     state.Labels, d = types.ListValueFrom(ctx, types.StringType, labels)
-} else if !state.Labels.IsNull() { //nolint:listnullread // clearable: preserve null
-    // Prior state was non-null — return empty list (existing behavior)
+} else {
     state.Labels, d = types.ListValueFrom(ctx, types.StringType, []string{})
 }
-// If state.Labels IS null (from clearing), don't touch it — preserves null
 ```
 
-This works because `mapXxxToModel` receives the state struct with prior values already loaded from `req.State.Get(ctx, &state)` in Read. The `state.Labels.IsNull()` check tells us whether the prior state was null.
+No state-aware `IsNull()` checks are needed — `[]` from Read matches `[]` from the modifier.
 
-| Scenario | Prior state | API returns | Read produces | Stable? |
-|----------|-------------|-------------|---------------|---------|
-| Create, list omitted | null (overlay) | nil | null (preserved) | ✅ |
-| Create, list set | `["a"]` | `["a"]` | `["a"]` | ✅ |
-| Clear (remove from config) | null (modifier→overlay) | nil | null (preserved) | ✅ |
-| Import, no values | null (default) | nil | null | ✅ |
-| Import, has values | null (default) | `["a"]` | `["a"]` | ✅ |
-| Explicit empty `[]` | `[]` | nil | `[]` | ✅ |
-
-**Part 3: Update request — send empty list on null**
+**Update request — send empty list to clear**
 
 The API treats an omitted field as "no change", so clearing must send an explicit empty list:
 
 ```go
 // In toUpdateRequest:
-if plan.Labels.IsNull() {
+if plan.Labels.IsNull() || (plan.Labels.IsKnown() && len(plan.Labels.Elements()) == 0) {
     emptyLabels := []string{}
     req.Labels = &emptyLabels
 } else if !plan.Labels.IsUnknown() {
@@ -252,6 +242,15 @@ if plan.Labels.IsNull() {
     req.Labels = &labels
 }
 ```
+
+| Scenario | Modifier proposes | Overlay produces | Read produces | Stable? |
+|----------|-------------------|------------------|---------------|---------|
+| Create, list omitted | `[]` | `[]` (from API) | `[]` | ✅ |
+| Create, list set | `["a"]` (plan) | `["a"]` (plan wins) | `["a"]` | ✅ |
+| Clear (remove from config) | `[]` | `[]` (plan wins) | `[]` | ✅ |
+| Import, no values | n/a | n/a | `[]` | ✅ |
+| Import, has values | n/a | n/a | `["a"]` | ✅ |
+| Explicit empty `[]` | `[]` (plan) | `[]` (plan wins) | `[]` | ✅ |
 
 > **Note on Computed-only fields:** When the list clearing modifier triggers an Update, Computed-only timestamp fields like `update_time` must be guarded with `IsUnknown()` in the overlay to avoid "inconsistent result" errors. On Create the field is Unknown (overlay sets it); on modifier-triggered Updates the field is Known (overlay preserves it; the next Read fetches the new value).
 
@@ -313,21 +312,21 @@ Every clearable attribute (Category A) must have a clearing lifecycle test:
 // Step 4: Drift check (ExpectEmptyPlan) → confirms cleared value is stable
 ```
 
-For omitted clearable lists, verify the state is null (not empty):
+For omitted clearable lists, verify the state is an empty list (not null):
 
 ```go
 // In tests where a clearable list is omitted from config:
 statecheck.ExpectKnownValue(
     "doit_annotation.omitted_lists",
     tfjsonpath.New("labels"),
-    knownvalue.Null()),  // NOT ListSizeExact(0)
+    knownvalue.ListExact([]knownvalue.Check{})),  // empty [], NOT Null()
 ```
 
 **Important:** Terraform does not distinguish "attribute omitted" from "attribute explicitly set to null." Both result in a null config value. With this modifier, omitting an attribute from config will clear it rather than preserve the prior value.
 
-The overlay (`IsUnknown()` check) correctly interacts with this modifier: when the modifier sets the plan to null (not unknown), the overlay leaves it as null.
+The overlay (`IsUnknown()` check) correctly interacts with this modifier: when the modifier sets the plan to `[]` (not unknown), the overlay leaves it as `[]`.
 
-See: [`planmodifier_null_on_config_null.go`](internal/provider/planmodifier_null_on_config_null.go) and [framework issue #603](https://github.com/hashicorp/terraform-plugin-framework/issues/603).
+See: [`planmodifier_null_on_config_null_list.go`](internal/provider/planmodifier_null_on_config_null_list.go) and [framework issue #603](https://github.com/hashicorp/terraform-plugin-framework/issues/603).
 
 ### RFC3339 Timestamp Validation
 
