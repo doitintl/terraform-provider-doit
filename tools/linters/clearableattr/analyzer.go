@@ -124,7 +124,7 @@ func run(pass *analysis.Pass) (any, error) {
 			pass.Reportf(pos,
 				"Optional+Computed attribute %q has no clearable classification.\n"+
 					"\tAdd useNullForUnknownWhenConfigNull() if the attribute should be clearable,\n"+
-					"\tor //nolint:clearableattr if the prior value should be preserved.\n"+
+					"\tor acknowledgeNotClearable() if the prior value should be preserved.\n"+
 					"\tSee: https://github.com/doitintl/terraform-provider-doit/issues/233",
 				fullPath)
 		}
