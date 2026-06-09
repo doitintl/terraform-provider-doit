@@ -605,9 +605,6 @@ func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req model
 	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
 		req.Name = plan.Name.ValueStringPointer()
 	}
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		req.Description = plan.Description.ValueStringPointer()
-	}
 	req.FolderId = plan.FolderId.ValueStringPointer()
 
 	if !plan.Labels.IsNull() && !plan.Labels.IsUnknown() {
@@ -617,6 +614,10 @@ func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req model
 			return req, diags
 		}
 		req.Labels = &labels
+	}
+
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		req.Description = plan.Description.ValueStringPointer()
 	}
 
 	config, d := toExternalConfig(ctx, plan.Config)
@@ -777,7 +778,10 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		}
 	}
 
-	if !config.Metric.IsNull() && !config.Metric.IsUnknown() {
+	// metric and metrics are mutually exclusive in the API. On Update, prior state
+	// may carry both (the API response populates both). Prefer metrics (non-deprecated).
+	hasMetrics := !config.Metrics.IsNull() && !config.Metrics.IsUnknown()
+	if !config.Metric.IsNull() && !config.Metric.IsUnknown() && !hasMetrics {
 		metric := baseTypeObjectValueToExternalMetric(config.Metric)
 		externalConfig.Metric = metric
 	}
