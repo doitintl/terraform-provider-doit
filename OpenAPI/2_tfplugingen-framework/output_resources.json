@@ -1408,6 +1408,85 @@
 			}
 		},
 		{
+			"name": "cloudconnect_aws_account",
+			"schema": {
+				"attributes": [
+					{
+						"name": "account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The AWS account ID."
+						}
+					},
+					{
+						"name": "enabled_features",
+						"list": {
+							"computed_optional_required": "required",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Declares which supported AWS features the caller intends to enable. Values must match feature names configured in awsFeaturePermissions on app/cloud-connect. The value is persisted and returned in account responses. When \"real-time-data\" is included, s3Bucket and s3BucketRegion are required; when it is not included, s3Bucket and s3BucketRegion are not allowed."
+						}
+					},
+					{
+						"name": "role_arn",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The ARN of the IAM role created for DoiT access."
+						}
+					},
+					{
+						"name": "s3bucket",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "S3 bucket name for CloudTrail real-time anomaly detection. Required together with s3BucketRegion."
+						}
+					},
+					{
+						"name": "s3bucket_region",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "AWS region of the S3 bucket. Required together with s3Bucket."
+						}
+					},
+					{
+						"name": "supported_features",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "has_required_permissions",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the role has the required permissions for this feature."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Feature name."
+										}
+									}
+								]
+							},
+							"description": "List of supported features and their permission status."
+						}
+					},
+					{
+						"name": "time_linked",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp of when the role was linked."
+						}
+					}
+				],
+				"description": "Manage cloud provider connections and check feature availability for connected accounts.",
+				"markdown_description": "Manage cloud provider connections and check feature availability for connected accounts."
+			}
+		},
+		{
 			"name": "custom_theme",
 			"schema": {
 				"attributes": [

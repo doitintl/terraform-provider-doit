@@ -3785,6 +3785,39 @@ type AvaAskSyncResponse struct {
 	ConversationId *string `json:"conversationId,omitempty"`
 }
 
+// AwsAccountResponse defines model for AwsAccountResponse.
+type AwsAccountResponse struct {
+	// AccountID The AWS account ID.
+	AccountID *string `json:"accountID,omitempty"`
+
+	// EnabledFeatures List of supported AWS features enabled by the caller. Returned in the same order as provided.
+	EnabledFeatures *[]string `json:"enabledFeatures,omitempty"`
+
+	// RoleArn The ARN of the IAM role.
+	RoleArn *string `json:"roleArn,omitempty"`
+
+	// S3Bucket S3 bucket name for real-time anomaly detection. Present only if real-time is enabled.
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+
+	// S3BucketRegion AWS region of the S3 bucket. Present only if s3Bucket exists.
+	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
+
+	// SupportedFeatures List of supported features and their permission status.
+	SupportedFeatures *[]AwsSupportedFeature `json:"supportedFeatures,omitempty"`
+
+	// TimeLinked ISO 8601 timestamp of when the role was linked.
+	TimeLinked *string `json:"timeLinked,omitempty"`
+}
+
+// AwsSupportedFeature defines model for AwsSupportedFeature.
+type AwsSupportedFeature struct {
+	// HasRequiredPermissions Whether the role has the required permissions for this feature.
+	HasRequiredPermissions *bool `json:"hasRequiredPermissions,omitempty"`
+
+	// Name Feature name.
+	Name *string `json:"name,omitempty"`
+}
+
 // BudgetAPI Budget details and runtime metrics.
 type BudgetAPI struct {
 	// Alerts List of up to three thresholds defined as a percentage of amount.
@@ -4862,6 +4895,24 @@ type CommitmentPeriod struct {
 
 // Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 type Condition string
+
+// CreateAccountRoleRequestBody defines model for CreateAccountRoleRequestBody.
+type CreateAccountRoleRequestBody struct {
+	// AccountID The AWS account ID.
+	AccountID string `json:"accountID"`
+
+	// EnabledFeatures Declares which supported AWS features the caller intends to enable. Values must match feature names configured in awsFeaturePermissions on app/cloud-connect. The value is persisted and returned in account responses. When "real-time-data" is included, s3Bucket and s3BucketRegion are required; when it is not included, s3Bucket and s3BucketRegion are not allowed.
+	EnabledFeatures []string `json:"enabledFeatures"`
+
+	// RoleArn The ARN of the IAM role created for DoiT access.
+	RoleArn string `json:"roleArn"`
+
+	// S3Bucket S3 bucket name for CloudTrail real-time anomaly detection. Required together with s3BucketRegion.
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+
+	// S3BucketRegion AWS region of the S3 bucket. Required together with s3Bucket.
+	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
+}
 
 // CreateAllocationRequest Request body for creating an allocation.
 type CreateAllocationRequest struct {
@@ -6805,6 +6856,18 @@ type UpdateAnnotationRequest struct {
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
 
+// UpdateAwsFeatureRequestBody defines model for UpdateAwsFeatureRequestBody.
+type UpdateAwsFeatureRequestBody struct {
+	// EnabledFeatures Declares which supported AWS features the caller intends to enable. Values must match feature names configured in awsFeaturePermissions on app/cloud-connect. The value is persisted and returned in account responses. When "real-time-data" is included, s3Bucket and s3BucketRegion are required; when it is not included, s3Bucket and s3BucketRegion are not allowed.
+	EnabledFeatures []string `json:"enabledFeatures"`
+
+	// S3Bucket S3 bucket name for CloudTrail real-time anomaly detection. Required together with s3BucketRegion.
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+
+	// S3BucketRegion AWS region of the S3 bucket. Required together with s3Bucket.
+	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
+}
+
 // UpdateCustomThemeRequest Request body for updating a custom theme. Only provided fields are modified.
 type UpdateCustomThemeRequest struct {
 	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
@@ -7653,6 +7716,12 @@ type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
 // GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
 type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 
+// CreateAccountRoleJSONRequestBody defines body for CreateAccountRole for application/json ContentType.
+type CreateAccountRoleJSONRequestBody = CreateAccountRoleRequestBody
+
+// UpdateAwsFeatureJSONRequestBody defines body for UpdateAwsFeature for application/json ContentType.
+type UpdateAwsFeatureJSONRequestBody = UpdateAwsFeatureRequestBody
+
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
 
@@ -8147,6 +8216,22 @@ type ClientInterface interface {
 
 	// ListCloudDiagramLayerSnapshots request
 	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateAccountRoleWithBody request with any body
+	CreateAccountRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateAccountRole(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAccountRole request
+	DeleteAccountRole(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAwsAccount request
+	GetAwsAccount(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateAwsFeatureWithBody request with any body
+	UpdateAwsFeatureWithBody(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateAwsFeature(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9338,6 +9423,78 @@ func (c *Client) GetCloudDiagramLayerSnapshot(ctx context.Context, id string, pa
 
 func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListCloudDiagramLayerSnapshotsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAccountRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAccountRoleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAccountRole(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAccountRoleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAccountRole(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAccountRoleRequest(c.Server, accountID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAwsAccount(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAwsAccountRequest(c.Server, accountID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAwsFeatureWithBody(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAwsFeatureRequestWithBody(c.Server, accountID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAwsFeature(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAwsFeatureRequest(c.Server, accountID, body)
 	if err != nil {
 		return nil, err
 	}
@@ -13427,6 +13584,161 @@ func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *
 	return req, nil
 }
 
+// NewCreateAccountRoleRequest calls the generic CreateAccountRole builder with application/json body
+func NewCreateAccountRoleRequest(server string, body CreateAccountRoleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateAccountRoleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateAccountRoleRequestWithBody generates requests for CreateAccountRole with any type of body
+func NewCreateAccountRoleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAccountRoleRequest generates requests for DeleteAccountRole
+func NewDeleteAccountRoleRequest(server string, accountID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "accountID", accountID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAwsAccountRequest generates requests for GetAwsAccount
+func NewGetAwsAccountRequest(server string, accountID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "accountID", accountID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateAwsFeatureRequest calls the generic UpdateAwsFeature builder with application/json body
+func NewUpdateAwsFeatureRequest(server string, accountID string, body UpdateAwsFeatureJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateAwsFeatureRequestWithBody(server, accountID, "application/json", bodyReader)
+}
+
+// NewUpdateAwsFeatureRequestWithBody generates requests for UpdateAwsFeature with any type of body
+func NewUpdateAwsFeatureRequestWithBody(server string, accountID string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "accountID", accountID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListKnownIssuesRequest generates requests for ListKnownIssues
 func NewListKnownIssuesRequest(server string, params *ListKnownIssuesParams) (*http.Request, error) {
 	var err error
@@ -15111,6 +15423,22 @@ type ClientWithResponsesInterface interface {
 
 	// ListCloudDiagramLayerSnapshotsWithResponse request
 	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
+
+	// CreateAccountRoleWithBodyWithResponse request with any body
+	CreateAccountRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error)
+
+	CreateAccountRoleWithResponse(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error)
+
+	// DeleteAccountRoleWithResponse request
+	DeleteAccountRoleWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*DeleteAccountRoleResp, error)
+
+	// GetAwsAccountWithResponse request
+	GetAwsAccountWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*GetAwsAccountResp, error)
+
+	// UpdateAwsFeatureWithBodyWithResponse request with any body
+	UpdateAwsFeatureWithBodyWithResponse(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error)
+
+	UpdateAwsFeatureWithResponse(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -17472,6 +17800,143 @@ func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
 	return ""
 }
 
+type CreateAccountRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AwsAccountResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON409      *Error
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateAccountRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateAccountRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateAccountRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteAccountRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAccountRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAccountRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteAccountRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetAwsAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AwsAccountResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *Error
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAwsAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAwsAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetAwsAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateAwsFeatureResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AwsAccountResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateAwsFeatureResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateAwsFeatureResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateAwsFeatureResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListKnownIssuesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -19191,6 +19656,58 @@ func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx con
 		return nil, err
 	}
 	return ParseListCloudDiagramLayerSnapshotsResp(rsp)
+}
+
+// CreateAccountRoleWithBodyWithResponse request with arbitrary body returning *CreateAccountRoleResp
+func (c *ClientWithResponses) CreateAccountRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error) {
+	rsp, err := c.CreateAccountRoleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAccountRoleResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateAccountRoleWithResponse(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error) {
+	rsp, err := c.CreateAccountRole(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAccountRoleResp(rsp)
+}
+
+// DeleteAccountRoleWithResponse request returning *DeleteAccountRoleResp
+func (c *ClientWithResponses) DeleteAccountRoleWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*DeleteAccountRoleResp, error) {
+	rsp, err := c.DeleteAccountRole(ctx, accountID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAccountRoleResp(rsp)
+}
+
+// GetAwsAccountWithResponse request returning *GetAwsAccountResp
+func (c *ClientWithResponses) GetAwsAccountWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*GetAwsAccountResp, error) {
+	rsp, err := c.GetAwsAccount(ctx, accountID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAwsAccountResp(rsp)
+}
+
+// UpdateAwsFeatureWithBodyWithResponse request with arbitrary body returning *UpdateAwsFeatureResp
+func (c *ClientWithResponses) UpdateAwsFeatureWithBodyWithResponse(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error) {
+	rsp, err := c.UpdateAwsFeatureWithBody(ctx, accountID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAwsFeatureResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateAwsFeatureWithResponse(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error) {
+	rsp, err := c.UpdateAwsFeature(ctx, accountID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAwsFeatureResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -23006,6 +23523,229 @@ func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiag
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateAccountRoleResp parses an HTTP response from a CreateAccountRoleWithResponse call
+func ParseCreateAccountRoleResp(rsp *http.Response) (*CreateAccountRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateAccountRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AwsAccountResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAccountRoleResp parses an HTTP response from a DeleteAccountRoleWithResponse call
+func ParseDeleteAccountRoleResp(rsp *http.Response) (*DeleteAccountRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAccountRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAwsAccountResp parses an HTTP response from a GetAwsAccountWithResponse call
+func ParseGetAwsAccountResp(rsp *http.Response) (*GetAwsAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAwsAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AwsAccountResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateAwsFeatureResp parses an HTTP response from a UpdateAwsFeatureWithResponse call
+func ParseUpdateAwsFeatureResp(rsp *http.Response) (*UpdateAwsFeatureResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateAwsFeatureResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AwsAccountResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
