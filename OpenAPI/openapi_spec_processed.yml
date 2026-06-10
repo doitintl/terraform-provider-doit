@@ -3111,6 +3111,80 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Get resource relationships
+      description: |-
+        Walks the diagram graph from the anchor resource and returns related resources.
+        Edge traversal walks the diagram's link set (same-scheme guard, BFS, cycle-safe);
+        group traversal walks the group membership set. The result list is capped at 200
+        relations; `truncated` is `true` when the cap is hit. Read-only: does not mutate
+        diagram state.
+      operationId: getCloudDiagramResourceRelationships
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Diagram (layer) ID.
+          schema:
+            type: string
+        - name: rid
+          in: path
+          required: true
+          description: Anchor resource ID — must exist as a node, element, or group on the diagram.
+          schema:
+            type: string
+        - name: direction
+          in: query
+          description: Edge direction relative to the anchor. `both` returns upstream and downstream neighbours. Defaults to `both`.
+          schema:
+            type: string
+            enum:
+              - downstream
+              - upstream
+              - both
+            default: both
+        - name: depth
+          in: query
+          description: |-
+            `direct` returns one-hop neighbours; `transitive` runs a cycle-safe BFS to the
+            connected component (still capped at 200 relations). Defaults to `direct`.
+          schema:
+            type: string
+            enum:
+              - direct
+              - transitive
+            default: direct
+        - name: kind
+          in: query
+          description: |-
+            `edges` walks the link graph; `group_members` walks group membership (children
+            and parent groups); `both` merges the two and dedupes by id, preserving the
+            smallest observed hop count. Defaults to `edges`.
+          schema:
+            type: string
+            enum:
+              - edges
+              - group_members
+              - both
+            default: edges
+      responses:
+        "200":
+          description: OK - Related resources returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagramRelationshipsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
+        "404":
+          $ref: "#/components/responses/404"
   /clouddiagrams/v1/activity:
     get:
       tags:
@@ -6386,6 +6460,111 @@ components:
         message:
           type: string
           description: Success message
+    DiagramRelationship:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - relation
+        - hops
+      description: One related resource returned by the traversal.
+      properties:
+        id:
+          type: string
+          description: Related resource ID.
+        type:
+          type: string
+          enum:
+            - node
+            - element
+            - group
+          description: Component bucket the related resource lives in.
+        name:
+          type: string
+          description: Human-readable name of the related resource.
+        serviceType:
+          type: string
+          description: Cloud service type when available.
+        relation:
+          type: string
+          enum:
+            - downstream
+            - upstream
+            - group_member
+            - group_parent
+          description: |-
+            How the resource is related to the anchor. `downstream` / `upstream` are edge
+            relations (anchor is the edge origin / destination respectively).
+            `group_member` means the related resource is contained in the anchor (anchor is
+            a group); `group_parent` means the related resource is a group that contains
+            the anchor.
+        hops:
+          type: integer
+          minimum: 1
+          description: Edge hop count from the anchor. Group-member / group-parent entries are reported as 1.
+    DiagramRelationshipsAnchor:
+      type: object
+      required:
+        - id
+        - type
+        - name
+      description: The anchor resource the traversal started from.
+      properties:
+        id:
+          type: string
+          description: Anchor resource ID (matches the `rid` path parameter).
+        type:
+          type: string
+          enum:
+            - node
+            - element
+            - group
+          description: Component bucket the anchor lives in.
+        name:
+          type: string
+          description: Human-readable resource name.
+        serviceType:
+          type: string
+          description: Cloud service type when available (e.g. `Amazon RDS`, `GCP Cloud SQL`).
+    DiagramRelationshipsResponse:
+      type: object
+      required:
+        - anchor
+        - direction
+        - depth
+        - kind
+        - relations
+        - truncated
+      description: The response payload for the resource relationships endpoint.
+      properties:
+        anchor:
+          $ref: "#/components/schemas/DiagramRelationshipsAnchor"
+        direction:
+          type: string
+          enum:
+            - downstream
+            - upstream
+            - both
+        depth:
+          type: string
+          enum:
+            - direct
+            - transitive
+        kind:
+          type: string
+          enum:
+            - edges
+            - group_members
+            - both
+        relations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiagramRelationship"
+          description: Resources related to the anchor (capped at 200).
+        truncated:
+          type: boolean
+          description: True when the relation list was capped at 200 entries.
     Dimension:
       description: Definition of a report dimension.
       type: object

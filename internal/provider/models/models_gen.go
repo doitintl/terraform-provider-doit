@@ -1166,6 +1166,132 @@ func (e Currency) Valid() bool {
 	}
 }
 
+// Defines values for DiagramRelationshipRelation.
+const (
+	DiagramRelationshipRelationDownstream  DiagramRelationshipRelation = "downstream"
+	DiagramRelationshipRelationGroupMember DiagramRelationshipRelation = "group_member"
+	DiagramRelationshipRelationGroupParent DiagramRelationshipRelation = "group_parent"
+	DiagramRelationshipRelationUpstream    DiagramRelationshipRelation = "upstream"
+)
+
+// Valid indicates whether the value is a known member of the DiagramRelationshipRelation enum.
+func (e DiagramRelationshipRelation) Valid() bool {
+	switch e {
+	case DiagramRelationshipRelationDownstream:
+		return true
+	case DiagramRelationshipRelationGroupMember:
+		return true
+	case DiagramRelationshipRelationGroupParent:
+		return true
+	case DiagramRelationshipRelationUpstream:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DiagramRelationshipType.
+const (
+	DiagramRelationshipTypeElement DiagramRelationshipType = "element"
+	DiagramRelationshipTypeGroup   DiagramRelationshipType = "group"
+	DiagramRelationshipTypeNode    DiagramRelationshipType = "node"
+)
+
+// Valid indicates whether the value is a known member of the DiagramRelationshipType enum.
+func (e DiagramRelationshipType) Valid() bool {
+	switch e {
+	case DiagramRelationshipTypeElement:
+		return true
+	case DiagramRelationshipTypeGroup:
+		return true
+	case DiagramRelationshipTypeNode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DiagramRelationshipsAnchorType.
+const (
+	DiagramRelationshipsAnchorTypeElement DiagramRelationshipsAnchorType = "element"
+	DiagramRelationshipsAnchorTypeGroup   DiagramRelationshipsAnchorType = "group"
+	DiagramRelationshipsAnchorTypeNode    DiagramRelationshipsAnchorType = "node"
+)
+
+// Valid indicates whether the value is a known member of the DiagramRelationshipsAnchorType enum.
+func (e DiagramRelationshipsAnchorType) Valid() bool {
+	switch e {
+	case DiagramRelationshipsAnchorTypeElement:
+		return true
+	case DiagramRelationshipsAnchorTypeGroup:
+		return true
+	case DiagramRelationshipsAnchorTypeNode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DiagramRelationshipsResponseDepth.
+const (
+	DiagramRelationshipsResponseDepthDirect     DiagramRelationshipsResponseDepth = "direct"
+	DiagramRelationshipsResponseDepthTransitive DiagramRelationshipsResponseDepth = "transitive"
+)
+
+// Valid indicates whether the value is a known member of the DiagramRelationshipsResponseDepth enum.
+func (e DiagramRelationshipsResponseDepth) Valid() bool {
+	switch e {
+	case DiagramRelationshipsResponseDepthDirect:
+		return true
+	case DiagramRelationshipsResponseDepthTransitive:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DiagramRelationshipsResponseDirection.
+const (
+	DiagramRelationshipsResponseDirectionBoth       DiagramRelationshipsResponseDirection = "both"
+	DiagramRelationshipsResponseDirectionDownstream DiagramRelationshipsResponseDirection = "downstream"
+	DiagramRelationshipsResponseDirectionUpstream   DiagramRelationshipsResponseDirection = "upstream"
+)
+
+// Valid indicates whether the value is a known member of the DiagramRelationshipsResponseDirection enum.
+func (e DiagramRelationshipsResponseDirection) Valid() bool {
+	switch e {
+	case DiagramRelationshipsResponseDirectionBoth:
+		return true
+	case DiagramRelationshipsResponseDirectionDownstream:
+		return true
+	case DiagramRelationshipsResponseDirectionUpstream:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DiagramRelationshipsResponseKind.
+const (
+	DiagramRelationshipsResponseKindBoth         DiagramRelationshipsResponseKind = "both"
+	DiagramRelationshipsResponseKindEdges        DiagramRelationshipsResponseKind = "edges"
+	DiagramRelationshipsResponseKindGroupMembers DiagramRelationshipsResponseKind = "group_members"
+)
+
+// Valid indicates whether the value is a known member of the DiagramRelationshipsResponseKind enum.
+func (e DiagramRelationshipsResponseKind) Valid() bool {
+	switch e {
+	case DiagramRelationshipsResponseKindBoth:
+		return true
+	case DiagramRelationshipsResponseKindEdges:
+		return true
+	case DiagramRelationshipsResponseKindGroupMembers:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DimensionsTypes.
 const (
 	DimensionsTypesAllocation       DimensionsTypes = "allocation"
@@ -3185,6 +3311,66 @@ func (e GetCloudDiagramComponentsParamsNodeType) Valid() bool {
 	}
 }
 
+// Defines values for GetCloudDiagramResourceRelationshipsParamsDirection.
+const (
+	GetCloudDiagramResourceRelationshipsParamsDirectionBoth       GetCloudDiagramResourceRelationshipsParamsDirection = "both"
+	GetCloudDiagramResourceRelationshipsParamsDirectionDownstream GetCloudDiagramResourceRelationshipsParamsDirection = "downstream"
+	GetCloudDiagramResourceRelationshipsParamsDirectionUpstream   GetCloudDiagramResourceRelationshipsParamsDirection = "upstream"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramResourceRelationshipsParamsDirection enum.
+func (e GetCloudDiagramResourceRelationshipsParamsDirection) Valid() bool {
+	switch e {
+	case GetCloudDiagramResourceRelationshipsParamsDirectionBoth:
+		return true
+	case GetCloudDiagramResourceRelationshipsParamsDirectionDownstream:
+		return true
+	case GetCloudDiagramResourceRelationshipsParamsDirectionUpstream:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCloudDiagramResourceRelationshipsParamsDepth.
+const (
+	GetCloudDiagramResourceRelationshipsParamsDepthDirect     GetCloudDiagramResourceRelationshipsParamsDepth = "direct"
+	GetCloudDiagramResourceRelationshipsParamsDepthTransitive GetCloudDiagramResourceRelationshipsParamsDepth = "transitive"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramResourceRelationshipsParamsDepth enum.
+func (e GetCloudDiagramResourceRelationshipsParamsDepth) Valid() bool {
+	switch e {
+	case GetCloudDiagramResourceRelationshipsParamsDepthDirect:
+		return true
+	case GetCloudDiagramResourceRelationshipsParamsDepthTransitive:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCloudDiagramResourceRelationshipsParamsKind.
+const (
+	Both         GetCloudDiagramResourceRelationshipsParamsKind = "both"
+	Edges        GetCloudDiagramResourceRelationshipsParamsKind = "edges"
+	GroupMembers GetCloudDiagramResourceRelationshipsParamsKind = "group_members"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramResourceRelationshipsParamsKind enum.
+func (e GetCloudDiagramResourceRelationshipsParamsKind) Valid() bool {
+	switch e {
+	case Both:
+		return true
+	case Edges:
+		return true
+	case GroupMembers:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetInsightResultsParamsDisplayStatus.
 const (
 	Acknowledged GetInsightResultsParamsDisplayStatus = "acknowledged"
@@ -5171,6 +5357,83 @@ type DeleteUserResponse struct {
 	// Message Success message
 	Message *string `json:"message,omitempty"`
 }
+
+// DiagramRelationship One related resource returned by the traversal.
+type DiagramRelationship struct {
+	// Hops Edge hop count from the anchor. Group-member / group-parent entries are reported as 1.
+	Hops int `json:"hops"`
+
+	// Id Related resource ID.
+	Id string `json:"id"`
+
+	// Name Human-readable name of the related resource.
+	Name string `json:"name"`
+
+	// Relation How the resource is related to the anchor. `downstream` / `upstream` are edge
+	// relations (anchor is the edge origin / destination respectively).
+	// `group_member` means the related resource is contained in the anchor (anchor is
+	// a group); `group_parent` means the related resource is a group that contains
+	// the anchor.
+	Relation DiagramRelationshipRelation `json:"relation"`
+
+	// ServiceType Cloud service type when available.
+	ServiceType *string `json:"serviceType,omitempty"`
+
+	// Type Component bucket the related resource lives in.
+	Type DiagramRelationshipType `json:"type"`
+}
+
+// DiagramRelationshipRelation How the resource is related to the anchor. `downstream` / `upstream` are edge
+// relations (anchor is the edge origin / destination respectively).
+// `group_member` means the related resource is contained in the anchor (anchor is
+// a group); `group_parent` means the related resource is a group that contains
+// the anchor.
+type DiagramRelationshipRelation string
+
+// DiagramRelationshipType Component bucket the related resource lives in.
+type DiagramRelationshipType string
+
+// DiagramRelationshipsAnchor The anchor resource the traversal started from.
+type DiagramRelationshipsAnchor struct {
+	// Id Anchor resource ID (matches the `rid` path parameter).
+	Id string `json:"id"`
+
+	// Name Human-readable resource name.
+	Name string `json:"name"`
+
+	// ServiceType Cloud service type when available (e.g. `Amazon RDS`, `GCP Cloud SQL`).
+	ServiceType *string `json:"serviceType,omitempty"`
+
+	// Type Component bucket the anchor lives in.
+	Type DiagramRelationshipsAnchorType `json:"type"`
+}
+
+// DiagramRelationshipsAnchorType Component bucket the anchor lives in.
+type DiagramRelationshipsAnchorType string
+
+// DiagramRelationshipsResponse The response payload for the resource relationships endpoint.
+type DiagramRelationshipsResponse struct {
+	// Anchor The anchor resource the traversal started from.
+	Anchor    DiagramRelationshipsAnchor            `json:"anchor"`
+	Depth     DiagramRelationshipsResponseDepth     `json:"depth"`
+	Direction DiagramRelationshipsResponseDirection `json:"direction"`
+	Kind      DiagramRelationshipsResponseKind      `json:"kind"`
+
+	// Relations Resources related to the anchor (capped at 200).
+	Relations []DiagramRelationship `json:"relations"`
+
+	// Truncated True when the relation list was capped at 200 entries.
+	Truncated bool `json:"truncated"`
+}
+
+// DiagramRelationshipsResponseDepth defines model for DiagramRelationshipsResponse.Depth.
+type DiagramRelationshipsResponseDepth string
+
+// DiagramRelationshipsResponseDirection defines model for DiagramRelationshipsResponse.Direction.
+type DiagramRelationshipsResponseDirection string
+
+// DiagramRelationshipsResponseKind defines model for DiagramRelationshipsResponse.Kind.
+type DiagramRelationshipsResponseKind string
 
 // Dimension Definition of a report dimension.
 type Dimension struct {
@@ -7611,6 +7874,30 @@ type GetStatussheetComponentsParams struct {
 	P *string `form:"p,omitempty" json:"p,omitempty"`
 }
 
+// GetCloudDiagramResourceRelationshipsParams defines parameters for GetCloudDiagramResourceRelationships.
+type GetCloudDiagramResourceRelationshipsParams struct {
+	// Direction Edge direction relative to the anchor. `both` returns upstream and downstream neighbours. Defaults to `both`.
+	Direction *GetCloudDiagramResourceRelationshipsParamsDirection `form:"direction,omitempty" json:"direction,omitempty"`
+
+	// Depth `direct` returns one-hop neighbours; `transitive` runs a cycle-safe BFS to the
+	// connected component (still capped at 200 relations). Defaults to `direct`.
+	Depth *GetCloudDiagramResourceRelationshipsParamsDepth `form:"depth,omitempty" json:"depth,omitempty"`
+
+	// Kind `edges` walks the link graph; `group_members` walks group membership (children
+	// and parent groups); `both` merges the two and dedupes by id, preserving the
+	// smallest observed hop count. Defaults to `edges`.
+	Kind *GetCloudDiagramResourceRelationshipsParamsKind `form:"kind,omitempty" json:"kind,omitempty"`
+}
+
+// GetCloudDiagramResourceRelationshipsParamsDirection defines parameters for GetCloudDiagramResourceRelationships.
+type GetCloudDiagramResourceRelationshipsParamsDirection string
+
+// GetCloudDiagramResourceRelationshipsParamsDepth defines parameters for GetCloudDiagramResourceRelationships.
+type GetCloudDiagramResourceRelationshipsParamsDepth string
+
+// GetCloudDiagramResourceRelationshipsParamsKind defines parameters for GetCloudDiagramResourceRelationships.
+type GetCloudDiagramResourceRelationshipsParamsKind string
+
 // GetCloudDiagramLayerSnapshotParams defines parameters for GetCloudDiagramLayerSnapshot.
 type GetCloudDiagramLayerSnapshotParams struct {
 	// SnapshotId Snapshot ID.
@@ -8327,6 +8614,9 @@ type ClientInterface interface {
 	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudDiagramResourceRelationships request
+	GetCloudDiagramResourceRelationships(ctx context.Context, id string, rid string, params *GetCloudDiagramResourceRelationshipsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCloudDiagramLayerSnapshot request
 	GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9528,6 +9818,18 @@ func (c *Client) GetStatussheetComponentsWithBody(ctx context.Context, id string
 
 func (c *Client) GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStatussheetComponentsRequest(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramResourceRelationships(ctx context.Context, id string, rid string, params *GetCloudDiagramResourceRelationshipsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramResourceRelationshipsRequest(c.Server, id, rid, params)
 	if err != nil {
 		return nil, err
 	}
@@ -13657,6 +13959,98 @@ func NewGetStatussheetComponentsRequestWithBody(server string, id string, params
 	return req, nil
 }
 
+// NewGetCloudDiagramResourceRelationshipsRequest generates requests for GetCloudDiagramResourceRelationships
+func NewGetCloudDiagramResourceRelationshipsRequest(server string, id string, rid string, params *GetCloudDiagramResourceRelationshipsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "rid", rid, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/resources/%s/relationships", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Direction != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "direction", *params.Direction, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Depth != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "depth", *params.Depth, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Kind != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "kind", *params.Kind, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetCloudDiagramLayerSnapshotRequest generates requests for GetCloudDiagramLayerSnapshot
 func NewGetCloudDiagramLayerSnapshotRequest(server string, id string, params *GetCloudDiagramLayerSnapshotParams) (*http.Request, error) {
 	var err error
@@ -15635,6 +16029,9 @@ type ClientWithResponsesInterface interface {
 	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
 
 	GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
+	// GetCloudDiagramResourceRelationshipsWithResponse request
+	GetCloudDiagramResourceRelationshipsWithResponse(ctx context.Context, id string, rid string, params *GetCloudDiagramResourceRelationshipsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramResourceRelationshipsResp, error)
 
 	// GetCloudDiagramLayerSnapshotWithResponse request
 	GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error)
@@ -17985,6 +18382,40 @@ func (r GetStatussheetComponentsResp) ContentType() string {
 	return ""
 }
 
+type GetCloudDiagramResourceRelationshipsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DiagramRelationshipsResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+	JSON404      *N404
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramResourceRelationshipsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramResourceRelationshipsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCloudDiagramResourceRelationshipsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetCloudDiagramLayerSnapshotResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -19898,6 +20329,15 @@ func (c *ClientWithResponses) GetStatussheetComponentsWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParseGetStatussheetComponentsResp(rsp)
+}
+
+// GetCloudDiagramResourceRelationshipsWithResponse request returning *GetCloudDiagramResourceRelationshipsResp
+func (c *ClientWithResponses) GetCloudDiagramResourceRelationshipsWithResponse(ctx context.Context, id string, rid string, params *GetCloudDiagramResourceRelationshipsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramResourceRelationshipsResp, error) {
+	rsp, err := c.GetCloudDiagramResourceRelationships(ctx, id, rid, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramResourceRelationshipsResp(rsp)
 }
 
 // GetCloudDiagramLayerSnapshotWithResponse request returning *GetCloudDiagramLayerSnapshotResp
@@ -23736,6 +24176,60 @@ func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetCompo
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramResourceRelationshipsResp parses an HTTP response from a GetCloudDiagramResourceRelationshipsWithResponse call
+func ParseGetCloudDiagramResourceRelationshipsResp(rsp *http.Response) (*GetCloudDiagramResourceRelationshipsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramResourceRelationshipsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DiagramRelationshipsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 

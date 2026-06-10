@@ -2991,6 +2991,183 @@
 			}
 		},
 		{
+			"name": "cloud_diagrams_relationships",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Diagram (layer) ID."
+						}
+					},
+					{
+						"name": "rid",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Anchor resource ID — must exist as a node, element, or group on the diagram."
+						}
+					},
+					{
+						"name": "direction",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Edge direction relative to the anchor. `both` returns upstream and downstream neighbours. Defaults to `both`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"downstream\",\n\"upstream\",\n\"both\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "depth",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "`direct` returns one-hop neighbours; `transitive` runs a cycle-safe BFS to the\nconnected component (still capped at 200 relations). Defaults to `direct`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"direct\",\n\"transitive\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "kind",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "`edges` walks the link graph; `group_members` walks group membership (children\nand parent groups); `both` merges the two and dedupes by id, preserving the\nsmallest observed hop count. Defaults to `edges`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"edges\",\n\"group_members\",\n\"both\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "anchor",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Anchor resource ID (matches the `rid` path parameter)."
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Human-readable resource name."
+									}
+								},
+								{
+									"name": "service_type",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Cloud service type when available (e.g. `Amazon RDS`, `GCP Cloud SQL`)."
+									}
+								},
+								{
+									"name": "type",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Component bucket the anchor lives in."
+									}
+								}
+							],
+							"description": "The anchor resource the traversal started from."
+						}
+					},
+					{
+						"name": "relations",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "hops",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Edge hop count from the anchor. Group-member / group-parent entries are reported as 1."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Related resource ID."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Human-readable name of the related resource."
+										}
+									},
+									{
+										"name": "relation",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "How the resource is related to the anchor. `downstream` / `upstream` are edge\nrelations (anchor is the edge origin / destination respectively).\n`group_member` means the related resource is contained in the anchor (anchor is\na group); `group_parent` means the related resource is a group that contains\nthe anchor."
+										}
+									},
+									{
+										"name": "service_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud service type when available."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component bucket the related resource lives in."
+										}
+									}
+								]
+							},
+							"description": "Resources related to the anchor (capped at 200)."
+						}
+					},
+					{
+						"name": "truncated",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "True when the relation list was capped at 200 entries."
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
 			"name": "cloud_diagrams_schemes",
 			"schema": {
 				"attributes": [
