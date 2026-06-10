@@ -208,6 +208,10 @@ data_sources:
     read:
       path: /clouddiagrams/v1/scheme/stats
       method: GET
+  cloud_diagrams_activity_groups:
+    read:
+      path: /clouddiagrams/v1/activity
+      method: GET
   # Cloud Diagrams statussheet data source
   cloud_diagrams_statussheet:
     read:
@@ -222,6 +226,11 @@ data_sources:
   cloud_diagrams_export:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/export-json
+      method: GET
+  # Cloud Diagrams resource relationships data source
+  cloud_diagrams_relationships:
+    read:
+      path: /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships
       method: GET
   # Insight data sources
   insight:

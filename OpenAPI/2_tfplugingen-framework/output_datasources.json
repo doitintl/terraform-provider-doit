@@ -2682,689 +2682,67 @@
 			}
 		},
 		{
-			"name": "cloud_diagrams_export",
+			"name": "cloud_diagrams_activity_groups",
 			"schema": {
 				"attributes": [
 					{
-						"name": "id",
+						"name": "ss_id",
 						"string": {
 							"computed_optional_required": "required",
 							"description": "Layer ID."
 						}
 					},
 					{
-						"name": "attachments",
-						"list_nested": {
-							"computed_optional_required": "computed",
-							"nested_object": {
-								"attributes": [
-									{
-										"name": "_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Attachment ID."
-										}
-									},
-									{
-										"name": "cld_account",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account ID."
-										}
-									},
-									{
-										"name": "cld_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud resource ID (set on cloud-imported components)."
-										}
-									},
-									{
-										"name": "cld_sync",
-										"bool": {
-											"computed_optional_required": "computed",
-											"description": "Whether this component is synced with cloud."
-										}
-									},
-									{
-										"name": "cld_type",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account type."
-										}
-									},
-									{
-										"name": "color",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Attachment color."
-										}
-									},
-									{
-										"name": "group",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Parent group ID."
-										}
-									},
-									{
-										"name": "icon",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Attachment icon identifier."
-										}
-									},
-									{
-										"name": "issues",
-										"list_nested": {
-											"computed_optional_required": "computed",
-											"nested_object": {
-												"attributes": [
-													{
-														"name": "_id",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Issue reference ID."
-														}
-													},
-													{
-														"name": "comment",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Optional comment on the issue."
-														}
-													},
-													{
-														"name": "jira",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Linked Jira ticket key or URL."
-														}
-													},
-													{
-														"name": "snoozed",
-														"number": {
-															"computed_optional_required": "computed",
-															"description": "Snooze duration in seconds."
-														}
-													}
-												]
-											},
-											"description": "Issues associated with this attachment."
-										}
-									},
-									{
-										"name": "name",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Component name."
-										}
-									},
-									{
-										"name": "props",
-										"string": {
-											"computed_optional_required": "computed",
-											"custom_type": {
-												"import": {
-													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-												},
-												"type": "jsontypes.NormalizedType{}",
-												"value_type": "jsontypes.Normalized"
-											},
-											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
-										}
-									},
-									{
-										"name": "tags",
-										"list": {
-											"computed_optional_required": "computed",
-											"element_type": {
-												"string": {}
-											},
-											"description": "Tags assigned to the component."
-										}
-									}
-								]
-							},
-							"description": "Exported attachments."
-						}
-					},
-					{
-						"name": "combiners",
-						"list_nested": {
-							"computed_optional_required": "computed",
-							"nested_object": {
-								"attributes": [
-									{
-										"name": "_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Combiner ID."
-										}
-									},
-									{
-										"name": "color",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Combiner color."
-										}
-									},
-									{
-										"name": "icon",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Combiner icon identifier."
-										}
-									},
-									{
-										"name": "items",
-										"list_nested": {
-											"computed_optional_required": "computed",
-											"nested_object": {
-												"attributes": [
-													{
-														"name": "_id",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Component ID."
-														}
-													},
-													{
-														"name": "type",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Component type."
-														}
-													}
-												]
-											},
-											"description": "Components contained in the combiner."
-										}
-									},
-									{
-										"name": "name",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Combiner name."
-										}
-									}
-								]
-							},
-							"description": "Exported combiners."
-						}
-					},
-					{
-						"name": "elements",
-						"list_nested": {
-							"computed_optional_required": "computed",
-							"nested_object": {
-								"attributes": [
-									{
-										"name": "_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Element ID."
-										}
-									},
-									{
-										"name": "cld_account",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account ID."
-										}
-									},
-									{
-										"name": "cld_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud resource ID (set on cloud-imported components)."
-										}
-									},
-									{
-										"name": "cld_sync",
-										"bool": {
-											"computed_optional_required": "computed",
-											"description": "Whether this component is synced with cloud."
-										}
-									},
-									{
-										"name": "cld_type",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account type."
-										}
-									},
-									{
-										"name": "color",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Element color."
-										}
-									},
-									{
-										"name": "icon",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Element icon identifier."
-										}
-									},
-									{
-										"name": "issues",
-										"list_nested": {
-											"computed_optional_required": "computed",
-											"nested_object": {
-												"attributes": [
-													{
-														"name": "_id",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Issue reference ID."
-														}
-													},
-													{
-														"name": "comment",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Optional comment on the issue."
-														}
-													},
-													{
-														"name": "jira",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Linked Jira ticket key or URL."
-														}
-													},
-													{
-														"name": "snoozed",
-														"number": {
-															"computed_optional_required": "computed",
-															"description": "Snooze duration in seconds."
-														}
-													}
-												]
-											},
-											"description": "Issues associated with this element."
-										}
-									},
-									{
-										"name": "name",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Component name."
-										}
-									},
-									{
-										"name": "parent",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Parent element ID."
-										}
-									},
-									{
-										"name": "props",
-										"string": {
-											"computed_optional_required": "computed",
-											"custom_type": {
-												"import": {
-													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-												},
-												"type": "jsontypes.NormalizedType{}",
-												"value_type": "jsontypes.Normalized"
-											},
-											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
-										}
-									},
-									{
-										"name": "tags",
-										"list": {
-											"computed_optional_required": "computed",
-											"element_type": {
-												"string": {}
-											},
-											"description": "Tags assigned to the component."
-										}
-									}
-								]
-							},
-							"description": "Exported elements."
-						}
-					},
-					{
-						"name": "groups",
-						"list_nested": {
-							"computed_optional_required": "computed",
-							"nested_object": {
-								"attributes": [
-									{
-										"name": "_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Group ID."
-										}
-									},
-									{
-										"name": "cld_account",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account ID."
-										}
-									},
-									{
-										"name": "cld_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud resource ID (set on cloud-imported components)."
-										}
-									},
-									{
-										"name": "cld_sync",
-										"bool": {
-											"computed_optional_required": "computed",
-											"description": "Whether this component is synced with cloud."
-										}
-									},
-									{
-										"name": "cld_type",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account type."
-										}
-									},
-									{
-										"name": "color",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Group color."
-										}
-									},
-									{
-										"name": "group_type",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Group type."
-										}
-									},
-									{
-										"name": "icon",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Group icon identifier."
-										}
-									},
-									{
-										"name": "issues",
-										"list_nested": {
-											"computed_optional_required": "computed",
-											"nested_object": {
-												"attributes": [
-													{
-														"name": "_id",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Issue reference ID."
-														}
-													},
-													{
-														"name": "comment",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Optional comment on the issue."
-														}
-													},
-													{
-														"name": "jira",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Linked Jira ticket key or URL."
-														}
-													},
-													{
-														"name": "snoozed",
-														"number": {
-															"computed_optional_required": "computed",
-															"description": "Snooze duration in seconds."
-														}
-													}
-												]
-											},
-											"description": "Issues associated with this group."
-										}
-									},
-									{
-										"name": "items",
-										"list_nested": {
-											"computed_optional_required": "computed",
-											"nested_object": {
-												"attributes": [
-													{
-														"name": "_id",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Component ID."
-														}
-													},
-													{
-														"name": "type",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Component type."
-														}
-													}
-												]
-											},
-											"description": "Components contained in the group."
-										}
-									},
-									{
-										"name": "name",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Component name."
-										}
-									},
-									{
-										"name": "props",
-										"string": {
-											"computed_optional_required": "computed",
-											"custom_type": {
-												"import": {
-													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-												},
-												"type": "jsontypes.NormalizedType{}",
-												"value_type": "jsontypes.Normalized"
-											},
-											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
-										}
-									},
-									{
-										"name": "tags",
-										"list": {
-											"computed_optional_required": "computed",
-											"element_type": {
-												"string": {}
-											},
-											"description": "Tags assigned to the component."
-										}
-									}
-								]
-							},
-							"description": "Exported groups."
-						}
-					},
-					{
-						"name": "links",
-						"list_nested": {
-							"computed_optional_required": "computed",
-							"nested_object": {
-								"attributes": [
-									{
-										"name": "_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Link ID."
-										}
-									},
-									{
-										"name": "cld_account",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account ID."
-										}
-									},
-									{
-										"name": "cld_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud resource ID (set on cloud-imported components)."
-										}
-									},
-									{
-										"name": "cld_sync",
-										"bool": {
-											"computed_optional_required": "computed",
-											"description": "Whether this component is synced with cloud."
-										}
-									},
-									{
-										"name": "cld_type",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account type."
-										}
-									},
-									{
-										"name": "connection_type",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Link connection type."
-										}
-									},
-									{
-										"name": "issues",
-										"list_nested": {
-											"computed_optional_required": "computed",
-											"nested_object": {
-												"attributes": [
-													{
-														"name": "_id",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Issue reference ID."
-														}
-													},
-													{
-														"name": "comment",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Optional comment on the issue."
-														}
-													},
-													{
-														"name": "jira",
-														"string": {
-															"computed_optional_required": "computed",
-															"description": "Linked Jira ticket key or URL."
-														}
-													},
-													{
-														"name": "snoozed",
-														"number": {
-															"computed_optional_required": "computed",
-															"description": "Snooze duration in seconds."
-														}
-													}
-												]
-											},
-											"description": "Issues associated with this link."
-										}
-									},
-									{
-										"name": "name",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Component name."
-										}
-									},
-									{
-										"name": "owner_ss_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Owner layer ID for cross-diagram links."
-										}
-									},
-									{
-										"name": "props",
-										"string": {
-											"computed_optional_required": "computed",
-											"custom_type": {
-												"import": {
-													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-												},
-												"type": "jsontypes.NormalizedType{}",
-												"value_type": "jsontypes.Normalized"
-											},
-											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
-										}
-									},
-									{
-										"name": "tags",
-										"list": {
-											"computed_optional_required": "computed",
-											"element_type": {
-												"string": {}
-											},
-											"description": "Tags assigned to the component."
-										}
-									}
-								]
-							},
-							"description": "Exported links."
-						}
-					},
-					{
-						"name": "metadata",
-						"single_nested": {
-							"computed_optional_required": "computed",
-							"attributes": [
+						"name": "limit",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of groups to return (default 10).",
+							"validators": [
 								{
-									"name": "connections",
-									"map": {
-										"computed_optional_required": "computed",
-										"element_type": {
-											"string": {}
-										},
-										"description": "Map of component ID to display label for external connections referenced by cross-diagram links."
-									}
-								},
-								{
-									"name": "date",
-									"string": {
-										"computed_optional_required": "computed",
-										"description": "ISO 8601 timestamp of the export."
-									}
-								},
-								{
-									"name": "user",
-									"string": {
-										"computed_optional_required": "computed",
-										"description": "Email of the user who triggered the export."
-									}
-								},
-								{
-									"name": "version",
-									"string": {
-										"computed_optional_required": "computed",
-										"description": "Export format version."
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(1)"
 									}
 								}
-							],
-							"description": "Metadata included in a diagram JSON export."
+							]
 						}
 					},
 					{
-						"name": "nodes",
-						"list_nested": {
+						"name": "offset",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Number of groups to skip (default 0).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(0)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "tags",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Filter by tags."
+						}
+					},
+					{
+						"name": "cloud_diagrams_activity_groups",
+						"set_nested": {
 							"computed_optional_required": "computed",
 							"nested_object": {
 								"attributes": [
@@ -3372,90 +2750,11 @@
 										"name": "_id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Node ID."
+											"description": "Activity group ID."
 										}
 									},
 									{
-										"name": "cld_account",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account ID."
-										}
-									},
-									{
-										"name": "cld_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud resource ID (set on cloud-imported components)."
-										}
-									},
-									{
-										"name": "cld_sync",
-										"bool": {
-											"computed_optional_required": "computed",
-											"description": "Whether this component is synced with cloud."
-										}
-									},
-									{
-										"name": "cld_type",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Cloud account type."
-										}
-									},
-									{
-										"name": "color",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Node color."
-										}
-									},
-									{
-										"name": "icon",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Node icon identifier."
-										}
-									},
-									{
-										"name": "infra_node",
-										"single_nested": {
-											"computed_optional_required": "computed",
-											"attributes": [
-												{
-													"name": "_id",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Infrastructure node ID."
-													}
-												},
-												{
-													"name": "scheme_id",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Parent diagram ID."
-													}
-												},
-												{
-													"name": "ss_id",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Parent layer ID."
-													}
-												}
-											],
-											"description": "Reference to a linked infrastructure node in another diagram."
-										}
-									},
-									{
-										"name": "instance_count",
-										"int64": {
-											"computed_optional_required": "computed",
-											"description": "Number of instances represented by this node."
-										}
-									},
-									{
-										"name": "issues",
+										"name": "items",
 										"list_nested": {
 											"computed_optional_required": "computed",
 											"nested_object": {
@@ -3464,68 +2763,85 @@
 														"name": "_id",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Issue reference ID."
+															"description": "Activity record ID."
 														}
 													},
 													{
-														"name": "comment",
+														"name": "activity",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Optional comment on the issue."
+															"description": "Activity type."
 														}
 													},
 													{
-														"name": "jira",
+														"name": "group",
 														"string": {
 															"computed_optional_required": "computed",
-															"description": "Linked Jira ticket key or URL."
+															"description": "ID of the activity group this record belongs to."
 														}
 													},
 													{
-														"name": "snoozed",
-														"number": {
+														"name": "group_type",
+														"string": {
 															"computed_optional_required": "computed",
-															"description": "Snooze duration in seconds."
+															"description": "Activity group sub-type."
+														}
+													},
+													{
+														"name": "metadata",
+														"string": {
+															"computed_optional_required": "computed",
+															"custom_type": {
+																"import": {
+																	"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+																},
+																"type": "jsontypes.NormalizedType{}",
+																"value_type": "jsontypes.Normalized"
+															},
+															"description": "Activity-specific payload (structure varies by activity type). Value is JSON-encoded."
+														}
+													},
+													{
+														"name": "service_type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Cloud service type the activity applies to."
+														}
+													},
+													{
+														"name": "tags",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															},
+															"description": "Tags associated with the activity."
+														}
+													},
+													{
+														"name": "timestamp",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Timestamp of the activity."
 														}
 													}
 												]
 											},
-											"description": "Issues associated with this node."
+											"description": "Individual activity records within this group."
 										}
 									},
 									{
-										"name": "name",
+										"name": "snapshot",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Component name."
+											"description": "ID of the associated snapshot (equal to the group ID)."
 										}
 									},
 									{
-										"name": "parent",
+										"name": "statussheet",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Parent node ID."
-										}
-									},
-									{
-										"name": "props",
-										"string": {
-											"computed_optional_required": "computed",
-											"custom_type": {
-												"import": {
-													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-												},
-												"type": "jsontypes.NormalizedType{}",
-												"value_type": "jsontypes.Normalized"
-											},
-											"description": "Custom component properties (key-value pairs). Value is JSON-encoded."
-										}
-									},
-									{
-										"name": "running",
-										"bool": {
-											"computed_optional_required": "computed",
-											"description": "Whether the node is currently running."
+											"description": "Layer ID this group belongs to."
 										}
 									},
 									{
@@ -3535,65 +2851,18 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "Tags assigned to the component."
+											"description": "Tags associated with the group."
+										}
+									},
+									{
+										"name": "timestamp",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Timestamp of the activity group."
 										}
 									}
 								]
-							},
-							"description": "Exported nodes."
-						}
-					},
-					{
-						"name": "notes",
-						"list_nested": {
-							"computed_optional_required": "computed",
-							"nested_object": {
-								"attributes": [
-									{
-										"name": "_id",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Note ID."
-										}
-									},
-									{
-										"name": "color",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Note background color."
-										}
-									},
-									{
-										"name": "font_size",
-										"number": {
-											"computed_optional_required": "computed",
-											"description": "Note font size."
-										}
-									},
-									{
-										"name": "text",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Note text content."
-										}
-									}
-								]
-							},
-							"description": "Exported notes."
-						}
-					},
-					{
-						"name": "statussheet",
-						"string": {
-							"computed_optional_required": "computed",
-							"custom_type": {
-								"import": {
-									"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-								},
-								"type": "jsontypes.NormalizedType{}",
-								"value_type": "jsontypes.Normalized"
-							},
-							"description": "Diagram-level metadata (excluding internal IDs). Value is JSON-encoded."
+							}
 						}
 					}
 				],
@@ -3714,6 +2983,183 @@
 									}
 								]
 							}
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
+			"name": "cloud_diagrams_relationships",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Diagram (layer) ID."
+						}
+					},
+					{
+						"name": "rid",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Anchor resource ID — must exist as a node, element, or group on the diagram."
+						}
+					},
+					{
+						"name": "direction",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Edge direction relative to the anchor. `both` returns upstream and downstream neighbours. Defaults to `both`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"downstream\",\n\"upstream\",\n\"both\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "depth",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "`direct` returns one-hop neighbours; `transitive` runs a cycle-safe BFS to the\nconnected component (still capped at 200 relations). Defaults to `direct`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"direct\",\n\"transitive\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "kind",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "`edges` walks the link graph; `group_members` walks group membership (children\nand parent groups); `both` merges the two and dedupes by id, preserving the\nsmallest observed hop count. Defaults to `edges`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"edges\",\n\"group_members\",\n\"both\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "anchor",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Anchor resource ID (matches the `rid` path parameter)."
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Human-readable resource name."
+									}
+								},
+								{
+									"name": "service_type",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Cloud service type when available (e.g. `Amazon RDS`, `GCP Cloud SQL`)."
+									}
+								},
+								{
+									"name": "type",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Component bucket the anchor lives in."
+									}
+								}
+							],
+							"description": "The anchor resource the traversal started from."
+						}
+					},
+					{
+						"name": "relations",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "hops",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Edge hop count from the anchor. Group-member / group-parent entries are reported as 1."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Related resource ID."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Human-readable name of the related resource."
+										}
+									},
+									{
+										"name": "relation",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "How the resource is related to the anchor. `downstream` / `upstream` are edge\nrelations (anchor is the edge origin / destination respectively).\n`group_member` means the related resource is contained in the anchor (anchor is\na group); `group_parent` means the related resource is a group that contains\nthe anchor."
+										}
+									},
+									{
+										"name": "service_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud service type when available."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Component bucket the related resource lives in."
+										}
+									}
+								]
+							},
+							"description": "Resources related to the anchor (capped at 200)."
+						}
+					},
+					{
+						"name": "truncated",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "True when the relation list was capped at 200 entries."
 						}
 					}
 				],

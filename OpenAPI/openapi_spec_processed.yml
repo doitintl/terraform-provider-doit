@@ -3140,6 +3140,131 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Get resource relationships
+      description: |-
+        Walks the diagram graph from the anchor resource and returns related resources.
+        Edge traversal walks the diagram's link set (same-scheme guard, BFS, cycle-safe);
+        group traversal walks the group membership set. The result list is capped at 200
+        relations; `truncated` is `true` when the cap is hit. Read-only: does not mutate
+        diagram state.
+      operationId: getCloudDiagramResourceRelationships
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Diagram (layer) ID.
+          schema:
+            type: string
+        - name: rid
+          in: path
+          required: true
+          description: Anchor resource ID — must exist as a node, element, or group on the diagram.
+          schema:
+            type: string
+        - name: direction
+          in: query
+          description: Edge direction relative to the anchor. `both` returns upstream and downstream neighbours. Defaults to `both`.
+          schema:
+            type: string
+            enum:
+              - downstream
+              - upstream
+              - both
+            default: both
+        - name: depth
+          in: query
+          description: |-
+            `direct` returns one-hop neighbours; `transitive` runs a cycle-safe BFS to the
+            connected component (still capped at 200 relations). Defaults to `direct`.
+          schema:
+            type: string
+            enum:
+              - direct
+              - transitive
+            default: direct
+        - name: kind
+          in: query
+          description: |-
+            `edges` walks the link graph; `group_members` walks group membership (children
+            and parent groups); `both` merges the two and dedupes by id, preserving the
+            smallest observed hop count. Defaults to `edges`.
+          schema:
+            type: string
+            enum:
+              - edges
+              - group_members
+              - both
+            default: edges
+      responses:
+        "200":
+          description: OK - Related resources returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagramRelationshipsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
+        "404":
+          $ref: "#/components/responses/404"
+  /clouddiagrams/v1/activity:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: List activity groups for a layer
+      description: |-
+        Returns snapshot activity groups for the specified diagram layer,
+        ordered by timestamp descending. Each group contains a snapshot reference
+        and the individual activity records that belong to it.
+      operationId: listCloudDiagramActivityGroups
+      parameters:
+        - name: ss_id
+          in: query
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of groups to return (default 10).
+          schema:
+            type: integer
+            minimum: 1
+        - name: offset
+          in: query
+          description: Number of groups to skip (default 0).
+          schema:
+            type: integer
+            minimum: 0
+        - name: tags
+          in: query
+          description: Filter by tags.
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK - Activity groups returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramSnapshotActivityGroup"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
   /clouddiagrams/v1/activity/node-activities:
     get:
       tags:
@@ -4768,6 +4893,56 @@ components:
       type: string
       description: The insight category.
       enum: ["FinOps", "Operational excellence", "Performance efficiency", "Reliability", "Security", "Sustainability"]
+    CloudDiagramActivityItem:
+      type: object
+      required:
+        - _id
+        - group
+        - activity
+        - timestamp
+      description: An individual activity record within an activity group.
+      properties:
+        _id:
+          type: string
+          description: Activity record ID.
+        group:
+          type: string
+          description: ID of the activity group this record belongs to.
+        activity:
+          type: string
+          enum:
+            - NODE_CREATE
+            - NODE_UPDATE
+            - NODE_DELETE
+            - LINK_CREATE
+            - LINK_UPDATE
+            - LINK_DELETE
+            - GROUP_CREATE
+            - GROUP_UPDATE
+            - GROUP_DELETE
+            - ATTACHMENT_CREATE
+            - ATTACHMENT_UPDATE
+            - ATTACHMENT_DELETE
+          description: Activity type.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Activity-specific payload (structure varies by activity type).
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity.
+        service_type:
+          type: string
+          description: Cloud service type the activity applies to.
+        group_type:
+          type: string
+          description: Activity group sub-type.
+        tags:
+          type: array
+          description: Tags associated with the activity.
+          items:
+            type: string
     CloudDiagramAttachment:
       type: object
       required:
@@ -5506,6 +5681,38 @@ components:
         color:
           type: string
           description: Layer color.
+    CloudDiagramSnapshotActivityGroup:
+      type: object
+      required:
+        - _id
+        - statussheet
+        - timestamp
+        - snapshot
+      description: A snapshot activity group containing the individual activity records that produced it.
+      properties:
+        _id:
+          type: string
+          description: Activity group ID.
+        statussheet:
+          type: string
+          description: Layer ID this group belongs to.
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity group.
+        tags:
+          type: array
+          description: Tags associated with the group.
+          items:
+            type: string
+        snapshot:
+          type: string
+          description: ID of the associated snapshot (equal to the group ID).
+        items:
+          type: array
+          description: Individual activity records within this group.
+          items:
+            $ref: "#/components/schemas/CloudDiagramActivityItem"
     CloudDiagramStats:
       type: object
       description: Diagram with activity stats for a given time period.
@@ -6352,6 +6559,111 @@ components:
         message:
           type: string
           description: Success message
+    DiagramRelationship:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - relation
+        - hops
+      description: One related resource returned by the traversal.
+      properties:
+        id:
+          type: string
+          description: Related resource ID.
+        type:
+          type: string
+          enum:
+            - node
+            - element
+            - group
+          description: Component bucket the related resource lives in.
+        name:
+          type: string
+          description: Human-readable name of the related resource.
+        serviceType:
+          type: string
+          description: Cloud service type when available.
+        relation:
+          type: string
+          enum:
+            - downstream
+            - upstream
+            - group_member
+            - group_parent
+          description: |-
+            How the resource is related to the anchor. `downstream` / `upstream` are edge
+            relations (anchor is the edge origin / destination respectively).
+            `group_member` means the related resource is contained in the anchor (anchor is
+            a group); `group_parent` means the related resource is a group that contains
+            the anchor.
+        hops:
+          type: integer
+          minimum: 1
+          description: Edge hop count from the anchor. Group-member / group-parent entries are reported as 1.
+    DiagramRelationshipsAnchor:
+      type: object
+      required:
+        - id
+        - type
+        - name
+      description: The anchor resource the traversal started from.
+      properties:
+        id:
+          type: string
+          description: Anchor resource ID (matches the `rid` path parameter).
+        type:
+          type: string
+          enum:
+            - node
+            - element
+            - group
+          description: Component bucket the anchor lives in.
+        name:
+          type: string
+          description: Human-readable resource name.
+        serviceType:
+          type: string
+          description: Cloud service type when available (e.g. `Amazon RDS`, `GCP Cloud SQL`).
+    DiagramRelationshipsResponse:
+      type: object
+      required:
+        - anchor
+        - direction
+        - depth
+        - kind
+        - relations
+        - truncated
+      description: The response payload for the resource relationships endpoint.
+      properties:
+        anchor:
+          $ref: "#/components/schemas/DiagramRelationshipsAnchor"
+        direction:
+          type: string
+          enum:
+            - downstream
+            - upstream
+            - both
+        depth:
+          type: string
+          enum:
+            - direct
+            - transitive
+        kind:
+          type: string
+          enum:
+            - edges
+            - group_members
+            - both
+        relations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiagramRelationship"
+          description: Resources related to the anchor (capped at 200).
+        truncated:
+          type: boolean
+          description: True when the relation list was capped at 200 entries.
     Dimension:
       description: Definition of a report dimension.
       type: object
