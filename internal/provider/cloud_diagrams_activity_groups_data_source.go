@@ -190,11 +190,8 @@ func mapActivityItems(ctx context.Context, items *[]models.CloudDiagramActivityI
 			return types.ListNull(itemType), diags
 		}
 
-		// Metadata is free-form (additionalProperties: true). Map as empty object.
-		metadataVal := ds.NewMetadataValueMust(
-			ds.MetadataValue{}.AttributeTypes(ctx),
-			map[string]attr.Value{},
-		)
+		// Metadata is free-form (additionalProperties: true). Map as JSON string.
+		metadataVal := mapFreeformJSON(item.Metadata)
 
 		val, valDiags := ds.NewItemsValue(
 			ds.ItemsValue{}.AttributeTypes(ctx),

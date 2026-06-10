@@ -3111,6 +3111,57 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/activity:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: List activity groups for a layer
+      description: |-
+        Returns snapshot activity groups for the specified diagram layer,
+        ordered by timestamp descending. Each group contains a snapshot reference
+        and the individual activity records that belong to it.
+      operationId: listCloudDiagramActivityGroups
+      parameters:
+        - name: ss_id
+          in: query
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of groups to return (default 10).
+          schema:
+            type: integer
+            minimum: 1
+        - name: offset
+          in: query
+          description: Number of groups to skip (default 0).
+          schema:
+            type: integer
+            minimum: 0
+        - name: tags
+          in: query
+          description: Filter by tags.
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK - Activity groups returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudDiagramSnapshotActivityGroup"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
   /clouddiagrams/v1/activity/node-activities:
     get:
       tags:

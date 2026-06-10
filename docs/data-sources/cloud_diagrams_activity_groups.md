@@ -51,6 +51,7 @@ output "activity_groups" {
 
 - `limit` (Number) Maximum number of groups to return (default 10).
 - `offset` (Number) Number of groups to skip (default 0).
+- `tags` (List of String) Filter by tags.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
@@ -86,10 +87,7 @@ Read-Only:
 - `activity` (String) Activity type.
 - `group` (String) ID of the activity group this record belongs to.
 - `group_type` (String) Activity group sub-type.
-- `metadata` (Attributes) Activity-specific payload (structure varies by activity type). (see [below for nested schema](#nestedatt--cloud_diagrams_activity_groups--items--metadata))
+- `metadata` (String) Activity-specific payload (structure varies by activity type). Value is JSON-encoded.
 - `service_type` (String) Cloud service type the activity applies to.
 - `tags` (List of String) Tags associated with the activity.
 - `timestamp` (String) Timestamp of the activity.
-
-<a id="nestedatt--cloud_diagrams_activity_groups--items--metadata"></a>
-### Nested Schema for `cloud_diagrams_activity_groups.items.metadata`

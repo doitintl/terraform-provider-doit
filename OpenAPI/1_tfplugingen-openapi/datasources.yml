@@ -211,6 +211,7 @@ data_sources:
   cloud_diagrams_activity_groups:
     read:
       path: /clouddiagrams/v1/activity
+      method: GET
   # Cloud Diagrams statussheet data source
   cloud_diagrams_statussheet:
     read:
