@@ -218,6 +218,11 @@ data_sources:
     read:
       path: /clouddiagrams/v1/activity/node-activities
       method: GET
+  # Cloud Diagrams export data source
+  cloud_diagrams_export:
+    read:
+      path: /clouddiagrams/v1/statussheet/{id}/export-json
+      method: GET
   # Insight data sources
   insight:
     read:
