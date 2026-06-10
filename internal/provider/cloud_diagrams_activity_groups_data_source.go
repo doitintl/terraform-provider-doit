@@ -80,7 +80,7 @@ func (d *cloudDiagramsActivityGroupsDataSource) Read(ctx context.Context, req da
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	if data.SsId.IsUnknown() || data.Limit.IsUnknown() || data.Offset.IsUnknown() || !req.Config.Raw.IsFullyKnown() {
+	if !req.Config.Raw.IsFullyKnown() {
 		data.CloudDiagramsActivityGroups = types.SetUnknown(ds.CloudDiagramsActivityGroupsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
