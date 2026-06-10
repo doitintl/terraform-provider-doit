@@ -76,7 +76,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	defer cancel()
 
 	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() || data.IncludeNotifications.IsUnknown() {
 		data.Anomalies = types.ListUnknown(datasource_anomalies.AnomaliesValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -91,6 +91,9 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	}
 	if !data.MaxCreationTime.IsNull() {
 		params.MaxCreationTime = new(data.MaxCreationTime.ValueString())
+	}
+	if !data.IncludeNotifications.IsNull() {
+		params.IncludeNotifications = data.IncludeNotifications.ValueBoolPointer()
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
