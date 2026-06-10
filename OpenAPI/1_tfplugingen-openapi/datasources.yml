@@ -222,6 +222,11 @@ data_sources:
     read:
       path: /clouddiagrams/v1/activity/node-activities
       method: GET
+  # Cloud Diagrams resource relationships data source
+  cloud_diagrams_relationships:
+    read:
+      path: /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships
+      method: GET
   # Insight data sources
   insight:
     read:
