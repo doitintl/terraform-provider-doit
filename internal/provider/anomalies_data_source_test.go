@@ -257,6 +257,80 @@ output "anomaly_notifications" {
 `
 }
 
+// TestAccAnomaliesDataSource_IncludeNotifications verifies that setting
+// include_notifications = true causes the API to return notification events
+// in each anomaly's notifications list.
+func TestAccAnomaliesDataSource_IncludeNotifications(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceIncludeNotificationsConfig(true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.with_notifications", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.with_notifications", "include_notifications", "true"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceIncludeNotificationsConfig(true),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAnomaliesDataSource_IncludeNotificationsFalse verifies that setting
+// include_notifications = false also produces no drift.
+func TestAccAnomaliesDataSource_IncludeNotificationsFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceIncludeNotificationsConfig(false),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.with_notifications", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.with_notifications", "include_notifications", "false"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceIncludeNotificationsConfig(false),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceIncludeNotificationsConfig(includeNotifications bool) string {
+	return fmt.Sprintf(`
+data "doit_anomalies" "with_notifications" {
+  max_results            = 1
+  include_notifications  = %t
+}
+
+output "notification_channels" {
+  value = [
+    for a in data.doit_anomalies.with_notifications.anomalies : [
+      for n in a.notifications : n.channel
+    ]
+  ]
+}
+`, includeNotifications)
+}
+
 // Helper functions
 
 var (

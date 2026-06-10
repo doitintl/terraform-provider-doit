@@ -208,6 +208,12 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "An expression for filtering the results of the request",
 				MarkdownDescription: "An expression for filtering the results of the request",
 			},
+			"include_notifications": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Include anomaly notifications from the subcollection. Defaults to false.",
+				MarkdownDescription: "Include anomaly notifications from the subcollection. Defaults to false.",
+			},
 			"max_creation_time": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -242,13 +248,14 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AnomaliesModel struct {
-	Anomalies       types.List   `tfsdk:"anomalies"`
-	Filter          types.String `tfsdk:"filter"`
-	MaxCreationTime types.String `tfsdk:"max_creation_time"`
-	MaxResults      types.Int64  `tfsdk:"max_results"`
-	MinCreationTime types.String `tfsdk:"min_creation_time"`
-	PageToken       types.String `tfsdk:"page_token"`
-	RowCount        types.Int64  `tfsdk:"row_count"`
+	Anomalies            types.List   `tfsdk:"anomalies"`
+	Filter               types.String `tfsdk:"filter"`
+	IncludeNotifications types.Bool   `tfsdk:"include_notifications"`
+	MaxCreationTime      types.String `tfsdk:"max_creation_time"`
+	MaxResults           types.Int64  `tfsdk:"max_results"`
+	MinCreationTime      types.String `tfsdk:"min_creation_time"`
+	PageToken            types.String `tfsdk:"page_token"`
+	RowCount             types.Int64  `tfsdk:"row_count"`
 }
 
 var _ basetypes.ObjectTypable = AnomaliesType{}

@@ -1929,6 +1929,7 @@ paths:
       description: |-
         Returns a list of detected anomalies.
         Anomalies are returned in reverse chronological order by default.
+        The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
       operationId: listAnomalies
       parameters:
         - name: minCreationTime
@@ -1953,6 +1954,12 @@ paths:
             type: integer
             format: int64
         - $ref: "#/components/parameters/pageToken"
+        - name: includeNotifications
+          in: query
+          description: Include anomaly notifications from the subcollection. Defaults to false.
+          schema:
+            type: boolean
+            default: false
       responses:
         "200":
           description: OK - The request succeeded.
@@ -4325,7 +4332,8 @@ components:
         - top3SKUs
         - notifications
       type: object
-      description: Detailed information about a detected anomaly.
+      description: >-
+        Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
       properties:
         attribution:
           type: string

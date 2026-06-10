@@ -6,6 +6,23 @@ data "doit_anomalies" "critical" {
   filter = "severityLevel:critical"
 }
 
+# Include notification events for each anomaly
+data "doit_anomalies" "with_notifications" {
+  include_notifications = true
+}
+
+output "notification_audit" {
+  value = [for a in data.doit_anomalies.with_notifications.anomalies : {
+    id           = a.id
+    service      = a.service_name
+    severity     = a.severity_level
+    notifications = [for n in a.notifications : {
+      channel   = n.channel
+      timestamp = n.timestamp
+    }]
+  }]
+}
+
 # Output anomaly details
 output "total_anomalies" {
   value = data.doit_anomalies.all.row_count
