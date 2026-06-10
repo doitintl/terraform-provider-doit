@@ -14,22 +14,18 @@ Retrieves resource relationships for a Cloud Diagram component by traversing the
 
 ```terraform
 # Retrieve resource relationships for a Cloud Diagram component.
-# This example discovers a diagram, picks the first node, and walks
-# both edge and group-membership relationships one hop out.
+# This example searches for a node and walks both edge and group-membership
+# relationships one hop out from it.
 
-data "doit_cloud_diagrams_schemes" "all" {}
-
-locals {
-  scheme_key = keys(data.doit_cloud_diagrams_schemes.all.scheme)[0]
-  layer_id   = data.doit_cloud_diagrams_schemes.all.scheme[local.scheme_key].statussheet[0].ssid
-}
-
-data "doit_cloud_diagrams_statussheet" "layer" {
-  id = local.layer_id
+data "doit_cloud_diagrams_search" "lookup" {
+  query = "peer"
 }
 
 locals {
-  anchor_id = keys(data.doit_cloud_diagrams_statussheet.layer.node)[0]
+  # Pick the first node-type component from search results.
+  nodes     = [for c in data.doit_cloud_diagrams_search.lookup.component : c if c.type == "node"]
+  layer_id  = local.nodes[0].ss_id
+  anchor_id = local.nodes[0]._id
 }
 
 data "doit_cloud_diagrams_relationships" "example" {
