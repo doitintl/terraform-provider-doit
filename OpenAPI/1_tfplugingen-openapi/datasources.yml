@@ -208,6 +208,10 @@ data_sources:
     read:
       path: /clouddiagrams/v1/scheme/stats
       method: GET
+  cloud_diagrams_activity_groups:
+    read:
+      path: /clouddiagrams/v1/activity
+      method: GET
   # Cloud Diagrams statussheet data source
   cloud_diagrams_statussheet:
     read:
