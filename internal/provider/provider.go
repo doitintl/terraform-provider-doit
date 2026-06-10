@@ -299,6 +299,8 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCloudDiagramsSchemesDataSource,
 		NewCloudDiagramsStatsDataSource,
 		NewCloudDiagramsActivityGroupsDataSource,
+		NewCloudDiagramsStatussheetDataSource,
+		NewCloudDiagramsNodeActivitiesDataSource,
 		NewSharingDataSource,
 		NewInsightsDataSource,
 		NewInsightResourceResultsDataSource,
@@ -323,6 +325,7 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewInsightResourceResultsResource,
 		NewSharingResource,
 		NewUserResource,
+		NewCloudconnectAwsAccountResource,
 		NewCustomThemeResource,
 		NewActiveThemeResource,
 	}

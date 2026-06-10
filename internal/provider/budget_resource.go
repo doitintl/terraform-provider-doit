@@ -92,6 +92,51 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["create_time"] = attr
 	}
 
+	// Classify Optional+Computed attributes (clearableattr).
+	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+
+	// Category B: API-computed defaults or legacy fields — not clearable.
+	acknowledgeNotClearable(s,
+		"seasonal_amounts", // optional list, API returns empty list
+		"currency",         // API defaults to org currency
+		"scope",            // legacy alias list, API always returns a value
+		"type",             // API defaults budget type
+		"time_interval",    // API defaults time interval
+		"amount",           // API-computed for use_prev_spend budgets
+		"public",           // API defaults to false
+		"start_period",     // API defaults to current period
+		"name",             // API auto-generates name when omitted
+		"end_period",       // API rejects clearing (endPeriod=0/null)
+		"recipients",       // API auto-assigns creator's email on create
+
+		// recipients_slack_channels — API-populated Slack metadata
+		"recipients_slack_channels[*].customer_id", // API-populated
+		"recipients_slack_channels[*].id",          // API-populated
+		"recipients_slack_channels[*].name",        // API-populated
+		"recipients_slack_channels[*].shared",      // API-populated
+		"recipients_slack_channels[*].type",        // API-populated
+		"recipients_slack_channels[*].workspace",   // API-populated
+
+		// collaborators — identity/API defaults
+		"collaborators[*].email", // identity field
+		"collaborators[*].role",  // API defaults role
+
+		// alerts — identity field within list
+		"alerts[*].percentage", // identity field within list
+
+		// scopes
+		"scopes[*].inverse", // API defaults to false
+	)
+
+	// Category A: nested scopes[*].values — clearable.
+	if scopesAttr, ok := s.Attributes["scopes"].(schema.ListNestedAttribute); ok {
+		if attr, ok := scopesAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+			scopesAttr.NestedObject.Attributes["values"] = attr
+		}
+		s.Attributes["scopes"] = scopesAttr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,

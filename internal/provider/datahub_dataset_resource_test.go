@@ -138,3 +138,54 @@ resource "doit_datahub_dataset" "test" {
 }
 `, name)
 }
+
+// TestAccDatahubDatasetResource_ClearDescription tests that setting a description
+// and then removing it from config results in no drift. This is a diagnostic test
+// for https://github.com/doitintl/terraform-provider-doit/issues/233.
+func TestAccDatahubDatasetResource_ClearDescription(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-dataset")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with description set
+			{
+				Config: testAccDatahubDatasetResource(rName, "initial description"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "description", "initial description"),
+				),
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccDatahubDatasetResource(rName, "initial description"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear description by omitting it
+			{
+				Config: testAccDatahubDatasetResource(rName, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						// If issue #233 is real, this will be empty (old value sticks).
+						// If the attribute CAN be cleared, this should be non-empty.
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Drift check — cleared value should produce no drift
+			{
+				Config: testAccDatahubDatasetResource(rName, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}

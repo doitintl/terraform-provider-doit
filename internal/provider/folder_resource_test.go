@@ -540,3 +540,140 @@ resource "doit_folder" "child" {
 }
 `, parentA, parentB, child)
 }
+
+// TestAccFolder_ClearDescription tests that setting a description and then
+// removing it from config results in no drift. This is a diagnostic test
+// for https://github.com/doitintl/terraform-provider-doit/issues/233.
+// If the clearing drift check fails, it confirms that the Optional+Computed
+// attribute cannot be cleared due to the framework bug.
+func TestAccFolder_ClearDescription(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-folder")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with description set
+			{
+				Config: testAccFolderWithDescription(rName, "initial description"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_folder.this",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact("initial description")),
+				},
+			},
+			// Step 2: Drift check — same config, expect no changes
+			{
+				Config: testAccFolderWithDescription(rName, "initial description"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear description by omitting it from config
+			{
+				Config: testAccFolderMinimal(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						// If issue #233 is real, this will be an empty plan
+						// (the old value "sticks") instead of showing a change.
+						// If the attribute CAN be cleared, this should be non-empty.
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Drift check — cleared config should produce no drift
+			{
+				Config: testAccFolderMinimal(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccFolder_ClearParentFolderId tests that setting parent_folder_id and then
+// removing it from config results in no drift. The API defaults to "root".
+func TestAccFolder_ClearParentFolderId(t *testing.T) {
+	rParent := acctest.RandomWithPrefix("tf-acc-parent")
+	rChild := acctest.RandomWithPrefix("tf-acc-child")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create child under parent (parent_folder_id is set)
+			{
+				Config: testAccFolderNested(rParent, rChild),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValuePairs(
+						"doit_folder.parent",
+						tfjsonpath.New("id"),
+						"doit_folder.child",
+						tfjsonpath.New("parent_folder_id"),
+						compare.ValuesSame(),
+					),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccFolderNested(rParent, rChild),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear parent_folder_id by omitting it — should move to root
+			{
+				Config: testAccFolderClearParent(rParent, rChild),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						// If issue #233 is real for parent_folder_id, this will
+						// be empty (old parent value sticks) instead of showing
+						// an update to move the folder to root.
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Drift check — should be stable at root
+			{
+				Config: testAccFolderClearParent(rParent, rChild),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccFolderWithDescription(name, description string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "this" {
+  name        = %q
+  description = %q
+}
+`, name, description)
+}
+
+func testAccFolderClearParent(parentName, childName string) string {
+	return fmt.Sprintf(`
+resource "doit_folder" "parent" {
+  name             = %q
+  parent_folder_id = "root"
+}
+
+resource "doit_folder" "child" {
+  name = %q
+}
+`, parentName, childName)
+}

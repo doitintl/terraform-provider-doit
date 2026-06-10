@@ -2,6 +2,7 @@
 package linters
 
 import (
+	"github.com/doitintl/terraform-provider-doit/tools/linters/clearableattr"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/constructor"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/crudnaming"
@@ -122,5 +123,9 @@ func init() {
 
 	register.Plugin("requestguard", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{requestguard.Analyzer}}, nil
+	})
+
+	register.Plugin("clearableattr", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{clearableattr.Analyzer}}, nil
 	})
 }

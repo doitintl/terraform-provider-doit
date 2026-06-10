@@ -73,7 +73,7 @@ Possible values: `app_component`, `app_group`, `app_link`, `attachment`, `group`
 - `scheme` (Attributes Map) Map of diagram ID to diagram with its connected cloud accounts. (see [below for nested schema](#nestedatt--scheme))
 - `statussheet` (Attributes Map) Map of layer ID to layer metadata and component collections.
 Components are projected to key display and cloud fields by default. (see [below for nested schema](#nestedatt--statussheet))
-- `template` (Attributes) Map of template layer ID to template data. (see [below for nested schema](#nestedatt--template))
+- `template` (String) Map of template layer ID to template data. Value is JSON-encoded.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -138,7 +138,7 @@ Read-Only:
 - `icon` (String) Attachment icon identifier.
 - `issues` (Attributes List) Issues associated with this attachment. (see [below for nested schema](#nestedatt--statussheet--attachment--issues))
 - `name` (String) Component name.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--statussheet--attachment--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--statussheet--attachment--issues"></a>
@@ -150,10 +150,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--statussheet--attachment--props"></a>
-### Nested Schema for `statussheet.attachment.props`
 
 
 
@@ -193,7 +189,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this element. (see [below for nested schema](#nestedatt--statussheet--element--issues))
 - `name` (String) Component name.
 - `parent` (String) Parent element ID.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--statussheet--element--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--statussheet--element--issues"></a>
@@ -205,10 +201,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--statussheet--element--props"></a>
-### Nested Schema for `statussheet.element.props`
 
 
 
@@ -228,7 +220,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this group. (see [below for nested schema](#nestedatt--statussheet--group--issues))
 - `items` (Attributes List) Components contained in the group. (see [below for nested schema](#nestedatt--statussheet--group--items))
 - `name` (String) Component name.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--statussheet--group--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--statussheet--group--issues"></a>
@@ -251,10 +243,6 @@ Read-Only:
 - `type` (String) Component type.
 
 
-<a id="nestedatt--statussheet--group--props"></a>
-### Nested Schema for `statussheet.group.props`
-
-
 
 <a id="nestedatt--statussheet--link"></a>
 ### Nested Schema for `statussheet.link`
@@ -270,7 +258,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this link. (see [below for nested schema](#nestedatt--statussheet--link--issues))
 - `name` (String) Component name.
 - `owner_ss_id` (String) Owner layer ID for cross-diagram links.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--statussheet--link--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
 
 <a id="nestedatt--statussheet--link--issues"></a>
@@ -282,10 +270,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--statussheet--link--props"></a>
-### Nested Schema for `statussheet.link.props`
 
 
 
@@ -306,7 +290,7 @@ Read-Only:
 - `issues` (Attributes List) Issues associated with this node. (see [below for nested schema](#nestedatt--statussheet--node--issues))
 - `name` (String) Component name.
 - `parent` (String) Parent node ID.
-- `props` (Attributes) Custom component properties (key-value pairs). (see [below for nested schema](#nestedatt--statussheet--node--props))
+- `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `running` (Boolean) Whether the node is currently running.
 - `tags` (List of String) Tags assigned to the component.
 
@@ -329,10 +313,6 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
-
-
-<a id="nestedatt--statussheet--node--props"></a>
-### Nested Schema for `statussheet.node.props`
 
 
 
@@ -368,9 +348,3 @@ Read-Only:
 - `status` (String) Import status.
 - `synced_at` (String) Timestamp of the last successful sync.
 - `type` (String) Connected cloud account type.
-
-
-
-
-<a id="nestedatt--template"></a>
-### Nested Schema for `template`

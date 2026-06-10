@@ -4,49 +4,54 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// useNullForUnknownWhenConfigNull returns a plan modifier that proposes null when
-// the config value is null (either explicitly set or omitted).
+// useEmptyForUnknownWhenConfigNull returns a plan modifier that proposes an empty
+// string when the config value is null (either explicitly set or omitted) and a
+// prior state value exists.
 //
-// This is needed for the "public" attribute because the sharing API uses full-replacement
-// PUT semantics: omitting the "public" field from the request body clears public access.
-// Therefore, when the user omits "public" from their config, the planned value must be
-// null so that the provider correctly omits it from the API request, which in turn clears
-// any previously-set public access.
+// For Optional+Computed attributes, Terraform Core copies the prior state value
+// into the ProposedNewState when the config value is null. The framework then
+// skips its MarkComputedNilsAsUnknown phase because ProposedNewState already
+// equals PriorState. The net effect is that the plan silently preserves the old
+// value, making it impossible for users to clear the attribute.
 //
-// Without this modifier, Terraform's default Optional+Computed behavior would preserve
-// the prior state value when config is null, causing the provider to re-send the old
-// public value and preventing the user from clearing public access.
+// This modifier overrides that behavior: when the config is null and the state
+// holds a value, it sets the planned value to empty string so the provider can
+// clear the field in the API request.
 //
-// Note: Because Terraform does not distinguish between "attribute omitted" and
-// "attribute explicitly set to null", both cases result in public access being cleared.
-// This is consistent with the API's full-replacement semantics.
+// Using empty string instead of null avoids null↔"" drift: APIs that return ""
+// after clearing will match the modifier's value without state-aware Read paths.
+//
+// Note: Terraform does not distinguish between "attribute omitted" and
+// "attribute explicitly set to null" — both result in a null config value.
+// Apply this modifier only to clearable string attributes where the API accepts
+// "" to clear the field and returns "" (not nil) for empty values.
 //
 // See: https://github.com/hashicorp/terraform-plugin-framework/issues/603
-func useNullForUnknownWhenConfigNull() planmodifier.String {
-	return useNullForUnknownWhenConfigNullModifier{}
+func useEmptyForUnknownWhenConfigNull() planmodifier.String {
+	return useEmptyForUnknownWhenConfigNullModifier{}
 }
 
-type useNullForUnknownWhenConfigNullModifier struct{}
+type useEmptyForUnknownWhenConfigNullModifier struct{}
 
-func (m useNullForUnknownWhenConfigNullModifier) Description(_ context.Context) string {
-	return "Proposes null when the config value is null (omitted or explicitly set), " +
-		"allowing the attribute to be cleared. This matches the API's full-replacement PUT semantics."
+func (m useEmptyForUnknownWhenConfigNullModifier) Description(_ context.Context) string {
+	return "Proposes an empty string when the config value is null (omitted or explicitly set) " +
+		"and a prior state value exists, allowing the attribute to be cleared."
 }
 
-func (m useNullForUnknownWhenConfigNullModifier) MarkdownDescription(ctx context.Context) string {
+func (m useEmptyForUnknownWhenConfigNullModifier) MarkdownDescription(ctx context.Context) string {
 	return m.Description(ctx)
 }
 
-func (m useNullForUnknownWhenConfigNullModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+func (m useEmptyForUnknownWhenConfigNullModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
 	// If the config value is null (user explicitly set null or omitted the field),
-	// and there IS a prior state value, propose null to allow clearing.
-	// This overrides the default Optional+Computed behavior of preserving prior state.
-	//
-	// This is correct because the API uses full-replacement PUT: omitting "public"
-	// from the request body clears public access. So the plan must reflect that.
+	// and there IS a prior state value, propose empty string to allow clearing.
+	// This overrides the default Optional+Computed behavior where Terraform Core
+	// copies the prior state value into the ProposedNewState, making clearing
+	// impossible.
 	if req.ConfigValue.IsNull() && !req.StateValue.IsNull() {
-		resp.PlanValue = req.ConfigValue // null
+		resp.PlanValue = types.StringValue("")
 	}
 }

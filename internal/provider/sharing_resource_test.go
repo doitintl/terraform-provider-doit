@@ -186,7 +186,7 @@ func TestAccSharing_ChangeOwner(t *testing.T) {
 }
 
 // TestAccSharing_PublicAccess tests setting, changing, and clearing public access.
-// The custom plan modifier (useNullForUnknownWhenConfigNull) allows clearing public
+// The custom plan modifier (useEmptyForUnknownWhenConfigNull) allows clearing public
 // by explicitly setting public = null in config.
 func TestAccSharing_PublicAccess(t *testing.T) {
 	n := acctest.RandInt()

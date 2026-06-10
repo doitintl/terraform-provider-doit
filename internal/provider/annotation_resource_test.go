@@ -403,8 +403,8 @@ resource "doit_annotation" "empty_lists" {
 }
 
 // TestAccAnnotation_WithOmittedLists tests that omitted lists are handled correctly.
-// Note: The API returns empty arrays even when labels/reports are not sent, so the
-// state will contain empty lists rather than null.
+// Without a clearing modifier (Cat B), omitted lists resolve to [] from the API
+// response (the API returns empty arrays for unset list fields).
 func TestAccAnnotation_WithOmittedLists(t *testing.T) {
 	n := acctest.RandInt()
 	timestamp := time.Now().AddDate(0, 0, -1).UTC().Format(time.RFC3339) // Yesterday in UTC
@@ -426,15 +426,25 @@ func TestAccAnnotation_WithOmittedLists(t *testing.T) {
 						"doit_annotation.omitted_lists",
 						tfjsonpath.New("content"),
 						knownvalue.StringExact(fmt.Sprintf("Annotation with omitted lists %d", n))),
-					// API returns empty arrays even when lists are not sent
+					// Omitted lists resolve to [] from the API response
+					// (Optional+Computed without clearing modifier, Cat B).
 					statecheck.ExpectKnownValue(
 						"doit_annotation.omitted_lists",
 						tfjsonpath.New("labels"),
-						knownvalue.ListSizeExact(0)),
+						knownvalue.ListExact([]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(
 						"doit_annotation.omitted_lists",
 						tfjsonpath.New("reports"),
-						knownvalue.ListSizeExact(0)),
+						knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			// Step 2: Drift check — re-apply should show no changes.
+			{
+				Config: testAccAnnotationWithOmittedLists(n, timestamp),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},

@@ -779,6 +779,27 @@ func (e CloudDiagramNodeCldType) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramNodeActivityActivity.
+const (
+	CloudDiagramNodeActivityActivityNODECREATE CloudDiagramNodeActivityActivity = "NODE_CREATE"
+	CloudDiagramNodeActivityActivityNODEDELETE CloudDiagramNodeActivityActivity = "NODE_DELETE"
+	CloudDiagramNodeActivityActivityNODEUPDATE CloudDiagramNodeActivityActivity = "NODE_UPDATE"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramNodeActivityActivity enum.
+func (e CloudDiagramNodeActivityActivity) Valid() bool {
+	switch e {
+	case CloudDiagramNodeActivityActivityNODECREATE:
+		return true
+	case CloudDiagramNodeActivityActivityNODEDELETE:
+		return true
+	case CloudDiagramNodeActivityActivityNODEUPDATE:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudDiagramSchemeResultType.
 const (
 	CloudDiagramSchemeResultTypeApplication    CloudDiagramSchemeResultType = "application"
@@ -3812,6 +3833,39 @@ type AvaAskSyncResponse struct {
 	ConversationId *string `json:"conversationId,omitempty"`
 }
 
+// AwsAccountResponse defines model for AwsAccountResponse.
+type AwsAccountResponse struct {
+	// AccountID The AWS account ID.
+	AccountID *string `json:"accountID,omitempty"`
+
+	// EnabledFeatures List of supported AWS features enabled by the caller. Returned in the same order as provided.
+	EnabledFeatures *[]string `json:"enabledFeatures,omitempty"`
+
+	// RoleArn The ARN of the IAM role.
+	RoleArn *string `json:"roleArn,omitempty"`
+
+	// S3Bucket S3 bucket name for real-time anomaly detection. Present only if real-time is enabled.
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+
+	// S3BucketRegion AWS region of the S3 bucket. Present only if s3Bucket exists.
+	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
+
+	// SupportedFeatures List of supported features and their permission status.
+	SupportedFeatures *[]AwsSupportedFeature `json:"supportedFeatures,omitempty"`
+
+	// TimeLinked ISO 8601 timestamp of when the role was linked.
+	TimeLinked *string `json:"timeLinked,omitempty"`
+}
+
+// AwsSupportedFeature defines model for AwsSupportedFeature.
+type AwsSupportedFeature struct {
+	// HasRequiredPermissions Whether the role has the required permissions for this feature.
+	HasRequiredPermissions *bool `json:"hasRequiredPermissions,omitempty"`
+
+	// Name Feature name.
+	Name *string `json:"name,omitempty"`
+}
+
 // BudgetAPI Budget details and runtime metrics.
 type BudgetAPI struct {
 	// Alerts List of up to three thresholds defined as a percentage of amount.
@@ -4403,6 +4457,30 @@ type CloudDiagramNode struct {
 // CloudDiagramNodeCldType Cloud account type.
 type CloudDiagramNodeCldType string
 
+// CloudDiagramNodeActivity An individual activity record scoped to a specific component node.
+type CloudDiagramNodeActivity struct {
+	// UnderscoreId Activity record ID.
+	UnderscoreId string `json:"_id"`
+
+	// Activity Activity type.
+	Activity CloudDiagramNodeActivityActivity `json:"activity"`
+
+	// Metadata Activity-specific payload (structure varies by activity type).
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+
+	// Statussheet Layer ID where the activity occurred.
+	Statussheet string `json:"statussheet"`
+
+	// Timestamp Timestamp of the activity.
+	Timestamp time.Time `json:"timestamp"`
+
+	// User ID of the user who performed the activity.
+	User string `json:"user"`
+}
+
+// CloudDiagramNodeActivityActivity Activity type.
+type CloudDiagramNodeActivityActivity string
+
 // CloudDiagramNote A text note placed on the diagram.
 type CloudDiagramNote struct {
 	// UnderscoreId Note ID.
@@ -4559,6 +4637,30 @@ type CloudDiagramStatsChange struct {
 // CloudDiagramStatsChangeType Type of the change.
 type CloudDiagramStatsChangeType string
 
+// CloudDiagramStatussheetComponents Component collections of a diagram layer, keyed by component ID.
+type CloudDiagramStatussheetComponents struct {
+	// Attachment Map of attachment ID to attachment component.
+	Attachment *map[string]CloudDiagramAttachment `json:"attachment,omitempty"`
+
+	// Combiner Map of combiner ID to combiner component.
+	Combiner *map[string]CloudDiagramCombiner `json:"combiner,omitempty"`
+
+	// Element Map of element ID to element component.
+	Element *map[string]CloudDiagramElement `json:"element,omitempty"`
+
+	// Group Map of group ID to group component.
+	Group *map[string]CloudDiagramGroup `json:"group,omitempty"`
+
+	// Link Map of link ID to link component.
+	Link *map[string]CloudDiagramLink `json:"link,omitempty"`
+
+	// Node Map of node ID to node component.
+	Node *map[string]CloudDiagramNode `json:"node,omitempty"`
+
+	// Note Map of note ID to note component.
+	Note *map[string]CloudDiagramNote `json:"note,omitempty"`
+}
+
 // CloudDiagramStatussheetData A layer entry with projected metadata and component collections.
 type CloudDiagramStatussheetData struct {
 	// Attachment Map of attachment ID to attachment component.
@@ -4585,6 +4687,31 @@ type CloudDiagramStatussheetData struct {
 	// Statussheet Projected layer metadata returned inside each layer entry.
 	// Contains import state, last updated timestamp, and links version.
 	Statussheet CloudDiagramStatussheetMeta `json:"statussheet"`
+}
+
+// CloudDiagramStatussheetGetRequest Request body for getting layer components. At least one component type must be
+// provided with one or more IDs.
+type CloudDiagramStatussheetGetRequest struct {
+	// Attachment Attachment IDs to fetch.
+	Attachment *[]string `json:"attachment,omitempty"`
+
+	// Combiner Combiner IDs to fetch.
+	Combiner *[]string `json:"combiner,omitempty"`
+
+	// Element Element IDs to fetch.
+	Element *[]string `json:"element,omitempty"`
+
+	// Group Group IDs to fetch.
+	Group *[]string `json:"group,omitempty"`
+
+	// Link Link IDs to fetch.
+	Link *[]string `json:"link,omitempty"`
+
+	// Node Node IDs to fetch.
+	Node *[]string `json:"node,omitempty"`
+
+	// Note Note IDs to fetch.
+	Note *[]string `json:"note,omitempty"`
 }
 
 // CloudDiagramStatussheetMeta Projected layer metadata returned inside each layer entry.
@@ -4867,6 +4994,24 @@ type CommitmentPeriod struct {
 
 // Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 type Condition string
+
+// CreateAccountRoleRequestBody defines model for CreateAccountRoleRequestBody.
+type CreateAccountRoleRequestBody struct {
+	// AccountID The AWS account ID.
+	AccountID string `json:"accountID"`
+
+	// EnabledFeatures Declares which supported AWS features the caller intends to enable. Values must match feature names configured in awsFeaturePermissions on app/cloud-connect. The value is persisted and returned in account responses. When "real-time-data" is included, s3Bucket and s3BucketRegion are required; when it is not included, s3Bucket and s3BucketRegion are not allowed.
+	EnabledFeatures []string `json:"enabledFeatures"`
+
+	// RoleArn The ARN of the IAM role created for DoiT access.
+	RoleArn string `json:"roleArn"`
+
+	// S3Bucket S3 bucket name for CloudTrail real-time anomaly detection. Required together with s3BucketRegion.
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+
+	// S3BucketRegion AWS region of the S3 bucket. Required together with s3Bucket.
+	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
+}
 
 // CreateAllocationRequest Request body for creating an allocation.
 type CreateAllocationRequest struct {
@@ -6810,6 +6955,18 @@ type UpdateAnnotationRequest struct {
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
 
+// UpdateAwsFeatureRequestBody defines model for UpdateAwsFeatureRequestBody.
+type UpdateAwsFeatureRequestBody struct {
+	// EnabledFeatures Declares which supported AWS features the caller intends to enable. Values must match feature names configured in awsFeaturePermissions on app/cloud-connect. The value is persisted and returned in account responses. When "real-time-data" is included, s3Bucket and s3BucketRegion are required; when it is not included, s3Bucket and s3BucketRegion are not allowed.
+	EnabledFeatures []string `json:"enabledFeatures"`
+
+	// S3Bucket S3 bucket name for CloudTrail real-time anomaly detection. Required together with s3BucketRegion.
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+
+	// S3BucketRegion AWS region of the S3 bucket. Required together with s3Bucket.
+	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
+}
+
 // UpdateCustomThemeRequest Request body for updating a custom theme. Only provided fields are modified.
 type UpdateCustomThemeRequest struct {
 	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
@@ -7358,19 +7515,19 @@ type ListInvoicesParams struct {
 	MaxCreationTime *int64 `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
-// ListCloudDiagramActivityGroupsParams defines parameters for ListCloudDiagramActivityGroups.
-type ListCloudDiagramActivityGroupsParams struct {
+// ListCloudDiagramNodeActivitiesParams defines parameters for ListCloudDiagramNodeActivities.
+type ListCloudDiagramNodeActivitiesParams struct {
 	// SsId Layer ID.
 	SsId string `form:"ss_id" json:"ss_id"`
 
-	// Limit Maximum number of groups to return (default 10).
+	// NodeId Node component ID.
+	NodeId string `form:"nodeId" json:"nodeId"`
+
+	// Limit Maximum number of records to return (default 50).
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
-	// Offset Number of groups to skip (default 0).
+	// Offset Number of records to skip (default 0).
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// Tags Filter by tags.
-	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
 }
 
 // GetCloudDiagramComponentsParams defines parameters for GetCloudDiagramComponents.
@@ -7431,6 +7588,12 @@ type GetCloudDiagramsStatsParams struct {
 
 	// End End of the period.
 	End time.Time `form:"end" json:"end"`
+}
+
+// GetStatussheetComponentsParams defines parameters for GetStatussheetComponents.
+type GetStatussheetComponentsParams struct {
+	// P Space-separated projection fields for component documents.
+	P *string `form:"p,omitempty" json:"p,omitempty"`
 }
 
 // GetCloudDiagramLayerSnapshotParams defines parameters for GetCloudDiagramLayerSnapshot.
@@ -7648,6 +7811,15 @@ type GetCloudDiagramComponentsJSONRequestBody = CloudDiagramsGetRequest
 
 // SearchCloudDiagramsJSONRequestBody defines body for SearchCloudDiagrams for application/json ContentType.
 type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
+
+// GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
+type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
+
+// CreateAccountRoleJSONRequestBody defines body for CreateAccountRole for application/json ContentType.
+type CreateAccountRoleJSONRequestBody = CreateAccountRoleRequestBody
+
+// UpdateAwsFeatureJSONRequestBody defines body for UpdateAwsFeature for application/json ContentType.
+type UpdateAwsFeatureJSONRequestBody = UpdateAwsFeatureRequestBody
 
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
@@ -8112,8 +8284,8 @@ type ClientInterface interface {
 	// GetInvoice request
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListCloudDiagramActivityGroups request
-	ListCloudDiagramActivityGroups(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListCloudDiagramNodeActivities request
+	ListCloudDiagramNodeActivities(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindCloudDiagramsWithBody request with any body
 	FindCloudDiagramsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -8133,11 +8305,32 @@ type ClientInterface interface {
 	// GetCloudDiagramsStats request
 	GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetStatussheetComponentsWithBody request with any body
+	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetCloudDiagramLayerSnapshot request
 	GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListCloudDiagramLayerSnapshots request
 	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateAccountRoleWithBody request with any body
+	CreateAccountRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateAccountRole(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAccountRole request
+	DeleteAccountRole(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAwsAccount request
+	GetAwsAccount(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateAwsFeatureWithBody request with any body
+	UpdateAwsFeatureWithBody(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateAwsFeature(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKnownIssues request
 	ListKnownIssues(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9195,8 +9388,8 @@ func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListCloudDiagramActivityGroups(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListCloudDiagramActivityGroupsRequest(c.Server, params)
+func (c *Client) ListCloudDiagramNodeActivities(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCloudDiagramNodeActivitiesRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -9291,6 +9484,30 @@ func (c *Client) GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiag
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatussheetComponents(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatussheetComponentsRequest(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetCloudDiagramLayerSnapshot(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCloudDiagramLayerSnapshotRequest(c.Server, id, params)
 	if err != nil {
@@ -9305,6 +9522,78 @@ func (c *Client) GetCloudDiagramLayerSnapshot(ctx context.Context, id string, pa
 
 func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListCloudDiagramLayerSnapshotsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAccountRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAccountRoleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAccountRole(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAccountRoleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAccountRole(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAccountRoleRequest(c.Server, accountID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAwsAccount(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAwsAccountRequest(c.Server, accountID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAwsFeatureWithBody(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAwsFeatureRequestWithBody(c.Server, accountID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAwsFeature(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAwsFeatureRequest(c.Server, accountID, body)
 	if err != nil {
 		return nil, err
 	}
@@ -12735,8 +13024,8 @@ func NewGetInvoiceRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewListCloudDiagramActivityGroupsRequest generates requests for ListCloudDiagramActivityGroups
-func NewListCloudDiagramActivityGroupsRequest(server string, params *ListCloudDiagramActivityGroupsParams) (*http.Request, error) {
+// NewListCloudDiagramNodeActivitiesRequest generates requests for ListCloudDiagramNodeActivities
+func NewListCloudDiagramNodeActivitiesRequest(server string, params *ListCloudDiagramNodeActivitiesParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -12744,7 +13033,7 @@ func NewListCloudDiagramActivityGroupsRequest(server string, params *ListCloudDi
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/clouddiagrams/v1/activity")
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/activity/node-activities")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -12771,6 +13060,14 @@ func NewListCloudDiagramActivityGroupsRequest(server string, params *ListCloudDi
 			}
 		}
 
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nodeId", params.NodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
 		if params.Limit != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
@@ -12786,18 +13083,6 @@ func NewListCloudDiagramActivityGroupsRequest(server string, params *ListCloudDi
 		if params.Offset != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "offset", *params.Offset, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
-				return nil, err
-			} else {
-				for _, qp := range strings.Split(queryFrag, "&") {
-					rawQueryFragments = append(rawQueryFragments, qp)
-				}
-			}
-
-		}
-
-		if params.Tags != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "tags", *params.Tags, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -13182,6 +13467,80 @@ func NewGetCloudDiagramsStatsRequest(server string, params *GetCloudDiagramsStat
 	return req, nil
 }
 
+// NewGetStatussheetComponentsRequest calls the generic GetStatussheetComponents builder with application/json body
+func NewGetStatussheetComponentsRequest(server string, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetStatussheetComponentsRequestWithBody(server, id, params, "application/json", bodyReader)
+}
+
+// NewGetStatussheetComponentsRequestWithBody generates requests for GetStatussheetComponents with any type of body
+func NewGetStatussheetComponentsRequestWithBody(server string, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/get", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.P != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "p", *params.P, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetCloudDiagramLayerSnapshotRequest generates requests for GetCloudDiagramLayerSnapshot
 func NewGetCloudDiagramLayerSnapshotRequest(server string, id string, params *GetCloudDiagramLayerSnapshotParams) (*http.Request, error) {
 	var err error
@@ -13320,6 +13679,161 @@ func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewCreateAccountRoleRequest calls the generic CreateAccountRole builder with application/json body
+func NewCreateAccountRoleRequest(server string, body CreateAccountRoleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateAccountRoleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateAccountRoleRequestWithBody generates requests for CreateAccountRole with any type of body
+func NewCreateAccountRoleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAccountRoleRequest generates requests for DeleteAccountRole
+func NewDeleteAccountRoleRequest(server string, accountID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "accountID", accountID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAwsAccountRequest generates requests for GetAwsAccount
+func NewGetAwsAccountRequest(server string, accountID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "accountID", accountID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateAwsFeatureRequest calls the generic UpdateAwsFeature builder with application/json body
+func NewUpdateAwsFeatureRequest(server string, accountID string, body UpdateAwsFeatureJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateAwsFeatureRequestWithBody(server, accountID, "application/json", bodyReader)
+}
+
+// NewUpdateAwsFeatureRequestWithBody generates requests for UpdateAwsFeature with any type of body
+func NewUpdateAwsFeatureRequestWithBody(server string, accountID string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "accountID", accountID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/aws/accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -14977,8 +15491,8 @@ type ClientWithResponsesInterface interface {
 	// GetInvoiceWithResponse request
 	GetInvoiceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoiceResp, error)
 
-	// ListCloudDiagramActivityGroupsWithResponse request
-	ListCloudDiagramActivityGroupsWithResponse(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramActivityGroupsResp, error)
+	// ListCloudDiagramNodeActivitiesWithResponse request
+	ListCloudDiagramNodeActivitiesWithResponse(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramNodeActivitiesResp, error)
 
 	// FindCloudDiagramsWithBodyWithResponse request with any body
 	FindCloudDiagramsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*FindCloudDiagramsResp, error)
@@ -14998,11 +15512,32 @@ type ClientWithResponsesInterface interface {
 	// GetCloudDiagramsStatsWithResponse request
 	GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error)
 
+	// GetStatussheetComponentsWithBodyWithResponse request with any body
+	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
+	GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
+
 	// GetCloudDiagramLayerSnapshotWithResponse request
 	GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error)
 
 	// ListCloudDiagramLayerSnapshotsWithResponse request
 	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
+
+	// CreateAccountRoleWithBodyWithResponse request with any body
+	CreateAccountRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error)
+
+	CreateAccountRoleWithResponse(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error)
+
+	// DeleteAccountRoleWithResponse request
+	DeleteAccountRoleWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*DeleteAccountRoleResp, error)
+
+	// GetAwsAccountWithResponse request
+	GetAwsAccountWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*GetAwsAccountResp, error)
+
+	// UpdateAwsFeatureWithBodyWithResponse request with any body
+	UpdateAwsFeatureWithBodyWithResponse(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error)
+
+	UpdateAwsFeatureWithResponse(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error)
 
 	// ListKnownIssuesWithResponse request
 	ListKnownIssuesWithResponse(ctx context.Context, params *ListKnownIssuesParams, reqEditors ...RequestEditorFn) (*ListKnownIssuesResp, error)
@@ -17100,17 +17635,17 @@ func (r GetInvoiceResp) ContentType() string {
 	return ""
 }
 
-type ListCloudDiagramActivityGroupsResp struct {
+type ListCloudDiagramNodeActivitiesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]CloudDiagramSnapshotActivityGroup
+	JSON200      *[]CloudDiagramNodeActivity
 	JSON400      *N400
 	JSON401      *N401
 	JSON403      *N403
 }
 
 // Status returns HTTPResponse.Status
-func (r ListCloudDiagramActivityGroupsResp) Status() string {
+func (r ListCloudDiagramNodeActivitiesResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -17118,7 +17653,7 @@ func (r ListCloudDiagramActivityGroupsResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListCloudDiagramActivityGroupsResp) StatusCode() int {
+func (r ListCloudDiagramNodeActivitiesResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -17126,7 +17661,7 @@ func (r ListCloudDiagramActivityGroupsResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r ListCloudDiagramActivityGroupsResp) ContentType() string {
+func (r ListCloudDiagramNodeActivitiesResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -17265,6 +17800,39 @@ func (r GetCloudDiagramsStatsResp) ContentType() string {
 	return ""
 }
 
+type GetStatussheetComponentsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramStatussheetComponents
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r GetStatussheetComponentsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetStatussheetComponentsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetStatussheetComponentsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetCloudDiagramLayerSnapshotResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -17325,6 +17893,143 @@ func (r ListCloudDiagramLayerSnapshotsResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateAccountRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AwsAccountResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON409      *Error
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateAccountRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateAccountRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateAccountRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteAccountRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAccountRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAccountRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteAccountRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetAwsAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AwsAccountResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *Error
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAwsAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAwsAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetAwsAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateAwsFeatureResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AwsAccountResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateAwsFeatureResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateAwsFeatureResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateAwsFeatureResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -18948,13 +19653,13 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 	return ParseGetInvoiceResp(rsp)
 }
 
-// ListCloudDiagramActivityGroupsWithResponse request returning *ListCloudDiagramActivityGroupsResp
-func (c *ClientWithResponses) ListCloudDiagramActivityGroupsWithResponse(ctx context.Context, params *ListCloudDiagramActivityGroupsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramActivityGroupsResp, error) {
-	rsp, err := c.ListCloudDiagramActivityGroups(ctx, params, reqEditors...)
+// ListCloudDiagramNodeActivitiesWithResponse request returning *ListCloudDiagramNodeActivitiesResp
+func (c *ClientWithResponses) ListCloudDiagramNodeActivitiesWithResponse(ctx context.Context, params *ListCloudDiagramNodeActivitiesParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramNodeActivitiesResp, error) {
+	rsp, err := c.ListCloudDiagramNodeActivities(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListCloudDiagramActivityGroupsResp(rsp)
+	return ParseListCloudDiagramNodeActivitiesResp(rsp)
 }
 
 // FindCloudDiagramsWithBodyWithResponse request with arbitrary body returning *FindCloudDiagramsResp
@@ -19017,6 +19722,23 @@ func (c *ClientWithResponses) GetCloudDiagramsStatsWithResponse(ctx context.Cont
 	return ParseGetCloudDiagramsStatsResp(rsp)
 }
 
+// GetStatussheetComponentsWithBodyWithResponse request with arbitrary body returning *GetStatussheetComponentsResp
+func (c *ClientWithResponses) GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponentsWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
+}
+
+func (c *ClientWithResponses) GetStatussheetComponentsWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error) {
+	rsp, err := c.GetStatussheetComponents(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatussheetComponentsResp(rsp)
+}
+
 // GetCloudDiagramLayerSnapshotWithResponse request returning *GetCloudDiagramLayerSnapshotResp
 func (c *ClientWithResponses) GetCloudDiagramLayerSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramLayerSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramLayerSnapshotResp, error) {
 	rsp, err := c.GetCloudDiagramLayerSnapshot(ctx, id, params, reqEditors...)
@@ -19033,6 +19755,58 @@ func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx con
 		return nil, err
 	}
 	return ParseListCloudDiagramLayerSnapshotsResp(rsp)
+}
+
+// CreateAccountRoleWithBodyWithResponse request with arbitrary body returning *CreateAccountRoleResp
+func (c *ClientWithResponses) CreateAccountRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error) {
+	rsp, err := c.CreateAccountRoleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAccountRoleResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateAccountRoleWithResponse(ctx context.Context, body CreateAccountRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error) {
+	rsp, err := c.CreateAccountRole(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAccountRoleResp(rsp)
+}
+
+// DeleteAccountRoleWithResponse request returning *DeleteAccountRoleResp
+func (c *ClientWithResponses) DeleteAccountRoleWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*DeleteAccountRoleResp, error) {
+	rsp, err := c.DeleteAccountRole(ctx, accountID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAccountRoleResp(rsp)
+}
+
+// GetAwsAccountWithResponse request returning *GetAwsAccountResp
+func (c *ClientWithResponses) GetAwsAccountWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*GetAwsAccountResp, error) {
+	rsp, err := c.GetAwsAccount(ctx, accountID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAwsAccountResp(rsp)
+}
+
+// UpdateAwsFeatureWithBodyWithResponse request with arbitrary body returning *UpdateAwsFeatureResp
+func (c *ClientWithResponses) UpdateAwsFeatureWithBodyWithResponse(ctx context.Context, accountID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error) {
+	rsp, err := c.UpdateAwsFeatureWithBody(ctx, accountID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAwsFeatureResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateAwsFeatureWithResponse(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error) {
+	rsp, err := c.UpdateAwsFeature(ctx, accountID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAwsFeatureResp(rsp)
 }
 
 // ListKnownIssuesWithResponse request returning *ListKnownIssuesResp
@@ -22478,22 +23252,22 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 	return response, nil
 }
 
-// ParseListCloudDiagramActivityGroupsResp parses an HTTP response from a ListCloudDiagramActivityGroupsWithResponse call
-func ParseListCloudDiagramActivityGroupsResp(rsp *http.Response) (*ListCloudDiagramActivityGroupsResp, error) {
+// ParseListCloudDiagramNodeActivitiesResp parses an HTTP response from a ListCloudDiagramNodeActivitiesWithResponse call
+func ParseListCloudDiagramNodeActivitiesResp(rsp *http.Response) (*ListCloudDiagramNodeActivitiesResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListCloudDiagramActivityGroupsResp{
+	response := &ListCloudDiagramNodeActivitiesResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []CloudDiagramSnapshotActivityGroup
+		var dest []CloudDiagramNodeActivity
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -22713,6 +23487,53 @@ func ParseGetCloudDiagramsStatsResp(rsp *http.Response) (*GetCloudDiagramsStatsR
 	return response, nil
 }
 
+// ParseGetStatussheetComponentsResp parses an HTTP response from a GetStatussheetComponentsWithResponse call
+func ParseGetStatussheetComponentsResp(rsp *http.Response) (*GetStatussheetComponentsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetStatussheetComponentsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramStatussheetComponents
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetCloudDiagramLayerSnapshotResp parses an HTTP response from a GetCloudDiagramLayerSnapshotWithResponse call
 func ParseGetCloudDiagramLayerSnapshotResp(rsp *http.Response) (*GetCloudDiagramLayerSnapshotResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -22801,6 +23622,229 @@ func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiag
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateAccountRoleResp parses an HTTP response from a CreateAccountRoleWithResponse call
+func ParseCreateAccountRoleResp(rsp *http.Response) (*CreateAccountRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateAccountRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AwsAccountResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAccountRoleResp parses an HTTP response from a DeleteAccountRoleWithResponse call
+func ParseDeleteAccountRoleResp(rsp *http.Response) (*DeleteAccountRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAccountRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAwsAccountResp parses an HTTP response from a GetAwsAccountWithResponse call
+func ParseGetAwsAccountResp(rsp *http.Response) (*GetAwsAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAwsAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AwsAccountResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateAwsFeatureResp parses an HTTP response from a UpdateAwsFeatureWithResponse call
+func ParseUpdateAwsFeatureResp(rsp *http.Response) (*UpdateAwsFeatureResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateAwsFeatureResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AwsAccountResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
