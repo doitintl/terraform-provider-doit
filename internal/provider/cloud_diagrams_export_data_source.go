@@ -8,6 +8,7 @@ import (
 	ds "github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_diagrams_export"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -90,6 +91,7 @@ func (d *cloudDiagramsExportDataSource) Read(ctx context.Context, req datasource
 		data.Nodes = types.ListUnknown(ds.NodesValue{}.Type(ctx))
 		data.Notes = types.ListUnknown(ds.NotesValue{}.Type(ctx))
 		data.Metadata = ds.NewMetadataValueUnknown()
+		data.Statussheet = jsontypes.NewNormalizedUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -134,9 +136,9 @@ func mapExportToState(
 	data.Statussheet = mapFreeformJSON(export.Statussheet)
 
 	// Metadata.
-	connectionsMap := types.MapNull(types.StringType)
+	connectionsMap, mapDiags := types.MapValueFrom(ctx, types.StringType, map[string]string{})
+	diags.Append(mapDiags...)
 	if export.Metadata.Connections != nil && len(*export.Metadata.Connections) > 0 {
-		var mapDiags diag.Diagnostics
 		connectionsMap, mapDiags = types.MapValueFrom(ctx, types.StringType, *export.Metadata.Connections)
 		diags.Append(mapDiags...)
 		if diags.HasError() {

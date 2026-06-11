@@ -14,6 +14,8 @@ data "doit_cloud_diagrams_export" "test" {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
 				Config: config,
@@ -22,13 +24,68 @@ data "doit_cloud_diagrams_export" "test" {
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_export.test", "metadata.date"),
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_export.test", "metadata.version"),
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_export.test", "nodes.#"),
+					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_export.test", "statussheet"),
 				),
 			},
-			// Re-read to confirm idempotent behavior.
+			{
+				Config:   config,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func TestAccCloudDiagramsExportDataSource_ConnectionsIterable(t *testing.T) {
+	config := testAccCloudDiagramsExportLayerDiscovery() + `
+data "doit_cloud_diagrams_export" "test" {
+  id = local.first_layer_id
+}
+
+# Iterate over metadata.connections — must not error even when empty.
+output "connection_keys" {
+  value = keys(data.doit_cloud_diagrams_export.test.metadata.connections)
+}
+
+output "connection_count" {
+  value = length(data.doit_cloud_diagrams_export.test.metadata.connections)
+}`
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
 			{
 				Config: config,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_export.test", "metadata.user"),
+					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_export.test", "metadata.connections.%"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCloudDiagramsExportDataSource_StatussheetNotNull(t *testing.T) {
+	config := testAccCloudDiagramsExportLayerDiscovery() + `
+data "doit_cloud_diagrams_export" "test" {
+  id = local.first_layer_id
+}
+
+# Verify statussheet is valid JSON by decoding it.
+output "statussheet_valid" {
+  value = can(jsondecode(data.doit_cloud_diagrams_export.test.statussheet))
+}`
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_export.test", "statussheet"),
+					resource.TestCheckOutput("statussheet_valid", "true"),
 				),
 			},
 		},
