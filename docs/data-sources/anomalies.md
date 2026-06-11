@@ -20,6 +20,23 @@ data "doit_anomalies" "critical" {
   filter = "severityLevel:critical"
 }
 
+# Include notification events for each anomaly
+data "doit_anomalies" "with_notifications" {
+  include_notifications = true
+}
+
+output "notification_audit" {
+  value = [for a in data.doit_anomalies.with_notifications.anomalies : {
+    id           = a.id
+    service      = a.service_name
+    severity     = a.severity_level
+    notifications = [for n in a.notifications : {
+      channel   = n.channel
+      timestamp = n.timestamp
+    }]
+  }]
+}
+
 # Output anomaly details
 output "total_anomalies" {
   value = data.doit_anomalies.all.row_count
@@ -242,6 +259,7 @@ output "acknowledgment_audit" {
 ### Optional
 
 - `filter` (String) An expression for filtering the results of the request
+- `include_notifications` (Boolean) Include anomaly notifications from the subcollection. Defaults to false.
 - `max_creation_time` (String) Max value for the anomaly detection time
 - `max_results` (Number) The maximum number of results to return in a single page
 - `min_creation_time` (String) Min value for the anomaly detection time

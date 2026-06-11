@@ -3832,7 +3832,7 @@ type AnomaliesResponse struct {
 	RowCount  *int64         `json:"rowCount,omitempty"`
 }
 
-// AnomalyItem Detailed information about a detected anomaly.
+// AnomalyItem Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
 type AnomalyItem struct {
 	// Acknowledged Has the anomaly been acknowledged
 	Acknowledged *bool `json:"acknowledged,omitempty"`
@@ -7789,6 +7789,9 @@ type ListAnomaliesParams struct {
 
 	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// IncludeNotifications Include anomaly notifications from the subcollection. Defaults to false.
+	IncludeNotifications *bool `form:"includeNotifications,omitempty" json:"includeNotifications,omitempty"`
 }
 
 // IdOfAssetsParams defines parameters for IdOfAssets.
@@ -12997,6 +13000,18 @@ func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.
 		if params.PageToken != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.IncludeNotifications != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "includeNotifications", *params.IncludeNotifications, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {

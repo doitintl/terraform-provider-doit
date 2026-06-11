@@ -1267,6 +1267,13 @@
 						}
 					},
 					{
+						"name": "include_notifications",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Include anomaly notifications from the subcollection. Defaults to false."
+						}
+					},
+					{
 						"name": "anomalies",
 						"list_nested": {
 							"computed_optional_required": "computed",
