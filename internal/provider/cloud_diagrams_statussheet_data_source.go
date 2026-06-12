@@ -377,7 +377,7 @@ func mapSSNodeMap(ctx context.Context, nodes *map[string]models.CloudDiagramNode
 	nodeType := datasource_cloud_diagrams_statussheet.NodeValue{}.Type(ctx)
 
 	if nodes == nil || len(*nodes) == 0 {
-		return types.MapNull(nodeType), nil
+		return types.MapValueFrom(ctx, nodeType, map[string]datasource_cloud_diagrams_statussheet.NodeValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -450,7 +450,7 @@ func mapSSElementMap(ctx context.Context, elements *map[string]models.CloudDiagr
 	elemType := datasource_cloud_diagrams_statussheet.ElementValue{}.Type(ctx)
 
 	if elements == nil || len(*elements) == 0 {
-		return types.MapNull(elemType), nil
+		return types.MapValueFrom(ctx, elemType, map[string]datasource_cloud_diagrams_statussheet.ElementValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -503,7 +503,7 @@ func mapSSGroupMap(ctx context.Context, groups *map[string]models.CloudDiagramGr
 	groupType := datasource_cloud_diagrams_statussheet.GroupValue{}.Type(ctx)
 
 	if groups == nil || len(*groups) == 0 {
-		return types.MapNull(groupType), nil
+		return types.MapValueFrom(ctx, groupType, map[string]datasource_cloud_diagrams_statussheet.GroupValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -592,7 +592,7 @@ func mapSSLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink
 	linkType := datasource_cloud_diagrams_statussheet.LinkValue{}.Type(ctx)
 
 	if links == nil || len(*links) == 0 {
-		return types.MapNull(linkType), nil
+		return types.MapValueFrom(ctx, linkType, map[string]datasource_cloud_diagrams_statussheet.LinkValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -644,7 +644,7 @@ func mapSSAttachmentMap(ctx context.Context, attachments *map[string]models.Clou
 	attType := datasource_cloud_diagrams_statussheet.AttachmentValue{}.Type(ctx)
 
 	if attachments == nil || len(*attachments) == 0 {
-		return types.MapNull(attType), nil
+		return types.MapValueFrom(ctx, attType, map[string]datasource_cloud_diagrams_statussheet.AttachmentValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -697,7 +697,7 @@ func mapSSCombinerMap(ctx context.Context, combiners *map[string]models.CloudDia
 	cmbType := datasource_cloud_diagrams_statussheet.CombinerValue{}.Type(ctx)
 
 	if combiners == nil || len(*combiners) == 0 {
-		return types.MapNull(cmbType), nil
+		return types.MapValueFrom(ctx, cmbType, map[string]datasource_cloud_diagrams_statussheet.CombinerValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -766,7 +766,7 @@ func mapSSNoteMap(ctx context.Context, notes *map[string]models.CloudDiagramNote
 	noteType := datasource_cloud_diagrams_statussheet.NoteValue{}.Type(ctx)
 
 	if notes == nil || len(*notes) == 0 {
-		return types.MapNull(noteType), nil
+		return types.MapValueFrom(ctx, noteType, map[string]datasource_cloud_diagrams_statussheet.NoteValue{})
 	}
 
 	var diags diag.Diagnostics

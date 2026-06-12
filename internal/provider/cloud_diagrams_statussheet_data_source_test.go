@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -104,8 +105,65 @@ data "doit_cloud_diagrams_schemes" "with_components" {
 # is not triggered on empty lists.
 locals {
   ss_data   = data.doit_cloud_diagrams_schemes.with_components.statussheet[local.first_layer_id]
-  node_ids  = local.ss_data != null && local.ss_data.node != null && length(keys(local.ss_data.node)) > 0 ? keys(local.ss_data.node) : null
-  group_ids = local.ss_data != null && local.ss_data.group != null && length(keys(local.ss_data.group)) > 0 ? keys(local.ss_data.group) : null
+  node_ids  = local.ss_data != null && length(keys(local.ss_data.node)) > 0 ? keys(local.ss_data.node) : null
+  group_ids = local.ss_data != null && length(keys(local.ss_data.group)) > 0 ? keys(local.ss_data.group) : null
 }
 `
+}
+
+func TestAccCloudDiagramsStatussheetDataSource_ComponentMapsIterable(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCloudDiagramsStatussheetDiscovery() + `
+data "doit_cloud_diagrams_statussheet" "test" {
+  id       = local.first_layer_id
+  node_ids = local.node_ids
+}
+
+# Iterate over all component maps to verify they are not null.
+# keys() and length() would fail on null maps.
+output "ss_node_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_statussheet.test.node))
+}
+
+output "ss_element_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_statussheet.test.element))
+}
+
+output "ss_group_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_statussheet.test.group))
+}
+
+output "ss_link_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_statussheet.test.link))
+}
+
+output "ss_attachment_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_statussheet.test.attachment))
+}
+
+output "ss_combiner_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_statussheet.test.combiner))
+}
+
+output "ss_note_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_statussheet.test.note))
+}`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_statussheet.test", "id"),
+					resource.TestMatchOutput("ss_node_key_count", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchOutput("ss_element_key_count", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchOutput("ss_group_key_count", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchOutput("ss_link_key_count", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchOutput("ss_attachment_key_count", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchOutput("ss_combiner_key_count", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchOutput("ss_note_key_count", regexp.MustCompile(`^\d+$`)),
+				),
+			},
+		},
+	})
 }

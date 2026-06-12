@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -150,4 +151,30 @@ func testCheckAtLeastOneDiagramWithLayers(name string) resource.TestCheckFunc {
 
 		return fmt.Errorf("expected at least one diagram with layers, but none found")
 	}
+}
+
+func TestAccCloudDiagramsSchemesDataSource_ComponentMapsIterable(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCloudDiagramsSchemesDataSourceConfigChained() + `
+# Verify that scheme and statussheet maps are iterable (not null).
+# keys() on null maps would produce "Call to function 'keys' failed: argument is null."
+output "scheme_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_schemes.detailed.scheme))
+}
+
+output "statussheet_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_schemes.detailed.statussheet))
+}`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchOutput("scheme_key_count", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchOutput("statussheet_key_count", regexp.MustCompile(`^\d+$`)),
+				),
+			},
+		},
+	})
 }
