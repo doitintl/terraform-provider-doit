@@ -809,6 +809,34 @@ func mapLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink) 
 			return basetypes.MapValue{}, diags
 		}
 
+		originVal, originDiags := datasource_cloud_diagrams_schemes.NewOriginValue(
+			datasource_cloud_diagrams_schemes.OriginValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"_id":       types.StringValue(l.Origin.UnderscoreId),
+				"type":      types.StringValue(string(l.Origin.Type)),
+				"scheme_id": types.StringValue(l.Origin.SchemeId),
+				"ss_id":     types.StringValue(l.Origin.SsId),
+			},
+		)
+		diags.Append(originDiags...)
+		if diags.HasError() {
+			return basetypes.MapValue{}, diags
+		}
+
+		destVal, destDiags := datasource_cloud_diagrams_schemes.NewDestinationValue(
+			datasource_cloud_diagrams_schemes.DestinationValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"_id":       types.StringValue(l.Destination.UnderscoreId),
+				"type":      types.StringValue(string(l.Destination.Type)),
+				"scheme_id": types.StringValue(l.Destination.SchemeId),
+				"ss_id":     types.StringValue(l.Destination.SsId),
+			},
+		)
+		diags.Append(destDiags...)
+		if diags.HasError() {
+			return basetypes.MapValue{}, diags
+		}
+
 		val, valDiags := datasource_cloud_diagrams_schemes.NewLinkValue(
 			datasource_cloud_diagrams_schemes.LinkValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
@@ -818,8 +846,10 @@ func mapLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink) 
 				"cld_sync":        types.BoolPointerValue(l.CldSync),
 				"cld_type":        mapEnumPointerValue(l.CldType),
 				"connection_type": mapEnumPointerValue(l.ConnectionType),
+				"destination":     destVal,
 				"issues":          issues,
 				"name":            types.StringPointerValue(l.Name),
+				"origin":          originVal,
 				"owner_ss_id":     types.StringPointerValue(l.OwnerSsId),
 				"props":           mapSchemesPropsValue(l.Props),
 				"tags":            tags,

@@ -255,11 +255,24 @@ Read-Only:
 - `cld_sync` (Boolean) Whether this component is synced with cloud.
 - `cld_type` (String) Cloud account type.
 - `connection_type` (String) Link connection type.
+- `destination` (Attributes) Reference to a diagram component, including its parent diagram and layer. (see [below for nested schema](#nestedatt--statussheet--link--destination))
 - `issues` (Attributes List) Issues associated with this link. (see [below for nested schema](#nestedatt--statussheet--link--issues))
 - `name` (String) Component name.
+- `origin` (Attributes) Reference to a diagram component, including its parent diagram and layer. (see [below for nested schema](#nestedatt--statussheet--link--origin))
 - `owner_ss_id` (String) Owner layer ID for cross-diagram links.
 - `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
+
+<a id="nestedatt--statussheet--link--destination"></a>
+### Nested Schema for `statussheet.link.destination`
+
+Read-Only:
+
+- `_id` (String) Component ID.
+- `scheme_id` (String) Parent diagram ID.
+- `ss_id` (String) Parent layer ID.
+- `type` (String) Component type.
+
 
 <a id="nestedatt--statussheet--link--issues"></a>
 ### Nested Schema for `statussheet.link.issues`
@@ -270,6 +283,17 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
+
+
+<a id="nestedatt--statussheet--link--origin"></a>
+### Nested Schema for `statussheet.link.origin`
+
+Read-Only:
+
+- `_id` (String) Component ID.
+- `scheme_id` (String) Parent diagram ID.
+- `ss_id` (String) Parent layer ID.
+- `type` (String) Component type.
 
 
 
