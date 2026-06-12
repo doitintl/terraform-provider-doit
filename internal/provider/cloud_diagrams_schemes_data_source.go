@@ -304,7 +304,9 @@ func mapSchemeMap(
 	var diags diag.Diagnostics
 
 	if scheme == nil || len(*scheme) == 0 {
-		data.Scheme = types.MapNull(datasource_cloud_diagrams_schemes.SchemeValue{}.Type(ctx))
+		emptyMap, mapDiags := types.MapValueFrom(ctx, datasource_cloud_diagrams_schemes.SchemeValue{}.Type(ctx), map[string]datasource_cloud_diagrams_schemes.SchemeValue{})
+		diags.Append(mapDiags...)
+		data.Scheme = emptyMap
 		return diags
 	}
 
@@ -379,7 +381,9 @@ func mapStatussheetMap(
 	var diags diag.Diagnostics
 
 	if statussheet == nil || len(*statussheet) == 0 {
-		data.Statussheet = types.MapNull(datasource_cloud_diagrams_schemes.StatussheetValue{}.Type(ctx))
+		emptyMap, mapDiags := types.MapValueFrom(ctx, datasource_cloud_diagrams_schemes.StatussheetValue{}.Type(ctx), map[string]datasource_cloud_diagrams_schemes.StatussheetValue{})
+		diags.Append(mapDiags...)
+		data.Statussheet = emptyMap
 		return diags
 	}
 
@@ -571,7 +575,7 @@ func mapNodeMap(ctx context.Context, nodes *map[string]models.CloudDiagramNode) 
 	nodeType := datasource_cloud_diagrams_schemes.NodeValue{}.Type(ctx)
 
 	if nodes == nil || len(*nodes) == 0 {
-		return types.MapNull(nodeType), nil
+		return types.MapValueFrom(ctx, nodeType, map[string]datasource_cloud_diagrams_schemes.NodeValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -644,7 +648,7 @@ func mapElementMap(ctx context.Context, elements *map[string]models.CloudDiagram
 	elemType := datasource_cloud_diagrams_schemes.ElementValue{}.Type(ctx)
 
 	if elements == nil || len(*elements) == 0 {
-		return types.MapNull(elemType), nil
+		return types.MapValueFrom(ctx, elemType, map[string]datasource_cloud_diagrams_schemes.ElementValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -697,7 +701,7 @@ func mapGroupMap(ctx context.Context, groups *map[string]models.CloudDiagramGrou
 	groupType := datasource_cloud_diagrams_schemes.GroupValue{}.Type(ctx)
 
 	if groups == nil || len(*groups) == 0 {
-		return types.MapNull(groupType), nil
+		return types.MapValueFrom(ctx, groupType, map[string]datasource_cloud_diagrams_schemes.GroupValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -787,7 +791,7 @@ func mapLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink) 
 	linkType := datasource_cloud_diagrams_schemes.LinkValue{}.Type(ctx)
 
 	if links == nil || len(*links) == 0 {
-		return types.MapNull(linkType), nil
+		return types.MapValueFrom(ctx, linkType, map[string]datasource_cloud_diagrams_schemes.LinkValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -839,7 +843,7 @@ func mapAttachmentMap(ctx context.Context, attachments *map[string]models.CloudD
 	attType := datasource_cloud_diagrams_schemes.AttachmentValue{}.Type(ctx)
 
 	if attachments == nil || len(*attachments) == 0 {
-		return types.MapNull(attType), nil
+		return types.MapValueFrom(ctx, attType, map[string]datasource_cloud_diagrams_schemes.AttachmentValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -892,7 +896,7 @@ func mapCombinerMap(ctx context.Context, combiners *map[string]models.CloudDiagr
 	cmbType := datasource_cloud_diagrams_schemes.CombinerValue{}.Type(ctx)
 
 	if combiners == nil || len(*combiners) == 0 {
-		return types.MapNull(cmbType), nil
+		return types.MapValueFrom(ctx, cmbType, map[string]datasource_cloud_diagrams_schemes.CombinerValue{})
 	}
 
 	var diags diag.Diagnostics
@@ -961,7 +965,7 @@ func mapNoteMap(ctx context.Context, notes *map[string]models.CloudDiagramNote) 
 	noteType := datasource_cloud_diagrams_schemes.NoteValue{}.Type(ctx)
 
 	if notes == nil || len(*notes) == 0 {
-		return types.MapNull(noteType), nil
+		return types.MapValueFrom(ctx, noteType, map[string]datasource_cloud_diagrams_schemes.NoteValue{})
 	}
 
 	var diags diag.Diagnostics
