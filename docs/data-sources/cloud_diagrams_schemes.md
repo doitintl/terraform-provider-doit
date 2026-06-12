@@ -13,10 +13,36 @@ Retrieves Cloud Diagram data including diagrams, layers, and components.
 ## Example Usage
 
 ```terraform
-# Retrieve all accessible diagrams (overview mode — no components).
+# Use case: Find and inspect a specific project's diagram.
+
+# Step 1: Search for the diagram by project or account name.
+data "doit_cloud_diagrams_search" "project" {
+  query = "my-gcp-project"
+}
+
+locals {
+  layer_id = data.doit_cloud_diagrams_search.project.scheme[0].ss_id
+}
+
+# Step 2: Load the diagram with full component data and links.
+data "doit_cloud_diagrams_schemes" "project" {
+  layer_ids  = [local.layer_id]
+  components = true
+  link       = true
+}
+
+# Summarize what's in the layer.
+output "layer_summary" {
+  value = {
+    nodes  = length(keys(data.doit_cloud_diagrams_schemes.project.statussheet[local.layer_id].node))
+    groups = length(keys(data.doit_cloud_diagrams_schemes.project.statussheet[local.layer_id].group))
+    links  = length(keys(data.doit_cloud_diagrams_schemes.project.statussheet[local.layer_id].link))
+  }
+}
+
+# List all diagrams and their layers (overview mode — no components).
 data "doit_cloud_diagrams_schemes" "all" {}
 
-# Output diagram names and their layers.
 output "diagrams" {
   value = {
     for key, diagram in data.doit_cloud_diagrams_schemes.all.scheme :
@@ -26,20 +52,6 @@ output "diagrams" {
       layers = [for layer in diagram.statussheet : layer.account_name]
     }
   }
-}
-
-# Retrieve specific diagrams with full component data.
-data "doit_cloud_diagrams_schemes" "detailed" {
-  scheme_ids = ["diagram-id-1", "diagram-id-2"]
-  components = true
-  skip_empty = true
-}
-
-# Retrieve specific layers with components and links.
-data "doit_cloud_diagrams_schemes" "layers" {
-  layer_ids  = ["layer-id-1"]
-  components = true
-  link       = true
 }
 
 # --- Mermaid flowchart export (community recipe) ---

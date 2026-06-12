@@ -1,14 +1,22 @@
-# Discover a layer ID from the schemes endpoint.
-# Each diagram has layers (statussheet entries) with an "ssid" field
-# that serves as the layer ID for other Cloud Diagram data sources.
-data "doit_cloud_diagrams_schemes" "all" {}
+# Use case: List snapshots for a specific project's diagram.
 
-locals {
-  first_scheme_key = keys(data.doit_cloud_diagrams_schemes.all.scheme)[0]
-  first_layer_id   = data.doit_cloud_diagrams_schemes.all.scheme[local.first_scheme_key].statussheet[0].ssid
+# Step 1: Find the diagram by project name.
+data "doit_cloud_diagrams_search" "project" {
+  query = "my-gcp-project"
 }
 
-# Look up snapshots for the discovered layer.
+# Step 2: List snapshots for the matching layer.
 data "doit_cloud_diagrams_snapshots" "example" {
-  id = local.first_layer_id
+  id    = data.doit_cloud_diagrams_search.project.scheme[0].ss_id
+  limit = 5
+}
+
+output "snapshots" {
+  value = [
+    for s in data.doit_cloud_diagrams_snapshots.example.cloud_diagrams_snapshots : {
+      id         = s._id
+      name       = s.name
+      created_at = s.created_at
+    }
+  ]
 }
