@@ -5059,6 +5059,627 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  # CloudFlow
+  /cloudflow/v1/flows:
+    get:
+      operationId: ListFlows
+      summary: List flows
+      description: Returns a cursor-paginated list of flows visible to the authenticated principal.
+      tags:
+      - Flows
+      parameters: []
+      responses:
+        '200':
+          description: Paginated list of flows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedListOfFlows'
+    post:
+      operationId: CreateFlow
+      summary: Create a flow
+      description: 'Creates a new flow. If `templateId` is present in the request body the flow is
+
+        initialised from the identified template (blueprint) and inherits its nodes and
+
+        structure.
+
+
+        **Dry-run**: Pass `?dryRun=true` to validate the request without persisting. The
+
+        response is `200` with generated fields (`id`, `etag`, `createTime`, `updateTime`)
+
+        set to `null` and the `X-Dry-Run: true` header.
+
+        '
+      tags:
+      - Flows
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalFlowInput'
+      responses:
+        '201':
+          description: Flow created. `Location` header contains the canonical URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalFlow'
+        '200':
+          description: 'Dry-run response — the operation was validated but no flow was persisted.
+
+            Generated fields (`id`, `etag`, `createTime`, `updateTime`) are `null`.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalFlow'
+  /cloudflow/v1/flows/{flowId}:
+    get:
+      operationId: GetFlow
+      summary: Get a flow
+      tags:
+      - Flows
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      responses:
+        '200':
+          description: Flow retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalFlow'
+    put:
+      operationId: UpdateFlow
+      summary: Update a flow
+      description: 'Replaces all mutable fields of a flow with the supplied values. This is a full
+
+        replacement: optional fields absent from the body are reset to their defaults
+
+        (e.g. `instructions` is cleared). Read-only fields (`id`, `status`, `published`,
+
+        `createTime`, `etag`) are ignored if present in the body.
+
+
+        `If-Match` is required. Obtain the current ETag from a preceding GET or mutation.
+
+        '
+      tags:
+      - Flows
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalFlowUpdate'
+      responses:
+        '200':
+          description: Flow updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalFlow'
+    delete:
+      operationId: DeleteFlow
+      summary: Delete a flow
+      description: 'Permanently deletes a flow and all its nodes. This action is irreversible.
+
+        Returns `204 No Content`. The `ETag` response header reflects the final resource version.
+
+        '
+      tags:
+      - Flows
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      responses:
+        '204':
+          description: Flow deleted.
+  /cloudflow/v1/flows/{flowId}/actions/publish:
+    post:
+      operationId: PublishFlow
+      summary: Publish a flow
+      description: 'Publishes a flow, making it available for scheduled or event-driven execution.
+
+        Validates that all required variables have values and that the flow graph is
+
+        complete before transitioning. Uses conditional validation; dry-run is supported.
+
+
+        The `published` field on the returned flow will be `true`.
+
+        '
+      tags:
+      - Flows
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      responses:
+        '200':
+          description: Flow published (or dry-run validated).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalFlow'
+  /cloudflow/v1/flows/{flowId}/actions/unpublish:
+    post:
+      operationId: UnpublishFlow
+      summary: Unpublish a flow
+      description: 'Unpublishes a flow, stopping any scheduled or event-driven execution and performing
+
+        tear-down steps (e.g. clearing the active schedule). The `published` field on the
+
+        returned flow will be `false`.
+
+        '
+      tags:
+      - Flows
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      responses:
+        '200':
+          description: Flow unpublished (or dry-run validated).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalFlow'
+  /cloudflow/v1/flows/{flowId}/nodes:
+    post:
+      operationId: CreateNode
+      summary: Create a node
+      description: 'Adds a new node to a flow. The optional `transition` field wires the new node to
+
+        an existing parent node. When `If-Match` matches the flow''s current ETag, the
+
+        operation is safe against concurrent edits.
+
+        '
+      tags:
+      - Nodes
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalCreateNodeRequest'
+      responses:
+        '201':
+          description: Node created. `Location` header contains the canonical URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalNode'
+        '200':
+          description: Dry-run response — node was not created. Generated fields are `null`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalNode'
+  /cloudflow/v1/flows/{flowId}/nodes/actions/update-batch:
+    post:
+      operationId: UpdateNodesBatch
+      summary: Batch-update nodes
+      description: 'Atomically adds and updates a batch of nodes in a flow. All changes in the batch
+
+        are applied atomically or not at all.
+
+
+        This endpoint is intended for AI agents (e.g. Ava) that build or reshape the flow
+
+        graph in a single operation. A future phase may fold whole-graph updates into
+
+        `PUT /flows/{flowId}`.
+
+        '
+      tags:
+      - Nodes
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalUpdateNodesBatchRequest'
+      responses:
+        '200':
+          description: Batch applied. Returns the updated flow with nodes embedded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalFlow'
+  /cloudflow/v1/flows/{flowId}/nodes/{nodeId}:
+    get:
+      operationId: GetNode
+      summary: Get a node
+      tags:
+      - Nodes
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      - $ref: '#/components/parameters/NodeId'
+      responses:
+        '200':
+          description: Node retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalNode'
+    delete:
+      operationId: DeleteNode
+      summary: Delete a node
+      description: 'Removes a node from a flow. Any transitions pointing to the deleted node are
+
+        also removed. Returns `204 No Content`.
+
+        '
+      tags:
+      - Nodes
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      - $ref: '#/components/parameters/NodeId'
+      responses:
+        '204':
+          description: Node deleted.
+  /cloudflow/v1/flows/{flowId}/variables:
+    get:
+      operationId: ListFlowVariables
+      summary: List flow variables
+      tags:
+      - Flow Variables
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      responses:
+        '200':
+          description: Paginated list of flow-scoped variables.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedListOfVariables'
+    post:
+      operationId: CreateFlowVariable
+      summary: Create a flow variable
+      tags:
+      - Flow Variables
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalVariableInput'
+      responses:
+        '201':
+          description: Flow variable created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+        '200':
+          description: Dry-run response — variable was not created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+    patch:
+      operationId: UpdateFlowVariableValues
+      summary: Bulk-update flow variable values
+      description: 'Atomically updates the values of one or more flow-scoped variables. The request body
+
+        is an object with an `updates` array of `{ id, value }` pairs; only specified
+
+        variables are updated. Variables not listed are unaffected.
+
+        '
+      tags:
+      - Flow Variables
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalVariableValuesBulkUpdate'
+      responses:
+        '200':
+          description: Variable values updated. Returns the full updated variable list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedListOfVariables'
+  /cloudflow/v1/flows/{flowId}/variables/{variableId}:
+    get:
+      operationId: GetFlowVariable
+      summary: Get a flow variable
+      tags:
+      - Flow Variables
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      - $ref: '#/components/parameters/VariableId'
+      responses:
+        '200':
+          description: Flow variable retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+    put:
+      operationId: UpdateFlowVariable
+      summary: Update a flow variable
+      description: 'Replaces the definition of a flow-scoped variable. The `name` must remain unique
+
+        within the flow (excluding the current variable). `If-Match` is required.
+
+        '
+      tags:
+      - Flow Variables
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      - $ref: '#/components/parameters/VariableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalVariableInput'
+      responses:
+        '200':
+          description: Flow variable updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+    delete:
+      operationId: DeleteFlowVariable
+      summary: Delete a flow variable
+      tags:
+      - Flow Variables
+      parameters:
+      - $ref: '#/components/parameters/FlowId'
+      - $ref: '#/components/parameters/VariableId'
+      responses:
+        '204':
+          description: Flow variable deleted.
+  /cloudflow/v1/global-variables:
+    get:
+      operationId: ListGlobalVariables
+      summary: List global variables
+      description: Returns all global (tenant-scoped) variables visible to the principal.
+      tags:
+      - Global Variables
+      parameters: []
+      responses:
+        '200':
+          description: Paginated list of global variables.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedListOfVariables'
+    post:
+      operationId: CreateGlobalVariable
+      summary: Create a global variable
+      tags:
+      - Global Variables
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalVariableInput'
+      responses:
+        '201':
+          description: Global variable created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+        '200':
+          description: Dry-run response — variable was not created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+  /cloudflow/v1/global-variables/{variableId}:
+    get:
+      operationId: GetGlobalVariable
+      summary: Get a global variable
+      tags:
+      - Global Variables
+      parameters:
+      - $ref: '#/components/parameters/VariableId'
+      responses:
+        '200':
+          description: Global variable retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+    put:
+      operationId: UpdateGlobalVariable
+      summary: Update a global variable
+      description: 'Replaces the definition of a global variable. The `name` must remain unique
+
+        across all global variables (excluding the current one). `If-Match` is required.
+
+        '
+      tags:
+      - Global Variables
+      parameters:
+      - $ref: '#/components/parameters/VariableId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalVariableInput'
+      responses:
+        '200':
+          description: Global variable updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalVariable'
+    delete:
+      operationId: DeleteGlobalVariable
+      summary: Delete a global variable
+      tags:
+      - Global Variables
+      parameters:
+      - $ref: '#/components/parameters/VariableId'
+      responses:
+        '204':
+          description: Global variable deleted.
+  /cloudflow/v1/connections:
+    get:
+      operationId: ListConnections
+      summary: List connections
+      tags:
+      - Connections
+      parameters: []
+      responses:
+        '200':
+          description: Paginated list of connections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedListOfConnections'
+    post:
+      operationId: CreateConnection
+      summary: Create a connection
+      description: 'Creates a new cloud provider connection. On creation the status is set to `active`
+
+        unless the provider requires an asynchronous permission-grant step, in which case
+
+        it will be `pending_permissions`.
+
+        '
+      tags:
+      - Connections
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalConnectionInput'
+      responses:
+        '201':
+          description: Connection created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalConnection'
+        '200':
+          description: Dry-run response — connection was not created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalConnection'
+  /cloudflow/v1/connections/{connectionId}:
+    get:
+      operationId: GetConnection
+      summary: Get a connection
+      tags:
+      - Connections
+      parameters:
+      - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: Connection retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalConnection'
+    patch:
+      operationId: UpdateConnection
+      summary: Update a connection
+      description: 'Partially updates a connection. Currently supports toggling the `enabled` flag:
+
+
+        - `enabled: true` — transitions status from `disabled` to `active`.
+
+        - `enabled: false` — transitions status to `disabled`.
+
+
+        Uses `Content-Type: application/merge-patch+json`. `If-Match` is required.
+
+        '
+      tags:
+      - Connections
+      parameters:
+      - $ref: '#/components/parameters/ConnectionId'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: '#/components/schemas/ExternalConnectionPatch'
+      responses:
+        '200':
+          description: Connection updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalConnection'
+    delete:
+      operationId: DeleteConnection
+      summary: Delete a connection
+      description: 'Permanently deletes a connection. Fails with `409 Conflict` if any flows reference
+
+        this connection via a variable of type `connection`.
+
+        '
+      tags:
+      - Connections
+      parameters:
+      - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '204':
+          description: Connection deleted.
+  /cloudflow/v1/templates:
+    get:
+      operationId: ListTemplates
+      summary: List templates
+      description: 'Returns the catalogue of available flow templates (blueprints). Templates are
+
+        read-only. To create a flow from a template, use `POST /flows` with a `templateId`.
+
+        '
+      tags:
+      - Templates
+      parameters: []
+      responses:
+        '200':
+          description: Paginated list of templates.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedListOfTemplates'
+  /cloudflow/v1/templates/{templateId}:
+    get:
+      operationId: GetTemplate
+      summary: Get a template
+      tags:
+      - Templates
+      parameters:
+      - $ref: '#/components/parameters/TemplateId'
+      responses:
+        '200':
+          description: Template retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalTemplate'
+
+
 components:
   schemas:
     AwsAccountResponse:
@@ -10581,6 +11202,932 @@ components:
         - conversationId
         - answerId
         - feedback
+    # CloudFlow schemas
+    PagedListOfFlows:
+      type: object
+      required:
+      - items
+      - rowCount
+      description: Paginated list of ExternalFlow resources.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalFlow'
+        pageToken:
+          type: string
+          description: 'Opaque cursor for the next page. `null` or absent when there are no more pages.
+
+            Pass as `?pageToken=<value>` on the next request. Expires after 5 minutes.
+
+            '
+          nullable: true
+        rowCount:
+          type: integer
+          description: Total number of resources matching the query (independent of page size).
+    PagedListOfVariables:
+      type: object
+      required:
+      - items
+      - rowCount
+      description: Paginated list of ExternalVariable resources.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalVariable'
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+    PagedListOfConnections:
+      type: object
+      required:
+      - items
+      - rowCount
+      description: Paginated list of ExternalConnection resources.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalConnection'
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+    PagedListOfTemplates:
+      type: object
+      required:
+      - items
+      - rowCount
+      description: Paginated list of ExternalTemplate resources.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalTemplate'
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+    ExternalFlowStatus:
+      type: string
+      description: 'Lifecycle state of a flow.
+
+        - `draft` — the flow is being built and is not yet active.
+
+        - `pending` — awaiting validation or an async provisioning step.
+
+        - `active` — live and executable.
+
+        - `published` — published and available for scheduled/event-driven execution.
+
+        - `inactive` — deactivated by the owner.
+
+        - `new` — initial state assigned on creation.
+
+        '
+      enum:
+      - draft
+      - pending
+      - active
+      - published
+      - inactive
+      - new
+    ExternalConnectionStatus:
+      type: string
+      description: 'Operational status of a connection.
+
+        - `active` — the connection is valid and in use.
+
+        - `disabled` — disabled via `PATCH /connections/{connectionId}`.
+
+        - `pending_permissions` — awaiting a permission grant in the cloud provider.
+
+        - `permissions_failed` — permission setup failed.
+
+        - `inactive` — deactivated.
+
+        - `cloud_deleted` — the underlying cloud resource was deleted externally.
+
+        - `draft` — initial state during creation wizard (internal).
+
+        '
+      enum:
+      - draft
+      - pending_permissions
+      - permissions_failed
+      - active
+      - inactive
+      - cloud_deleted
+      - disabled
+    ExternalVariableType:
+      type: string
+      description: 'Data type of a variable.
+
+        - `string` — UTF-8 text.
+
+        - `integer` — 64-bit signed integer.
+
+        - `float` — 64-bit floating-point number.
+
+        - `boolean` — true / false.
+
+        - `list` — ordered collection; element type specified by `elementType`.
+
+        - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+
+        '
+      enum:
+      - string
+      - integer
+      - float
+      - boolean
+      - list
+      - connection
+    ExternalConnectionProvider:
+      type: string
+      description: Cloud provider that a connection is bound to.
+      enum:
+      - AWS
+      - GCP
+    ExternalNodeStatus:
+      type: string
+      description: 'Per-node validation state.
+
+        - `new` — freshly added, not yet validated.
+
+        - `pending` — validation in progress.
+
+        - `validated` — configuration is valid.
+
+        - `error` — configuration is invalid; see `errorMessages`.
+
+        '
+      enum:
+      - new
+      - pending
+      - validated
+      - error
+    ExternalNodeType:
+      type: string
+      description: 'Discriminator that identifies a node''s role and determines the shape of its
+
+        `parameters` field.
+
+        '
+      enum:
+      - triggerNode
+      - actionNode
+      - conditionNode
+      - filterNode
+      - httpNode
+      - manualTrigger
+      - webhookTrigger
+      - systemEventTrigger
+      - transformation
+      - datetimeTransform
+      - notificationNode
+      - avaNode
+      - policy
+      - sqlNode
+      - codeNode
+      - cliNode
+      - datastoreNode
+      - subFlowNode
+      - sleepNode
+      - flowOutput
+      - scheduleTrigger
+    ExternalFlow:
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - status
+      - published
+      - createTime
+      - etag
+      description: A CloudFlow workflow resource.
+      properties:
+        id:
+          type: string
+          description: 'Server-assigned unique identifier. `null` on dry-run create responses
+
+            (no resource was persisted).
+
+            '
+          nullable: true
+        name:
+          type: string
+          description: Display name of the flow.
+        description:
+          type: string
+          description: Human-readable description.
+        instructions:
+          type: string
+          description: Operator instructions or notes attached to the flow.
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ExternalFlowStatus'
+          description: Lifecycle state. `null` on dry-run create responses.
+          nullable: true
+        published:
+          type: boolean
+          description: 'Whether the flow is currently published. Readable on every response; use
+
+            `POST /actions/publish` and `POST /actions/unpublish` to change this value.
+
+            '
+        firstNodeId:
+          type: string
+          description: ID of the trigger (first) node. `null` if no trigger node has been set.
+          nullable: true
+        triggerType:
+          type: string
+          description: 'Node type of the trigger node. `null` if no trigger node has been set.
+
+            One of the `ExternalNodeType` trigger variants: `triggerNode`, `manualTrigger`,
+
+            `webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.
+
+            '
+          nullable: true
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create.
+          nullable: true
+        updateTime:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run.
+          nullable: true
+        lastExecutedTime:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed.
+          nullable: true
+        lastExecutionStatus:
+          type: string
+          description: Status string of the most recent execution. `null` if never executed.
+          nullable: true
+        etag:
+          type: string
+          description: 'Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.
+
+            `null` on dry-run create responses.
+
+            '
+          nullable: true
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalNode'
+          description: 'Embedded nodes. Populated by the `update-batch` response and by operations that
+
+            return the full flow with nodes inline. Not present on standard list responses.
+
+            '
+        schedule:
+          allOf:
+          - $ref: '#/components/schemas/ExternalSchedule'
+          description: Schedule configuration. `null` if the flow does not have scheduling configured.
+          nullable: true
+    ExternalFlowInput:
+      type: object
+      required:
+      - name
+      description: Request body for `CreateFlow`.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name for the new flow.
+        description:
+          type: string
+          maxLength: 2000
+          description: Human-readable description.
+        templateId:
+          type: string
+          description: 'ID of a template (blueprint) to initialise the flow from. When present the
+
+            new flow inherits the template''s node graph and structure. The template itself
+
+            is not modified.
+
+            '
+    ExternalFlowUpdate:
+      type: object
+      description: 'Request body for `UpdateFlow` (full replacement). All writable fields are replaced
+
+        with the supplied values. Optional fields that are omitted are reset to their defaults
+
+        (e.g. `instructions` is cleared if absent). Read-only fields (`id`, `status`,
+
+        `published`, `createTime`, `etag`) are silently ignored.
+
+        '
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: New display name.
+        description:
+          type: string
+          maxLength: 2000
+          description: New description.
+        instructions:
+          type: string
+          description: New operator instructions. Pass `null` to clear.
+          nullable: true
+    ExternalSchedule:
+      type: object
+      required:
+      - scheduled
+      description: Schedule configuration for a flow's scheduled trigger node.
+      properties:
+        scheduled:
+          type: boolean
+          description: Whether scheduling is currently enabled.
+        nextRun:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) timestamp of the next scheduled run. `null` if not scheduled or paused.
+          nullable: true
+        frequency:
+          type: string
+          description: 'Schedule cadence preset. One of: `Daily`, `Weekly`, `Monthly`, `Do not repeat`, `Custom`.
+
+            '
+          nullable: true
+        customFrequency:
+          type: string
+          description: 'Time unit when `frequency` is `Custom`. One of: `Hour`, `Day`, `Week`, `Month`.
+
+            '
+          nullable: true
+        customFrequencyAmount:
+          type: integer
+          minimum: 1
+          description: Number of `customFrequency` units between runs. Required when `frequency` is `Custom`.
+          nullable: true
+    ExternalNode:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - appKey
+      - status
+      - disabled
+      - createTime
+      - etag
+      description: A single node within a CloudFlow.
+      properties:
+        id:
+          type: string
+          description: Server-assigned unique identifier. `null` on dry-run create responses.
+          nullable: true
+        name:
+          type: string
+          description: Display name.
+        description:
+          type: string
+          description: Human-readable description.
+        type:
+          $ref: '#/components/schemas/ExternalNodeType'
+        appKey:
+          type: string
+          description: Identifier of the integration or application this node belongs to.
+        actionId:
+          type: string
+          description: Identifier of the specific operation this node performs (e.g. AWS service action).
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ExternalNodeStatus'
+          description: Validation state. `null` on dry-run create responses.
+          nullable: true
+        disabled:
+          type: boolean
+          description: When `true` this node is skipped during flow execution.
+        errorMessages:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of field-path → error message for nodes in the `error` status.
+        parameters:
+          type: object
+          additionalProperties: true
+          description: 'Node-specific configuration. The concrete schema depends on `type`. See the
+
+            CloudFlow node type documentation for full parameter shapes. Key parameter
+
+            schemas are also defined in the internal spec at
+
+            `services/cloudflow/api/openapi/spec.yaml` (NodeParameters and variants).
+
+            '
+        approval:
+          allOf:
+          - $ref: '#/components/schemas/ExternalApproval'
+          description: Optional human approval gate. `null` if no approval is required.
+          nullable: true
+        transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalTransition'
+          description: Directed edges to child nodes.
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+          nullable: true
+        updateTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+          nullable: true
+        etag:
+          type: string
+          description: Strong ETag for this node version. `null` on dry-run create.
+          nullable: true
+    ExternalTransition:
+      type: object
+      required:
+      - targetNodeId
+      description: Directed edge from a parent node to a child node.
+      properties:
+        targetNodeId:
+          type: string
+          description: ID of the target (child) node.
+        label:
+          type: string
+          description: Optional display label shown on the canvas edge.
+          nullable: true
+    ExternalApproval:
+      type: object
+      required:
+      - required
+      - rejectApprovalAfterTime
+      - rejectTimeValue
+      - rejectTimeUnit
+      description: Human approval gate configuration for a node.
+      properties:
+        required:
+          type: boolean
+          description: Whether approval is required before the node can proceed.
+        recipientEmail:
+          type: string
+          format: email
+          description: Email address of the approval recipient.
+          nullable: true
+        message:
+          type: string
+          description: Approval request message shown to the recipient.
+          nullable: true
+        rejectApprovalAfterTime:
+          type: boolean
+          description: Whether the approval auto-rejects if not acted on within the time window.
+        rejectTimeValue:
+          type: integer
+          minimum: 1
+          description: Number of time units before auto-rejection.
+        rejectTimeUnit:
+          type: string
+          enum:
+          - Hours
+          - Days
+          - Weeks
+          - Months
+          description: Time unit for the auto-rejection window.
+    ExternalCreateNodeRequest:
+      type: object
+      required:
+      - node
+      description: Request body for `CreateNode`.
+      properties:
+        node:
+          $ref: '#/components/schemas/ExternalNodeInput'
+        transition:
+          allOf:
+          - $ref: '#/components/schemas/ExternalParentTransition'
+          description: 'Optional wiring to an existing parent node. When supplied, the new node is
+
+            connected as a child of `parentNodeId` via the given branch value.
+
+            '
+          nullable: true
+    ExternalNodeInput:
+      type: object
+      required:
+      - name
+      - type
+      - appKey
+      - disabled
+      description: Node payload for create and update operations.
+      properties:
+        id:
+          type: string
+          description: 'Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a
+
+            stable ID enables idempotent batch operations.
+
+            '
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        type:
+          $ref: '#/components/schemas/ExternalNodeType'
+        appKey:
+          type: string
+          description: Identifier of the integration or application.
+        disabled:
+          type: boolean
+          default: false
+        parameters:
+          type: object
+          additionalProperties: true
+          description: 'Node-specific configuration. See CloudFlow node type documentation for
+
+            the required fields per `type`.
+
+            '
+        approval:
+          allOf:
+          - $ref: '#/components/schemas/ExternalApproval'
+          nullable: true
+        transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalTransition'
+          description: Outgoing edges to child nodes.
+    ExternalParentTransition:
+      type: object
+      required:
+      - parentNodeId
+      description: Wires the new node as a child of an existing parent node.
+      properties:
+        parentNodeId:
+          type: string
+          description: ID of the existing parent node.
+        label:
+          type: string
+          description: Optional display label for the edge.
+          nullable: true
+    ExternalUpdateNodesBatchRequest:
+      type: object
+      description: 'Request body for `UpdateNodesBatch`. All changes are applied atomically.
+
+        '
+      properties:
+        name:
+          type: string
+          description: Optional new display name for the flow.
+          nullable: true
+        addedNodes:
+          type: array
+          description: New nodes to add to the flow.
+          items:
+            $ref: '#/components/schemas/ExternalCreateNodeRequest'
+        updatedNodes:
+          type: array
+          description: 'Existing nodes to update. Each entry must have `node.id` set to the ID
+
+            of the node being replaced.
+
+            '
+          items:
+            $ref: '#/components/schemas/ExternalCreateNodeRequest'
+    ExternalVariable:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - required
+      - createTime
+      - updateTime
+      - etag
+      description: A CloudFlow variable resource (flow-scoped or global).
+      properties:
+        id:
+          type: string
+          description: Server-assigned unique identifier. `null` on dry-run create responses.
+          nullable: true
+        name:
+          type: string
+          description: 'Variable name. Alphanumeric characters, underscores, and dashes only (1–100 chars).
+
+            Must be unique within scope (flow or global).
+
+            '
+        description:
+          type: string
+          description: Human-readable description.
+        type:
+          $ref: '#/components/schemas/ExternalVariableType'
+        elementType:
+          type: string
+          description: 'Element type for `list` variables (e.g. `string`, `integer`). Required when
+
+            `type` is `list`; `null` for all other types.
+
+            '
+          nullable: true
+        connectionType:
+          type: string
+          description: 'Connection provider type for `connection` variables (e.g. `AWS`, `GCP`). Required
+
+            when `type` is `connection`; `null` for all other types.
+
+            '
+          nullable: true
+        required:
+          type: boolean
+          description: Whether a value must be provided before the flow can be published.
+        value:
+          type: string
+          description: 'Current value, always string-encoded on the wire. `null` if no value has been set.
+
+            Logical encoding by variable `type`:
+
+            - `string` → the string value
+
+            - `integer` → decimal string, e.g. `"42"`
+
+            - `float` → decimal string, e.g. `"3.14"`
+
+            - `boolean` → `"true"` or `"false"`
+
+            - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
+
+            - `connection` → connection ID string
+
+            '
+          nullable: true
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+          nullable: true
+        updateTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp.
+          nullable: true
+        etag:
+          type: string
+          description: Strong ETag. `null` on dry-run create.
+          nullable: true
+    ExternalVariableInput:
+      type: object
+      required:
+      - name
+      - type
+      - required
+      description: 'Request body for `CreateFlowVariable`, `CreateGlobalVariable`,
+
+        `UpdateFlowVariable`, and `UpdateGlobalVariable`.
+
+        '
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[a-zA-Z0-9_\-]+$
+          description: 'Variable name. Alphanumeric, underscore, and dash only. Must be unique
+
+            within scope (flow-local or global).
+
+            '
+        description:
+          type: string
+          maxLength: 2000
+        type:
+          $ref: '#/components/schemas/ExternalVariableType'
+        elementType:
+          type: string
+          description: Element type for `list` variables. Required when `type` is `list`.
+          enum:
+          - string
+          - integer
+          - float
+          - boolean
+          - connection
+        connectionType:
+          allOf:
+          - $ref: '#/components/schemas/ExternalConnectionProvider'
+          description: 'Connection provider type for `connection` variables.
+
+            Required when `type` is `connection`.
+
+            '
+        required:
+          type: boolean
+          description: Whether the flow requires a value before publishing.
+        value:
+          type: string
+          description: "Initial or updated value, always string-encoded on the wire. Encoding by `type`:\n- `string` → the string value\n- `integer` → decimal string, e.g. `\"42\"`\n- `float` → decimal string,\
+            \ e.g. `\"3.14\"`\n- `boolean` → `\"true\"` or `\"false\"`\n- `list` → JSON-encoded array string, e.g. `\"[\\\"a\\\",\\\"b\\\"]\"`\n- `connection` → connection ID string; the referenced connection\
+            \ must exist\n  within the tenant and be in an `active` or `inactive` state.\n"
+    ExternalVariableValuesBulkUpdate:
+      type: object
+      required:
+      - updates
+      description: 'Request body for `UpdateFlowVariableValues`. Only the specified variables are
+
+        updated; others are unaffected.
+
+        '
+      properties:
+        updates:
+          type: array
+          description: Variable-value pairs to update.
+          items:
+            type: object
+            required:
+            - id
+            - value
+            description: Single variable value update.
+            properties:
+              id:
+                type: string
+                description: ID of the flow-scoped variable to update.
+              value:
+                type: string
+                description: 'New value, string-encoded. See `ExternalVariableInput.value` for encoding
+
+                  rules per variable `type`.
+
+                  '
+    ExternalConnection:
+      type: object
+      required:
+      - id
+      - name
+      - cloudProvider
+      - status
+      - enabled
+      - createTime
+      - updateTime
+      - etag
+      description: A cloud provider connection resource.
+      properties:
+        id:
+          type: string
+          description: Unique identifier. `null` on dry-run create responses.
+          nullable: true
+        name:
+          type: string
+          description: Display name.
+        description:
+          type: string
+          description: Human-readable description.
+          nullable: true
+        cloudProvider:
+          $ref: '#/components/schemas/ExternalConnectionProvider'
+        status:
+          $ref: '#/components/schemas/ExternalConnectionStatus'
+        statusMessage:
+          type: string
+          description: Human-readable explanation of a non-active status.
+          nullable: true
+        enabled:
+          type: boolean
+          description: 'Whether this connection is enabled. Derived from `status`: `false` when
+
+            `status` is `disabled`, `true` otherwise. Toggle via
+
+            `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
+
+            '
+        connectionConfiguration:
+          type: object
+          additionalProperties: true
+          description: 'Provider-specific configuration. Shape depends on `cloudProvider`:
+
+            - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
+
+            - **GCP**: project IDs and service account configuration.
+
+            '
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+          nullable: true
+        updateTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp.
+          nullable: true
+        lastSyncedTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) timestamp of the last successful sync with the cloud provider.
+          nullable: true
+        etag:
+          type: string
+          description: Strong ETag. `null` on dry-run create.
+          nullable: true
+    ExternalConnectionInput:
+      type: object
+      required:
+      - name
+      - cloudProvider
+      - connectionConfiguration
+      description: Request body for `CreateConnection`.
+      properties:
+        id:
+          type: string
+          description: 'Client-provided connection ID. Server assigns one if omitted. Providing a
+
+            stable ID enables idempotent creation.
+
+            '
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Unique display name for the connection within the tenant.
+        description:
+          type: string
+          maxLength: 2000
+        cloudProvider:
+          $ref: '#/components/schemas/ExternalConnectionProvider'
+        connectionConfiguration:
+          type: object
+          additionalProperties: true
+          description: 'Provider-specific configuration object. Required fields depend on `cloudProvider`.
+
+            See CloudFlow connection documentation for the expected shape per provider.
+
+            '
+    ExternalConnectionPatch:
+      type: object
+      required:
+      - enabled
+      description: 'Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
+
+        Currently supports toggling the `enabled` flag only.
+
+        '
+      properties:
+        enabled:
+          type: boolean
+          description: '- `true` — enable the connection (transitions `disabled` → `active`).
+
+            - `false` — disable the connection (transitions current status → `disabled`).
+
+            '
+    ExternalTemplate:
+      type: object
+      required:
+      - id
+      - name
+      - createTime
+      description: 'A read-only flow template (blueprint). Use `POST /flows` with `templateId` to
+
+        create a new flow initialised from this template.
+
+        '
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the template.
+        name:
+          type: string
+          description: Display name.
+        description:
+          type: string
+          description: Human-readable description.
+        instructions:
+          type: string
+          description: Operator instructions for flows created from this template.
+          nullable: true
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp.
+        updateTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+          nullable: true
+
+
   responses:
     "400":
       description: >-
@@ -10708,6 +12255,41 @@ components:
               resourceData:
                 $ref: "#/components/schemas/AnomalyResourceArray"
   parameters:
+    FlowId:
+      name: flowId
+      in: path
+      required: true
+      description: Flow ID
+      schema:
+        type: string
+    NodeId:
+      name: nodeId
+      in: path
+      required: true
+      description: Node ID
+      schema:
+        type: string
+    VariableId:
+      name: variableId
+      in: path
+      required: true
+      description: Variable ID
+      schema:
+        type: string
+    ConnectionId:
+      name: connectionId
+      in: path
+      required: true
+      description: Connection ID
+      schema:
+        type: string
+    TemplateId:
+      name: templateId
+      in: path
+      required: true
+      description: Template ID
+      schema:
+        type: string
     maxResults:
       name: maxResults
       in: query

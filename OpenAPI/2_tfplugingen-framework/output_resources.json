@@ -1487,6 +1487,1272 @@
 			}
 		},
 		{
+			"name": "cloudflow_connection",
+			"schema": {
+				"attributes": [
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Cloud provider that a connection is bound to.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"AWS\",\n\"GCP\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "connection_configuration",
+						"string": {
+							"computed_optional_required": "required",
+							"custom_type": {
+								"import": {
+									"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+								},
+								"type": "jsontypes.NormalizedType{}",
+								"value_type": "jsontypes.Normalized"
+							},
+							"description": "Provider-specific configuration object. Required fields depend on `cloudProvider`.\nSee CloudFlow connection documentation for the expected shape per provider.\n. Value is JSON-encoded."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Human-readable description.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(2000)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Client-provided connection ID. Server assigns one if omitted. Providing a\nstable ID enables idempotent creation.\n"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Unique display name for the connection within the tenant.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 200)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) creation timestamp. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "enabled",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether this connection is enabled. Derived from `status`: `false` when\n`status` is `disabled`, `true` otherwise. Toggle via\n`PATCH /connections/{connectionId}` with `{ \"enabled\": true/false }`.\n"
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong ETag. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "last_synced_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) timestamp of the last successful sync with the cloud provider."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Operational status of a connection.\n- `active` — the connection is valid and in use.\n- `disabled` — disabled via `PATCH /connections/{connectionId}`.\n- `pending_permissions` — awaiting a permission grant in the cloud provider.\n- `permissions_failed` — permission setup failed.\n- `inactive` — deactivated.\n- `cloud_deleted` — the underlying cloud resource was deleted externally.\n- `draft` — initial state during creation wizard (internal).\n"
+						}
+					},
+					{
+						"name": "status_message",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Human-readable explanation of a non-active status."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) last-modified timestamp."
+						}
+					},
+					{
+						"name": "connection_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Connection ID"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "cloudflow_flow",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Human-readable description.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(2000)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Display name for the new flow.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 200)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "template_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "ID of a template (blueprint) to initialise the flow from. When present the\nnew flow inherits the template's node graph and structure. The template itself\nis not modified.\n"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.\n`null` on dry-run create responses.\n"
+						}
+					},
+					{
+						"name": "first_node_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the trigger (first) node. `null` if no trigger node has been set."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned unique identifier. `null` on dry-run create responses\n(no resource was persisted).\n"
+						}
+					},
+					{
+						"name": "instructions",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Operator instructions or notes attached to the flow."
+						}
+					},
+					{
+						"name": "last_executed_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed."
+						}
+					},
+					{
+						"name": "last_execution_status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Status string of the most recent execution. `null` if never executed."
+						}
+					},
+					{
+						"name": "nodes",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "action_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the specific operation this node performs (e.g. AWS service action)."
+										}
+									},
+									{
+										"name": "app_key",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the integration or application this node belongs to."
+										}
+									},
+									{
+										"name": "approval",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "message",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Approval request message shown to the recipient."
+													}
+												},
+												{
+													"name": "recipient_email",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Email address of the approval recipient."
+													}
+												},
+												{
+													"name": "reject_approval_after_time",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the approval auto-rejects if not acted on within the time window."
+													}
+												},
+												{
+													"name": "reject_time_unit",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Time unit for the auto-rejection window."
+													}
+												},
+												{
+													"name": "reject_time_value",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "Number of time units before auto-rejection."
+													}
+												},
+												{
+													"name": "required",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether approval is required before the node can proceed."
+													}
+												}
+											],
+											"description": "Optional human approval gate. `null` if no approval is required."
+										}
+									},
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ISO 8601 (UTC) creation timestamp. `null` on dry-run create."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Human-readable description."
+										}
+									},
+									{
+										"name": "disabled",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "When `true` this node is skipped during flow execution."
+										}
+									},
+									{
+										"name": "error_messages",
+										"map": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Map of field-path → error message for nodes in the `error` status."
+										}
+									},
+									{
+										"name": "etag",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Strong ETag for this node version. `null` on dry-run create."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Server-assigned unique identifier. `null` on dry-run create responses."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name."
+										}
+									},
+									{
+										"name": "parameters",
+										"string": {
+											"computed_optional_required": "computed",
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Node-specific configuration. The concrete schema depends on `type`. See the\nCloudFlow node type documentation for full parameter shapes. Key parameter\nschemas are also defined in the internal spec at\n`services/cloudflow/api/openapi/spec.yaml` (NodeParameters and variants).\n. Value is JSON-encoded."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Validation state. `null` on dry-run create responses."
+										}
+									},
+									{
+										"name": "transitions",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "label",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Optional display label shown on the canvas edge."
+														}
+													},
+													{
+														"name": "target_node_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "ID of the target (child) node."
+														}
+													}
+												]
+											},
+											"description": "Directed edges to child nodes."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Discriminator that identifies a node's role and determines the shape of its\n`parameters` field.\n"
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ISO 8601 (UTC) last-modified timestamp. `null` if never modified."
+										}
+									}
+								]
+							},
+							"description": "Embedded nodes. Populated by the `update-batch` response and by operations that\nreturn the full flow with nodes inline. Not present on standard list responses.\n"
+						}
+					},
+					{
+						"name": "published",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the flow is currently published. Readable on every response; use\n`POST /actions/publish` and `POST /actions/unpublish` to change this value.\n"
+						}
+					},
+					{
+						"name": "schedule",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "custom_frequency",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Time unit when `frequency` is `Custom`. One of: `Hour`, `Day`, `Week`, `Month`.\n"
+									}
+								},
+								{
+									"name": "custom_frequency_amount",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "Number of `customFrequency` units between runs. Required when `frequency` is `Custom`."
+									}
+								},
+								{
+									"name": "frequency",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Schedule cadence preset. One of: `Daily`, `Weekly`, `Monthly`, `Do not repeat`, `Custom`.\n"
+									}
+								},
+								{
+									"name": "next_run",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "ISO 8601 (UTC) timestamp of the next scheduled run. `null` if not scheduled or paused."
+									}
+								},
+								{
+									"name": "scheduled",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether scheduling is currently enabled."
+									}
+								}
+							],
+							"description": "Schedule configuration. `null` if the flow does not have scheduling configured."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Lifecycle state. `null` on dry-run create responses."
+						}
+					},
+					{
+						"name": "trigger_type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Node type of the trigger node. `null` if no trigger node has been set.\nOne of the `ExternalNodeType` trigger variants: `triggerNode`, `manualTrigger`,\n`webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.\n"
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run."
+						}
+					},
+					{
+						"name": "flow_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Flow ID"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "cloudflow_flow_variable",
+			"schema": {
+				"attributes": [
+					{
+						"name": "connection_type",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Connection provider type for `connection` variables.\nRequired when `type` is `connection`.\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"AWS\",\n\"GCP\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Human-readable description.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(2000)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "element_type",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Element type for `list` variables. Required when `type` is `list`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"string\",\n\"integer\",\n\"float\",\n\"boolean\",\n\"connection\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Variable name. Alphanumeric, underscore, and dash only. Must be unique\nwithin scope (flow-local or global).\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 100)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-zA-Z0-9_\\\\-]+$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "required",
+						"bool": {
+							"computed_optional_required": "required",
+							"description": "Whether the flow requires a value before publishing."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Data type of a variable.\n- `string` — UTF-8 text.\n- `integer` — 64-bit signed integer.\n- `float` — 64-bit floating-point number.\n- `boolean` — true / false.\n- `list` — ordered collection; element type specified by `elementType`.\n- `connection` — reference to a connection resource; provider type specified by `connectionType`.\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"string\",\n\"integer\",\n\"float\",\n\"boolean\",\n\"list\",\n\"connection\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "value",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Initial or updated value, always string-encoded on the wire. Encoding by `type`:\n- `string` → the string value\n- `integer` → decimal string, e.g. `\"42\"`\n- `float` → decimal string, e.g. `\"3.14\"`\n- `boolean` → `\"true\"` or `\"false\"`\n- `list` → JSON-encoded array string, e.g. `\"[\\\"a\\\",\\\"b\\\"]\"`\n- `connection` → connection ID string; the referenced connection must exist\n  within the tenant and be in an `active` or `inactive` state.\n"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) creation timestamp. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong ETag. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned unique identifier. `null` on dry-run create responses."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) last-modified timestamp."
+						}
+					},
+					{
+						"name": "flow_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Flow ID"
+						}
+					},
+					{
+						"name": "variable_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Variable ID"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "cloudflow_global_variable",
+			"schema": {
+				"attributes": [
+					{
+						"name": "connection_type",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Connection provider type for `connection` variables.\nRequired when `type` is `connection`.\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"AWS\",\n\"GCP\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Human-readable description.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(2000)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "element_type",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Element type for `list` variables. Required when `type` is `list`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"string\",\n\"integer\",\n\"float\",\n\"boolean\",\n\"connection\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Variable name. Alphanumeric, underscore, and dash only. Must be unique\nwithin scope (flow-local or global).\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 100)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-zA-Z0-9_\\\\-]+$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "required",
+						"bool": {
+							"computed_optional_required": "required",
+							"description": "Whether the flow requires a value before publishing."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Data type of a variable.\n- `string` — UTF-8 text.\n- `integer` — 64-bit signed integer.\n- `float` — 64-bit floating-point number.\n- `boolean` — true / false.\n- `list` — ordered collection; element type specified by `elementType`.\n- `connection` — reference to a connection resource; provider type specified by `connectionType`.\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"string\",\n\"integer\",\n\"float\",\n\"boolean\",\n\"list\",\n\"connection\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "value",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Initial or updated value, always string-encoded on the wire. Encoding by `type`:\n- `string` → the string value\n- `integer` → decimal string, e.g. `\"42\"`\n- `float` → decimal string, e.g. `\"3.14\"`\n- `boolean` → `\"true\"` or `\"false\"`\n- `list` → JSON-encoded array string, e.g. `\"[\\\"a\\\",\\\"b\\\"]\"`\n- `connection` → connection ID string; the referenced connection must exist\n  within the tenant and be in an `active` or `inactive` state.\n"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) creation timestamp. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong ETag. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned unique identifier. `null` on dry-run create responses."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) last-modified timestamp."
+						}
+					},
+					{
+						"name": "variable_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Variable ID"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "cloudflow_node",
+			"schema": {
+				"attributes": [
+					{
+						"name": "node",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "app_key",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Identifier of the integration or application."
+									}
+								},
+								{
+									"name": "approval",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "message",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Approval request message shown to the recipient."
+												}
+											},
+											{
+												"name": "recipient_email",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Email address of the approval recipient."
+												}
+											},
+											{
+												"name": "reject_approval_after_time",
+												"bool": {
+													"computed_optional_required": "required",
+													"description": "Whether the approval auto-rejects if not acted on within the time window."
+												}
+											},
+											{
+												"name": "reject_time_unit",
+												"string": {
+													"computed_optional_required": "required",
+													"description": "Time unit for the auto-rejection window.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"Hours\",\n\"Days\",\n\"Weeks\",\n\"Months\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "reject_time_value",
+												"int64": {
+													"computed_optional_required": "required",
+													"description": "Number of time units before auto-rejection.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																	}
+																],
+																"schema_definition": "int64validator.AtLeast(1)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "required",
+												"bool": {
+													"computed_optional_required": "required",
+													"description": "Whether approval is required before the node can proceed."
+												}
+											}
+										],
+										"description": "Human approval gate configuration for a node."
+									}
+								},
+								{
+									"name": "description",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.LengthAtMost(2000)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "disabled",
+									"bool": {
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": false
+										}
+									}
+								},
+								{
+									"name": "id",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a\nstable ID enables idempotent batch operations.\n"
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "required",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.LengthBetween(1, 200)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "parameters",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"custom_type": {
+											"import": {
+												"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+											},
+											"type": "jsontypes.NormalizedType{}",
+											"value_type": "jsontypes.Normalized"
+										},
+										"description": "Node-specific configuration. See CloudFlow node type documentation for\nthe required fields per `type`.\n. Value is JSON-encoded."
+									}
+								},
+								{
+									"name": "transitions",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "label",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Optional display label shown on the canvas edge."
+													}
+												},
+												{
+													"name": "target_node_id",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "ID of the target (child) node."
+													}
+												}
+											]
+										},
+										"description": "Outgoing edges to child nodes."
+									}
+								},
+								{
+									"name": "type",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Discriminator that identifies a node's role and determines the shape of its\n`parameters` field.\n",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"triggerNode\",\n\"actionNode\",\n\"conditionNode\",\n\"filterNode\",\n\"httpNode\",\n\"manualTrigger\",\n\"webhookTrigger\",\n\"systemEventTrigger\",\n\"transformation\",\n\"datetimeTransform\",\n\"notificationNode\",\n\"avaNode\",\n\"policy\",\n\"sqlNode\",\n\"codeNode\",\n\"cliNode\",\n\"datastoreNode\",\n\"subFlowNode\",\n\"sleepNode\",\n\"flowOutput\",\n\"scheduleTrigger\",\n)"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Node payload for create and update operations."
+						}
+					},
+					{
+						"name": "transition",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "label",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Optional display label for the edge."
+									}
+								},
+								{
+									"name": "parent_node_id",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "ID of the existing parent node."
+									}
+								}
+							],
+							"description": "Optional wiring to an existing parent node. When supplied, the new node is\nconnected as a child of `parentNodeId` via the given branch value.\n"
+						}
+					},
+					{
+						"name": "action_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the specific operation this node performs (e.g. AWS service action)."
+						}
+					},
+					{
+						"name": "app_key",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the integration or application this node belongs to."
+						}
+					},
+					{
+						"name": "approval",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "message",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Approval request message shown to the recipient."
+									}
+								},
+								{
+									"name": "recipient_email",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Email address of the approval recipient."
+									}
+								},
+								{
+									"name": "reject_approval_after_time",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether the approval auto-rejects if not acted on within the time window."
+									}
+								},
+								{
+									"name": "reject_time_unit",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Time unit for the auto-rejection window."
+									}
+								},
+								{
+									"name": "reject_time_value",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "Number of time units before auto-rejection."
+									}
+								},
+								{
+									"name": "required",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether approval is required before the node can proceed."
+									}
+								}
+							],
+							"description": "Optional human approval gate. `null` if no approval is required."
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) creation timestamp. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Human-readable description."
+						}
+					},
+					{
+						"name": "disabled",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "When `true` this node is skipped during flow execution."
+						}
+					},
+					{
+						"name": "error_messages",
+						"map": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Map of field-path → error message for nodes in the `error` status."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong ETag for this node version. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned unique identifier. `null` on dry-run create responses."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Display name."
+						}
+					},
+					{
+						"name": "parameters",
+						"string": {
+							"computed_optional_required": "computed",
+							"custom_type": {
+								"import": {
+									"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+								},
+								"type": "jsontypes.NormalizedType{}",
+								"value_type": "jsontypes.Normalized"
+							},
+							"description": "Node-specific configuration. The concrete schema depends on `type`. See the\nCloudFlow node type documentation for full parameter shapes. Key parameter\nschemas are also defined in the internal spec at\n`services/cloudflow/api/openapi/spec.yaml` (NodeParameters and variants).\n. Value is JSON-encoded."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Validation state. `null` on dry-run create responses."
+						}
+					},
+					{
+						"name": "transitions",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "label",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Optional display label shown on the canvas edge."
+										}
+									},
+									{
+										"name": "target_node_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the target (child) node."
+										}
+									}
+								]
+							},
+							"description": "Directed edges to child nodes."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Discriminator that identifies a node's role and determines the shape of its\n`parameters` field.\n"
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) last-modified timestamp. `null` if never modified."
+						}
+					},
+					{
+						"name": "flow_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Flow ID"
+						}
+					},
+					{
+						"name": "node_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Node ID"
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "custom_theme",
 			"schema": {
 				"attributes": [

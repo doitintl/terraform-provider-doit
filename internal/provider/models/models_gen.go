@@ -1400,6 +1400,30 @@ func (e DisplayStatus) Valid() bool {
 	}
 }
 
+// Defines values for ExternalApprovalRejectTimeUnit.
+const (
+	Days   ExternalApprovalRejectTimeUnit = "Days"
+	Hours  ExternalApprovalRejectTimeUnit = "Hours"
+	Months ExternalApprovalRejectTimeUnit = "Months"
+	Weeks  ExternalApprovalRejectTimeUnit = "Weeks"
+)
+
+// Valid indicates whether the value is a known member of the ExternalApprovalRejectTimeUnit enum.
+func (e ExternalApprovalRejectTimeUnit) Valid() bool {
+	switch e {
+	case Days:
+		return true
+	case Hours:
+		return true
+	case Months:
+		return true
+	case Weeks:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalConfigAggregation.
 const (
 	Count          ExternalConfigAggregation = "count"
@@ -1622,6 +1646,57 @@ func (e ExternalConfigMetricFilterOperator) Valid() bool {
 	}
 }
 
+// Defines values for ExternalConnectionProvider.
+const (
+	AWS ExternalConnectionProvider = "AWS"
+	GCP ExternalConnectionProvider = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConnectionProvider enum.
+func (e ExternalConnectionProvider) Valid() bool {
+	switch e {
+	case AWS:
+		return true
+	case GCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConnectionStatus.
+const (
+	ExternalConnectionStatusActive             ExternalConnectionStatus = "active"
+	ExternalConnectionStatusCloudDeleted       ExternalConnectionStatus = "cloud_deleted"
+	ExternalConnectionStatusDisabled           ExternalConnectionStatus = "disabled"
+	ExternalConnectionStatusDraft              ExternalConnectionStatus = "draft"
+	ExternalConnectionStatusInactive           ExternalConnectionStatus = "inactive"
+	ExternalConnectionStatusPendingPermissions ExternalConnectionStatus = "pending_permissions"
+	ExternalConnectionStatusPermissionsFailed  ExternalConnectionStatus = "permissions_failed"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConnectionStatus enum.
+func (e ExternalConnectionStatus) Valid() bool {
+	switch e {
+	case ExternalConnectionStatusActive:
+		return true
+	case ExternalConnectionStatusCloudDeleted:
+		return true
+	case ExternalConnectionStatusDisabled:
+		return true
+	case ExternalConnectionStatusDraft:
+		return true
+	case ExternalConnectionStatusInactive:
+		return true
+	case ExternalConnectionStatusPendingPermissions:
+		return true
+	case ExternalConnectionStatusPermissionsFailed:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalDisplaySettingsAxisLabelFontSize.
 const (
 	ExternalDisplaySettingsAxisLabelFontSizeAuto   ExternalDisplaySettingsAxisLabelFontSize = "auto"
@@ -1697,6 +1772,36 @@ func (e ExternalDisplaySettingsNumberScale) Valid() bool {
 	}
 }
 
+// Defines values for ExternalFlowStatus.
+const (
+	ExternalFlowStatusActive    ExternalFlowStatus = "active"
+	ExternalFlowStatusDraft     ExternalFlowStatus = "draft"
+	ExternalFlowStatusInactive  ExternalFlowStatus = "inactive"
+	ExternalFlowStatusNew       ExternalFlowStatus = "new"
+	ExternalFlowStatusPending   ExternalFlowStatus = "pending"
+	ExternalFlowStatusPublished ExternalFlowStatus = "published"
+)
+
+// Valid indicates whether the value is a known member of the ExternalFlowStatus enum.
+func (e ExternalFlowStatus) Valid() bool {
+	switch e {
+	case ExternalFlowStatusActive:
+		return true
+	case ExternalFlowStatusDraft:
+		return true
+	case ExternalFlowStatusInactive:
+		return true
+	case ExternalFlowStatusNew:
+		return true
+	case ExternalFlowStatusPending:
+		return true
+	case ExternalFlowStatusPublished:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalMetricType.
 const (
 	ExternalMetricTypeBasic    ExternalMetricType = "basic"
@@ -1712,6 +1817,105 @@ func (e ExternalMetricType) Valid() bool {
 	case ExternalMetricTypeCustom:
 		return true
 	case ExternalMetricTypeExtended:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalNodeStatus.
+const (
+	ExternalNodeStatusError     ExternalNodeStatus = "error"
+	ExternalNodeStatusNew       ExternalNodeStatus = "new"
+	ExternalNodeStatusPending   ExternalNodeStatus = "pending"
+	ExternalNodeStatusValidated ExternalNodeStatus = "validated"
+)
+
+// Valid indicates whether the value is a known member of the ExternalNodeStatus enum.
+func (e ExternalNodeStatus) Valid() bool {
+	switch e {
+	case ExternalNodeStatusError:
+		return true
+	case ExternalNodeStatusNew:
+		return true
+	case ExternalNodeStatusPending:
+		return true
+	case ExternalNodeStatusValidated:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalNodeType.
+const (
+	ActionNode         ExternalNodeType = "actionNode"
+	AvaNode            ExternalNodeType = "avaNode"
+	CliNode            ExternalNodeType = "cliNode"
+	CodeNode           ExternalNodeType = "codeNode"
+	ConditionNode      ExternalNodeType = "conditionNode"
+	DatastoreNode      ExternalNodeType = "datastoreNode"
+	DatetimeTransform  ExternalNodeType = "datetimeTransform"
+	FilterNode         ExternalNodeType = "filterNode"
+	FlowOutput         ExternalNodeType = "flowOutput"
+	HttpNode           ExternalNodeType = "httpNode"
+	ManualTrigger      ExternalNodeType = "manualTrigger"
+	NotificationNode   ExternalNodeType = "notificationNode"
+	Policy             ExternalNodeType = "policy"
+	ScheduleTrigger    ExternalNodeType = "scheduleTrigger"
+	SleepNode          ExternalNodeType = "sleepNode"
+	SqlNode            ExternalNodeType = "sqlNode"
+	SubFlowNode        ExternalNodeType = "subFlowNode"
+	SystemEventTrigger ExternalNodeType = "systemEventTrigger"
+	Transformation     ExternalNodeType = "transformation"
+	TriggerNode        ExternalNodeType = "triggerNode"
+	WebhookTrigger     ExternalNodeType = "webhookTrigger"
+)
+
+// Valid indicates whether the value is a known member of the ExternalNodeType enum.
+func (e ExternalNodeType) Valid() bool {
+	switch e {
+	case ActionNode:
+		return true
+	case AvaNode:
+		return true
+	case CliNode:
+		return true
+	case CodeNode:
+		return true
+	case ConditionNode:
+		return true
+	case DatastoreNode:
+		return true
+	case DatetimeTransform:
+		return true
+	case FilterNode:
+		return true
+	case FlowOutput:
+		return true
+	case HttpNode:
+		return true
+	case ManualTrigger:
+		return true
+	case NotificationNode:
+		return true
+	case Policy:
+		return true
+	case ScheduleTrigger:
+		return true
+	case SleepNode:
+		return true
+	case SqlNode:
+		return true
+	case SubFlowNode:
+		return true
+	case SystemEventTrigger:
+		return true
+	case Transformation:
+		return true
+	case TriggerNode:
+		return true
+	case WebhookTrigger:
 		return true
 	default:
 		return false
@@ -1952,6 +2156,63 @@ func (e ExternalSplitTargetType) Valid() bool {
 	case ExternalSplitTargetTypeSystemLabel:
 		return true
 	case ExternalSplitTargetTypeTag:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalVariableInputElementType.
+const (
+	ExternalVariableInputElementTypeBoolean    ExternalVariableInputElementType = "boolean"
+	ExternalVariableInputElementTypeConnection ExternalVariableInputElementType = "connection"
+	ExternalVariableInputElementTypeFloat      ExternalVariableInputElementType = "float"
+	ExternalVariableInputElementTypeInteger    ExternalVariableInputElementType = "integer"
+	ExternalVariableInputElementTypeString     ExternalVariableInputElementType = "string"
+)
+
+// Valid indicates whether the value is a known member of the ExternalVariableInputElementType enum.
+func (e ExternalVariableInputElementType) Valid() bool {
+	switch e {
+	case ExternalVariableInputElementTypeBoolean:
+		return true
+	case ExternalVariableInputElementTypeConnection:
+		return true
+	case ExternalVariableInputElementTypeFloat:
+		return true
+	case ExternalVariableInputElementTypeInteger:
+		return true
+	case ExternalVariableInputElementTypeString:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalVariableType.
+const (
+	ExternalVariableTypeBoolean    ExternalVariableType = "boolean"
+	ExternalVariableTypeConnection ExternalVariableType = "connection"
+	ExternalVariableTypeFloat      ExternalVariableType = "float"
+	ExternalVariableTypeInteger    ExternalVariableType = "integer"
+	ExternalVariableTypeList       ExternalVariableType = "list"
+	ExternalVariableTypeString     ExternalVariableType = "string"
+)
+
+// Valid indicates whether the value is a known member of the ExternalVariableType enum.
+func (e ExternalVariableType) Valid() bool {
+	switch e {
+	case ExternalVariableTypeBoolean:
+		return true
+	case ExternalVariableTypeConnection:
+		return true
+	case ExternalVariableTypeFloat:
+		return true
+	case ExternalVariableTypeInteger:
+		return true
+	case ExternalVariableTypeList:
+		return true
+	case ExternalVariableTypeString:
 		return true
 	default:
 		return false
@@ -5561,6 +5822,30 @@ type ExternalAlertList struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ExternalApproval Human approval gate configuration for a node.
+type ExternalApproval struct {
+	// Message Approval request message shown to the recipient.
+	Message *string `json:"message,omitempty"`
+
+	// RecipientEmail Email address of the approval recipient.
+	RecipientEmail *openapi_types.Email `json:"recipientEmail,omitempty"`
+
+	// RejectApprovalAfterTime Whether the approval auto-rejects if not acted on within the time window.
+	RejectApprovalAfterTime bool `json:"rejectApprovalAfterTime"`
+
+	// RejectTimeUnit Time unit for the auto-rejection window.
+	RejectTimeUnit ExternalApprovalRejectTimeUnit `json:"rejectTimeUnit"`
+
+	// RejectTimeValue Number of time units before auto-rejection.
+	RejectTimeValue int `json:"rejectTimeValue"`
+
+	// Required Whether approval is required before the node can proceed.
+	Required bool `json:"required"`
+}
+
+// ExternalApprovalRejectTimeUnit Time unit for the auto-rejection window.
+type ExternalApprovalRejectTimeUnit string
+
 // ExternalBudgetAlert Budget alert status details.
 type ExternalBudgetAlert struct {
 	ForecastedDate *int64   `json:"forecastedDate,omitempty"`
@@ -5710,6 +5995,105 @@ type ExternalConfigMetricFilter struct {
 // ExternalConfigMetricFilterOperator Comparison operator for filtering metric values.
 type ExternalConfigMetricFilterOperator string
 
+// ExternalConnection A cloud provider connection resource.
+type ExternalConnection struct {
+	// CloudProvider Cloud provider that a connection is bound to.
+	CloudProvider ExternalConnectionProvider `json:"cloudProvider"`
+
+	// ConnectionConfiguration Provider-specific configuration. Shape depends on `cloudProvider`:
+	// - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
+	// - **GCP**: project IDs and service account configuration.
+	ConnectionConfiguration *map[string]interface{} `json:"connectionConfiguration,omitempty"`
+
+	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// Enabled Whether this connection is enabled. Derived from `status`: `false` when
+	// `status` is `disabled`, `true` otherwise. Toggle via
+	// `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
+	Enabled bool `json:"enabled"`
+
+	// Etag Strong ETag. `null` on dry-run create.
+	Etag *string `json:"etag"`
+
+	// Id Unique identifier. `null` on dry-run create responses.
+	Id *string `json:"id"`
+
+	// LastSyncedTime ISO 8601 (UTC) timestamp of the last successful sync with the cloud provider.
+	LastSyncedTime *time.Time `json:"lastSyncedTime,omitempty"`
+
+	// Name Display name.
+	Name string `json:"name"`
+
+	// Status Operational status of a connection.
+	// - `active` — the connection is valid and in use.
+	// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
+	// - `pending_permissions` — awaiting a permission grant in the cloud provider.
+	// - `permissions_failed` — permission setup failed.
+	// - `inactive` — deactivated.
+	// - `cloud_deleted` — the underlying cloud resource was deleted externally.
+	// - `draft` — initial state during creation wizard (internal).
+	Status ExternalConnectionStatus `json:"status"`
+
+	// StatusMessage Human-readable explanation of a non-active status.
+	StatusMessage *string `json:"statusMessage,omitempty"`
+
+	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
+	UpdateTime *time.Time `json:"updateTime"`
+}
+
+// ExternalConnectionInput Request body for `CreateConnection`.
+type ExternalConnectionInput struct {
+	// CloudProvider Cloud provider that a connection is bound to.
+	CloudProvider ExternalConnectionProvider `json:"cloudProvider"`
+
+	// ConnectionConfiguration Provider-specific configuration object. Required fields depend on `cloudProvider`.
+	// See CloudFlow connection documentation for the expected shape per provider.
+	ConnectionConfiguration map[string]interface{} `json:"connectionConfiguration"`
+	Description             *string                `json:"description,omitempty"`
+
+	// Id Client-provided connection ID. Server assigns one if omitted. Providing a
+	// stable ID enables idempotent creation.
+	Id *string `json:"id,omitempty"`
+
+	// Name Unique display name for the connection within the tenant.
+	Name string `json:"name"`
+}
+
+// ExternalConnectionPatch Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
+// Currently supports toggling the `enabled` flag only.
+type ExternalConnectionPatch struct {
+	// Enabled - `true` — enable the connection (transitions `disabled` → `active`).
+	// - `false` — disable the connection (transitions current status → `disabled`).
+	Enabled bool `json:"enabled"`
+}
+
+// ExternalConnectionProvider Cloud provider that a connection is bound to.
+type ExternalConnectionProvider string
+
+// ExternalConnectionStatus Operational status of a connection.
+// - `active` — the connection is valid and in use.
+// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
+// - `pending_permissions` — awaiting a permission grant in the cloud provider.
+// - `permissions_failed` — permission setup failed.
+// - `inactive` — deactivated.
+// - `cloud_deleted` — the underlying cloud resource was deleted externally.
+// - `draft` — initial state during creation wizard (internal).
+type ExternalConnectionStatus string
+
+// ExternalCreateNodeRequest Request body for `CreateNode`.
+type ExternalCreateNodeRequest struct {
+	// Node Node payload for create and update operations.
+	Node ExternalNodeInput `json:"node"`
+
+	// Transition Optional wiring to an existing parent node. When supplied, the new node is
+	// connected as a child of `parentNodeId` via the given branch value.
+	Transition *ExternalParentTransition `json:"transition,omitempty"`
+}
+
 // ExternalDisplaySettings Display settings for the report.
 type ExternalDisplaySettings struct {
 	// AxisLabelFontSize Font size used for axis labels on charts.
@@ -5740,6 +6124,98 @@ type ExternalDisplaySettingsDataLabelFontSize string
 // ExternalDisplaySettingsNumberScale Scale applied to numeric values when rendering the report.
 type ExternalDisplaySettingsNumberScale string
 
+// ExternalFlow A CloudFlow workflow resource.
+type ExternalFlow struct {
+	// CreateTime ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description string `json:"description"`
+
+	// Etag Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.
+	// `null` on dry-run create responses.
+	Etag *string `json:"etag"`
+
+	// FirstNodeId ID of the trigger (first) node. `null` if no trigger node has been set.
+	FirstNodeId *string `json:"firstNodeId,omitempty"`
+
+	// Id Server-assigned unique identifier. `null` on dry-run create responses
+	// (no resource was persisted).
+	Id *string `json:"id"`
+
+	// Instructions Operator instructions or notes attached to the flow.
+	Instructions *string `json:"instructions,omitempty"`
+
+	// LastExecutedTime ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed.
+	LastExecutedTime *time.Time `json:"lastExecutedTime,omitempty"`
+
+	// LastExecutionStatus Status string of the most recent execution. `null` if never executed.
+	LastExecutionStatus *string `json:"lastExecutionStatus,omitempty"`
+
+	// Name Display name of the flow.
+	Name string `json:"name"`
+
+	// Nodes Embedded nodes. Populated by the `update-batch` response and by operations that
+	// return the full flow with nodes inline. Not present on standard list responses.
+	Nodes *[]ExternalNode `json:"nodes,omitempty"`
+
+	// Published Whether the flow is currently published. Readable on every response; use
+	// `POST /actions/publish` and `POST /actions/unpublish` to change this value.
+	Published bool `json:"published"`
+
+	// Schedule Schedule configuration. `null` if the flow does not have scheduling configured.
+	Schedule *ExternalSchedule `json:"schedule,omitempty"`
+
+	// Status Lifecycle state. `null` on dry-run create responses.
+	Status *ExternalFlowStatus `json:"status"`
+
+	// TriggerType Node type of the trigger node. `null` if no trigger node has been set.
+	// One of the `ExternalNodeType` trigger variants: `triggerNode`, `manualTrigger`,
+	// `webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.
+	TriggerType *string `json:"triggerType,omitempty"`
+
+	// UpdateTime ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run.
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
+
+// ExternalFlowInput Request body for `CreateFlow`.
+type ExternalFlowInput struct {
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// Name Display name for the new flow.
+	Name string `json:"name"`
+
+	// TemplateId ID of a template (blueprint) to initialise the flow from. When present the
+	// new flow inherits the template's node graph and structure. The template itself
+	// is not modified.
+	TemplateId *string `json:"templateId,omitempty"`
+}
+
+// ExternalFlowStatus Lifecycle state of a flow.
+// - `draft` — the flow is being built and is not yet active.
+// - `pending` — awaiting validation or an async provisioning step.
+// - `active` — live and executable.
+// - `published` — published and available for scheduled/event-driven execution.
+// - `inactive` — deactivated by the owner.
+// - `new` — initial state assigned on creation.
+type ExternalFlowStatus string
+
+// ExternalFlowUpdate Request body for `UpdateFlow` (full replacement). All writable fields are replaced
+// with the supplied values. Optional fields that are omitted are reset to their defaults
+// (e.g. `instructions` is cleared if absent). Read-only fields (`id`, `status`,
+// `published`, `createTime`, `etag`) are silently ignored.
+type ExternalFlowUpdate struct {
+	// Description New description.
+	Description *string `json:"description,omitempty"`
+
+	// Instructions New operator instructions. Pass `null` to clear.
+	Instructions *string `json:"instructions,omitempty"`
+
+	// Name New display name.
+	Name *string `json:"name,omitempty"`
+}
+
 // ExternalMetric Metric selector used in reports and filters.
 type ExternalMetric struct {
 	// Type Type of metric to use.
@@ -5753,6 +6229,94 @@ type ExternalMetric struct {
 // ExternalMetricType Type of metric to use.
 type ExternalMetricType string
 
+// ExternalNode A single node within a CloudFlow.
+type ExternalNode struct {
+	// ActionId Identifier of the specific operation this node performs (e.g. AWS service action).
+	ActionId *string `json:"actionId,omitempty"`
+
+	// AppKey Identifier of the integration or application this node belongs to.
+	AppKey string `json:"appKey"`
+
+	// Approval Optional human approval gate. `null` if no approval is required.
+	Approval *ExternalApproval `json:"approval,omitempty"`
+
+	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// Disabled When `true` this node is skipped during flow execution.
+	Disabled bool `json:"disabled"`
+
+	// ErrorMessages Map of field-path → error message for nodes in the `error` status.
+	ErrorMessages *map[string]string `json:"errorMessages,omitempty"`
+
+	// Etag Strong ETag for this node version. `null` on dry-run create.
+	Etag *string `json:"etag"`
+
+	// Id Server-assigned unique identifier. `null` on dry-run create responses.
+	Id *string `json:"id"`
+
+	// Name Display name.
+	Name string `json:"name"`
+
+	// Parameters Node-specific configuration. The concrete schema depends on `type`. See the
+	// CloudFlow node type documentation for full parameter shapes. Key parameter
+	// schemas are also defined in the internal spec at
+	// `services/cloudflow/api/openapi/spec.yaml` (NodeParameters and variants).
+	Parameters *map[string]interface{} `json:"parameters,omitempty"`
+
+	// Status Validation state. `null` on dry-run create responses.
+	Status *ExternalNodeStatus `json:"status"`
+
+	// Transitions Directed edges to child nodes.
+	Transitions *[]ExternalTransition `json:"transitions,omitempty"`
+
+	// Type Discriminator that identifies a node's role and determines the shape of its
+	// `parameters` field.
+	Type ExternalNodeType `json:"type"`
+
+	// UpdateTime ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
+
+// ExternalNodeInput Node payload for create and update operations.
+type ExternalNodeInput struct {
+	// AppKey Identifier of the integration or application.
+	AppKey      string            `json:"appKey"`
+	Approval    *ExternalApproval `json:"approval,omitempty"`
+	Description *string           `json:"description,omitempty"`
+	Disabled    bool              `json:"disabled"`
+
+	// Id Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a
+	// stable ID enables idempotent batch operations.
+	Id   *string `json:"id,omitempty"`
+	Name string  `json:"name"`
+
+	// Parameters Node-specific configuration. See CloudFlow node type documentation for
+	// the required fields per `type`.
+	Parameters *map[string]interface{} `json:"parameters,omitempty"`
+
+	// Transitions Outgoing edges to child nodes.
+	Transitions *[]ExternalTransition `json:"transitions,omitempty"`
+
+	// Type Discriminator that identifies a node's role and determines the shape of its
+	// `parameters` field.
+	Type ExternalNodeType `json:"type"`
+}
+
+// ExternalNodeStatus Per-node validation state.
+// - `new` — freshly added, not yet validated.
+// - `pending` — validation in progress.
+// - `validated` — configuration is valid.
+// - `error` — configuration is invalid; see `errorMessages`.
+type ExternalNodeStatus string
+
+// ExternalNodeType Discriminator that identifies a node's role and determines the shape of its
+// `parameters` field.
+type ExternalNodeType string
+
 // ExternalOrigin Origin info for cost splitting.
 type ExternalOrigin struct {
 	// Id ID of the origin.
@@ -5764,6 +6328,15 @@ type ExternalOrigin struct {
 
 // ExternalOriginType Type of the origin.
 type ExternalOriginType string
+
+// ExternalParentTransition Wires the new node as a child of an existing parent node.
+type ExternalParentTransition struct {
+	// Label Optional display label for the edge.
+	Label *string `json:"label,omitempty"`
+
+	// ParentNodeId ID of the existing parent node.
+	ParentNodeId string `json:"parentNodeId"`
+}
 
 // ExternalRenderer Type of visualization or output format.
 type ExternalRenderer string
@@ -5794,6 +6367,24 @@ type ExternalReport struct {
 
 // ExternalReportType Report type.
 type ExternalReportType string
+
+// ExternalSchedule Schedule configuration for a flow's scheduled trigger node.
+type ExternalSchedule struct {
+	// CustomFrequency Time unit when `frequency` is `Custom`. One of: `Hour`, `Day`, `Week`, `Month`.
+	CustomFrequency *string `json:"customFrequency,omitempty"`
+
+	// CustomFrequencyAmount Number of `customFrequency` units between runs. Required when `frequency` is `Custom`.
+	CustomFrequencyAmount *int `json:"customFrequencyAmount,omitempty"`
+
+	// Frequency Schedule cadence preset. One of: `Daily`, `Weekly`, `Monthly`, `Do not repeat`, `Custom`.
+	Frequency *string `json:"frequency,omitempty"`
+
+	// NextRun ISO 8601 (UTC) timestamp of the next scheduled run. `null` if not scheduled or paused.
+	NextRun *time.Time `json:"nextRun,omitempty"`
+
+	// Scheduled Whether scheduling is currently enabled.
+	Scheduled bool `json:"scheduled"`
+}
 
 // ExternalSplit Specification of how to split costs.
 type ExternalSplit struct {
@@ -5839,6 +6430,15 @@ type ExternalSplitTarget struct {
 // Otherwise split types and target types must be the same.
 type ExternalSplitTargetType string
 
+// ExternalTransition Directed edge from a parent node to a child node.
+type ExternalTransition struct {
+	// Label Optional display label shown on the canvas edge.
+	Label *string `json:"label,omitempty"`
+
+	// TargetNodeId ID of the target (child) node.
+	TargetNodeId string `json:"targetNodeId"`
+}
+
 // ExternalUpdateReport Partial report object used for updates.
 type ExternalUpdateReport struct {
 	// Config Report configuration.
@@ -5856,6 +6456,108 @@ type ExternalUpdateReport struct {
 	// Name Report name
 	Name *string `json:"name,omitempty"`
 }
+
+// ExternalVariable A CloudFlow variable resource (flow-scoped or global).
+type ExternalVariable struct {
+	// ConnectionType Connection provider type for `connection` variables (e.g. `AWS`, `GCP`). Required
+	// when `type` is `connection`; `null` for all other types.
+	ConnectionType *string `json:"connectionType,omitempty"`
+
+	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// ElementType Element type for `list` variables (e.g. `string`, `integer`). Required when
+	// `type` is `list`; `null` for all other types.
+	ElementType *string `json:"elementType,omitempty"`
+
+	// Etag Strong ETag. `null` on dry-run create.
+	Etag *string `json:"etag"`
+
+	// Id Server-assigned unique identifier. `null` on dry-run create responses.
+	Id *string `json:"id"`
+
+	// Name Variable name. Alphanumeric characters, underscores, and dashes only (1–100 chars).
+	// Must be unique within scope (flow or global).
+	Name string `json:"name"`
+
+	// Required Whether a value must be provided before the flow can be published.
+	Required bool `json:"required"`
+
+	// Type Data type of a variable.
+	// - `string` — UTF-8 text.
+	// - `integer` — 64-bit signed integer.
+	// - `float` — 64-bit floating-point number.
+	// - `boolean` — true / false.
+	// - `list` — ordered collection; element type specified by `elementType`.
+	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+	Type ExternalVariableType `json:"type"`
+
+	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
+	UpdateTime *time.Time `json:"updateTime"`
+
+	// Value Current value, always string-encoded on the wire. `null` if no value has been set.
+	// Logical encoding by variable `type`:
+	// - `string` → the string value
+	// - `integer` → decimal string, e.g. `"42"`
+	// - `float` → decimal string, e.g. `"3.14"`
+	// - `boolean` → `"true"` or `"false"`
+	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
+	// - `connection` → connection ID string
+	Value *string `json:"value,omitempty"`
+}
+
+// ExternalVariableInput Request body for `CreateFlowVariable`, `CreateGlobalVariable`,
+// `UpdateFlowVariable`, and `UpdateGlobalVariable`.
+type ExternalVariableInput struct {
+	// ConnectionType Connection provider type for `connection` variables.
+	// Required when `type` is `connection`.
+	ConnectionType *ExternalConnectionProvider `json:"connectionType,omitempty"`
+	Description    *string                     `json:"description,omitempty"`
+
+	// ElementType Element type for `list` variables. Required when `type` is `list`.
+	ElementType *ExternalVariableInputElementType `json:"elementType,omitempty"`
+
+	// Name Variable name. Alphanumeric, underscore, and dash only. Must be unique
+	// within scope (flow-local or global).
+	Name string `json:"name"`
+
+	// Required Whether the flow requires a value before publishing.
+	Required bool `json:"required"`
+
+	// Type Data type of a variable.
+	// - `string` — UTF-8 text.
+	// - `integer` — 64-bit signed integer.
+	// - `float` — 64-bit floating-point number.
+	// - `boolean` — true / false.
+	// - `list` — ordered collection; element type specified by `elementType`.
+	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+	Type ExternalVariableType `json:"type"`
+
+	// Value Initial or updated value, always string-encoded on the wire. Encoding by `type`:
+	// - `string` → the string value
+	// - `integer` → decimal string, e.g. `"42"`
+	// - `float` → decimal string, e.g. `"3.14"`
+	// - `boolean` → `"true"` or `"false"`
+	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
+	// - `connection` → connection ID string; the referenced connection must exist
+	//   within the tenant and be in an `active` or `inactive` state.
+	Value *string `json:"value,omitempty"`
+}
+
+// ExternalVariableInputElementType Element type for `list` variables. Required when `type` is `list`.
+type ExternalVariableInputElementType string
+
+// ExternalVariableType Data type of a variable.
+// - `string` — UTF-8 text.
+// - `integer` — 64-bit signed integer.
+// - `float` — 64-bit floating-point number.
+// - `boolean` — true / false.
+// - `list` — ordered collection; element type specified by `elementType`.
+// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+type ExternalVariableType string
 
 // Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 type Filter = string
@@ -7506,6 +8208,18 @@ type Value1 = float32
 // Value2 defines model for .
 type Value2 = int
 
+// ConnectionId defines model for ConnectionId.
+type ConnectionId = string
+
+// FlowId defines model for FlowId.
+type FlowId = string
+
+// NodeId defines model for NodeId.
+type NodeId = string
+
+// VariableId defines model for VariableId.
+type VariableId = string
+
 // MaxResults defines model for maxResults.
 type MaxResults = string
 
@@ -8165,6 +8879,33 @@ type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
 // GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
 type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 
+// CreateConnectionJSONRequestBody defines body for CreateConnection for application/json ContentType.
+type CreateConnectionJSONRequestBody = ExternalConnectionInput
+
+// UpdateConnectionApplicationMergePatchPlusJSONRequestBody defines body for UpdateConnection for application/merge-patch+json ContentType.
+type UpdateConnectionApplicationMergePatchPlusJSONRequestBody = ExternalConnectionPatch
+
+// CreateFlowJSONRequestBody defines body for CreateFlow for application/json ContentType.
+type CreateFlowJSONRequestBody = ExternalFlowInput
+
+// UpdateFlowJSONRequestBody defines body for UpdateFlow for application/json ContentType.
+type UpdateFlowJSONRequestBody = ExternalFlowUpdate
+
+// CreateNodeJSONRequestBody defines body for CreateNode for application/json ContentType.
+type CreateNodeJSONRequestBody = ExternalCreateNodeRequest
+
+// CreateFlowVariableJSONRequestBody defines body for CreateFlowVariable for application/json ContentType.
+type CreateFlowVariableJSONRequestBody = ExternalVariableInput
+
+// UpdateFlowVariableJSONRequestBody defines body for UpdateFlowVariable for application/json ContentType.
+type UpdateFlowVariableJSONRequestBody = ExternalVariableInput
+
+// CreateGlobalVariableJSONRequestBody defines body for CreateGlobalVariable for application/json ContentType.
+type CreateGlobalVariableJSONRequestBody = ExternalVariableInput
+
+// UpdateGlobalVariableJSONRequestBody defines body for UpdateGlobalVariable for application/json ContentType.
+type UpdateGlobalVariableJSONRequestBody = ExternalVariableInput
+
 // CreateAccountRoleJSONRequestBody defines body for CreateAccountRole for application/json ContentType.
 type CreateAccountRoleJSONRequestBody = CreateAccountRoleRequestBody
 
@@ -8674,6 +9415,81 @@ type ClientInterface interface {
 
 	// ListCloudDiagramLayerSnapshots request
 	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateConnectionWithBody request with any body
+	CreateConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateConnection(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteConnection request
+	DeleteConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetConnection request
+	GetConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateConnectionWithBody request with any body
+	UpdateConnectionWithBody(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateFlowWithBody request with any body
+	CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteFlow request
+	DeleteFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetFlow request
+	GetFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateFlowWithBody request with any body
+	UpdateFlowWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateFlow(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateNodeWithBody request with any body
+	CreateNodeWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateNode(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteNode request
+	DeleteNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetNode request
+	GetNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateFlowVariableWithBody request with any body
+	CreateFlowVariableWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateFlowVariable(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteFlowVariable request
+	DeleteFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetFlowVariable request
+	GetFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateFlowVariableWithBody request with any body
+	UpdateFlowVariableWithBody(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateGlobalVariableWithBody request with any body
+	CreateGlobalVariableWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateGlobalVariable(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteGlobalVariable request
+	DeleteGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetGlobalVariable request
+	GetGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateGlobalVariableWithBody request with any body
+	UpdateGlobalVariableWithBody(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateGlobalVariable(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateAccountRoleWithBody request with any body
 	CreateAccountRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -9917,6 +10733,342 @@ func (c *Client) GetCloudDiagramLayerSnapshot(ctx context.Context, id string, pa
 
 func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListCloudDiagramLayerSnapshotsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateConnectionRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateConnection(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateConnectionRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteConnectionRequest(c.Server, connectionId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetConnectionRequest(c.Server, connectionId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateConnectionWithBody(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateConnectionRequestWithBody(c.Server, connectionId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateConnectionRequestWithApplicationMergePatchPlusJSONBody(c.Server, connectionId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteFlowRequest(c.Server, flowId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFlowRequest(c.Server, flowId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateFlowWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateFlowRequestWithBody(c.Server, flowId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateFlow(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateFlowRequest(c.Server, flowId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateNodeWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateNodeRequestWithBody(c.Server, flowId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateNode(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateNodeRequest(c.Server, flowId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteNodeRequest(c.Server, flowId, nodeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetNodeRequest(c.Server, flowId, nodeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateFlowVariableWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowVariableRequestWithBody(c.Server, flowId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateFlowVariable(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowVariableRequest(c.Server, flowId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteFlowVariableRequest(c.Server, flowId, variableId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFlowVariableRequest(c.Server, flowId, variableId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateFlowVariableWithBody(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateFlowVariableRequestWithBody(c.Server, flowId, variableId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateFlowVariableRequest(c.Server, flowId, variableId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateGlobalVariableWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGlobalVariableRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateGlobalVariable(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGlobalVariableRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteGlobalVariableRequest(c.Server, variableId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGlobalVariableRequest(c.Server, variableId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateGlobalVariableWithBody(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateGlobalVariableRequestWithBody(c.Server, variableId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateGlobalVariable(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateGlobalVariableRequest(c.Server, variableId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -14302,6 +15454,783 @@ func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *
 	return req, nil
 }
 
+// NewCreateConnectionRequest calls the generic CreateConnection builder with application/json body
+func NewCreateConnectionRequest(server string, body CreateConnectionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateConnectionRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateConnectionRequestWithBody generates requests for CreateConnection with any type of body
+func NewCreateConnectionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteConnectionRequest generates requests for DeleteConnection
+func NewDeleteConnectionRequest(server string, connectionId ConnectionId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "connectionId", connectionId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetConnectionRequest generates requests for GetConnection
+func NewGetConnectionRequest(server string, connectionId ConnectionId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "connectionId", connectionId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateConnectionRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateConnection builder with application/merge-patch+json body
+func NewUpdateConnectionRequestWithApplicationMergePatchPlusJSONBody(server string, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateConnectionRequestWithBody(server, connectionId, "application/merge-patch+json", bodyReader)
+}
+
+// NewUpdateConnectionRequestWithBody generates requests for UpdateConnection with any type of body
+func NewUpdateConnectionRequestWithBody(server string, connectionId ConnectionId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "connectionId", connectionId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateFlowRequest calls the generic CreateFlow builder with application/json body
+func NewCreateFlowRequest(server string, body CreateFlowJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateFlowRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateFlowRequestWithBody generates requests for CreateFlow with any type of body
+func NewCreateFlowRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteFlowRequest generates requests for DeleteFlow
+func NewDeleteFlowRequest(server string, flowId FlowId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetFlowRequest generates requests for GetFlow
+func NewGetFlowRequest(server string, flowId FlowId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateFlowRequest calls the generic UpdateFlow builder with application/json body
+func NewUpdateFlowRequest(server string, flowId FlowId, body UpdateFlowJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateFlowRequestWithBody(server, flowId, "application/json", bodyReader)
+}
+
+// NewUpdateFlowRequestWithBody generates requests for UpdateFlow with any type of body
+func NewUpdateFlowRequestWithBody(server string, flowId FlowId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateNodeRequest calls the generic CreateNode builder with application/json body
+func NewCreateNodeRequest(server string, flowId FlowId, body CreateNodeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateNodeRequestWithBody(server, flowId, "application/json", bodyReader)
+}
+
+// NewCreateNodeRequestWithBody generates requests for CreateNode with any type of body
+func NewCreateNodeRequestWithBody(server string, flowId FlowId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/nodes", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteNodeRequest generates requests for DeleteNode
+func NewDeleteNodeRequest(server string, flowId FlowId, nodeId NodeId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "nodeId", nodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/nodes/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetNodeRequest generates requests for GetNode
+func NewGetNodeRequest(server string, flowId FlowId, nodeId NodeId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "nodeId", nodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/nodes/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateFlowVariableRequest calls the generic CreateFlowVariable builder with application/json body
+func NewCreateFlowVariableRequest(server string, flowId FlowId, body CreateFlowVariableJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateFlowVariableRequestWithBody(server, flowId, "application/json", bodyReader)
+}
+
+// NewCreateFlowVariableRequestWithBody generates requests for CreateFlowVariable with any type of body
+func NewCreateFlowVariableRequestWithBody(server string, flowId FlowId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteFlowVariableRequest generates requests for DeleteFlowVariable
+func NewDeleteFlowVariableRequest(server string, flowId FlowId, variableId VariableId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetFlowVariableRequest generates requests for GetFlowVariable
+func NewGetFlowVariableRequest(server string, flowId FlowId, variableId VariableId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateFlowVariableRequest calls the generic UpdateFlowVariable builder with application/json body
+func NewUpdateFlowVariableRequest(server string, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateFlowVariableRequestWithBody(server, flowId, variableId, "application/json", bodyReader)
+}
+
+// NewUpdateFlowVariableRequestWithBody generates requests for UpdateFlowVariable with any type of body
+func NewUpdateFlowVariableRequestWithBody(server string, flowId FlowId, variableId VariableId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateGlobalVariableRequest calls the generic CreateGlobalVariable builder with application/json body
+func NewCreateGlobalVariableRequest(server string, body CreateGlobalVariableJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateGlobalVariableRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateGlobalVariableRequestWithBody generates requests for CreateGlobalVariable with any type of body
+func NewCreateGlobalVariableRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteGlobalVariableRequest generates requests for DeleteGlobalVariable
+func NewDeleteGlobalVariableRequest(server string, variableId VariableId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetGlobalVariableRequest generates requests for GetGlobalVariable
+func NewGetGlobalVariableRequest(server string, variableId VariableId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateGlobalVariableRequest calls the generic UpdateGlobalVariable builder with application/json body
+func NewUpdateGlobalVariableRequest(server string, variableId VariableId, body UpdateGlobalVariableJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateGlobalVariableRequestWithBody(server, variableId, "application/json", bodyReader)
+}
+
+// NewUpdateGlobalVariableRequestWithBody generates requests for UpdateGlobalVariable with any type of body
+func NewUpdateGlobalVariableRequestWithBody(server string, variableId VariableId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewCreateAccountRoleRequest calls the generic CreateAccountRole builder with application/json body
 func NewCreateAccountRoleRequest(server string, body CreateAccountRoleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -16150,6 +18079,81 @@ type ClientWithResponsesInterface interface {
 
 	// ListCloudDiagramLayerSnapshotsWithResponse request
 	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
+
+	// CreateConnectionWithBodyWithResponse request with any body
+	CreateConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error)
+
+	CreateConnectionWithResponse(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error)
+
+	// DeleteConnectionWithResponse request
+	DeleteConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*DeleteConnectionResp, error)
+
+	// GetConnectionWithResponse request
+	GetConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*GetConnectionResp, error)
+
+	// UpdateConnectionWithBodyWithResponse request with any body
+	UpdateConnectionWithBodyWithResponse(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
+
+	UpdateConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
+
+	// CreateFlowWithBodyWithResponse request with any body
+	CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
+
+	CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
+
+	// DeleteFlowWithResponse request
+	DeleteFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*DeleteFlowResp, error)
+
+	// GetFlowWithResponse request
+	GetFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*GetFlowResp, error)
+
+	// UpdateFlowWithBodyWithResponse request with any body
+	UpdateFlowWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error)
+
+	UpdateFlowWithResponse(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error)
+
+	// CreateNodeWithBodyWithResponse request with any body
+	CreateNodeWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateNodeResp, error)
+
+	CreateNodeWithResponse(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateNodeResp, error)
+
+	// DeleteNodeWithResponse request
+	DeleteNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*DeleteNodeResp, error)
+
+	// GetNodeWithResponse request
+	GetNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*GetNodeResp, error)
+
+	// CreateFlowVariableWithBodyWithResponse request with any body
+	CreateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error)
+
+	CreateFlowVariableWithResponse(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error)
+
+	// DeleteFlowVariableWithResponse request
+	DeleteFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteFlowVariableResp, error)
+
+	// GetFlowVariableWithResponse request
+	GetFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*GetFlowVariableResp, error)
+
+	// UpdateFlowVariableWithBodyWithResponse request with any body
+	UpdateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error)
+
+	UpdateFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error)
+
+	// CreateGlobalVariableWithBodyWithResponse request with any body
+	CreateGlobalVariableWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error)
+
+	CreateGlobalVariableWithResponse(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error)
+
+	// DeleteGlobalVariableWithResponse request
+	DeleteGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteGlobalVariableResp, error)
+
+	// GetGlobalVariableWithResponse request
+	GetGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*GetGlobalVariableResp, error)
+
+	// UpdateGlobalVariableWithBodyWithResponse request with any body
+	UpdateGlobalVariableWithBodyWithResponse(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error)
+
+	UpdateGlobalVariableWithResponse(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error)
 
 	// CreateAccountRoleWithBodyWithResponse request with any body
 	CreateAccountRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error)
@@ -18627,6 +20631,576 @@ func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
 	return ""
 }
 
+type CreateConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalConnection
+	JSON201      *ExternalConnection
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalConnection
+}
+
+// Status returns HTTPResponse.Status
+func (r GetConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalConnection
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateFlowResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalFlow
+	JSON201      *ExternalFlow
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateFlowResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateFlowResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateFlowResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteFlowResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteFlowResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteFlowResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteFlowResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetFlowResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalFlow
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFlowResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFlowResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetFlowResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateFlowResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalFlow
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateFlowResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateFlowResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateFlowResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateNodeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalNode
+	JSON201      *ExternalNode
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateNodeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateNodeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateNodeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteNodeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteNodeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteNodeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteNodeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetNodeResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalNode
+}
+
+// Status returns HTTPResponse.Status
+func (r GetNodeResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetNodeResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetNodeResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateFlowVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalVariable
+	JSON201      *ExternalVariable
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateFlowVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateFlowVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateFlowVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteFlowVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteFlowVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteFlowVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteFlowVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetFlowVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalVariable
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFlowVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFlowVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetFlowVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateFlowVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalVariable
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateFlowVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateFlowVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateFlowVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateGlobalVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalVariable
+	JSON201      *ExternalVariable
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateGlobalVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateGlobalVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateGlobalVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteGlobalVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteGlobalVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteGlobalVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteGlobalVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetGlobalVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalVariable
+}
+
+// Status returns HTTPResponse.Status
+func (r GetGlobalVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetGlobalVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetGlobalVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateGlobalVariableResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExternalVariable
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateGlobalVariableResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateGlobalVariableResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateGlobalVariableResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type CreateAccountRoleResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -20510,6 +23084,249 @@ func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx con
 		return nil, err
 	}
 	return ParseListCloudDiagramLayerSnapshotsResp(rsp)
+}
+
+// CreateConnectionWithBodyWithResponse request with arbitrary body returning *CreateConnectionResp
+func (c *ClientWithResponses) CreateConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error) {
+	rsp, err := c.CreateConnectionWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateConnectionResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateConnectionWithResponse(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error) {
+	rsp, err := c.CreateConnection(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateConnectionResp(rsp)
+}
+
+// DeleteConnectionWithResponse request returning *DeleteConnectionResp
+func (c *ClientWithResponses) DeleteConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*DeleteConnectionResp, error) {
+	rsp, err := c.DeleteConnection(ctx, connectionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteConnectionResp(rsp)
+}
+
+// GetConnectionWithResponse request returning *GetConnectionResp
+func (c *ClientWithResponses) GetConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*GetConnectionResp, error) {
+	rsp, err := c.GetConnection(ctx, connectionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetConnectionResp(rsp)
+}
+
+// UpdateConnectionWithBodyWithResponse request with arbitrary body returning *UpdateConnectionResp
+func (c *ClientWithResponses) UpdateConnectionWithBodyWithResponse(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error) {
+	rsp, err := c.UpdateConnectionWithBody(ctx, connectionId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateConnectionResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error) {
+	rsp, err := c.UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx, connectionId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateConnectionResp(rsp)
+}
+
+// CreateFlowWithBodyWithResponse request with arbitrary body returning *CreateFlowResp
+func (c *ClientWithResponses) CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
+	rsp, err := c.CreateFlowWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateFlowResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
+	rsp, err := c.CreateFlow(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateFlowResp(rsp)
+}
+
+// DeleteFlowWithResponse request returning *DeleteFlowResp
+func (c *ClientWithResponses) DeleteFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*DeleteFlowResp, error) {
+	rsp, err := c.DeleteFlow(ctx, flowId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteFlowResp(rsp)
+}
+
+// GetFlowWithResponse request returning *GetFlowResp
+func (c *ClientWithResponses) GetFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*GetFlowResp, error) {
+	rsp, err := c.GetFlow(ctx, flowId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFlowResp(rsp)
+}
+
+// UpdateFlowWithBodyWithResponse request with arbitrary body returning *UpdateFlowResp
+func (c *ClientWithResponses) UpdateFlowWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error) {
+	rsp, err := c.UpdateFlowWithBody(ctx, flowId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateFlowResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateFlowWithResponse(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error) {
+	rsp, err := c.UpdateFlow(ctx, flowId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateFlowResp(rsp)
+}
+
+// CreateNodeWithBodyWithResponse request with arbitrary body returning *CreateNodeResp
+func (c *ClientWithResponses) CreateNodeWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateNodeResp, error) {
+	rsp, err := c.CreateNodeWithBody(ctx, flowId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateNodeResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateNodeWithResponse(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateNodeResp, error) {
+	rsp, err := c.CreateNode(ctx, flowId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateNodeResp(rsp)
+}
+
+// DeleteNodeWithResponse request returning *DeleteNodeResp
+func (c *ClientWithResponses) DeleteNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*DeleteNodeResp, error) {
+	rsp, err := c.DeleteNode(ctx, flowId, nodeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteNodeResp(rsp)
+}
+
+// GetNodeWithResponse request returning *GetNodeResp
+func (c *ClientWithResponses) GetNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*GetNodeResp, error) {
+	rsp, err := c.GetNode(ctx, flowId, nodeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetNodeResp(rsp)
+}
+
+// CreateFlowVariableWithBodyWithResponse request with arbitrary body returning *CreateFlowVariableResp
+func (c *ClientWithResponses) CreateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error) {
+	rsp, err := c.CreateFlowVariableWithBody(ctx, flowId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateFlowVariableResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateFlowVariableWithResponse(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error) {
+	rsp, err := c.CreateFlowVariable(ctx, flowId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateFlowVariableResp(rsp)
+}
+
+// DeleteFlowVariableWithResponse request returning *DeleteFlowVariableResp
+func (c *ClientWithResponses) DeleteFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteFlowVariableResp, error) {
+	rsp, err := c.DeleteFlowVariable(ctx, flowId, variableId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteFlowVariableResp(rsp)
+}
+
+// GetFlowVariableWithResponse request returning *GetFlowVariableResp
+func (c *ClientWithResponses) GetFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*GetFlowVariableResp, error) {
+	rsp, err := c.GetFlowVariable(ctx, flowId, variableId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFlowVariableResp(rsp)
+}
+
+// UpdateFlowVariableWithBodyWithResponse request with arbitrary body returning *UpdateFlowVariableResp
+func (c *ClientWithResponses) UpdateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error) {
+	rsp, err := c.UpdateFlowVariableWithBody(ctx, flowId, variableId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateFlowVariableResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error) {
+	rsp, err := c.UpdateFlowVariable(ctx, flowId, variableId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateFlowVariableResp(rsp)
+}
+
+// CreateGlobalVariableWithBodyWithResponse request with arbitrary body returning *CreateGlobalVariableResp
+func (c *ClientWithResponses) CreateGlobalVariableWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error) {
+	rsp, err := c.CreateGlobalVariableWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGlobalVariableResp(rsp)
+}
+
+func (c *ClientWithResponses) CreateGlobalVariableWithResponse(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error) {
+	rsp, err := c.CreateGlobalVariable(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGlobalVariableResp(rsp)
+}
+
+// DeleteGlobalVariableWithResponse request returning *DeleteGlobalVariableResp
+func (c *ClientWithResponses) DeleteGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteGlobalVariableResp, error) {
+	rsp, err := c.DeleteGlobalVariable(ctx, variableId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteGlobalVariableResp(rsp)
+}
+
+// GetGlobalVariableWithResponse request returning *GetGlobalVariableResp
+func (c *ClientWithResponses) GetGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*GetGlobalVariableResp, error) {
+	rsp, err := c.GetGlobalVariable(ctx, variableId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGlobalVariableResp(rsp)
+}
+
+// UpdateGlobalVariableWithBodyWithResponse request with arbitrary body returning *UpdateGlobalVariableResp
+func (c *ClientWithResponses) UpdateGlobalVariableWithBodyWithResponse(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error) {
+	rsp, err := c.UpdateGlobalVariableWithBody(ctx, variableId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateGlobalVariableResp(rsp)
+}
+
+func (c *ClientWithResponses) UpdateGlobalVariableWithResponse(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error) {
+	rsp, err := c.UpdateGlobalVariable(ctx, variableId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateGlobalVariableResp(rsp)
 }
 
 // CreateAccountRoleWithBodyWithResponse request with arbitrary body returning *CreateAccountRoleResp
@@ -24525,6 +27342,485 @@ func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiag
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateConnectionResp parses an HTTP response from a CreateConnectionWithResponse call
+func ParseCreateConnectionResp(rsp *http.Response) (*CreateConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalConnection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ExternalConnection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteConnectionResp parses an HTTP response from a DeleteConnectionWithResponse call
+func ParseDeleteConnectionResp(rsp *http.Response) (*DeleteConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetConnectionResp parses an HTTP response from a GetConnectionWithResponse call
+func ParseGetConnectionResp(rsp *http.Response) (*GetConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalConnection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateConnectionResp parses an HTTP response from a UpdateConnectionWithResponse call
+func ParseUpdateConnectionResp(rsp *http.Response) (*UpdateConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalConnection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateFlowResp parses an HTTP response from a CreateFlowWithResponse call
+func ParseCreateFlowResp(rsp *http.Response) (*CreateFlowResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateFlowResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalFlow
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ExternalFlow
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteFlowResp parses an HTTP response from a DeleteFlowWithResponse call
+func ParseDeleteFlowResp(rsp *http.Response) (*DeleteFlowResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteFlowResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetFlowResp parses an HTTP response from a GetFlowWithResponse call
+func ParseGetFlowResp(rsp *http.Response) (*GetFlowResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFlowResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalFlow
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateFlowResp parses an HTTP response from a UpdateFlowWithResponse call
+func ParseUpdateFlowResp(rsp *http.Response) (*UpdateFlowResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateFlowResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalFlow
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateNodeResp parses an HTTP response from a CreateNodeWithResponse call
+func ParseCreateNodeResp(rsp *http.Response) (*CreateNodeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateNodeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalNode
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ExternalNode
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteNodeResp parses an HTTP response from a DeleteNodeWithResponse call
+func ParseDeleteNodeResp(rsp *http.Response) (*DeleteNodeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteNodeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetNodeResp parses an HTTP response from a GetNodeWithResponse call
+func ParseGetNodeResp(rsp *http.Response) (*GetNodeResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetNodeResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalNode
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateFlowVariableResp parses an HTTP response from a CreateFlowVariableWithResponse call
+func ParseCreateFlowVariableResp(rsp *http.Response) (*CreateFlowVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateFlowVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteFlowVariableResp parses an HTTP response from a DeleteFlowVariableWithResponse call
+func ParseDeleteFlowVariableResp(rsp *http.Response) (*DeleteFlowVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteFlowVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetFlowVariableResp parses an HTTP response from a GetFlowVariableWithResponse call
+func ParseGetFlowVariableResp(rsp *http.Response) (*GetFlowVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFlowVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateFlowVariableResp parses an HTTP response from a UpdateFlowVariableWithResponse call
+func ParseUpdateFlowVariableResp(rsp *http.Response) (*UpdateFlowVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateFlowVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateGlobalVariableResp parses an HTTP response from a CreateGlobalVariableWithResponse call
+func ParseCreateGlobalVariableResp(rsp *http.Response) (*CreateGlobalVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateGlobalVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteGlobalVariableResp parses an HTTP response from a DeleteGlobalVariableWithResponse call
+func ParseDeleteGlobalVariableResp(rsp *http.Response) (*DeleteGlobalVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteGlobalVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetGlobalVariableResp parses an HTTP response from a GetGlobalVariableWithResponse call
+func ParseGetGlobalVariableResp(rsp *http.Response) (*GetGlobalVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetGlobalVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateGlobalVariableResp parses an HTTP response from a UpdateGlobalVariableWithResponse call
+func ParseUpdateGlobalVariableResp(rsp *http.Response) (*UpdateGlobalVariableResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateGlobalVariableResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExternalVariable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 

@@ -484,6 +484,112 @@ func TestStripDocFields(t *testing.T) {
 	})
 }
 
+// --- wrapRefSiblings ---
+
+func TestWrapRefSiblings(t *testing.T) {
+	t.Run("wraps $ref with description sibling", func(t *testing.T) {
+		node := mustParseYAML(t, `
+type: object
+properties:
+  connectionType:
+    $ref: "#/components/schemas/Provider"
+    description: Connection provider type.
+`)
+		wrapRefSiblings(node)
+
+		prop := getMappingValue(getMappingValue(node, "properties"), "connectionType")
+		if prop == nil {
+			t.Fatal("connectionType property is nil")
+		}
+		allOf := getMappingValue(prop, "allOf")
+		if allOf == nil {
+			t.Fatal("expected allOf wrapper, got nil")
+		}
+		if allOf.Kind != yaml.SequenceNode || len(allOf.Content) != 1 {
+			t.Fatalf("allOf should be a sequence with 1 element, got kind=%d len=%d", allOf.Kind, len(allOf.Content))
+		}
+		ref := getScalarValue(allOf.Content[0], "$ref")
+		if ref != "#/components/schemas/Provider" {
+			t.Errorf("allOf[0].$ref = %q, want %q", ref, "#/components/schemas/Provider")
+		}
+		desc := getScalarValue(prop, "description")
+		if desc != "Connection provider type." {
+			t.Errorf("description = %q, want %q", desc, "Connection provider type.")
+		}
+	})
+
+	t.Run("wraps $ref with nullable sibling", func(t *testing.T) {
+		node := mustParseYAML(t, `
+approval:
+  $ref: "#/components/schemas/Approval"
+  description: Optional approval gate.
+  nullable: true
+`)
+		wrapRefSiblings(node)
+
+		prop := getMappingValue(node, "approval")
+		allOf := getMappingValue(prop, "allOf")
+		if allOf == nil {
+			t.Fatal("expected allOf wrapper")
+		}
+		ref := getScalarValue(allOf.Content[0], "$ref")
+		if ref != "#/components/schemas/Approval" {
+			t.Errorf("$ref = %q, want %q", ref, "#/components/schemas/Approval")
+		}
+		if getScalarValue(prop, "description") != "Optional approval gate." {
+			t.Error("description not preserved")
+		}
+		if getScalarValue(prop, "nullable") != "true" {
+			t.Error("nullable not preserved")
+		}
+	})
+
+	t.Run("leaves bare $ref alone", func(t *testing.T) {
+		node := mustParseYAML(t, `
+status:
+  $ref: "#/components/schemas/Status"
+`)
+		wrapRefSiblings(node)
+
+		prop := getMappingValue(node, "status")
+		if getMappingValue(prop, "allOf") != nil {
+			t.Error("bare $ref should NOT be wrapped in allOf")
+		}
+		ref := getScalarValue(prop, "$ref")
+		if ref != "#/components/schemas/Status" {
+			t.Errorf("$ref = %q, want %q", ref, "#/components/schemas/Status")
+		}
+	})
+
+	t.Run("recurses into nested structures", func(t *testing.T) {
+		node := mustParseYAML(t, `
+type: object
+properties:
+  outer:
+    type: object
+    properties:
+      inner:
+        $ref: "#/components/schemas/Inner"
+        description: Nested ref.
+`)
+		wrapRefSiblings(node)
+
+		inner := getMappingValue(
+			getMappingValue(
+				getMappingValue(
+					getMappingValue(node, "properties"),
+					"outer"),
+				"properties"),
+			"inner")
+		if inner == nil {
+			t.Fatal("inner property not found")
+		}
+		if getMappingValue(inner, "allOf") == nil {
+			t.Error("nested $ref with sibling should be wrapped")
+		}
+	})
+}
+
 // --- resolveRefs ---
 
 func TestResolveRefs(t *testing.T) {
@@ -567,6 +673,20 @@ func TestResolveRefs(t *testing.T) {
 		got := resolveRefs(input, schemas).(map[string]any)
 		if got["$ref"] != "#/components/responses/NotFound" {
 			t.Error("non-schema ref should be left as-is")
+		}
+	})
+
+	t.Run("resolves $ref with sibling keywords", func(t *testing.T) {
+		input := map[string]any{
+			"$ref":        "#/components/schemas/Pet",
+			"description": "A pet reference",
+		}
+		got := resolveRefs(input, schemas).(map[string]any)
+		if got["type"] != "object" {
+			t.Errorf("resolved type = %v, want %q", got["type"], "object")
+		}
+		if got["description"] != "A pet reference" {
+			t.Errorf("sibling description = %v, want %q", got["description"], "A pet reference")
 		}
 	})
 }

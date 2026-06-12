@@ -1,7 +1,11 @@
-// extract-inline-schemas transforms an OpenAPI 3.0 spec by extracting all inline
+// extract-inline-schemas transforms an OpenAPI spec by extracting all inline
 // object definitions into named schemas under components/schemas, replacing them
 // with $ref pointers. This produces named Go types instead of anonymous structs
 // when used with code generators like oapi-codegen.
+//
+// It also normalizes OAS 3.1 patterns that break 3.0-era codegen tools:
+//   - $ref with sibling keywords (e.g., description) is wrapped in a
+//     single-member allOf so the siblings become siblings of allOf, not $ref.
 //
 // Usage:
 //
@@ -61,19 +65,26 @@ func main() {
 		extracted: make(map[string]*yaml.Node),
 	}
 
-	// Phase 1: Extract inline schemas from components/schemas
+	// Phase 1: Normalize $ref nodes with sibling keywords.
+	// OAS 3.1 allows $ref alongside siblings like description. Our codegen
+	// tools (tfplugingen-openapi) interpret this as allOf with 2 subschemas
+	// and reject it. Wrapping the $ref in a single-member allOf separates
+	// the $ref from its siblings, which codegen handles correctly.
+	wrapRefSiblings(doc)
+
+	// Phase 2: Extract inline schemas from components/schemas
 	schemasNode := findMapValue(doc, "components", "schemas")
 	if schemasNode != nil {
 		extractor.walkSchemas(schemasNode)
 	}
 
-	// Phase 2: Extract inline schemas from paths (response/request bodies)
+	// Phase 3: Extract inline schemas from paths (response/request bodies)
 	pathsNode := findMapValue(doc, "paths")
 	if pathsNode != nil {
 		extractor.walkPaths(pathsNode)
 	}
 
-	// Phase 3: Insert extracted schemas into components/schemas.
+	// Phase 4: Insert extracted schemas into components/schemas.
 	// NOTE: This requires a pre-existing components/schemas section. The tool
 	// does not create one automatically. This is acceptable for our spec but
 	// limits reuse with specs that lack this section.
@@ -84,7 +95,7 @@ func main() {
 		extractor.insertExtractedSchemas(schemasNode)
 	}
 
-	// Phase 4: Validate functional equivalence of the extraction.
+	// Phase 5: Validate functional equivalence of the extraction.
 	// This runs BEFORE pruning so that inline-schema extraction regressions
 	// are always caught, regardless of whether pruning is enabled.
 	{
@@ -102,7 +113,7 @@ func main() {
 		}
 	}
 
-	// Phase 5: Prune unused paths and unreachable schemas (optional).
+	// Phase 6: Prune unused paths and unreachable schemas (optional).
 	// When -datasources and -resources are provided, only paths/methods
 	// referenced by the provider configs (plus any -extra-paths) are retained.
 	// Schemas not transitively reachable from the remaining paths are removed.
@@ -519,6 +530,69 @@ func hasRef(node *yaml.Node) bool {
 	return false
 }
 
+// wrapRefSiblings recursively walks the YAML tree and wraps any $ref node
+// that has sibling keywords (e.g., description, nullable) in a single-member
+// allOf. This converts valid OAS 3.1 patterns into 3.0-compatible structures.
+//
+// Before:  {$ref: "#/.../Foo", description: "...", nullable: true}.
+// After:   {allOf: [{$ref: "#/.../Foo"}], description: "...", nullable: true}.
+func wrapRefSiblings(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+	switch node.Kind {
+	case yaml.MappingNode:
+		refIdx := -1
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			if node.Content[i].Value == "$ref" {
+				refIdx = i
+				break
+			}
+		}
+		if refIdx >= 0 && len(node.Content) > 2 {
+			// Has $ref plus at least one sibling key.
+			// Extract the $ref pair and rebuild the node as allOf + siblings.
+			refKeyNode := node.Content[refIdx]
+			refValNode := node.Content[refIdx+1]
+
+			// Build the inner $ref-only mapping node
+			innerRef := &yaml.Node{
+				Kind:    yaml.MappingNode,
+				Content: []*yaml.Node{refKeyNode, refValNode},
+			}
+
+			// Collect all sibling pairs (everything except $ref)
+			var siblings []*yaml.Node
+			for i := 0; i < len(node.Content)-1; i += 2 {
+				if i != refIdx {
+					siblings = append(siblings, node.Content[i], node.Content[i+1])
+				}
+			}
+
+			// Rebuild: allOf key + sequence, then all sibling pairs
+			node.Content = append(
+				[]*yaml.Node{
+					{Kind: yaml.ScalarNode, Value: "allOf", Tag: "!!str"},
+					{Kind: yaml.SequenceNode, Content: []*yaml.Node{innerRef}},
+				},
+				siblings...,
+			)
+		}
+		// Recurse into all values (skip keys)
+		for i := 1; i < len(node.Content); i += 2 {
+			wrapRefSiblings(node.Content[i])
+		}
+	case yaml.SequenceNode:
+		for _, child := range node.Content {
+			wrapRefSiblings(child)
+		}
+	case yaml.DocumentNode:
+		for _, child := range node.Content {
+			wrapRefSiblings(child)
+		}
+	}
+}
+
 // isInlineObject checks if a node is an inline object definition:
 // a mapping node with type: object and properties, but no $ref.
 func isInlineObject(node *yaml.Node) bool {
@@ -795,24 +869,45 @@ func resolveRefs(v any, schemas map[string]any) any {
 func resolveRefsWithVisited(v any, schemas map[string]any, visited map[string]bool) any {
 	switch val := v.(type) {
 	case map[string]any:
-		// Check if this is a $ref
-		if ref, ok := val["$ref"].(string); ok && len(val) == 1 {
+		// Check if this is a $ref (with or without sibling keywords).
+		// OAS 3.1 allows $ref with siblings; we resolve the $ref and
+		// merge the non-$ref siblings into the result so that equivalence
+		// checking works correctly after wrapRefSiblings transforms them.
+		if ref, ok := val["$ref"].(string); ok {
 			const prefix = "#/components/schemas/"
 			if strings.HasPrefix(ref, prefix) {
 				name := ref[len(prefix):]
 				if visited[name] {
-					// Circular reference — return as-is to avoid infinite loop
 					return val
 				}
 				if schema, ok := schemas[name]; ok {
 					newVisited := make(map[string]bool, len(visited)+1)
 					maps.Copy(newVisited, visited)
 					newVisited[name] = true
-					return resolveRefsWithVisited(schema, schemas, newVisited)
+					resolved := resolveRefsWithVisited(schema, schemas, newVisited)
+					// If there are sibling keys (OAS 3.1 $ref + description etc.),
+					// merge them into the resolved schema so both the original
+					// and processed specs normalize to the same structure.
+					if len(val) > 1 {
+						if resolvedMap, ok := resolved.(map[string]any); ok {
+							merged := make(map[string]any, len(resolvedMap)+len(val))
+							for k, v := range resolvedMap {
+								merged[k] = v
+							}
+							for k, v := range val {
+								if k != "$ref" {
+									merged[k] = resolveRefsWithVisited(v, schemas, newVisited)
+								}
+							}
+							return merged
+						}
+					}
+					return resolved
 				}
 			}
-			// Non-schema $ref (e.g., responses, parameters) — leave as-is
-			return val
+			if len(val) == 1 {
+				return val
+			}
 		}
 
 		result := make(map[string]any, len(val))
