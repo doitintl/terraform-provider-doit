@@ -1,35 +1,39 @@
-# Use case: Find a specific cloud resource and fetch its full component details.
+# Use case: Find a specific VPC and fetch its full component details.
 
-# Step 1: Search for components by name (e.g. a specific EC2 instance or VPC).
-data "doit_cloud_diagrams_search" "lookup" {
+# Step 1: Search for the component by name.
+data "doit_cloud_diagrams_search" "vpc" {
   query = "my-production-vpc"
 }
 
-# Step 2: Collect matching component IDs grouped by type and layer.
 locals {
-  # Pick the first matching component.
-  target     = data.doit_cloud_diagrams_search.lookup.component[0]
-  layer_id   = local.target.ss_id
-  target_ids = [local.target._id]
-
-  # Map component type to the correct ID list attribute.
-  is_node    = local.target.type == "node"
-  is_element = local.target.type == "element"
-  is_group   = local.target.type == "group"
+  target   = data.doit_cloud_diagrams_search.vpc.component[0]
+  layer_id = local.target.ss_id
 }
 
-# Step 3: Fetch full component details (all properties and attributes).
-data "doit_cloud_diagrams_statussheet" "details" {
+# Step 2: Fetch the component with all its properties.
+# Use node_ids, element_ids, group_ids, etc. to request specific components.
+data "doit_cloud_diagrams_statussheet" "vpc_details" {
+  id       = local.layer_id
+  node_ids = [local.target._id]
+}
+
+output "vpc_details" {
+  value = data.doit_cloud_diagrams_statussheet.vpc_details.node[local.target._id]
+}
+
+# Use case: Fetch multiple component types at once.
+# You can combine different ID lists in a single call.
+data "doit_cloud_diagrams_statussheet" "mixed" {
   id          = local.layer_id
-  node_ids    = local.is_node ? local.target_ids : null
-  element_ids = local.is_element ? local.target_ids : null
-  group_ids   = local.is_group ? local.target_ids : null
+  node_ids    = [local.target._id]
+  group_ids   = [local.target._id]
+  link_ids    = [local.target._id]
 }
 
-output "component_details" {
+output "mixed_results" {
   value = {
-    nodes    = data.doit_cloud_diagrams_statussheet.details.node
-    elements = data.doit_cloud_diagrams_statussheet.details.element
-    groups   = data.doit_cloud_diagrams_statussheet.details.group
+    nodes  = length(keys(data.doit_cloud_diagrams_statussheet.mixed.node))
+    groups = length(keys(data.doit_cloud_diagrams_statussheet.mixed.group))
+    links  = length(keys(data.doit_cloud_diagrams_statussheet.mixed.link))
   }
 }

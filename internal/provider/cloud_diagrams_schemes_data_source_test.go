@@ -178,3 +178,66 @@ output "statussheet_key_count" {
 		},
 	})
 }
+
+func TestAccCloudDiagramsSchemesDataSource_LinkOriginDestination(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "doit_cloud_diagrams_schemes" "overview" {}
+
+locals {
+  scheme_ids = keys(data.doit_cloud_diagrams_schemes.overview.scheme)
+  first_id   = length(local.scheme_ids) > 0 ? [local.scheme_ids[0]] : []
+}
+
+data "doit_cloud_diagrams_schemes" "with_links" {
+  scheme_ids = local.first_id
+  link       = true
+}
+
+# Extract link origin/destination from the first statussheet that has links.
+output "link_map_key_count" {
+  value = length(keys(data.doit_cloud_diagrams_schemes.with_links.statussheet)) > 0 ? sum([for k, ss in data.doit_cloud_diagrams_schemes.with_links.statussheet : length(keys(ss.link))]) : 0
+}`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchOutput("link_map_key_count", regexp.MustCompile(`^\d+$`)),
+					testCheckSchemesLinkOriginDestination("data.doit_cloud_diagrams_schemes.with_links"),
+				),
+			},
+		},
+	})
+}
+
+func testCheckSchemesLinkOriginDestination(name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("data source not found: %s", name)
+		}
+
+		for key, val := range rs.Primary.Attributes {
+			if strings.HasSuffix(key, ".link.%") && val != "0" {
+				prefix := strings.TrimSuffix(key, ".%")
+				for attrKey := range rs.Primary.Attributes {
+					if strings.HasPrefix(attrKey, prefix+".") && strings.HasSuffix(attrKey, ".origin._id") {
+						originID := rs.Primary.Attributes[attrKey]
+						if originID == "" {
+							return fmt.Errorf("expected %s to be set", attrKey)
+						}
+						destKey := strings.Replace(attrKey, ".origin._id", ".destination._id", 1)
+						destID := rs.Primary.Attributes[destKey]
+						if destID == "" {
+							return fmt.Errorf("expected %s to be set", destKey)
+						}
+						return nil
+					}
+				}
+			}
+		}
+		return nil
+	}
+}

@@ -495,6 +495,34 @@ func mapExportLinkList(ctx context.Context, links *[]models.CloudDiagramLink) (b
 			return basetypes.ListValue{}, diags
 		}
 
+		originVal, originDiags := ds.NewOriginValue(
+			ds.OriginValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"_id":       types.StringValue(l.Origin.UnderscoreId),
+				"type":      types.StringValue(string(l.Origin.Type)),
+				"scheme_id": types.StringValue(l.Origin.SchemeId),
+				"ss_id":     types.StringValue(l.Origin.SsId),
+			},
+		)
+		diags.Append(originDiags...)
+		if diags.HasError() {
+			return basetypes.ListValue{}, diags
+		}
+
+		destVal, destDiags := ds.NewDestinationValue(
+			ds.DestinationValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"_id":       types.StringValue(l.Destination.UnderscoreId),
+				"type":      types.StringValue(string(l.Destination.Type)),
+				"scheme_id": types.StringValue(l.Destination.SchemeId),
+				"ss_id":     types.StringValue(l.Destination.SsId),
+			},
+		)
+		diags.Append(destDiags...)
+		if diags.HasError() {
+			return basetypes.ListValue{}, diags
+		}
+
 		val, valDiags := ds.NewLinksValue(
 			ds.LinksValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
@@ -504,8 +532,10 @@ func mapExportLinkList(ctx context.Context, links *[]models.CloudDiagramLink) (b
 				"cld_sync":        types.BoolPointerValue(l.CldSync),
 				"cld_type":        mapEnumPointerValue(l.CldType),
 				"connection_type": mapEnumPointerValue(l.ConnectionType),
+				"destination":     destVal,
 				"issues":          issues,
 				"name":            types.StringPointerValue(l.Name),
+				"origin":          originVal,
 				"owner_ss_id":     types.StringPointerValue(l.OwnerSsId),
 				"props":           mapFreeformJSON(l.Props),
 				"tags":            tags,

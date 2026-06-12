@@ -407,6 +407,45 @@ func (e CloudDiagramCombinerItemType) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramComponentRefType.
+const (
+	CloudDiagramComponentRefTypeAttachment  CloudDiagramComponentRefType = "attachment"
+	CloudDiagramComponentRefTypeCombiner    CloudDiagramComponentRefType = "combiner"
+	CloudDiagramComponentRefTypeElement     CloudDiagramComponentRefType = "element"
+	CloudDiagramComponentRefTypeGroup       CloudDiagramComponentRefType = "group"
+	CloudDiagramComponentRefTypeLink        CloudDiagramComponentRefType = "link"
+	CloudDiagramComponentRefTypeNode        CloudDiagramComponentRefType = "node"
+	CloudDiagramComponentRefTypeNote        CloudDiagramComponentRefType = "note"
+	CloudDiagramComponentRefTypeScheme      CloudDiagramComponentRefType = "scheme"
+	CloudDiagramComponentRefTypeStatussheet CloudDiagramComponentRefType = "statussheet"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramComponentRefType enum.
+func (e CloudDiagramComponentRefType) Valid() bool {
+	switch e {
+	case CloudDiagramComponentRefTypeAttachment:
+		return true
+	case CloudDiagramComponentRefTypeCombiner:
+		return true
+	case CloudDiagramComponentRefTypeElement:
+		return true
+	case CloudDiagramComponentRefTypeGroup:
+		return true
+	case CloudDiagramComponentRefTypeLink:
+		return true
+	case CloudDiagramComponentRefTypeNode:
+		return true
+	case CloudDiagramComponentRefTypeNote:
+		return true
+	case CloudDiagramComponentRefTypeScheme:
+		return true
+	case CloudDiagramComponentRefTypeStatussheet:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudDiagramComponentSearchItemNodeType.
 const (
 	CloudDiagramComponentSearchItemNodeTypeAppComponent CloudDiagramComponentSearchItemNodeType = "app_component"
@@ -886,16 +925,16 @@ func (e CloudDiagramStatsChangeType) Valid() bool {
 
 // Defines values for CloudDiagramsGetRequestTemplate0.
 const (
-	Component   CloudDiagramsGetRequestTemplate0 = "component"
-	Statussheet CloudDiagramsGetRequestTemplate0 = "statussheet"
+	CloudDiagramsGetRequestTemplate0Component   CloudDiagramsGetRequestTemplate0 = "component"
+	CloudDiagramsGetRequestTemplate0Statussheet CloudDiagramsGetRequestTemplate0 = "statussheet"
 )
 
 // Valid indicates whether the value is a known member of the CloudDiagramsGetRequestTemplate0 enum.
 func (e CloudDiagramsGetRequestTemplate0) Valid() bool {
 	switch e {
-	case Component:
+	case CloudDiagramsGetRequestTemplate0Component:
 		return true
-	case Statussheet:
+	case CloudDiagramsGetRequestTemplate0Statussheet:
 		return true
 	default:
 		return false
@@ -4331,6 +4370,24 @@ type CloudDiagramCombinerItem struct {
 // CloudDiagramCombinerItemType Component type.
 type CloudDiagramCombinerItemType string
 
+// CloudDiagramComponentRef Reference to a diagram component, including its parent diagram and layer.
+type CloudDiagramComponentRef struct {
+	// UnderscoreId Component ID.
+	UnderscoreId string `json:"_id"`
+
+	// SchemeId Parent diagram ID.
+	SchemeId string `json:"scheme_id"`
+
+	// SsId Parent layer ID.
+	SsId string `json:"ss_id"`
+
+	// Type Component type.
+	Type CloudDiagramComponentRefType `json:"type"`
+}
+
+// CloudDiagramComponentRefType Component type.
+type CloudDiagramComponentRefType string
+
 // CloudDiagramComponentSearchItem A component matching the search query.
 type CloudDiagramComponentSearchItem struct {
 	// UnderscoreId Component ID.
@@ -4615,11 +4672,17 @@ type CloudDiagramLink struct {
 	// ConnectionType Link connection type.
 	ConnectionType *CloudDiagramLinkConnectionType `json:"connection_type,omitempty"`
 
+	// Destination Reference to a diagram component, including its parent diagram and layer.
+	Destination CloudDiagramComponentRef `json:"destination"`
+
 	// Issues Issues associated with this link.
 	Issues *[]CloudDiagramIssue `json:"issues,omitempty"`
 
 	// Name Component name.
 	Name *string `json:"name,omitempty"`
+
+	// Origin Reference to a diagram component, including its parent diagram and layer.
+	Origin CloudDiagramComponentRef `json:"origin"`
 
 	// OwnerSsId Owner layer ID for cross-diagram links.
 	OwnerSsId *string `json:"owner_ss_id,omitempty"`

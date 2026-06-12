@@ -13,28 +13,32 @@ Retrieves snapshot activity groups for a Cloud Diagram layer.
 ## Example Usage
 
 ```terraform
-# Discover the first available layer ID from the schemes endpoint,
-# then list its activity groups.
-data "doit_cloud_diagrams_schemes" "discovery" {}
+# Use case: View recent infrastructure changes for a specific project.
 
-locals {
-  first_scheme_key = keys(data.doit_cloud_diagrams_schemes.discovery.scheme)[0]
-  first_layer_id   = data.doit_cloud_diagrams_schemes.discovery.scheme[local.first_scheme_key].statussheet[0].ssid
+# Step 1: Find the diagram by project name.
+data "doit_cloud_diagrams_search" "project" {
+  query = "my-gcp-project"
 }
 
-data "doit_cloud_diagrams_activity_groups" "example" {
-  ss_id = local.first_layer_id
-  limit = 5
+# Step 2: Fetch recent activity groups for the matching layer.
+data "doit_cloud_diagrams_activity_groups" "recent" {
+  ss_id = data.doit_cloud_diagrams_search.project.scheme[0].ss_id
+  limit = 3
 }
 
-output "activity_groups" {
+# Each activity group bundles related changes that happened together.
+# The items inside each group describe what actually changed.
+output "recent_changes" {
   value = [
-    for g in data.doit_cloud_diagrams_activity_groups.example.cloud_diagrams_activity_groups :
-    {
-      id        = g._id
+    for g in data.doit_cloud_diagrams_activity_groups.recent.cloud_diagrams_activity_groups : {
       timestamp = g.timestamp
-      snapshot  = g.snapshot
-      items     = length(g.items)
+      changes = [
+        for item in g.items : {
+          activity     = item.activity
+          service_type = item.service_type
+          timestamp    = item.timestamp
+        }
+      ]
     }
   ]
 }
