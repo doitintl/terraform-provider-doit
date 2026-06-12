@@ -300,6 +300,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCloudDiagramsStatsDataSource,
 		NewCloudDiagramsActivityGroupsDataSource,
 		NewCloudDiagramsStatussheetDataSource,
+		NewCloudDiagramsExportDataSource,
 		NewCloudDiagramsNodeActivitiesDataSource,
 		NewCloudDiagramsRelationshipsDataSource,
 		NewSharingDataSource,

@@ -4421,6 +4421,51 @@ type CloudDiagramElement struct {
 // CloudDiagramElementCldType Cloud account type.
 type CloudDiagramElementCldType string
 
+// CloudDiagramExportJsonMetadata Metadata included in a diagram JSON export.
+type CloudDiagramExportJsonMetadata struct {
+	// Connections Map of component ID to display label for external connections referenced by cross-diagram links.
+	Connections *map[string]string `json:"connections,omitempty"`
+
+	// Date ISO 8601 timestamp of the export.
+	Date time.Time `json:"date"`
+
+	// User Email of the user who triggered the export.
+	User string `json:"user"`
+
+	// Version Export format version.
+	Version string `json:"version"`
+}
+
+// CloudDiagramExportJsonResponse Full diagram export as a structured JSON document.
+type CloudDiagramExportJsonResponse struct {
+	// Attachments Exported attachments.
+	Attachments *[]CloudDiagramAttachment `json:"attachments,omitempty"`
+
+	// Combiners Exported combiners.
+	Combiners *[]CloudDiagramCombiner `json:"combiners,omitempty"`
+
+	// Elements Exported elements.
+	Elements *[]CloudDiagramElement `json:"elements,omitempty"`
+
+	// Groups Exported groups.
+	Groups *[]CloudDiagramGroup `json:"groups,omitempty"`
+
+	// Links Exported links.
+	Links *[]CloudDiagramLink `json:"links,omitempty"`
+
+	// Metadata Metadata included in a diagram JSON export.
+	Metadata CloudDiagramExportJsonMetadata `json:"metadata"`
+
+	// Nodes Exported nodes.
+	Nodes *[]CloudDiagramNode `json:"nodes,omitempty"`
+
+	// Notes Exported notes.
+	Notes *[]CloudDiagramNote `json:"notes,omitempty"`
+
+	// Statussheet Diagram-level metadata (excluding internal IDs).
+	Statussheet *map[string]interface{} `json:"statussheet,omitempty"`
+}
+
 // CloudDiagramGroup A group component (VPC, subnet, region, cluster, etc.).
 type CloudDiagramGroup struct {
 	// UnderscoreId Group ID.
@@ -8613,6 +8658,9 @@ type ClientInterface interface {
 	// GetCloudDiagramsStats request
 	GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ExportCloudDiagramJson request
+	ExportCloudDiagramJson(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetStatussheetComponentsWithBody request with any body
 	GetStatussheetComponentsWithBody(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -9797,6 +9845,18 @@ func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagra
 
 func (c *Client) GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCloudDiagramsStatsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ExportCloudDiagramJson(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExportCloudDiagramJsonRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -13900,6 +13960,40 @@ func NewGetCloudDiagramsStatsRequest(server string, params *GetCloudDiagramsStat
 	return req, nil
 }
 
+// NewExportCloudDiagramJsonRequest generates requests for ExportCloudDiagramJson
+func NewExportCloudDiagramJsonRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/export-json", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetStatussheetComponentsRequest calls the generic GetStatussheetComponents builder with application/json body
 func NewGetStatussheetComponentsRequest(server string, id string, params *GetStatussheetComponentsParams, body GetStatussheetComponentsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -16039,6 +16133,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetCloudDiagramsStatsWithResponse request
 	GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error)
+
+	// ExportCloudDiagramJsonWithResponse request
+	ExportCloudDiagramJsonWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ExportCloudDiagramJsonResp, error)
 
 	// GetStatussheetComponentsWithBodyWithResponse request with any body
 	GetStatussheetComponentsWithBodyWithResponse(ctx context.Context, id string, params *GetStatussheetComponentsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetStatussheetComponentsResp, error)
@@ -18364,6 +18461,39 @@ func (r GetCloudDiagramsStatsResp) ContentType() string {
 	return ""
 }
 
+type ExportCloudDiagramJsonResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramExportJsonResponse
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r ExportCloudDiagramJsonResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExportCloudDiagramJsonResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExportCloudDiagramJsonResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetStatussheetComponentsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -20327,6 +20457,15 @@ func (c *ClientWithResponses) GetCloudDiagramsStatsWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseGetCloudDiagramsStatsResp(rsp)
+}
+
+// ExportCloudDiagramJsonWithResponse request returning *ExportCloudDiagramJsonResp
+func (c *ClientWithResponses) ExportCloudDiagramJsonWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ExportCloudDiagramJsonResp, error) {
+	rsp, err := c.ExportCloudDiagramJson(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExportCloudDiagramJsonResp(rsp)
 }
 
 // GetStatussheetComponentsWithBodyWithResponse request with arbitrary body returning *GetStatussheetComponentsResp
@@ -24140,6 +24279,53 @@ func ParseGetCloudDiagramsStatsResp(rsp *http.Response) (*GetCloudDiagramsStatsR
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
 		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseExportCloudDiagramJsonResp parses an HTTP response from a ExportCloudDiagramJsonWithResponse call
+func ParseExportCloudDiagramJsonResp(rsp *http.Response) (*ExportCloudDiagramJsonResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExportCloudDiagramJsonResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramExportJsonResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
