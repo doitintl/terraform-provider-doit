@@ -4212,7 +4212,7 @@ type AnomalySKUArray = []AnomalySKU
 type Approval struct {
 	// Message Approval request message body. May contain inline text, upstream node
 	// output references, or a mix. Resolved at runtime by the flow engine.
-	Message interface{} `json:"message,omitempty"`
+	Message *string `json:"message,omitempty"`
 
 	// NotificationProvider Delivery channel for the approval notification.
 	// - `email` — sends to the addresses in `recipients`.
@@ -4222,7 +4222,7 @@ type Approval struct {
 	// Recipients Notification recipients. Each entry is a plain string (email address or
 	// Slack channel identifier) or a referenced node-output value (an upstream
 	// node's output field resolved at runtime by the flow engine).
-	Recipients *[]interface{} `json:"recipients,omitempty"`
+	Recipients *[]string `json:"recipients,omitempty"`
 
 	// RejectApprovalAfterTime Whether the approval auto-rejects if not acted on within the time window.
 	RejectApprovalAfterTime bool `json:"rejectApprovalAfterTime"`
@@ -4240,7 +4240,7 @@ type Approval struct {
 
 	// Subject Subject line for email notifications. Plain string or a referenced
 	// node-output value. Ignored when `notificationProvider` is `slack`.
-	Subject interface{} `json:"subject,omitempty"`
+	Subject *string `json:"subject,omitempty"`
 }
 
 // ApprovalNotificationProvider Delivery channel for the approval notification.
@@ -7863,8 +7863,7 @@ type UpdateAwsFeatureRequestBody struct {
 	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
 }
 
-// UpdateConnectionRequest Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
-// Currently supports toggling the `enabled` flag only.
+// UpdateConnectionRequest Request body for `UpdateConnection`. Currently supports toggling the `enabled` flag only.
 type UpdateConnectionRequest struct {
 	// Enabled - `true` — enable the connection (transitions `disabled` → `active`).
 	// - `false` — disable the connection (transitions current status → `disabled`).
@@ -8901,8 +8900,8 @@ type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 // CreateConnectionJSONRequestBody defines body for CreateConnection for application/json ContentType.
 type CreateConnectionJSONRequestBody = CreateConnectionRequest
 
-// UpdateConnectionApplicationMergePatchPlusJSONRequestBody defines body for UpdateConnection for application/merge-patch+json ContentType.
-type UpdateConnectionApplicationMergePatchPlusJSONRequestBody = UpdateConnectionRequest
+// UpdateConnectionJSONRequestBody defines body for UpdateConnection for application/json ContentType.
+type UpdateConnectionJSONRequestBody = UpdateConnectionRequest
 
 // CreateFlowJSONRequestBody defines body for CreateFlow for application/json ContentType.
 type CreateFlowJSONRequestBody = CreateFlowRequest
@@ -9449,7 +9448,7 @@ type ClientInterface interface {
 	// UpdateConnectionWithBody request with any body
 	UpdateConnectionWithBody(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateConnection(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateFlowWithBody request with any body
 	CreateFlowWithBody(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -10822,8 +10821,8 @@ func (c *Client) UpdateConnectionWithBody(ctx context.Context, connectionId Conn
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateConnectionRequestWithApplicationMergePatchPlusJSONBody(c.Server, connectionId, body)
+func (c *Client) UpdateConnection(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateConnectionRequest(c.Server, connectionId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -15581,15 +15580,15 @@ func NewGetConnectionRequest(server string, connectionId ConnectionId) (*http.Re
 	return req, nil
 }
 
-// NewUpdateConnectionRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateConnection builder with application/merge-patch+json body
-func NewUpdateConnectionRequestWithApplicationMergePatchPlusJSONBody(server string, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+// NewUpdateConnectionRequest calls the generic UpdateConnection builder with application/json body
+func NewUpdateConnectionRequest(server string, connectionId ConnectionId, body UpdateConnectionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateConnectionRequestWithBody(server, connectionId, "application/merge-patch+json", bodyReader)
+	return NewUpdateConnectionRequestWithBody(server, connectionId, "application/json", bodyReader)
 }
 
 // NewUpdateConnectionRequestWithBody generates requests for UpdateConnection with any type of body
@@ -18140,7 +18139,7 @@ type ClientWithResponsesInterface interface {
 	// UpdateConnectionWithBodyWithResponse request with any body
 	UpdateConnectionWithBodyWithResponse(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
 
-	UpdateConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
+	UpdateConnectionWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
 
 	// CreateFlowWithBodyWithResponse request with any body
 	CreateFlowWithBodyWithResponse(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
@@ -23176,8 +23175,8 @@ func (c *ClientWithResponses) UpdateConnectionWithBodyWithResponse(ctx context.C
 	return ParseUpdateConnectionResp(rsp)
 }
 
-func (c *ClientWithResponses) UpdateConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error) {
-	rsp, err := c.UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx, connectionId, body, reqEditors...)
+func (c *ClientWithResponses) UpdateConnectionWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error) {
+	rsp, err := c.UpdateConnection(ctx, connectionId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

@@ -4282,7 +4282,7 @@ paths:
         - `enabled: false` — transitions status to `disabled`.
 
 
-        Uses `Content-Type: application/merge-patch+json`. `If-Match` is required.
+        `If-Match` is required.
 
 '
       tags:
@@ -4292,7 +4292,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/merge-patch+json:
+          application/json:
             schema:
               $ref: '#/components/schemas/UpdateConnectionRequest'
       responses:
@@ -4944,14 +4944,17 @@ components:
             node''s output field resolved at runtime by the flow engine).
 
 '
-          items: {}
+          items:
+            type: string
         subject:
+          type: string
           description: 'Subject line for email notifications. Plain string or a referenced
 
             node-output value. Ignored when `notificationProvider` is `slack`.
 
 '
         message:
+          type: string
           description: 'Approval request message body. May contain inline text, upstream node
 
             output references, or a mix. Resolved at runtime by the flow engine.
@@ -10193,9 +10196,7 @@ components:
       type: object
       required:
         - enabled
-      description: 'Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
-
-        Currently supports toggling the `enabled` flag only.
+      description: 'Request body for `UpdateConnection`. Currently supports toggling the `enabled` flag only.
 
 '
       properties:

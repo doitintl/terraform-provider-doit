@@ -1677,6 +1677,271 @@
 						}
 					},
 					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.\n`null` on dry-run create responses.\n"
+						}
+					},
+					{
+						"name": "first_node_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the trigger (first) node. `null` if no trigger node has been set."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned unique identifier. `null` on dry-run create responses\n(no resource was persisted).\n"
+						}
+					},
+					{
+						"name": "last_executed_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed."
+						}
+					},
+					{
+						"name": "last_execution_status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Status string of the most recent execution. `null` if never executed."
+						}
+					},
+					{
+						"name": "next_run",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) timestamp of the next scheduled execution. `null` if the flow\nhas no scheduled trigger, is unpublished, or scheduling is paused.\n"
+						}
+					},
+					{
+						"name": "nodes",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "action_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the specific operation this node performs (e.g. AWS service action)."
+										}
+									},
+									{
+										"name": "app_key",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the integration or application this node belongs to."
+										}
+									},
+									{
+										"name": "approval",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "message",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n"
+													}
+												},
+												{
+													"name": "notification_provider",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n"
+													}
+												},
+												{
+													"name": "recipients",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n"
+													}
+												},
+												{
+													"name": "reject_approval_after_time",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the approval auto-rejects if not acted on within the time window."
+													}
+												},
+												{
+													"name": "reject_time_unit",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
+													}
+												},
+												{
+													"name": "reject_time_value",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
+													}
+												},
+												{
+													"name": "required",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether approval is required before the node can proceed."
+													}
+												},
+												{
+													"name": "subject",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n"
+													}
+												}
+											],
+											"description": "Optional human approval gate. `null` if no approval is required."
+										}
+									},
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ISO 8601 (UTC) creation timestamp. `null` on dry-run create."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Human-readable description."
+										}
+									},
+									{
+										"name": "disabled",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "When `true` this node is skipped during flow execution."
+										}
+									},
+									{
+										"name": "etag",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Strong ETag for this node version. `null` on dry-run create."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Server-assigned unique identifier. `null` on dry-run create responses."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name."
+										}
+									},
+									{
+										"name": "parameters",
+										"string": {
+											"computed_optional_required": "computed",
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Node-specific configuration. The concrete shape depends on `type`. Refer to\nthe CloudFlow node type documentation for the required fields per node type.\n. Value is JSON-encoded."
+										}
+									},
+									{
+										"name": "transitions",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "label",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Identifies the execution path for branch node transitions. Branch nodes have at most two outgoing transitions: one labeled \"True\" and one labeled \"False\". Required on branch node transitions; must be omitted for all other node types.\n"
+														}
+													},
+													{
+														"name": "target_node_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "ID of the target (child) node."
+														}
+													}
+												]
+											},
+											"description": "Directed edges to child nodes."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Discriminator that identifies a node's role and determines the shape of its\n`parameters` field.\n"
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ISO 8601 (UTC) last-modified timestamp. `null` if never modified."
+										}
+									}
+								]
+							},
+							"description": "Embedded nodes. Populated by the `update-batch` response and by operations that\nreturn the full flow with nodes inline. Not present on standard list responses.\n"
+						}
+					},
+					{
+						"name": "published",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the flow is currently published. Readable on every response; use\n`POST /actions/publish` and `POST /actions/unpublish` to change this value.\n"
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Lifecycle state. `null` on dry-run create responses."
+						}
+					},
+					{
+						"name": "trigger_type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Node type of the trigger node. `null` if no trigger node has been set.\nOne of the `NodeType` trigger variants: `triggerNode`, `manualTrigger`,\n`webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.\n"
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run."
+						}
+					},
+					{
 						"name": "flow_id",
 						"string": {
 							"computed_optional_required": "computed_optional",
@@ -2016,6 +2281,481 @@
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "Unique identifier of the variable."
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "cloudflow_node",
+			"schema": {
+				"attributes": [
+					{
+						"name": "node",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "app_key",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Identifier of the integration or application."
+									}
+								},
+								{
+									"name": "approval",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "message",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n"
+												}
+											},
+											{
+												"name": "notification_provider",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"email\",\n\"slack\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "recipients",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n"
+												}
+											},
+											{
+												"name": "reject_approval_after_time",
+												"bool": {
+													"computed_optional_required": "required",
+													"description": "Whether the approval auto-rejects if not acted on within the time window."
+												}
+											},
+											{
+												"name": "reject_time_unit",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"Hours\",\n\"Days\",\n\"Weeks\",\n\"Months\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "reject_time_value",
+												"int64": {
+													"computed_optional_required": "computed_optional",
+													"description": "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																	}
+																],
+																"schema_definition": "int64validator.AtLeast(1)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "required",
+												"bool": {
+													"computed_optional_required": "required",
+													"description": "Whether approval is required before the node can proceed."
+												}
+											},
+											{
+												"name": "subject",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n"
+												}
+											}
+										],
+										"description": "Human approval gate configuration for a node."
+									}
+								},
+								{
+									"name": "description",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.LengthAtMost(2000)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "disabled",
+									"bool": {
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": false
+										}
+									}
+								},
+								{
+									"name": "id",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a\nstable ID enables idempotent batch operations.\n"
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "required",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.LengthBetween(1, 200)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "parameters",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"custom_type": {
+											"import": {
+												"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+											},
+											"type": "jsontypes.NormalizedType{}",
+											"value_type": "jsontypes.Normalized"
+										},
+										"description": "Node-specific configuration. See CloudFlow node type documentation for\nthe required fields per `type`.\n. Value is JSON-encoded."
+									}
+								},
+								{
+									"name": "transitions",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "label",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Identifies the execution path for branch node transitions. Branch nodes have at most two outgoing transitions: one labeled \"True\" and one labeled \"False\". Required on branch node transitions; must be omitted for all other node types.\n",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"True\",\n\"False\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "target_node_id",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "ID of the target (child) node."
+													}
+												}
+											]
+										},
+										"description": "Outgoing edges to child nodes."
+									}
+								},
+								{
+									"name": "type",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Discriminator that identifies a node's role and determines the shape of its\n`parameters` field.\n",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"triggerNode\",\n\"actionNode\",\n\"conditionNode\",\n\"filterNode\",\n\"httpNode\",\n\"manualTrigger\",\n\"webhookTrigger\",\n\"systemEventTrigger\",\n\"transformation\",\n\"datetimeTransform\",\n\"notificationNode\",\n\"avaNode\",\n\"policy\",\n\"sqlNode\",\n\"codeNode\",\n\"cliNode\",\n\"datastoreNode\",\n\"subFlowNode\",\n\"sleepNode\",\n\"flowOutput\",\n\"scheduleTrigger\",\n)"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Node payload for create and update operations."
+						}
+					},
+					{
+						"name": "transition",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "label",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Selects which branch of the parent node this node connects to. Required when the parent is a branch node; must be \"True\" or \"False\". Omit for all other parent node types.\n",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"True\",\n\"False\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "parent_node_id",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "ID of the existing parent node."
+									}
+								}
+							],
+							"description": "Optional wiring to an existing parent node. When supplied, the new node is\nconnected as a child of `parentNodeId` via the given branch value.\n"
+						}
+					},
+					{
+						"name": "action_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the specific operation this node performs (e.g. AWS service action)."
+						}
+					},
+					{
+						"name": "app_key",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the integration or application this node belongs to."
+						}
+					},
+					{
+						"name": "approval",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "message",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n"
+									}
+								},
+								{
+									"name": "notification_provider",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n"
+									}
+								},
+								{
+									"name": "recipients",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n"
+									}
+								},
+								{
+									"name": "reject_approval_after_time",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether the approval auto-rejects if not acted on within the time window."
+									}
+								},
+								{
+									"name": "reject_time_unit",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
+									}
+								},
+								{
+									"name": "reject_time_value",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
+									}
+								},
+								{
+									"name": "required",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether approval is required before the node can proceed."
+									}
+								},
+								{
+									"name": "subject",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n"
+									}
+								}
+							],
+							"description": "Optional human approval gate. `null` if no approval is required."
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) creation timestamp. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Human-readable description."
+						}
+					},
+					{
+						"name": "disabled",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "When `true` this node is skipped during flow execution."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong ETag for this node version. `null` on dry-run create."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned unique identifier. `null` on dry-run create responses."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Display name."
+						}
+					},
+					{
+						"name": "parameters",
+						"string": {
+							"computed_optional_required": "computed",
+							"custom_type": {
+								"import": {
+									"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+								},
+								"type": "jsontypes.NormalizedType{}",
+								"value_type": "jsontypes.Normalized"
+							},
+							"description": "Node-specific configuration. The concrete shape depends on `type`. Refer to\nthe CloudFlow node type documentation for the required fields per node type.\n. Value is JSON-encoded."
+						}
+					},
+					{
+						"name": "transitions",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "label",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifies the execution path for branch node transitions. Branch nodes have at most two outgoing transitions: one labeled \"True\" and one labeled \"False\". Required on branch node transitions; must be omitted for all other node types.\n"
+										}
+									},
+									{
+										"name": "target_node_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the target (child) node."
+										}
+									}
+								]
+							},
+							"description": "Directed edges to child nodes."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Discriminator that identifies a node's role and determines the shape of its\n`parameters` field.\n"
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 (UTC) last-modified timestamp. `null` if never modified."
+						}
+					},
+					{
+						"name": "flow_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Unique identifier of the flow."
+						}
+					},
+					{
+						"name": "node_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Unique identifier of the node."
 						}
 					}
 				]
