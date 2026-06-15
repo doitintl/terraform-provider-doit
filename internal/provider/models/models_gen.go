@@ -209,48 +209,6 @@ func (e AnomalyItemStatus) Valid() bool {
 	}
 }
 
-// Defines values for ApprovalNotificationProvider.
-const (
-	ApprovalNotificationProviderEmail ApprovalNotificationProvider = "email"
-	ApprovalNotificationProviderSlack ApprovalNotificationProvider = "slack"
-)
-
-// Valid indicates whether the value is a known member of the ApprovalNotificationProvider enum.
-func (e ApprovalNotificationProvider) Valid() bool {
-	switch e {
-	case ApprovalNotificationProviderEmail:
-		return true
-	case ApprovalNotificationProviderSlack:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ApprovalRejectTimeUnit.
-const (
-	Days   ApprovalRejectTimeUnit = "Days"
-	Hours  ApprovalRejectTimeUnit = "Hours"
-	Months ApprovalRejectTimeUnit = "Months"
-	Weeks  ApprovalRejectTimeUnit = "Weeks"
-)
-
-// Valid indicates whether the value is a known member of the ApprovalRejectTimeUnit enum.
-func (e ApprovalRejectTimeUnit) Valid() bool {
-	switch e {
-	case Days:
-		return true
-	case Hours:
-		return true
-	case Months:
-		return true
-	case Weeks:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for BudgetAPIPublic.
 const (
 	BudgetAPIPublicEditor BudgetAPIPublic = "editor"
@@ -2551,19 +2509,19 @@ func (e NodeType) Valid() bool {
 
 // Defines values for NotificationEventChannel.
 const (
-	NotificationEventChannelEmail   NotificationEventChannel = "email"
-	NotificationEventChannelMsteams NotificationEventChannel = "msteams"
-	NotificationEventChannelSlack   NotificationEventChannel = "slack"
+	Email   NotificationEventChannel = "email"
+	Msteams NotificationEventChannel = "msteams"
+	Slack   NotificationEventChannel = "slack"
 )
 
 // Valid indicates whether the value is a known member of the NotificationEventChannel enum.
 func (e NotificationEventChannel) Valid() bool {
 	switch e {
-	case NotificationEventChannelEmail:
+	case Email:
 		return true
-	case NotificationEventChannelMsteams:
+	case Msteams:
 		return true
-	case NotificationEventChannelSlack:
+	case Slack:
 		return true
 	default:
 		return false
@@ -4282,50 +4240,6 @@ type AnomalySKU struct {
 // AnomalySKUArray Array of SKU entries contributing to an anomaly.
 type AnomalySKUArray = []AnomalySKU
 
-// Approval Human approval gate configuration for a node.
-type Approval struct {
-	// Message Approval request message body. May contain inline text, upstream node
-	// output references, or a mix. Resolved at runtime by the flow engine.
-	Message *string `json:"message,omitempty"`
-
-	// NotificationProvider Delivery channel for the approval notification.
-	// - `email` — sends to the addresses in `recipients`.
-	// - `slack` — sends to the channels in `recipients`.
-	NotificationProvider *ApprovalNotificationProvider `json:"notificationProvider,omitempty"`
-
-	// Recipients Notification recipients. Each entry is a plain string (email address or
-	// Slack channel identifier) or a referenced node-output value (an upstream
-	// node's output field resolved at runtime by the flow engine).
-	Recipients *[]string `json:"recipients,omitempty"`
-
-	// RejectApprovalAfterTime Whether the approval auto-rejects if not acted on within the time window.
-	RejectApprovalAfterTime bool `json:"rejectApprovalAfterTime"`
-
-	// RejectTimeUnit Time unit for the auto-rejection window.
-	// Required when `rejectApprovalAfterTime` is `true`.
-	RejectTimeUnit *ApprovalRejectTimeUnit `json:"rejectTimeUnit,omitempty"`
-
-	// RejectTimeValue Number of time units before auto-rejection.
-	// Required when `rejectApprovalAfterTime` is `true`.
-	RejectTimeValue *int `json:"rejectTimeValue,omitempty"`
-
-	// Required Whether approval is required before the node can proceed.
-	Required bool `json:"required"`
-
-	// Subject Subject line for email notifications. Plain string or a referenced
-	// node-output value. Ignored when `notificationProvider` is `slack`.
-	Subject *string `json:"subject,omitempty"`
-}
-
-// ApprovalNotificationProvider Delivery channel for the approval notification.
-// - `email` — sends to the addresses in `recipients`.
-// - `slack` — sends to the channels in `recipients`.
-type ApprovalNotificationProvider string
-
-// ApprovalRejectTimeUnit Time unit for the auto-rejection window.
-// Required when `rejectApprovalAfterTime` is `true`.
-type ApprovalRejectTimeUnit string
-
 // AssetItem Summary information about a single asset.
 type AssetItem struct {
 	// CreateTime The time when the asset was created, in milliseconds since the epoch.
@@ -5814,6 +5728,11 @@ type CreateFlowRequest struct {
 
 	// Name Display name for the new flow.
 	Name string `json:"name"`
+
+	// TemplateId ID of a template (blueprint) to initialise the flow from. When supplied the
+	// new flow inherits the template's node graph and structure. The template itself
+	// is not modified. Omit to create a blank flow.
+	TemplateId *string `json:"templateId,omitempty"`
 }
 
 // CreateFolderRequest Request body for creating a folder.
@@ -7218,12 +7137,6 @@ type Node struct {
 	// ActionId Identifier of the specific operation this node performs (e.g. AWS service action).
 	ActionId *string `json:"actionId,omitempty"`
 
-	// AppKey Identifier of the integration or application this node belongs to.
-	AppKey string `json:"appKey"`
-
-	// Approval Optional human approval gate. `null` if no approval is required.
-	Approval *Approval `json:"approval,omitempty"`
-
 	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
 	CreateTime *time.Time `json:"createTime"`
 
@@ -7259,11 +7172,8 @@ type Node struct {
 
 // NodeInput Node payload for create and update operations.
 type NodeInput struct {
-	// AppKey Identifier of the integration or application.
-	AppKey      string    `json:"appKey"`
-	Approval    *Approval `json:"approval,omitempty"`
-	Description *string   `json:"description,omitempty"`
-	Disabled    bool      `json:"disabled"`
+	Description *string `json:"description,omitempty"`
+	Disabled    bool    `json:"disabled"`
 
 	// Id Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a
 	// stable ID enables idempotent batch operations.
@@ -8806,14 +8716,6 @@ type ListCloudDiagramLayerSnapshotsParams struct {
 	Sort *string `form:"sort,omitempty" json:"sort,omitempty"`
 }
 
-// CreateFlowParams defines parameters for CreateFlow.
-type CreateFlowParams struct {
-	// TemplateId ID of a template (blueprint) to initialise the flow from. When supplied the
-	// new flow inherits the template's node graph and structure. The template itself
-	// is not modified.
-	TemplateId *string `form:"templateId,omitempty" json:"templateId,omitempty"`
-}
-
 // ListKnownIssuesParams defines parameters for ListKnownIssues.
 type ListKnownIssuesParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -9569,9 +9471,9 @@ type ClientInterface interface {
 	UpdateConnection(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateFlowWithBody request with any body
-	CreateFlowWithBody(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateFlow(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteFlow request
 	DeleteFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -10951,8 +10853,8 @@ func (c *Client) UpdateConnection(ctx context.Context, connectionId ConnectionId
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateFlowWithBody(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10963,8 +10865,8 @@ func (c *Client) CreateFlowWithBody(ctx context.Context, params *CreateFlowParam
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateFlow(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowRequest(c.Server, params, body)
+func (c *Client) CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -15746,18 +15648,18 @@ func NewUpdateConnectionRequestWithBody(server string, connectionId ConnectionId
 }
 
 // NewCreateFlowRequest calls the generic CreateFlow builder with application/json body
-func NewCreateFlowRequest(server string, params *CreateFlowParams, body CreateFlowJSONRequestBody) (*http.Request, error) {
+func NewCreateFlowRequest(server string, body CreateFlowJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateFlowRequestWithBody(server, params, "application/json", bodyReader)
+	return NewCreateFlowRequestWithBody(server, "application/json", bodyReader)
 }
 
 // NewCreateFlowRequestWithBody generates requests for CreateFlow with any type of body
-func NewCreateFlowRequestWithBody(server string, params *CreateFlowParams, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateFlowRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -15773,33 +15675,6 @@ func NewCreateFlowRequestWithBody(server string, params *CreateFlowParams, conte
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
-	}
-
-	if params != nil {
-		// queryValues collects non-styled parameters (passthrough, JSON)
-		// that are safe to round-trip through url.Values.Encode().
-		queryValues := queryURL.Query()
-		// rawQueryFragments collects pre-encoded query fragments from
-		// styled parameters, preserving literal commas as delimiters
-		// per the OpenAPI spec (e.g. "color=blue,black,brown").
-		var rawQueryFragments []string
-
-		if params.TemplateId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "templateId", *params.TemplateId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-				return nil, err
-			} else {
-				for _, qp := range strings.Split(queryFrag, "&") {
-					rawQueryFragments = append(rawQueryFragments, qp)
-				}
-			}
-
-		}
-
-		if encoded := queryValues.Encode(); encoded != "" {
-			rawQueryFragments = append(rawQueryFragments, encoded)
-		}
-		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
 	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
@@ -18260,9 +18135,9 @@ type ClientWithResponsesInterface interface {
 	UpdateConnectionWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
 
 	// CreateFlowWithBodyWithResponse request with any body
-	CreateFlowWithBodyWithResponse(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
+	CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
 
-	CreateFlowWithResponse(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
+	CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
 
 	// DeleteFlowWithResponse request
 	DeleteFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*DeleteFlowResp, error)
@@ -23302,16 +23177,16 @@ func (c *ClientWithResponses) UpdateConnectionWithResponse(ctx context.Context, 
 }
 
 // CreateFlowWithBodyWithResponse request with arbitrary body returning *CreateFlowResp
-func (c *ClientWithResponses) CreateFlowWithBodyWithResponse(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
-	rsp, err := c.CreateFlowWithBody(ctx, params, contentType, body, reqEditors...)
+func (c *ClientWithResponses) CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
+	rsp, err := c.CreateFlowWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseCreateFlowResp(rsp)
 }
 
-func (c *ClientWithResponses) CreateFlowWithResponse(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
-	rsp, err := c.CreateFlow(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
+	rsp, err := c.CreateFlow(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

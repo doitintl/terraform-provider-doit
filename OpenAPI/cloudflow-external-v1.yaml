@@ -83,8 +83,8 @@ paths:
       operationId: CreateFlow
       summary: Create a flow
       description: |
-        Creates a new flow. Pass `?templateId=<id>` to initialise the flow from a
-        template (blueprint), inheriting its nodes and structure.
+        Creates a new flow. Supply `templateId` in the request body to initialise the
+        flow from a template (blueprint), inheriting its nodes and structure.
 
         **Dry-run**: Pass `?dryRun=true` to validate the request without persisting. The
         response is `200` with generated fields (`id`, `etag`, `createTime`, `updateTime`)
@@ -94,15 +94,6 @@ paths:
         - $ref: "#/components/parameters/DryRun"
         - $ref: "#/components/parameters/IdempotencyKey"
         - $ref: "#/components/parameters/TenantId"
-        - name: templateId
-          in: query
-          required: false
-          description: |
-            ID of a template (blueprint) to initialise the flow from. When supplied the
-            new flow inherits the template's node graph and structure. The template itself
-            is not modified.
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -1986,6 +1977,12 @@ components:
           description: |
             Operator instructions or notes attached to the flow. Pass `null` or
             omit to leave empty.
+        templateId:
+          type: string
+          description: |
+            ID of a template (blueprint) to initialise the flow from. When supplied the
+            new flow inherits the template's node graph and structure. The template itself
+            is not modified. Omit to create a blank flow.
     UpdateFlowRequest:
       type: object
       description: |
@@ -2012,7 +2009,7 @@ components:
     # ----------------------------------------------------------------
     Node:
       type: object
-      required: [id, name, type, appKey, disabled, createTime, etag]
+      required: [id, name, type, disabled, createTime, etag]
       description: A single node within a CloudFlow.
       properties:
         id:
@@ -2026,9 +2023,6 @@ components:
           description: Human-readable description.
         type:
           $ref: "#/components/schemas/NodeType"
-        appKey:
-          type: string
-          description: Identifier of the integration or application this node belongs to.
         actionId:
           type: string
           description: Identifier of the specific operation this node performs (e.g. AWS service action).
@@ -2041,11 +2035,6 @@ components:
           description: |
             Node-specific configuration. The concrete shape depends on `type`. Refer to
             the CloudFlow node type documentation for the required fields per node type.
-        approval:
-          description: Optional human approval gate. `null` if no approval is required.
-          oneOf:
-            - $ref: "#/components/schemas/Approval"
-            - type: "null"
         transitions:
           type: array
           items:
@@ -2080,55 +2069,6 @@ components:
             "True" and one labeled "False". Required on branch node transitions;
             must be omitted for all other node types.
 
-    Approval:
-      type: object
-      required: [required, rejectApprovalAfterTime]
-      description: Human approval gate configuration for a node.
-      properties:
-        required:
-          type: boolean
-          description: Whether approval is required before the node can proceed.
-        notificationProvider:
-          type: string
-          enum: [email, slack]
-          description: |
-            Delivery channel for the approval notification.
-            - `email` — sends to the addresses in `recipients`.
-            - `slack` — sends to the channels in `recipients`.
-        recipients:
-          type: array
-          description: |
-            Notification recipients. Each entry is a plain string (email address or
-            Slack channel identifier) or a referenced node-output value (an upstream
-            node's output field resolved at runtime by the flow engine).
-          items:
-            type: string
-        subject:
-          type: string
-          description: |
-            Subject line for email notifications. Plain string or a referenced
-            node-output value. Ignored when `notificationProvider` is `slack`.
-        message:
-          type: string
-          description: |
-            Approval request message body. May contain inline text, upstream node
-            output references, or a mix. Resolved at runtime by the flow engine.
-        rejectApprovalAfterTime:
-          type: boolean
-          description: Whether the approval auto-rejects if not acted on within the time window.
-        rejectTimeValue:
-          type: integer
-          minimum: 1
-          description: |
-            Number of time units before auto-rejection.
-            Required when `rejectApprovalAfterTime` is `true`.
-        rejectTimeUnit:
-          type: string
-          enum: [Hours, Days, Weeks, Months]
-          description: |
-            Time unit for the auto-rejection window.
-            Required when `rejectApprovalAfterTime` is `true`.
-
     CreateNodeRequest:
       type: object
       required: [node]
@@ -2146,7 +2086,7 @@ components:
 
     NodeInput:
       type: object
-      required: [name, type, appKey, disabled]
+      required: [name, type, disabled]
       description: Node payload for create and update operations.
       properties:
         id:
@@ -2163,9 +2103,6 @@ components:
           maxLength: 2000
         type:
           $ref: "#/components/schemas/NodeType"
-        appKey:
-          type: string
-          description: Identifier of the integration or application.
         disabled:
           type: boolean
           default: false
@@ -2175,10 +2112,6 @@ components:
           description: |
             Node-specific configuration. See CloudFlow node type documentation for
             the required fields per `type`.
-        approval:
-          oneOf:
-            - $ref: "#/components/schemas/Approval"
-            - type: "null"
         transitions:
           type: array
           items:

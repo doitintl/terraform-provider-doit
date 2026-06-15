@@ -1874,6 +1874,13 @@
 						}
 					},
 					{
+						"name": "template_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "ID of a template (blueprint) to initialise the flow from. When supplied the\nnew flow inherits the template's node graph and structure. The template itself\nis not modified. Omit to create a blank flow.\n"
+						}
+					},
+					{
 						"name": "create_time",
 						"string": {
 							"computed_optional_required": "computed",
@@ -1933,81 +1940,6 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "Identifier of the specific operation this node performs (e.g. AWS service action)."
-										}
-									},
-									{
-										"name": "app_key",
-										"string": {
-											"computed_optional_required": "computed",
-											"description": "Identifier of the integration or application this node belongs to."
-										}
-									},
-									{
-										"name": "approval",
-										"single_nested": {
-											"computed_optional_required": "computed",
-											"attributes": [
-												{
-													"name": "message",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n"
-													}
-												},
-												{
-													"name": "notification_provider",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n"
-													}
-												},
-												{
-													"name": "recipients",
-													"list": {
-														"computed_optional_required": "computed",
-														"element_type": {
-															"string": {}
-														},
-														"description": "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n"
-													}
-												},
-												{
-													"name": "reject_approval_after_time",
-													"bool": {
-														"computed_optional_required": "computed",
-														"description": "Whether the approval auto-rejects if not acted on within the time window."
-													}
-												},
-												{
-													"name": "reject_time_unit",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
-													}
-												},
-												{
-													"name": "reject_time_value",
-													"int64": {
-														"computed_optional_required": "computed",
-														"description": "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
-													}
-												},
-												{
-													"name": "required",
-													"bool": {
-														"computed_optional_required": "computed",
-														"description": "Whether approval is required before the node can proceed."
-													}
-												},
-												{
-													"name": "subject",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n"
-													}
-												}
-											],
-											"description": "Optional human approval gate. `null` if no approval is required."
 										}
 									},
 									{
@@ -2493,117 +2425,6 @@
 							"computed_optional_required": "required",
 							"attributes": [
 								{
-									"name": "app_key",
-									"string": {
-										"computed_optional_required": "required",
-										"description": "Identifier of the integration or application."
-									}
-								},
-								{
-									"name": "approval",
-									"single_nested": {
-										"computed_optional_required": "computed_optional",
-										"attributes": [
-											{
-												"name": "message",
-												"string": {
-													"computed_optional_required": "computed_optional",
-													"description": "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n"
-												}
-											},
-											{
-												"name": "notification_provider",
-												"string": {
-													"computed_optional_required": "computed_optional",
-													"description": "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n",
-													"validators": [
-														{
-															"custom": {
-																"imports": [
-																	{
-																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-																	}
-																],
-																"schema_definition": "stringvalidator.OneOf(\n\"email\",\n\"slack\",\n)"
-															}
-														}
-													]
-												}
-											},
-											{
-												"name": "recipients",
-												"list": {
-													"computed_optional_required": "computed_optional",
-													"element_type": {
-														"string": {}
-													},
-													"description": "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n"
-												}
-											},
-											{
-												"name": "reject_approval_after_time",
-												"bool": {
-													"computed_optional_required": "required",
-													"description": "Whether the approval auto-rejects if not acted on within the time window."
-												}
-											},
-											{
-												"name": "reject_time_unit",
-												"string": {
-													"computed_optional_required": "computed_optional",
-													"description": "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
-													"validators": [
-														{
-															"custom": {
-																"imports": [
-																	{
-																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-																	}
-																],
-																"schema_definition": "stringvalidator.OneOf(\n\"Hours\",\n\"Days\",\n\"Weeks\",\n\"Months\",\n)"
-															}
-														}
-													]
-												}
-											},
-											{
-												"name": "reject_time_value",
-												"int64": {
-													"computed_optional_required": "computed_optional",
-													"description": "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
-													"validators": [
-														{
-															"custom": {
-																"imports": [
-																	{
-																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-																	}
-																],
-																"schema_definition": "int64validator.AtLeast(1)"
-															}
-														}
-													]
-												}
-											},
-											{
-												"name": "required",
-												"bool": {
-													"computed_optional_required": "required",
-													"description": "Whether approval is required before the node can proceed."
-												}
-											},
-											{
-												"name": "subject",
-												"string": {
-													"computed_optional_required": "computed_optional",
-													"description": "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n"
-												}
-											}
-										],
-										"description": "Human approval gate configuration for a node."
-									}
-								},
-								{
 									"name": "description",
 									"string": {
 										"computed_optional_required": "computed_optional",
@@ -2769,81 +2590,6 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "Identifier of the specific operation this node performs (e.g. AWS service action)."
-						}
-					},
-					{
-						"name": "app_key",
-						"string": {
-							"computed_optional_required": "computed",
-							"description": "Identifier of the integration or application this node belongs to."
-						}
-					},
-					{
-						"name": "approval",
-						"single_nested": {
-							"computed_optional_required": "computed",
-							"attributes": [
-								{
-									"name": "message",
-									"string": {
-										"computed_optional_required": "computed",
-										"description": "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n"
-									}
-								},
-								{
-									"name": "notification_provider",
-									"string": {
-										"computed_optional_required": "computed",
-										"description": "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n"
-									}
-								},
-								{
-									"name": "recipients",
-									"list": {
-										"computed_optional_required": "computed",
-										"element_type": {
-											"string": {}
-										},
-										"description": "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n"
-									}
-								},
-								{
-									"name": "reject_approval_after_time",
-									"bool": {
-										"computed_optional_required": "computed",
-										"description": "Whether the approval auto-rejects if not acted on within the time window."
-									}
-								},
-								{
-									"name": "reject_time_unit",
-									"string": {
-										"computed_optional_required": "computed",
-										"description": "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
-									}
-								},
-								{
-									"name": "reject_time_value",
-									"int64": {
-										"computed_optional_required": "computed",
-										"description": "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n"
-									}
-								},
-								{
-									"name": "required",
-									"bool": {
-										"computed_optional_required": "computed",
-										"description": "Whether approval is required before the node can proceed."
-									}
-								},
-								{
-									"name": "subject",
-									"string": {
-										"computed_optional_required": "computed",
-										"description": "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n"
-									}
-								}
-							],
-							"description": "Optional human approval gate. `null` if no approval is required."
 						}
 					},
 					{

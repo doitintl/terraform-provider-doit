@@ -93,64 +93,6 @@ func CloudflowFlowResourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Identifier of the specific operation this node performs (e.g. AWS service action).",
 							MarkdownDescription: "Identifier of the specific operation this node performs (e.g. AWS service action).",
 						},
-						"app_key": schema.StringAttribute{
-							Computed:            true,
-							Description:         "Identifier of the integration or application this node belongs to.",
-							MarkdownDescription: "Identifier of the integration or application this node belongs to.",
-						},
-						"approval": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"message": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n",
-									MarkdownDescription: "Approval request message body. May contain inline text, upstream node\noutput references, or a mix. Resolved at runtime by the flow engine.\n",
-								},
-								"notification_provider": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n",
-									MarkdownDescription: "Delivery channel for the approval notification.\n- `email` — sends to the addresses in `recipients`.\n- `slack` — sends to the channels in `recipients`.\n",
-								},
-								"recipients": schema.ListAttribute{
-									ElementType:         types.StringType,
-									Computed:            true,
-									Description:         "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n",
-									MarkdownDescription: "Notification recipients. Each entry is a plain string (email address or\nSlack channel identifier) or a referenced node-output value (an upstream\nnode's output field resolved at runtime by the flow engine).\n",
-								},
-								"reject_approval_after_time": schema.BoolAttribute{
-									Computed:            true,
-									Description:         "Whether the approval auto-rejects if not acted on within the time window.",
-									MarkdownDescription: "Whether the approval auto-rejects if not acted on within the time window.",
-								},
-								"reject_time_unit": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
-									MarkdownDescription: "Time unit for the auto-rejection window.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
-								},
-								"reject_time_value": schema.Int64Attribute{
-									Computed:            true,
-									Description:         "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
-									MarkdownDescription: "Number of time units before auto-rejection.\nRequired when `rejectApprovalAfterTime` is `true`.\n",
-								},
-								"required": schema.BoolAttribute{
-									Computed:            true,
-									Description:         "Whether approval is required before the node can proceed.",
-									MarkdownDescription: "Whether approval is required before the node can proceed.",
-								},
-								"subject": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n",
-									MarkdownDescription: "Subject line for email notifications. Plain string or a referenced\nnode-output value. Ignored when `notificationProvider` is `slack`.\n",
-								},
-							},
-							CustomType: ApprovalType{
-								ObjectType: types.ObjectType{
-									AttrTypes: ApprovalValue{}.AttributeTypes(ctx),
-								},
-							},
-							Computed:            true,
-							Description:         "Optional human approval gate. `null` if no approval is required.",
-							MarkdownDescription: "Optional human approval gate. `null` if no approval is required.",
-						},
 						"create_time": schema.StringAttribute{
 							Computed:            true,
 							Description:         "ISO 8601 (UTC) creation timestamp. `null` on dry-run create.",
@@ -242,6 +184,12 @@ func CloudflowFlowResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Lifecycle state. `null` on dry-run create responses.",
 				MarkdownDescription: "Lifecycle state. `null` on dry-run create responses.",
 			},
+			"template_id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "ID of a template (blueprint) to initialise the flow from. When supplied the\nnew flow inherits the template's node graph and structure. The template itself\nis not modified. Omit to create a blank flow.\n",
+				MarkdownDescription: "ID of a template (blueprint) to initialise the flow from. When supplied the\nnew flow inherits the template's node graph and structure. The template itself\nis not modified. Omit to create a blank flow.\n",
+			},
 			"trigger_type": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Node type of the trigger node. `null` if no trigger node has been set.\nOne of the `NodeType` trigger variants: `triggerNode`, `manualTrigger`,\n`webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.\n",
@@ -271,6 +219,7 @@ type CloudflowFlowModel struct {
 	Nodes               types.List   `tfsdk:"nodes"`
 	Published           types.Bool   `tfsdk:"published"`
 	Status              types.String `tfsdk:"status"`
+	TemplateId          types.String `tfsdk:"template_id"`
 	TriggerType         types.String `tfsdk:"trigger_type"`
 	UpdateTime          types.String `tfsdk:"update_time"`
 }
@@ -316,42 +265,6 @@ func (t NodesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`action_id expected to be basetypes.StringValue, was: %T`, actionIdAttribute))
-	}
-
-	appKeyAttribute, ok := attributes["app_key"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`app_key is missing from object`)
-
-		return nil, diags
-	}
-
-	appKeyVal, ok := appKeyAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`app_key expected to be basetypes.StringValue, was: %T`, appKeyAttribute))
-	}
-
-	approvalAttribute, ok := attributes["approval"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`approval is missing from object`)
-
-		return nil, diags
-	}
-
-	approvalVal, ok := approvalAttribute.(ApprovalValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`approval expected to be ApprovalValue, was: %T`, approvalAttribute))
 	}
 
 	createTimeAttribute, ok := attributes["create_time"]
@@ -540,8 +453,6 @@ func (t NodesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 
 	return NodesValue{
 		ActionId:    actionIdVal,
-		AppKey:      appKeyVal,
-		Approval:    approvalVal,
 		CreateTime:  createTimeVal,
 		Description: descriptionVal,
 		Disabled:    disabledVal,
@@ -637,42 +548,6 @@ func NewNodesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`action_id expected to be basetypes.StringValue, was: %T`, actionIdAttribute))
 	}
 
-	appKeyAttribute, ok := attributes["app_key"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`app_key is missing from object`)
-
-		return NewNodesValueUnknown(), diags
-	}
-
-	appKeyVal, ok := appKeyAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`app_key expected to be basetypes.StringValue, was: %T`, appKeyAttribute))
-	}
-
-	approvalAttribute, ok := attributes["approval"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`approval is missing from object`)
-
-		return NewNodesValueUnknown(), diags
-	}
-
-	approvalVal, ok := approvalAttribute.(ApprovalValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`approval expected to be ApprovalValue, was: %T`, approvalAttribute))
-	}
-
 	createTimeAttribute, ok := attributes["create_time"]
 
 	if !ok {
@@ -859,8 +734,6 @@ func NewNodesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 
 	return NodesValue{
 		ActionId:    actionIdVal,
-		AppKey:      appKeyVal,
-		Approval:    approvalVal,
 		CreateTime:  createTimeVal,
 		Description: descriptionVal,
 		Disabled:    disabledVal,
@@ -944,8 +817,6 @@ var _ basetypes.ObjectValuable = NodesValue{}
 
 type NodesValue struct {
 	ActionId    basetypes.StringValue `tfsdk:"action_id"`
-	AppKey      basetypes.StringValue `tfsdk:"app_key"`
-	Approval    ApprovalValue         `tfsdk:"approval"`
 	CreateTime  basetypes.StringValue `tfsdk:"create_time"`
 	Description basetypes.StringValue `tfsdk:"description"`
 	Disabled    basetypes.BoolValue   `tfsdk:"disabled"`
@@ -960,18 +831,12 @@ type NodesValue struct {
 }
 
 func (v NodesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 13)
+	attrTypes := make(map[string]tftypes.Type, 11)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["action_id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["app_key"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["approval"] = ApprovalType{
-		basetypes.ObjectType{
-			AttrTypes: ApprovalValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
 	attrTypes["create_time"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["disabled"] = basetypes.BoolType{}.TerraformType(ctx)
@@ -989,7 +854,7 @@ func (v NodesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 13)
+		vals := make(map[string]tftypes.Value, 11)
 
 		val, err = v.ActionId.ToTerraformValue(ctx)
 
@@ -998,22 +863,6 @@ func (v NodesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["action_id"] = val
-
-		val, err = v.AppKey.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["app_key"] = val
-
-		val, err = v.Approval.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["approval"] = val
 
 		val, err = v.CreateTime.ToTerraformValue(ctx)
 
@@ -1124,12 +973,6 @@ func (v NodesValue) String() string {
 func (v NodesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var approval attr.Value
-
-	{
-		approval = v.Approval
-	}
-
 	var transitions attr.Value
 
 	{
@@ -1137,13 +980,7 @@ func (v NodesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"action_id": basetypes.StringType{},
-		"app_key":   basetypes.StringType{},
-		"approval": ApprovalType{
-			basetypes.ObjectType{
-				AttrTypes: ApprovalValue{}.AttributeTypes(ctx),
-			},
-		},
+		"action_id":   basetypes.StringType{},
 		"create_time": basetypes.StringType{},
 		"description": basetypes.StringType{},
 		"disabled":    basetypes.BoolType{},
@@ -1170,8 +1007,6 @@ func (v NodesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		attributeTypes,
 		map[string]attr.Value{
 			"action_id":   v.ActionId,
-			"app_key":     v.AppKey,
-			"approval":    approval,
 			"create_time": v.CreateTime,
 			"description": v.Description,
 			"disabled":    v.Disabled,
@@ -1203,14 +1038,6 @@ func (v NodesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.ActionId.Equal(other.ActionId) {
-		return false
-	}
-
-	if !v.AppKey.Equal(other.AppKey) {
-		return false
-	}
-
-	if !v.Approval.Equal(other.Approval) {
 		return false
 	}
 
@@ -1267,13 +1094,7 @@ func (v NodesValue) Type(ctx context.Context) attr.Type {
 
 func (v NodesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"action_id": basetypes.StringType{},
-		"app_key":   basetypes.StringType{},
-		"approval": ApprovalType{
-			basetypes.ObjectType{
-				AttrTypes: ApprovalValue{}.AttributeTypes(ctx),
-			},
-		},
+		"action_id":   basetypes.StringType{},
 		"create_time": basetypes.StringType{},
 		"description": basetypes.StringType{},
 		"disabled":    basetypes.BoolType{},
@@ -1286,748 +1107,6 @@ func (v NodesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		},
 		"type":        basetypes.StringType{},
 		"update_time": basetypes.StringType{},
-	}
-}
-
-var _ basetypes.ObjectTypable = ApprovalType{}
-
-type ApprovalType struct {
-	basetypes.ObjectType
-}
-
-func (t ApprovalType) Equal(o attr.Type) bool {
-	other, ok := o.(ApprovalType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t ApprovalType) String() string {
-	return "ApprovalType"
-}
-
-func (t ApprovalType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributes := in.Attributes()
-
-	messageAttribute, ok := attributes["message"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`message is missing from object`)
-
-		return nil, diags
-	}
-
-	messageVal, ok := messageAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`message expected to be basetypes.StringValue, was: %T`, messageAttribute))
-	}
-
-	notificationProviderAttribute, ok := attributes["notification_provider"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`notification_provider is missing from object`)
-
-		return nil, diags
-	}
-
-	notificationProviderVal, ok := notificationProviderAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`notification_provider expected to be basetypes.StringValue, was: %T`, notificationProviderAttribute))
-	}
-
-	recipientsAttribute, ok := attributes["recipients"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`recipients is missing from object`)
-
-		return nil, diags
-	}
-
-	recipientsVal, ok := recipientsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`recipients expected to be basetypes.ListValue, was: %T`, recipientsAttribute))
-	}
-
-	rejectApprovalAfterTimeAttribute, ok := attributes["reject_approval_after_time"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`reject_approval_after_time is missing from object`)
-
-		return nil, diags
-	}
-
-	rejectApprovalAfterTimeVal, ok := rejectApprovalAfterTimeAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`reject_approval_after_time expected to be basetypes.BoolValue, was: %T`, rejectApprovalAfterTimeAttribute))
-	}
-
-	rejectTimeUnitAttribute, ok := attributes["reject_time_unit"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`reject_time_unit is missing from object`)
-
-		return nil, diags
-	}
-
-	rejectTimeUnitVal, ok := rejectTimeUnitAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`reject_time_unit expected to be basetypes.StringValue, was: %T`, rejectTimeUnitAttribute))
-	}
-
-	rejectTimeValueAttribute, ok := attributes["reject_time_value"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`reject_time_value is missing from object`)
-
-		return nil, diags
-	}
-
-	rejectTimeValueVal, ok := rejectTimeValueAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`reject_time_value expected to be basetypes.Int64Value, was: %T`, rejectTimeValueAttribute))
-	}
-
-	requiredAttribute, ok := attributes["required"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`required is missing from object`)
-
-		return nil, diags
-	}
-
-	requiredVal, ok := requiredAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`required expected to be basetypes.BoolValue, was: %T`, requiredAttribute))
-	}
-
-	subjectAttribute, ok := attributes["subject"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`subject is missing from object`)
-
-		return nil, diags
-	}
-
-	subjectVal, ok := subjectAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`subject expected to be basetypes.StringValue, was: %T`, subjectAttribute))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return ApprovalValue{
-		Message:                 messageVal,
-		NotificationProvider:    notificationProviderVal,
-		Recipients:              recipientsVal,
-		RejectApprovalAfterTime: rejectApprovalAfterTimeVal,
-		RejectTimeUnit:          rejectTimeUnitVal,
-		RejectTimeValue:         rejectTimeValueVal,
-		Required:                requiredVal,
-		Subject:                 subjectVal,
-		state:                   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewApprovalValueNull() ApprovalValue {
-	return ApprovalValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewApprovalValueUnknown() ApprovalValue {
-	return ApprovalValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewApprovalValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ApprovalValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing ApprovalValue Attribute Value",
-				"While creating a ApprovalValue value, a missing attribute value was detected. "+
-					"A ApprovalValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ApprovalValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid ApprovalValue Attribute Type",
-				"While creating a ApprovalValue value, an invalid attribute value was detected. "+
-					"A ApprovalValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ApprovalValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("ApprovalValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra ApprovalValue Attribute Value",
-				"While creating a ApprovalValue value, an extra attribute value was detected. "+
-					"A ApprovalValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra ApprovalValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewApprovalValueUnknown(), diags
-	}
-
-	messageAttribute, ok := attributes["message"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`message is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	messageVal, ok := messageAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`message expected to be basetypes.StringValue, was: %T`, messageAttribute))
-	}
-
-	notificationProviderAttribute, ok := attributes["notification_provider"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`notification_provider is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	notificationProviderVal, ok := notificationProviderAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`notification_provider expected to be basetypes.StringValue, was: %T`, notificationProviderAttribute))
-	}
-
-	recipientsAttribute, ok := attributes["recipients"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`recipients is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	recipientsVal, ok := recipientsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`recipients expected to be basetypes.ListValue, was: %T`, recipientsAttribute))
-	}
-
-	rejectApprovalAfterTimeAttribute, ok := attributes["reject_approval_after_time"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`reject_approval_after_time is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	rejectApprovalAfterTimeVal, ok := rejectApprovalAfterTimeAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`reject_approval_after_time expected to be basetypes.BoolValue, was: %T`, rejectApprovalAfterTimeAttribute))
-	}
-
-	rejectTimeUnitAttribute, ok := attributes["reject_time_unit"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`reject_time_unit is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	rejectTimeUnitVal, ok := rejectTimeUnitAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`reject_time_unit expected to be basetypes.StringValue, was: %T`, rejectTimeUnitAttribute))
-	}
-
-	rejectTimeValueAttribute, ok := attributes["reject_time_value"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`reject_time_value is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	rejectTimeValueVal, ok := rejectTimeValueAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`reject_time_value expected to be basetypes.Int64Value, was: %T`, rejectTimeValueAttribute))
-	}
-
-	requiredAttribute, ok := attributes["required"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`required is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	requiredVal, ok := requiredAttribute.(basetypes.BoolValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`required expected to be basetypes.BoolValue, was: %T`, requiredAttribute))
-	}
-
-	subjectAttribute, ok := attributes["subject"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`subject is missing from object`)
-
-		return NewApprovalValueUnknown(), diags
-	}
-
-	subjectVal, ok := subjectAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`subject expected to be basetypes.StringValue, was: %T`, subjectAttribute))
-	}
-
-	if diags.HasError() {
-		return NewApprovalValueUnknown(), diags
-	}
-
-	return ApprovalValue{
-		Message:                 messageVal,
-		NotificationProvider:    notificationProviderVal,
-		Recipients:              recipientsVal,
-		RejectApprovalAfterTime: rejectApprovalAfterTimeVal,
-		RejectTimeUnit:          rejectTimeUnitVal,
-		RejectTimeValue:         rejectTimeValueVal,
-		Required:                requiredVal,
-		Subject:                 subjectVal,
-		state:                   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewApprovalValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ApprovalValue {
-	object, diags := NewApprovalValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewApprovalValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t ApprovalType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewApprovalValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewApprovalValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewApprovalValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewApprovalValueMust(ApprovalValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t ApprovalType) ValueType(ctx context.Context) attr.Value {
-	return ApprovalValue{}
-}
-
-var _ basetypes.ObjectValuable = ApprovalValue{}
-
-type ApprovalValue struct {
-	Message                 basetypes.StringValue `tfsdk:"message"`
-	NotificationProvider    basetypes.StringValue `tfsdk:"notification_provider"`
-	Recipients              basetypes.ListValue   `tfsdk:"recipients"`
-	RejectApprovalAfterTime basetypes.BoolValue   `tfsdk:"reject_approval_after_time"`
-	RejectTimeUnit          basetypes.StringValue `tfsdk:"reject_time_unit"`
-	RejectTimeValue         basetypes.Int64Value  `tfsdk:"reject_time_value"`
-	Required                basetypes.BoolValue   `tfsdk:"required"`
-	Subject                 basetypes.StringValue `tfsdk:"subject"`
-	state                   attr.ValueState
-}
-
-func (v ApprovalValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 8)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["message"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["notification_provider"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["recipients"] = basetypes.ListType{
-		ElemType: types.StringType,
-	}.TerraformType(ctx)
-	attrTypes["reject_approval_after_time"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["reject_time_unit"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["reject_time_value"] = basetypes.Int64Type{}.TerraformType(ctx)
-	attrTypes["required"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["subject"] = basetypes.StringType{}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 8)
-
-		val, err = v.Message.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["message"] = val
-
-		val, err = v.NotificationProvider.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["notification_provider"] = val
-
-		val, err = v.Recipients.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["recipients"] = val
-
-		val, err = v.RejectApprovalAfterTime.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["reject_approval_after_time"] = val
-
-		val, err = v.RejectTimeUnit.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["reject_time_unit"] = val
-
-		val, err = v.RejectTimeValue.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["reject_time_value"] = val
-
-		val, err = v.Required.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["required"] = val
-
-		val, err = v.Subject.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["subject"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v ApprovalValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v ApprovalValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v ApprovalValue) String() string {
-	return "ApprovalValue"
-}
-
-func (v ApprovalValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var recipientsVal basetypes.ListValue
-	switch {
-	case v.Recipients.IsUnknown():
-		recipientsVal = types.ListUnknown(types.StringType)
-	case v.Recipients.IsNull():
-		recipientsVal = types.ListNull(types.StringType)
-	default:
-		var d diag.Diagnostics
-		recipientsVal, d = types.ListValue(types.StringType, v.Recipients.Elements())
-		diags.Append(d...)
-	}
-
-	if diags.HasError() {
-		return types.ObjectUnknown(map[string]attr.Type{
-			"message":               basetypes.StringType{},
-			"notification_provider": basetypes.StringType{},
-			"recipients": basetypes.ListType{
-				ElemType: types.StringType,
-			},
-			"reject_approval_after_time": basetypes.BoolType{},
-			"reject_time_unit":           basetypes.StringType{},
-			"reject_time_value":          basetypes.Int64Type{},
-			"required":                   basetypes.BoolType{},
-			"subject":                    basetypes.StringType{},
-		}), diags
-	}
-
-	attributeTypes := map[string]attr.Type{
-		"message":               basetypes.StringType{},
-		"notification_provider": basetypes.StringType{},
-		"recipients": basetypes.ListType{
-			ElemType: types.StringType,
-		},
-		"reject_approval_after_time": basetypes.BoolType{},
-		"reject_time_unit":           basetypes.StringType{},
-		"reject_time_value":          basetypes.Int64Type{},
-		"required":                   basetypes.BoolType{},
-		"subject":                    basetypes.StringType{},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"message":                    v.Message,
-			"notification_provider":      v.NotificationProvider,
-			"recipients":                 recipientsVal,
-			"reject_approval_after_time": v.RejectApprovalAfterTime,
-			"reject_time_unit":           v.RejectTimeUnit,
-			"reject_time_value":          v.RejectTimeValue,
-			"required":                   v.Required,
-			"subject":                    v.Subject,
-		})
-
-	return objVal, diags
-}
-
-func (v ApprovalValue) Equal(o attr.Value) bool {
-	other, ok := o.(ApprovalValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.Message.Equal(other.Message) {
-		return false
-	}
-
-	if !v.NotificationProvider.Equal(other.NotificationProvider) {
-		return false
-	}
-
-	if !v.Recipients.Equal(other.Recipients) {
-		return false
-	}
-
-	if !v.RejectApprovalAfterTime.Equal(other.RejectApprovalAfterTime) {
-		return false
-	}
-
-	if !v.RejectTimeUnit.Equal(other.RejectTimeUnit) {
-		return false
-	}
-
-	if !v.RejectTimeValue.Equal(other.RejectTimeValue) {
-		return false
-	}
-
-	if !v.Required.Equal(other.Required) {
-		return false
-	}
-
-	if !v.Subject.Equal(other.Subject) {
-		return false
-	}
-
-	return true
-}
-
-func (v ApprovalValue) Type(ctx context.Context) attr.Type {
-	return ApprovalType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v ApprovalValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"message":               basetypes.StringType{},
-		"notification_provider": basetypes.StringType{},
-		"recipients": basetypes.ListType{
-			ElemType: types.StringType,
-		},
-		"reject_approval_after_time": basetypes.BoolType{},
-		"reject_time_unit":           basetypes.StringType{},
-		"reject_time_value":          basetypes.Int64Type{},
-		"required":                   basetypes.BoolType{},
-		"subject":                    basetypes.StringType{},
 	}
 }
 

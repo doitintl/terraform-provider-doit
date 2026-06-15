@@ -5080,9 +5080,9 @@ paths:
     post:
       operationId: CreateFlow
       summary: Create a flow
-      description: 'Creates a new flow. Pass `?templateId=<id>` to initialise the flow from a
+      description: 'Creates a new flow. Supply `templateId` in the request body to initialise the
 
-        template (blueprint), inheriting its nodes and structure.
+        flow from a template (blueprint), inheriting its nodes and structure.
 
 
         **Dry-run**: Pass `?dryRun=true` to validate the request without persisting. The
@@ -5094,19 +5094,7 @@ paths:
         '
       tags:
       - Flows
-      parameters:
-      - name: templateId
-        in: query
-        required: false
-        description: 'ID of a template (blueprint) to initialise the flow from. When supplied the
-
-          new flow inherits the template''s node graph and structure. The template itself
-
-          is not modified.
-
-          '
-        schema:
-          type: string
+      parameters: []
       requestBody:
         required: true
         content:
@@ -11505,6 +11493,15 @@ components:
 
             '
           nullable: true
+        templateId:
+          type: string
+          description: 'ID of a template (blueprint) to initialise the flow from. When supplied the
+
+            new flow inherits the template''s node graph and structure. The template itself
+
+            is not modified. Omit to create a blank flow.
+
+            '
     UpdateFlowRequest:
       type: object
       description: 'Request body for `UpdateFlow` (full replacement). All writable fields are replaced
@@ -11535,7 +11532,6 @@ components:
       - id
       - name
       - type
-      - appKey
       - disabled
       - createTime
       - etag
@@ -11553,9 +11549,6 @@ components:
           description: Human-readable description.
         type:
           $ref: '#/components/schemas/NodeType'
-        appKey:
-          type: string
-          description: Identifier of the integration or application this node belongs to.
         actionId:
           type: string
           description: Identifier of the specific operation this node performs (e.g. AWS service action).
@@ -11570,10 +11563,6 @@ components:
             the CloudFlow node type documentation for the required fields per node type.
 
             '
-        approval:
-          description: Optional human approval gate. `null` if no approval is required.
-          $ref: '#/components/schemas/Approval'
-          nullable: true
         transitions:
           type: array
           items:
@@ -11611,76 +11600,6 @@ components:
             must be omitted for all other node types.
 
             '
-    Approval:
-      type: object
-      required:
-      - required
-      - rejectApprovalAfterTime
-      description: Human approval gate configuration for a node.
-      properties:
-        required:
-          type: boolean
-          description: Whether approval is required before the node can proceed.
-        notificationProvider:
-          type: string
-          enum:
-          - email
-          - slack
-          description: 'Delivery channel for the approval notification.
-
-            - `email` — sends to the addresses in `recipients`.
-
-            - `slack` — sends to the channels in `recipients`.
-
-            '
-        recipients:
-          type: array
-          description: 'Notification recipients. Each entry is a plain string (email address or
-
-            Slack channel identifier) or a referenced node-output value (an upstream
-
-            node''s output field resolved at runtime by the flow engine).
-
-            '
-          items:
-            type: string
-        subject:
-          type: string
-          description: 'Subject line for email notifications. Plain string or a referenced
-
-            node-output value. Ignored when `notificationProvider` is `slack`.
-
-            '
-        message:
-          type: string
-          description: 'Approval request message body. May contain inline text, upstream node
-
-            output references, or a mix. Resolved at runtime by the flow engine.
-
-            '
-        rejectApprovalAfterTime:
-          type: boolean
-          description: Whether the approval auto-rejects if not acted on within the time window.
-        rejectTimeValue:
-          type: integer
-          minimum: 1
-          description: 'Number of time units before auto-rejection.
-
-            Required when `rejectApprovalAfterTime` is `true`.
-
-            '
-        rejectTimeUnit:
-          type: string
-          enum:
-          - Hours
-          - Days
-          - Weeks
-          - Months
-          description: 'Time unit for the auto-rejection window.
-
-            Required when `rejectApprovalAfterTime` is `true`.
-
-            '
     CreateNodeRequest:
       type: object
       required:
@@ -11702,7 +11621,6 @@ components:
       required:
       - name
       - type
-      - appKey
       - disabled
       description: Node payload for create and update operations.
       properties:
@@ -11722,9 +11640,6 @@ components:
           maxLength: 2000
         type:
           $ref: '#/components/schemas/NodeType'
-        appKey:
-          type: string
-          description: Identifier of the integration or application.
         disabled:
           type: boolean
           default: false
@@ -11736,9 +11651,6 @@ components:
             the required fields per `type`.
 
             '
-        approval:
-          $ref: '#/components/schemas/Approval'
-          nullable: true
         transitions:
           type: array
           items:
