@@ -1491,36 +1491,134 @@
 			"schema": {
 				"attributes": [
 					{
-						"name": "cloud_provider",
-						"string": {
-							"computed_optional_required": "required",
-							"description": "Cloud provider that a connection is bound to.",
-							"validators": [
+						"name": "aws_config",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
 								{
-									"custom": {
-										"imports": [
+									"name": "context",
+									"list_nested": {
+										"computed_optional_required": "required",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "account_id",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "AWS account ID."
+													}
+												},
+												{
+													"name": "regions",
+													"list": {
+														"computed_optional_required": "computed_optional",
+														"element_type": {
+															"string": {}
+														},
+														"description": "AWS regions accessible via this account. Empty means all regions."
+													}
+												},
+												{
+													"name": "status",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Per-account permission status. Read-only — assigned by the server:\nmanagement account → `active`; all other accounts → `pending_permissions` on create.\n"
+													}
+												}
+											]
+										},
+										"description": "List of AWS accounts linked to this connection."
+									}
+								},
+								{
+									"name": "management_account",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "AWS management account ID (payer account). When set, that account receives\n`active` status on create; all other accounts receive `pending_permissions`.\n"
+									}
+								},
+								{
+									"name": "organization_root_id",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "AWS Organizations root ID (e.g. `r-xxxx`)."
+									}
+								},
+								{
+									"name": "permissions",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
 											{
-												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+												"name": "actions",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Custom IAM action statements."
+												}
+											},
+											{
+												"name": "aws_managed_policies",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "AWS-managed policy ARNs attached to the role."
+												}
 											}
 										],
-										"schema_definition": "stringvalidator.OneOf(\n\"AWS\",\n\"GCP\",\n)"
+										"description": "IAM permissions granted to the CloudFlow role."
+									}
+								},
+								{
+									"name": "role_name",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "IAM role name assumed by CloudFlow in each linked account."
+									}
+								},
+								{
+									"name": "scope_excluded_account_ids",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Account IDs explicitly excluded from scope."
+									}
+								},
+								{
+									"name": "scope_explicit_account_ids",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Account IDs explicitly included in scope."
+									}
+								},
+								{
+									"name": "scope_management_account_explicit_in_scope",
+									"bool": {
+										"computed_optional_required": "computed_optional",
+										"description": "Whether the management account is explicitly included in scope."
+									}
+								},
+								{
+									"name": "scope_targeted_organizational_unit_ids",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										},
+										"description": "OU IDs explicitly included in scope."
 									}
 								}
-							]
-						}
-					},
-					{
-						"name": "connection_configuration",
-						"string": {
-							"computed_optional_required": "required",
-							"custom_type": {
-								"import": {
-									"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-								},
-								"type": "jsontypes.NormalizedType{}",
-								"value_type": "jsontypes.Normalized"
-							},
-							"description": "Provider-specific configuration object. Required fields depend on `cloudProvider`.\nSee CloudFlow connection documentation for the expected shape per provider.\n. Value is JSON-encoded."
+							],
+							"description": "AWS configuration. Provide this (and omit `gcpConfig`) for an AWS connection."
 						}
 					},
 					{
@@ -1540,6 +1638,98 @@
 									}
 								}
 							]
+						}
+					},
+					{
+						"name": "gcp_config",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "custom_role",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "permissions",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "IAM permissions included in the custom role."
+												}
+											},
+											{
+												"name": "role_id",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "Custom role ID."
+												}
+											}
+										],
+										"description": "Custom IAM role granted to the service account."
+									}
+								},
+								{
+									"name": "folder_id",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "GCP folder ID. Required when `level` is `folder`.\n"
+									}
+								},
+								{
+									"name": "level",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Binding level of the service account.\n- `project` — access scoped to a single project.\n- `organization` — access scoped to a GCP organization; `organizationId` required.\n- `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.\n",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"project\",\n\"organization\",\n\"folder\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "organization_id",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "GCP organization ID. Required when `level` is `organization` or `folder`.\n"
+									}
+								},
+								{
+									"name": "predefined_roles",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Predefined GCP IAM roles granted to the service account."
+									}
+								},
+								{
+									"name": "project_id",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "GCP project ID that hosts the CloudFlow service account."
+									}
+								},
+								{
+									"name": "service_account_name",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Name of the GCP service account (without the `@project.iam.gserviceaccount.com` suffix)."
+									}
+								}
+							],
+							"description": "GCP configuration. Provide this (and omit `awsConfig`) for a GCP connection."
 						}
 					},
 					{
@@ -1566,6 +1756,13 @@
 									}
 								}
 							]
+						}
+					},
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Cloud provider that a connection is bound to."
 						}
 					},
 					{

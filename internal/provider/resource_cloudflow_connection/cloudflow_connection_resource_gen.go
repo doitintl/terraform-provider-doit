@@ -4,10 +4,15 @@ package resource_cloudflow_connection
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
@@ -15,22 +20,126 @@ import (
 func CloudflowConnectionResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"cloud_provider": schema.StringAttribute{
-				Required:            true,
-				Description:         "Cloud provider that a connection is bound to.\nPossible values: `AWS`, `GCP`",
-				MarkdownDescription: "Cloud provider that a connection is bound to.\nPossible values: `AWS`, `GCP`",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"AWS",
-						"GCP",
-					),
+			"aws_config": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"context": schema.ListNestedAttribute{
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"account_id": schema.StringAttribute{
+									Required:            true,
+									Description:         "AWS account ID.",
+									MarkdownDescription: "AWS account ID.",
+								},
+								"regions": schema.ListAttribute{
+									ElementType:         types.StringType,
+									Optional:            true,
+									Computed:            true,
+									Description:         "AWS regions accessible via this account. Empty means all regions.",
+									MarkdownDescription: "AWS regions accessible via this account. Empty means all regions.",
+								},
+								"status": schema.StringAttribute{
+									Optional:            true,
+									Computed:            true,
+									Description:         "Per-account permission status. Read-only — assigned by the server:\nmanagement account → `active`; all other accounts → `pending_permissions` on create.\n",
+									MarkdownDescription: "Per-account permission status. Read-only — assigned by the server:\nmanagement account → `active`; all other accounts → `pending_permissions` on create.\n",
+								},
+							},
+							CustomType: ContextType{
+								ObjectType: types.ObjectType{
+									AttrTypes: ContextValue{}.AttributeTypes(ctx),
+								},
+							},
+						},
+						Required:            true,
+						Description:         "List of AWS accounts linked to this connection.",
+						MarkdownDescription: "List of AWS accounts linked to this connection.",
+					},
+					"management_account": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "AWS management account ID (payer account). When set, that account receives\n`active` status on create; all other accounts receive `pending_permissions`.\n",
+						MarkdownDescription: "AWS management account ID (payer account). When set, that account receives\n`active` status on create; all other accounts receive `pending_permissions`.\n",
+					},
+					"organization_root_id": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "AWS Organizations root ID (e.g. `r-xxxx`).",
+						MarkdownDescription: "AWS Organizations root ID (e.g. `r-xxxx`).",
+					},
+					"permissions": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"actions": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Optional:            true,
+								Computed:            true,
+								Description:         "Custom IAM action statements.",
+								MarkdownDescription: "Custom IAM action statements.",
+							},
+							"aws_managed_policies": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Optional:            true,
+								Computed:            true,
+								Description:         "AWS-managed policy ARNs attached to the role.",
+								MarkdownDescription: "AWS-managed policy ARNs attached to the role.",
+							},
+						},
+						CustomType: PermissionsType{
+							ObjectType: types.ObjectType{
+								AttrTypes: PermissionsValue{}.AttributeTypes(ctx),
+							},
+						},
+						Optional:            true,
+						Computed:            true,
+						Description:         "IAM permissions granted to the CloudFlow role.",
+						MarkdownDescription: "IAM permissions granted to the CloudFlow role.",
+					},
+					"role_name": schema.StringAttribute{
+						Required:            true,
+						Description:         "IAM role name assumed by CloudFlow in each linked account.",
+						MarkdownDescription: "IAM role name assumed by CloudFlow in each linked account.",
+					},
+					"scope_excluded_account_ids": schema.ListAttribute{
+						ElementType:         types.StringType,
+						Optional:            true,
+						Computed:            true,
+						Description:         "Account IDs explicitly excluded from scope.",
+						MarkdownDescription: "Account IDs explicitly excluded from scope.",
+					},
+					"scope_explicit_account_ids": schema.ListAttribute{
+						ElementType:         types.StringType,
+						Optional:            true,
+						Computed:            true,
+						Description:         "Account IDs explicitly included in scope.",
+						MarkdownDescription: "Account IDs explicitly included in scope.",
+					},
+					"scope_management_account_explicit_in_scope": schema.BoolAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "Whether the management account is explicitly included in scope.",
+						MarkdownDescription: "Whether the management account is explicitly included in scope.",
+					},
+					"scope_targeted_organizational_unit_ids": schema.ListAttribute{
+						ElementType:         types.StringType,
+						Optional:            true,
+						Computed:            true,
+						Description:         "OU IDs explicitly included in scope.",
+						MarkdownDescription: "OU IDs explicitly included in scope.",
+					},
 				},
+				CustomType: AwsConfigType{
+					ObjectType: types.ObjectType{
+						AttrTypes: AwsConfigValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "AWS configuration. Provide this (and omit `gcpConfig`) for an AWS connection.",
+				MarkdownDescription: "AWS configuration. Provide this (and omit `gcpConfig`) for an AWS connection.",
 			},
-			"connection_configuration": schema.StringAttribute{
-				CustomType:          jsontypes.NormalizedType{},
-				Required:            true,
-				Description:         "Provider-specific configuration object. Required fields depend on `cloudProvider`.\nSee CloudFlow connection documentation for the expected shape per provider.\n. Value is JSON-encoded.",
-				MarkdownDescription: "Provider-specific configuration object. Required fields depend on `cloudProvider`.\nSee CloudFlow connection documentation for the expected shape per provider.\n. Value is JSON-encoded.",
+			"cloud_provider": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Cloud provider that a connection is bound to.",
+				MarkdownDescription: "Cloud provider that a connection is bound to.",
 			},
 			"connection_id": schema.StringAttribute{
 				Optional:            true,
@@ -61,6 +170,86 @@ func CloudflowConnectionResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Strong ETag. `null` on dry-run create.",
 				MarkdownDescription: "Strong ETag. `null` on dry-run create.",
+			},
+			"gcp_config": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"custom_role": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"permissions": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Optional:            true,
+								Computed:            true,
+								Description:         "IAM permissions included in the custom role.",
+								MarkdownDescription: "IAM permissions included in the custom role.",
+							},
+							"role_id": schema.StringAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Custom role ID.",
+								MarkdownDescription: "Custom role ID.",
+							},
+						},
+						CustomType: CustomRoleType{
+							ObjectType: types.ObjectType{
+								AttrTypes: CustomRoleValue{}.AttributeTypes(ctx),
+							},
+						},
+						Optional:            true,
+						Computed:            true,
+						Description:         "Custom IAM role granted to the service account.",
+						MarkdownDescription: "Custom IAM role granted to the service account.",
+					},
+					"folder_id": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "GCP folder ID. Required when `level` is `folder`.\n",
+						MarkdownDescription: "GCP folder ID. Required when `level` is `folder`.\n",
+					},
+					"level": schema.StringAttribute{
+						Required:            true,
+						Description:         "Binding level of the service account.\n- `project` — access scoped to a single project.\n- `organization` — access scoped to a GCP organization; `organizationId` required.\n- `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.\n\nPossible values: `project`, `organization`, `folder`",
+						MarkdownDescription: "Binding level of the service account.\n- `project` — access scoped to a single project.\n- `organization` — access scoped to a GCP organization; `organizationId` required.\n- `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.\n\nPossible values: `project`, `organization`, `folder`",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"project",
+								"organization",
+								"folder",
+							),
+						},
+					},
+					"organization_id": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "GCP organization ID. Required when `level` is `organization` or `folder`.\n",
+						MarkdownDescription: "GCP organization ID. Required when `level` is `organization` or `folder`.\n",
+					},
+					"predefined_roles": schema.ListAttribute{
+						ElementType:         types.StringType,
+						Optional:            true,
+						Computed:            true,
+						Description:         "Predefined GCP IAM roles granted to the service account.",
+						MarkdownDescription: "Predefined GCP IAM roles granted to the service account.",
+					},
+					"project_id": schema.StringAttribute{
+						Required:            true,
+						Description:         "GCP project ID that hosts the CloudFlow service account.",
+						MarkdownDescription: "GCP project ID that hosts the CloudFlow service account.",
+					},
+					"service_account_name": schema.StringAttribute{
+						Required:            true,
+						Description:         "Name of the GCP service account (without the `@project.iam.gserviceaccount.com` suffix).",
+						MarkdownDescription: "Name of the GCP service account (without the `@project.iam.gserviceaccount.com` suffix).",
+					},
+				},
+				CustomType: GcpConfigType{
+					ObjectType: types.ObjectType{
+						AttrTypes: GcpConfigValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "GCP configuration. Provide this (and omit `awsConfig`) for a GCP connection.",
+				MarkdownDescription: "GCP configuration. Provide this (and omit `awsConfig`) for a GCP connection.",
 			},
 			"id": schema.StringAttribute{
 				Optional:            true,
@@ -101,17 +290,2957 @@ func CloudflowConnectionResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type CloudflowConnectionModel struct {
-	CloudProvider           types.String         `tfsdk:"cloud_provider"`
-	ConnectionConfiguration jsontypes.Normalized `tfsdk:"connection_configuration"`
-	ConnectionId            types.String         `tfsdk:"connection_id"`
-	CreateTime              types.String         `tfsdk:"create_time"`
-	Description             types.String         `tfsdk:"description"`
-	Enabled                 types.Bool           `tfsdk:"enabled"`
-	Etag                    types.String         `tfsdk:"etag"`
-	Id                      types.String         `tfsdk:"id"`
-	LastSyncedTime          types.String         `tfsdk:"last_synced_time"`
-	Name                    types.String         `tfsdk:"name"`
-	Status                  types.String         `tfsdk:"status"`
-	StatusMessage           types.String         `tfsdk:"status_message"`
-	UpdateTime              types.String         `tfsdk:"update_time"`
+	AwsConfig      AwsConfigValue `tfsdk:"aws_config"`
+	CloudProvider  types.String   `tfsdk:"cloud_provider"`
+	ConnectionId   types.String   `tfsdk:"connection_id"`
+	CreateTime     types.String   `tfsdk:"create_time"`
+	Description    types.String   `tfsdk:"description"`
+	Enabled        types.Bool     `tfsdk:"enabled"`
+	Etag           types.String   `tfsdk:"etag"`
+	GcpConfig      GcpConfigValue `tfsdk:"gcp_config"`
+	Id             types.String   `tfsdk:"id"`
+	LastSyncedTime types.String   `tfsdk:"last_synced_time"`
+	Name           types.String   `tfsdk:"name"`
+	Status         types.String   `tfsdk:"status"`
+	StatusMessage  types.String   `tfsdk:"status_message"`
+	UpdateTime     types.String   `tfsdk:"update_time"`
+}
+
+var _ basetypes.ObjectTypable = AwsConfigType{}
+
+type AwsConfigType struct {
+	basetypes.ObjectType
+}
+
+func (t AwsConfigType) Equal(o attr.Type) bool {
+	other, ok := o.(AwsConfigType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t AwsConfigType) String() string {
+	return "AwsConfigType"
+}
+
+func (t AwsConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	contextAttribute, ok := attributes["context"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`context is missing from object`)
+
+		return nil, diags
+	}
+
+	contextVal, ok := contextAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`context expected to be basetypes.ListValue, was: %T`, contextAttribute))
+	}
+
+	managementAccountAttribute, ok := attributes["management_account"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`management_account is missing from object`)
+
+		return nil, diags
+	}
+
+	managementAccountVal, ok := managementAccountAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`management_account expected to be basetypes.StringValue, was: %T`, managementAccountAttribute))
+	}
+
+	organizationRootIdAttribute, ok := attributes["organization_root_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`organization_root_id is missing from object`)
+
+		return nil, diags
+	}
+
+	organizationRootIdVal, ok := organizationRootIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`organization_root_id expected to be basetypes.StringValue, was: %T`, organizationRootIdAttribute))
+	}
+
+	permissionsAttribute, ok := attributes["permissions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`permissions is missing from object`)
+
+		return nil, diags
+	}
+
+	permissionsVal, ok := permissionsAttribute.(PermissionsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`permissions expected to be PermissionsValue, was: %T`, permissionsAttribute))
+	}
+
+	roleNameAttribute, ok := attributes["role_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_name is missing from object`)
+
+		return nil, diags
+	}
+
+	roleNameVal, ok := roleNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_name expected to be basetypes.StringValue, was: %T`, roleNameAttribute))
+	}
+
+	scopeExcludedAccountIdsAttribute, ok := attributes["scope_excluded_account_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_excluded_account_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	scopeExcludedAccountIdsVal, ok := scopeExcludedAccountIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_excluded_account_ids expected to be basetypes.ListValue, was: %T`, scopeExcludedAccountIdsAttribute))
+	}
+
+	scopeExplicitAccountIdsAttribute, ok := attributes["scope_explicit_account_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_explicit_account_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	scopeExplicitAccountIdsVal, ok := scopeExplicitAccountIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_explicit_account_ids expected to be basetypes.ListValue, was: %T`, scopeExplicitAccountIdsAttribute))
+	}
+
+	scopeManagementAccountExplicitInScopeAttribute, ok := attributes["scope_management_account_explicit_in_scope"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_management_account_explicit_in_scope is missing from object`)
+
+		return nil, diags
+	}
+
+	scopeManagementAccountExplicitInScopeVal, ok := scopeManagementAccountExplicitInScopeAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_management_account_explicit_in_scope expected to be basetypes.BoolValue, was: %T`, scopeManagementAccountExplicitInScopeAttribute))
+	}
+
+	scopeTargetedOrganizationalUnitIdsAttribute, ok := attributes["scope_targeted_organizational_unit_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_targeted_organizational_unit_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	scopeTargetedOrganizationalUnitIdsVal, ok := scopeTargetedOrganizationalUnitIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_targeted_organizational_unit_ids expected to be basetypes.ListValue, was: %T`, scopeTargetedOrganizationalUnitIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return AwsConfigValue{
+		Context:                               contextVal,
+		ManagementAccount:                     managementAccountVal,
+		OrganizationRootId:                    organizationRootIdVal,
+		Permissions:                           permissionsVal,
+		RoleName:                              roleNameVal,
+		ScopeExcludedAccountIds:               scopeExcludedAccountIdsVal,
+		ScopeExplicitAccountIds:               scopeExplicitAccountIdsVal,
+		ScopeManagementAccountExplicitInScope: scopeManagementAccountExplicitInScopeVal,
+		ScopeTargetedOrganizationalUnitIds:    scopeTargetedOrganizationalUnitIdsVal,
+		state:                                 attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAwsConfigValueNull() AwsConfigValue {
+	return AwsConfigValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewAwsConfigValueUnknown() AwsConfigValue {
+	return AwsConfigValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewAwsConfigValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (AwsConfigValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing AwsConfigValue Attribute Value",
+				"While creating a AwsConfigValue value, a missing attribute value was detected. "+
+					"A AwsConfigValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AwsConfigValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid AwsConfigValue Attribute Type",
+				"While creating a AwsConfigValue value, an invalid attribute value was detected. "+
+					"A AwsConfigValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AwsConfigValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("AwsConfigValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra AwsConfigValue Attribute Value",
+				"While creating a AwsConfigValue value, an extra attribute value was detected. "+
+					"A AwsConfigValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra AwsConfigValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	contextAttribute, ok := attributes["context"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`context is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	contextVal, ok := contextAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`context expected to be basetypes.ListValue, was: %T`, contextAttribute))
+	}
+
+	managementAccountAttribute, ok := attributes["management_account"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`management_account is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	managementAccountVal, ok := managementAccountAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`management_account expected to be basetypes.StringValue, was: %T`, managementAccountAttribute))
+	}
+
+	organizationRootIdAttribute, ok := attributes["organization_root_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`organization_root_id is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	organizationRootIdVal, ok := organizationRootIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`organization_root_id expected to be basetypes.StringValue, was: %T`, organizationRootIdAttribute))
+	}
+
+	permissionsAttribute, ok := attributes["permissions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`permissions is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	permissionsVal, ok := permissionsAttribute.(PermissionsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`permissions expected to be PermissionsValue, was: %T`, permissionsAttribute))
+	}
+
+	roleNameAttribute, ok := attributes["role_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_name is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	roleNameVal, ok := roleNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_name expected to be basetypes.StringValue, was: %T`, roleNameAttribute))
+	}
+
+	scopeExcludedAccountIdsAttribute, ok := attributes["scope_excluded_account_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_excluded_account_ids is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	scopeExcludedAccountIdsVal, ok := scopeExcludedAccountIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_excluded_account_ids expected to be basetypes.ListValue, was: %T`, scopeExcludedAccountIdsAttribute))
+	}
+
+	scopeExplicitAccountIdsAttribute, ok := attributes["scope_explicit_account_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_explicit_account_ids is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	scopeExplicitAccountIdsVal, ok := scopeExplicitAccountIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_explicit_account_ids expected to be basetypes.ListValue, was: %T`, scopeExplicitAccountIdsAttribute))
+	}
+
+	scopeManagementAccountExplicitInScopeAttribute, ok := attributes["scope_management_account_explicit_in_scope"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_management_account_explicit_in_scope is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	scopeManagementAccountExplicitInScopeVal, ok := scopeManagementAccountExplicitInScopeAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_management_account_explicit_in_scope expected to be basetypes.BoolValue, was: %T`, scopeManagementAccountExplicitInScopeAttribute))
+	}
+
+	scopeTargetedOrganizationalUnitIdsAttribute, ok := attributes["scope_targeted_organizational_unit_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scope_targeted_organizational_unit_ids is missing from object`)
+
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	scopeTargetedOrganizationalUnitIdsVal, ok := scopeTargetedOrganizationalUnitIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scope_targeted_organizational_unit_ids expected to be basetypes.ListValue, was: %T`, scopeTargetedOrganizationalUnitIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return NewAwsConfigValueUnknown(), diags
+	}
+
+	return AwsConfigValue{
+		Context:                               contextVal,
+		ManagementAccount:                     managementAccountVal,
+		OrganizationRootId:                    organizationRootIdVal,
+		Permissions:                           permissionsVal,
+		RoleName:                              roleNameVal,
+		ScopeExcludedAccountIds:               scopeExcludedAccountIdsVal,
+		ScopeExplicitAccountIds:               scopeExplicitAccountIdsVal,
+		ScopeManagementAccountExplicitInScope: scopeManagementAccountExplicitInScopeVal,
+		ScopeTargetedOrganizationalUnitIds:    scopeTargetedOrganizationalUnitIdsVal,
+		state:                                 attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAwsConfigValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) AwsConfigValue {
+	object, diags := NewAwsConfigValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewAwsConfigValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t AwsConfigType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewAwsConfigValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewAwsConfigValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewAwsConfigValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewAwsConfigValueMust(AwsConfigValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t AwsConfigType) ValueType(ctx context.Context) attr.Value {
+	return AwsConfigValue{}
+}
+
+var _ basetypes.ObjectValuable = AwsConfigValue{}
+
+type AwsConfigValue struct {
+	Context                               basetypes.ListValue   `tfsdk:"context"`
+	ManagementAccount                     basetypes.StringValue `tfsdk:"management_account"`
+	OrganizationRootId                    basetypes.StringValue `tfsdk:"organization_root_id"`
+	Permissions                           PermissionsValue      `tfsdk:"permissions"`
+	RoleName                              basetypes.StringValue `tfsdk:"role_name"`
+	ScopeExcludedAccountIds               basetypes.ListValue   `tfsdk:"scope_excluded_account_ids"`
+	ScopeExplicitAccountIds               basetypes.ListValue   `tfsdk:"scope_explicit_account_ids"`
+	ScopeManagementAccountExplicitInScope basetypes.BoolValue   `tfsdk:"scope_management_account_explicit_in_scope"`
+	ScopeTargetedOrganizationalUnitIds    basetypes.ListValue   `tfsdk:"scope_targeted_organizational_unit_ids"`
+	state                                 attr.ValueState
+}
+
+func (v AwsConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 9)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["context"] = basetypes.ListType{
+		ElemType: ContextValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["management_account"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["organization_root_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["permissions"] = PermissionsType{
+		basetypes.ObjectType{
+			AttrTypes: PermissionsValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["role_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["scope_excluded_account_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["scope_explicit_account_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["scope_management_account_explicit_in_scope"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["scope_targeted_organizational_unit_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 9)
+
+		val, err = v.Context.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["context"] = val
+
+		val, err = v.ManagementAccount.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["management_account"] = val
+
+		val, err = v.OrganizationRootId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["organization_root_id"] = val
+
+		val, err = v.Permissions.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["permissions"] = val
+
+		val, err = v.RoleName.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["role_name"] = val
+
+		val, err = v.ScopeExcludedAccountIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scope_excluded_account_ids"] = val
+
+		val, err = v.ScopeExplicitAccountIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scope_explicit_account_ids"] = val
+
+		val, err = v.ScopeManagementAccountExplicitInScope.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scope_management_account_explicit_in_scope"] = val
+
+		val, err = v.ScopeTargetedOrganizationalUnitIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scope_targeted_organizational_unit_ids"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v AwsConfigValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v AwsConfigValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v AwsConfigValue) String() string {
+	return "AwsConfigValue"
+}
+
+func (v AwsConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var context attr.Value
+
+	{
+		context = v.Context
+	}
+
+	var permissions attr.Value
+
+	{
+		permissions = v.Permissions
+	}
+
+	var scopeExcludedAccountIdsVal basetypes.ListValue
+	switch {
+	case v.ScopeExcludedAccountIds.IsUnknown():
+		scopeExcludedAccountIdsVal = types.ListUnknown(types.StringType)
+	case v.ScopeExcludedAccountIds.IsNull():
+		scopeExcludedAccountIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		scopeExcludedAccountIdsVal, d = types.ListValue(types.StringType, v.ScopeExcludedAccountIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"context": basetypes.ListType{
+				ElemType: ContextValue{}.Type(ctx),
+			},
+			"management_account":   basetypes.StringType{},
+			"organization_root_id": basetypes.StringType{},
+			"permissions": PermissionsType{
+				basetypes.ObjectType{
+					AttrTypes: PermissionsValue{}.AttributeTypes(ctx),
+				},
+			},
+			"role_name": basetypes.StringType{},
+			"scope_excluded_account_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"scope_explicit_account_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"scope_management_account_explicit_in_scope": basetypes.BoolType{},
+			"scope_targeted_organizational_unit_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	var scopeExplicitAccountIdsVal basetypes.ListValue
+	switch {
+	case v.ScopeExplicitAccountIds.IsUnknown():
+		scopeExplicitAccountIdsVal = types.ListUnknown(types.StringType)
+	case v.ScopeExplicitAccountIds.IsNull():
+		scopeExplicitAccountIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		scopeExplicitAccountIdsVal, d = types.ListValue(types.StringType, v.ScopeExplicitAccountIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"context": basetypes.ListType{
+				ElemType: ContextValue{}.Type(ctx),
+			},
+			"management_account":   basetypes.StringType{},
+			"organization_root_id": basetypes.StringType{},
+			"permissions": PermissionsType{
+				basetypes.ObjectType{
+					AttrTypes: PermissionsValue{}.AttributeTypes(ctx),
+				},
+			},
+			"role_name": basetypes.StringType{},
+			"scope_excluded_account_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"scope_explicit_account_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"scope_management_account_explicit_in_scope": basetypes.BoolType{},
+			"scope_targeted_organizational_unit_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	var scopeTargetedOrganizationalUnitIdsVal basetypes.ListValue
+	switch {
+	case v.ScopeTargetedOrganizationalUnitIds.IsUnknown():
+		scopeTargetedOrganizationalUnitIdsVal = types.ListUnknown(types.StringType)
+	case v.ScopeTargetedOrganizationalUnitIds.IsNull():
+		scopeTargetedOrganizationalUnitIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		scopeTargetedOrganizationalUnitIdsVal, d = types.ListValue(types.StringType, v.ScopeTargetedOrganizationalUnitIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"context": basetypes.ListType{
+				ElemType: ContextValue{}.Type(ctx),
+			},
+			"management_account":   basetypes.StringType{},
+			"organization_root_id": basetypes.StringType{},
+			"permissions": PermissionsType{
+				basetypes.ObjectType{
+					AttrTypes: PermissionsValue{}.AttributeTypes(ctx),
+				},
+			},
+			"role_name": basetypes.StringType{},
+			"scope_excluded_account_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"scope_explicit_account_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"scope_management_account_explicit_in_scope": basetypes.BoolType{},
+			"scope_targeted_organizational_unit_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"context": basetypes.ListType{
+			ElemType: ContextValue{}.Type(ctx),
+		},
+		"management_account":   basetypes.StringType{},
+		"organization_root_id": basetypes.StringType{},
+		"permissions": PermissionsType{
+			basetypes.ObjectType{
+				AttrTypes: PermissionsValue{}.AttributeTypes(ctx),
+			},
+		},
+		"role_name": basetypes.StringType{},
+		"scope_excluded_account_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"scope_explicit_account_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"scope_management_account_explicit_in_scope": basetypes.BoolType{},
+		"scope_targeted_organizational_unit_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"context":                    context,
+			"management_account":         v.ManagementAccount,
+			"organization_root_id":       v.OrganizationRootId,
+			"permissions":                permissions,
+			"role_name":                  v.RoleName,
+			"scope_excluded_account_ids": scopeExcludedAccountIdsVal,
+			"scope_explicit_account_ids": scopeExplicitAccountIdsVal,
+			"scope_management_account_explicit_in_scope": v.ScopeManagementAccountExplicitInScope,
+			"scope_targeted_organizational_unit_ids":     scopeTargetedOrganizationalUnitIdsVal,
+		})
+
+	return objVal, diags
+}
+
+func (v AwsConfigValue) Equal(o attr.Value) bool {
+	other, ok := o.(AwsConfigValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Context.Equal(other.Context) {
+		return false
+	}
+
+	if !v.ManagementAccount.Equal(other.ManagementAccount) {
+		return false
+	}
+
+	if !v.OrganizationRootId.Equal(other.OrganizationRootId) {
+		return false
+	}
+
+	if !v.Permissions.Equal(other.Permissions) {
+		return false
+	}
+
+	if !v.RoleName.Equal(other.RoleName) {
+		return false
+	}
+
+	if !v.ScopeExcludedAccountIds.Equal(other.ScopeExcludedAccountIds) {
+		return false
+	}
+
+	if !v.ScopeExplicitAccountIds.Equal(other.ScopeExplicitAccountIds) {
+		return false
+	}
+
+	if !v.ScopeManagementAccountExplicitInScope.Equal(other.ScopeManagementAccountExplicitInScope) {
+		return false
+	}
+
+	if !v.ScopeTargetedOrganizationalUnitIds.Equal(other.ScopeTargetedOrganizationalUnitIds) {
+		return false
+	}
+
+	return true
+}
+
+func (v AwsConfigValue) Type(ctx context.Context) attr.Type {
+	return AwsConfigType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v AwsConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"context": basetypes.ListType{
+			ElemType: ContextValue{}.Type(ctx),
+		},
+		"management_account":   basetypes.StringType{},
+		"organization_root_id": basetypes.StringType{},
+		"permissions": PermissionsType{
+			basetypes.ObjectType{
+				AttrTypes: PermissionsValue{}.AttributeTypes(ctx),
+			},
+		},
+		"role_name": basetypes.StringType{},
+		"scope_excluded_account_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"scope_explicit_account_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"scope_management_account_explicit_in_scope": basetypes.BoolType{},
+		"scope_targeted_organizational_unit_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = ContextType{}
+
+type ContextType struct {
+	basetypes.ObjectType
+}
+
+func (t ContextType) Equal(o attr.Type) bool {
+	other, ok := o.(ContextType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ContextType) String() string {
+	return "ContextType"
+}
+
+func (t ContextType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	accountIdAttribute, ok := attributes["account_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`account_id is missing from object`)
+
+		return nil, diags
+	}
+
+	accountIdVal, ok := accountIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`account_id expected to be basetypes.StringValue, was: %T`, accountIdAttribute))
+	}
+
+	regionsAttribute, ok := attributes["regions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`regions is missing from object`)
+
+		return nil, diags
+	}
+
+	regionsVal, ok := regionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`regions expected to be basetypes.ListValue, was: %T`, regionsAttribute))
+	}
+
+	statusAttribute, ok := attributes["status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`status is missing from object`)
+
+		return nil, diags
+	}
+
+	statusVal, ok := statusAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`status expected to be basetypes.StringValue, was: %T`, statusAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ContextValue{
+		AccountId: accountIdVal,
+		Regions:   regionsVal,
+		Status:    statusVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewContextValueNull() ContextValue {
+	return ContextValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewContextValueUnknown() ContextValue {
+	return ContextValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewContextValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ContextValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ContextValue Attribute Value",
+				"While creating a ContextValue value, a missing attribute value was detected. "+
+					"A ContextValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ContextValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ContextValue Attribute Type",
+				"While creating a ContextValue value, an invalid attribute value was detected. "+
+					"A ContextValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ContextValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ContextValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ContextValue Attribute Value",
+				"While creating a ContextValue value, an extra attribute value was detected. "+
+					"A ContextValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ContextValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewContextValueUnknown(), diags
+	}
+
+	accountIdAttribute, ok := attributes["account_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`account_id is missing from object`)
+
+		return NewContextValueUnknown(), diags
+	}
+
+	accountIdVal, ok := accountIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`account_id expected to be basetypes.StringValue, was: %T`, accountIdAttribute))
+	}
+
+	regionsAttribute, ok := attributes["regions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`regions is missing from object`)
+
+		return NewContextValueUnknown(), diags
+	}
+
+	regionsVal, ok := regionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`regions expected to be basetypes.ListValue, was: %T`, regionsAttribute))
+	}
+
+	statusAttribute, ok := attributes["status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`status is missing from object`)
+
+		return NewContextValueUnknown(), diags
+	}
+
+	statusVal, ok := statusAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`status expected to be basetypes.StringValue, was: %T`, statusAttribute))
+	}
+
+	if diags.HasError() {
+		return NewContextValueUnknown(), diags
+	}
+
+	return ContextValue{
+		AccountId: accountIdVal,
+		Regions:   regionsVal,
+		Status:    statusVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewContextValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ContextValue {
+	object, diags := NewContextValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewContextValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ContextType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewContextValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewContextValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewContextValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewContextValueMust(ContextValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ContextType) ValueType(ctx context.Context) attr.Value {
+	return ContextValue{}
+}
+
+var _ basetypes.ObjectValuable = ContextValue{}
+
+type ContextValue struct {
+	AccountId basetypes.StringValue `tfsdk:"account_id"`
+	Regions   basetypes.ListValue   `tfsdk:"regions"`
+	Status    basetypes.StringValue `tfsdk:"status"`
+	state     attr.ValueState
+}
+
+func (v ContextValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["account_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["regions"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["status"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.AccountId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["account_id"] = val
+
+		val, err = v.Regions.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["regions"] = val
+
+		val, err = v.Status.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["status"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ContextValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ContextValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ContextValue) String() string {
+	return "ContextValue"
+}
+
+func (v ContextValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var regionsVal basetypes.ListValue
+	switch {
+	case v.Regions.IsUnknown():
+		regionsVal = types.ListUnknown(types.StringType)
+	case v.Regions.IsNull():
+		regionsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		regionsVal, d = types.ListValue(types.StringType, v.Regions.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"account_id": basetypes.StringType{},
+			"regions": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"status": basetypes.StringType{},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"account_id": basetypes.StringType{},
+		"regions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"status": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"account_id": v.AccountId,
+			"regions":    regionsVal,
+			"status":     v.Status,
+		})
+
+	return objVal, diags
+}
+
+func (v ContextValue) Equal(o attr.Value) bool {
+	other, ok := o.(ContextValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.AccountId.Equal(other.AccountId) {
+		return false
+	}
+
+	if !v.Regions.Equal(other.Regions) {
+		return false
+	}
+
+	if !v.Status.Equal(other.Status) {
+		return false
+	}
+
+	return true
+}
+
+func (v ContextValue) Type(ctx context.Context) attr.Type {
+	return ContextType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ContextValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"account_id": basetypes.StringType{},
+		"regions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"status": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = PermissionsType{}
+
+type PermissionsType struct {
+	basetypes.ObjectType
+}
+
+func (t PermissionsType) Equal(o attr.Type) bool {
+	other, ok := o.(PermissionsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t PermissionsType) String() string {
+	return "PermissionsType"
+}
+
+func (t PermissionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	actionsAttribute, ok := attributes["actions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`actions is missing from object`)
+
+		return nil, diags
+	}
+
+	actionsVal, ok := actionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`actions expected to be basetypes.ListValue, was: %T`, actionsAttribute))
+	}
+
+	awsManagedPoliciesAttribute, ok := attributes["aws_managed_policies"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`aws_managed_policies is missing from object`)
+
+		return nil, diags
+	}
+
+	awsManagedPoliciesVal, ok := awsManagedPoliciesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`aws_managed_policies expected to be basetypes.ListValue, was: %T`, awsManagedPoliciesAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return PermissionsValue{
+		Actions:            actionsVal,
+		AwsManagedPolicies: awsManagedPoliciesVal,
+		state:              attr.ValueStateKnown,
+	}, diags
+}
+
+func NewPermissionsValueNull() PermissionsValue {
+	return PermissionsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewPermissionsValueUnknown() PermissionsValue {
+	return PermissionsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewPermissionsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (PermissionsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing PermissionsValue Attribute Value",
+				"While creating a PermissionsValue value, a missing attribute value was detected. "+
+					"A PermissionsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("PermissionsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid PermissionsValue Attribute Type",
+				"While creating a PermissionsValue value, an invalid attribute value was detected. "+
+					"A PermissionsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("PermissionsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("PermissionsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra PermissionsValue Attribute Value",
+				"While creating a PermissionsValue value, an extra attribute value was detected. "+
+					"A PermissionsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra PermissionsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewPermissionsValueUnknown(), diags
+	}
+
+	actionsAttribute, ok := attributes["actions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`actions is missing from object`)
+
+		return NewPermissionsValueUnknown(), diags
+	}
+
+	actionsVal, ok := actionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`actions expected to be basetypes.ListValue, was: %T`, actionsAttribute))
+	}
+
+	awsManagedPoliciesAttribute, ok := attributes["aws_managed_policies"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`aws_managed_policies is missing from object`)
+
+		return NewPermissionsValueUnknown(), diags
+	}
+
+	awsManagedPoliciesVal, ok := awsManagedPoliciesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`aws_managed_policies expected to be basetypes.ListValue, was: %T`, awsManagedPoliciesAttribute))
+	}
+
+	if diags.HasError() {
+		return NewPermissionsValueUnknown(), diags
+	}
+
+	return PermissionsValue{
+		Actions:            actionsVal,
+		AwsManagedPolicies: awsManagedPoliciesVal,
+		state:              attr.ValueStateKnown,
+	}, diags
+}
+
+func NewPermissionsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) PermissionsValue {
+	object, diags := NewPermissionsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewPermissionsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t PermissionsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewPermissionsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewPermissionsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewPermissionsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewPermissionsValueMust(PermissionsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t PermissionsType) ValueType(ctx context.Context) attr.Value {
+	return PermissionsValue{}
+}
+
+var _ basetypes.ObjectValuable = PermissionsValue{}
+
+type PermissionsValue struct {
+	Actions            basetypes.ListValue `tfsdk:"actions"`
+	AwsManagedPolicies basetypes.ListValue `tfsdk:"aws_managed_policies"`
+	state              attr.ValueState
+}
+
+func (v PermissionsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["actions"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["aws_managed_policies"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Actions.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["actions"] = val
+
+		val, err = v.AwsManagedPolicies.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["aws_managed_policies"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v PermissionsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v PermissionsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v PermissionsValue) String() string {
+	return "PermissionsValue"
+}
+
+func (v PermissionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var actionsVal basetypes.ListValue
+	switch {
+	case v.Actions.IsUnknown():
+		actionsVal = types.ListUnknown(types.StringType)
+	case v.Actions.IsNull():
+		actionsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		actionsVal, d = types.ListValue(types.StringType, v.Actions.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"actions": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"aws_managed_policies": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	var awsManagedPoliciesVal basetypes.ListValue
+	switch {
+	case v.AwsManagedPolicies.IsUnknown():
+		awsManagedPoliciesVal = types.ListUnknown(types.StringType)
+	case v.AwsManagedPolicies.IsNull():
+		awsManagedPoliciesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		awsManagedPoliciesVal, d = types.ListValue(types.StringType, v.AwsManagedPolicies.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"actions": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"aws_managed_policies": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"actions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"aws_managed_policies": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"actions":              actionsVal,
+			"aws_managed_policies": awsManagedPoliciesVal,
+		})
+
+	return objVal, diags
+}
+
+func (v PermissionsValue) Equal(o attr.Value) bool {
+	other, ok := o.(PermissionsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Actions.Equal(other.Actions) {
+		return false
+	}
+
+	if !v.AwsManagedPolicies.Equal(other.AwsManagedPolicies) {
+		return false
+	}
+
+	return true
+}
+
+func (v PermissionsValue) Type(ctx context.Context) attr.Type {
+	return PermissionsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v PermissionsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"actions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"aws_managed_policies": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = GcpConfigType{}
+
+type GcpConfigType struct {
+	basetypes.ObjectType
+}
+
+func (t GcpConfigType) Equal(o attr.Type) bool {
+	other, ok := o.(GcpConfigType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t GcpConfigType) String() string {
+	return "GcpConfigType"
+}
+
+func (t GcpConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	customRoleAttribute, ok := attributes["custom_role"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`custom_role is missing from object`)
+
+		return nil, diags
+	}
+
+	customRoleVal, ok := customRoleAttribute.(CustomRoleValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_role expected to be CustomRoleValue, was: %T`, customRoleAttribute))
+	}
+
+	folderIdAttribute, ok := attributes["folder_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`folder_id is missing from object`)
+
+		return nil, diags
+	}
+
+	folderIdVal, ok := folderIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`folder_id expected to be basetypes.StringValue, was: %T`, folderIdAttribute))
+	}
+
+	levelAttribute, ok := attributes["level"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`level is missing from object`)
+
+		return nil, diags
+	}
+
+	levelVal, ok := levelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`level expected to be basetypes.StringValue, was: %T`, levelAttribute))
+	}
+
+	organizationIdAttribute, ok := attributes["organization_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`organization_id is missing from object`)
+
+		return nil, diags
+	}
+
+	organizationIdVal, ok := organizationIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`organization_id expected to be basetypes.StringValue, was: %T`, organizationIdAttribute))
+	}
+
+	predefinedRolesAttribute, ok := attributes["predefined_roles"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`predefined_roles is missing from object`)
+
+		return nil, diags
+	}
+
+	predefinedRolesVal, ok := predefinedRolesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`predefined_roles expected to be basetypes.ListValue, was: %T`, predefinedRolesAttribute))
+	}
+
+	projectIdAttribute, ok := attributes["project_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`project_id is missing from object`)
+
+		return nil, diags
+	}
+
+	projectIdVal, ok := projectIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`project_id expected to be basetypes.StringValue, was: %T`, projectIdAttribute))
+	}
+
+	serviceAccountNameAttribute, ok := attributes["service_account_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service_account_name is missing from object`)
+
+		return nil, diags
+	}
+
+	serviceAccountNameVal, ok := serviceAccountNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`service_account_name expected to be basetypes.StringValue, was: %T`, serviceAccountNameAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return GcpConfigValue{
+		CustomRole:         customRoleVal,
+		FolderId:           folderIdVal,
+		Level:              levelVal,
+		OrganizationId:     organizationIdVal,
+		PredefinedRoles:    predefinedRolesVal,
+		ProjectId:          projectIdVal,
+		ServiceAccountName: serviceAccountNameVal,
+		state:              attr.ValueStateKnown,
+	}, diags
+}
+
+func NewGcpConfigValueNull() GcpConfigValue {
+	return GcpConfigValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewGcpConfigValueUnknown() GcpConfigValue {
+	return GcpConfigValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewGcpConfigValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (GcpConfigValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing GcpConfigValue Attribute Value",
+				"While creating a GcpConfigValue value, a missing attribute value was detected. "+
+					"A GcpConfigValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("GcpConfigValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid GcpConfigValue Attribute Type",
+				"While creating a GcpConfigValue value, an invalid attribute value was detected. "+
+					"A GcpConfigValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("GcpConfigValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("GcpConfigValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra GcpConfigValue Attribute Value",
+				"While creating a GcpConfigValue value, an extra attribute value was detected. "+
+					"A GcpConfigValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra GcpConfigValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	customRoleAttribute, ok := attributes["custom_role"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`custom_role is missing from object`)
+
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	customRoleVal, ok := customRoleAttribute.(CustomRoleValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_role expected to be CustomRoleValue, was: %T`, customRoleAttribute))
+	}
+
+	folderIdAttribute, ok := attributes["folder_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`folder_id is missing from object`)
+
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	folderIdVal, ok := folderIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`folder_id expected to be basetypes.StringValue, was: %T`, folderIdAttribute))
+	}
+
+	levelAttribute, ok := attributes["level"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`level is missing from object`)
+
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	levelVal, ok := levelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`level expected to be basetypes.StringValue, was: %T`, levelAttribute))
+	}
+
+	organizationIdAttribute, ok := attributes["organization_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`organization_id is missing from object`)
+
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	organizationIdVal, ok := organizationIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`organization_id expected to be basetypes.StringValue, was: %T`, organizationIdAttribute))
+	}
+
+	predefinedRolesAttribute, ok := attributes["predefined_roles"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`predefined_roles is missing from object`)
+
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	predefinedRolesVal, ok := predefinedRolesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`predefined_roles expected to be basetypes.ListValue, was: %T`, predefinedRolesAttribute))
+	}
+
+	projectIdAttribute, ok := attributes["project_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`project_id is missing from object`)
+
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	projectIdVal, ok := projectIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`project_id expected to be basetypes.StringValue, was: %T`, projectIdAttribute))
+	}
+
+	serviceAccountNameAttribute, ok := attributes["service_account_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service_account_name is missing from object`)
+
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	serviceAccountNameVal, ok := serviceAccountNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`service_account_name expected to be basetypes.StringValue, was: %T`, serviceAccountNameAttribute))
+	}
+
+	if diags.HasError() {
+		return NewGcpConfigValueUnknown(), diags
+	}
+
+	return GcpConfigValue{
+		CustomRole:         customRoleVal,
+		FolderId:           folderIdVal,
+		Level:              levelVal,
+		OrganizationId:     organizationIdVal,
+		PredefinedRoles:    predefinedRolesVal,
+		ProjectId:          projectIdVal,
+		ServiceAccountName: serviceAccountNameVal,
+		state:              attr.ValueStateKnown,
+	}, diags
+}
+
+func NewGcpConfigValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) GcpConfigValue {
+	object, diags := NewGcpConfigValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewGcpConfigValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t GcpConfigType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewGcpConfigValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewGcpConfigValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewGcpConfigValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewGcpConfigValueMust(GcpConfigValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t GcpConfigType) ValueType(ctx context.Context) attr.Value {
+	return GcpConfigValue{}
+}
+
+var _ basetypes.ObjectValuable = GcpConfigValue{}
+
+type GcpConfigValue struct {
+	CustomRole         CustomRoleValue       `tfsdk:"custom_role"`
+	FolderId           basetypes.StringValue `tfsdk:"folder_id"`
+	Level              basetypes.StringValue `tfsdk:"level"`
+	OrganizationId     basetypes.StringValue `tfsdk:"organization_id"`
+	PredefinedRoles    basetypes.ListValue   `tfsdk:"predefined_roles"`
+	ProjectId          basetypes.StringValue `tfsdk:"project_id"`
+	ServiceAccountName basetypes.StringValue `tfsdk:"service_account_name"`
+	state              attr.ValueState
+}
+
+func (v GcpConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 7)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["custom_role"] = CustomRoleType{
+		basetypes.ObjectType{
+			AttrTypes: CustomRoleValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["folder_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["level"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["organization_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["predefined_roles"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["project_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["service_account_name"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 7)
+
+		val, err = v.CustomRole.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["custom_role"] = val
+
+		val, err = v.FolderId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["folder_id"] = val
+
+		val, err = v.Level.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["level"] = val
+
+		val, err = v.OrganizationId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["organization_id"] = val
+
+		val, err = v.PredefinedRoles.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["predefined_roles"] = val
+
+		val, err = v.ProjectId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["project_id"] = val
+
+		val, err = v.ServiceAccountName.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["service_account_name"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v GcpConfigValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v GcpConfigValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v GcpConfigValue) String() string {
+	return "GcpConfigValue"
+}
+
+func (v GcpConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var customRole attr.Value
+
+	{
+		customRole = v.CustomRole
+	}
+
+	var predefinedRolesVal basetypes.ListValue
+	switch {
+	case v.PredefinedRoles.IsUnknown():
+		predefinedRolesVal = types.ListUnknown(types.StringType)
+	case v.PredefinedRoles.IsNull():
+		predefinedRolesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		predefinedRolesVal, d = types.ListValue(types.StringType, v.PredefinedRoles.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"custom_role": CustomRoleType{
+				basetypes.ObjectType{
+					AttrTypes: CustomRoleValue{}.AttributeTypes(ctx),
+				},
+			},
+			"folder_id":       basetypes.StringType{},
+			"level":           basetypes.StringType{},
+			"organization_id": basetypes.StringType{},
+			"predefined_roles": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"project_id":           basetypes.StringType{},
+			"service_account_name": basetypes.StringType{},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"custom_role": CustomRoleType{
+			basetypes.ObjectType{
+				AttrTypes: CustomRoleValue{}.AttributeTypes(ctx),
+			},
+		},
+		"folder_id":       basetypes.StringType{},
+		"level":           basetypes.StringType{},
+		"organization_id": basetypes.StringType{},
+		"predefined_roles": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"project_id":           basetypes.StringType{},
+		"service_account_name": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"custom_role":          customRole,
+			"folder_id":            v.FolderId,
+			"level":                v.Level,
+			"organization_id":      v.OrganizationId,
+			"predefined_roles":     predefinedRolesVal,
+			"project_id":           v.ProjectId,
+			"service_account_name": v.ServiceAccountName,
+		})
+
+	return objVal, diags
+}
+
+func (v GcpConfigValue) Equal(o attr.Value) bool {
+	other, ok := o.(GcpConfigValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.CustomRole.Equal(other.CustomRole) {
+		return false
+	}
+
+	if !v.FolderId.Equal(other.FolderId) {
+		return false
+	}
+
+	if !v.Level.Equal(other.Level) {
+		return false
+	}
+
+	if !v.OrganizationId.Equal(other.OrganizationId) {
+		return false
+	}
+
+	if !v.PredefinedRoles.Equal(other.PredefinedRoles) {
+		return false
+	}
+
+	if !v.ProjectId.Equal(other.ProjectId) {
+		return false
+	}
+
+	if !v.ServiceAccountName.Equal(other.ServiceAccountName) {
+		return false
+	}
+
+	return true
+}
+
+func (v GcpConfigValue) Type(ctx context.Context) attr.Type {
+	return GcpConfigType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v GcpConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"custom_role": CustomRoleType{
+			basetypes.ObjectType{
+				AttrTypes: CustomRoleValue{}.AttributeTypes(ctx),
+			},
+		},
+		"folder_id":       basetypes.StringType{},
+		"level":           basetypes.StringType{},
+		"organization_id": basetypes.StringType{},
+		"predefined_roles": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"project_id":           basetypes.StringType{},
+		"service_account_name": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = CustomRoleType{}
+
+type CustomRoleType struct {
+	basetypes.ObjectType
+}
+
+func (t CustomRoleType) Equal(o attr.Type) bool {
+	other, ok := o.(CustomRoleType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CustomRoleType) String() string {
+	return "CustomRoleType"
+}
+
+func (t CustomRoleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	permissionsAttribute, ok := attributes["permissions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`permissions is missing from object`)
+
+		return nil, diags
+	}
+
+	permissionsVal, ok := permissionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`permissions expected to be basetypes.ListValue, was: %T`, permissionsAttribute))
+	}
+
+	roleIdAttribute, ok := attributes["role_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_id is missing from object`)
+
+		return nil, diags
+	}
+
+	roleIdVal, ok := roleIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_id expected to be basetypes.StringValue, was: %T`, roleIdAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CustomRoleValue{
+		Permissions: permissionsVal,
+		RoleId:      roleIdVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCustomRoleValueNull() CustomRoleValue {
+	return CustomRoleValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCustomRoleValueUnknown() CustomRoleValue {
+	return CustomRoleValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCustomRoleValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CustomRoleValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CustomRoleValue Attribute Value",
+				"While creating a CustomRoleValue value, a missing attribute value was detected. "+
+					"A CustomRoleValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CustomRoleValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CustomRoleValue Attribute Type",
+				"While creating a CustomRoleValue value, an invalid attribute value was detected. "+
+					"A CustomRoleValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CustomRoleValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CustomRoleValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CustomRoleValue Attribute Value",
+				"While creating a CustomRoleValue value, an extra attribute value was detected. "+
+					"A CustomRoleValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CustomRoleValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCustomRoleValueUnknown(), diags
+	}
+
+	permissionsAttribute, ok := attributes["permissions"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`permissions is missing from object`)
+
+		return NewCustomRoleValueUnknown(), diags
+	}
+
+	permissionsVal, ok := permissionsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`permissions expected to be basetypes.ListValue, was: %T`, permissionsAttribute))
+	}
+
+	roleIdAttribute, ok := attributes["role_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`role_id is missing from object`)
+
+		return NewCustomRoleValueUnknown(), diags
+	}
+
+	roleIdVal, ok := roleIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`role_id expected to be basetypes.StringValue, was: %T`, roleIdAttribute))
+	}
+
+	if diags.HasError() {
+		return NewCustomRoleValueUnknown(), diags
+	}
+
+	return CustomRoleValue{
+		Permissions: permissionsVal,
+		RoleId:      roleIdVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCustomRoleValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CustomRoleValue {
+	object, diags := NewCustomRoleValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCustomRoleValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CustomRoleType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCustomRoleValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCustomRoleValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCustomRoleValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCustomRoleValueMust(CustomRoleValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CustomRoleType) ValueType(ctx context.Context) attr.Value {
+	return CustomRoleValue{}
+}
+
+var _ basetypes.ObjectValuable = CustomRoleValue{}
+
+type CustomRoleValue struct {
+	Permissions basetypes.ListValue   `tfsdk:"permissions"`
+	RoleId      basetypes.StringValue `tfsdk:"role_id"`
+	state       attr.ValueState
+}
+
+func (v CustomRoleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["permissions"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["role_id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Permissions.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["permissions"] = val
+
+		val, err = v.RoleId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["role_id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CustomRoleValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CustomRoleValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CustomRoleValue) String() string {
+	return "CustomRoleValue"
+}
+
+func (v CustomRoleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var permissionsVal basetypes.ListValue
+	switch {
+	case v.Permissions.IsUnknown():
+		permissionsVal = types.ListUnknown(types.StringType)
+	case v.Permissions.IsNull():
+		permissionsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		permissionsVal, d = types.ListValue(types.StringType, v.Permissions.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"permissions": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"role_id": basetypes.StringType{},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"permissions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"role_id": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"permissions": permissionsVal,
+			"role_id":     v.RoleId,
+		})
+
+	return objVal, diags
+}
+
+func (v CustomRoleValue) Equal(o attr.Value) bool {
+	other, ok := o.(CustomRoleValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Permissions.Equal(other.Permissions) {
+		return false
+	}
+
+	if !v.RoleId.Equal(other.RoleId) {
+		return false
+	}
+
+	return true
+}
+
+func (v CustomRoleValue) Type(ctx context.Context) attr.Type {
+	return CustomRoleType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CustomRoleValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"permissions": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"role_id": basetypes.StringType{},
+	}
 }

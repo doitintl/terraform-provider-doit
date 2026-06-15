@@ -562,82 +562,82 @@ func (e CloudDiagramGroupCldType) Valid() bool {
 
 // Defines values for CloudDiagramGroupGroupType.
 const (
-	Account            CloudDiagramGroupGroupType = "account"
-	Aks                CloudDiagramGroupGroupType = "aks"
-	Az                 CloudDiagramGroupGroupType = "az"
-	AzureCdnProfile    CloudDiagramGroupGroupType = "azure_cdn_profile"
-	AzureDnsZone       CloudDiagramGroupGroupType = "azure_dns_zone"
-	AzureResourceGroup CloudDiagramGroupGroupType = "azure_resource_group"
-	AzureSubscription  CloudDiagramGroupGroupType = "azure_subscription"
-	CustomerGateway    CloudDiagramGroupGroupType = "customer_gateway"
-	Ecs                CloudDiagramGroupGroupType = "ecs"
-	Eks                CloudDiagramGroupGroupType = "eks"
-	GcpInstanceGroup   CloudDiagramGroupGroupType = "gcp_instance_group"
-	GcpManagedZone     CloudDiagramGroupGroupType = "gcp_managed_zone"
-	GkeCluster         CloudDiagramGroupGroupType = "gke_cluster"
-	K8sDaemonSet       CloudDiagramGroupGroupType = "k8s_daemon_set"
-	K8sDeployment      CloudDiagramGroupGroupType = "k8s_deployment"
-	K8sNamespace       CloudDiagramGroupGroupType = "k8s_namespace"
-	K8sPod             CloudDiagramGroupGroupType = "k8s_pod"
-	K8sReplicaSet      CloudDiagramGroupGroupType = "k8s_replica_set"
-	K8sStatefulSet     CloudDiagramGroupGroupType = "k8s_stateful_set"
-	Project            CloudDiagramGroupGroupType = "project"
-	Region             CloudDiagramGroupGroupType = "region"
-	SecurityGroup      CloudDiagramGroupGroupType = "security_group"
-	Subnet             CloudDiagramGroupGroupType = "subnet"
-	Vpc                CloudDiagramGroupGroupType = "vpc"
+	CloudDiagramGroupGroupTypeAccount            CloudDiagramGroupGroupType = "account"
+	CloudDiagramGroupGroupTypeAks                CloudDiagramGroupGroupType = "aks"
+	CloudDiagramGroupGroupTypeAz                 CloudDiagramGroupGroupType = "az"
+	CloudDiagramGroupGroupTypeAzureCdnProfile    CloudDiagramGroupGroupType = "azure_cdn_profile"
+	CloudDiagramGroupGroupTypeAzureDnsZone       CloudDiagramGroupGroupType = "azure_dns_zone"
+	CloudDiagramGroupGroupTypeAzureResourceGroup CloudDiagramGroupGroupType = "azure_resource_group"
+	CloudDiagramGroupGroupTypeAzureSubscription  CloudDiagramGroupGroupType = "azure_subscription"
+	CloudDiagramGroupGroupTypeCustomerGateway    CloudDiagramGroupGroupType = "customer_gateway"
+	CloudDiagramGroupGroupTypeEcs                CloudDiagramGroupGroupType = "ecs"
+	CloudDiagramGroupGroupTypeEks                CloudDiagramGroupGroupType = "eks"
+	CloudDiagramGroupGroupTypeGcpInstanceGroup   CloudDiagramGroupGroupType = "gcp_instance_group"
+	CloudDiagramGroupGroupTypeGcpManagedZone     CloudDiagramGroupGroupType = "gcp_managed_zone"
+	CloudDiagramGroupGroupTypeGkeCluster         CloudDiagramGroupGroupType = "gke_cluster"
+	CloudDiagramGroupGroupTypeK8sDaemonSet       CloudDiagramGroupGroupType = "k8s_daemon_set"
+	CloudDiagramGroupGroupTypeK8sDeployment      CloudDiagramGroupGroupType = "k8s_deployment"
+	CloudDiagramGroupGroupTypeK8sNamespace       CloudDiagramGroupGroupType = "k8s_namespace"
+	CloudDiagramGroupGroupTypeK8sPod             CloudDiagramGroupGroupType = "k8s_pod"
+	CloudDiagramGroupGroupTypeK8sReplicaSet      CloudDiagramGroupGroupType = "k8s_replica_set"
+	CloudDiagramGroupGroupTypeK8sStatefulSet     CloudDiagramGroupGroupType = "k8s_stateful_set"
+	CloudDiagramGroupGroupTypeProject            CloudDiagramGroupGroupType = "project"
+	CloudDiagramGroupGroupTypeRegion             CloudDiagramGroupGroupType = "region"
+	CloudDiagramGroupGroupTypeSecurityGroup      CloudDiagramGroupGroupType = "security_group"
+	CloudDiagramGroupGroupTypeSubnet             CloudDiagramGroupGroupType = "subnet"
+	CloudDiagramGroupGroupTypeVpc                CloudDiagramGroupGroupType = "vpc"
 )
 
 // Valid indicates whether the value is a known member of the CloudDiagramGroupGroupType enum.
 func (e CloudDiagramGroupGroupType) Valid() bool {
 	switch e {
-	case Account:
+	case CloudDiagramGroupGroupTypeAccount:
 		return true
-	case Aks:
+	case CloudDiagramGroupGroupTypeAks:
 		return true
-	case Az:
+	case CloudDiagramGroupGroupTypeAz:
 		return true
-	case AzureCdnProfile:
+	case CloudDiagramGroupGroupTypeAzureCdnProfile:
 		return true
-	case AzureDnsZone:
+	case CloudDiagramGroupGroupTypeAzureDnsZone:
 		return true
-	case AzureResourceGroup:
+	case CloudDiagramGroupGroupTypeAzureResourceGroup:
 		return true
-	case AzureSubscription:
+	case CloudDiagramGroupGroupTypeAzureSubscription:
 		return true
-	case CustomerGateway:
+	case CloudDiagramGroupGroupTypeCustomerGateway:
 		return true
-	case Ecs:
+	case CloudDiagramGroupGroupTypeEcs:
 		return true
-	case Eks:
+	case CloudDiagramGroupGroupTypeEks:
 		return true
-	case GcpInstanceGroup:
+	case CloudDiagramGroupGroupTypeGcpInstanceGroup:
 		return true
-	case GcpManagedZone:
+	case CloudDiagramGroupGroupTypeGcpManagedZone:
 		return true
-	case GkeCluster:
+	case CloudDiagramGroupGroupTypeGkeCluster:
 		return true
-	case K8sDaemonSet:
+	case CloudDiagramGroupGroupTypeK8sDaemonSet:
 		return true
-	case K8sDeployment:
+	case CloudDiagramGroupGroupTypeK8sDeployment:
 		return true
-	case K8sNamespace:
+	case CloudDiagramGroupGroupTypeK8sNamespace:
 		return true
-	case K8sPod:
+	case CloudDiagramGroupGroupTypeK8sPod:
 		return true
-	case K8sReplicaSet:
+	case CloudDiagramGroupGroupTypeK8sReplicaSet:
 		return true
-	case K8sStatefulSet:
+	case CloudDiagramGroupGroupTypeK8sStatefulSet:
 		return true
-	case Project:
+	case CloudDiagramGroupGroupTypeProject:
 		return true
-	case Region:
+	case CloudDiagramGroupGroupTypeRegion:
 		return true
-	case SecurityGroup:
+	case CloudDiagramGroupGroupTypeSecurityGroup:
 		return true
-	case Subnet:
+	case CloudDiagramGroupGroupTypeSubnet:
 		return true
-	case Vpc:
+	case CloudDiagramGroupGroupTypeVpc:
 		return true
 	default:
 		return false
@@ -2066,6 +2066,27 @@ func (e FlowStatus) Valid() bool {
 	case FlowStatusNew:
 		return true
 	case FlowStatusPublished:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GCPConnectionConfigLevel.
+const (
+	GCPConnectionConfigLevelFolder       GCPConnectionConfigLevel = "folder"
+	GCPConnectionConfigLevelOrganization GCPConnectionConfigLevel = "organization"
+	GCPConnectionConfigLevelProject      GCPConnectionConfigLevel = "project"
+)
+
+// Valid indicates whether the value is a known member of the GCPConnectionConfigLevel enum.
+func (e GCPConnectionConfigLevel) Valid() bool {
+	switch e {
+	case GCPConnectionConfigLevelFolder:
+		return true
+	case GCPConnectionConfigLevelOrganization:
+		return true
+	case GCPConnectionConfigLevelProject:
 		return true
 	default:
 		return false
@@ -3824,6 +3845,59 @@ func (e UpdateResourcePermissionParamsResourceType) Valid() bool {
 	}
 }
 
+// AWSConnectionConfig AWS-specific connection configuration.
+type AWSConnectionConfig struct {
+	// Context List of AWS accounts linked to this connection.
+	Context []AWSConnectionContext `json:"context"`
+
+	// ManagementAccount AWS management account ID (payer account). When set, that account receives
+	// `active` status on create; all other accounts receive `pending_permissions`.
+	ManagementAccount *string `json:"managementAccount,omitempty"`
+
+	// OrganizationRootId AWS Organizations root ID (e.g. `r-xxxx`).
+	OrganizationRootId *string `json:"organizationRootId,omitempty"`
+
+	// Permissions IAM permissions granted to the CloudFlow role.
+	Permissions *AWSConnectionConfigPermissions `json:"permissions,omitempty"`
+
+	// RoleName IAM role name assumed by CloudFlow in each linked account.
+	RoleName string `json:"roleName"`
+
+	// ScopeExcludedAccountIds Account IDs explicitly excluded from scope.
+	ScopeExcludedAccountIds *[]string `json:"scopeExcludedAccountIds,omitempty"`
+
+	// ScopeExplicitAccountIds Account IDs explicitly included in scope.
+	ScopeExplicitAccountIds *[]string `json:"scopeExplicitAccountIds,omitempty"`
+
+	// ScopeManagementAccountExplicitInScope Whether the management account is explicitly included in scope.
+	ScopeManagementAccountExplicitInScope *bool `json:"scopeManagementAccountExplicitInScope,omitempty"`
+
+	// ScopeTargetedOrganizationalUnitIds OU IDs explicitly included in scope.
+	ScopeTargetedOrganizationalUnitIds *[]string `json:"scopeTargetedOrganizationalUnitIds,omitempty"`
+}
+
+// AWSConnectionConfigPermissions IAM permissions granted to the CloudFlow role.
+type AWSConnectionConfigPermissions struct {
+	// Actions Custom IAM action statements.
+	Actions *[]string `json:"actions,omitempty"`
+
+	// AwsManagedPolicies AWS-managed policy ARNs attached to the role.
+	AwsManagedPolicies *[]string `json:"awsManagedPolicies,omitempty"`
+}
+
+// AWSConnectionContext Per-account entry in an AWS connection.
+type AWSConnectionContext struct {
+	// AccountId AWS account ID.
+	AccountId string `json:"accountId"`
+
+	// Regions AWS regions accessible via this account. Empty means all regions.
+	Regions *[]string `json:"regions,omitempty"`
+
+	// Status Per-account permission status. Read-only — assigned by the server:
+	// management account → `active`; all other accounts → `pending_permissions` on create.
+	Status *string `json:"status,omitempty"`
+}
+
 // AccountManagerListItem Information of a DoiT account manager assigned to your organization.
 type AccountManagerListItem struct {
 	CalendlyLink *string `json:"calendlyLink,omitempty"`
@@ -5554,13 +5628,11 @@ type Condition string
 
 // Connection A cloud provider connection resource.
 type Connection struct {
+	// AwsConfig AWS configuration. Present when `cloudProvider` is `AWS`.
+	AwsConfig *AWSConnectionConfig `json:"awsConfig,omitempty"`
+
 	// CloudProvider Cloud provider that a connection is bound to.
 	CloudProvider ConnectionProvider `json:"cloudProvider"`
-
-	// ConnectionConfiguration Provider-specific configuration. Shape depends on `cloudProvider`:
-	// - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
-	// - **GCP**: project IDs and service account configuration.
-	ConnectionConfiguration *map[string]interface{} `json:"connectionConfiguration,omitempty"`
 
 	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
 	CreateTime *time.Time `json:"createTime"`
@@ -5575,6 +5647,9 @@ type Connection struct {
 
 	// Etag Strong ETag. `null` on dry-run create.
 	Etag *string `json:"etag"`
+
+	// GcpConfig GCP configuration. Present when `cloudProvider` is `GCP`.
+	GcpConfig *GCPConnectionConfig `json:"gcpConfig,omitempty"`
 
 	// Id Unique identifier. `null` on dry-run create responses.
 	Id *string `json:"id"`
@@ -5670,15 +5745,16 @@ type CreateAnnotationRequest struct {
 // CreateCategory Allowed categories when creating insights via the public API.
 type CreateCategory string
 
-// CreateConnectionRequest Request body for `CreateConnection`.
+// CreateConnectionRequest Request body for `CreateConnection`. Supply exactly one of `gcpConfig` or `awsConfig` —
+// the provider is inferred from which field is present. Supplying both returns
+// `400 invalid_connection_config`.
 type CreateConnectionRequest struct {
-	// CloudProvider Cloud provider that a connection is bound to.
-	CloudProvider ConnectionProvider `json:"cloudProvider"`
+	// AwsConfig AWS configuration. Provide this (and omit `gcpConfig`) for an AWS connection.
+	AwsConfig   *AWSConnectionConfig `json:"awsConfig,omitempty"`
+	Description *string              `json:"description,omitempty"`
 
-	// ConnectionConfiguration Provider-specific configuration object. Required fields depend on `cloudProvider`.
-	// See CloudFlow connection documentation for the expected shape per provider.
-	ConnectionConfiguration map[string]interface{} `json:"connectionConfiguration"`
-	Description             *string                `json:"description,omitempty"`
+	// GcpConfig GCP configuration. Provide this (and omit `awsConfig`) for a GCP connection.
+	GcpConfig *GCPConnectionConfig `json:"gcpConfig,omitempty"`
 
 	// Id Client-provided connection ID. Server assigns one if omitted. Providing a
 	// stable ID enables idempotent creation.
@@ -6382,6 +6458,48 @@ type Folder struct {
 
 	// ParentFolderId Identifier of the parent folder. Set to "root" if the folder is at the top level.
 	ParentFolderId *string `json:"parentFolderId,omitempty"`
+}
+
+// GCPConnectionConfig GCP-specific connection configuration.
+type GCPConnectionConfig struct {
+	// CustomRole Custom IAM role granted to the service account.
+	CustomRole *GCPConnectionConfigCustomRole `json:"customRole,omitempty"`
+
+	// FolderId GCP folder ID. Required when `level` is `folder`.
+	FolderId *string `json:"folderId,omitempty"`
+
+	// Level Binding level of the service account.
+	// - `project` — access scoped to a single project.
+	// - `organization` — access scoped to a GCP organization; `organizationId` required.
+	// - `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.
+	Level GCPConnectionConfigLevel `json:"level"`
+
+	// OrganizationId GCP organization ID. Required when `level` is `organization` or `folder`.
+	OrganizationId *string `json:"organizationId,omitempty"`
+
+	// PredefinedRoles Predefined GCP IAM roles granted to the service account.
+	PredefinedRoles *[]string `json:"predefinedRoles,omitempty"`
+
+	// ProjectId GCP project ID that hosts the CloudFlow service account.
+	ProjectId string `json:"projectId"`
+
+	// ServiceAccountName Name of the GCP service account (without the `@project.iam.gserviceaccount.com` suffix).
+	ServiceAccountName string `json:"serviceAccountName"`
+}
+
+// GCPConnectionConfigLevel Binding level of the service account.
+// - `project` — access scoped to a single project.
+// - `organization` — access scoped to a GCP organization; `organizationId` required.
+// - `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.
+type GCPConnectionConfigLevel string
+
+// GCPConnectionConfigCustomRole Custom IAM role granted to the service account.
+type GCPConnectionConfigCustomRole struct {
+	// Permissions IAM permissions included in the custom role.
+	Permissions *[]string `json:"permissions,omitempty"`
+
+	// RoleId Custom role ID.
+	RoleId *string `json:"roleId,omitempty"`
 }
 
 // GetAnomaly200Response defines model for GetAnomaly200Response.

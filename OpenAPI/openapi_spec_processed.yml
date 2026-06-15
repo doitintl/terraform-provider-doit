@@ -4227,11 +4227,16 @@ paths:
     post:
       operationId: CreateConnection
       summary: Create a connection
-      description: 'Creates a new cloud provider connection. On creation the status is set to `active`
+      description: 'Creates a new cloud provider connection. Supply exactly one of `gcpConfig` or
 
-        unless the provider requires an asynchronous permission-grant step, in which case
+        `awsConfig` in the request body — the provider is inferred from which field is
 
-        it will be `pending_permissions`.
+        present. Supplying both returns `400 invalid_connection_config`.
+
+
+        On creation the status is set to `active` unless the provider requires an
+
+        asynchronous permission-grant step, in which case it will be `pending_permissions`.
 
 '
       tags:
@@ -4319,6 +4324,88 @@ paths:
           description: Connection deleted.
 components:
   schemas:
+    AWSConnectionConfig:
+      type: object
+      required:
+        - context
+        - roleName
+      description: AWS-specific connection configuration.
+      properties:
+        context:
+          type: array
+          items:
+            $ref: '#/components/schemas/AWSConnectionContext'
+          description: List of AWS accounts linked to this connection.
+        roleName:
+          type: string
+          description: IAM role name assumed by CloudFlow in each linked account.
+        managementAccount:
+          type: string
+          description: 'AWS management account ID (payer account). When set, that account receives
+
+            `active` status on create; all other accounts receive `pending_permissions`.
+
+'
+        organizationRootId:
+          type: string
+          description: AWS Organizations root ID (e.g. `r-xxxx`).
+        scopeTargetedOrganizationalUnitIds:
+          type: array
+          items:
+            type: string
+          description: OU IDs explicitly included in scope.
+        scopeExplicitAccountIds:
+          type: array
+          items:
+            type: string
+          description: Account IDs explicitly included in scope.
+        scopeExcludedAccountIds:
+          type: array
+          items:
+            type: string
+          description: Account IDs explicitly excluded from scope.
+        scopeManagementAccountExplicitInScope:
+          type: boolean
+          description: Whether the management account is explicitly included in scope.
+        permissions:
+          description: IAM permissions granted to the CloudFlow role.
+          allOf:
+            - $ref: '#/components/schemas/AWSConnectionConfigPermissions'
+    AWSConnectionConfigPermissions:
+      type: object
+      description: IAM permissions granted to the CloudFlow role.
+      properties:
+        awsManagedPolicies:
+          type: array
+          items:
+            type: string
+          description: AWS-managed policy ARNs attached to the role.
+        actions:
+          type: array
+          items:
+            type: string
+          description: Custom IAM action statements.
+    AWSConnectionContext:
+      type: object
+      required:
+        - accountId
+      description: Per-account entry in an AWS connection.
+      properties:
+        accountId:
+          type: string
+          description: AWS account ID.
+        regions:
+          type: array
+          items:
+            type: string
+          description: AWS regions accessible via this account. Empty means all regions.
+        status:
+          type: string
+          description: 'Per-account permission status. Read-only — assigned by the server:
+
+            management account → `active`; all other accounts → `pending_permissions` on create.
+
+'
     AccountManagerListItem:
       type: object
       description: Information of a DoiT account manager assigned to your organization.
@@ -6834,16 +6921,16 @@ components:
             `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
 
 '
-        connectionConfiguration:
-          type: object
-          additionalProperties: true
-          description: 'Provider-specific configuration. Shape depends on `cloudProvider`:
-
-            - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
-
-            - **GCP**: project IDs and service account configuration.
-
-'
+        awsConfig:
+          allOf:
+            - $ref: '#/components/schemas/AWSConnectionConfig'
+          description: AWS configuration. Present when `cloudProvider` is `AWS`.
+          nullable: true
+        gcpConfig:
+          allOf:
+            - $ref: '#/components/schemas/GCPConnectionConfig'
+          description: GCP configuration. Present when `cloudProvider` is `GCP`.
+          nullable: true
         createTime:
           type: string
           format: date-time
@@ -6984,9 +7071,13 @@ components:
       type: object
       required:
         - name
-        - cloudProvider
-        - connectionConfiguration
-      description: Request body for `CreateConnection`.
+      description: 'Request body for `CreateConnection`. Supply exactly one of `gcpConfig` or `awsConfig` —
+
+        the provider is inferred from which field is present. Supplying both returns
+
+        `400 invalid_connection_config`.
+
+'
       properties:
         id:
           type: string
@@ -7003,16 +7094,14 @@ components:
         description:
           type: string
           maxLength: 2000
-        cloudProvider:
-          $ref: '#/components/schemas/ConnectionProvider'
-        connectionConfiguration:
-          type: object
-          additionalProperties: true
-          description: 'Provider-specific configuration object. Required fields depend on `cloudProvider`.
-
-            See CloudFlow connection documentation for the expected shape per provider.
-
-'
+        gcpConfig:
+          allOf:
+            - $ref: '#/components/schemas/GCPConnectionConfig'
+          description: GCP configuration. Provide this (and omit `awsConfig`) for a GCP connection.
+        awsConfig:
+          allOf:
+            - $ref: '#/components/schemas/AWSConnectionConfig'
+          description: AWS configuration. Provide this (and omit `gcpConfig`) for an AWS connection.
     CreateCustomThemeRequest:
       required:
         - name
@@ -8199,6 +8288,66 @@ components:
           description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
           default: root
           example: root
+    GCPConnectionConfig:
+      type: object
+      required:
+        - projectId
+        - level
+        - serviceAccountName
+      description: GCP-specific connection configuration.
+      properties:
+        projectId:
+          type: string
+          description: GCP project ID that hosts the CloudFlow service account.
+        level:
+          type: string
+          enum:
+            - project
+            - organization
+            - folder
+          description: 'Binding level of the service account.
+
+            - `project` — access scoped to a single project.
+
+            - `organization` — access scoped to a GCP organization; `organizationId` required.
+
+            - `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.
+
+'
+        serviceAccountName:
+          type: string
+          description: Name of the GCP service account (without the `@project.iam.gserviceaccount.com` suffix).
+        organizationId:
+          type: string
+          description: 'GCP organization ID. Required when `level` is `organization` or `folder`.
+
+'
+        folderId:
+          type: string
+          description: 'GCP folder ID. Required when `level` is `folder`.
+
+'
+        predefinedRoles:
+          type: array
+          items:
+            type: string
+          description: Predefined GCP IAM roles granted to the service account.
+        customRole:
+          description: Custom IAM role granted to the service account.
+          allOf:
+            - $ref: '#/components/schemas/GCPConnectionConfigCustomRole'
+    GCPConnectionConfigCustomRole:
+      type: object
+      description: Custom IAM role granted to the service account.
+      properties:
+        roleId:
+          type: string
+          description: Custom role ID.
+        permissions:
+          type: array
+          items:
+            type: string
+          description: IAM permissions included in the custom role.
     GetAnomaly200Response:
       required:
         - attribution

@@ -1105,9 +1105,12 @@ paths:
       operationId: CreateConnection
       summary: Create a connection
       description: |
-        Creates a new cloud provider connection. On creation the status is set to `active`
-        unless the provider requires an asynchronous permission-grant step, in which case
-        it will be `pending_permissions`.
+        Creates a new cloud provider connection. Supply exactly one of `gcpConfig` or
+        `awsConfig` in the request body — the provider is inferred from which field is
+        present. Supplying both returns `400 invalid_connection_config`.
+
+        On creation the status is set to `active` unless the provider requires an
+        asynchronous permission-grant step, in which case it will be `pending_permissions`.
       tags: [Connections]
       parameters:
         - $ref: "#/components/parameters/DryRun"
@@ -1203,7 +1206,7 @@ paths:
         - `enabled: true` — transitions status from `disabled` to `active`.
         - `enabled: false` — transitions status to `disabled`.
 
-        Uses `Content-Type: application/merge-patch+json`. `If-Match` is required.
+        `If-Match` is required.
       tags: [Connections]
       parameters:
         - $ref: "#/components/parameters/ConnectionId"
@@ -1214,7 +1217,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/merge-patch+json:
+          application/json:
             schema:
               $ref: "#/components/schemas/UpdateConnectionRequest"
       responses:
@@ -2098,12 +2101,15 @@ components:
             Notification recipients. Each entry is a plain string (email address or
             Slack channel identifier) or a referenced node-output value (an upstream
             node's output field resolved at runtime by the flow engine).
-          items: {}
+          items:
+            type: string
         subject:
+          type: string
           description: |
             Subject line for email notifications. Plain string or a referenced
             node-output value. Ignored when `notificationProvider` is `slack`.
         message:
+          type: string
           description: |
             Approval request message body. May contain inline text, upstream node
             output references, or a mix. Resolved at runtime by the flow engine.
@@ -2344,6 +2350,124 @@ components:
     # ----------------------------------------------------------------
     # Connection schemas
     # ----------------------------------------------------------------
+    AWSConnectionContext:
+      type: object
+      required: [accountId]
+      description: Per-account entry in an AWS connection.
+      properties:
+        accountId:
+          type: string
+          description: AWS account ID.
+        regions:
+          type: array
+          items:
+            type: string
+          description: AWS regions accessible via this account. Empty means all regions.
+        status:
+          type: string
+          description: |
+            Per-account permission status. Read-only — assigned by the server:
+            management account → `active`; all other accounts → `pending_permissions` on create.
+
+    AWSConnectionConfig:
+      type: object
+      required: [context, roleName]
+      description: AWS-specific connection configuration.
+      properties:
+        context:
+          type: array
+          items:
+            $ref: "#/components/schemas/AWSConnectionContext"
+          description: List of AWS accounts linked to this connection.
+        roleName:
+          type: string
+          description: IAM role name assumed by CloudFlow in each linked account.
+        managementAccount:
+          type: string
+          description: |
+            AWS management account ID (payer account). When set, that account receives
+            `active` status on create; all other accounts receive `pending_permissions`.
+        organizationRootId:
+          type: string
+          description: AWS Organizations root ID (e.g. `r-xxxx`).
+        scopeTargetedOrganizationalUnitIds:
+          type: array
+          items:
+            type: string
+          description: OU IDs explicitly included in scope.
+        scopeExplicitAccountIds:
+          type: array
+          items:
+            type: string
+          description: Account IDs explicitly included in scope.
+        scopeExcludedAccountIds:
+          type: array
+          items:
+            type: string
+          description: Account IDs explicitly excluded from scope.
+        scopeManagementAccountExplicitInScope:
+          type: boolean
+          description: Whether the management account is explicitly included in scope.
+        permissions:
+          type: object
+          description: IAM permissions granted to the CloudFlow role.
+          properties:
+            awsManagedPolicies:
+              type: array
+              items:
+                type: string
+              description: AWS-managed policy ARNs attached to the role.
+            actions:
+              type: array
+              items:
+                type: string
+              description: Custom IAM action statements.
+
+    GCPConnectionConfig:
+      type: object
+      required: [projectId, level, serviceAccountName]
+      description: GCP-specific connection configuration.
+      properties:
+        projectId:
+          type: string
+          description: GCP project ID that hosts the CloudFlow service account.
+        level:
+          type: string
+          enum: [project, organization, folder]
+          description: |
+            Binding level of the service account.
+            - `project` — access scoped to a single project.
+            - `organization` — access scoped to a GCP organization; `organizationId` required.
+            - `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.
+        serviceAccountName:
+          type: string
+          description: Name of the GCP service account (without the `@project.iam.gserviceaccount.com` suffix).
+        organizationId:
+          type: string
+          description: |
+            GCP organization ID. Required when `level` is `organization` or `folder`.
+        folderId:
+          type: string
+          description: |
+            GCP folder ID. Required when `level` is `folder`.
+        predefinedRoles:
+          type: array
+          items:
+            type: string
+          description: Predefined GCP IAM roles granted to the service account.
+        customRole:
+          type: object
+          description: Custom IAM role granted to the service account.
+          properties:
+            roleId:
+              type: string
+              description: Custom role ID.
+            permissions:
+              type: array
+              items:
+                type: string
+              description: IAM permissions included in the custom role.
+
     Connection:
       type: object
       required: [id, name, cloudProvider, status, enabled, createTime, updateTime, etag]
@@ -2371,13 +2495,16 @@ components:
             Whether this connection is enabled. Derived from `status`: `false` when
             `status` is `disabled`, `true` otherwise. Toggle via
             `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
-        connectionConfiguration:
-          type: object
-          additionalProperties: true
-          description: |
-            Provider-specific configuration. Shape depends on `cloudProvider`:
-            - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
-            - **GCP**: project IDs and service account configuration.
+        awsConfig:
+          description: AWS configuration. Present when `cloudProvider` is `AWS`.
+          oneOf:
+            - $ref: "#/components/schemas/AWSConnectionConfig"
+            - type: "null"
+        gcpConfig:
+          description: GCP configuration. Present when `cloudProvider` is `GCP`.
+          oneOf:
+            - $ref: "#/components/schemas/GCPConnectionConfig"
+            - type: "null"
         createTime:
           type: ["string", "null"]
           format: date-time
@@ -2396,8 +2523,11 @@ components:
 
     CreateConnectionRequest:
       type: object
-      required: [name, cloudProvider, connectionConfiguration]
-      description: Request body for `CreateConnection`.
+      required: [name]
+      description: |
+        Request body for `CreateConnection`. Supply exactly one of `gcpConfig` or `awsConfig` —
+        the provider is inferred from which field is present. Supplying both returns
+        `400 invalid_connection_config`.
       properties:
         id:
           type: string
@@ -2412,21 +2542,18 @@ components:
         description:
           type: string
           maxLength: 2000
-        cloudProvider:
-          $ref: "#/components/schemas/ConnectionProvider"
-        connectionConfiguration:
-          type: object
-          additionalProperties: true
-          description: |
-            Provider-specific configuration object. Required fields depend on `cloudProvider`.
-            See CloudFlow connection documentation for the expected shape per provider.
+        gcpConfig:
+          $ref: "#/components/schemas/GCPConnectionConfig"
+          description: GCP configuration. Provide this (and omit `awsConfig`) for a GCP connection.
+        awsConfig:
+          $ref: "#/components/schemas/AWSConnectionConfig"
+          description: AWS configuration. Provide this (and omit `gcpConfig`) for an AWS connection.
 
     UpdateConnectionRequest:
       type: object
       required: [enabled]
       description: |
-        Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
-        Currently supports toggling the `enabled` flag only.
+        Request body for `UpdateConnection`. Currently supports toggling the `enabled` flag only.
       properties:
         enabled:
           type: boolean
