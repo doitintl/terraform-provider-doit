@@ -941,16 +941,34 @@ func stripDocFields(v any) any {
 			}
 			result[k] = stripDocFields(v)
 		}
-		// Unwrap single-element allOf/anyOf/oneOf when it's the only remaining key.
-		// This handles the pattern: {description: "...", allOf: [{$ref: ...}]}
-		// After stripping description: {allOf: [{resolved_schema}]}
-		// Which should be equivalent to just {resolved_schema}.
+		// Unwrap single-element allOf/anyOf/oneOf.
+		// Case 1: {allOf: [{resolved_schema}]} → {resolved_schema}
+		// Case 2: {allOf: [{resolved_schema}], nullable: true} → {resolved_schema..., nullable: true}
+		// This handles patterns from wrapRefSiblings where $ref+siblings
+		// becomes allOf+siblings, which must resolve equivalently.
 		for _, compKey := range []string{"allOf", "anyOf", "oneOf"} {
-			if items, ok := result[compKey].([]any); ok && len(items) == 1 && len(result) == 1 {
-				if inner, ok := items[0].(map[string]any); ok {
-					return inner
+			items, ok := result[compKey].([]any)
+			if !ok || len(items) != 1 {
+				continue
+			}
+			inner, ok := items[0].(map[string]any)
+			if !ok {
+				continue
+			}
+			if len(result) == 1 {
+				return inner
+			}
+			// Merge inner schema with remaining siblings (e.g. nullable).
+			merged := make(map[string]any, len(inner)+len(result))
+			for k, v := range inner {
+				merged[k] = v
+			}
+			for k, v := range result {
+				if k != compKey {
+					merged[k] = v
 				}
 			}
+			return merged
 		}
 		return result
 	case []any:

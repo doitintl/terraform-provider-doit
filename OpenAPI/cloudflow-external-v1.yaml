@@ -1,0 +1,2466 @@
+openapi: 3.1.0
+
+info:
+  title: CloudFlow External API
+  version: "1.0.0"
+  license:
+    name: Proprietary
+  description: |
+    The CloudFlow API lets you automate your cloud operations by building and managing
+    workflows programmatically — creating flows, configuring nodes, setting variables,
+    and managing cloud provider connections — without needing console access.
+
+    **Authentication**: Bearer token via `Authorization: Bearer <token>`.
+
+    **Tenant resolution**: Pass `X-Tenant-Id` when the authenticated principal can access
+    more than one tenant. Omit for single-tenant principals (tenant is resolved from
+    token claims).
+
+    **Idempotency**: All side-effecting endpoints (POST/PUT/PATCH/DELETE) require an
+    `Idempotency-Key` request header. Retrying with the same key and fingerprint replays
+    the original response with an `Idempotency-Replayed: true` header. TTL is 24 h.
+
+    **Optimistic concurrency**: Mutating a flow, connection, or variable requires the
+    `If-Match` header containing the ETag from the most recent GET or mutation response.
+
+servers:
+  - url: https://api.doit.com
+    description: DoiT production API
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Flows
+    description: CloudFlow workflow management — create, read, update, delete, publish, and unpublish flows.
+  - name: Nodes
+    description: Flow node management — create, read, delete, and batch-update nodes within a flow.
+  - name: Flow Variables
+    description: Per-flow scoped variable management.
+  - name: Global Variables
+    description: Tenant-scoped global variable management.
+  - name: Connections
+    description: Cloud provider connection management (AWS and GCP).
+  - name: Templates
+    description: Read-only catalogue of flow templates (blueprints).
+
+paths:
+  # ============================================================
+  # Flows
+  # ============================================================
+  /cloudflow/v1/flows:
+    get:
+      operationId: ListFlows
+      summary: List flows
+      description: Returns a cursor-paginated list of flows visible to the authenticated principal.
+      tags: [Flows]
+      parameters:
+        - $ref: "#/components/parameters/MaxResults"
+        - $ref: "#/components/parameters/PageToken"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Paginated list of flows.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlowListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    post:
+      operationId: CreateFlow
+      summary: Create a flow
+      description: |
+        Creates a new flow. Pass `?templateId=<id>` to initialise the flow from a
+        template (blueprint), inheriting its nodes and structure.
+
+        **Dry-run**: Pass `?dryRun=true` to validate the request without persisting. The
+        response is `200` with generated fields (`id`, `etag`, `createTime`, `updateTime`)
+        set to `null` and the `X-Dry-Run: true` header.
+      tags: [Flows]
+      parameters:
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+        - name: templateId
+          in: query
+          required: false
+          description: |
+            ID of a template (blueprint) to initialise the flow from. When supplied the
+            new flow inherits the template's node graph and structure. The template itself
+            is not modified.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFlowRequest"
+      responses:
+        "201":
+          description: Flow created. `Location` header contains the canonical URL.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flow"
+        "200":
+          description: |
+            Dry-run response — the operation was validated but no flow was persisted.
+            Generated fields (`id`, `etag`, `createTime`, `updateTime`) are `null`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/flows/{flowId}:
+    get:
+      operationId: GetFlow
+      summary: Get a flow
+      tags: [Flows]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Flow retrieved successfully.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      operationId: UpdateFlow
+      summary: Update a flow
+      description: |
+        Replaces all mutable fields of a flow with the supplied values. This is a full
+        replacement: optional fields absent from the body are reset to their defaults
+        (e.g. `instructions` is cleared). Read-only fields (`id`, `status`, `published`,
+        `createTime`, `etag`) are ignored if present in the body.
+
+        `If-Match` is required. Obtain the current ETag from a preceding GET or mutation.
+      tags: [Flows]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFlowRequest"
+      responses:
+        "200":
+          description: Flow updated successfully.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      operationId: DeleteFlow
+      summary: Delete a flow
+      description: |
+        Permanently deletes a flow and all its nodes. This action is irreversible.
+        Returns `204 No Content`. The `ETag` response header reflects the final resource version.
+      tags: [Flows]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "204":
+          description: Flow deleted.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/flows/{flowId}/actions/publish:
+    post:
+      operationId: PublishFlow
+      summary: Publish a flow
+      description: |
+        Publishes a flow, making it available for scheduled or event-driven execution.
+        Validates that all required variables have values and that the flow graph is
+        complete before transitioning. Uses conditional validation; dry-run is supported.
+
+        The `published` field on the returned flow will be `true`.
+      tags: [Flows]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Flow published (or dry-run validated).
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/flows/{flowId}/actions/unpublish:
+    post:
+      operationId: UnpublishFlow
+      summary: Unpublish a flow
+      description: |
+        Unpublishes a flow, stopping any scheduled or event-driven execution and performing
+        tear-down steps (e.g. clearing the active schedule). The `published` field on the
+        returned flow will be `false`.
+      tags: [Flows]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Flow unpublished (or dry-run validated).
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ============================================================
+  # Nodes
+  # ============================================================
+  /cloudflow/v1/flows/{flowId}/nodes:
+    post:
+      operationId: CreateNode
+      summary: Create a node
+      description: |
+        Adds a new node to a flow. The optional `transition` field wires the new node to
+        an existing parent node. When `If-Match` matches the flow's current ETag, the
+        operation is safe against concurrent edits.
+      tags: [Nodes]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNodeRequest"
+      responses:
+        "201":
+          description: Node created. `Location` header contains the canonical URL.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Node"
+        "200":
+          description: Dry-run response — node was not created. Generated fields are `null`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Node"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/flows/{flowId}/nodes/actions/update-batch:
+    post:
+      operationId: UpdateNodesBatch
+      summary: Batch-update nodes
+      description: |
+        Atomically adds and updates a batch of nodes in a flow. All changes in the batch
+        are applied atomically or not at all.
+
+        This endpoint is intended for AI agents (e.g. Ava) that build or reshape the flow
+        graph in a single operation.
+      tags: [Nodes]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNodesBatchRequest"
+      responses:
+        "200":
+          description: Batch applied. Returns the updated flow with nodes embedded.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/flows/{flowId}/nodes/{nodeId}:
+    get:
+      operationId: GetNode
+      summary: Get a node
+      tags: [Nodes]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/NodeId"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Node retrieved successfully.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Node"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      operationId: DeleteNode
+      summary: Delete a node
+      description: |
+        Removes a node from a flow. Any transitions pointing to the deleted node are
+        also removed. Returns `204 No Content`.
+      tags: [Nodes]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/NodeId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "204":
+          description: Node deleted.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ============================================================
+  # Flow Variables
+  # ============================================================
+  /cloudflow/v1/flows/{flowId}/variables:
+    get:
+      operationId: ListFlowVariables
+      summary: List flow variables
+      tags: [Flow Variables]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/MaxResults"
+        - $ref: "#/components/parameters/PageToken"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Paginated list of flow-scoped variables.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VariableListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    post:
+      operationId: CreateFlowVariable
+      summary: Create a flow variable
+      tags: [Flow Variables]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VariableInput"
+      responses:
+        "201":
+          description: Flow variable created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "200":
+          description: Dry-run response — variable was not created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    patch:
+      operationId: UpdateFlowVariableValues
+      summary: Bulk-update flow variable values
+      description: |
+        Atomically updates the values of one or more flow-scoped variables. The request body
+        is an object with an `updates` array of `{ id, value }` pairs; only specified
+        variables are updated. Variables not listed are unaffected.
+      tags: [Flow Variables]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVariableValuesRequest"
+      responses:
+        "200":
+          description: Variable values updated. Returns the full updated variable list.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VariableListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/flows/{flowId}/variables/{variableId}:
+    get:
+      operationId: GetFlowVariable
+      summary: Get a flow variable
+      tags: [Flow Variables]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/VariableId"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Flow variable retrieved.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      operationId: UpdateFlowVariable
+      summary: Update a flow variable
+      description: |
+        Replaces the definition of a flow-scoped variable. The `name` must remain unique
+        within the flow (excluding the current variable). `If-Match` is required.
+      tags: [Flow Variables]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/VariableId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VariableInput"
+      responses:
+        "200":
+          description: Flow variable updated.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      operationId: DeleteFlowVariable
+      summary: Delete a flow variable
+      tags: [Flow Variables]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - $ref: "#/components/parameters/VariableId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "204":
+          description: Flow variable deleted.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ============================================================
+  # Global Variables
+  # ============================================================
+  /cloudflow/v1/global-variables:
+    get:
+      operationId: ListGlobalVariables
+      summary: List global variables
+      description: Returns all global (tenant-scoped) variables visible to the principal.
+      tags: [Global Variables]
+      parameters:
+        - $ref: "#/components/parameters/MaxResults"
+        - $ref: "#/components/parameters/PageToken"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Paginated list of global variables.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VariableListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    post:
+      operationId: CreateGlobalVariable
+      summary: Create a global variable
+      tags: [Global Variables]
+      parameters:
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VariableInput"
+      responses:
+        "201":
+          description: Global variable created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "200":
+          description: Dry-run response — variable was not created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/global-variables/{variableId}:
+    get:
+      operationId: GetGlobalVariable
+      summary: Get a global variable
+      tags: [Global Variables]
+      parameters:
+        - $ref: "#/components/parameters/VariableId"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Global variable retrieved.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      operationId: UpdateGlobalVariable
+      summary: Update a global variable
+      description: |
+        Replaces the definition of a global variable. The `name` must remain unique
+        across all global variables (excluding the current one). `If-Match` is required.
+      tags: [Global Variables]
+      parameters:
+        - $ref: "#/components/parameters/VariableId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VariableInput"
+      responses:
+        "200":
+          description: Global variable updated.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Variable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      operationId: DeleteGlobalVariable
+      summary: Delete a global variable
+      tags: [Global Variables]
+      parameters:
+        - $ref: "#/components/parameters/VariableId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "204":
+          description: Global variable deleted.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ============================================================
+  # Connections
+  # ============================================================
+  /cloudflow/v1/connections:
+    get:
+      operationId: ListConnections
+      summary: List connections
+      tags: [Connections]
+      parameters:
+        - $ref: "#/components/parameters/MaxResults"
+        - $ref: "#/components/parameters/PageToken"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Paginated list of connections.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    post:
+      operationId: CreateConnection
+      summary: Create a connection
+      description: |
+        Creates a new cloud provider connection. On creation the status is set to `active`
+        unless the provider requires an asynchronous permission-grant step, in which case
+        it will be `pending_permissions`.
+      tags: [Connections]
+      parameters:
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConnectionRequest"
+      responses:
+        "201":
+          description: Connection created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "200":
+          description: Dry-run response — connection was not created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/connections/{connectionId}:
+    get:
+      operationId: GetConnection
+      summary: Get a connection
+      tags: [Connections]
+      parameters:
+        - $ref: "#/components/parameters/ConnectionId"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Connection retrieved.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    patch:
+      operationId: UpdateConnection
+      summary: Update a connection
+      description: |
+        Partially updates a connection. Currently supports toggling the `enabled` flag:
+
+        - `enabled: true` — transitions status from `disabled` to `active`.
+        - `enabled: false` — transitions status to `disabled`.
+
+        Uses `Content-Type: application/merge-patch+json`. `If-Match` is required.
+      tags: [Connections]
+      parameters:
+        - $ref: "#/components/parameters/ConnectionId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/DryRun"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/UpdateConnectionRequest"
+      responses:
+        "200":
+          description: Connection updated.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      operationId: DeleteConnection
+      summary: Delete a connection
+      description: |
+        Permanently deletes a connection. Fails with `409 Conflict` if any flows reference
+        this connection via a variable of type `connection`.
+      tags: [Connections]
+      parameters:
+        - $ref: "#/components/parameters/ConnectionId"
+        - $ref: "#/components/parameters/IfMatchRequired"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "204":
+          description: Connection deleted.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ============================================================
+  # Templates (read-only)
+  # ============================================================
+  /cloudflow/v1/templates:
+    get:
+      operationId: ListTemplates
+      summary: List templates
+      description: |
+        Returns the catalogue of available flow templates (blueprints). Templates are
+        read-only. To create a flow from a template, use `POST /flows` with a `templateId`.
+      tags: [Templates]
+      parameters:
+        - $ref: "#/components/parameters/MaxResults"
+        - $ref: "#/components/parameters/PageToken"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Paginated list of templates.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /cloudflow/v1/templates/{templateId}:
+    get:
+      operationId: GetTemplate
+      summary: Get a template
+      tags: [Templates]
+      parameters:
+        - $ref: "#/components/parameters/TemplateId"
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Template retrieved.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+# ================================================================
+# Components
+# ================================================================
+components:
+  # --------------------------------------------------------------
+  # Security schemes
+  # --------------------------------------------------------------
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  # --------------------------------------------------------------
+  # Parameters
+  # --------------------------------------------------------------
+  parameters:
+    MaxResults:
+      name: maxResults
+      in: query
+      description: Maximum number of results to return in a single page. Default 50, max 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+
+    PageToken:
+      name: pageToken
+      in: query
+      description: Opaque page token returned by a previous list call. Expired tokens return 400 `pagination_token_expired`.
+      schema:
+        type: string
+
+    DryRun:
+      name: dryRun
+      in: query
+      description: |
+        Validate and preview the operation without persisting changes.
+        - Create endpoints: returns `200` with generated fields (`id`, `etag`, `createTime`, `updateTime`) set to `null`.
+        - Mutation endpoints: returns `200` with the projected updated state.
+        - Response includes `X-Dry-Run: true` header.
+      schema:
+        type: boolean
+        default: false
+
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Client-generated idempotency key for safe retries of side-effecting requests.
+        - Same key + matching fingerprint → original response is replayed with `Idempotency-Replayed: true`.
+        - Same key + different fingerprint → `422 idempotency_key_reused`.
+        - Missing → `400 idempotency_key_required`.
+        - TTL: 24 hours.
+        - Dry-run: fingerprint is validated but no cache entry is stored.
+      schema:
+        type: string
+        maxLength: 255
+
+    IfMatchRequired:
+      name: If-Match
+      in: header
+      required: true
+      description: |
+        Strong ETag of the current resource version for optimistic concurrency control.
+        Obtain from the `ETag` response header of a preceding GET or mutation.
+        - Absent → `428 precondition_required`.
+        - Mismatch → `412 precondition_failed`.
+      schema:
+        type: string
+        examples:
+          - '"a1b2c3d4"'
+
+    TenantId:
+      name: X-Tenant-Id
+      in: header
+      required: false
+      description: |
+        Tenant (customer) identifier. Required when the authenticated principal can access
+        more than one tenant. Absent for single-tenant principals — tenant is resolved
+        implicitly from the token. Absent for multi-tenant principals → `400 tenant_id_required`.
+      schema:
+        type: string
+
+    FlowId:
+      name: flowId
+      in: path
+      required: true
+      description: Unique identifier of the flow.
+      schema:
+        type: string
+
+    NodeId:
+      name: nodeId
+      in: path
+      required: true
+      description: Unique identifier of the node.
+      schema:
+        type: string
+
+    VariableId:
+      name: variableId
+      in: path
+      required: true
+      description: Unique identifier of the variable.
+      schema:
+        type: string
+
+    ConnectionId:
+      name: connectionId
+      in: path
+      required: true
+      description: Unique identifier of the connection.
+      schema:
+        type: string
+
+    TemplateId:
+      name: templateId
+      in: path
+      required: true
+      description: Unique identifier of the template.
+      schema:
+        type: string
+
+  # --------------------------------------------------------------
+  # Response headers
+  # --------------------------------------------------------------
+  headers:
+    RequestId:
+      description: |
+        DoiT request identifier of the form `req_<ULID>`. Present on every response.
+        Use for support tickets and log correlation. Equals the `instance` path segment
+        in the problem body on error responses.
+      schema:
+        $ref: "#/components/schemas/RequestId"
+
+    ContentLanguage:
+      description: Language of human-readable response text. Always `en`.
+      schema:
+        type: string
+        enum: [en]
+
+    ETag:
+      description: |
+        Strong entity tag for the current resource version. Returned on all mutable resource
+        responses including `204 No Content` (DELETE). Pass as `If-Match` on subsequent
+        mutations to guard against concurrent edits.
+      schema:
+        type: string
+        examples:
+          - '"a1b2c3d4"'
+
+    Location:
+      description: Canonical URL of the created resource. Present on `201 Created` responses.
+      schema:
+        type: string
+        format: uri-reference
+
+    XDryRun:
+      description: Present and set to `true` on dry-run responses.
+      schema:
+        type: boolean
+        enum: [true]
+
+  # --------------------------------------------------------------
+  # Common responses
+  # --------------------------------------------------------------
+  responses:
+    BadRequest:
+      description: |
+        `400 Bad Request` — caller error. Common `code` values:
+        - `validation_failed` — malformed or semantically invalid request body / parameters.
+        - `idempotency_key_required` — `Idempotency-Key` header is missing on a required endpoint.
+        - `tenant_id_required` — multi-tenant principal did not supply `X-Tenant-Id`.
+        - `pagination_token_expired` — page token has expired (TTL exceeded).
+        - `pagination_token_invalid` — page token is malformed or for a different query.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    Unauthorized:
+      description: "`401 Unauthorized` — missing or invalid credentials."
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+        WWW-Authenticate:
+          schema:
+            type: string
+            examples:
+              - 'Bearer realm="api.doit.com"'
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    Forbidden:
+      description: "`403 Forbidden` — authenticated but not authorised for this resource or action."
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    NotFound:
+      description: "`404 Not Found` — resource does not exist or is not visible to the caller."
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    Conflict:
+      description: |
+        `409 Conflict`. Discriminated by `code`:
+        - `conflict` — generic edit collision.
+        - `duplicate_name` — a resource with the same name already exists in scope.
+        - `idempotency_request_in_progress` — same key + fingerprint is currently in flight; wait and retry.
+        - `delete_blocked_by_dependencies` — resource cannot be deleted; dependents listed in `details`.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    UnprocessableEntity:
+      description: |
+        `422 Unprocessable Entity`. Discriminated by `code`:
+        - `validation_failed` — request body failed semantic validation (field errors in `details`).
+        - `idempotency_key_reused` — same key was used with a different request fingerprint.
+        - `connection_not_found` — a connection-type variable references a connection that does not exist
+          or does not belong to this tenant.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    PreconditionFailed:
+      description: |
+        `412 Precondition Failed` — `If-Match` was supplied but does not match the current
+        resource ETag. Fetch the resource to get the latest ETag and retry.
+        Code: `precondition_failed`.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    PreconditionRequired:
+      description: |
+        `428 Precondition Required` — `If-Match` header is required on this endpoint but
+        was not supplied.
+        Code: `precondition_required`.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+    TooManyRequests:
+      description: "`429 Too Many Requests` — rate limit exceeded. Retry after the `Retry-After` delay."
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+        Retry-After:
+          description: Delay in seconds before the next request may be attempted.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+
+  # --------------------------------------------------------------
+  # Schemas
+  # --------------------------------------------------------------
+  schemas:
+    # ----------------------------------------------------------------
+    # Standard — RFC 9457 / DoiT extensions
+    # ----------------------------------------------------------------
+    RequestId:
+      type: string
+      pattern: "^req_[0-9A-HJKMNP-TV-Z]{26}$"
+      description: DoiT request identifier. Always of the form `req_<ULID>`.
+      examples:
+        - "req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9"
+
+    ProblemDetails:
+      type: object
+      additionalProperties: true
+      description: |
+        DoiT Problem Details payload, compatible with RFC 9457 with DoiT extensions.
+      required: [type, title, status, detail, instance, code, retryable]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: |
+            Stable URI identifying the problem type.
+            Convention: `https://developer.doit.com/errors/<code>`.
+        title:
+          type: string
+          description: |
+            Short, stable, human-readable summary of the problem type. Suitable for
+            documentation. Do not branch logic on `title` — use `code` instead.
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+          description: HTTP status code, repeated in the body for log-only consumers.
+        detail:
+          type: string
+          description: |
+            Human-readable explanation specific to this occurrence.
+        instance:
+          type: string
+          format: uri
+          description: |
+            URI of the form `https://api.doit.com/requests/{requestId}`. The trailing
+            segment equals the `Request-Id` response header value.
+        code:
+          type: string
+          description: |
+            Stable, machine-parseable error identifier. Core codes are `lower_snake_case`.
+            Service-specific codes use `cloudflow.<code>` notation.
+          examples:
+            - validation_failed
+            - precondition_failed
+            - precondition_required
+            - conflict
+            - duplicate_name
+            - delete_blocked_by_dependencies
+            - idempotency_key_required
+            - idempotency_key_reused
+            - idempotency_request_in_progress
+            - tenant_id_required
+            - pagination_token_expired
+            - pagination_token_invalid
+            - connection_not_found
+        retryable:
+          type: boolean
+          description: Whether retrying the identical request (without changes) might succeed.
+        details:
+          type: array
+          description: |
+            Structured per-field diagnostic objects. Each object carries a `issue`
+            identifier; objects describing a specific field also carry `field`.
+          items:
+            type: object
+            required: [issue]
+            additionalProperties: true
+            properties:
+              issue:
+                type: string
+                pattern: "^[a-z][a-z0-9_]*$"
+                description: Stable snake_case identifier for the specific diagnostic.
+              field:
+                type: string
+                description: JSON pointer or dotted path to the offending request field.
+        docsUrl:
+          type: ["string", "null"]
+          format: uri
+          description: Optional URL to human-readable remediation documentation.
+
+    # ----------------------------------------------------------------
+    # Pagination envelopes
+    # ----------------------------------------------------------------
+    CursorPageEnvelope:
+      type: object
+      properties:
+        pageToken:
+          type: ["string", "null"]
+          description: |
+            Opaque cursor for the next page. `null` or absent when there are no more pages.
+            Pass as `?pageToken=<value>` on the next request. Expires after 5 minutes.
+        rowCount:
+          type: ["integer", "null"]
+          description: |
+            Best-effort total count of matching resources. May be `null` for very large
+            or filtered result sets.
+
+    FlowListResponse:
+      allOf:
+        - $ref: "#/components/schemas/CursorPageEnvelope"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Flow"
+
+    VariableListResponse:
+      allOf:
+        - $ref: "#/components/schemas/CursorPageEnvelope"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Variable"
+
+    ConnectionListResponse:
+      allOf:
+        - $ref: "#/components/schemas/CursorPageEnvelope"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Connection"
+
+    TemplateListResponse:
+      allOf:
+        - $ref: "#/components/schemas/CursorPageEnvelope"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Template"
+
+    # ----------------------------------------------------------------
+    # Enums
+    # ----------------------------------------------------------------
+    FlowStatus:
+      type: string
+      description: |
+        Lifecycle state of a flow.
+        - `new` — initial state assigned on creation.
+        - `draft` — flow has been unpublished, imported, or copied; not yet published.
+        - `published` — published and available for scheduled/event-driven execution.
+      enum: [new, draft, published]
+
+    ConnectionStatus:
+      type: string
+      description: |
+        Operational status of a connection.
+        - `active` — the connection is valid and in use.
+        - `disabled` — disabled via `PATCH /connections/{connectionId}`.
+        - `pending_permissions` — awaiting a permission grant in the cloud provider.
+        - `permissions_failed` — permission setup failed.
+        - `inactive` — deactivated.
+        - `cloud_deleted` — the underlying cloud resource was deleted externally.
+        - `draft` — connection is not yet fully configured.
+      enum: [draft, pending_permissions, permissions_failed, active, inactive, cloud_deleted, disabled]
+
+    VariableType:
+      type: string
+      description: |
+        Data type of a variable.
+        - `string` — UTF-8 text.
+        - `integer` — 64-bit signed integer.
+        - `float` — 64-bit floating-point number.
+        - `boolean` — true / false.
+        - `list` — ordered collection; element type specified by `elementType`.
+        - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+      enum: [string, integer, float, boolean, list, connection]
+
+    ConnectionProvider:
+      type: string
+      description: Cloud provider that a connection is bound to.
+      enum: [AWS, GCP]
+
+    NodeType:
+      type: string
+      description: |
+        Discriminator that identifies a node's role and determines the shape of its
+        `parameters` field.
+      enum:
+        - triggerNode
+        - actionNode
+        - conditionNode
+        - filterNode
+        - httpNode
+        - manualTrigger
+        - webhookTrigger
+        - systemEventTrigger
+        - transformation
+        - datetimeTransform
+        - notificationNode
+        - avaNode
+        - policy
+        - sqlNode
+        - codeNode
+        - cliNode
+        - datastoreNode
+        - subFlowNode
+        - sleepNode
+        - flowOutput
+        - scheduleTrigger
+
+    # ----------------------------------------------------------------
+    # Flow schemas
+    # ----------------------------------------------------------------
+    Flow:
+      type: object
+      required: [id, name, description, status, published, createTime, etag]
+      description: A CloudFlow workflow resource.
+      properties:
+        id:
+          type: ["string", "null"]
+          description: |
+            Server-assigned unique identifier. `null` on dry-run create responses
+            (no resource was persisted).
+        name:
+          type: string
+          description: Display name of the flow.
+        description:
+          type: string
+          description: Human-readable description.
+        instructions:
+          type: ["string", "null"]
+          description: Operator instructions or notes attached to the flow.
+        status:
+          oneOf:
+            - $ref: "#/components/schemas/FlowStatus"
+            - type: "null"
+          description: Lifecycle state. `null` on dry-run create responses.
+        published:
+          type: boolean
+          description: |
+            Whether the flow is currently published. Readable on every response; use
+            `POST /actions/publish` and `POST /actions/unpublish` to change this value.
+        firstNodeId:
+          type: ["string", "null"]
+          description: ID of the trigger (first) node. `null` if no trigger node has been set.
+        triggerType:
+          type: ["string", "null"]
+          description: |
+            Node type of the trigger node. `null` if no trigger node has been set.
+            One of the `NodeType` trigger variants: `triggerNode`, `manualTrigger`,
+            `webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.
+        createTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create.
+        updateTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run.
+        lastExecutedTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed.
+        lastExecutionStatus:
+          type: ["string", "null"]
+          description: Status string of the most recent execution. `null` if never executed.
+        etag:
+          type: ["string", "null"]
+          description: |
+            Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.
+            `null` on dry-run create responses.
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Node"
+          description: |
+            Embedded nodes. Populated by the `update-batch` response and by operations that
+            return the full flow with nodes inline. Not present on standard list responses.
+        nextRun:
+          type: ["string", "null"]
+          format: date-time
+          description: |
+            ISO 8601 (UTC) timestamp of the next scheduled execution. `null` if the flow
+            has no scheduled trigger, is unpublished, or scheduling is paused.
+
+    CreateFlowRequest:
+      type: object
+      required: [name]
+      description: Request body for `CreateFlow`.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name for the new flow.
+        description:
+          type: string
+          maxLength: 2000
+          description: Human-readable description.
+        instructions:
+          type: ["string", "null"]
+          description: |
+            Operator instructions or notes attached to the flow. Pass `null` or
+            omit to leave empty.
+    UpdateFlowRequest:
+      type: object
+      description: |
+        Request body for `UpdateFlow` (full replacement). All writable fields are replaced
+        with the supplied values. Optional fields that are omitted are reset to their defaults
+        (e.g. `instructions` is cleared if absent). Read-only fields (`id`, `status`,
+        `published`, `createTime`, `etag`) are silently ignored.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: New display name.
+        description:
+          type: string
+          maxLength: 2000
+          description: New description.
+        instructions:
+          type: string
+          description: New operator instructions. Omit to clear.
+
+    # ----------------------------------------------------------------
+    # Node schemas
+    # ----------------------------------------------------------------
+    Node:
+      type: object
+      required: [id, name, type, appKey, disabled, createTime, etag]
+      description: A single node within a CloudFlow.
+      properties:
+        id:
+          type: ["string", "null"]
+          description: Server-assigned unique identifier. `null` on dry-run create responses.
+        name:
+          type: string
+          description: Display name.
+        description:
+          type: string
+          description: Human-readable description.
+        type:
+          $ref: "#/components/schemas/NodeType"
+        appKey:
+          type: string
+          description: Identifier of the integration or application this node belongs to.
+        actionId:
+          type: string
+          description: Identifier of the specific operation this node performs (e.g. AWS service action).
+        disabled:
+          type: boolean
+          description: When `true` this node is skipped during flow execution.
+        parameters:
+          type: object
+          additionalProperties: true
+          description: |
+            Node-specific configuration. The concrete shape depends on `type`. Refer to
+            the CloudFlow node type documentation for the required fields per node type.
+        approval:
+          description: Optional human approval gate. `null` if no approval is required.
+          oneOf:
+            - $ref: "#/components/schemas/Approval"
+            - type: "null"
+        transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transition"
+          description: Directed edges to child nodes.
+        createTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+        updateTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+        etag:
+          type: ["string", "null"]
+          description: Strong ETag for this node version. `null` on dry-run create.
+
+    Transition:
+      type: object
+      required: [targetNodeId]
+      description: Directed edge from a parent node to a child node.
+      properties:
+        targetNodeId:
+          type: string
+          description: ID of the target (child) node.
+        label:
+          type: string
+          enum: ["True", "False"]
+          description: >
+            Identifies the execution path for branch node transitions.
+            Branch nodes have at most two outgoing transitions: one labeled
+            "True" and one labeled "False". Required on branch node transitions;
+            must be omitted for all other node types.
+
+    Approval:
+      type: object
+      required: [required, rejectApprovalAfterTime]
+      description: Human approval gate configuration for a node.
+      properties:
+        required:
+          type: boolean
+          description: Whether approval is required before the node can proceed.
+        notificationProvider:
+          type: string
+          enum: [email, slack]
+          description: |
+            Delivery channel for the approval notification.
+            - `email` — sends to the addresses in `recipients`.
+            - `slack` — sends to the channels in `recipients`.
+        recipients:
+          type: array
+          description: |
+            Notification recipients. Each entry is a plain string (email address or
+            Slack channel identifier) or a referenced node-output value (an upstream
+            node's output field resolved at runtime by the flow engine).
+          items: {}
+        subject:
+          description: |
+            Subject line for email notifications. Plain string or a referenced
+            node-output value. Ignored when `notificationProvider` is `slack`.
+        message:
+          description: |
+            Approval request message body. May contain inline text, upstream node
+            output references, or a mix. Resolved at runtime by the flow engine.
+        rejectApprovalAfterTime:
+          type: boolean
+          description: Whether the approval auto-rejects if not acted on within the time window.
+        rejectTimeValue:
+          type: integer
+          minimum: 1
+          description: |
+            Number of time units before auto-rejection.
+            Required when `rejectApprovalAfterTime` is `true`.
+        rejectTimeUnit:
+          type: string
+          enum: [Hours, Days, Weeks, Months]
+          description: |
+            Time unit for the auto-rejection window.
+            Required when `rejectApprovalAfterTime` is `true`.
+
+    CreateNodeRequest:
+      type: object
+      required: [node]
+      description: Request body for `CreateNode`.
+      properties:
+        node:
+          $ref: "#/components/schemas/NodeInput"
+        transition:
+          description: |
+            Optional wiring to an existing parent node. When supplied, the new node is
+            connected as a child of `parentNodeId` via the given branch value.
+          oneOf:
+            - $ref: "#/components/schemas/ParentTransition"
+            - type: "null"
+
+    NodeInput:
+      type: object
+      required: [name, type, appKey, disabled]
+      description: Node payload for create and update operations.
+      properties:
+        id:
+          type: string
+          description: |
+            Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a
+            stable ID enables idempotent batch operations.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        type:
+          $ref: "#/components/schemas/NodeType"
+        appKey:
+          type: string
+          description: Identifier of the integration or application.
+        disabled:
+          type: boolean
+          default: false
+        parameters:
+          type: object
+          additionalProperties: true
+          description: |
+            Node-specific configuration. See CloudFlow node type documentation for
+            the required fields per `type`.
+        approval:
+          oneOf:
+            - $ref: "#/components/schemas/Approval"
+            - type: "null"
+        transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transition"
+          description: Outgoing edges to child nodes.
+
+    ParentTransition:
+      type: object
+      required: [parentNodeId]
+      description: Wires the new node as a child of an existing parent node.
+      properties:
+        parentNodeId:
+          type: string
+          description: ID of the existing parent node.
+        label:
+          type: string
+          enum: ["True", "False"]
+          description: >
+            Selects which branch of the parent node this node connects to.
+            Required when the parent is a branch node; must be "True" or "False".
+            Omit for all other parent node types.
+
+    UpdateNodesBatchRequest:
+      type: object
+      description: |
+        Request body for `UpdateNodesBatch`. All changes are applied atomically.
+      properties:
+        name:
+          type: ["string", "null"]
+          description: Optional new display name for the flow.
+        addedNodes:
+          type: array
+          description: New nodes to add to the flow.
+          items:
+            $ref: "#/components/schemas/CreateNodeRequest"
+        updatedNodes:
+          type: array
+          description: |
+            Existing nodes to update. Each entry must have `node.id` set to the ID
+            of the node being replaced.
+          items:
+            $ref: "#/components/schemas/CreateNodeRequest"
+
+    # ----------------------------------------------------------------
+    # Variable schemas
+    # ----------------------------------------------------------------
+    Variable:
+      type: object
+      required: [id, name, type, required, createTime, updateTime, etag]
+      description: A CloudFlow variable resource (flow-scoped or global).
+      properties:
+        id:
+          type: ["string", "null"]
+          description: Server-assigned unique identifier. `null` on dry-run create responses.
+        name:
+          type: string
+          description: |
+            Variable name. Alphanumeric characters, underscores, and dashes only (1–100 chars).
+            Must be unique within scope (flow or global).
+        description:
+          type: string
+          description: Human-readable description.
+        type:
+          $ref: "#/components/schemas/VariableType"
+        elementType:
+          type: ["string", "null"]
+          description: |
+            Element type for `list` variables (e.g. `string`, `integer`). Required when
+            `type` is `list`; `null` for all other types.
+        connectionType:
+          type: ["string", "null"]
+          description: |
+            Connection provider type for `connection` variables (e.g. `AWS`, `GCP`). Required
+            when `type` is `connection`; `null` for all other types.
+        required:
+          type: boolean
+          description: Whether a value must be provided before the flow can be published.
+        value:
+          type: ["string", "null"]
+          description: |
+            Current value, always string-encoded on the wire. `null` if no value has been set.
+            Logical encoding by variable `type`:
+            - `string` → the string value
+            - `integer` → decimal string, e.g. `"42"`
+            - `float` → decimal string, e.g. `"3.14"`
+            - `boolean` → `"true"` or `"false"`
+            - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
+            - `connection` → connection ID string
+        createTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+        updateTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp.
+        etag:
+          type: ["string", "null"]
+          description: Strong ETag. `null` on dry-run create.
+
+    VariableInput:
+      type: object
+      required: [name, type, required]
+      description: |
+        Request body for `CreateFlowVariable`, `CreateGlobalVariable`,
+        `UpdateFlowVariable`, and `UpdateGlobalVariable`.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: "^[a-zA-Z0-9_\\-]+$"
+          description: |
+            Variable name. Alphanumeric, underscore, and dash only. Must be unique
+            within scope (flow-local or global).
+        description:
+          type: string
+          maxLength: 2000
+        type:
+          $ref: "#/components/schemas/VariableType"
+        elementType:
+          type: string
+          description: Element type for `list` variables. Required when `type` is `list`.
+          enum: [string, integer, float, boolean, connection]
+        connectionType:
+          $ref: "#/components/schemas/ConnectionProvider"
+          description: |
+            Connection provider type for `connection` variables.
+            Required when `type` is `connection`.
+        required:
+          type: boolean
+          description: Whether the flow requires a value before publishing.
+        value:
+          type: string
+          description: |
+            Initial or updated value, always string-encoded on the wire. Encoding by `type`:
+            - `string` → the string value
+            - `integer` → decimal string, e.g. `"42"`
+            - `float` → decimal string, e.g. `"3.14"`
+            - `boolean` → `"true"` or `"false"`
+            - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
+            - `connection` → connection ID string; the referenced connection must exist
+              within the tenant and be in an `active` or `inactive` state.
+
+    UpdateVariableValuesRequest:
+      type: object
+      required: [updates]
+      description: |
+        Request body for `UpdateFlowVariableValues`. Only the specified variables are
+        updated; others are unaffected.
+      properties:
+        updates:
+          type: array
+          description: Variable-value pairs to update.
+          items:
+            type: object
+            required: [id, value]
+            description: Single variable value update.
+            properties:
+              id:
+                type: string
+                description: ID of the flow-scoped variable to update.
+              value:
+                type: string
+                description: |
+                  New value, string-encoded. See `VariableInput.value` for encoding
+                  rules per variable `type`.
+
+    # ----------------------------------------------------------------
+    # Connection schemas
+    # ----------------------------------------------------------------
+    Connection:
+      type: object
+      required: [id, name, cloudProvider, status, enabled, createTime, updateTime, etag]
+      description: A cloud provider connection resource.
+      properties:
+        id:
+          type: ["string", "null"]
+          description: Unique identifier. `null` on dry-run create responses.
+        name:
+          type: string
+          description: Display name.
+        description:
+          type: ["string", "null"]
+          description: Human-readable description.
+        cloudProvider:
+          $ref: "#/components/schemas/ConnectionProvider"
+        status:
+          $ref: "#/components/schemas/ConnectionStatus"
+        statusMessage:
+          type: ["string", "null"]
+          description: Human-readable explanation of a non-active status.
+        enabled:
+          type: boolean
+          description: |
+            Whether this connection is enabled. Derived from `status`: `false` when
+            `status` is `disabled`, `true` otherwise. Toggle via
+            `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
+        connectionConfiguration:
+          type: object
+          additionalProperties: true
+          description: |
+            Provider-specific configuration. Shape depends on `cloudProvider`:
+            - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
+            - **GCP**: project IDs and service account configuration.
+        createTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+        updateTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp.
+        lastSyncedTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) timestamp of the last successful sync with the cloud provider.
+        etag:
+          type: ["string", "null"]
+          description: Strong ETag. `null` on dry-run create.
+
+    CreateConnectionRequest:
+      type: object
+      required: [name, cloudProvider, connectionConfiguration]
+      description: Request body for `CreateConnection`.
+      properties:
+        id:
+          type: string
+          description: |
+            Client-provided connection ID. Server assigns one if omitted. Providing a
+            stable ID enables idempotent creation.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Unique display name for the connection within the tenant.
+        description:
+          type: string
+          maxLength: 2000
+        cloudProvider:
+          $ref: "#/components/schemas/ConnectionProvider"
+        connectionConfiguration:
+          type: object
+          additionalProperties: true
+          description: |
+            Provider-specific configuration object. Required fields depend on `cloudProvider`.
+            See CloudFlow connection documentation for the expected shape per provider.
+
+    UpdateConnectionRequest:
+      type: object
+      required: [enabled]
+      description: |
+        Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
+        Currently supports toggling the `enabled` flag only.
+      properties:
+        enabled:
+          type: boolean
+          description: |
+            - `true` — enable the connection (transitions `disabled` → `active`).
+            - `false` — disable the connection (transitions current status → `disabled`).
+
+    # ----------------------------------------------------------------
+    # Template schemas
+    # ----------------------------------------------------------------
+    Template:
+      type: object
+      required: [id, name, createTime]
+      description: |
+        A read-only flow template (blueprint). Use `POST /flows` with `templateId` to
+        create a new flow initialised from this template.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the template.
+        name:
+          type: string
+          description: Display name.
+        description:
+          type: string
+          description: Human-readable description.
+        instructions:
+          type: ["string", "null"]
+          description: Operator instructions for flows created from this template.
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp.
+        updateTime:
+          type: ["string", "null"]
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.

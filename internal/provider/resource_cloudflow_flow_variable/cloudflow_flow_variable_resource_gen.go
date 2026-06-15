@@ -64,8 +64,8 @@ func CloudflowFlowVariableResourceSchema(ctx context.Context) schema.Schema {
 			"flow_id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Flow ID",
-				MarkdownDescription: "Flow ID",
+				Description:         "Unique identifier of the flow.",
+				MarkdownDescription: "Unique identifier of the flow.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -115,8 +115,8 @@ func CloudflowFlowVariableResourceSchema(ctx context.Context) schema.Schema {
 			"variable_id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Variable ID",
-				MarkdownDescription: "Variable ID",
+				Description:         "Unique identifier of the variable.",
+				MarkdownDescription: "Unique identifier of the variable.",
 			},
 		},
 	}

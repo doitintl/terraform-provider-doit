@@ -209,6 +209,48 @@ func (e AnomalyItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for ApprovalNotificationProvider.
+const (
+	ApprovalNotificationProviderEmail ApprovalNotificationProvider = "email"
+	ApprovalNotificationProviderSlack ApprovalNotificationProvider = "slack"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalNotificationProvider enum.
+func (e ApprovalNotificationProvider) Valid() bool {
+	switch e {
+	case ApprovalNotificationProviderEmail:
+		return true
+	case ApprovalNotificationProviderSlack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApprovalRejectTimeUnit.
+const (
+	Days   ApprovalRejectTimeUnit = "Days"
+	Hours  ApprovalRejectTimeUnit = "Hours"
+	Months ApprovalRejectTimeUnit = "Months"
+	Weeks  ApprovalRejectTimeUnit = "Weeks"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalRejectTimeUnit enum.
+func (e ApprovalRejectTimeUnit) Valid() bool {
+	switch e {
+	case Days:
+		return true
+	case Hours:
+		return true
+	case Months:
+		return true
+	case Weeks:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BudgetAPIPublic.
 const (
 	BudgetAPIPublicEditor BudgetAPIPublic = "editor"
@@ -1025,6 +1067,57 @@ func (e Condition) Valid() bool {
 	}
 }
 
+// Defines values for ConnectionProvider.
+const (
+	AWS ConnectionProvider = "AWS"
+	GCP ConnectionProvider = "GCP"
+)
+
+// Valid indicates whether the value is a known member of the ConnectionProvider enum.
+func (e ConnectionProvider) Valid() bool {
+	switch e {
+	case AWS:
+		return true
+	case GCP:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ConnectionStatus.
+const (
+	ConnectionStatusActive             ConnectionStatus = "active"
+	ConnectionStatusCloudDeleted       ConnectionStatus = "cloud_deleted"
+	ConnectionStatusDisabled           ConnectionStatus = "disabled"
+	ConnectionStatusDraft              ConnectionStatus = "draft"
+	ConnectionStatusInactive           ConnectionStatus = "inactive"
+	ConnectionStatusPendingPermissions ConnectionStatus = "pending_permissions"
+	ConnectionStatusPermissionsFailed  ConnectionStatus = "permissions_failed"
+)
+
+// Valid indicates whether the value is a known member of the ConnectionStatus enum.
+func (e ConnectionStatus) Valid() bool {
+	switch e {
+	case ConnectionStatusActive:
+		return true
+	case ConnectionStatusCloudDeleted:
+		return true
+	case ConnectionStatusDisabled:
+		return true
+	case ConnectionStatusDraft:
+		return true
+	case ConnectionStatusInactive:
+		return true
+	case ConnectionStatusPendingPermissions:
+		return true
+	case ConnectionStatusPermissionsFailed:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CreateCategory.
 const (
 	CreateCategoryFinOps   CreateCategory = "FinOps"
@@ -1400,30 +1493,6 @@ func (e DisplayStatus) Valid() bool {
 	}
 }
 
-// Defines values for ExternalApprovalRejectTimeUnit.
-const (
-	Days   ExternalApprovalRejectTimeUnit = "Days"
-	Hours  ExternalApprovalRejectTimeUnit = "Hours"
-	Months ExternalApprovalRejectTimeUnit = "Months"
-	Weeks  ExternalApprovalRejectTimeUnit = "Weeks"
-)
-
-// Valid indicates whether the value is a known member of the ExternalApprovalRejectTimeUnit enum.
-func (e ExternalApprovalRejectTimeUnit) Valid() bool {
-	switch e {
-	case Days:
-		return true
-	case Hours:
-		return true
-	case Months:
-		return true
-	case Weeks:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ExternalConfigAggregation.
 const (
 	Count          ExternalConfigAggregation = "count"
@@ -1646,57 +1715,6 @@ func (e ExternalConfigMetricFilterOperator) Valid() bool {
 	}
 }
 
-// Defines values for ExternalConnectionProvider.
-const (
-	AWS ExternalConnectionProvider = "AWS"
-	GCP ExternalConnectionProvider = "GCP"
-)
-
-// Valid indicates whether the value is a known member of the ExternalConnectionProvider enum.
-func (e ExternalConnectionProvider) Valid() bool {
-	switch e {
-	case AWS:
-		return true
-	case GCP:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ExternalConnectionStatus.
-const (
-	ExternalConnectionStatusActive             ExternalConnectionStatus = "active"
-	ExternalConnectionStatusCloudDeleted       ExternalConnectionStatus = "cloud_deleted"
-	ExternalConnectionStatusDisabled           ExternalConnectionStatus = "disabled"
-	ExternalConnectionStatusDraft              ExternalConnectionStatus = "draft"
-	ExternalConnectionStatusInactive           ExternalConnectionStatus = "inactive"
-	ExternalConnectionStatusPendingPermissions ExternalConnectionStatus = "pending_permissions"
-	ExternalConnectionStatusPermissionsFailed  ExternalConnectionStatus = "permissions_failed"
-)
-
-// Valid indicates whether the value is a known member of the ExternalConnectionStatus enum.
-func (e ExternalConnectionStatus) Valid() bool {
-	switch e {
-	case ExternalConnectionStatusActive:
-		return true
-	case ExternalConnectionStatusCloudDeleted:
-		return true
-	case ExternalConnectionStatusDisabled:
-		return true
-	case ExternalConnectionStatusDraft:
-		return true
-	case ExternalConnectionStatusInactive:
-		return true
-	case ExternalConnectionStatusPendingPermissions:
-		return true
-	case ExternalConnectionStatusPermissionsFailed:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ExternalDisplaySettingsAxisLabelFontSize.
 const (
 	ExternalDisplaySettingsAxisLabelFontSizeAuto   ExternalDisplaySettingsAxisLabelFontSize = "auto"
@@ -1772,36 +1790,6 @@ func (e ExternalDisplaySettingsNumberScale) Valid() bool {
 	}
 }
 
-// Defines values for ExternalFlowStatus.
-const (
-	ExternalFlowStatusActive    ExternalFlowStatus = "active"
-	ExternalFlowStatusDraft     ExternalFlowStatus = "draft"
-	ExternalFlowStatusInactive  ExternalFlowStatus = "inactive"
-	ExternalFlowStatusNew       ExternalFlowStatus = "new"
-	ExternalFlowStatusPending   ExternalFlowStatus = "pending"
-	ExternalFlowStatusPublished ExternalFlowStatus = "published"
-)
-
-// Valid indicates whether the value is a known member of the ExternalFlowStatus enum.
-func (e ExternalFlowStatus) Valid() bool {
-	switch e {
-	case ExternalFlowStatusActive:
-		return true
-	case ExternalFlowStatusDraft:
-		return true
-	case ExternalFlowStatusInactive:
-		return true
-	case ExternalFlowStatusNew:
-		return true
-	case ExternalFlowStatusPending:
-		return true
-	case ExternalFlowStatusPublished:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ExternalMetricType.
 const (
 	ExternalMetricTypeBasic    ExternalMetricType = "basic"
@@ -1817,105 +1805,6 @@ func (e ExternalMetricType) Valid() bool {
 	case ExternalMetricTypeCustom:
 		return true
 	case ExternalMetricTypeExtended:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ExternalNodeStatus.
-const (
-	ExternalNodeStatusError     ExternalNodeStatus = "error"
-	ExternalNodeStatusNew       ExternalNodeStatus = "new"
-	ExternalNodeStatusPending   ExternalNodeStatus = "pending"
-	ExternalNodeStatusValidated ExternalNodeStatus = "validated"
-)
-
-// Valid indicates whether the value is a known member of the ExternalNodeStatus enum.
-func (e ExternalNodeStatus) Valid() bool {
-	switch e {
-	case ExternalNodeStatusError:
-		return true
-	case ExternalNodeStatusNew:
-		return true
-	case ExternalNodeStatusPending:
-		return true
-	case ExternalNodeStatusValidated:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ExternalNodeType.
-const (
-	ActionNode         ExternalNodeType = "actionNode"
-	AvaNode            ExternalNodeType = "avaNode"
-	CliNode            ExternalNodeType = "cliNode"
-	CodeNode           ExternalNodeType = "codeNode"
-	ConditionNode      ExternalNodeType = "conditionNode"
-	DatastoreNode      ExternalNodeType = "datastoreNode"
-	DatetimeTransform  ExternalNodeType = "datetimeTransform"
-	FilterNode         ExternalNodeType = "filterNode"
-	FlowOutput         ExternalNodeType = "flowOutput"
-	HttpNode           ExternalNodeType = "httpNode"
-	ManualTrigger      ExternalNodeType = "manualTrigger"
-	NotificationNode   ExternalNodeType = "notificationNode"
-	Policy             ExternalNodeType = "policy"
-	ScheduleTrigger    ExternalNodeType = "scheduleTrigger"
-	SleepNode          ExternalNodeType = "sleepNode"
-	SqlNode            ExternalNodeType = "sqlNode"
-	SubFlowNode        ExternalNodeType = "subFlowNode"
-	SystemEventTrigger ExternalNodeType = "systemEventTrigger"
-	Transformation     ExternalNodeType = "transformation"
-	TriggerNode        ExternalNodeType = "triggerNode"
-	WebhookTrigger     ExternalNodeType = "webhookTrigger"
-)
-
-// Valid indicates whether the value is a known member of the ExternalNodeType enum.
-func (e ExternalNodeType) Valid() bool {
-	switch e {
-	case ActionNode:
-		return true
-	case AvaNode:
-		return true
-	case CliNode:
-		return true
-	case CodeNode:
-		return true
-	case ConditionNode:
-		return true
-	case DatastoreNode:
-		return true
-	case DatetimeTransform:
-		return true
-	case FilterNode:
-		return true
-	case FlowOutput:
-		return true
-	case HttpNode:
-		return true
-	case ManualTrigger:
-		return true
-	case NotificationNode:
-		return true
-	case Policy:
-		return true
-	case ScheduleTrigger:
-		return true
-	case SleepNode:
-		return true
-	case SqlNode:
-		return true
-	case SubFlowNode:
-		return true
-	case SystemEventTrigger:
-		return true
-	case Transformation:
-		return true
-	case TriggerNode:
-		return true
-	case WebhookTrigger:
 		return true
 	default:
 		return false
@@ -2162,57 +2051,21 @@ func (e ExternalSplitTargetType) Valid() bool {
 	}
 }
 
-// Defines values for ExternalVariableInputElementType.
+// Defines values for FlowStatus.
 const (
-	ExternalVariableInputElementTypeBoolean    ExternalVariableInputElementType = "boolean"
-	ExternalVariableInputElementTypeConnection ExternalVariableInputElementType = "connection"
-	ExternalVariableInputElementTypeFloat      ExternalVariableInputElementType = "float"
-	ExternalVariableInputElementTypeInteger    ExternalVariableInputElementType = "integer"
-	ExternalVariableInputElementTypeString     ExternalVariableInputElementType = "string"
+	FlowStatusDraft     FlowStatus = "draft"
+	FlowStatusNew       FlowStatus = "new"
+	FlowStatusPublished FlowStatus = "published"
 )
 
-// Valid indicates whether the value is a known member of the ExternalVariableInputElementType enum.
-func (e ExternalVariableInputElementType) Valid() bool {
+// Valid indicates whether the value is a known member of the FlowStatus enum.
+func (e FlowStatus) Valid() bool {
 	switch e {
-	case ExternalVariableInputElementTypeBoolean:
+	case FlowStatusDraft:
 		return true
-	case ExternalVariableInputElementTypeConnection:
+	case FlowStatusNew:
 		return true
-	case ExternalVariableInputElementTypeFloat:
-		return true
-	case ExternalVariableInputElementTypeInteger:
-		return true
-	case ExternalVariableInputElementTypeString:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ExternalVariableType.
-const (
-	ExternalVariableTypeBoolean    ExternalVariableType = "boolean"
-	ExternalVariableTypeConnection ExternalVariableType = "connection"
-	ExternalVariableTypeFloat      ExternalVariableType = "float"
-	ExternalVariableTypeInteger    ExternalVariableType = "integer"
-	ExternalVariableTypeList       ExternalVariableType = "list"
-	ExternalVariableTypeString     ExternalVariableType = "string"
-)
-
-// Valid indicates whether the value is a known member of the ExternalVariableType enum.
-func (e ExternalVariableType) Valid() bool {
-	switch e {
-	case ExternalVariableTypeBoolean:
-		return true
-	case ExternalVariableTypeConnection:
-		return true
-	case ExternalVariableTypeFloat:
-		return true
-	case ExternalVariableTypeInteger:
-		return true
-	case ExternalVariableTypeList:
-		return true
-	case ExternalVariableTypeString:
+	case FlowStatusPublished:
 		return true
 	default:
 		return false
@@ -2600,21 +2453,114 @@ func (e MetricFilterText) Valid() bool {
 	}
 }
 
+// Defines values for NodeType.
+const (
+	ActionNode         NodeType = "actionNode"
+	AvaNode            NodeType = "avaNode"
+	CliNode            NodeType = "cliNode"
+	CodeNode           NodeType = "codeNode"
+	ConditionNode      NodeType = "conditionNode"
+	DatastoreNode      NodeType = "datastoreNode"
+	DatetimeTransform  NodeType = "datetimeTransform"
+	FilterNode         NodeType = "filterNode"
+	FlowOutput         NodeType = "flowOutput"
+	HttpNode           NodeType = "httpNode"
+	ManualTrigger      NodeType = "manualTrigger"
+	NotificationNode   NodeType = "notificationNode"
+	Policy             NodeType = "policy"
+	ScheduleTrigger    NodeType = "scheduleTrigger"
+	SleepNode          NodeType = "sleepNode"
+	SqlNode            NodeType = "sqlNode"
+	SubFlowNode        NodeType = "subFlowNode"
+	SystemEventTrigger NodeType = "systemEventTrigger"
+	Transformation     NodeType = "transformation"
+	TriggerNode        NodeType = "triggerNode"
+	WebhookTrigger     NodeType = "webhookTrigger"
+)
+
+// Valid indicates whether the value is a known member of the NodeType enum.
+func (e NodeType) Valid() bool {
+	switch e {
+	case ActionNode:
+		return true
+	case AvaNode:
+		return true
+	case CliNode:
+		return true
+	case CodeNode:
+		return true
+	case ConditionNode:
+		return true
+	case DatastoreNode:
+		return true
+	case DatetimeTransform:
+		return true
+	case FilterNode:
+		return true
+	case FlowOutput:
+		return true
+	case HttpNode:
+		return true
+	case ManualTrigger:
+		return true
+	case NotificationNode:
+		return true
+	case Policy:
+		return true
+	case ScheduleTrigger:
+		return true
+	case SleepNode:
+		return true
+	case SqlNode:
+		return true
+	case SubFlowNode:
+		return true
+	case SystemEventTrigger:
+		return true
+	case Transformation:
+		return true
+	case TriggerNode:
+		return true
+	case WebhookTrigger:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for NotificationEventChannel.
 const (
-	Email   NotificationEventChannel = "email"
-	Msteams NotificationEventChannel = "msteams"
-	Slack   NotificationEventChannel = "slack"
+	NotificationEventChannelEmail   NotificationEventChannel = "email"
+	NotificationEventChannelMsteams NotificationEventChannel = "msteams"
+	NotificationEventChannelSlack   NotificationEventChannel = "slack"
 )
 
 // Valid indicates whether the value is a known member of the NotificationEventChannel enum.
 func (e NotificationEventChannel) Valid() bool {
 	switch e {
-	case Email:
+	case NotificationEventChannelEmail:
 		return true
-	case Msteams:
+	case NotificationEventChannelMsteams:
 		return true
-	case Slack:
+	case NotificationEventChannelSlack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ParentTransitionLabel.
+const (
+	ParentTransitionLabelFalse ParentTransitionLabel = "False"
+	ParentTransitionLabelTrue  ParentTransitionLabel = "True"
+)
+
+// Valid indicates whether the value is a known member of the ParentTransitionLabel enum.
+func (e ParentTransitionLabel) Valid() bool {
+	switch e {
+	case ParentTransitionLabelFalse:
+		return true
+	case ParentTransitionLabelTrue:
 		return true
 	default:
 		return false
@@ -2918,6 +2864,24 @@ func (e TimeSettingsSecondaryUnit) Valid() bool {
 	}
 }
 
+// Defines values for TransitionLabel.
+const (
+	TransitionLabelFalse TransitionLabel = "False"
+	TransitionLabelTrue  TransitionLabel = "True"
+)
+
+// Valid indicates whether the value is a known member of the TransitionLabel enum.
+func (e TransitionLabel) Valid() bool {
+	switch e {
+	case TransitionLabelFalse:
+		return true
+	case TransitionLabelTrue:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UpdateLabelRequestColor.
 const (
 	Apricot    UpdateLabelRequestColor = "apricot"
@@ -3191,6 +3155,63 @@ func (e UserListItemStatus) Valid() bool {
 	case UserListItemStatusActive:
 		return true
 	case UserListItemStatusInvited:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VariableInputElementType.
+const (
+	VariableInputElementTypeBoolean    VariableInputElementType = "boolean"
+	VariableInputElementTypeConnection VariableInputElementType = "connection"
+	VariableInputElementTypeFloat      VariableInputElementType = "float"
+	VariableInputElementTypeInteger    VariableInputElementType = "integer"
+	VariableInputElementTypeString     VariableInputElementType = "string"
+)
+
+// Valid indicates whether the value is a known member of the VariableInputElementType enum.
+func (e VariableInputElementType) Valid() bool {
+	switch e {
+	case VariableInputElementTypeBoolean:
+		return true
+	case VariableInputElementTypeConnection:
+		return true
+	case VariableInputElementTypeFloat:
+		return true
+	case VariableInputElementTypeInteger:
+		return true
+	case VariableInputElementTypeString:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VariableType.
+const (
+	VariableTypeBoolean    VariableType = "boolean"
+	VariableTypeConnection VariableType = "connection"
+	VariableTypeFloat      VariableType = "float"
+	VariableTypeInteger    VariableType = "integer"
+	VariableTypeList       VariableType = "list"
+	VariableTypeString     VariableType = "string"
+)
+
+// Valid indicates whether the value is a known member of the VariableType enum.
+func (e VariableType) Valid() bool {
+	switch e {
+	case VariableTypeBoolean:
+		return true
+	case VariableTypeConnection:
+		return true
+	case VariableTypeFloat:
+		return true
+	case VariableTypeInteger:
+		return true
+	case VariableTypeList:
+		return true
+	case VariableTypeString:
 		return true
 	default:
 		return false
@@ -4186,6 +4207,50 @@ type AnomalySKU struct {
 
 // AnomalySKUArray Array of SKU entries contributing to an anomaly.
 type AnomalySKUArray = []AnomalySKU
+
+// Approval Human approval gate configuration for a node.
+type Approval struct {
+	// Message Approval request message body. May contain inline text, upstream node
+	// output references, or a mix. Resolved at runtime by the flow engine.
+	Message interface{} `json:"message,omitempty"`
+
+	// NotificationProvider Delivery channel for the approval notification.
+	// - `email` — sends to the addresses in `recipients`.
+	// - `slack` — sends to the channels in `recipients`.
+	NotificationProvider *ApprovalNotificationProvider `json:"notificationProvider,omitempty"`
+
+	// Recipients Notification recipients. Each entry is a plain string (email address or
+	// Slack channel identifier) or a referenced node-output value (an upstream
+	// node's output field resolved at runtime by the flow engine).
+	Recipients *[]interface{} `json:"recipients,omitempty"`
+
+	// RejectApprovalAfterTime Whether the approval auto-rejects if not acted on within the time window.
+	RejectApprovalAfterTime bool `json:"rejectApprovalAfterTime"`
+
+	// RejectTimeUnit Time unit for the auto-rejection window.
+	// Required when `rejectApprovalAfterTime` is `true`.
+	RejectTimeUnit *ApprovalRejectTimeUnit `json:"rejectTimeUnit,omitempty"`
+
+	// RejectTimeValue Number of time units before auto-rejection.
+	// Required when `rejectApprovalAfterTime` is `true`.
+	RejectTimeValue *int `json:"rejectTimeValue,omitempty"`
+
+	// Required Whether approval is required before the node can proceed.
+	Required bool `json:"required"`
+
+	// Subject Subject line for email notifications. Plain string or a referenced
+	// node-output value. Ignored when `notificationProvider` is `slack`.
+	Subject interface{} `json:"subject,omitempty"`
+}
+
+// ApprovalNotificationProvider Delivery channel for the approval notification.
+// - `email` — sends to the addresses in `recipients`.
+// - `slack` — sends to the channels in `recipients`.
+type ApprovalNotificationProvider string
+
+// ApprovalRejectTimeUnit Time unit for the auto-rejection window.
+// Required when `rejectApprovalAfterTime` is `true`.
+type ApprovalRejectTimeUnit string
 
 // AssetItem Summary information about a single asset.
 type AssetItem struct {
@@ -5487,6 +5552,69 @@ type CommitmentPeriod struct {
 // Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 type Condition string
 
+// Connection A cloud provider connection resource.
+type Connection struct {
+	// CloudProvider Cloud provider that a connection is bound to.
+	CloudProvider ConnectionProvider `json:"cloudProvider"`
+
+	// ConnectionConfiguration Provider-specific configuration. Shape depends on `cloudProvider`:
+	// - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
+	// - **GCP**: project IDs and service account configuration.
+	ConnectionConfiguration *map[string]interface{} `json:"connectionConfiguration,omitempty"`
+
+	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// Enabled Whether this connection is enabled. Derived from `status`: `false` when
+	// `status` is `disabled`, `true` otherwise. Toggle via
+	// `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
+	Enabled bool `json:"enabled"`
+
+	// Etag Strong ETag. `null` on dry-run create.
+	Etag *string `json:"etag"`
+
+	// Id Unique identifier. `null` on dry-run create responses.
+	Id *string `json:"id"`
+
+	// LastSyncedTime ISO 8601 (UTC) timestamp of the last successful sync with the cloud provider.
+	LastSyncedTime *time.Time `json:"lastSyncedTime,omitempty"`
+
+	// Name Display name.
+	Name string `json:"name"`
+
+	// Status Operational status of a connection.
+	// - `active` — the connection is valid and in use.
+	// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
+	// - `pending_permissions` — awaiting a permission grant in the cloud provider.
+	// - `permissions_failed` — permission setup failed.
+	// - `inactive` — deactivated.
+	// - `cloud_deleted` — the underlying cloud resource was deleted externally.
+	// - `draft` — connection is not yet fully configured.
+	Status ConnectionStatus `json:"status"`
+
+	// StatusMessage Human-readable explanation of a non-active status.
+	StatusMessage *string `json:"statusMessage,omitempty"`
+
+	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
+	UpdateTime *time.Time `json:"updateTime"`
+}
+
+// ConnectionProvider Cloud provider that a connection is bound to.
+type ConnectionProvider string
+
+// ConnectionStatus Operational status of a connection.
+// - `active` — the connection is valid and in use.
+// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
+// - `pending_permissions` — awaiting a permission grant in the cloud provider.
+// - `permissions_failed` — permission setup failed.
+// - `inactive` — deactivated.
+// - `cloud_deleted` — the underlying cloud resource was deleted externally.
+// - `draft` — connection is not yet fully configured.
+type ConnectionStatus string
+
 // CreateAccountRoleRequestBody defines model for CreateAccountRoleRequestBody.
 type CreateAccountRoleRequestBody struct {
 	// AccountID The AWS account ID.
@@ -5542,6 +5670,24 @@ type CreateAnnotationRequest struct {
 // CreateCategory Allowed categories when creating insights via the public API.
 type CreateCategory string
 
+// CreateConnectionRequest Request body for `CreateConnection`.
+type CreateConnectionRequest struct {
+	// CloudProvider Cloud provider that a connection is bound to.
+	CloudProvider ConnectionProvider `json:"cloudProvider"`
+
+	// ConnectionConfiguration Provider-specific configuration object. Required fields depend on `cloudProvider`.
+	// See CloudFlow connection documentation for the expected shape per provider.
+	ConnectionConfiguration map[string]interface{} `json:"connectionConfiguration"`
+	Description             *string                `json:"description,omitempty"`
+
+	// Id Client-provided connection ID. Server assigns one if omitted. Providing a
+	// stable ID enables idempotent creation.
+	Id *string `json:"id,omitempty"`
+
+	// Name Unique display name for the connection within the tenant.
+	Name string `json:"name"`
+}
+
 // CreateCustomThemeRequest Request body for creating a custom theme.
 type CreateCustomThemeRequest struct {
 	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
@@ -5581,6 +5727,19 @@ type CreateDatahubDatasetRequestBody struct {
 	Name string `json:"name"`
 }
 
+// CreateFlowRequest Request body for `CreateFlow`.
+type CreateFlowRequest struct {
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// Instructions Operator instructions or notes attached to the flow. Pass `null` or
+	// omit to leave empty.
+	Instructions *string `json:"instructions,omitempty"`
+
+	// Name Display name for the new flow.
+	Name string `json:"name"`
+}
+
 // CreateFolderRequest Request body for creating a folder.
 type CreateFolderRequest struct {
 	// Description Folder description.
@@ -5604,6 +5763,16 @@ type CreateLabelRequest struct {
 
 // CreateLabelRequestColor The color of the label.
 type CreateLabelRequestColor string
+
+// CreateNodeRequest Request body for `CreateNode`.
+type CreateNodeRequest struct {
+	// Node Node payload for create and update operations.
+	Node NodeInput `json:"node"`
+
+	// Transition Optional wiring to an existing parent node. When supplied, the new node is
+	// connected as a child of `parentNodeId` via the given branch value.
+	Transition *ParentTransition `json:"transition,omitempty"`
+}
 
 // CreateReportRequestBody defines model for CreateReportRequestBody.
 type CreateReportRequestBody struct {
@@ -5822,30 +5991,6 @@ type ExternalAlertList struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
-// ExternalApproval Human approval gate configuration for a node.
-type ExternalApproval struct {
-	// Message Approval request message shown to the recipient.
-	Message *string `json:"message,omitempty"`
-
-	// RecipientEmail Email address of the approval recipient.
-	RecipientEmail *openapi_types.Email `json:"recipientEmail,omitempty"`
-
-	// RejectApprovalAfterTime Whether the approval auto-rejects if not acted on within the time window.
-	RejectApprovalAfterTime bool `json:"rejectApprovalAfterTime"`
-
-	// RejectTimeUnit Time unit for the auto-rejection window.
-	RejectTimeUnit ExternalApprovalRejectTimeUnit `json:"rejectTimeUnit"`
-
-	// RejectTimeValue Number of time units before auto-rejection.
-	RejectTimeValue int `json:"rejectTimeValue"`
-
-	// Required Whether approval is required before the node can proceed.
-	Required bool `json:"required"`
-}
-
-// ExternalApprovalRejectTimeUnit Time unit for the auto-rejection window.
-type ExternalApprovalRejectTimeUnit string
-
 // ExternalBudgetAlert Budget alert status details.
 type ExternalBudgetAlert struct {
 	ForecastedDate *int64   `json:"forecastedDate,omitempty"`
@@ -5995,105 +6140,6 @@ type ExternalConfigMetricFilter struct {
 // ExternalConfigMetricFilterOperator Comparison operator for filtering metric values.
 type ExternalConfigMetricFilterOperator string
 
-// ExternalConnection A cloud provider connection resource.
-type ExternalConnection struct {
-	// CloudProvider Cloud provider that a connection is bound to.
-	CloudProvider ExternalConnectionProvider `json:"cloudProvider"`
-
-	// ConnectionConfiguration Provider-specific configuration. Shape depends on `cloudProvider`:
-	// - **AWS**: account IDs, IAM role ARNs, regions, and context statuses per linked account.
-	// - **GCP**: project IDs and service account configuration.
-	ConnectionConfiguration *map[string]interface{} `json:"connectionConfiguration,omitempty"`
-
-	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// Enabled Whether this connection is enabled. Derived from `status`: `false` when
-	// `status` is `disabled`, `true` otherwise. Toggle via
-	// `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
-	Enabled bool `json:"enabled"`
-
-	// Etag Strong ETag. `null` on dry-run create.
-	Etag *string `json:"etag"`
-
-	// Id Unique identifier. `null` on dry-run create responses.
-	Id *string `json:"id"`
-
-	// LastSyncedTime ISO 8601 (UTC) timestamp of the last successful sync with the cloud provider.
-	LastSyncedTime *time.Time `json:"lastSyncedTime,omitempty"`
-
-	// Name Display name.
-	Name string `json:"name"`
-
-	// Status Operational status of a connection.
-	// - `active` — the connection is valid and in use.
-	// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
-	// - `pending_permissions` — awaiting a permission grant in the cloud provider.
-	// - `permissions_failed` — permission setup failed.
-	// - `inactive` — deactivated.
-	// - `cloud_deleted` — the underlying cloud resource was deleted externally.
-	// - `draft` — initial state during creation wizard (internal).
-	Status ExternalConnectionStatus `json:"status"`
-
-	// StatusMessage Human-readable explanation of a non-active status.
-	StatusMessage *string `json:"statusMessage,omitempty"`
-
-	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
-	UpdateTime *time.Time `json:"updateTime"`
-}
-
-// ExternalConnectionInput Request body for `CreateConnection`.
-type ExternalConnectionInput struct {
-	// CloudProvider Cloud provider that a connection is bound to.
-	CloudProvider ExternalConnectionProvider `json:"cloudProvider"`
-
-	// ConnectionConfiguration Provider-specific configuration object. Required fields depend on `cloudProvider`.
-	// See CloudFlow connection documentation for the expected shape per provider.
-	ConnectionConfiguration map[string]interface{} `json:"connectionConfiguration"`
-	Description             *string                `json:"description,omitempty"`
-
-	// Id Client-provided connection ID. Server assigns one if omitted. Providing a
-	// stable ID enables idempotent creation.
-	Id *string `json:"id,omitempty"`
-
-	// Name Unique display name for the connection within the tenant.
-	Name string `json:"name"`
-}
-
-// ExternalConnectionPatch Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
-// Currently supports toggling the `enabled` flag only.
-type ExternalConnectionPatch struct {
-	// Enabled - `true` — enable the connection (transitions `disabled` → `active`).
-	// - `false` — disable the connection (transitions current status → `disabled`).
-	Enabled bool `json:"enabled"`
-}
-
-// ExternalConnectionProvider Cloud provider that a connection is bound to.
-type ExternalConnectionProvider string
-
-// ExternalConnectionStatus Operational status of a connection.
-// - `active` — the connection is valid and in use.
-// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
-// - `pending_permissions` — awaiting a permission grant in the cloud provider.
-// - `permissions_failed` — permission setup failed.
-// - `inactive` — deactivated.
-// - `cloud_deleted` — the underlying cloud resource was deleted externally.
-// - `draft` — initial state during creation wizard (internal).
-type ExternalConnectionStatus string
-
-// ExternalCreateNodeRequest Request body for `CreateNode`.
-type ExternalCreateNodeRequest struct {
-	// Node Node payload for create and update operations.
-	Node ExternalNodeInput `json:"node"`
-
-	// Transition Optional wiring to an existing parent node. When supplied, the new node is
-	// connected as a child of `parentNodeId` via the given branch value.
-	Transition *ExternalParentTransition `json:"transition,omitempty"`
-}
-
 // ExternalDisplaySettings Display settings for the report.
 type ExternalDisplaySettings struct {
 	// AxisLabelFontSize Font size used for axis labels on charts.
@@ -6124,98 +6170,6 @@ type ExternalDisplaySettingsDataLabelFontSize string
 // ExternalDisplaySettingsNumberScale Scale applied to numeric values when rendering the report.
 type ExternalDisplaySettingsNumberScale string
 
-// ExternalFlow A CloudFlow workflow resource.
-type ExternalFlow struct {
-	// CreateTime ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description string `json:"description"`
-
-	// Etag Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.
-	// `null` on dry-run create responses.
-	Etag *string `json:"etag"`
-
-	// FirstNodeId ID of the trigger (first) node. `null` if no trigger node has been set.
-	FirstNodeId *string `json:"firstNodeId,omitempty"`
-
-	// Id Server-assigned unique identifier. `null` on dry-run create responses
-	// (no resource was persisted).
-	Id *string `json:"id"`
-
-	// Instructions Operator instructions or notes attached to the flow.
-	Instructions *string `json:"instructions,omitempty"`
-
-	// LastExecutedTime ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed.
-	LastExecutedTime *time.Time `json:"lastExecutedTime,omitempty"`
-
-	// LastExecutionStatus Status string of the most recent execution. `null` if never executed.
-	LastExecutionStatus *string `json:"lastExecutionStatus,omitempty"`
-
-	// Name Display name of the flow.
-	Name string `json:"name"`
-
-	// Nodes Embedded nodes. Populated by the `update-batch` response and by operations that
-	// return the full flow with nodes inline. Not present on standard list responses.
-	Nodes *[]ExternalNode `json:"nodes,omitempty"`
-
-	// Published Whether the flow is currently published. Readable on every response; use
-	// `POST /actions/publish` and `POST /actions/unpublish` to change this value.
-	Published bool `json:"published"`
-
-	// Schedule Schedule configuration. `null` if the flow does not have scheduling configured.
-	Schedule *ExternalSchedule `json:"schedule,omitempty"`
-
-	// Status Lifecycle state. `null` on dry-run create responses.
-	Status *ExternalFlowStatus `json:"status"`
-
-	// TriggerType Node type of the trigger node. `null` if no trigger node has been set.
-	// One of the `ExternalNodeType` trigger variants: `triggerNode`, `manualTrigger`,
-	// `webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.
-	TriggerType *string `json:"triggerType,omitempty"`
-
-	// UpdateTime ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run.
-	UpdateTime *time.Time `json:"updateTime,omitempty"`
-}
-
-// ExternalFlowInput Request body for `CreateFlow`.
-type ExternalFlowInput struct {
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// Name Display name for the new flow.
-	Name string `json:"name"`
-
-	// TemplateId ID of a template (blueprint) to initialise the flow from. When present the
-	// new flow inherits the template's node graph and structure. The template itself
-	// is not modified.
-	TemplateId *string `json:"templateId,omitempty"`
-}
-
-// ExternalFlowStatus Lifecycle state of a flow.
-// - `draft` — the flow is being built and is not yet active.
-// - `pending` — awaiting validation or an async provisioning step.
-// - `active` — live and executable.
-// - `published` — published and available for scheduled/event-driven execution.
-// - `inactive` — deactivated by the owner.
-// - `new` — initial state assigned on creation.
-type ExternalFlowStatus string
-
-// ExternalFlowUpdate Request body for `UpdateFlow` (full replacement). All writable fields are replaced
-// with the supplied values. Optional fields that are omitted are reset to their defaults
-// (e.g. `instructions` is cleared if absent). Read-only fields (`id`, `status`,
-// `published`, `createTime`, `etag`) are silently ignored.
-type ExternalFlowUpdate struct {
-	// Description New description.
-	Description *string `json:"description,omitempty"`
-
-	// Instructions New operator instructions. Pass `null` to clear.
-	Instructions *string `json:"instructions,omitempty"`
-
-	// Name New display name.
-	Name *string `json:"name,omitempty"`
-}
-
 // ExternalMetric Metric selector used in reports and filters.
 type ExternalMetric struct {
 	// Type Type of metric to use.
@@ -6229,94 +6183,6 @@ type ExternalMetric struct {
 // ExternalMetricType Type of metric to use.
 type ExternalMetricType string
 
-// ExternalNode A single node within a CloudFlow.
-type ExternalNode struct {
-	// ActionId Identifier of the specific operation this node performs (e.g. AWS service action).
-	ActionId *string `json:"actionId,omitempty"`
-
-	// AppKey Identifier of the integration or application this node belongs to.
-	AppKey string `json:"appKey"`
-
-	// Approval Optional human approval gate. `null` if no approval is required.
-	Approval *ExternalApproval `json:"approval,omitempty"`
-
-	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// Disabled When `true` this node is skipped during flow execution.
-	Disabled bool `json:"disabled"`
-
-	// ErrorMessages Map of field-path → error message for nodes in the `error` status.
-	ErrorMessages *map[string]string `json:"errorMessages,omitempty"`
-
-	// Etag Strong ETag for this node version. `null` on dry-run create.
-	Etag *string `json:"etag"`
-
-	// Id Server-assigned unique identifier. `null` on dry-run create responses.
-	Id *string `json:"id"`
-
-	// Name Display name.
-	Name string `json:"name"`
-
-	// Parameters Node-specific configuration. The concrete schema depends on `type`. See the
-	// CloudFlow node type documentation for full parameter shapes. Key parameter
-	// schemas are also defined in the internal spec at
-	// `services/cloudflow/api/openapi/spec.yaml` (NodeParameters and variants).
-	Parameters *map[string]interface{} `json:"parameters,omitempty"`
-
-	// Status Validation state. `null` on dry-run create responses.
-	Status *ExternalNodeStatus `json:"status"`
-
-	// Transitions Directed edges to child nodes.
-	Transitions *[]ExternalTransition `json:"transitions,omitempty"`
-
-	// Type Discriminator that identifies a node's role and determines the shape of its
-	// `parameters` field.
-	Type ExternalNodeType `json:"type"`
-
-	// UpdateTime ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
-	UpdateTime *time.Time `json:"updateTime,omitempty"`
-}
-
-// ExternalNodeInput Node payload for create and update operations.
-type ExternalNodeInput struct {
-	// AppKey Identifier of the integration or application.
-	AppKey      string            `json:"appKey"`
-	Approval    *ExternalApproval `json:"approval,omitempty"`
-	Description *string           `json:"description,omitempty"`
-	Disabled    bool              `json:"disabled"`
-
-	// Id Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a
-	// stable ID enables idempotent batch operations.
-	Id   *string `json:"id,omitempty"`
-	Name string  `json:"name"`
-
-	// Parameters Node-specific configuration. See CloudFlow node type documentation for
-	// the required fields per `type`.
-	Parameters *map[string]interface{} `json:"parameters,omitempty"`
-
-	// Transitions Outgoing edges to child nodes.
-	Transitions *[]ExternalTransition `json:"transitions,omitempty"`
-
-	// Type Discriminator that identifies a node's role and determines the shape of its
-	// `parameters` field.
-	Type ExternalNodeType `json:"type"`
-}
-
-// ExternalNodeStatus Per-node validation state.
-// - `new` — freshly added, not yet validated.
-// - `pending` — validation in progress.
-// - `validated` — configuration is valid.
-// - `error` — configuration is invalid; see `errorMessages`.
-type ExternalNodeStatus string
-
-// ExternalNodeType Discriminator that identifies a node's role and determines the shape of its
-// `parameters` field.
-type ExternalNodeType string
-
 // ExternalOrigin Origin info for cost splitting.
 type ExternalOrigin struct {
 	// Id ID of the origin.
@@ -6328,15 +6194,6 @@ type ExternalOrigin struct {
 
 // ExternalOriginType Type of the origin.
 type ExternalOriginType string
-
-// ExternalParentTransition Wires the new node as a child of an existing parent node.
-type ExternalParentTransition struct {
-	// Label Optional display label for the edge.
-	Label *string `json:"label,omitempty"`
-
-	// ParentNodeId ID of the existing parent node.
-	ParentNodeId string `json:"parentNodeId"`
-}
 
 // ExternalRenderer Type of visualization or output format.
 type ExternalRenderer string
@@ -6367,24 +6224,6 @@ type ExternalReport struct {
 
 // ExternalReportType Report type.
 type ExternalReportType string
-
-// ExternalSchedule Schedule configuration for a flow's scheduled trigger node.
-type ExternalSchedule struct {
-	// CustomFrequency Time unit when `frequency` is `Custom`. One of: `Hour`, `Day`, `Week`, `Month`.
-	CustomFrequency *string `json:"customFrequency,omitempty"`
-
-	// CustomFrequencyAmount Number of `customFrequency` units between runs. Required when `frequency` is `Custom`.
-	CustomFrequencyAmount *int `json:"customFrequencyAmount,omitempty"`
-
-	// Frequency Schedule cadence preset. One of: `Daily`, `Weekly`, `Monthly`, `Do not repeat`, `Custom`.
-	Frequency *string `json:"frequency,omitempty"`
-
-	// NextRun ISO 8601 (UTC) timestamp of the next scheduled run. `null` if not scheduled or paused.
-	NextRun *time.Time `json:"nextRun,omitempty"`
-
-	// Scheduled Whether scheduling is currently enabled.
-	Scheduled bool `json:"scheduled"`
-}
 
 // ExternalSplit Specification of how to split costs.
 type ExternalSplit struct {
@@ -6430,15 +6269,6 @@ type ExternalSplitTarget struct {
 // Otherwise split types and target types must be the same.
 type ExternalSplitTargetType string
 
-// ExternalTransition Directed edge from a parent node to a child node.
-type ExternalTransition struct {
-	// Label Optional display label shown on the canvas edge.
-	Label *string `json:"label,omitempty"`
-
-	// TargetNodeId ID of the target (child) node.
-	TargetNodeId string `json:"targetNodeId"`
-}
-
 // ExternalUpdateReport Partial report object used for updates.
 type ExternalUpdateReport struct {
 	// Config Report configuration.
@@ -6456,108 +6286,6 @@ type ExternalUpdateReport struct {
 	// Name Report name
 	Name *string `json:"name,omitempty"`
 }
-
-// ExternalVariable A CloudFlow variable resource (flow-scoped or global).
-type ExternalVariable struct {
-	// ConnectionType Connection provider type for `connection` variables (e.g. `AWS`, `GCP`). Required
-	// when `type` is `connection`; `null` for all other types.
-	ConnectionType *string `json:"connectionType,omitempty"`
-
-	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// ElementType Element type for `list` variables (e.g. `string`, `integer`). Required when
-	// `type` is `list`; `null` for all other types.
-	ElementType *string `json:"elementType,omitempty"`
-
-	// Etag Strong ETag. `null` on dry-run create.
-	Etag *string `json:"etag"`
-
-	// Id Server-assigned unique identifier. `null` on dry-run create responses.
-	Id *string `json:"id"`
-
-	// Name Variable name. Alphanumeric characters, underscores, and dashes only (1–100 chars).
-	// Must be unique within scope (flow or global).
-	Name string `json:"name"`
-
-	// Required Whether a value must be provided before the flow can be published.
-	Required bool `json:"required"`
-
-	// Type Data type of a variable.
-	// - `string` — UTF-8 text.
-	// - `integer` — 64-bit signed integer.
-	// - `float` — 64-bit floating-point number.
-	// - `boolean` — true / false.
-	// - `list` — ordered collection; element type specified by `elementType`.
-	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
-	Type ExternalVariableType `json:"type"`
-
-	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
-	UpdateTime *time.Time `json:"updateTime"`
-
-	// Value Current value, always string-encoded on the wire. `null` if no value has been set.
-	// Logical encoding by variable `type`:
-	// - `string` → the string value
-	// - `integer` → decimal string, e.g. `"42"`
-	// - `float` → decimal string, e.g. `"3.14"`
-	// - `boolean` → `"true"` or `"false"`
-	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
-	// - `connection` → connection ID string
-	Value *string `json:"value,omitempty"`
-}
-
-// ExternalVariableInput Request body for `CreateFlowVariable`, `CreateGlobalVariable`,
-// `UpdateFlowVariable`, and `UpdateGlobalVariable`.
-type ExternalVariableInput struct {
-	// ConnectionType Connection provider type for `connection` variables.
-	// Required when `type` is `connection`.
-	ConnectionType *ExternalConnectionProvider `json:"connectionType,omitempty"`
-	Description    *string                     `json:"description,omitempty"`
-
-	// ElementType Element type for `list` variables. Required when `type` is `list`.
-	ElementType *ExternalVariableInputElementType `json:"elementType,omitempty"`
-
-	// Name Variable name. Alphanumeric, underscore, and dash only. Must be unique
-	// within scope (flow-local or global).
-	Name string `json:"name"`
-
-	// Required Whether the flow requires a value before publishing.
-	Required bool `json:"required"`
-
-	// Type Data type of a variable.
-	// - `string` — UTF-8 text.
-	// - `integer` — 64-bit signed integer.
-	// - `float` — 64-bit floating-point number.
-	// - `boolean` — true / false.
-	// - `list` — ordered collection; element type specified by `elementType`.
-	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
-	Type ExternalVariableType `json:"type"`
-
-	// Value Initial or updated value, always string-encoded on the wire. Encoding by `type`:
-	// - `string` → the string value
-	// - `integer` → decimal string, e.g. `"42"`
-	// - `float` → decimal string, e.g. `"3.14"`
-	// - `boolean` → `"true"` or `"false"`
-	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
-	// - `connection` → connection ID string; the referenced connection must exist
-	//   within the tenant and be in an `active` or `inactive` state.
-	Value *string `json:"value,omitempty"`
-}
-
-// ExternalVariableInputElementType Element type for `list` variables. Required when `type` is `list`.
-type ExternalVariableInputElementType string
-
-// ExternalVariableType Data type of a variable.
-// - `string` — UTF-8 text.
-// - `integer` — 64-bit signed integer.
-// - `float` — 64-bit floating-point number.
-// - `boolean` — true / false.
-// - `list` — ordered collection; element type specified by `elementType`.
-// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
-type ExternalVariableType string
 
 // Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 type Filter = string
@@ -6579,6 +6307,67 @@ type FindCloudDiagramsResponseItem struct {
 	// ImageUrl URL to the diagram image.
 	ImageUrl string `json:"imageUrl"`
 }
+
+// Flow A CloudFlow workflow resource.
+type Flow struct {
+	// CreateTime ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description string `json:"description"`
+
+	// Etag Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.
+	// `null` on dry-run create responses.
+	Etag *string `json:"etag"`
+
+	// FirstNodeId ID of the trigger (first) node. `null` if no trigger node has been set.
+	FirstNodeId *string `json:"firstNodeId,omitempty"`
+
+	// Id Server-assigned unique identifier. `null` on dry-run create responses
+	// (no resource was persisted).
+	Id *string `json:"id"`
+
+	// Instructions Operator instructions or notes attached to the flow.
+	Instructions *string `json:"instructions,omitempty"`
+
+	// LastExecutedTime ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed.
+	LastExecutedTime *time.Time `json:"lastExecutedTime,omitempty"`
+
+	// LastExecutionStatus Status string of the most recent execution. `null` if never executed.
+	LastExecutionStatus *string `json:"lastExecutionStatus,omitempty"`
+
+	// Name Display name of the flow.
+	Name string `json:"name"`
+
+	// NextRun ISO 8601 (UTC) timestamp of the next scheduled execution. `null` if the flow
+	// has no scheduled trigger, is unpublished, or scheduling is paused.
+	NextRun *time.Time `json:"nextRun,omitempty"`
+
+	// Nodes Embedded nodes. Populated by the `update-batch` response and by operations that
+	// return the full flow with nodes inline. Not present on standard list responses.
+	Nodes *[]Node `json:"nodes,omitempty"`
+
+	// Published Whether the flow is currently published. Readable on every response; use
+	// `POST /actions/publish` and `POST /actions/unpublish` to change this value.
+	Published bool `json:"published"`
+
+	// Status Lifecycle state. `null` on dry-run create responses.
+	Status *FlowStatus `json:"status"`
+
+	// TriggerType Node type of the trigger node. `null` if no trigger node has been set.
+	// One of the `NodeType` trigger variants: `triggerNode`, `manualTrigger`,
+	// `webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.
+	TriggerType *string `json:"triggerType,omitempty"`
+
+	// UpdateTime ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run.
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
+
+// FlowStatus Lifecycle state of a flow.
+// - `new` — initial state assigned on creation.
+// - `draft` — flow has been unpublished, imported, or copied; not yet published.
+// - `published` — published and available for scheduled/event-driven execution.
+type FlowStatus string
 
 // Folder A Cloud Analytics folder.
 type Folder struct {
@@ -7306,6 +7095,79 @@ type MetricFilterText string
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string
 
+// Node A single node within a CloudFlow.
+type Node struct {
+	// ActionId Identifier of the specific operation this node performs (e.g. AWS service action).
+	ActionId *string `json:"actionId,omitempty"`
+
+	// AppKey Identifier of the integration or application this node belongs to.
+	AppKey string `json:"appKey"`
+
+	// Approval Optional human approval gate. `null` if no approval is required.
+	Approval *Approval `json:"approval,omitempty"`
+
+	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// Disabled When `true` this node is skipped during flow execution.
+	Disabled bool `json:"disabled"`
+
+	// Etag Strong ETag for this node version. `null` on dry-run create.
+	Etag *string `json:"etag"`
+
+	// Id Server-assigned unique identifier. `null` on dry-run create responses.
+	Id *string `json:"id"`
+
+	// Name Display name.
+	Name string `json:"name"`
+
+	// Parameters Node-specific configuration. The concrete shape depends on `type`. Refer to
+	// the CloudFlow node type documentation for the required fields per node type.
+	Parameters *map[string]interface{} `json:"parameters,omitempty"`
+
+	// Transitions Directed edges to child nodes.
+	Transitions *[]Transition `json:"transitions,omitempty"`
+
+	// Type Discriminator that identifies a node's role and determines the shape of its
+	// `parameters` field.
+	Type NodeType `json:"type"`
+
+	// UpdateTime ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
+
+// NodeInput Node payload for create and update operations.
+type NodeInput struct {
+	// AppKey Identifier of the integration or application.
+	AppKey      string    `json:"appKey"`
+	Approval    *Approval `json:"approval,omitempty"`
+	Description *string   `json:"description,omitempty"`
+	Disabled    bool      `json:"disabled"`
+
+	// Id Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a
+	// stable ID enables idempotent batch operations.
+	Id   *string `json:"id,omitempty"`
+	Name string  `json:"name"`
+
+	// Parameters Node-specific configuration. See CloudFlow node type documentation for
+	// the required fields per `type`.
+	Parameters *map[string]interface{} `json:"parameters,omitempty"`
+
+	// Transitions Outgoing edges to child nodes.
+	Transitions *[]Transition `json:"transitions,omitempty"`
+
+	// Type Discriminator that identifies a node's role and determines the shape of its
+	// `parameters` field.
+	Type NodeType `json:"type"`
+}
+
+// NodeType Discriminator that identifies a node's role and determines the shape of its
+// `parameters` field.
+type NodeType string
+
 // NotificationEvent A successful notification dispatch for an anomaly.
 // This records that the API/worker sent the notification, not that delivery was confirmed.
 type NotificationEvent struct {
@@ -7339,6 +7201,18 @@ type Pagination struct {
 	// RowCount Number of items in this page.
 	RowCount int `json:"rowCount"`
 }
+
+// ParentTransition Wires the new node as a child of an existing parent node.
+type ParentTransition struct {
+	// Label Selects which branch of the parent node this node connects to. Required when the parent is a branch node; must be "True" or "False". Omit for all other parent node types.
+	Label *ParentTransitionLabel `json:"label,omitempty"`
+
+	// ParentNodeId ID of the existing parent node.
+	ParentNodeId string `json:"parentNodeId"`
+}
+
+// ParentTransitionLabel Selects which branch of the parent node this node connects to. Required when the parent is a branch node; must be "True" or "False". Omit for all other parent node types.
+type ParentTransitionLabel string
 
 // PlatformAPI Platform metadata used by product listing endpoints.
 type PlatformAPI struct {
@@ -7931,6 +7805,18 @@ type TimeSettingsSecondaryCustomTimeRange struct {
 	To *time.Time `json:"to,omitempty"`
 }
 
+// Transition Directed edge from a parent node to a child node.
+type Transition struct {
+	// Label Identifies the execution path for branch node transitions. Branch nodes have at most two outgoing transitions: one labeled "True" and one labeled "False". Required on branch node transitions; must be omitted for all other node types.
+	Label *TransitionLabel `json:"label,omitempty"`
+
+	// TargetNodeId ID of the target (child) node.
+	TargetNodeId string `json:"targetNodeId"`
+}
+
+// TransitionLabel Identifies the execution path for branch node transitions. Branch nodes have at most two outgoing transitions: one labeled "True" and one labeled "False". Required on branch node transitions; must be omitted for all other node types.
+type TransitionLabel string
+
 // UpdateAllocationRequest Request body for updating an allocation.
 type UpdateAllocationRequest struct {
 	// Description Allocation description
@@ -7977,6 +7863,14 @@ type UpdateAwsFeatureRequestBody struct {
 	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
 }
 
+// UpdateConnectionRequest Request body for `UpdateConnection`. Uses `Content-Type: application/merge-patch+json`.
+// Currently supports toggling the `enabled` flag only.
+type UpdateConnectionRequest struct {
+	// Enabled - `true` — enable the connection (transitions `disabled` → `active`).
+	// - `false` — disable the connection (transitions current status → `disabled`).
+	Enabled bool `json:"enabled"`
+}
+
 // UpdateCustomThemeRequest Request body for updating a custom theme. Only provided fields are modified.
 type UpdateCustomThemeRequest struct {
 	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
@@ -8013,6 +7907,21 @@ type UpdateDatahubDatasetRequestBody struct {
 	Description *string `json:"description,omitempty"`
 
 	// Name Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed.
+	Name *string `json:"name,omitempty"`
+}
+
+// UpdateFlowRequest Request body for `UpdateFlow` (full replacement). All writable fields are replaced
+// with the supplied values. Optional fields that are omitted are reset to their defaults
+// (e.g. `instructions` is cleared if absent). Read-only fields (`id`, `status`,
+// `published`, `createTime`, `etag`) are silently ignored.
+type UpdateFlowRequest struct {
+	// Description New description.
+	Description *string `json:"description,omitempty"`
+
+	// Instructions New operator instructions. Omit to clear.
+	Instructions *string `json:"instructions,omitempty"`
+
+	// Name New display name.
 	Name *string `json:"name,omitempty"`
 }
 
@@ -8207,6 +8116,108 @@ type Value1 = float32
 
 // Value2 defines model for .
 type Value2 = int
+
+// Variable A CloudFlow variable resource (flow-scoped or global).
+type Variable struct {
+	// ConnectionType Connection provider type for `connection` variables (e.g. `AWS`, `GCP`). Required
+	// when `type` is `connection`; `null` for all other types.
+	ConnectionType *string `json:"connectionType,omitempty"`
+
+	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
+	CreateTime *time.Time `json:"createTime"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// ElementType Element type for `list` variables (e.g. `string`, `integer`). Required when
+	// `type` is `list`; `null` for all other types.
+	ElementType *string `json:"elementType,omitempty"`
+
+	// Etag Strong ETag. `null` on dry-run create.
+	Etag *string `json:"etag"`
+
+	// Id Server-assigned unique identifier. `null` on dry-run create responses.
+	Id *string `json:"id"`
+
+	// Name Variable name. Alphanumeric characters, underscores, and dashes only (1–100 chars).
+	// Must be unique within scope (flow or global).
+	Name string `json:"name"`
+
+	// Required Whether a value must be provided before the flow can be published.
+	Required bool `json:"required"`
+
+	// Type Data type of a variable.
+	// - `string` — UTF-8 text.
+	// - `integer` — 64-bit signed integer.
+	// - `float` — 64-bit floating-point number.
+	// - `boolean` — true / false.
+	// - `list` — ordered collection; element type specified by `elementType`.
+	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+	Type VariableType `json:"type"`
+
+	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
+	UpdateTime *time.Time `json:"updateTime"`
+
+	// Value Current value, always string-encoded on the wire. `null` if no value has been set.
+	// Logical encoding by variable `type`:
+	// - `string` → the string value
+	// - `integer` → decimal string, e.g. `"42"`
+	// - `float` → decimal string, e.g. `"3.14"`
+	// - `boolean` → `"true"` or `"false"`
+	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
+	// - `connection` → connection ID string
+	Value *string `json:"value,omitempty"`
+}
+
+// VariableInput Request body for `CreateFlowVariable`, `CreateGlobalVariable`,
+// `UpdateFlowVariable`, and `UpdateGlobalVariable`.
+type VariableInput struct {
+	// ConnectionType Connection provider type for `connection` variables.
+	// Required when `type` is `connection`.
+	ConnectionType *ConnectionProvider `json:"connectionType,omitempty"`
+	Description    *string             `json:"description,omitempty"`
+
+	// ElementType Element type for `list` variables. Required when `type` is `list`.
+	ElementType *VariableInputElementType `json:"elementType,omitempty"`
+
+	// Name Variable name. Alphanumeric, underscore, and dash only. Must be unique
+	// within scope (flow-local or global).
+	Name string `json:"name"`
+
+	// Required Whether the flow requires a value before publishing.
+	Required bool `json:"required"`
+
+	// Type Data type of a variable.
+	// - `string` — UTF-8 text.
+	// - `integer` — 64-bit signed integer.
+	// - `float` — 64-bit floating-point number.
+	// - `boolean` — true / false.
+	// - `list` — ordered collection; element type specified by `elementType`.
+	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+	Type VariableType `json:"type"`
+
+	// Value Initial or updated value, always string-encoded on the wire. Encoding by `type`:
+	// - `string` → the string value
+	// - `integer` → decimal string, e.g. `"42"`
+	// - `float` → decimal string, e.g. `"3.14"`
+	// - `boolean` → `"true"` or `"false"`
+	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
+	// - `connection` → connection ID string; the referenced connection must exist
+	//   within the tenant and be in an `active` or `inactive` state.
+	Value *string `json:"value,omitempty"`
+}
+
+// VariableInputElementType Element type for `list` variables. Required when `type` is `list`.
+type VariableInputElementType string
+
+// VariableType Data type of a variable.
+// - `string` — UTF-8 text.
+// - `integer` — 64-bit signed integer.
+// - `float` — 64-bit floating-point number.
+// - `boolean` — true / false.
+// - `list` — ordered collection; element type specified by `elementType`.
+// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
+type VariableType string
 
 // ConnectionId defines model for ConnectionId.
 type ConnectionId = string
@@ -8678,6 +8689,14 @@ type ListCloudDiagramLayerSnapshotsParams struct {
 	Sort *string `form:"sort,omitempty" json:"sort,omitempty"`
 }
 
+// CreateFlowParams defines parameters for CreateFlow.
+type CreateFlowParams struct {
+	// TemplateId ID of a template (blueprint) to initialise the flow from. When supplied the
+	// new flow inherits the template's node graph and structure. The template itself
+	// is not modified.
+	TemplateId *string `form:"templateId,omitempty" json:"templateId,omitempty"`
+}
+
 // ListKnownIssuesParams defines parameters for ListKnownIssues.
 type ListKnownIssuesParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -8880,31 +8899,31 @@ type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
 type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 
 // CreateConnectionJSONRequestBody defines body for CreateConnection for application/json ContentType.
-type CreateConnectionJSONRequestBody = ExternalConnectionInput
+type CreateConnectionJSONRequestBody = CreateConnectionRequest
 
 // UpdateConnectionApplicationMergePatchPlusJSONRequestBody defines body for UpdateConnection for application/merge-patch+json ContentType.
-type UpdateConnectionApplicationMergePatchPlusJSONRequestBody = ExternalConnectionPatch
+type UpdateConnectionApplicationMergePatchPlusJSONRequestBody = UpdateConnectionRequest
 
 // CreateFlowJSONRequestBody defines body for CreateFlow for application/json ContentType.
-type CreateFlowJSONRequestBody = ExternalFlowInput
+type CreateFlowJSONRequestBody = CreateFlowRequest
 
 // UpdateFlowJSONRequestBody defines body for UpdateFlow for application/json ContentType.
-type UpdateFlowJSONRequestBody = ExternalFlowUpdate
+type UpdateFlowJSONRequestBody = UpdateFlowRequest
 
 // CreateNodeJSONRequestBody defines body for CreateNode for application/json ContentType.
-type CreateNodeJSONRequestBody = ExternalCreateNodeRequest
+type CreateNodeJSONRequestBody = CreateNodeRequest
 
 // CreateFlowVariableJSONRequestBody defines body for CreateFlowVariable for application/json ContentType.
-type CreateFlowVariableJSONRequestBody = ExternalVariableInput
+type CreateFlowVariableJSONRequestBody = VariableInput
 
 // UpdateFlowVariableJSONRequestBody defines body for UpdateFlowVariable for application/json ContentType.
-type UpdateFlowVariableJSONRequestBody = ExternalVariableInput
+type UpdateFlowVariableJSONRequestBody = VariableInput
 
 // CreateGlobalVariableJSONRequestBody defines body for CreateGlobalVariable for application/json ContentType.
-type CreateGlobalVariableJSONRequestBody = ExternalVariableInput
+type CreateGlobalVariableJSONRequestBody = VariableInput
 
 // UpdateGlobalVariableJSONRequestBody defines body for UpdateGlobalVariable for application/json ContentType.
-type UpdateGlobalVariableJSONRequestBody = ExternalVariableInput
+type UpdateGlobalVariableJSONRequestBody = VariableInput
 
 // CreateAccountRoleJSONRequestBody defines body for CreateAccountRole for application/json ContentType.
 type CreateAccountRoleJSONRequestBody = CreateAccountRoleRequestBody
@@ -9433,9 +9452,9 @@ type ClientInterface interface {
 	UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateFlowWithBody request with any body
-	CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateFlowWithBody(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateFlow(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteFlow request
 	DeleteFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -10815,8 +10834,8 @@ func (c *Client) UpdateConnectionWithApplicationMergePatchPlusJSONBody(ctx conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowRequestWithBody(c.Server, contentType, body)
+func (c *Client) CreateFlowWithBody(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowRequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10827,8 +10846,8 @@ func (c *Client) CreateFlowWithBody(ctx context.Context, contentType string, bod
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowRequest(c.Server, body)
+func (c *Client) CreateFlow(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateFlowRequest(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -15610,18 +15629,18 @@ func NewUpdateConnectionRequestWithBody(server string, connectionId ConnectionId
 }
 
 // NewCreateFlowRequest calls the generic CreateFlow builder with application/json body
-func NewCreateFlowRequest(server string, body CreateFlowJSONRequestBody) (*http.Request, error) {
+func NewCreateFlowRequest(server string, params *CreateFlowParams, body CreateFlowJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateFlowRequestWithBody(server, "application/json", bodyReader)
+	return NewCreateFlowRequestWithBody(server, params, "application/json", bodyReader)
 }
 
 // NewCreateFlowRequestWithBody generates requests for CreateFlow with any type of body
-func NewCreateFlowRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateFlowRequestWithBody(server string, params *CreateFlowParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -15637,6 +15656,33 @@ func NewCreateFlowRequestWithBody(server string, contentType string, body io.Rea
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.TemplateId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "templateId", *params.TemplateId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
 	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
@@ -18097,9 +18143,9 @@ type ClientWithResponsesInterface interface {
 	UpdateConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
 
 	// CreateFlowWithBodyWithResponse request with any body
-	CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
+	CreateFlowWithBodyWithResponse(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
 
-	CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
+	CreateFlowWithResponse(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
 
 	// DeleteFlowWithResponse request
 	DeleteFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*DeleteFlowResp, error)
@@ -20634,8 +20680,8 @@ func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
 type CreateConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalConnection
-	JSON201      *ExternalConnection
+	JSON200      *Connection
+	JSON201      *Connection
 }
 
 // Status returns HTTPResponse.Status
@@ -20694,7 +20740,7 @@ func (r DeleteConnectionResp) ContentType() string {
 type GetConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalConnection
+	JSON200      *Connection
 }
 
 // Status returns HTTPResponse.Status
@@ -20724,7 +20770,7 @@ func (r GetConnectionResp) ContentType() string {
 type UpdateConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalConnection
+	JSON200      *Connection
 }
 
 // Status returns HTTPResponse.Status
@@ -20754,8 +20800,8 @@ func (r UpdateConnectionResp) ContentType() string {
 type CreateFlowResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalFlow
-	JSON201      *ExternalFlow
+	JSON200      *Flow
+	JSON201      *Flow
 }
 
 // Status returns HTTPResponse.Status
@@ -20814,7 +20860,7 @@ func (r DeleteFlowResp) ContentType() string {
 type GetFlowResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalFlow
+	JSON200      *Flow
 }
 
 // Status returns HTTPResponse.Status
@@ -20844,7 +20890,7 @@ func (r GetFlowResp) ContentType() string {
 type UpdateFlowResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalFlow
+	JSON200      *Flow
 }
 
 // Status returns HTTPResponse.Status
@@ -20874,8 +20920,8 @@ func (r UpdateFlowResp) ContentType() string {
 type CreateNodeResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalNode
-	JSON201      *ExternalNode
+	JSON200      *Node
+	JSON201      *Node
 }
 
 // Status returns HTTPResponse.Status
@@ -20934,7 +20980,7 @@ func (r DeleteNodeResp) ContentType() string {
 type GetNodeResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalNode
+	JSON200      *Node
 }
 
 // Status returns HTTPResponse.Status
@@ -20964,8 +21010,8 @@ func (r GetNodeResp) ContentType() string {
 type CreateFlowVariableResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalVariable
-	JSON201      *ExternalVariable
+	JSON200      *Variable
+	JSON201      *Variable
 }
 
 // Status returns HTTPResponse.Status
@@ -21024,7 +21070,7 @@ func (r DeleteFlowVariableResp) ContentType() string {
 type GetFlowVariableResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalVariable
+	JSON200      *Variable
 }
 
 // Status returns HTTPResponse.Status
@@ -21054,7 +21100,7 @@ func (r GetFlowVariableResp) ContentType() string {
 type UpdateFlowVariableResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalVariable
+	JSON200      *Variable
 }
 
 // Status returns HTTPResponse.Status
@@ -21084,8 +21130,8 @@ func (r UpdateFlowVariableResp) ContentType() string {
 type CreateGlobalVariableResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalVariable
-	JSON201      *ExternalVariable
+	JSON200      *Variable
+	JSON201      *Variable
 }
 
 // Status returns HTTPResponse.Status
@@ -21144,7 +21190,7 @@ func (r DeleteGlobalVariableResp) ContentType() string {
 type GetGlobalVariableResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalVariable
+	JSON200      *Variable
 }
 
 // Status returns HTTPResponse.Status
@@ -21174,7 +21220,7 @@ func (r GetGlobalVariableResp) ContentType() string {
 type UpdateGlobalVariableResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ExternalVariable
+	JSON200      *Variable
 }
 
 // Status returns HTTPResponse.Status
@@ -23139,16 +23185,16 @@ func (c *ClientWithResponses) UpdateConnectionWithApplicationMergePatchPlusJSONB
 }
 
 // CreateFlowWithBodyWithResponse request with arbitrary body returning *CreateFlowResp
-func (c *ClientWithResponses) CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
-	rsp, err := c.CreateFlowWithBody(ctx, contentType, body, reqEditors...)
+func (c *ClientWithResponses) CreateFlowWithBodyWithResponse(ctx context.Context, params *CreateFlowParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
+	rsp, err := c.CreateFlowWithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseCreateFlowResp(rsp)
 }
 
-func (c *ClientWithResponses) CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
-	rsp, err := c.CreateFlow(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateFlowWithResponse(ctx context.Context, params *CreateFlowParams, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
+	rsp, err := c.CreateFlow(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -27363,14 +27409,14 @@ func ParseCreateConnectionResp(rsp *http.Response) (*CreateConnectionResp, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalConnection
+		var dest Connection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest ExternalConnection
+		var dest Connection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27412,7 +27458,7 @@ func ParseGetConnectionResp(rsp *http.Response) (*GetConnectionResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalConnection
+		var dest Connection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27438,7 +27484,7 @@ func ParseUpdateConnectionResp(rsp *http.Response) (*UpdateConnectionResp, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalConnection
+		var dest Connection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27464,14 +27510,14 @@ func ParseCreateFlowResp(rsp *http.Response) (*CreateFlowResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalFlow
+		var dest Flow
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest ExternalFlow
+		var dest Flow
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27513,7 +27559,7 @@ func ParseGetFlowResp(rsp *http.Response) (*GetFlowResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalFlow
+		var dest Flow
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27539,7 +27585,7 @@ func ParseUpdateFlowResp(rsp *http.Response) (*UpdateFlowResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalFlow
+		var dest Flow
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27565,14 +27611,14 @@ func ParseCreateNodeResp(rsp *http.Response) (*CreateNodeResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalNode
+		var dest Node
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest ExternalNode
+		var dest Node
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27614,7 +27660,7 @@ func ParseGetNodeResp(rsp *http.Response) (*GetNodeResp, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalNode
+		var dest Node
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27640,14 +27686,14 @@ func ParseCreateFlowVariableResp(rsp *http.Response) (*CreateFlowVariableResp, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27689,7 +27735,7 @@ func ParseGetFlowVariableResp(rsp *http.Response) (*GetFlowVariableResp, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27715,7 +27761,7 @@ func ParseUpdateFlowVariableResp(rsp *http.Response) (*UpdateFlowVariableResp, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27741,14 +27787,14 @@ func ParseCreateGlobalVariableResp(rsp *http.Response) (*CreateGlobalVariableRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27790,7 +27836,7 @@ func ParseGetGlobalVariableResp(rsp *http.Response) (*GetGlobalVariableResp, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -27816,7 +27862,7 @@ func ParseUpdateGlobalVariableResp(rsp *http.Response) (*UpdateGlobalVariableRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ExternalVariable
+		var dest Variable
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

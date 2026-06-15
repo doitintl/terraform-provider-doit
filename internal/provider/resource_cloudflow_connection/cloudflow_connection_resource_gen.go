@@ -35,8 +35,8 @@ func CloudflowConnectionResourceSchema(ctx context.Context) schema.Schema {
 			"connection_id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Connection ID",
-				MarkdownDescription: "Connection ID",
+				Description:         "Unique identifier of the connection.",
+				MarkdownDescription: "Unique identifier of the connection.",
 			},
 			"create_time": schema.StringAttribute{
 				Computed:            true,
@@ -83,8 +83,8 @@ func CloudflowConnectionResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"status": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Operational status of a connection.\n- `active` — the connection is valid and in use.\n- `disabled` — disabled via `PATCH /connections/{connectionId}`.\n- `pending_permissions` — awaiting a permission grant in the cloud provider.\n- `permissions_failed` — permission setup failed.\n- `inactive` — deactivated.\n- `cloud_deleted` — the underlying cloud resource was deleted externally.\n- `draft` — initial state during creation wizard (internal).\n",
-				MarkdownDescription: "Operational status of a connection.\n- `active` — the connection is valid and in use.\n- `disabled` — disabled via `PATCH /connections/{connectionId}`.\n- `pending_permissions` — awaiting a permission grant in the cloud provider.\n- `permissions_failed` — permission setup failed.\n- `inactive` — deactivated.\n- `cloud_deleted` — the underlying cloud resource was deleted externally.\n- `draft` — initial state during creation wizard (internal).\n",
+				Description:         "Operational status of a connection.\n- `active` — the connection is valid and in use.\n- `disabled` — disabled via `PATCH /connections/{connectionId}`.\n- `pending_permissions` — awaiting a permission grant in the cloud provider.\n- `permissions_failed` — permission setup failed.\n- `inactive` — deactivated.\n- `cloud_deleted` — the underlying cloud resource was deleted externally.\n- `draft` — connection is not yet fully configured.\n",
+				MarkdownDescription: "Operational status of a connection.\n- `active` — the connection is valid and in use.\n- `disabled` — disabled via `PATCH /connections/{connectionId}`.\n- `pending_permissions` — awaiting a permission grant in the cloud provider.\n- `permissions_failed` — permission setup failed.\n- `inactive` — deactivated.\n- `cloud_deleted` — the underlying cloud resource was deleted externally.\n- `draft` — connection is not yet fully configured.\n",
 			},
 			"status_message": schema.StringAttribute{
 				Computed:            true,
