@@ -58,20 +58,23 @@ provider "doit" {
 
 ### Resources
 
-| Resource                 | Description                                                       |
-| ------------------------ | ----------------------------------------------------------------- |
-| `doit_alert`             | Cost/usage alerts with threshold notifications                    |
-| `doit_allocation`        | Cost allocation rules and groups                                  |
-| `doit_annotation`        | Custom notes on cost data                                         |
-| `doit_asset`             | Cloud assets (import-only; manage Google Workspace licenses)      |
-| `doit_budget`            | Budget tracking with alerts and seasonal amounts                  |
-| `doit_datahub_dataset`   | DataHub dataset management                                        |
-| `doit_folder`            | Cloud Analytics folders for organizing reports and allocations    |
-| `doit_label`             | Labels for categorizing annotations                               |
-| `doit_label_assignments` | Assign labels to resources                                        |
-| `doit_report`            | Cloud Analytics reports with filters, metrics, and grouping       |
-| `doit_sharing`           | Sharing permissions for reports, budgets, alerts, and allocations |
-| `doit_user`              | Invite and manage platform users                                  |
+| Resource                       | Description                                                       |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `doit_active_theme`            | Active console theme (singleton)                                  |
+| `doit_alert`                   | Cost/usage alerts with threshold notifications                    |
+| `doit_allocation`              | Cost allocation rules and groups                                  |
+| `doit_annotation`              | Custom notes on cost data                                         |
+| `doit_asset`                   | Cloud assets (import-only; manage Google Workspace licenses)      |
+| `doit_budget`                  | Budget tracking with alerts and seasonal amounts                  |
+| `doit_cloudconnect_aws_account`| AWS CloudConnect account onboarding                               |
+| `doit_custom_theme`            | Custom console themes                                             |
+| `doit_datahub_dataset`         | DataHub dataset management                                        |
+| `doit_folder`                  | Cloud Analytics folders for organizing reports and allocations    |
+| `doit_label`                   | Labels for categorizing annotations                               |
+| `doit_label_assignments`       | Assign labels to resources                                        |
+| `doit_report`                  | Cloud Analytics reports with filters, metrics, and grouping       |
+| `doit_sharing`                 | Sharing permissions for reports, budgets, alerts, and allocations |
+| `doit_user`                    | Invite and manage platform users                                  |
 
 ### Data Sources
 
@@ -83,26 +86,37 @@ provider "doit" {
 | `doit_alert` / `doit_alerts`           | Get or list cost/usage alerts       |
 | `doit_allocation` / `doit_allocations` | Get or list allocation rules        |
 | `doit_budget` / `doit_budgets`         | Get or list budgets                 |
+| `doit_dimension` / `doit_dimensions`   | Get or list report dimensions       |
 | `doit_folder` / `doit_folders`         | Get or list Cloud Analytics folders |
 | `doit_report` / `doit_reports`         | Get or list Cloud Analytics reports |
 | `doit_report_query`                    | Run ad-hoc Cloud Analytics queries  |
 | `doit_report_result`                   | Get results from an existing report |
-| `doit_dimensions`                      | List available report dimensions    |
 
 </details>
 
 <details>
 <summary><strong>Operations</strong> — anomalies, incidents, commitments, assets, invoices</summary>
 
-| Data Source                                      | Description                          |
-| ------------------------------------------------ | ------------------------------------ |
-| `doit_anomaly` / `doit_anomalies`                | Get or list cost anomalies           |
-| `doit_cloud_incident` / `doit_cloud_incidents`   | Get or list cloud provider incidents |
-| `doit_commitment` / `doit_commitments`           | Get or list commitments              |
-| `doit_asset` / `doit_assets`                     | Get or list cloud assets             |
-| `doit_invoice` / `doit_invoices`                 | Get or list invoices                 |
-| `doit_support_request` / `doit_support_requests` | Get or list support requests         |
-| `doit_support_request_comments`                  | List comments on a support request   |
+| Data Source                                      | Description                                   |
+| ------------------------------------------------ | --------------------------------------------- |
+| `doit_anomaly` / `doit_anomalies`                | Get or list cost anomalies                     |
+| `doit_cloud_diagrams`                            | Search cloud infrastructure diagrams           |
+| `doit_cloud_diagrams_activity_groups`             | List activity groups for a diagram             |
+| `doit_cloud_diagrams_export`                     | Export a cloud diagram                         |
+| `doit_cloud_diagrams_node_activities`             | List node activities for a diagram             |
+| `doit_cloud_diagrams_relationships`              | List relationships for a diagram               |
+| `doit_cloud_diagrams_schemes`                    | List available diagram color schemes           |
+| `doit_cloud_diagrams_search`                     | Search within a cloud diagram                  |
+| `doit_cloud_diagrams_snapshot`                   | Get a single diagram snapshot                  |
+| `doit_cloud_diagrams_snapshots`                  | List diagram snapshots                         |
+| `doit_cloud_diagrams_stats`                      | Get diagram statistics                         |
+| `doit_cloud_diagrams_statussheet`                | Get diagram status sheet                       |
+| `doit_cloud_incident` / `doit_cloud_incidents`   | Get or list cloud provider incidents           |
+| `doit_commitment` / `doit_commitments`           | Get or list commitments                        |
+| `doit_asset` / `doit_assets`                     | Get or list cloud assets                       |
+| `doit_invoice` / `doit_invoices`                 | Get or list invoices                           |
+| `doit_support_request` / `doit_support_requests` | Get or list support requests                   |
+| `doit_support_request_comments`                  | List comments on a support request             |
 
 </details>
 
@@ -111,18 +125,20 @@ provider "doit" {
 
 | Data Source                                      | Description                    |
 | ------------------------------------------------ | ------------------------------ |
+| `doit_account_team`                              | Get account team information   |
+| `doit_active_theme`                              | Get active console theme       |
 | `doit_annotation` / `doit_annotations`           | Get or list annotations        |
+| `doit_ava`                                       | Query the Ava AI assistant     |
+| `doit_current_user`                              | Get current authenticated user |
+| `doit_custom_theme` / `doit_custom_themes`       | Get or list custom themes      |
+| `doit_datahub_dataset` / `doit_datahub_datasets` | Get or list DataHub datasets   |
 | `doit_label` / `doit_labels`                     | Get or list labels             |
 | `doit_label_assignments`                         | List label assignments         |
-| `doit_datahub_dataset` / `doit_datahub_datasets` | Get or list DataHub datasets   |
-| `doit_current_user`                              | Get current authenticated user |
-| `doit_users`                                     | List users                     |
-| `doit_roles`                                     | List available roles           |
-| `doit_account_team`                              | Get account team information   |
 | `doit_organizations`                             | List organizations             |
 | `doit_platforms`                                 | List available cloud platforms |
 | `doit_products`                                  | List available cloud products  |
-| `doit_ava`                                       | Query the Ava AI assistant     |
+| `doit_roles`                                     | List available roles           |
+| `doit_users`                                     | List users                     |
 
 </details>
 
