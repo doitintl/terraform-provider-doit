@@ -3701,6 +3701,139 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  "/iam/v1/users/{id}/actions/resend":
+    post:
+      tags:
+        - Users
+      summary: Resend invite
+      description: |
+        Resets the invite expiry to 48 hours from now, invalidates the previous invite token (so
+        old email links stop working), and triggers a fresh invitation email. Works on invites in
+        any state including `Cancelled` — resending a cancelled invite reactivates it to `Pending`.
+
+        Returns `404` if no invite exists for the given ID (never created, or already accepted and removed).
+
+        Requires `usersManager` permission.
+      operationId: resendInvite
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the invited user.
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects. The server retains the key for at least 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |
+            If `true`, validates and simulates the operation without committing changes.
+            The response shape is identical to a real execution.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK - Invite resent and expiry reset.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResendInviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  "/iam/v1/users/{id}/actions/cancel":
+    post:
+      tags:
+        - Users
+      summary: Cancel invite
+      description: |
+        Marks the invite as `Cancelled` and invalidates the invite token so any outstanding email
+        links stop working. The invite document is retained (soft cancel) — the user row remains
+        visible in `GET /iam/v1/users` with `inviteStatus: Cancelled`. Use `DELETE /iam/v1/users/{id}`
+        to fully remove the record.
+
+        Returns `404` if no invite exists for the given ID, and `409` if the invite is already cancelled.
+
+        Requires `usersManager` permission.
+      operationId: cancelInvite
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the invited user.
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects. The server retains the key for at least 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |
+            If `true`, validates and simulates the operation without committing changes.
+            The response shape is identical to a real execution.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK - Invite cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelInviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: Conflict - Invite already cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
   /clouddiagrams/v1/scheme/find:
     post:
       tags:
@@ -5823,6 +5956,28 @@ components:
         message:
           type: string
           description: Success message
+    ResendInviteResponse:
+      type: object
+      description: Response confirming invite resend.
+      required: [message, inviteId]
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    CancelInviteResponse:
+      type: object
+      description: Response confirming invite cancellation.
+      required: [message, inviteId]
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
     AdvancedAnalysis:
       type: object
       description: Advanced analysis options. Each can be set independently.
@@ -8688,6 +8843,7 @@ components:
         - platform
         - product
         - severity
+        - subject
       properties:
         body:
           type: string

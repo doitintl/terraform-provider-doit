@@ -359,7 +359,7 @@ func mapSSTagsList(ctx context.Context, tags *[]string) (basetypes.ListValue, di
 }
 
 // mapSSPropsValue serializes the free-form props map as a JSON string.
-func mapSSPropsValue(props *map[string]interface{}) jsontypes.Normalized {
+func mapSSPropsValue(props *map[string]any) jsontypes.Normalized {
 	return mapFreeformJSON(props)
 }
 

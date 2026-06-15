@@ -10,7 +10,7 @@ func TestMapFreeformJSON(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		input    *map[string]interface{}
+		input    *map[string]any
 		wantNull bool
 		wantJSON string
 	}{
@@ -19,18 +19,18 @@ func TestMapFreeformJSON(t *testing.T) {
 			wantNull: true,
 		},
 		"empty-map": {
-			input:    &map[string]interface{}{},
+			input:    &map[string]any{},
 			wantNull: true,
 		},
 		"simple-map": {
-			input:    &map[string]interface{}{"key": "value"},
+			input:    &map[string]any{"key": "value"},
 			wantNull: false,
 			wantJSON: `{"key":"value"}`,
 		},
 		"nested-map": {
-			input: &map[string]interface{}{
-				"nested": map[string]interface{}{"inner": 42.0},
-				"list":   []interface{}{"a", "b"},
+			input: &map[string]any{
+				"nested": map[string]any{"inner": 42.0},
+				"list":   []any{"a", "b"},
 			},
 			wantNull: false,
 		},
@@ -67,7 +67,7 @@ func TestFreeformJSONToMap(t *testing.T) {
 		wantNil   bool
 		wantError bool
 		wantKey   string
-		wantVal   interface{}
+		wantVal   any
 	}{
 		"null-value": {
 			input:   jsontypes.NewNormalizedNull(),
@@ -134,7 +134,7 @@ func TestFreeformJSONToMap(t *testing.T) {
 func TestFreeformJSON_RoundTrip(t *testing.T) {
 	t.Parallel()
 
-	original := &map[string]interface{}{
+	original := &map[string]any{
 		"region":       "us-east-1",
 		"instanceType": "m5.large",
 	}
@@ -171,7 +171,7 @@ func TestFreeformJSON_EmptyObjectRoundTrip(t *testing.T) {
 
 	// The API normalizes empty objects to null in responses, so mapFreeformJSON
 	// collapses {} to null to prevent drift.
-	original := &map[string]interface{}{}
+	original := &map[string]any{}
 
 	normalized := mapFreeformJSON(original)
 	if !normalized.IsNull() {

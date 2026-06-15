@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_diagrams_schemes"
@@ -228,12 +229,13 @@ func (d *cloudDiagramsSchemesDataSource) Read(ctx context.Context, req datasourc
 
 // computeSchemesID creates a deterministic hash from query parameters.
 func computeSchemesID(data cloudDiagramsSchemesDataSourceModel) string {
-	input := "cloud_diagrams_schemes"
+	var input strings.Builder
+	input.WriteString("cloud_diagrams_schemes")
 	if !data.SchemeIds.IsNull() {
-		input += fmt.Sprintf("\nscheme_ids:%s", data.SchemeIds.String())
+		fmt.Fprintf(&input, "\nscheme_ids:%s", data.SchemeIds.String())
 	}
 	if !data.LayerIds.IsNull() {
-		input += fmt.Sprintf("\nlayer_ids:%s", data.LayerIds.String())
+		fmt.Fprintf(&input, "\nlayer_ids:%s", data.LayerIds.String())
 	}
 
 	// Include all boolean query params in the hash.
@@ -255,17 +257,17 @@ func computeSchemesID(data cloudDiagramsSchemesDataSourceModel) string {
 		{"skip_empty", data.SkipEmpty},
 	} {
 		if !p.val.IsNull() {
-			input += fmt.Sprintf("\n%s:%v", p.name, p.val.ValueBool())
+			fmt.Fprintf(&input, "\n%s:%v", p.name, p.val.ValueBool())
 		}
 	}
 
 	if !data.NodeType.IsNull() {
-		input += fmt.Sprintf("\nnode_type:%s", data.NodeType.ValueString())
+		fmt.Fprintf(&input, "\nnode_type:%s", data.NodeType.ValueString())
 	}
 	if !data.Type.IsNull() {
-		input += fmt.Sprintf("\ntype:%s", data.Type.String())
+		fmt.Fprintf(&input, "\ntype:%s", data.Type.String())
 	}
-	hash := sha256.Sum256([]byte(input))
+	hash := sha256.Sum256([]byte(input.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -565,7 +567,7 @@ func mapTagsList(ctx context.Context, tags *[]string) (basetypes.ListValue, diag
 
 // mapSchemesPropsValue serializes the free-form props map as a JSON string.
 // Props is additionalProperties: true, generated as a StringAttribute with jsontypes.NormalizedType.
-func mapSchemesPropsValue(props *map[string]interface{}) jsontypes.Normalized {
+func mapSchemesPropsValue(props *map[string]any) jsontypes.Normalized {
 	return mapFreeformJSON(props)
 }
 
