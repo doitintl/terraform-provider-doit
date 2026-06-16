@@ -84,6 +84,16 @@ func main() {
 		extractor.insertExtractedSchemas(schemasNode)
 	}
 
+	// Phase 3.5: Flatten multi-element allOf compositions in components/schemas.
+	// Schemas like {allOf: [$ref: Base, {properties: {extra}}]} are merged into
+	// a single {type: object, properties: {all Base props + extra}}. This allows
+	// downstream code generators (tfplugingen-openapi) that don't support allOf
+	// composition to process them.
+	schemasNode = findMapValue(doc, "components", "schemas")
+	if schemasNode != nil {
+		flattenAllOfSchemas(schemasNode)
+	}
+
 	// Phase 4: Validate functional equivalence of the extraction.
 	// This runs BEFORE pruning so that inline-schema extraction regressions
 	// are always caught, regardless of whether pruning is enabled.
@@ -519,6 +529,189 @@ func hasRef(node *yaml.Node) bool {
 	return false
 }
 
+// flattenAllOfSchemas walks all named schemas in components/schemas and flattens
+// any schema that uses allOf with 2+ sub-schemas into a single flat object.
+// Each $ref sub-schema is resolved by looking it up in the same schemasNode.
+// Properties from later sub-schemas override earlier ones on conflict (with a
+// log warning). Required arrays are merged (union, deduplicated).
+func flattenAllOfSchemas(schemasNode *yaml.Node) {
+	if schemasNode.Kind != yaml.MappingNode {
+		return
+	}
+	for i := 0; i < len(schemasNode.Content)-1; i += 2 {
+		schemaName := schemasNode.Content[i].Value
+		schemaNode := schemasNode.Content[i+1]
+		if schemaNode.Kind != yaml.MappingNode {
+			continue
+		}
+		allOfNode := getMappingValue(schemaNode, "allOf")
+		if allOfNode == nil || allOfNode.Kind != yaml.SequenceNode || len(allOfNode.Content) < 2 {
+			continue
+		}
+
+		merged := flattenAllOf(allOfNode, schemasNode, schemaName)
+		if merged == nil {
+			continue
+		}
+
+		// Preserve parent-level fields (description, example) from outside the allOf.
+		parentDesc := getScalarNode(schemaNode, "description")
+		parentExample := getMappingValue(schemaNode, "example")
+
+		// Replace the schema node content with the merged result.
+		schemaNode.Content = merged.Content
+
+		// Re-add parent description if present and the merged result doesn't have one.
+		if parentDesc != nil && parentDesc.Value != "" && getScalarValue(schemaNode, "description") == "" {
+			schemaNode.Content = append(
+				[]*yaml.Node{
+					{Kind: yaml.ScalarNode, Value: "description", Tag: "!!str"},
+					{Kind: yaml.ScalarNode, Value: parentDesc.Value, Tag: "!!str", Style: parentDesc.Style},
+				},
+				schemaNode.Content...,
+			)
+		}
+
+		// Re-add parent example if present and the merged result doesn't have one.
+		if parentExample != nil && getMappingValue(schemaNode, "example") == nil {
+			schemaNode.Content = append(schemaNode.Content,
+				&yaml.Node{Kind: yaml.ScalarNode, Value: "example", Tag: "!!str"},
+				deepCopyNode(parentExample),
+			)
+		}
+
+		fmt.Printf("Flattened allOf in schema %s\n", schemaName)
+	}
+}
+
+// flattenAllOf merges all sub-schemas of an allOf sequence node into a single
+// flat object mapping node. Returns nil if any sub-schema cannot be resolved.
+func flattenAllOf(allOfNode *yaml.Node, schemasNode *yaml.Node, contextName string) *yaml.Node {
+	// Collect resolved sub-schemas.
+	var resolved []*yaml.Node
+	for _, sub := range allOfNode.Content {
+		r := resolveSubSchema(sub, schemasNode)
+		if r == nil {
+			log.Printf("WARNING: cannot resolve allOf sub-schema in %s, skipping flatten", contextName)
+			return nil
+		}
+		resolved = append(resolved, r)
+	}
+
+	// Build the merged result.
+	result := &yaml.Node{Kind: yaml.MappingNode}
+
+	// Set type: object
+	result.Content = append(result.Content,
+		&yaml.Node{Kind: yaml.ScalarNode, Value: "type", Tag: "!!str"},
+		&yaml.Node{Kind: yaml.ScalarNode, Value: "object", Tag: "!!str"},
+	)
+
+	// Merge required arrays.
+	requiredSet := make(map[string]bool)
+	var requiredOrder []string
+	for _, r := range resolved {
+		reqNode := getMappingValue(r, "required")
+		if reqNode == nil || reqNode.Kind != yaml.SequenceNode {
+			continue
+		}
+		for _, item := range reqNode.Content {
+			if !requiredSet[item.Value] {
+				requiredSet[item.Value] = true
+				requiredOrder = append(requiredOrder, item.Value)
+			}
+		}
+	}
+	if len(requiredOrder) > 0 {
+		reqSeq := &yaml.Node{Kind: yaml.SequenceNode}
+		for _, name := range requiredOrder {
+			reqSeq.Content = append(reqSeq.Content,
+				&yaml.Node{Kind: yaml.ScalarNode, Value: name, Tag: "!!str"},
+			)
+		}
+		result.Content = append(result.Content,
+			&yaml.Node{Kind: yaml.ScalarNode, Value: "required", Tag: "!!str"},
+			reqSeq,
+		)
+	}
+
+	// Merge properties. Later sub-schemas win on conflict.
+	mergedProps := &yaml.Node{Kind: yaml.MappingNode}
+	propIndex := make(map[string]int) // property name -> index in mergedProps.Content
+	for _, r := range resolved {
+		propsNode := getMappingValue(r, "properties")
+		if propsNode == nil || propsNode.Kind != yaml.MappingNode {
+			continue
+		}
+		for j := 0; j < len(propsNode.Content)-1; j += 2 {
+			propKey := propsNode.Content[j].Value
+			propVal := propsNode.Content[j+1]
+			if idx, exists := propIndex[propKey]; exists {
+				log.Printf("WARNING: property %q in %s defined in multiple allOf sub-schemas, using last definition", propKey, contextName)
+				mergedProps.Content[idx+1] = deepCopyNode(propVal)
+			} else {
+				propIndex[propKey] = len(mergedProps.Content)
+				mergedProps.Content = append(mergedProps.Content,
+					deepCopyNode(propsNode.Content[j]),
+					deepCopyNode(propVal),
+				)
+			}
+		}
+	}
+	if len(mergedProps.Content) > 0 {
+		result.Content = append(result.Content,
+			&yaml.Node{Kind: yaml.ScalarNode, Value: "properties", Tag: "!!str"},
+			mergedProps,
+		)
+	}
+
+	// Copy over any other top-level keys from sub-schemas that aren't
+	// type/required/properties (e.g., description, example on sub-schemas).
+	for _, r := range resolved {
+		if r.Kind != yaml.MappingNode {
+			continue
+		}
+		for j := 0; j < len(r.Content)-1; j += 2 {
+			key := r.Content[j].Value
+			if key == "type" || key == "required" || key == "properties" {
+				continue
+			}
+			if getMappingValue(result, key) == nil {
+				result.Content = append(result.Content,
+					deepCopyNode(r.Content[j]),
+					deepCopyNode(r.Content[j+1]),
+				)
+			}
+		}
+	}
+
+	return result
+}
+
+// resolveSubSchema resolves a single allOf sub-schema. If it's a $ref, it
+// looks up the target in schemasNode and returns a deep copy. If it's an
+// inline object, it returns a deep copy directly.
+func resolveSubSchema(node *yaml.Node, schemasNode *yaml.Node) *yaml.Node {
+	if node.Kind != yaml.MappingNode {
+		return nil
+	}
+	refVal := getScalarValue(node, "$ref")
+	if refVal != "" {
+		const prefix = "#/components/schemas/"
+		if !strings.HasPrefix(refVal, prefix) {
+			return nil
+		}
+		name := refVal[len(prefix):]
+		for i := 0; i < len(schemasNode.Content)-1; i += 2 {
+			if schemasNode.Content[i].Value == name {
+				return deepCopyNode(schemasNode.Content[i+1])
+			}
+		}
+		return nil
+	}
+	return deepCopyNode(node)
+}
+
 // isInlineObject checks if a node is an inline object definition:
 // a mapping node with type: object and properties, but no $ref.
 func isInlineObject(node *yaml.Node) bool {
@@ -857,6 +1050,15 @@ func stripDocFields(v any) any {
 				}
 			}
 		}
+		// Merge multi-element allOf: when all elements are objects, merge their
+		// properties and required arrays into a single flat object.
+		// This ensures the validator treats the original allOf as equivalent to
+		// the flattened version produced by flattenAllOfSchemas.
+		if items, ok := result["allOf"].([]any); ok && len(items) >= 2 {
+			if merged, ok := mergeAllOfItems(items); ok {
+				return merged
+			}
+		}
 		return result
 	case []any:
 		result := make([]any, len(val))
@@ -867,4 +1069,49 @@ func stripDocFields(v any) any {
 	default:
 		return v
 	}
+}
+
+// mergeAllOfItems merges multiple allOf sub-schema maps into a single flat
+// object map. Returns (merged, true) if all items are object maps, or
+// (nil, false) if any item is not a map.
+func mergeAllOfItems(items []any) (map[string]any, bool) {
+	merged := make(map[string]any)
+	for _, item := range items {
+		obj, ok := item.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+		for k, v := range obj {
+			switch k {
+			case "properties":
+				existing, _ := merged["properties"].(map[string]any)
+				if existing == nil {
+					existing = make(map[string]any)
+				}
+				if newProps, ok := v.(map[string]any); ok {
+					maps.Copy(existing, newProps)
+				}
+				merged["properties"] = existing
+			case "required":
+				existing, _ := merged["required"].([]any)
+				if newReq, ok := v.([]any); ok {
+					seen := make(map[string]bool, len(existing))
+					for _, r := range existing {
+						if s, ok := r.(string); ok {
+							seen[s] = true
+						}
+					}
+					for _, r := range newReq {
+						if s, ok := r.(string); ok && !seen[s] {
+							existing = append(existing, r)
+						}
+					}
+				}
+				merged["required"] = existing
+			default:
+				merged[k] = v
+			}
+		}
+	}
+	return merged, true
 }
