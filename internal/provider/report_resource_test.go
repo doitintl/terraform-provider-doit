@@ -3117,3 +3117,130 @@ resource "doit_report" "metric_empty_test" {
 }
 `, i)
 }
+
+// TestAccReport_ClearFilterMode verifies the clearing lifecycle for config.filters[*].mode.
+// The API returns null when mode is unset, so omitting it from config clears it.
+func TestAccReport_ClearFilterMode(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with mode explicitly set.
+			{
+				Config: testAccReportWithFilterMode(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.this",
+						tfjsonpath.New("config").AtMapKey("filters"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":   knownvalue.StringExact("fixed"),
+								"id":     knownvalue.StringExact("cloud_provider"),
+								"mode":   knownvalue.StringExact("contains"),
+								"values": knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("amazon")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccReportWithFilterMode(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear mode by omitting it from config.
+			{
+				Config: testAccReportWithFilterModeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr("doit_report.this", "config.filters.0.mode"),
+				),
+			},
+			// Step 4: Drift check — cleared mode should produce no drift.
+			{
+				Config: testAccReportWithFilterModeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithFilterMode(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-clear-filter-mode-%d"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        filters = [
+          {
+            id      = "cloud_provider"
+            type    = "fixed"
+            inverse = false
+            mode    = "contains"
+            values  = ["amazon"]
+          }
+        ]
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportWithFilterModeCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "this" {
+    name = "test-clear-filter-mode-%d"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        filters = [
+          {
+            id      = "cloud_provider"
+            type    = "fixed"
+            inverse = false
+            values  = ["amazon"]
+          }
+        ]
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}

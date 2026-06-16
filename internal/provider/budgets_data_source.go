@@ -299,7 +299,7 @@ func mapBudgetScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter)
 				"id":               types.StringValue(s.Id),
 				"include_null":     types.BoolPointerValue(s.IncludeNull),
 				"inverse":          types.BoolPointerValue(s.Inverse),
-				"mode":             types.StringValue(string(s.Mode)),
+				"mode":             types.StringPointerValue((*string)(s.Mode)),
 				"type":             types.StringValue(string(s.Type)),
 				"values":           valuesList,
 			},

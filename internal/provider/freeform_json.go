@@ -12,7 +12,7 @@ import (
 // Returns null when the map pointer is nil (field absent) or the map is empty.
 // The API normalizes empty objects to null in responses, so collapsing {} to null
 // here prevents drift between the user's config and the API response.
-func mapFreeformJSON(data *map[string]interface{}) jsontypes.Normalized {
+func mapFreeformJSON(data *map[string]any) jsontypes.Normalized {
 	if data == nil || len(*data) == 0 {
 		return jsontypes.NewNormalizedNull()
 	}
@@ -27,7 +27,7 @@ func mapFreeformJSON(data *map[string]interface{}) jsontypes.Normalized {
 // for API requests. Returns nil and no error when the value is null or unknown
 // (meaning the field should be omitted from the request). Returns a diagnostic
 // error if the JSON cannot be parsed.
-func freeformJSONToMap(v jsontypes.Normalized) (*map[string]interface{}, diag.Diagnostics) {
+func freeformJSONToMap(v jsontypes.Normalized) (*map[string]any, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if v.IsNull() || v.IsUnknown() {
@@ -37,7 +37,7 @@ func freeformJSONToMap(v jsontypes.Normalized) (*map[string]interface{}, diag.Di
 	if raw == "" {
 		return nil, diags
 	}
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal([]byte(raw), &result); err != nil {
 		diags.AddError(
 			"Invalid JSON in Freeform Attribute",

@@ -1,5 +1,52 @@
 # Changelog
 
+## v1.5.0 (2026-06-15)
+
+### FEATURES
+
+- **resource/doit_custom_theme**: New resource for managing custom console themes ([#194](https://github.com/doitintl/terraform-provider-doit/pull/194))
+- **resource/doit_active_theme**: New singleton resource for managing the active console theme ([#214](https://github.com/doitintl/terraform-provider-doit/pull/214))
+- **resource/doit_cloudconnect_aws_account**: New resource for onboarding AWS CloudConnect accounts ([#195](https://github.com/doitintl/terraform-provider-doit/pull/195))
+- **data-source/doit_custom_theme, doit_custom_themes**: New data sources for custom console themes ([#213](https://github.com/doitintl/terraform-provider-doit/pull/213))
+- **data-source/doit_active_theme**: New data source for the active console theme ([#215](https://github.com/doitintl/terraform-provider-doit/pull/215))
+- **data-source/doit_cloud_diagrams_search**: Search within a cloud diagram ([#223](https://github.com/doitintl/terraform-provider-doit/pull/223))
+- **data-source/doit_cloud_diagrams_schemes**: List available diagram color schemes ([#226](https://github.com/doitintl/terraform-provider-doit/pull/226))
+- **data-source/doit_cloud_diagrams_stats**: Get diagram statistics ([#227](https://github.com/doitintl/terraform-provider-doit/pull/227))
+- **data-source/doit_cloud_diagrams_statussheet**: Get diagram component details ([#228](https://github.com/doitintl/terraform-provider-doit/pull/228))
+- **data-source/doit_cloud_diagrams_snapshot**: Get a single diagram snapshot by ID ([#229](https://github.com/doitintl/terraform-provider-doit/pull/229))
+- **data-source/doit_cloud_diagrams_snapshots**: List diagram snapshots ([#190](https://github.com/doitintl/terraform-provider-doit/pull/190))
+- **data-source/doit_cloud_diagrams_activity_groups**: List snapshot activity groups ([#231](https://github.com/doitintl/terraform-provider-doit/pull/231))
+- **data-source/doit_cloud_diagrams_node_activities**: List per-node activities ([#232](https://github.com/doitintl/terraform-provider-doit/pull/232))
+- **data-source/doit_cloud_diagrams_export**: Export a full diagram as structured JSON ([#236](https://github.com/doitintl/terraform-provider-doit/pull/236))
+- **data-source/doit_cloud_diagrams_relationships**: Resource graph traversal with link origin/destination endpoints ([#237](https://github.com/doitintl/terraform-provider-doit/pull/237), [#240](https://github.com/doitintl/terraform-provider-doit/pull/240))
+
+### ENHANCEMENTS
+
+- **resource/doit_report**: Added `display_settings` block with `theme` support for applying custom themes to reports ([#216](https://github.com/doitintl/terraform-provider-doit/pull/216))
+- **data-source/doit_anomalies**: Added `include_notifications` query parameter ([#238](https://github.com/doitintl/terraform-provider-doit/pull/238))
+- **clearable attributes**: All `Optional+Computed` attributes are now explicitly classified as clearable or not clearable. Clearable attributes (those that can be reset by omitting them from config) include: `description` (report, folder, datahub_dataset), `config.filters[*].values`, `config.metric_filter.values` (report), `scopes[*].values` (budget), `rules[*].name`, `rules[*].description`, `rules[*].formula`, `unallocated_costs` (allocation), `labels`, `reports` (annotation), `cloud_flow_template_id`, `report_url`, `detailed_description_mdx`, `easy_win_description`, `dismissal_details.*` (insight), `external_id`, `external_url`, `metadata`, `result.*` (insight resource results) ([#235](https://github.com/doitintl/terraform-provider-doit/pull/235))
+
+### BUG FIXES
+
+- **data-source/doit_cloud_diagrams_statussheet**: Return empty maps instead of null for computed component maps ([#239](https://github.com/doitintl/terraform-provider-doit/pull/239))
+- **resource/doit_alert**: Fixed type conversions for `Condition` and `AlertConfigDataSource` named types ([#212](https://github.com/doitintl/terraform-provider-doit/pull/212))
+
+### INTERNAL
+
+- Upgraded Go from 1.26.3 to 1.26.4
+- Upgraded `oapi-codegen/oapi-codegen` v2.7.0→v2.7.1
+- Upgraded transitive dependencies: `golang.org/x/crypto` v0.52.0→v0.53.0, `golang.org/x/net` v0.54.0→v0.56.0, `golang.org/x/sync` v0.20.0→v0.21.0, `mattn/go-colorable` v0.1.14→v0.1.15
+- Upgraded CI workflow actions: `actions/checkout` v6.0.2→v6.0.3, `goreleaser/goreleaser-action` v7.2.0→v7.2.2, `golangci/golangci-lint-action` v9.2.0→v9.2.1
+- Added custom golangci-lint analyzers: `clearableattr`, `requestguard`, `diagdrop`, `overlaycheck` (nested), `newexpr` (nested blocks), pointer-value drift detection ([#197](https://github.com/doitintl/terraform-provider-doit/pull/197), [#200](https://github.com/doitintl/terraform-provider-doit/pull/200), [#207](https://github.com/doitintl/terraform-provider-doit/pull/207), [#208](https://github.com/doitintl/terraform-provider-doit/pull/208), [#211](https://github.com/doitintl/terraform-provider-doit/pull/211), [#222](https://github.com/doitintl/terraform-provider-doit/pull/222), [#224](https://github.com/doitintl/terraform-provider-doit/pull/224), [#235](https://github.com/doitintl/terraform-provider-doit/pull/235))
+- Standardized helper function conventions and removed redundant `IsUnknown()` guards for fields with schema defaults ([#199](https://github.com/doitintl/terraform-provider-doit/pull/199), [#210](https://github.com/doitintl/terraform-provider-doit/pull/210))
+- Simplified folder `folderId` default logic using schema defaults ([#202](https://github.com/doitintl/terraform-provider-doit/pull/202))
+- Used `jsontypes.Normalized` for freeform JSON attributes in code generation ([#234](https://github.com/doitintl/terraform-provider-doit/pull/234))
+- Pruned unused OpenAPI endpoints from generated models ([#198](https://github.com/doitintl/terraform-provider-doit/pull/198))
+- Renamed `cloud_diagram_*` data sources to `cloud_diagrams_*` for consistency ([#230](https://github.com/doitintl/terraform-provider-doit/pull/230))
+- Synced upstream OpenAPI spec and regenerated code ([#225](https://github.com/doitintl/terraform-provider-doit/pull/225))
+- Added folder update test proving `parent_folder_id` is preserved ([#201](https://github.com/doitintl/terraform-provider-doit/pull/201))
+- Applied `go fix` rewrites (`interface{}` → `any`) and fixed `staticcheck` QF1012 lint warnings (`WriteString(Sprintf(...))` → `Fprintf`)
+
 ## v1.4.0 (2026-05-21)
 
 ### FEATURES

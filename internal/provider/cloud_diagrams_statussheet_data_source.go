@@ -359,7 +359,7 @@ func mapSSTagsList(ctx context.Context, tags *[]string) (basetypes.ListValue, di
 }
 
 // mapSSPropsValue serializes the free-form props map as a JSON string.
-func mapSSPropsValue(props *map[string]interface{}) jsontypes.Normalized {
+func mapSSPropsValue(props *map[string]any) jsontypes.Normalized {
 	return mapFreeformJSON(props)
 }
 
@@ -610,6 +610,34 @@ func mapSSLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink
 			return basetypes.MapValue{}, diags
 		}
 
+		originVal, originDiags := datasource_cloud_diagrams_statussheet.NewOriginValue(
+			datasource_cloud_diagrams_statussheet.OriginValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"_id":       types.StringValue(l.Origin.UnderscoreId),
+				"type":      types.StringValue(string(l.Origin.Type)),
+				"scheme_id": types.StringValue(l.Origin.SchemeId),
+				"ss_id":     types.StringValue(l.Origin.SsId),
+			},
+		)
+		diags.Append(originDiags...)
+		if diags.HasError() {
+			return basetypes.MapValue{}, diags
+		}
+
+		destVal, destDiags := datasource_cloud_diagrams_statussheet.NewDestinationValue(
+			datasource_cloud_diagrams_statussheet.DestinationValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"_id":       types.StringValue(l.Destination.UnderscoreId),
+				"type":      types.StringValue(string(l.Destination.Type)),
+				"scheme_id": types.StringValue(l.Destination.SchemeId),
+				"ss_id":     types.StringValue(l.Destination.SsId),
+			},
+		)
+		diags.Append(destDiags...)
+		if diags.HasError() {
+			return basetypes.MapValue{}, diags
+		}
+
 		val, valDiags := datasource_cloud_diagrams_statussheet.NewLinkValue(
 			datasource_cloud_diagrams_statussheet.LinkValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
@@ -619,8 +647,10 @@ func mapSSLinkMap(ctx context.Context, links *map[string]models.CloudDiagramLink
 				"cld_sync":        types.BoolPointerValue(l.CldSync),
 				"cld_type":        mapEnumPointerValue(l.CldType),
 				"connection_type": mapEnumPointerValue(l.ConnectionType),
+				"destination":     destVal,
 				"issues":          issues,
 				"name":            types.StringPointerValue(l.Name),
+				"origin":          originVal,
 				"owner_ss_id":     types.StringPointerValue(l.OwnerSsId),
 				"props":           mapSSPropsValue(l.Props),
 				"tags":            tags,

@@ -3701,6 +3701,139 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  "/iam/v1/users/{id}/actions/resend":
+    post:
+      tags:
+        - Users
+      summary: Resend invite
+      description: |
+        Resets the invite expiry to 48 hours from now, invalidates the previous invite token (so
+        old email links stop working), and triggers a fresh invitation email. Works on invites in
+        any state including `Cancelled` — resending a cancelled invite reactivates it to `Pending`.
+
+        Returns `404` if no invite exists for the given ID (never created, or already accepted and removed).
+
+        Requires `usersManager` permission.
+      operationId: resendInvite
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the invited user.
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects. The server retains the key for at least 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |
+            If `true`, validates and simulates the operation without committing changes.
+            The response shape is identical to a real execution.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK - Invite resent and expiry reset.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResendInviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  "/iam/v1/users/{id}/actions/cancel":
+    post:
+      tags:
+        - Users
+      summary: Cancel invite
+      description: |
+        Marks the invite as `Cancelled` and invalidates the invite token so any outstanding email
+        links stop working. The invite document is retained (soft cancel) — the user row remains
+        visible in `GET /iam/v1/users` with `inviteStatus: Cancelled`. Use `DELETE /iam/v1/users/{id}`
+        to fully remove the record.
+
+        Returns `404` if no invite exists for the given ID, and `409` if the invite is already cancelled.
+
+        Requires `usersManager` permission.
+      operationId: cancelInvite
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the invited user.
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects. The server retains the key for at least 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |
+            If `true`, validates and simulates the operation without committing changes.
+            The response shape is identical to a real execution.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK - Invite cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelInviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: Conflict - Invite already cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
   /clouddiagrams/v1/scheme/find:
     post:
       tags:
@@ -6447,6 +6580,28 @@ components:
         message:
           type: string
           description: Success message
+    ResendInviteResponse:
+      type: object
+      description: Response confirming invite resend.
+      required: [message, inviteId]
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    CancelInviteResponse:
+      type: object
+      description: Response confirming invite cancellation.
+      required: [message, inviteId]
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
     AdvancedAnalysis:
       type: object
       description: Advanced analysis options. Each can be set independently.
@@ -6514,6 +6669,18 @@ components:
           timeInterval: month
           dataSource: billing
           value: 500
+    AlertListItem:
+      description: >-
+        Alert as returned by the list endpoint. Identical to `Alert` but also
+        includes `owner`. The `owner` field is only populated in list results;
+        it is not returned by the get, create, or update endpoints.
+      allOf:
+        - $ref: "#/components/schemas/Alert"
+        - type: object
+          properties:
+            owner:
+              type: string
+              description: Email of the alert owner (the collaborator with the owner role).
     AlertConfig:
       type: object
       description: Parameters that define when and how an alert is evaluated.
@@ -6534,7 +6701,8 @@ components:
             billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
         scopes:
           type: array
-          description: The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
+          description: >-
+            The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.
           items:
             $ref: "#/components/schemas/ExternalConfigFilter"
         metric:
@@ -7938,7 +8106,7 @@ components:
           type: array
           description: Array of alerts.
           items:
-            $ref: "#/components/schemas/Alert"
+            $ref: "#/components/schemas/AlertListItem"
     ExternalBudgetAlert:
       type: object
       description: Budget alert status details.
@@ -8193,7 +8361,6 @@ components:
       required:
         - id
         - type
-        - mode
       properties:
         id:
           type: string
@@ -9312,6 +9479,7 @@ components:
         - platform
         - product
         - severity
+        - subject
       properties:
         body:
           type: string
@@ -10022,10 +10190,43 @@ components:
           description: Issues associated with this group.
           items:
             $ref: "#/components/schemas/CloudDiagramIssue"
+    CloudDiagramComponentRef:
+      type: object
+      required:
+        - _id
+        - type
+        - scheme_id
+        - ss_id
+      description: Reference to a diagram component, including its parent diagram and layer.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        type:
+          type: string
+          enum:
+            - attachment
+            - combiner
+            - element
+            - group
+            - link
+            - node
+            - note
+            - scheme
+            - statussheet
+          description: Component type.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Parent layer ID.
     CloudDiagramLink:
       type: object
       required:
         - _id
+        - origin
+        - destination
       description: A link component connecting two nodes or groups.
       properties:
         _id:
@@ -10076,6 +10277,10 @@ components:
             - Partner Interconnect
             - Dedicated Interconnect
           description: Link connection type.
+        origin:
+          $ref: "#/components/schemas/CloudDiagramComponentRef"
+        destination:
+          $ref: "#/components/schemas/CloudDiagramComponentRef"
         owner_ss_id:
           type: string
           description: Owner layer ID for cross-diagram links.

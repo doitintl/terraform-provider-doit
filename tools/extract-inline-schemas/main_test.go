@@ -457,20 +457,53 @@ func TestStripDocFields(t *testing.T) {
 		}
 	})
 
-	t.Run("does not unwrap multi-element allOf", func(t *testing.T) {
+	t.Run("merges multi-element allOf with object items", func(t *testing.T) {
+		input := map[string]any{
+			"allOf": []any{
+				map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"name": map[string]any{"type": "string"},
+					},
+				},
+				map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"extra": map[string]any{"type": "integer"},
+					},
+				},
+			},
+		}
+		got := stripDocFields(input).(map[string]any)
+		if _, ok := got["allOf"]; ok {
+			t.Error("multi-element allOf with object items should be merged")
+		}
+		props, _ := got["properties"].(map[string]any)
+		if props == nil {
+			t.Fatal("merged result should have properties")
+		}
+		if _, ok := props["name"]; !ok {
+			t.Error("merged properties should include 'name'")
+		}
+		if _, ok := props["extra"]; !ok {
+			t.Error("merged properties should include 'extra'")
+		}
+	})
+
+	t.Run("does not merge multi-element allOf with non-object items", func(t *testing.T) {
 		input := map[string]any{
 			"allOf": []any{
 				map[string]any{"type": "object"},
-				map[string]any{"type": "string"},
+				"not a map",
 			},
 		}
 		got := stripDocFields(input).(map[string]any)
 		if _, ok := got["allOf"]; !ok {
-			t.Error("multi-element allOf should NOT be unwrapped")
+			t.Error("multi-element allOf with non-object items should NOT be merged")
 		}
 	})
 
-	t.Run("does not unwrap allOf with other sibling keys", func(t *testing.T) {
+	t.Run("unwraps single-element allOf with sibling keys by merging", func(t *testing.T) {
 		input := map[string]any{
 			"type": "object",
 			"allOf": []any{
@@ -478,116 +511,379 @@ func TestStripDocFields(t *testing.T) {
 			},
 		}
 		got := stripDocFields(input).(map[string]any)
-		if _, ok := got["allOf"]; !ok {
-			t.Error("allOf with sibling type should NOT be unwrapped")
+		if _, ok := got["allOf"]; ok {
+			t.Error("single-element allOf with siblings should be unwrapped (merged)")
+		}
+		if got["type"] != "object" {
+			t.Error("sibling key 'type' should be preserved after merge")
+		}
+		if _, ok := got["properties"]; !ok {
+			t.Error("inner 'properties' should be present after merge")
 		}
 	})
 }
 
-// --- wrapRefSiblings ---
+// --- mergeAllOfItems ---
 
-func TestWrapRefSiblings(t *testing.T) {
-	t.Run("wraps $ref with description sibling", func(t *testing.T) {
-		node := mustParseYAML(t, `
-type: object
-properties:
-  connectionType:
-    $ref: "#/components/schemas/Provider"
-    description: Connection provider type.
-`)
-		wrapRefSiblings(node)
-
-		prop := getMappingValue(getMappingValue(node, "properties"), "connectionType")
-		if prop == nil {
-			t.Fatal("connectionType property is nil")
+func TestMergeAllOfItems(t *testing.T) {
+	t.Run("merges properties from multiple objects", func(t *testing.T) {
+		items := []any{
+			map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"id":   map[string]any{"type": "string"},
+					"name": map[string]any{"type": "string"},
+				},
+				"required": []any{"name"},
+			},
+			map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"owner": map[string]any{"type": "string"},
+				},
+			},
 		}
-		allOf := getMappingValue(prop, "allOf")
-		if allOf == nil {
-			t.Fatal("expected allOf wrapper, got nil")
+		merged, ok := mergeAllOfItems(items)
+		if !ok {
+			t.Fatal("mergeAllOfItems returned false")
 		}
-		if allOf.Kind != yaml.SequenceNode || len(allOf.Content) != 1 {
-			t.Fatalf("allOf should be a sequence with 1 element, got kind=%d len=%d", allOf.Kind, len(allOf.Content))
+		props := merged["properties"].(map[string]any)
+		if len(props) != 3 {
+			t.Errorf("expected 3 properties, got %d", len(props))
 		}
-		ref := getScalarValue(allOf.Content[0], "$ref")
-		if ref != "#/components/schemas/Provider" {
-			t.Errorf("allOf[0].$ref = %q, want %q", ref, "#/components/schemas/Provider")
+		if _, ok := props["owner"]; !ok {
+			t.Error("missing 'owner' property")
 		}
-		desc := getScalarValue(prop, "description")
-		if desc != "Connection provider type." {
-			t.Errorf("description = %q, want %q", desc, "Connection provider type.")
+		req := merged["required"].([]any)
+		if len(req) != 1 || req[0] != "name" {
+			t.Errorf("expected required=[name], got %v", req)
 		}
 	})
 
-	t.Run("wraps $ref with nullable sibling", func(t *testing.T) {
-		node := mustParseYAML(t, `
-approval:
-  $ref: "#/components/schemas/Approval"
-  description: Optional approval gate.
-  nullable: true
-`)
-		wrapRefSiblings(node)
-
-		prop := getMappingValue(node, "approval")
-		allOf := getMappingValue(prop, "allOf")
-		if allOf == nil {
-			t.Fatal("expected allOf wrapper")
+	t.Run("returns false for non-map items", func(t *testing.T) {
+		items := []any{
+			map[string]any{"type": "object"},
+			"not a map",
 		}
-		ref := getScalarValue(allOf.Content[0], "$ref")
-		if ref != "#/components/schemas/Approval" {
-			t.Errorf("$ref = %q, want %q", ref, "#/components/schemas/Approval")
-		}
-		if getScalarValue(prop, "description") != "Optional approval gate." {
-			t.Error("description not preserved")
-		}
-		if getScalarValue(prop, "nullable") != "true" {
-			t.Error("nullable not preserved")
+		_, ok := mergeAllOfItems(items)
+		if ok {
+			t.Error("expected false for non-map item")
 		}
 	})
 
-	t.Run("leaves bare $ref alone", func(t *testing.T) {
-		node := mustParseYAML(t, `
-status:
-  $ref: "#/components/schemas/Status"
-`)
-		wrapRefSiblings(node)
-
-		prop := getMappingValue(node, "status")
-		if getMappingValue(prop, "allOf") != nil {
-			t.Error("bare $ref should NOT be wrapped in allOf")
+	t.Run("later property wins on conflict", func(t *testing.T) {
+		items := []any{
+			map[string]any{
+				"properties": map[string]any{
+					"field": map[string]any{"type": "string"},
+				},
+			},
+			map[string]any{
+				"properties": map[string]any{
+					"field": map[string]any{"type": "integer"},
+				},
+			},
 		}
-		ref := getScalarValue(prop, "$ref")
-		if ref != "#/components/schemas/Status" {
-			t.Errorf("$ref = %q, want %q", ref, "#/components/schemas/Status")
+		merged, ok := mergeAllOfItems(items)
+		if !ok {
+			t.Fatal("mergeAllOfItems returned false")
+		}
+		props := merged["properties"].(map[string]any)
+		field := props["field"].(map[string]any)
+		if field["type"] != "integer" {
+			t.Errorf("conflicting property should use last definition, got type=%v", field["type"])
+		}
+	})
+
+	t.Run("deduplicates required", func(t *testing.T) {
+		items := []any{
+			map[string]any{"required": []any{"name", "id"}},
+			map[string]any{"required": []any{"name", "extra"}},
+		}
+		merged, ok := mergeAllOfItems(items)
+		if !ok {
+			t.Fatal("mergeAllOfItems returned false")
+		}
+		req := merged["required"].([]any)
+		if len(req) != 3 {
+			t.Errorf("expected 3 unique required fields, got %d: %v", len(req), req)
+		}
+	})
+}
+
+// --- flattenAllOfSchemas ---
+
+func TestFlattenAllOfSchemas(t *testing.T) {
+	t.Run("ref plus inline (AlertListItem pattern)", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+Alert:
+  required:
+    - name
+  type: object
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    config:
+      $ref: "#/components/schemas/AlertConfig"
+AlertListItem:
+  description: Alert with owner
+  allOf:
+    - $ref: "#/components/schemas/Alert"
+    - type: object
+      properties:
+        owner:
+          type: string
+          description: The owner
+AlertConfig:
+  type: object
+  properties:
+    value:
+      type: number
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		listItem := getMappingValue(schemasNode, "AlertListItem")
+		if listItem == nil {
+			t.Fatal("AlertListItem not found")
+		}
+
+		// Should be type: object now
+		if getScalarValue(listItem, "type") != "object" {
+			t.Errorf("type = %q, want %q", getScalarValue(listItem, "type"), "object")
+		}
+
+		// Should NOT have allOf anymore
+		if getMappingValue(listItem, "allOf") != nil {
+			t.Error("allOf should have been removed")
+		}
+
+		// Description preserved
+		if getScalarValue(listItem, "description") != "Alert with owner" {
+			t.Errorf("description = %q, want %q", getScalarValue(listItem, "description"), "Alert with owner")
+		}
+
+		// Required merged from Alert
+		reqNode := getMappingValue(listItem, "required")
+		if reqNode == nil || reqNode.Kind != yaml.SequenceNode {
+			t.Fatal("required should be a sequence")
+		}
+		if len(reqNode.Content) != 1 || reqNode.Content[0].Value != "name" {
+			t.Errorf("required = %v, want [name]", reqNode.Content)
+		}
+
+		// Properties should include all Alert props + owner
+		propsNode := getMappingValue(listItem, "properties")
+		if propsNode == nil {
+			t.Fatal("properties should exist")
+		}
+		for _, expected := range []string{"id", "name", "config", "owner"} {
+			if getMappingValue(propsNode, expected) == nil {
+				t.Errorf("missing property %q", expected)
+			}
+		}
+
+		// config should still be a $ref
+		configProp := getMappingValue(propsNode, "config")
+		if getScalarValue(configProp, "$ref") != "#/components/schemas/AlertConfig" {
+			t.Error("config property should preserve $ref")
+		}
+
+		// owner should have description
+		ownerProp := getMappingValue(propsNode, "owner")
+		if getScalarValue(ownerProp, "description") != "The owner" {
+			t.Errorf("owner description = %q, want %q", getScalarValue(ownerProp, "description"), "The owner")
 		}
 	})
 
-	t.Run("recurses into nested structures", func(t *testing.T) {
-		node := mustParseYAML(t, `
-type: object
-properties:
-  outer:
-    type: object
-    properties:
-      inner:
-        $ref: "#/components/schemas/Inner"
-        description: Nested ref.
+	t.Run("multiple refs", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+Base:
+  type: object
+  required:
+    - id
+  properties:
+    id:
+      type: string
+Extra:
+  type: object
+  required:
+    - label
+  properties:
+    label:
+      type: string
+Combined:
+  allOf:
+    - $ref: "#/components/schemas/Base"
+    - $ref: "#/components/schemas/Extra"
 `)
-		wrapRefSiblings(node)
+		flattenAllOfSchemas(schemasNode)
 
-		inner := getMappingValue(
-			getMappingValue(
-				getMappingValue(
-					getMappingValue(node, "properties"),
-					"outer"),
-				"properties"),
-			"inner")
-		if inner == nil {
-			t.Fatal("inner property not found")
+		combined := getMappingValue(schemasNode, "Combined")
+		if getMappingValue(combined, "allOf") != nil {
+			t.Error("allOf should have been removed")
 		}
-		if getMappingValue(inner, "allOf") == nil {
-			t.Error("nested $ref with sibling should be wrapped")
+		propsNode := getMappingValue(combined, "properties")
+		if getMappingValue(propsNode, "id") == nil {
+			t.Error("missing 'id' from Base")
+		}
+		if getMappingValue(propsNode, "label") == nil {
+			t.Error("missing 'label' from Extra")
+		}
+
+		reqNode := getMappingValue(combined, "required")
+		if reqNode == nil || len(reqNode.Content) != 2 {
+			t.Fatalf("expected 2 required fields, got %v", reqNode)
 		}
 	})
+
+	t.Run("single element allOf is left alone", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+Base:
+  type: object
+  properties:
+    id:
+      type: string
+Wrapper:
+  allOf:
+    - $ref: "#/components/schemas/Base"
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		wrapper := getMappingValue(schemasNode, "Wrapper")
+		if getMappingValue(wrapper, "allOf") == nil {
+			t.Error("single-element allOf should NOT be flattened (handled by codegen)")
+		}
+	})
+
+	t.Run("property conflict uses last definition", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+A:
+  type: object
+  properties:
+    field:
+      type: string
+      description: original
+B:
+  allOf:
+    - $ref: "#/components/schemas/A"
+    - type: object
+      properties:
+        field:
+          type: integer
+          description: override
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		b := getMappingValue(schemasNode, "B")
+		fieldProp := getMappingValue(getMappingValue(b, "properties"), "field")
+		if getScalarValue(fieldProp, "type") != "integer" {
+			t.Error("conflicting property should use last definition")
+		}
+		if getScalarValue(fieldProp, "description") != "override" {
+			t.Error("conflicting property description should use last definition")
+		}
+	})
+}
+
+// --- validateEquivalence with flattened allOf ---
+
+func TestValidateEquivalence_FlattenedAllOf(t *testing.T) {
+	original := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /items:
+    get:
+      operationId: listItems
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemList"
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ItemListEntry:
+      description: Item in a list
+      allOf:
+        - $ref: "#/components/schemas/Item"
+        - type: object
+          properties:
+            owner:
+              type: string
+    ItemList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemListEntry"
+`
+	// Processed: ItemListEntry flattened, allOf removed
+	processed := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /items:
+    get:
+      operationId: listItems
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemList"
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ItemListEntry:
+      description: Item in a list
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+    ItemList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemListEntry"
+`
+	if err := validateEquivalence([]byte(original), []byte(processed)); err != nil {
+		t.Errorf("flattened allOf should be equivalent: %v", err)
+	}
 }
 
 // --- resolveRefs ---
@@ -673,20 +969,6 @@ func TestResolveRefs(t *testing.T) {
 		got := resolveRefs(input, schemas).(map[string]any)
 		if got["$ref"] != "#/components/responses/NotFound" {
 			t.Error("non-schema ref should be left as-is")
-		}
-	})
-
-	t.Run("resolves $ref with sibling keywords", func(t *testing.T) {
-		input := map[string]any{
-			"$ref":        "#/components/schemas/Pet",
-			"description": "A pet reference",
-		}
-		got := resolveRefs(input, schemas).(map[string]any)
-		if got["type"] != "object" {
-			t.Errorf("resolved type = %v, want %q", got["type"], "object")
-		}
-		if got["description"] != "A pet reference" {
-			t.Errorf("sibling description = %v, want %q", got["description"], "A pet reference")
 		}
 	})
 }

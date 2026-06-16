@@ -13,10 +13,36 @@ Retrieves Cloud Diagram data including diagrams, layers, and components.
 ## Example Usage
 
 ```terraform
-# Retrieve all accessible diagrams (overview mode — no components).
+# Use case: Find and inspect a specific project's diagram.
+
+# Step 1: Search for the diagram by project or account name.
+data "doit_cloud_diagrams_search" "project" {
+  query = "my-gcp-project"
+}
+
+locals {
+  layer_id = data.doit_cloud_diagrams_search.project.scheme[0].ss_id
+}
+
+# Step 2: Load the diagram with full component data and links.
+data "doit_cloud_diagrams_schemes" "project" {
+  layer_ids  = [local.layer_id]
+  components = true
+  link       = true
+}
+
+# Summarize what's in the layer.
+output "layer_summary" {
+  value = {
+    nodes  = length(keys(data.doit_cloud_diagrams_schemes.project.statussheet[local.layer_id].node))
+    groups = length(keys(data.doit_cloud_diagrams_schemes.project.statussheet[local.layer_id].group))
+    links  = length(keys(data.doit_cloud_diagrams_schemes.project.statussheet[local.layer_id].link))
+  }
+}
+
+# List all diagrams and their layers (overview mode — no components).
 data "doit_cloud_diagrams_schemes" "all" {}
 
-# Output diagram names and their layers.
 output "diagrams" {
   value = {
     for key, diagram in data.doit_cloud_diagrams_schemes.all.scheme :
@@ -28,18 +54,55 @@ output "diagrams" {
   }
 }
 
-# Retrieve specific diagrams with full component data.
-data "doit_cloud_diagrams_schemes" "detailed" {
-  scheme_ids = ["diagram-id-1", "diagram-id-2"]
-  components = true
-  skip_empty = true
+# --- Mermaid flowchart export (community recipe) ---
+#
+# NOTE: This example is provided as-is to demonstrate what is possible
+# with the data source. It is not an officially supported feature and
+# may require adjustments for your specific diagram topology.
+#
+# Generates a Mermaid flowchart from nodes and links that you can paste
+# into any Markdown renderer or https://mermaid.live.
+#
+# Find your layer ID in the Cloud Diagrams URL:
+#   console.doit.com/cloud-diagrams/diagram/{scheme_id}/{layer_id}/...
+
+variable "layer_id" {
+  description = "Cloud Diagram layer (statussheet) ID."
+  type        = string
+  default     = "your-layer-id"
 }
 
-# Retrieve specific layers with components and links.
-data "doit_cloud_diagrams_schemes" "layers" {
-  layer_ids  = ["layer-id-1"]
+data "doit_cloud_diagrams_schemes" "mermaid" {
+  layer_ids  = [var.layer_id]
   components = true
   link       = true
+}
+
+locals {
+  ss = data.doit_cloud_diagrams_schemes.mermaid.statussheet[var.layer_id]
+
+  node_lines = [
+    for id, n in local.ss.node :
+    "  ${id}[\"${replace(coalesce(n.name, id), "\"", "#quot;")}\"]"
+  ]
+
+  edge_lines = [
+    for id, l in local.ss.link :
+    l.connection_type != null
+    ? "  ${l.origin._id} -->|${l.connection_type}| ${l.destination._id}"
+    : "  ${l.origin._id} --> ${l.destination._id}"
+  ]
+
+  mermaid = join("\n", concat(
+    ["flowchart LR"],
+    local.node_lines,
+    local.edge_lines,
+  ))
+}
+
+output "mermaid" {
+  description = "Mermaid flowchart of the diagram layer."
+  value       = local.mermaid
 }
 ```
 
@@ -255,11 +318,24 @@ Read-Only:
 - `cld_sync` (Boolean) Whether this component is synced with cloud.
 - `cld_type` (String) Cloud account type.
 - `connection_type` (String) Link connection type.
+- `destination` (Attributes) Reference to a diagram component, including its parent diagram and layer. (see [below for nested schema](#nestedatt--statussheet--link--destination))
 - `issues` (Attributes List) Issues associated with this link. (see [below for nested schema](#nestedatt--statussheet--link--issues))
 - `name` (String) Component name.
+- `origin` (Attributes) Reference to a diagram component, including its parent diagram and layer. (see [below for nested schema](#nestedatt--statussheet--link--origin))
 - `owner_ss_id` (String) Owner layer ID for cross-diagram links.
 - `props` (String) Custom component properties (key-value pairs). Value is JSON-encoded.
 - `tags` (List of String) Tags assigned to the component.
+
+<a id="nestedatt--statussheet--link--destination"></a>
+### Nested Schema for `statussheet.link.destination`
+
+Read-Only:
+
+- `_id` (String) Component ID.
+- `scheme_id` (String) Parent diagram ID.
+- `ss_id` (String) Parent layer ID.
+- `type` (String) Component type.
+
 
 <a id="nestedatt--statussheet--link--issues"></a>
 ### Nested Schema for `statussheet.link.issues`
@@ -270,6 +346,17 @@ Read-Only:
 - `comment` (String) Optional comment on the issue.
 - `jira` (String) Linked Jira ticket key or URL.
 - `snoozed` (Number) Snooze duration in seconds.
+
+
+<a id="nestedatt--statussheet--link--origin"></a>
+### Nested Schema for `statussheet.link.origin`
+
+Read-Only:
+
+- `_id` (String) Component ID.
+- `scheme_id` (String) Parent diagram ID.
+- `ss_id` (String) Parent layer ID.
+- `type` (String) Component type.
 
 
 

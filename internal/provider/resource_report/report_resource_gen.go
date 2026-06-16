@@ -300,7 +300,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									MarkdownDescription: "Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.",
 								},
 								"mode": schema.StringAttribute{
-									Required:            true,
+									Optional:            true,
+									Computed:            true,
 									Description:         "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									MarkdownDescription: "Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.\nPossible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`",
 									Validators: []validator.String{

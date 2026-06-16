@@ -454,6 +454,38 @@ func CloudDiagramsExportDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Link connection type.",
 							MarkdownDescription: "Link connection type.",
 						},
+						"destination": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Component ID.",
+									MarkdownDescription: "Component ID.",
+								},
+								"scheme_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Parent diagram ID.",
+									MarkdownDescription: "Parent diagram ID.",
+								},
+								"ss_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Parent layer ID.",
+									MarkdownDescription: "Parent layer ID.",
+								},
+								"type": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Component type.",
+									MarkdownDescription: "Component type.",
+								},
+							},
+							CustomType: DestinationType{
+								ObjectType: types.ObjectType{
+									AttrTypes: DestinationValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "Reference to a diagram component, including its parent diagram and layer.",
+							MarkdownDescription: "Reference to a diagram component, including its parent diagram and layer.",
+						},
 						"issues": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -492,6 +524,38 @@ func CloudDiagramsExportDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "Component name.",
 							MarkdownDescription: "Component name.",
+						},
+						"origin": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Component ID.",
+									MarkdownDescription: "Component ID.",
+								},
+								"scheme_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Parent diagram ID.",
+									MarkdownDescription: "Parent diagram ID.",
+								},
+								"ss_id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Parent layer ID.",
+									MarkdownDescription: "Parent layer ID.",
+								},
+								"type": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Component type.",
+									MarkdownDescription: "Component type.",
+								},
+							},
+							CustomType: OriginType{
+								ObjectType: types.ObjectType{
+									AttrTypes: OriginValue{}.AttributeTypes(ctx),
+								},
+							},
+							Computed:            true,
+							Description:         "Reference to a diagram component, including its parent diagram and layer.",
+							MarkdownDescription: "Reference to a diagram component, including its parent diagram and layer.",
 						},
 						"owner_ss_id": schema.StringAttribute{
 							Computed:            true,
@@ -5322,6 +5386,24 @@ func (t LinksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`connection_type expected to be basetypes.StringValue, was: %T`, connectionTypeAttribute))
 	}
 
+	destinationAttribute, ok := attributes["destination"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`destination is missing from object`)
+
+		return nil, diags
+	}
+
+	destinationVal, ok := destinationAttribute.(DestinationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`destination expected to be DestinationValue, was: %T`, destinationAttribute))
+	}
+
 	issuesAttribute, ok := attributes["issues"]
 
 	if !ok {
@@ -5356,6 +5438,24 @@ func (t LinksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	originAttribute, ok := attributes["origin"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`origin is missing from object`)
+
+		return nil, diags
+	}
+
+	originVal, ok := originAttribute.(OriginValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
 	}
 
 	ownerSsIdAttribute, ok := attributes["owner_ss_id"]
@@ -5423,8 +5523,10 @@ func (t LinksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		CldSync:        cldSyncVal,
 		CldType:        cldTypeVal,
 		ConnectionType: connectionTypeVal,
+		Destination:    destinationVal,
 		Issues:         issuesVal,
 		Name:           nameVal,
+		Origin:         originVal,
 		OwnerSsId:      ownerSsIdVal,
 		Props:          propsVal,
 		Tags:           tagsVal,
@@ -5603,6 +5705,24 @@ func NewLinksValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`connection_type expected to be basetypes.StringValue, was: %T`, connectionTypeAttribute))
 	}
 
+	destinationAttribute, ok := attributes["destination"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`destination is missing from object`)
+
+		return NewLinksValueUnknown(), diags
+	}
+
+	destinationVal, ok := destinationAttribute.(DestinationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`destination expected to be DestinationValue, was: %T`, destinationAttribute))
+	}
+
 	issuesAttribute, ok := attributes["issues"]
 
 	if !ok {
@@ -5637,6 +5757,24 @@ func NewLinksValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	originAttribute, ok := attributes["origin"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`origin is missing from object`)
+
+		return NewLinksValueUnknown(), diags
+	}
+
+	originVal, ok := originAttribute.(OriginValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
 	}
 
 	ownerSsIdAttribute, ok := attributes["owner_ss_id"]
@@ -5704,8 +5842,10 @@ func NewLinksValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		CldSync:        cldSyncVal,
 		CldType:        cldTypeVal,
 		ConnectionType: connectionTypeVal,
+		Destination:    destinationVal,
 		Issues:         issuesVal,
 		Name:           nameVal,
+		Origin:         originVal,
 		OwnerSsId:      ownerSsIdVal,
 		Props:          propsVal,
 		Tags:           tagsVal,
@@ -5787,8 +5927,10 @@ type LinksValue struct {
 	CldSync        basetypes.BoolValue   `tfsdk:"cld_sync"`
 	CldType        basetypes.StringValue `tfsdk:"cld_type"`
 	ConnectionType basetypes.StringValue `tfsdk:"connection_type"`
+	Destination    DestinationValue      `tfsdk:"destination"`
 	Issues         basetypes.ListValue   `tfsdk:"issues"`
 	Name           basetypes.StringValue `tfsdk:"name"`
+	Origin         OriginValue           `tfsdk:"origin"`
 	OwnerSsId      basetypes.StringValue `tfsdk:"owner_ss_id"`
 	Props          jsontypes.Normalized  `tfsdk:"props"`
 	Tags           basetypes.ListValue   `tfsdk:"tags"`
@@ -5796,7 +5938,7 @@ type LinksValue struct {
 }
 
 func (v LinksValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 11)
+	attrTypes := make(map[string]tftypes.Type, 13)
 
 	var val tftypes.Value
 	var err error
@@ -5807,10 +5949,20 @@ func (v LinksValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["cld_sync"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["cld_type"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["connection_type"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["destination"] = DestinationType{
+		basetypes.ObjectType{
+			AttrTypes: DestinationValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 	attrTypes["issues"] = basetypes.ListType{
 		ElemType: IssuesValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["origin"] = OriginType{
+		basetypes.ObjectType{
+			AttrTypes: OriginValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 	attrTypes["owner_ss_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["props"] = jsontypes.NormalizedType{}.TerraformType(ctx)
 	attrTypes["tags"] = basetypes.ListType{
@@ -5821,7 +5973,7 @@ func (v LinksValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 11)
+		vals := make(map[string]tftypes.Value, 13)
 
 		val, err = v.UnderscoreId.ToTerraformValue(ctx)
 
@@ -5871,6 +6023,14 @@ func (v LinksValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 		vals["connection_type"] = val
 
+		val, err = v.Destination.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["destination"] = val
+
 		val, err = v.Issues.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -5886,6 +6046,14 @@ func (v LinksValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["name"] = val
+
+		val, err = v.Origin.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["origin"] = val
 
 		val, err = v.OwnerSsId.ToTerraformValue(ctx)
 
@@ -5940,10 +6108,22 @@ func (v LinksValue) String() string {
 func (v LinksValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var destination attr.Value
+
+	{
+		destination = v.Destination
+	}
+
 	var issues attr.Value
 
 	{
 		issues = v.Issues
+	}
+
+	var origin attr.Value
+
+	{
+		origin = v.Origin
 	}
 
 	var tagsVal basetypes.ListValue
@@ -5966,10 +6146,20 @@ func (v LinksValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"cld_sync":        basetypes.BoolType{},
 			"cld_type":        basetypes.StringType{},
 			"connection_type": basetypes.StringType{},
+			"destination": DestinationType{
+				basetypes.ObjectType{
+					AttrTypes: DestinationValue{}.AttributeTypes(ctx),
+				},
+			},
 			"issues": basetypes.ListType{
 				ElemType: IssuesValue{}.Type(ctx),
 			},
-			"name":        basetypes.StringType{},
+			"name": basetypes.StringType{},
+			"origin": OriginType{
+				basetypes.ObjectType{
+					AttrTypes: OriginValue{}.AttributeTypes(ctx),
+				},
+			},
 			"owner_ss_id": basetypes.StringType{},
 			"props":       jsontypes.NormalizedType{},
 			"tags": basetypes.ListType{
@@ -5985,10 +6175,20 @@ func (v LinksValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"cld_sync":        basetypes.BoolType{},
 		"cld_type":        basetypes.StringType{},
 		"connection_type": basetypes.StringType{},
+		"destination": DestinationType{
+			basetypes.ObjectType{
+				AttrTypes: DestinationValue{}.AttributeTypes(ctx),
+			},
+		},
 		"issues": basetypes.ListType{
 			ElemType: IssuesValue{}.Type(ctx),
 		},
-		"name":        basetypes.StringType{},
+		"name": basetypes.StringType{},
+		"origin": OriginType{
+			basetypes.ObjectType{
+				AttrTypes: OriginValue{}.AttributeTypes(ctx),
+			},
+		},
 		"owner_ss_id": basetypes.StringType{},
 		"props":       jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
@@ -6013,8 +6213,10 @@ func (v LinksValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"cld_sync":        v.CldSync,
 			"cld_type":        v.CldType,
 			"connection_type": v.ConnectionType,
+			"destination":     destination,
 			"issues":          issues,
 			"name":            v.Name,
+			"origin":          origin,
 			"owner_ss_id":     v.OwnerSsId,
 			"props":           v.Props,
 			"tags":            tagsVal,
@@ -6062,11 +6264,19 @@ func (v LinksValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Destination.Equal(other.Destination) {
+		return false
+	}
+
 	if !v.Issues.Equal(other.Issues) {
 		return false
 	}
 
 	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.Origin.Equal(other.Origin) {
 		return false
 	}
 
@@ -6101,15 +6311,1003 @@ func (v LinksValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"cld_sync":        basetypes.BoolType{},
 		"cld_type":        basetypes.StringType{},
 		"connection_type": basetypes.StringType{},
+		"destination": DestinationType{
+			basetypes.ObjectType{
+				AttrTypes: DestinationValue{}.AttributeTypes(ctx),
+			},
+		},
 		"issues": basetypes.ListType{
 			ElemType: IssuesValue{}.Type(ctx),
 		},
-		"name":        basetypes.StringType{},
+		"name": basetypes.StringType{},
+		"origin": OriginType{
+			basetypes.ObjectType{
+				AttrTypes: OriginValue{}.AttributeTypes(ctx),
+			},
+		},
 		"owner_ss_id": basetypes.StringType{},
 		"props":       jsontypes.NormalizedType{},
 		"tags": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+	}
+}
+
+var _ basetypes.ObjectTypable = DestinationType{}
+
+type DestinationType struct {
+	basetypes.ObjectType
+}
+
+func (t DestinationType) Equal(o attr.Type) bool {
+	other, ok := o.(DestinationType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t DestinationType) String() string {
+	return "DestinationType"
+}
+
+func (t DestinationType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	underscoreIdAttribute, ok := attributes["_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`_id is missing from object`)
+
+		return nil, diags
+	}
+
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
+	}
+
+	schemeIdAttribute, ok := attributes["scheme_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scheme_id is missing from object`)
+
+		return nil, diags
+	}
+
+	schemeIdVal, ok := schemeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scheme_id expected to be basetypes.StringValue, was: %T`, schemeIdAttribute))
+	}
+
+	ssIdAttribute, ok := attributes["ss_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ss_id is missing from object`)
+
+		return nil, diags
+	}
+
+	ssIdVal, ok := ssIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ss_id expected to be basetypes.StringValue, was: %T`, ssIdAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return nil, diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return DestinationValue{
+		UnderscoreId:    underscoreIdVal,
+		SchemeId:        schemeIdVal,
+		SsId:            ssIdVal,
+		DestinationType: typeVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDestinationValueNull() DestinationValue {
+	return DestinationValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewDestinationValueUnknown() DestinationValue {
+	return DestinationValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewDestinationValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (DestinationValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing DestinationValue Attribute Value",
+				"While creating a DestinationValue value, a missing attribute value was detected. "+
+					"A DestinationValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DestinationValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid DestinationValue Attribute Type",
+				"While creating a DestinationValue value, an invalid attribute value was detected. "+
+					"A DestinationValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DestinationValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("DestinationValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra DestinationValue Attribute Value",
+				"While creating a DestinationValue value, an extra attribute value was detected. "+
+					"A DestinationValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra DestinationValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewDestinationValueUnknown(), diags
+	}
+
+	underscoreIdAttribute, ok := attributes["_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`_id is missing from object`)
+
+		return NewDestinationValueUnknown(), diags
+	}
+
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
+	}
+
+	schemeIdAttribute, ok := attributes["scheme_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scheme_id is missing from object`)
+
+		return NewDestinationValueUnknown(), diags
+	}
+
+	schemeIdVal, ok := schemeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scheme_id expected to be basetypes.StringValue, was: %T`, schemeIdAttribute))
+	}
+
+	ssIdAttribute, ok := attributes["ss_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ss_id is missing from object`)
+
+		return NewDestinationValueUnknown(), diags
+	}
+
+	ssIdVal, ok := ssIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ss_id expected to be basetypes.StringValue, was: %T`, ssIdAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return NewDestinationValueUnknown(), diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewDestinationValueUnknown(), diags
+	}
+
+	return DestinationValue{
+		UnderscoreId:    underscoreIdVal,
+		SchemeId:        schemeIdVal,
+		SsId:            ssIdVal,
+		DestinationType: typeVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDestinationValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) DestinationValue {
+	object, diags := NewDestinationValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewDestinationValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t DestinationType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewDestinationValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewDestinationValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewDestinationValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewDestinationValueMust(DestinationValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t DestinationType) ValueType(ctx context.Context) attr.Value {
+	return DestinationValue{}
+}
+
+var _ basetypes.ObjectValuable = DestinationValue{}
+
+type DestinationValue struct {
+	UnderscoreId    basetypes.StringValue `tfsdk:"_id"`
+	SchemeId        basetypes.StringValue `tfsdk:"scheme_id"`
+	SsId            basetypes.StringValue `tfsdk:"ss_id"`
+	DestinationType basetypes.StringValue `tfsdk:"type"`
+	state           attr.ValueState
+}
+
+func (v DestinationValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["scheme_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["ss_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.UnderscoreId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["_id"] = val
+
+		val, err = v.SchemeId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scheme_id"] = val
+
+		val, err = v.SsId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["ss_id"] = val
+
+		val, err = v.DestinationType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v DestinationValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v DestinationValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v DestinationValue) String() string {
+	return "DestinationValue"
+}
+
+func (v DestinationValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"_id":       basetypes.StringType{},
+		"scheme_id": basetypes.StringType{},
+		"ss_id":     basetypes.StringType{},
+		"type":      basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"_id":       v.UnderscoreId,
+			"scheme_id": v.SchemeId,
+			"ss_id":     v.SsId,
+			"type":      v.DestinationType,
+		})
+
+	return objVal, diags
+}
+
+func (v DestinationValue) Equal(o attr.Value) bool {
+	other, ok := o.(DestinationValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.UnderscoreId.Equal(other.UnderscoreId) {
+		return false
+	}
+
+	if !v.SchemeId.Equal(other.SchemeId) {
+		return false
+	}
+
+	if !v.SsId.Equal(other.SsId) {
+		return false
+	}
+
+	if !v.DestinationType.Equal(other.DestinationType) {
+		return false
+	}
+
+	return true
+}
+
+func (v DestinationValue) Type(ctx context.Context) attr.Type {
+	return DestinationType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v DestinationValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"_id":       basetypes.StringType{},
+		"scheme_id": basetypes.StringType{},
+		"ss_id":     basetypes.StringType{},
+		"type":      basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = OriginType{}
+
+type OriginType struct {
+	basetypes.ObjectType
+}
+
+func (t OriginType) Equal(o attr.Type) bool {
+	other, ok := o.(OriginType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t OriginType) String() string {
+	return "OriginType"
+}
+
+func (t OriginType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	underscoreIdAttribute, ok := attributes["_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`_id is missing from object`)
+
+		return nil, diags
+	}
+
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
+	}
+
+	schemeIdAttribute, ok := attributes["scheme_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scheme_id is missing from object`)
+
+		return nil, diags
+	}
+
+	schemeIdVal, ok := schemeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scheme_id expected to be basetypes.StringValue, was: %T`, schemeIdAttribute))
+	}
+
+	ssIdAttribute, ok := attributes["ss_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ss_id is missing from object`)
+
+		return nil, diags
+	}
+
+	ssIdVal, ok := ssIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ss_id expected to be basetypes.StringValue, was: %T`, ssIdAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return nil, diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return OriginValue{
+		UnderscoreId: underscoreIdVal,
+		SchemeId:     schemeIdVal,
+		SsId:         ssIdVal,
+		OriginType:   typeVal,
+		state:        attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOriginValueNull() OriginValue {
+	return OriginValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewOriginValueUnknown() OriginValue {
+	return OriginValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewOriginValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (OriginValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing OriginValue Attribute Value",
+				"While creating a OriginValue value, a missing attribute value was detected. "+
+					"A OriginValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OriginValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid OriginValue Attribute Type",
+				"While creating a OriginValue value, an invalid attribute value was detected. "+
+					"A OriginValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("OriginValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("OriginValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra OriginValue Attribute Value",
+				"While creating a OriginValue value, an extra attribute value was detected. "+
+					"A OriginValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra OriginValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewOriginValueUnknown(), diags
+	}
+
+	underscoreIdAttribute, ok := attributes["_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`_id is missing from object`)
+
+		return NewOriginValueUnknown(), diags
+	}
+
+	underscoreIdVal, ok := underscoreIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`_id expected to be basetypes.StringValue, was: %T`, underscoreIdAttribute))
+	}
+
+	schemeIdAttribute, ok := attributes["scheme_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`scheme_id is missing from object`)
+
+		return NewOriginValueUnknown(), diags
+	}
+
+	schemeIdVal, ok := schemeIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`scheme_id expected to be basetypes.StringValue, was: %T`, schemeIdAttribute))
+	}
+
+	ssIdAttribute, ok := attributes["ss_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ss_id is missing from object`)
+
+		return NewOriginValueUnknown(), diags
+	}
+
+	ssIdVal, ok := ssIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ss_id expected to be basetypes.StringValue, was: %T`, ssIdAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return NewOriginValueUnknown(), diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewOriginValueUnknown(), diags
+	}
+
+	return OriginValue{
+		UnderscoreId: underscoreIdVal,
+		SchemeId:     schemeIdVal,
+		SsId:         ssIdVal,
+		OriginType:   typeVal,
+		state:        attr.ValueStateKnown,
+	}, diags
+}
+
+func NewOriginValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) OriginValue {
+	object, diags := NewOriginValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewOriginValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t OriginType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewOriginValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewOriginValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewOriginValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewOriginValueMust(OriginValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t OriginType) ValueType(ctx context.Context) attr.Value {
+	return OriginValue{}
+}
+
+var _ basetypes.ObjectValuable = OriginValue{}
+
+type OriginValue struct {
+	UnderscoreId basetypes.StringValue `tfsdk:"_id"`
+	SchemeId     basetypes.StringValue `tfsdk:"scheme_id"`
+	SsId         basetypes.StringValue `tfsdk:"ss_id"`
+	OriginType   basetypes.StringValue `tfsdk:"type"`
+	state        attr.ValueState
+}
+
+func (v OriginValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["scheme_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["ss_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.UnderscoreId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["_id"] = val
+
+		val, err = v.SchemeId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["scheme_id"] = val
+
+		val, err = v.SsId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["ss_id"] = val
+
+		val, err = v.OriginType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v OriginValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v OriginValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v OriginValue) String() string {
+	return "OriginValue"
+}
+
+func (v OriginValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"_id":       basetypes.StringType{},
+		"scheme_id": basetypes.StringType{},
+		"ss_id":     basetypes.StringType{},
+		"type":      basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"_id":       v.UnderscoreId,
+			"scheme_id": v.SchemeId,
+			"ss_id":     v.SsId,
+			"type":      v.OriginType,
+		})
+
+	return objVal, diags
+}
+
+func (v OriginValue) Equal(o attr.Value) bool {
+	other, ok := o.(OriginValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.UnderscoreId.Equal(other.UnderscoreId) {
+		return false
+	}
+
+	if !v.SchemeId.Equal(other.SchemeId) {
+		return false
+	}
+
+	if !v.SsId.Equal(other.SsId) {
+		return false
+	}
+
+	if !v.OriginType.Equal(other.OriginType) {
+		return false
+	}
+
+	return true
+}
+
+func (v OriginValue) Type(ctx context.Context) attr.Type {
+	return OriginType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v OriginValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"_id":       basetypes.StringType{},
+		"scheme_id": basetypes.StringType{},
+		"ss_id":     basetypes.StringType{},
+		"type":      basetypes.StringType{},
 	}
 }
 

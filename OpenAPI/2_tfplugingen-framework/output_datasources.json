@@ -207,7 +207,7 @@
 												}
 											]
 										},
-										"description": "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert."
+										"description": "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead."
 									}
 								},
 								{
@@ -473,7 +473,7 @@
 																}
 															]
 														},
-														"description": "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert."
+														"description": "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead."
 													}
 												},
 												{
@@ -520,6 +520,13 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "Alert Name."
+										}
+									},
+									{
+										"name": "owner",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Email of the alert owner (the collaborator with the owner role)."
 										}
 									},
 									{
@@ -3437,6 +3444,43 @@
 										}
 									},
 									{
+										"name": "destination",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component ID."
+													}
+												},
+												{
+													"name": "scheme_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent diagram ID."
+													}
+												},
+												{
+													"name": "ss_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent layer ID."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component type."
+													}
+												}
+											],
+											"description": "Reference to a diagram component, including its parent diagram and layer."
+										}
+									},
+									{
 										"name": "issues",
 										"list_nested": {
 											"computed_optional_required": "computed",
@@ -3480,6 +3524,43 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "Component name."
+										}
+									},
+									{
+										"name": "origin",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component ID."
+													}
+												},
+												{
+													"name": "scheme_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent diagram ID."
+													}
+												},
+												{
+													"name": "ss_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent layer ID."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component type."
+													}
+												}
+											],
+											"description": "Reference to a diagram component, including its parent diagram and layer."
 										}
 									},
 									{
@@ -4858,6 +4939,43 @@
 														}
 													},
 													{
+														"name": "destination",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "_id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Component ID."
+																	}
+																},
+																{
+																	"name": "scheme_id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Parent diagram ID."
+																	}
+																},
+																{
+																	"name": "ss_id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Parent layer ID."
+																	}
+																},
+																{
+																	"name": "type",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Component type."
+																	}
+																}
+															],
+															"description": "Reference to a diagram component, including its parent diagram and layer."
+														}
+													},
+													{
 														"name": "issues",
 														"list_nested": {
 															"computed_optional_required": "computed",
@@ -4901,6 +5019,43 @@
 														"string": {
 															"computed_optional_required": "computed",
 															"description": "Component name."
+														}
+													},
+													{
+														"name": "origin",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "_id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Component ID."
+																	}
+																},
+																{
+																	"name": "scheme_id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Parent diagram ID."
+																	}
+																},
+																{
+																	"name": "ss_id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Parent layer ID."
+																	}
+																},
+																{
+																	"name": "type",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Component type."
+																	}
+																}
+															],
+															"description": "Reference to a diagram component, including its parent diagram and layer."
 														}
 													},
 													{
@@ -6416,6 +6571,43 @@
 										}
 									},
 									{
+										"name": "destination",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component ID."
+													}
+												},
+												{
+													"name": "scheme_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent diagram ID."
+													}
+												},
+												{
+													"name": "ss_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent layer ID."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component type."
+													}
+												}
+											],
+											"description": "Reference to a diagram component, including its parent diagram and layer."
+										}
+									},
+									{
 										"name": "issues",
 										"list_nested": {
 											"computed_optional_required": "computed",
@@ -6459,6 +6651,43 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "Component name."
+										}
+									},
+									{
+										"name": "origin",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component ID."
+													}
+												},
+												{
+													"name": "scheme_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent diagram ID."
+													}
+												},
+												{
+													"name": "ss_id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Parent layer ID."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Component type."
+													}
+												}
+											],
+											"description": "Reference to a diagram component, including its parent diagram and layer."
 										}
 									},
 									{

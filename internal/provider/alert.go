@@ -38,8 +38,13 @@ func overlayAlertComputedFields(ctx context.Context, apiResp *models.Alert, plan
 	// ── Computed-only fields: always from resolved ──
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
-	plan.UpdateTime = resolved.UpdateTime
-	plan.LastAlerted = resolved.LastAlerted
+	// Guarded: on Update the prior state is Known, but the API returns a new timestamp.
+	if plan.UpdateTime.IsUnknown() {
+		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+	}
+	if plan.LastAlerted.IsUnknown() {
+		plan.LastAlerted = resolved.LastAlerted //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+	}
 
 	// ── Name: Required — never touch ──
 
@@ -100,6 +105,10 @@ func overlayAlertScope(_ context.Context, resolved, plan *resource_alert.ScopesV
 
 	if plan.Inverse.IsUnknown() {
 		plan.Inverse = resolved.Inverse
+	}
+
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
 	}
 
 	if plan.Values.IsUnknown() {
@@ -215,15 +224,16 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 		apiScopes := make([]models.ExternalConfigFilter, len(scopes))
 		for i, scope := range scopes {
 			filterType := models.DimensionsTypes(scope.ScopesType.ValueString())
-			filterMode := models.ExternalConfigFilterMode(scope.Mode.ValueString())
 
 			apiScopes[i] = models.ExternalConfigFilter{
 				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
 				Id:              scope.Id.ValueString(),
 				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
 				Inverse:         scope.Inverse.ValueBoolPointer(),
-				Mode:            filterMode,
 				Type:            filterType,
+			}
+			if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
+				apiScopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string
@@ -416,7 +426,7 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 				"id":               types.StringValue(scopeID),
 				"include_null":     includeNullVal,
 				"inverse":          types.BoolPointerValue(scope.Inverse),
-				"mode":             types.StringValue(string(scope.Mode)),
+				"mode":             types.StringPointerValue((*string)(scope.Mode)),
 				"type":             types.StringValue(scopeType),
 				"values":           valuesVal,
 			}

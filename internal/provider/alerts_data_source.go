@@ -96,7 +96,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
 	userControlsPagination := !data.MaxResults.IsNull()
 
-	var allAlerts []models.Alert
+	var allAlerts []models.AlertListItem
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
@@ -206,6 +206,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 					"create_time":  types.Int64PointerValue(alert.CreateTime),
 					"update_time":  types.Int64PointerValue(alert.UpdateTime),
 					"last_alerted": types.Int64PointerValue(alert.LastAlerted),
+					"owner":        types.StringPointerValue(alert.Owner),
 					"recipients":   recipientsList,
 					"config":       configVal,
 				},
@@ -340,7 +341,7 @@ func mapAlertScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter, 
 				"id":               types.StringValue(s.Id),
 				"include_null":     types.BoolPointerValue(s.IncludeNull),
 				"inverse":          types.BoolPointerValue(s.Inverse),
-				"mode":             types.StringValue(string(s.Mode)),
+				"mode":             types.StringPointerValue((*string)(s.Mode)),
 				"type":             types.StringValue(string(s.Type)),
 				"values":           valuesList,
 			},

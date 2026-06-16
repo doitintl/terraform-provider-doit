@@ -2289,3 +2289,142 @@ resource "doit_budget" "this" {
 }
 `, budgetStartPeriod(), i, testAttribution(), testUser())
 }
+
+// TestAccBudget_ClearScopeMode verifies the clearing lifecycle for scopes[*].mode.
+// The API returns null when mode is unset, so omitting it from config clears it.
+func TestAccBudget_ClearScopeMode(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with mode explicitly set.
+			{
+				Config: testAccBudgetWithScopeMode(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":   knownvalue.StringExact("fixed"),
+								"id":     knownvalue.StringExact("cloud_provider"),
+								"mode":   knownvalue.StringExact("contains"),
+								"values": knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("amazon")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccBudgetWithScopeMode(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear mode by omitting it from config.
+			{
+				Config: testAccBudgetWithScopeModeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_budget.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr("doit_budget.this", "scopes.0.mode"),
+				),
+			},
+			// Step 4: Drift check — cleared mode should produce no drift.
+			{
+				Config: testAccBudgetWithScopeModeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetWithScopeMode(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-clear-mode-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scopes = [
+    {
+      type   = "fixed"
+      id     = "cloud_provider"
+      mode   = "contains"
+      values = ["amazon"]
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+}
+`, budgetStartPeriod(), i, testUser())
+}
+
+func testAccBudgetWithScopeModeCleared(i int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-clear-mode-%d"
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scopes = [
+    {
+      type   = "fixed"
+      id     = "cloud_provider"
+      values = ["amazon"]
+    }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    }
+  ]
+  alerts = [
+    { "percentage" : 100 }
+  ]
+}
+`, budgetStartPeriod(), i, testUser())
+}

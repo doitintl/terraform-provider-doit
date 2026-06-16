@@ -86,6 +86,7 @@ Read-Only:
 - `id` (String) Alert ID.
 - `last_alerted` (Number) Last time the alert was triggered (in UNIX timestamp).
 - `name` (String) Alert Name.
+- `owner` (String) Email of the alert owner (the collaborator with the owner role).
 - `recipients` (List of String) List of emails that will be notified when the alert is triggered.
 - `update_time` (Number) Last time the alert was modified (in UNIX timestamp).
 
@@ -101,7 +102,7 @@ Read-Only:
 - `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 - `metric` (Attributes) Define how metrics are selected and filtered in reports. (see [below for nested schema](#nestedatt--alerts--config--metric))
 - `operator` (String) Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
-- `scopes` (Attributes List) The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert. (see [below for nested schema](#nestedatt--alerts--config--scopes))
+- `scopes` (Attributes List) The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead. (see [below for nested schema](#nestedatt--alerts--config--scopes))
 - `time_interval` (String) The period each evaluation looks at.
 - `value` (Number) The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
 
