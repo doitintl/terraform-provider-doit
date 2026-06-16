@@ -516,6 +516,16 @@ func getScalarNode(node *yaml.Node, key string) *yaml.Node {
 	return nil
 }
 
+// removeMappingKey removes a key-value pair from a mapping node by key name.
+func removeMappingKey(node *yaml.Node, key string) {
+	for k := 0; k < len(node.Content)-1; k += 2 {
+		if node.Content[k].Value == key {
+			node.Content = append(node.Content[:k], node.Content[k+2:]...)
+			return
+		}
+	}
+}
+
 // hasRef checks if a mapping node contains a $ref key.
 func hasRef(node *yaml.Node) bool {
 	if node.Kind != yaml.MappingNode {
@@ -561,8 +571,9 @@ func flattenAllOfSchemas(schemasNode *yaml.Node) {
 		// Replace the schema node content with the merged result.
 		schemaNode.Content = merged.Content
 
-		// Re-add parent description if present and the merged result doesn't have one.
-		if parentDesc != nil && parentDesc.Value != "" && getScalarValue(schemaNode, "description") == "" {
+		// Re-add parent description, overriding any inherited from sub-schemas.
+		if parentDesc != nil && parentDesc.Value != "" {
+			removeMappingKey(schemaNode, "description")
 			schemaNode.Content = append(
 				[]*yaml.Node{
 					{Kind: yaml.ScalarNode, Value: "description", Tag: "!!str"},
@@ -572,8 +583,9 @@ func flattenAllOfSchemas(schemasNode *yaml.Node) {
 			)
 		}
 
-		// Re-add parent example if present and the merged result doesn't have one.
-		if parentExample != nil && getMappingValue(schemaNode, "example") == nil {
+		// Re-add parent example, overriding any inherited from sub-schemas.
+		if parentExample != nil {
+			removeMappingKey(schemaNode, "example")
 			schemaNode.Content = append(schemaNode.Content,
 				&yaml.Node{Kind: yaml.ScalarNode, Value: "example", Tag: "!!str"},
 				deepCopyNode(parentExample),
@@ -1104,6 +1116,7 @@ func mergeAllOfItems(items []any) (map[string]any, bool) {
 					for _, r := range newReq {
 						if s, ok := r.(string); ok && !seen[s] {
 							existing = append(existing, r)
+							seen[s] = true
 						}
 					}
 				}

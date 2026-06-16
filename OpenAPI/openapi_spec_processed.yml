@@ -4035,6 +4035,8 @@ components:
           items:
             type: string
     AlertListItem:
+      description: >-
+        Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
       type: object
       required:
         - name
@@ -4068,7 +4070,6 @@ components:
         owner:
           type: string
           description: Email of the alert owner (the collaborator with the owner role).
-      description: Configuration and runtime metadata of an alert.
       example:
         id: 7jyrczd6CSh3M8TuQ6Qq
         name: fgfgh

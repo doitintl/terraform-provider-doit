@@ -3670,7 +3670,7 @@ type AlertConfigDataSource string
 // AlertConfigTimeInterval The period each evaluation looks at.
 type AlertConfigTimeInterval string
 
-// AlertListItem Configuration and runtime metadata of an alert.
+// AlertListItem Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
 type AlertListItem struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
