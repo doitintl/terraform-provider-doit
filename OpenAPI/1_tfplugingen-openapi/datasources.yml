@@ -245,3 +245,7 @@ data_sources:
     read:
       path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
       method: GET
+  cloudconnect_aws_account:
+    read:
+      path: /core/v1/cloudconnect/aws/accounts/{accountID}
+      method: GET
