@@ -86,11 +86,7 @@ func (d *cloudconnectAwsAccountDataSource) Read(ctx context.Context, req datasou
 		data.EnabledFeatures = types.ListUnknown(types.StringType)
 		data.S3bucket = types.StringUnknown()
 		data.S3bucketRegion = types.StringUnknown()
-		data.SupportedFeatures = types.ListUnknown(datasource_cloudconnect_aws_account.SupportedFeaturesType{
-			ObjectType: types.ObjectType{
-				AttrTypes: datasource_cloudconnect_aws_account.SupportedFeaturesValue{}.AttributeTypes(ctx),
-			},
-		})
+		data.SupportedFeatures = types.ListUnknown(datasource_cloudconnect_aws_account.SupportedFeaturesValue{}.Type(ctx))
 		data.TimeLinked = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -139,8 +135,10 @@ func mapCloudConnectAwsAccountToDataSourceModel(ctx context.Context, resp *model
 		for _, f := range *resp.EnabledFeatures {
 			elems = append(elems, types.StringValue(f))
 		}
-		data.EnabledFeatures, diags = types.ListValue(types.StringType, elems)
-		if diags.HasError() {
+		var listDiags diag.Diagnostics
+		data.EnabledFeatures, listDiags = types.ListValue(types.StringType, elems)
+		diags.Append(listDiags...)
+		if listDiags.HasError() {
 			return diags
 		}
 	} else {
@@ -165,11 +163,7 @@ func mapCloudConnectAwsAccountToDataSourceModel(ctx context.Context, resp *model
 		}
 	}
 
-	featList, listDiags := types.ListValueFrom(ctx, datasource_cloudconnect_aws_account.SupportedFeaturesType{
-		ObjectType: types.ObjectType{
-			AttrTypes: datasource_cloudconnect_aws_account.SupportedFeaturesValue{}.AttributeTypes(ctx),
-		},
-	}, featElems)
+	featList, listDiags := types.ListValueFrom(ctx, datasource_cloudconnect_aws_account.SupportedFeaturesValue{}.Type(ctx), featElems)
 	diags.Append(listDiags...)
 	if listDiags.HasError() {
 		return diags
