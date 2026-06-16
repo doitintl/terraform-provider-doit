@@ -372,6 +372,10 @@ func overlayFilter(_ context.Context, resolved, plan *resource_report.FiltersVal
 		plan.Inverse = resolved.Inverse
 	}
 
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}
@@ -743,7 +747,9 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					}
 					externalFilters[i].Values = &values
 				}
-				externalFilters[i].Mode = models.ExternalConfigFilterMode(f.Mode.ValueString())
+				if !f.Mode.IsNull() && !f.Mode.IsUnknown() {
+					externalFilters[i].Mode = new(models.ExternalConfigFilterMode(f.Mode.ValueString()))
+				}
 			}
 			externalConfig.Filters = &externalFilters
 		}
@@ -1196,7 +1202,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 				"inverse":          inverseVal,
 				// filters type enum cast
 				"type": types.StringValue(fType),
-				"mode": types.StringValue(string(f.Mode)),
+				"mode": types.StringPointerValue((*string)(f.Mode)),
 			}
 
 			// The API silently strips legacy "[... N/A]" NullFallback sentinels from filter

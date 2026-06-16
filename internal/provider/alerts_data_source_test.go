@@ -153,6 +153,25 @@ func TestAccAlertsDataSource_AutoPagination(t *testing.T) {
 	})
 }
 
+// TestAccAlertsDataSource_OwnerAttribute verifies that the owner field is populated
+// in list results. The owner field is only returned by the list endpoint.
+func TestAccAlertsDataSource_OwnerAttribute(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertsDataSourceMaxResultsConfig("1"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_alerts.limited", "alerts.#", "1"),
+					resource.TestCheckResourceAttrSet("data.doit_alerts.limited", "alerts.0.owner"),
+				),
+			},
+		},
+	})
+}
+
 func testAccAlertsDataSourceConfig() string {
 	return `
 data "doit_alerts" "test" {

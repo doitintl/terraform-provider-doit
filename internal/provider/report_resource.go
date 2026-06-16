@@ -63,12 +63,16 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["description"] = attr
 	}
 
-	// Category A: nested clearable filter/metric_filter values.
+	// Category A: nested clearable filter/metric_filter values and mode.
 	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
 		if filtersAttr, ok := configAttr.Attributes["filters"].(schema.ListNestedAttribute); ok {
 			if attr, ok := filtersAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
 				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
 				filtersAttr.NestedObject.Attributes["values"] = attr
+			}
+			if attr, ok := filtersAttr.NestedObject.Attributes["mode"].(schema.StringAttribute); ok {
+				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				filtersAttr.NestedObject.Attributes["mode"] = attr
 			}
 			configAttr.Attributes["filters"] = filtersAttr
 		}

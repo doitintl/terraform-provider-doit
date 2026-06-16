@@ -286,7 +286,7 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 				"id":               types.StringValue(scope.Id),
 				"include_null":     types.BoolPointerValue(scope.IncludeNull),
 				"inverse":          types.BoolPointerValue(scope.Inverse),
-				"mode":             types.StringValue(string(scope.Mode)),
+				"mode":             types.StringPointerValue((*string)(scope.Mode)),
 				"type":             types.StringValue(string(scope.Type)),
 				"values":           valuesVal,
 			}

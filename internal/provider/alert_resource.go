@@ -91,6 +91,18 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		"config.scopes[*].values",  // API defaults scope values
 	)
 
+	// Category A: nested clearable attributes.
+	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
+		if scopesAttr, ok := configAttr.Attributes["scopes"].(schema.ListNestedAttribute); ok {
+			if attr, ok := scopesAttr.NestedObject.Attributes["mode"].(schema.StringAttribute); ok {
+				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				scopesAttr.NestedObject.Attributes["mode"] = attr
+			}
+			configAttr.Attributes["scopes"] = scopesAttr
+		}
+		s.Attributes["config"] = configAttr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,

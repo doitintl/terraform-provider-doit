@@ -119,8 +119,8 @@ func AlertDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
-						MarkdownDescription: "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
+						Description:         "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.",
+						MarkdownDescription: "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.",
 					},
 					"time_interval": schema.StringAttribute{
 						Computed:            true,

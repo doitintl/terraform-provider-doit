@@ -208,3 +208,62 @@ data "doit_report_query" "test" {
 }
 `
 }
+
+// TestAccReportQueryDataSource_FilterWithoutMode verifies that the query
+// data source works when a filter omits mode (optional field).
+func TestAccReportQueryDataSource_FilterWithoutMode(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceFilterNoMode(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceFilterNoMode() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        filters = [
+          {
+            id      = "cloud_provider"
+            type    = "fixed"
+            values  = ["amazon-web-services"]
+          }
+        ]
+    }
+}
+`
+}

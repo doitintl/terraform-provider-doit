@@ -175,6 +175,10 @@ func overlayBudgetScope(_ context.Context, resolved, plan *resource_budget.Scope
 		plan.Inverse = resolved.Inverse
 	}
 
+	if plan.Mode.IsUnknown() {
+		plan.Mode = resolved.Mode
+	}
+
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}
@@ -295,15 +299,16 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		reqScopes := make([]models.ExternalConfigFilter, len(scopes))
 		for i, scope := range scopes {
 			filterType := models.DimensionsTypes(scope.ScopesType.ValueString())
-			filterMode := models.ExternalConfigFilterMode(scope.Mode.ValueString())
 
 			reqScopes[i] = models.ExternalConfigFilter{
 				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
 				Id:              scope.Id.ValueString(),
 				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
 				Inverse:         scope.Inverse.ValueBoolPointer(),
-				Mode:            filterMode,
 				Type:            filterType,
+			}
+			if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
+				reqScopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string
@@ -614,7 +619,7 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 				"id":               types.StringValue(scopeID),
 				"include_null":     includeNullVal,
 				"inverse":          types.BoolPointerValue(scope.Inverse),
-				"mode":             types.StringValue(string(scope.Mode)),
+				"mode":             types.StringPointerValue((*string)(scope.Mode)),
 				"type":             types.StringValue(scopeType),
 				"values":           valuesVal,
 			}

@@ -751,6 +751,129 @@ resource "doit_alert" "this" {
 `, i)
 }
 
+// TestAccAlert_ClearScopeMode verifies the clearing lifecycle for scopes[*].mode.
+// The API returns null when mode is unset, so omitting it from config clears it.
+func TestAccAlert_ClearScopeMode(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with mode explicitly set
+			{
+				Config: testAccAlertWithScopeMode(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("scopes"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":   knownvalue.StringExact("fixed"),
+								"id":     knownvalue.StringExact("cloud_provider"),
+								"mode":   knownvalue.StringExact("contains"),
+								"values": knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("amazon")}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccAlertWithScopeMode(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear mode by omitting it from config
+			{
+				Config: testAccAlertWithScopeModeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr("doit_alert.this", "config.scopes.0.mode"),
+				),
+			},
+			// Step 4: Drift check — cleared mode should produce no drift
+			{
+				Config: testAccAlertWithScopeModeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertWithScopeMode(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-clear-mode-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type   = "fixed"
+        id     = "cloud_provider"
+        mode   = "contains"
+        values = ["amazon"]
+      }
+    ]
+  }
+}
+`, i)
+}
+
+func testAccAlertWithScopeModeCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-clear-mode-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 500
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type   = "fixed"
+        id     = "cloud_provider"
+        values = ["amazon"]
+      }
+    ]
+  }
+}
+`, i)
+}
+
 // TestAccAlert_Disappears verifies that Terraform correctly handles
 // resources that are deleted outside of Terraform (externally deleted).
 // This tests the Read method's 404 handling and RemoveResource call.

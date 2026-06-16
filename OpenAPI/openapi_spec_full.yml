@@ -6045,6 +6045,18 @@ components:
           timeInterval: month
           dataSource: billing
           value: 500
+    AlertListItem:
+      description: >-
+        Alert as returned by the list endpoint. Identical to `Alert` but also
+        includes `owner`. The `owner` field is only populated in list results;
+        it is not returned by the get, create, or update endpoints.
+      allOf:
+        - $ref: "#/components/schemas/Alert"
+        - type: object
+          properties:
+            owner:
+              type: string
+              description: Email of the alert owner (the collaborator with the owner role).
     AlertConfig:
       type: object
       description: Parameters that define when and how an alert is evaluated.
@@ -6065,7 +6077,8 @@ components:
             billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
         scopes:
           type: array
-          description: The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
+          description: >-
+            The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.
           items:
             $ref: "#/components/schemas/ExternalConfigFilter"
         metric:
@@ -7469,7 +7482,7 @@ components:
           type: array
           description: Array of alerts.
           items:
-            $ref: "#/components/schemas/Alert"
+            $ref: "#/components/schemas/AlertListItem"
     ExternalBudgetAlert:
       type: object
       description: Budget alert status details.
@@ -7724,7 +7737,6 @@ components:
       required:
         - id
         - type
-        - mode
       properties:
         id:
           type: string
