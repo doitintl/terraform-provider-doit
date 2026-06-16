@@ -124,8 +124,8 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									Computed:            true,
-									Description:         "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
-									MarkdownDescription: "The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.",
+									Description:         "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.",
+									MarkdownDescription: "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.",
 								},
 								"time_interval": schema.StringAttribute{
 									Computed:            true,
@@ -166,6 +166,11 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "Alert Name.",
 							MarkdownDescription: "Alert Name.",
+						},
+						"owner": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Email of the alert owner (the collaborator with the owner role).",
+							MarkdownDescription: "Email of the alert owner (the collaborator with the owner role).",
 						},
 						"recipients": schema.ListAttribute{
 							ElementType:         types.StringType,
@@ -369,6 +374,24 @@ func (t AlertsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
 	}
 
+	ownerAttribute, ok := attributes["owner"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owner is missing from object`)
+
+		return nil, diags
+	}
+
+	ownerVal, ok := ownerAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owner expected to be basetypes.StringValue, was: %T`, ownerAttribute))
+	}
+
 	recipientsAttribute, ok := attributes["recipients"]
 
 	if !ok {
@@ -415,6 +438,7 @@ func (t AlertsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		Id:          idVal,
 		LastAlerted: lastAlertedVal,
 		Name:        nameVal,
+		Owner:       ownerVal,
 		Recipients:  recipientsVal,
 		UpdateTime:  updateTimeVal,
 		state:       attr.ValueStateKnown,
@@ -574,6 +598,24 @@ func NewAlertsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
 	}
 
+	ownerAttribute, ok := attributes["owner"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`owner is missing from object`)
+
+		return NewAlertsValueUnknown(), diags
+	}
+
+	ownerVal, ok := ownerAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`owner expected to be basetypes.StringValue, was: %T`, ownerAttribute))
+	}
+
 	recipientsAttribute, ok := attributes["recipients"]
 
 	if !ok {
@@ -620,6 +662,7 @@ func NewAlertsValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		Id:          idVal,
 		LastAlerted: lastAlertedVal,
 		Name:        nameVal,
+		Owner:       ownerVal,
 		Recipients:  recipientsVal,
 		UpdateTime:  updateTimeVal,
 		state:       attr.ValueStateKnown,
@@ -699,13 +742,14 @@ type AlertsValue struct {
 	Id          basetypes.StringValue `tfsdk:"id"`
 	LastAlerted basetypes.Int64Value  `tfsdk:"last_alerted"`
 	Name        basetypes.StringValue `tfsdk:"name"`
+	Owner       basetypes.StringValue `tfsdk:"owner"`
 	Recipients  basetypes.ListValue   `tfsdk:"recipients"`
 	UpdateTime  basetypes.Int64Value  `tfsdk:"update_time"`
 	state       attr.ValueState
 }
 
 func (v AlertsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 7)
+	attrTypes := make(map[string]tftypes.Type, 8)
 
 	var val tftypes.Value
 	var err error
@@ -719,6 +763,7 @@ func (v AlertsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["last_alerted"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["owner"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["recipients"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
@@ -728,7 +773,7 @@ func (v AlertsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 7)
+		vals := make(map[string]tftypes.Value, 8)
 
 		val, err = v.Config.ToTerraformValue(ctx)
 
@@ -769,6 +814,14 @@ func (v AlertsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["name"] = val
+
+		val, err = v.Owner.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["owner"] = val
 
 		val, err = v.Recipients.ToTerraformValue(ctx)
 
@@ -844,6 +897,7 @@ func (v AlertsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"id":           basetypes.StringType{},
 			"last_alerted": basetypes.Int64Type{},
 			"name":         basetypes.StringType{},
+			"owner":        basetypes.StringType{},
 			"recipients": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -861,6 +915,7 @@ func (v AlertsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"id":           basetypes.StringType{},
 		"last_alerted": basetypes.Int64Type{},
 		"name":         basetypes.StringType{},
+		"owner":        basetypes.StringType{},
 		"recipients": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -883,6 +938,7 @@ func (v AlertsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"id":           v.Id,
 			"last_alerted": v.LastAlerted,
 			"name":         v.Name,
+			"owner":        v.Owner,
 			"recipients":   recipientsVal,
 			"update_time":  v.UpdateTime,
 		})
@@ -925,6 +981,10 @@ func (v AlertsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Owner.Equal(other.Owner) {
+		return false
+	}
+
 	if !v.Recipients.Equal(other.Recipients) {
 		return false
 	}
@@ -955,6 +1015,7 @@ func (v AlertsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"id":           basetypes.StringType{},
 		"last_alerted": basetypes.Int64Type{},
 		"name":         basetypes.StringType{},
+		"owner":        basetypes.StringType{},
 		"recipients": basetypes.ListType{
 			ElemType: types.StringType,
 		},

@@ -277,8 +277,13 @@ func (ds *alertDataSource) mapScopeToModel(ctx context.Context, scope *models.Ex
 		values = emptyList3
 	}
 
-	// Map mode - Mode is not a pointer, it's a string type
-	mode := types.StringValue(string(scope.Mode))
+	// Map mode - Mode is now a pointer (optional field)
+	var mode types.String
+	if scope.Mode != nil {
+		mode = types.StringValue(string(*scope.Mode))
+	} else {
+		mode = types.StringNull()
+	}
 
 	// Map inverse
 	var inverse types.Bool

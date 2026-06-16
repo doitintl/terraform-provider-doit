@@ -3654,7 +3654,7 @@ type AlertConfig struct {
 	// Operator Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
 	Operator *MetricFilterText `json:"operator,omitempty"`
 
-	// Scopes The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
+	// Scopes The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.
 	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// TimeInterval The period each evaluation looks at.
@@ -3669,6 +3669,33 @@ type AlertConfigDataSource string
 
 // AlertConfigTimeInterval The period each evaluation looks at.
 type AlertConfigTimeInterval string
+
+// AlertListItem Configuration and runtime metadata of an alert.
+type AlertListItem struct {
+	// Config Parameters that define when and how an alert is evaluated.
+	Config *AlertConfig `json:"config,omitempty"`
+
+	// CreateTime The time when the alert was created (in UNIX timestamp).
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Id Alert ID.
+	Id *string `json:"id,omitempty"`
+
+	// LastAlerted Last time the alert was triggered (in UNIX timestamp).
+	LastAlerted *int64 `json:"lastAlerted,omitempty"`
+
+	// Name Alert Name.
+	Name string `json:"name"`
+
+	// Owner Email of the alert owner (the collaborator with the owner role).
+	Owner *string `json:"owner,omitempty"`
+
+	// Recipients List of emails that will be notified when the alert is triggered.
+	Recipients *[]string `json:"recipients,omitempty"`
+
+	// UpdateTime Last time the alert was modified (in UNIX timestamp).
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+}
 
 // AlertRequest Request body for creating a new alert.
 type AlertRequest struct {
@@ -5615,7 +5642,7 @@ type ExternalAPIGetValue struct {
 // ExternalAlertList List of alerts.
 type ExternalAlertList struct {
 	// Alerts Array of alerts.
-	Alerts *[]Alert `json:"alerts,omitempty"`
+	Alerts *[]AlertListItem `json:"alerts,omitempty"`
 
 	// PageToken Page token. It is used to request a specific page of the list results.
 	PageToken *string `json:"pageToken,omitempty"`
@@ -5748,7 +5775,7 @@ type ExternalConfigFilter struct {
 	Inverse *bool `json:"inverse,omitempty"`
 
 	// Mode Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
-	Mode ExternalConfigFilterMode `json:"mode"`
+	Mode *ExternalConfigFilterMode `json:"mode,omitempty"`
 
 	// Type Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 	Type DimensionsTypes `json:"type"`

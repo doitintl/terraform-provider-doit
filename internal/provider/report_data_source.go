@@ -273,7 +273,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 				"include_null":     types.BoolPointerValue(f.IncludeNull),
 				"inverse":          types.BoolPointerValue(f.Inverse),
 				"type":             types.StringValue(fType),
-				"mode":             types.StringValue(string(f.Mode)),
+				"mode":             types.StringPointerValue((*string)(f.Mode)),
 			}
 
 			if f.Values != nil {

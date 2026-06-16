@@ -128,11 +128,15 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"scopes[*].inverse", // API defaults to false
 	)
 
-	// Category A: nested scopes[*].values — clearable.
+	// Category A: nested clearable attributes.
 	if scopesAttr, ok := s.Attributes["scopes"].(schema.ListNestedAttribute); ok {
 		if attr, ok := scopesAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
 			scopesAttr.NestedObject.Attributes["values"] = attr
+		}
+		if attr, ok := scopesAttr.NestedObject.Attributes["mode"].(schema.StringAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+			scopesAttr.NestedObject.Attributes["mode"] = attr
 		}
 		s.Attributes["scopes"] = scopesAttr
 	}

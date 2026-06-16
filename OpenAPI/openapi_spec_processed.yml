@@ -3998,7 +3998,8 @@ components:
             billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
         scopes:
           type: array
-          description: The filters selected define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Only costs/usages matching all scope logic are included in the alert.
+          description: >-
+            The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.
           items:
             $ref: "#/components/schemas/ExternalConfigFilter"
         metric:
@@ -4033,6 +4034,64 @@ components:
           description: Use 'scopes' instead. The attributions selected define the scope to monitor.
           items:
             type: string
+    AlertListItem:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+          description: Alert ID.
+        name:
+          type: string
+          description: Alert Name.
+          default: ""
+        createTime:
+          type: integer
+          description: The time when the alert was created (in UNIX timestamp).
+          format: int64
+        updateTime:
+          type: integer
+          description: Last time the alert was modified (in UNIX timestamp).
+          format: int64
+        lastAlerted:
+          type: integer
+          description: Last time the alert was triggered (in UNIX timestamp).
+          format: int64
+        recipients:
+          type: array
+          description: List of emails that will be notified when the alert is triggered.
+          items:
+            type: string
+        config:
+          $ref: "#/components/schemas/AlertConfig"
+        owner:
+          type: string
+          description: Email of the alert owner (the collaborator with the owner role).
+      description: Configuration and runtime metadata of an alert.
+      example:
+        id: 7jyrczd6CSh3M8TuQ6Qq
+        name: fgfgh
+        createTime: 1678628817062
+        updateTime: 1678628938891
+        lastAlerted: null
+        recipients:
+          - user1@example.com
+          - user2@example.com
+        config:
+          condition: value
+          currency: USD
+          metric:
+            type: basic
+            value: cost
+          operator: gt
+          evaluateForEach: ""
+          attributions:
+            - PvqyGcdFcTHh7aLUdGdf
+          scopes: []
+          timeInterval: month
+          dataSource: billing
+          value: 500
     AlertRequest:
       required:
         - config
@@ -6851,7 +6910,7 @@ components:
           type: array
           description: Array of alerts.
           items:
-            $ref: "#/components/schemas/Alert"
+            $ref: "#/components/schemas/AlertListItem"
     ExternalBudgetAlert:
       type: object
       description: Budget alert status details.
@@ -7068,7 +7127,6 @@ components:
       required:
         - id
         - type
-        - mode
       properties:
         id:
           type: string
