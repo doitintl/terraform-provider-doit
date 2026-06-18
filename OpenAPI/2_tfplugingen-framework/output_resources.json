@@ -3786,6 +3786,74 @@
 				"description": "Manage users who have access to the DoiT platform.",
 				"markdown_description": "Manage users who have access to the DoiT platform."
 			}
+		},
+		{
+			"name": "webhook_endpoint",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A human-readable description of the webhook endpoint."
+						}
+					},
+					{
+						"name": "events",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of event types this endpoint subscribes to. Omit or pass an empty list to subscribe to all events."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the webhook endpoint."
+						}
+					},
+					{
+						"name": "url",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The URL that receives webhook payloads."
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the webhook endpoint was created."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the webhook endpoint."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The current status of the webhook endpoint."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the webhook endpoint was last updated."
+						}
+					}
+				],
+				"description": "Configure webhooks to receive real-time notifications when events occur in your DoiT environment.",
+				"markdown_description": "Configure webhooks to receive real-time notifications when events occur in your DoiT environment."
+			}
 		}
 	],
 	"version": "0.1"

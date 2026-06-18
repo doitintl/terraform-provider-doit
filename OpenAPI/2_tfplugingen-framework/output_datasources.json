@@ -7135,6 +7135,85 @@
 			}
 		},
 		{
+			"name": "cloudconnect_aws_account",
+			"schema": {
+				"attributes": [
+					{
+						"name": "account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The AWS account ID."
+						}
+					},
+					{
+						"name": "enabled_features",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of supported AWS features enabled by the caller. Returned in the same order as provided."
+						}
+					},
+					{
+						"name": "role_arn",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The ARN of the IAM role."
+						}
+					},
+					{
+						"name": "s3bucket",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "S3 bucket name for real-time anomaly detection. Present only if real-time is enabled."
+						}
+					},
+					{
+						"name": "s3bucket_region",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "AWS region of the S3 bucket. Present only if s3Bucket exists."
+						}
+					},
+					{
+						"name": "supported_features",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "has_required_permissions",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the role has the required permissions for this feature."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Feature name."
+										}
+									}
+								]
+							},
+							"description": "List of supported features and their permission status."
+						}
+					},
+					{
+						"name": "time_linked",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp of when the role was linked."
+						}
+					}
+				],
+				"description": "Manage cloud provider connections and check feature availability for connected accounts.",
+				"markdown_description": "Manage cloud provider connections and check feature availability for connected accounts."
+			}
+		},
+		{
 			"name": "commitment",
 			"schema": {
 				"attributes": [
@@ -10899,6 +10978,218 @@
 				],
 				"description": "Manage users who have access to the DoiT platform.",
 				"markdown_description": "Manage users who have access to the DoiT platform."
+			}
+		},
+		{
+			"name": "webhook_endpoint",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Webhook endpoint ID"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the webhook endpoint was created."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "A human-readable description of the webhook endpoint."
+						}
+					},
+					{
+						"name": "events",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of event types this endpoint subscribes to. An empty list subscribes to all events."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the webhook endpoint."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The current status of the webhook endpoint."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The time when the webhook endpoint was last updated."
+						}
+					},
+					{
+						"name": "url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The URL that receives webhook payloads."
+						}
+					}
+				],
+				"description": "Configure webhooks to receive real-time notifications when events occur in your DoiT environment.",
+				"markdown_description": "Configure webhooks to receive real-time notifications when events occur in your DoiT environment."
+			}
+		},
+		{
+			"name": "webhook_endpoints",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An expression for filtering the results.\nValid fields: **name**, **status**."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"name\",\n\"createTime\",\n\"updateTime\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "endpoints",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the webhook endpoint was created."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "A human-readable description of the webhook endpoint."
+										}
+									},
+									{
+										"name": "events",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "List of event types this endpoint subscribes to. An empty list subscribes to all events."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The unique identifier of the webhook endpoint."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the webhook endpoint."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The current status of the webhook endpoint."
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The time when the webhook endpoint was last updated."
+										}
+									},
+									{
+										"name": "url",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The URL that receives webhook payloads."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of webhook endpoints in the result set."
+						}
+					}
+				],
+				"description": "Configure webhooks to receive real-time notifications when events occur in your DoiT environment.",
+				"markdown_description": "Configure webhooks to receive real-time notifications when events occur in your DoiT environment."
 			}
 		}
 	],

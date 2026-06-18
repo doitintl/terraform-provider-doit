@@ -245,3 +245,15 @@ data_sources:
     read:
       path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
       method: GET
+  cloudconnect_aws_account:
+    read:
+      path: /core/v1/cloudconnect/aws/accounts/{accountID}
+      method: GET
+  webhook_endpoint:
+    read:
+      path: /webhooks/v1/endpoints/{id}
+      method: GET
+  webhook_endpoints:
+    read:
+      path: /webhooks/v1/endpoints
+      method: GET

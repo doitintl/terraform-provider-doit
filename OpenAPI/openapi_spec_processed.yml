@@ -66,6 +66,8 @@ tags:
     description: Manage cloud insights representing recommendations and findings for cloud resources.
   - name: Cloud Connect
     description: Manage cloud provider connections and check feature availability for connected accounts.
+  - name: Webhooks
+    description: Configure webhooks to receive real-time notifications when events occur in your DoiT environment.
 paths:
   /analytics/v1/alerts:
     get:
@@ -3882,6 +3884,191 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /webhooks/v1/endpoints:
+    get:
+      tags:
+        - Webhooks
+      summary: List webhook endpoints
+      description: |-
+        Returns a list of webhook endpoints that your account has access to.
+        Endpoints are listed in reverse chronological order by default.
+      operationId: listWebhookEndpoints
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+        - name: filter
+          in: query
+          description: |-
+            An expression for filtering the results.
+            Valid fields: **name**, **status**.
+          example: status:active
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: A field by which the results will be sorted.
+          schema:
+            type: string
+            enum:
+              - name
+              - createTime
+              - updateTime
+        - $ref: "#/components/parameters/sortOrder"
+      responses:
+        "200":
+          description: >-
+            OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWebhookEndpoints200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Webhooks
+      summary: Create a webhook endpoint
+      description: Creates a new webhook endpoint.
+      operationId: createWebhookEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWebhookEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: >-
+            Created - Webhook endpoint created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+          links:
+            getWebhookEndpoint:
+              operationId: getWebhookEndpoint
+              parameters:
+                id: $response.body#/id
+            updateWebhookEndpoint:
+              operationId: updateWebhookEndpoint
+              parameters:
+                id: $response.body#/id
+            deleteWebhookEndpoint:
+              operationId: deleteWebhookEndpoint
+              parameters:
+                id: $response.body#/id
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  "/webhooks/v1/endpoints/{id}":
+    get:
+      tags:
+        - Webhooks
+      summary: Retrieve a webhook endpoint
+      description: Returns a webhook endpoint by the specified Id.
+      operationId: getWebhookEndpoint
+      parameters:
+        - name: id
+          in: path
+          description: Webhook endpoint ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: >-
+            OK - Webhook endpoint returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+          links:
+            updateWebhookEndpoint:
+              operationId: updateWebhookEndpoint
+              parameters:
+                id: $request.path.id
+            deleteWebhookEndpoint:
+              operationId: deleteWebhookEndpoint
+              parameters:
+                id: $request.path.id
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      tags:
+        - Webhooks
+      summary: Delete a webhook endpoint
+      description: Deletes the webhook endpoint specified by the Id.
+      operationId: deleteWebhookEndpoint
+      parameters:
+        - name: id
+          in: path
+          description: Webhook endpoint ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Webhook endpoint deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      tags:
+        - Webhooks
+      summary: Update a webhook endpoint
+      description: Updates the webhook endpoint specified by the Id.
+      operationId: updateWebhookEndpoint
+      parameters:
+        - name: id
+          in: path
+          description: Webhook endpoint ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWebhookEndpointRequest"
+      responses:
+        "200":
+          description: OK - Webhook endpoint updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
 components:
   schemas:
     AccountManagerListItem:
@@ -6597,6 +6784,35 @@ components:
       properties:
         resourceResults:
           $ref: "#/components/schemas/ResourceResults"
+    CreateWebhookEndpointRequest:
+      required:
+        - name
+        - url
+      type: object
+      description: Request body for creating a webhook endpoint.
+      properties:
+        name:
+          type: string
+          description: The name of the webhook endpoint.
+        url:
+          type: string
+          format: uri
+          description: The URL that receives webhook payloads.
+        description:
+          type: string
+          description: A human-readable description of the webhook endpoint.
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+              - alert.triggered
+              - alert.resolved
+              - budget.exceeded
+              - anomaly.detected
+              - anomaly.resolved
+              - report.completed
+          description: List of event types this endpoint subscribes to. Omit or pass an empty list to subscribe to all events.
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -8414,6 +8630,19 @@ components:
           description: The number of returned records.
           format: int64
           example: 5
+    ListWebhookEndpoints200Response:
+      type: object
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Total number of webhook endpoints in the result set.
+        endpoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEndpoint"
     MetricConfig:
       type: object
       description: Define how metrics are selected and filtered in reports.
@@ -9482,6 +9711,43 @@ components:
           description: Success message
         user:
           $ref: "#/components/schemas/UpdatedUserBody"
+    UpdateWebhookEndpointRequest:
+      type: object
+      description: Request body for updating a webhook endpoint.
+      properties:
+        name:
+          type: string
+          description: The name of the webhook endpoint.
+          nullable: true
+        url:
+          type: string
+          format: uri
+          description: The URL that receives webhook payloads.
+          nullable: true
+        description:
+          type: string
+          description: A human-readable description of the webhook endpoint.
+          nullable: true
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+              - alert.triggered
+              - alert.resolved
+              - budget.exceeded
+              - anomaly.detected
+              - anomaly.resolved
+              - report.completed
+          description: List of event types this endpoint subscribes to. Pass an empty list to subscribe to all events.
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - paused
+          description: Set the status of the webhook endpoint.
+          nullable: true
     UpdatedUserBody:
       type: object
       description: The updated user record.
@@ -9603,6 +9869,53 @@ components:
         - type: string
         - type: number
         - type: integer
+    WebhookEndpoint:
+      type: object
+      required:
+        - id
+        - name
+        - url
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the webhook endpoint.
+        description:
+          type: string
+          description: A human-readable description of the webhook endpoint.
+        name:
+          type: string
+          description: The name of the webhook endpoint.
+        url:
+          type: string
+          format: uri
+          description: The URL that receives webhook payloads.
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+              - alert.triggered
+              - alert.resolved
+              - budget.exceeded
+              - anomaly.detected
+              - anomaly.resolved
+              - report.completed
+          description: List of event types this endpoint subscribes to. An empty list subscribes to all events.
+        status:
+          type: string
+          enum:
+            - active
+            - paused
+            - disabled
+          description: The current status of the webhook endpoint.
+        createTime:
+          type: string
+          format: date-time
+          description: The time when the webhook endpoint was created.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the webhook endpoint was last updated.
   responses:
     "400":
       description: >-

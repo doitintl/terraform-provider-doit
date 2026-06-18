@@ -207,3 +207,16 @@ resources:
     delete:
       path: /core/v1/cloudconnect/aws/accounts/{accountID}
       method: DELETE
+  webhook_endpoint:
+    create:
+      path: /webhooks/v1/endpoints
+      method: POST
+    read:
+      path: /webhooks/v1/endpoints/{id}
+      method: GET
+    update:
+      path: /webhooks/v1/endpoints/{id}
+      method: PATCH
+    delete:
+      path: /webhooks/v1/endpoints/{id}
+      method: DELETE
