@@ -272,6 +272,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewInsightDataSource,
 		NewCustomThemeDataSource,
 		NewActiveThemeDataSource,
+		NewCloudconnectAwsAccountDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
@@ -330,5 +331,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewCloudconnectAwsAccountResource,
 		NewCustomThemeResource,
 		NewActiveThemeResource,
+		NewWebhookEndpointResource,
 	}
 }
