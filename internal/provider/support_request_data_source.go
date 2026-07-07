@@ -8,7 +8,9 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_support_request"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -86,6 +88,7 @@ func (ds *supportRequestDataSource) Read(ctx context.Context, req datasource.Rea
 		state.UrlUi = types.StringUnknown()
 		state.Platform = types.StringUnknown()
 		state.Severity = types.StringUnknown()
+		state.Tags = types.ListUnknown(types.StringType)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}
@@ -134,6 +137,23 @@ func (ds *supportRequestDataSource) Read(ctx context.Context, req datasource.Rea
 		state.Severity = types.StringValue(string(*ticket.Severity))
 	} else {
 		state.Severity = types.StringNull()
+	}
+
+	if ticket.Tags != nil {
+		tagVals := make([]attr.Value, len(*ticket.Tags))
+		for i, t := range *ticket.Tags {
+			tagVals[i] = types.StringValue(t)
+		}
+		var d diag.Diagnostics
+		state.Tags, d = types.ListValue(types.StringType, tagVals)
+		resp.Diagnostics.Append(d...)
+	} else {
+		var d diag.Diagnostics
+		state.Tags, d = types.ListValue(types.StringType, []attr.Value{})
+		resp.Diagnostics.Append(d...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

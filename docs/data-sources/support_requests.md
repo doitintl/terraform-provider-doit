@@ -110,5 +110,10 @@ Read-Only:
 - `severity` (String) Ticket severity.
 - `status` (String) Ticket status.
 - `subject` (String) The subject of the ticket.
+- `tags` (List of String) Ticket tags, filtered by caller type. DoiT employee (doer) callers
+receive the full tag set verbatim, including internal namespaces
+(e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+under the `customer_tag/` namespace, with that prefix stripped.
+Always present; empty array when the caller has no visible tags.
 - `update_time` (Number) The time when this ticket was last updated, in milliseconds since the epoch.
 - `url_ui` (String) Link to the report in DoiT console.
