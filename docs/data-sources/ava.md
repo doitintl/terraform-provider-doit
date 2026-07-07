@@ -54,7 +54,6 @@ output "report_summary" {
 ### Read-Only
 
 - `answer` (String) The Ava response text. Present on success.
-- `error` (String) Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
 - `id` (String) A deterministic hash of the question, used as the data source identifier.
 
 <a id="nestedatt--timeouts"></a>

@@ -29,7 +29,6 @@ type avaDataSourceModel struct {
 	Id       types.String   `tfsdk:"id"`
 	Question types.String   `tfsdk:"question"`
 	Answer   types.String   `tfsdk:"answer"`
-	Error    types.String   `tfsdk:"error"`
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
@@ -62,11 +61,7 @@ func (d *avaDataSource) Schema(ctx context.Context, req datasource.SchemaRequest
 				Description:         "The Ava response text. Present on success.",
 				MarkdownDescription: "The Ava response text. Present on success.",
 			},
-			"error": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Present instead of answer when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.",
-				MarkdownDescription: "Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.",
-			},
+
 			"timeouts": timeouts.Attributes(ctx),
 		},
 	}
@@ -110,7 +105,6 @@ func (d *avaDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	if data.Question.IsUnknown() {
 		data.Id = types.StringUnknown()
 		data.Answer = types.StringUnknown()
-		data.Error = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -149,7 +143,6 @@ func (d *avaDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	hash := sha256.Sum256([]byte(question))
 	data.Id = types.StringValue(fmt.Sprintf("%x", hash))
 	data.Answer = types.StringPointerValue(apiResp.JSON200.Answer)
-	data.Error = types.StringNull()
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
