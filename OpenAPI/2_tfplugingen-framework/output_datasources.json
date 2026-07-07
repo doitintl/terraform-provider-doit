@@ -2085,7 +2085,7 @@
 						"name": "answer",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The Ava response text."
+							"description": "The Ava response text. Present on success."
 						}
 					},
 					{
@@ -2100,6 +2100,13 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint."
+						}
+					},
+					{
+						"name": "error",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message."
 						}
 					}
 				],

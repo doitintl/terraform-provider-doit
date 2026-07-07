@@ -2446,6 +2446,34 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /iam/v1/users/invite:
+    post:
+      tags:
+        - Users
+      summary: Invite user
+      description: Invites a new user to the organization with specified role and organization.
+      operationId: inviteUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteUserRequest"
+      responses:
+        "201":
+          description: Created - User invitation created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
   /iam/v1/roles:
     get:
       tags:
@@ -2761,34 +2789,6 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
-  /iam/v1/users/invite:
-    post:
-      tags:
-        - Users
-      summary: Invite user
-      description: Invites a new user to the organization with specified role and organization.
-      operationId: inviteUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/InviteUserRequest"
-      responses:
-        "201":
-          description: Created - User invitation created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InviteResponse"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "500":
-          $ref: "#/components/responses/500"
   /clouddiagrams/v1/scheme/find:
     post:
       tags:
@@ -4634,18 +4634,22 @@ components:
         - question
     AvaAskSyncResponse:
       type: object
+      description: >-
+        Ava's response. On success, `answer` is present. The endpoint streams keep-alive whitespace while generating (to avoid proxy timeouts), so the HTTP status is committed to 200 before the answer is ready; if generation then fails, `answer` is omitted and `error` carries a message instead. Consumers should check for `error` before reading `answer`.
       properties:
         answer:
           type: string
-          description: The Ava response text.
+          description: The Ava response text. Present on success.
         conversationId:
           type: string
           description: The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
         answerId:
           type: string
           description: The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
-      required:
-        - answer
+        error:
+          type: string
+          description: >-
+            Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
     AwsAccountResponse:
       type: object
       properties:

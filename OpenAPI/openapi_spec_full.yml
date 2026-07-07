@@ -3150,6 +3150,167 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /iam/v1/users/invite:
+    post:
+      tags:
+        - Users
+      summary: Invite user
+      description: Invites a new user to the organization with specified role and organization.
+      operationId: inviteUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteUserRequest"
+      responses:
+        "201":
+          description: Created - User invitation created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/iam/v1/users/{id}/actions/resend":
+    post:
+      tags:
+        - Users
+      summary: Resend invite
+      description: |
+        Resets the invite expiry to 48 hours from now, invalidates the previous invite token (so
+        old email links stop working), and triggers a fresh invitation email. Works on invites in
+        any state including `Cancelled` — resending a cancelled invite reactivates it to `Pending`.
+
+        Returns `404` if no invite exists for the given ID (never created, or already accepted and removed).
+
+        Requires `usersManager` permission.
+      operationId: resendInvite
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the invited user.
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects. The server retains the key for at least 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |
+            If `true`, validates and simulates the operation without committing changes.
+            The response shape is identical to a real execution.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK - Invite resent and expiry reset.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResendInviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  "/iam/v1/users/{id}/actions/cancel":
+    post:
+      tags:
+        - Users
+      summary: Cancel invite
+      description: |
+        Marks the invite as `Cancelled` and invalidates the invite token so any outstanding email
+        links stop working. The invite document is retained (soft cancel) — the user row remains
+        visible in `GET /iam/v1/users` with `inviteStatus: Cancelled`. Use `DELETE /iam/v1/users/{id}`
+        to fully remove the record.
+
+        Returns `404` if no invite exists for the given ID, and `409` if the invite is already cancelled.
+
+        Requires `usersManager` permission.
+      operationId: cancelInvite
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the invited user.
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects. The server retains the key for at least 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |
+            If `true`, validates and simulates the operation without committing changes.
+            The response shape is identical to a real execution.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK - Invite cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelInviteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: Conflict - Invite already cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
   /iam/v1/roles:
     get:
       tags:
@@ -3673,167 +3834,6 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
-  /iam/v1/users/invite:
-    post:
-      tags:
-        - Users
-      summary: Invite user
-      description: Invites a new user to the organization with specified role and organization.
-      operationId: inviteUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/InviteUserRequest"
-      responses:
-        "201":
-          description: Created - User invitation created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InviteResponse"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "500":
-          $ref: "#/components/responses/500"
-  "/iam/v1/users/{id}/actions/resend":
-    post:
-      tags:
-        - Users
-      summary: Resend invite
-      description: |
-        Resets the invite expiry to 48 hours from now, invalidates the previous invite token (so
-        old email links stop working), and triggers a fresh invitation email. Works on invites in
-        any state including `Cancelled` — resending a cancelled invite reactivates it to `Pending`.
-
-        Returns `404` if no invite exists for the given ID (never created, or already accepted and removed).
-
-        Requires `usersManager` permission.
-      operationId: resendInvite
-      parameters:
-        - name: id
-          in: path
-          description: The unique ID of the invited user.
-          required: true
-          schema:
-            type: string
-        - name: Idempotency-Key
-          in: header
-          required: true
-          description: |
-            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
-            Re-submitting the same key with the same request returns the cached response without
-            re-executing side effects. The server retains the key for at least 24 hours.
-          schema:
-            type: string
-            maxLength: 255
-        - name: dryRun
-          in: query
-          required: false
-          description: |
-            If `true`, validates and simulates the operation without committing changes.
-            The response shape is identical to a real execution.
-          schema:
-            type: boolean
-            default: false
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        "200":
-          description: OK - Invite resent and expiry reset.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResendInviteResponse"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-        "500":
-          $ref: "#/components/responses/500"
-  "/iam/v1/users/{id}/actions/cancel":
-    post:
-      tags:
-        - Users
-      summary: Cancel invite
-      description: |
-        Marks the invite as `Cancelled` and invalidates the invite token so any outstanding email
-        links stop working. The invite document is retained (soft cancel) — the user row remains
-        visible in `GET /iam/v1/users` with `inviteStatus: Cancelled`. Use `DELETE /iam/v1/users/{id}`
-        to fully remove the record.
-
-        Returns `404` if no invite exists for the given ID, and `409` if the invite is already cancelled.
-
-        Requires `usersManager` permission.
-      operationId: cancelInvite
-      parameters:
-        - name: id
-          in: path
-          description: The unique ID of the invited user.
-          required: true
-          schema:
-            type: string
-        - name: Idempotency-Key
-          in: header
-          required: true
-          description: |
-            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
-            Re-submitting the same key with the same request returns the cached response without
-            re-executing side effects. The server retains the key for at least 24 hours.
-          schema:
-            type: string
-            maxLength: 255
-        - name: dryRun
-          in: query
-          required: false
-          description: |
-            If `true`, validates and simulates the operation without committing changes.
-            The response shape is identical to a real execution.
-          schema:
-            type: boolean
-            default: false
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        "200":
-          description: OK - Invite cancelled.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CancelInviteResponse"
-        "400":
-          $ref: "#/components/responses/400"
-        "401":
-          $ref: "#/components/responses/401"
-        "403":
-          $ref: "#/components/responses/403"
-        "404":
-          $ref: "#/components/responses/404"
-        "409":
-          description: Conflict - Invite already cancelled.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/500"
   /clouddiagrams/v1/scheme/find:
     post:
       tags:
@@ -10722,6 +10722,17 @@ components:
           type: number
           format: double
           description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+    CloudFlowRefineRequest:
+      type: object
+      required:
+        - question
+      properties:
+        question:
+          type: string
+          description: Natural language description of what to refine or modify in the CloudFlow.
+        conversationId:
+          type: string
+          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
     AvaAskRequest:
       type: object
       properties:
@@ -10750,18 +10761,26 @@ components:
         - question
     AvaAskSyncResponse:
       type: object
+      description: >-
+        Ava's response. On success, `answer` is present. The endpoint streams keep-alive
+        whitespace while generating (to avoid proxy timeouts), so the HTTP status is committed to
+        200 before the answer is ready; if generation then fails, `answer` is omitted and `error`
+        carries a message instead. Consumers should check for `error` before reading `answer`.
       properties:
         answer:
           type: string
-          description: The Ava response text.
+          description: The Ava response text. Present on success.
         conversationId:
           type: string
           description: The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
         answerId:
           type: string
           description: The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
-      required:
-        - answer
+        error:
+          type: string
+          description: >-
+            Present instead of `answer` when generation fails after the response has begun
+            streaming (the HTTP status remains 200). A human-readable error message.
     AvaFeedbackRequest:
       type: object
       properties:
