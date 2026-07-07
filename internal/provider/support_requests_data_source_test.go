@@ -8,7 +8,10 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // TestAccSupportRequestsDataSource_MaxResultsOnly tests that setting max_results limits results.
@@ -152,6 +155,60 @@ func TestAccSupportRequestsDataSource_AutoPagination(t *testing.T) {
 func testAccSupportRequestsDataSourceConfig() string {
 	return `
 data "doit_support_requests" "test" {
+}
+`
+}
+
+func TestAccSupportRequestsDataSource_TicketTags(t *testing.T) {
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // shares ticket with tags resource tests
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSupportRequestsDataSourceTagsSeedConfig(),
+			},
+			{
+				Config: testAccSupportRequestsDataSourceTagsConfig(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_support_requests.tagged",
+						tfjsonpath.New("tickets").AtSliceIndex(0).AtMapKey("tags"),
+						knownvalue.ListSizeExact(1),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccSupportRequestsDataSourceTagsSeedConfig() string {
+	return `
+data "doit_support_requests" "seed" {
+  max_results = 1
+}
+
+resource "doit_support_request_tags" "fixture" {
+  ticket_id = data.doit_support_requests.seed.tickets[0].id
+  tags      = ["tf-test-list-verify"]
+}
+`
+}
+
+func testAccSupportRequestsDataSourceTagsConfig() string {
+	return `
+data "doit_support_requests" "seed" {
+  max_results = 1
+}
+
+resource "doit_support_request_tags" "fixture" {
+  ticket_id = data.doit_support_requests.seed.tickets[0].id
+  tags      = ["tf-test-list-verify"]
+}
+
+data "doit_support_requests" "tagged" {
+  max_results = 1
+  depends_on  = [doit_support_request_tags.fixture]
 }
 `
 }
