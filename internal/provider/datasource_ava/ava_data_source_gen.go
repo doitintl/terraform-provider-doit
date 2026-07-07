@@ -14,8 +14,8 @@ func AvaDataSourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"answer": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The Ava response text.",
-				MarkdownDescription: "The Ava response text.",
+				Description:         "The Ava response text. Present on success.",
+				MarkdownDescription: "The Ava response text. Present on success.",
 			},
 			"answer_id": schema.StringAttribute{
 				Computed:            true,
@@ -27,6 +27,11 @@ func AvaDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.",
 				MarkdownDescription: "The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.",
 			},
+			"error": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.",
+				MarkdownDescription: "Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.",
+			},
 		},
 		Description:         "Interact with Ava, DoiT's AI-powered cloud assistant.",
 		MarkdownDescription: "Interact with Ava, DoiT's AI-powered cloud assistant.",
@@ -37,4 +42,5 @@ type AvaModel struct {
 	Answer         types.String `tfsdk:"answer"`
 	AnswerId       types.String `tfsdk:"answer_id"`
 	ConversationId types.String `tfsdk:"conversation_id"`
+	Error          types.String `tfsdk:"error"`
 }

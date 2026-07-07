@@ -4073,16 +4073,19 @@ type AvaAskSyncRequest struct {
 	Question string `json:"question"`
 }
 
-// AvaAskSyncResponse defines model for AvaAskSyncResponse.
+// AvaAskSyncResponse Ava's response. On success, `answer` is present. The endpoint streams keep-alive whitespace while generating (to avoid proxy timeouts), so the HTTP status is committed to 200 before the answer is ready; if generation then fails, `answer` is omitted and `error` carries a message instead. Consumers should check for `error` before reading `answer`.
 type AvaAskSyncResponse struct {
-	// Answer The Ava response text.
-	Answer string `json:"answer"`
+	// Answer The Ava response text. Present on success.
+	Answer *string `json:"answer,omitempty"`
 
 	// AnswerId The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
 	AnswerId *string `json:"answerId,omitempty"`
 
 	// ConversationId The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
 	ConversationId *string `json:"conversationId,omitempty"`
+
+	// Error Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
+	Error *string `json:"error,omitempty"`
 }
 
 // AwsAccountResponse defines model for AwsAccountResponse.
