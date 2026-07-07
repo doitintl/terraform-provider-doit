@@ -207,3 +207,10 @@ resources:
     delete:
       path: /core/v1/cloudconnect/aws/accounts/{accountID}
       method: DELETE
+  support_request_tags:
+    create:
+      path: /support/v1/tickets/{ticketId}/tags
+      method: POST
+    read:
+      path: /support/v1/tickets/{ticketId}
+      method: GET

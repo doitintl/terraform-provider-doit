@@ -10619,6 +10619,16 @@
 						}
 					},
 					{
+						"name": "tags",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Ticket tags, filtered by caller type. DoiT employee (doer) callers\nreceive the full tag set verbatim, including internal namespaces\n(e.g. `tier/*`, `synapse_*`). Customer callers receive only tags\nunder the `customer_tag/` namespace, with that prefix stripped\n(e.g. a tag added as `billing` reads back as `billing`). Always\npresent; empty array when the caller has no visible tags."
+						}
+					},
+					{
 						"name": "update_time",
 						"int64": {
 							"computed_optional_required": "computed",
@@ -10845,6 +10855,16 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "The subject of the ticket."
+										}
+									},
+									{
+										"name": "tags",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Ticket tags, filtered by caller type. DoiT employee (doer) callers\nreceive the full tag set verbatim, including internal namespaces\n(e.g. `tier/*`, `synapse_*`). Customer callers receive only tags\nunder the `customer_tag/` namespace, with that prefix stripped.\nAlways present; empty array when the caller has no visible tags."
 										}
 									},
 									{
