@@ -20,61 +20,6 @@ func SupportRequestTagsResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The tags that were stored on (POST) or removed from (DELETE) the ticket.",
 				MarkdownDescription: "The tags that were stored on (POST) or removed from (DELETE) the ticket.",
 			},
-			"create_time": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The time when this ticket was created, in milliseconds since the epoch.",
-				MarkdownDescription: "The time when this ticket was created, in milliseconds since the epoch.",
-			},
-			"description": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The body of the initial ticket message.",
-				MarkdownDescription: "The body of the initial ticket message.",
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Ticket ID.",
-				MarkdownDescription: "Ticket ID.",
-			},
-			"is_public": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Whether the ticket is public.",
-				MarkdownDescription: "Whether the ticket is public.",
-			},
-			"platform": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Platform of the ticket.",
-				MarkdownDescription: "Platform of the ticket.",
-			},
-			"platform_info": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector).",
-				MarkdownDescription: "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector).",
-			},
-			"product": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Ticket product.",
-				MarkdownDescription: "Ticket product.",
-			},
-			"requester": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Email address of the ticket requester.",
-				MarkdownDescription: "Email address of the ticket requester.",
-			},
-			"severity": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Ticket severity.",
-				MarkdownDescription: "Ticket severity.",
-			},
-			"status": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Ticket status.",
-				MarkdownDescription: "Ticket status.",
-			},
-			"subject": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The subject of the ticket.",
-				MarkdownDescription: "The subject of the ticket.",
-			},
 			"tags": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Required:            true,
@@ -90,16 +35,6 @@ func SupportRequestTagsResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The unique identifier of the support request.",
 				MarkdownDescription: "The unique identifier of the support request.",
 			},
-			"update_time": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The time when this ticket was last updated, in milliseconds since the epoch.",
-				MarkdownDescription: "The time when this ticket was last updated, in milliseconds since the epoch.",
-			},
-			"url_ui": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Link to the ticket in DoiT console.",
-				MarkdownDescription: "Link to the ticket in DoiT console.",
-			},
 		},
 		Description:         "Create and manage support tickets with DoiT.",
 		MarkdownDescription: "Create and manage support tickets with DoiT.",
@@ -107,20 +42,7 @@ func SupportRequestTagsResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type SupportRequestTagsModel struct {
-	AppliedTags  types.List   `tfsdk:"applied_tags"`
-	CreateTime   types.Int64  `tfsdk:"create_time"`
-	Description  types.String `tfsdk:"description"`
-	Id           types.Int64  `tfsdk:"id"`
-	IsPublic     types.Bool   `tfsdk:"is_public"`
-	Platform     types.String `tfsdk:"platform"`
-	PlatformInfo types.String `tfsdk:"platform_info"`
-	Product      types.String `tfsdk:"product"`
-	Requester    types.String `tfsdk:"requester"`
-	Severity     types.String `tfsdk:"severity"`
-	Status       types.String `tfsdk:"status"`
-	Subject      types.String `tfsdk:"subject"`
-	Tags         types.List   `tfsdk:"tags"`
-	TicketId     types.Int64  `tfsdk:"ticket_id"`
-	UpdateTime   types.Int64  `tfsdk:"update_time"`
-	UrlUi        types.String `tfsdk:"url_ui"`
+	AppliedTags types.List  `tfsdk:"applied_tags"`
+	Tags        types.List  `tfsdk:"tags"`
+	TicketId    types.Int64 `tfsdk:"ticket_id"`
 }

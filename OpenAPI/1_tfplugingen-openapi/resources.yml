@@ -212,5 +212,8 @@ resources:
       path: /support/v1/tickets/{ticketId}/tags
       method: POST
     read:
-      path: /support/v1/tickets/{ticketId}
+      path: /support/v1/tickets/{ticketId}/tags
       method: GET
+    delete:
+      path: /support/v1/tickets/{ticketId}/tags
+      method: DELETE

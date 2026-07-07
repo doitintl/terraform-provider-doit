@@ -13,35 +13,53 @@ import (
 func (r *supportRequestTagsResource) populateState(ctx context.Context, state *supportRequestTagsResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	ticketResp, err := r.client.IdOfTicketGetWithResponse(ctx, state.TicketId.ValueInt64())
+	tagsResp, err := r.client.ListTicketTagsWithResponse(ctx, state.TicketId.ValueInt64())
 	if err != nil {
 		diags.AddError(
 			"Error Reading Support Request Tags",
-			"Could not read support request: "+err.Error(),
+			"Could not read tags: "+err.Error(),
 		)
 		return diags
 	}
 
-	if ticketResp.StatusCode() == 404 {
+	if tagsResp.StatusCode() == 404 {
 		state.Id = types.StringNull()
 		return diags
 	}
 
-	if ticketResp.StatusCode() != 200 {
+	if tagsResp.StatusCode() != 200 {
 		diags.AddError(
 			"Error Reading Support Request Tags",
-			"Unexpected status code "+strconv.Itoa(ticketResp.StatusCode())+": "+string(ticketResp.Body),
+			"Unexpected status code "+strconv.Itoa(tagsResp.StatusCode())+": "+string(tagsResp.Body),
 		)
 		return diags
 	}
 
-	if ticketResp.JSON200 == nil {
+	if tagsResp.JSON200 == nil {
 		diags.AddError(
 			"Error Reading Support Request Tags",
 			"Received empty response body",
 		)
 		return diags
 	}
+
+	remoteTags := tagsResp.JSON200.Tags
+	if remoteTags == nil {
+		remoteTags = new([]string)
+	}
+
+	tagValues := make([]types.String, 0, len(*remoteTags))
+	for _, t := range *remoteTags {
+		tagValues = append(tagValues, types.StringValue(t))
+	}
+
+	tagsSet, setDiags := types.SetValueFrom(ctx, types.StringType, tagValues)
+	diags.Append(setDiags...)
+	if diags.HasError() {
+		return diags
+	}
+
+	state.Tags = tagsSet
 	return diags
 }
 

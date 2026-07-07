@@ -11,7 +11,3 @@ paths:
   # report_query_data_source.go uses QueryWithResponse (POST /analytics/v1/reports/query)
   - path: /analytics/v1/reports/query
     method: POST
-
-  # support_request_tags_resource.go uses DELETE /support/v1/tickets/{ticketId}/tags
-  - path: /support/v1/tickets/{ticketId}/tags
-    method: DELETE

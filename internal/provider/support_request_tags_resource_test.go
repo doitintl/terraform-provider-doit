@@ -81,10 +81,9 @@ func TestAccSupportRequestTags_Import(t *testing.T) {
 				Config: testAccSupportRequestTagsConfig([]string{"tf-test-import"}),
 			},
 			{
-				ResourceName:            "doit_support_request_tags.test",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"tags"},
+				ResourceName:      "doit_support_request_tags.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			// Re-apply after import to reconcile tags, then verify no drift
 			{
