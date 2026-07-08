@@ -84,7 +84,13 @@ func main() {
 		extractor.insertExtractedSchemas(schemasNode)
 	}
 
-	// Phase 3.5: Flatten multi-element allOf compositions in components/schemas.
+	// Phase 3.5: Wrap $ref nodes with sibling keywords (e.g., nullable) into allOf.
+	// OAS 3.1 allows $ref with siblings, but codegen tools expect 3.0-style allOf.
+	// This must run before flattenAllOfSchemas so both named and inline patterns
+	// are normalized.
+	wrapRefSiblings(doc)
+
+	// Phase 3.6: Flatten multi-element allOf compositions in components/schemas.
 	// Schemas like {allOf: [$ref: Base, {properties: {extra}}]} are merged into
 	// a single {type: object, properties: {all Base props + extra}}. This allows
 	// downstream code generators (tfplugingen-openapi) that don't support allOf
@@ -533,6 +539,83 @@ func hasRef(node *yaml.Node) bool {
 	}
 	for i := 0; i < len(node.Content)-1; i += 2 {
 		if node.Content[i].Value == "$ref" {
+			return true
+		}
+	}
+	return false
+}
+
+// wrapRefSiblings recursively walks the YAML tree and wraps any $ref node
+// that has sibling keywords (e.g., nullable) in a single-member allOf.
+// This converts valid OAS 3.1 patterns into 3.0-compatible structures.
+//
+// Non-schema Reference Objects (where the only siblings are summary and/or
+// description) are left untouched — those are valid OAS 3.1 reference
+// annotations, not schema compositions.
+//
+// Before:  {$ref: "#/.../Foo", nullable: true}.
+// After:   {allOf: [{$ref: "#/.../Foo"}], nullable: true}.
+func wrapRefSiblings(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+	switch node.Kind {
+	case yaml.MappingNode:
+		refIdx := -1
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			if node.Content[i].Value == "$ref" {
+				refIdx = i
+				break
+			}
+		}
+		if refIdx >= 0 && len(node.Content) > 2 && hasSchemaKeywordSiblings(node, refIdx) {
+			refKeyNode := node.Content[refIdx]
+			refValNode := node.Content[refIdx+1]
+
+			innerRef := &yaml.Node{
+				Kind:    yaml.MappingNode,
+				Content: []*yaml.Node{refKeyNode, refValNode},
+			}
+
+			var siblings []*yaml.Node
+			for i := 0; i < len(node.Content)-1; i += 2 {
+				if i != refIdx {
+					siblings = append(siblings, node.Content[i], node.Content[i+1])
+				}
+			}
+
+			node.Content = append(
+				[]*yaml.Node{
+					{Kind: yaml.ScalarNode, Value: "allOf", Tag: "!!str"},
+					{Kind: yaml.SequenceNode, Content: []*yaml.Node{innerRef}},
+				},
+				siblings...,
+			)
+		}
+		for i := 1; i < len(node.Content); i += 2 {
+			wrapRefSiblings(node.Content[i])
+		}
+	case yaml.SequenceNode:
+		for _, child := range node.Content {
+			wrapRefSiblings(child)
+		}
+	case yaml.DocumentNode:
+		for _, child := range node.Content {
+			wrapRefSiblings(child)
+		}
+	}
+}
+
+// hasSchemaKeywordSiblings returns true if a mapping node has sibling keys
+// beyond $ref that are schema keywords (not just summary/description which
+// are valid on non-schema Reference Objects in OAS 3.1).
+func hasSchemaKeywordSiblings(node *yaml.Node, refIdx int) bool {
+	for i := 0; i < len(node.Content)-1; i += 2 {
+		if i == refIdx {
+			continue
+		}
+		key := node.Content[i].Value
+		if key != "summary" && key != "description" {
 			return true
 		}
 	}
@@ -1000,24 +1083,42 @@ func resolveRefs(v any, schemas map[string]any) any {
 func resolveRefsWithVisited(v any, schemas map[string]any, visited map[string]bool) any {
 	switch val := v.(type) {
 	case map[string]any:
-		// Check if this is a $ref
-		if ref, ok := val["$ref"].(string); ok && len(val) == 1 {
+		// Check if this is a $ref (with or without sibling keywords).
+		// OAS 3.1 allows $ref with siblings; we resolve the $ref and
+		// merge the non-$ref siblings into the result so that equivalence
+		// checking works correctly after wrapRefSiblings transforms them.
+		if ref, ok := val["$ref"].(string); ok {
 			const prefix = "#/components/schemas/"
 			if strings.HasPrefix(ref, prefix) {
 				name := ref[len(prefix):]
 				if visited[name] {
-					// Circular reference — return as-is to avoid infinite loop
 					return val
 				}
 				if schema, ok := schemas[name]; ok {
 					newVisited := make(map[string]bool, len(visited)+1)
 					maps.Copy(newVisited, visited)
 					newVisited[name] = true
-					return resolveRefsWithVisited(schema, schemas, newVisited)
+					resolved := resolveRefsWithVisited(schema, schemas, newVisited)
+					if len(val) > 1 {
+						if resolvedMap, ok := resolved.(map[string]any); ok {
+							siblings := make(map[string]any, len(val)-1)
+							for k, v := range val {
+								if k != "$ref" {
+									siblings[k] = resolveRefsWithVisited(v, schemas, newVisited)
+								}
+							}
+							merged, ok := mergeAllOfItems([]any{resolvedMap, siblings})
+							if ok {
+								return merged
+							}
+						}
+					}
+					return resolved
 				}
 			}
-			// Non-schema $ref (e.g., responses, parameters) — leave as-is
-			return val
+			if len(val) == 1 {
+				return val
+			}
 		}
 
 		result := make(map[string]any, len(val))
@@ -1051,15 +1152,31 @@ func stripDocFields(v any) any {
 			}
 			result[k] = stripDocFields(v)
 		}
-		// Unwrap single-element allOf/anyOf/oneOf when it's the only remaining key.
-		// This handles the pattern: {description: "...", allOf: [{$ref: ...}]}
-		// After stripping description: {allOf: [{resolved_schema}]}
-		// Which should be equivalent to just {resolved_schema}.
+		// Unwrap single-element allOf/anyOf/oneOf.
+		// Case 1: {allOf: [{resolved_schema}]} → {resolved_schema}
+		// Case 2: {allOf: [{resolved_schema}], nullable: true} → {resolved_schema..., nullable: true}
+		// Case 2 handles patterns from wrapRefSiblings where $ref+siblings
+		// becomes allOf+siblings, which must resolve equivalently.
 		for _, compKey := range []string{"allOf", "anyOf", "oneOf"} {
-			if items, ok := result[compKey].([]any); ok && len(items) == 1 && len(result) == 1 {
-				if inner, ok := items[0].(map[string]any); ok {
-					return inner
+			items, ok := result[compKey].([]any)
+			if !ok || len(items) != 1 {
+				continue
+			}
+			inner, ok := items[0].(map[string]any)
+			if !ok {
+				continue
+			}
+			if len(result) == 1 {
+				return inner
+			}
+			siblings := make(map[string]any, len(result)-1)
+			for k, v := range result {
+				if k != compKey {
+					siblings[k] = v
 				}
+			}
+			if m, ok := mergeAllOfItems([]any{inner, siblings}); ok {
+				return m
 			}
 		}
 		// Merge multi-element allOf: when all elements are objects, merge their
