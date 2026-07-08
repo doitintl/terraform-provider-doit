@@ -10,10 +10,11 @@ locals {
 }
 
 # Step 2: Get the cost snapshot for the last 30 days.
+# start_date and end_date accept ISO dates (YYYY-MM-DD), not timestamps.
 data "doit_cloud_diagrams_cost_snapshot" "last_month" {
   id         = local.layer_id
-  start_date = timeadd(plantimestamp(), "-720h")
-  end_date   = plantimestamp()
+  start_date = formatdate("YYYY-MM-DD", timeadd(plantimestamp(), "-720h"))
+  end_date   = formatdate("YYYY-MM-DD", plantimestamp())
 }
 
 output "total_spend" {
