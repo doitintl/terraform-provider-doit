@@ -503,7 +503,7 @@ func TestStripDocFields(t *testing.T) {
 		}
 	})
 
-	t.Run("does not unwrap allOf with other sibling keys", func(t *testing.T) {
+	t.Run("unwraps single-element allOf with sibling keys by merging", func(t *testing.T) {
 		input := map[string]any{
 			"type": "object",
 			"allOf": []any{
@@ -511,8 +511,14 @@ func TestStripDocFields(t *testing.T) {
 			},
 		}
 		got := stripDocFields(input).(map[string]any)
-		if _, ok := got["allOf"]; !ok {
-			t.Error("allOf with sibling type should NOT be unwrapped")
+		if _, ok := got["allOf"]; ok {
+			t.Error("single-element allOf with siblings should be unwrapped (merged)")
+		}
+		if got["type"] != "object" {
+			t.Error("sibling key 'type' should be preserved after merge")
+		}
+		if _, ok := got["properties"]; !ok {
+			t.Error("inner 'properties' should be present after merge")
 		}
 	})
 }
