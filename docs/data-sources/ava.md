@@ -53,7 +53,7 @@ output "report_summary" {
 
 ### Read-Only
 
-- `answer` (String) The Ava response text.
+- `answer` (String) The Ava response text. Present on success.
 - `id` (String) A deterministic hash of the question, used as the data source identifier.
 
 <a id="nestedatt--timeouts"></a>

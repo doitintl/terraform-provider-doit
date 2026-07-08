@@ -58,9 +58,10 @@ func (d *avaDataSource) Schema(ctx context.Context, req datasource.SchemaRequest
 			},
 			"answer": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The Ava response text.",
-				MarkdownDescription: "The Ava response text.",
+				Description:         "The Ava response text. Present on success.",
+				MarkdownDescription: "The Ava response text. Present on success.",
 			},
+
 			"timeouts": timeouts.Attributes(ctx),
 		},
 	}
@@ -131,10 +132,17 @@ func (d *avaDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		return
 	}
 
-	// Set a deterministic ID based on the question hash
+	if apiResp.JSON200.Error != nil {
+		resp.Diagnostics.AddError(
+			"Ava Generation Failed",
+			fmt.Sprintf("Ava returned an error instead of an answer: %s", *apiResp.JSON200.Error),
+		)
+		return
+	}
+
 	hash := sha256.Sum256([]byte(question))
 	data.Id = types.StringValue(fmt.Sprintf("%x", hash))
-	data.Answer = types.StringValue(apiResp.JSON200.Answer)
+	data.Answer = types.StringPointerValue(apiResp.JSON200.Answer)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

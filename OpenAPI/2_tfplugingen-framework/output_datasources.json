@@ -2085,7 +2085,7 @@
 						"name": "answer",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "The Ava response text."
+							"description": "The Ava response text. Present on success."
 						}
 					},
 					{
@@ -2100,6 +2100,13 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint."
+						}
+					},
+					{
+						"name": "error",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message."
 						}
 					}
 				],
@@ -2877,6 +2884,202 @@
 									}
 								]
 							}
+						}
+					}
+				],
+				"description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships.",
+				"markdown_description": "Cloud Diagrams visualize your cloud infrastructure and resource relationships."
+			}
+		},
+		{
+			"name": "cloud_diagrams_cost_snapshot",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Layer ID."
+						}
+					},
+					{
+						"name": "start_date",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Inclusive start of the cost window (ISO date, e.g. `2026-04-01`)."
+						}
+					},
+					{
+						"name": "end_date",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Inclusive end of the cost window (ISO date, e.g. `2026-04-28`)."
+						}
+					},
+					{
+						"name": "interval",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Bucket interval for the trend series. Defaults to `day` when omitted.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"day\",\n\"week\",\n\"month\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "by_service",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "amount",
+										"number": {
+											"computed_optional_required": "computed",
+											"description": "Cost amount for this service within the snapshot window."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud service label (e.g. `EC2`)."
+										}
+									}
+								]
+							},
+							"description": "Top services by cost, capped at 5."
+						}
+					},
+					{
+						"name": "currency",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Currency the cost numbers are reported in (e.g. `USD`)."
+						}
+					},
+					{
+						"name": "diagram_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Diagram (layer) ID this snapshot was computed for."
+						}
+					},
+					{
+						"name": "time_range",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "end_date",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Inclusive end of the cost window (ISO date)."
+									}
+								},
+								{
+									"name": "interval",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Bucket interval used for the trend series."
+									}
+								},
+								{
+									"name": "start_date",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Inclusive start of the cost window (ISO date)."
+									}
+								}
+							],
+							"description": "Resolved cost window for the snapshot."
+						}
+					},
+					{
+						"name": "top_resources",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "amount",
+										"number": {
+											"computed_optional_required": "computed",
+											"description": "Cost amount for this resource within the snapshot window."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Resource id (cloud-native id when available; otherwise the diagram component id)."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Human-readable resource name."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Resource type label (e.g. `ec2`, `rds`)."
+										}
+									}
+								]
+							},
+							"description": "Top resources by cost, capped at 5."
+						}
+					},
+					{
+						"name": "total",
+						"number": {
+							"computed_optional_required": "computed",
+							"description": "Total cost across the entire diagram for the snapshot window."
+						}
+					},
+					{
+						"name": "trend",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "amount",
+										"number": {
+											"computed_optional_required": "computed",
+											"description": "Total cost for this bucket."
+										}
+									},
+									{
+										"name": "bucket_start",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Inclusive start of this bucket. ISO date for `day` and `month`; week label for `week`."
+										}
+									}
+								]
+							},
+							"description": "Most recent trend buckets at the requested interval, capped at 12."
+						}
+					},
+					{
+						"name": "trending_pct",
+						"number": {
+							"computed_optional_required": "computed",
+							"description": "Period-over-period change as a fraction (e.g. 0.142 = +14.2%). `null` when no\nprior period of equal length is available for comparison."
 						}
 					}
 				],
@@ -7132,6 +7335,85 @@
 				],
 				"description": "Service disruptions and outages from cloud providers.",
 				"markdown_description": "Service disruptions and outages from cloud providers."
+			}
+		},
+		{
+			"name": "cloudconnect_aws_account",
+			"schema": {
+				"attributes": [
+					{
+						"name": "account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The AWS account ID."
+						}
+					},
+					{
+						"name": "enabled_features",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of supported AWS features enabled by the caller. Returned in the same order as provided."
+						}
+					},
+					{
+						"name": "role_arn",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The ARN of the IAM role."
+						}
+					},
+					{
+						"name": "s3bucket",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "S3 bucket name for real-time anomaly detection. Present only if real-time is enabled."
+						}
+					},
+					{
+						"name": "s3bucket_region",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "AWS region of the S3 bucket. Present only if s3Bucket exists."
+						}
+					},
+					{
+						"name": "supported_features",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "has_required_permissions",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the role has the required permissions for this feature."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Feature name."
+										}
+									}
+								]
+							},
+							"description": "List of supported features and their permission status."
+						}
+					},
+					{
+						"name": "time_linked",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ISO 8601 timestamp of when the role was linked."
+						}
+					}
+				],
+				"description": "Manage cloud provider connections and check feature availability for connected accounts.",
+				"markdown_description": "Manage cloud provider connections and check feature availability for connected accounts."
 			}
 		},
 		{

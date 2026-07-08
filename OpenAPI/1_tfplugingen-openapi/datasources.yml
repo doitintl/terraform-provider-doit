@@ -232,6 +232,11 @@ data_sources:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships
       method: GET
+  # Cloud Diagrams cost snapshot data source
+  cloud_diagrams_cost_snapshot:
+    read:
+      path: /clouddiagrams/v1/statussheet/{id}/costs
+      method: GET
   # Insight data sources
   insight:
     read:
@@ -244,4 +249,8 @@ data_sources:
   insight_resource_results:
     read:
       path: /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results
+      method: GET
+  cloudconnect_aws_account:
+    read:
+      path: /core/v1/cloudconnect/aws/accounts/{accountID}
       method: GET

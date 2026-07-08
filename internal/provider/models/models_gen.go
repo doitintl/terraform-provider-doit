@@ -515,6 +515,27 @@ func (e CloudDiagramComponentSearchItemType) Valid() bool {
 	}
 }
 
+// Defines values for CloudDiagramCostTimeRangeInterval.
+const (
+	CloudDiagramCostTimeRangeIntervalDay   CloudDiagramCostTimeRangeInterval = "day"
+	CloudDiagramCostTimeRangeIntervalMonth CloudDiagramCostTimeRangeInterval = "month"
+	CloudDiagramCostTimeRangeIntervalWeek  CloudDiagramCostTimeRangeInterval = "week"
+)
+
+// Valid indicates whether the value is a known member of the CloudDiagramCostTimeRangeInterval enum.
+func (e CloudDiagramCostTimeRangeInterval) Valid() bool {
+	switch e {
+	case CloudDiagramCostTimeRangeIntervalDay:
+		return true
+	case CloudDiagramCostTimeRangeIntervalMonth:
+		return true
+	case CloudDiagramCostTimeRangeIntervalWeek:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CloudDiagramElementCldType.
 const (
 	CloudDiagramElementCldTypeAWS   CloudDiagramElementCldType = "AWS"
@@ -3611,6 +3632,27 @@ func (e GetCloudDiagramComponentsParamsNodeType) Valid() bool {
 	}
 }
 
+// Defines values for GetCloudDiagramCostSnapshotParamsInterval.
+const (
+	GetCloudDiagramCostSnapshotParamsIntervalDay   GetCloudDiagramCostSnapshotParamsInterval = "day"
+	GetCloudDiagramCostSnapshotParamsIntervalMonth GetCloudDiagramCostSnapshotParamsInterval = "month"
+	GetCloudDiagramCostSnapshotParamsIntervalWeek  GetCloudDiagramCostSnapshotParamsInterval = "week"
+)
+
+// Valid indicates whether the value is a known member of the GetCloudDiagramCostSnapshotParamsInterval enum.
+func (e GetCloudDiagramCostSnapshotParamsInterval) Valid() bool {
+	switch e {
+	case GetCloudDiagramCostSnapshotParamsIntervalDay:
+		return true
+	case GetCloudDiagramCostSnapshotParamsIntervalMonth:
+		return true
+	case GetCloudDiagramCostSnapshotParamsIntervalWeek:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCloudDiagramResourceRelationshipsParamsDirection.
 const (
 	GetCloudDiagramResourceRelationshipsParamsDirectionBoth       GetCloudDiagramResourceRelationshipsParamsDirection = "both"
@@ -4387,16 +4429,19 @@ type AvaAskSyncRequest struct {
 	Question string `json:"question"`
 }
 
-// AvaAskSyncResponse defines model for AvaAskSyncResponse.
+// AvaAskSyncResponse Ava's response. On success, `answer` is present. The endpoint streams keep-alive whitespace while generating (to avoid proxy timeouts), so the HTTP status is committed to 200 before the answer is ready; if generation then fails, `answer` is omitted and `error` carries a message instead. Consumers should check for `error` before reading `answer`.
 type AvaAskSyncResponse struct {
-	// Answer The Ava response text.
-	Answer string `json:"answer"`
+	// Answer The Ava response text. Present on success.
+	Answer *string `json:"answer,omitempty"`
 
 	// AnswerId The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
 	AnswerId *string `json:"answerId,omitempty"`
 
 	// ConversationId The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
 	ConversationId *string `json:"conversationId,omitempty"`
+
+	// Error Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
+	Error *string `json:"error,omitempty"`
 }
 
 // AwsAccountResponse defines model for AwsAccountResponse.
@@ -4775,6 +4820,84 @@ type CloudDiagramComponentSearchItemType string
 type CloudDiagramComponentSearchItemProps struct {
 	// ServiceType Cloud service type (e.g. AWS::EC2::Instance).
 	ServiceType *string `json:"service_type,omitempty"`
+}
+
+// CloudDiagramCostResource A single resource entry within the top-resources list.
+type CloudDiagramCostResource struct {
+	// Amount Cost amount for this resource within the snapshot window.
+	Amount float32 `json:"amount"`
+
+	// Id Resource id (cloud-native id when available; otherwise the diagram component id).
+	Id string `json:"id"`
+
+	// Name Human-readable resource name.
+	Name string `json:"name"`
+
+	// Type Resource type label (e.g. `ec2`, `rds`).
+	Type string `json:"type"`
+}
+
+// CloudDiagramCostServiceBreakdown A single service entry within the cost-by-service breakdown.
+type CloudDiagramCostServiceBreakdown struct {
+	// Amount Cost amount for this service within the snapshot window.
+	Amount float32 `json:"amount"`
+
+	// Service Cloud service label (e.g. `EC2`).
+	Service string `json:"service"`
+}
+
+// CloudDiagramCostSnapshot Bounded cost snapshot for a diagram layer. Composes the diagram's total spend,
+// period-over-period change, top resources by cost (capped at 5), top services by
+// cost (capped at 5), and the most recent 12 trend buckets at the requested interval.
+type CloudDiagramCostSnapshot struct {
+	// ByService Top services by cost, capped at 5.
+	ByService []CloudDiagramCostServiceBreakdown `json:"byService"`
+
+	// Currency Currency the cost numbers are reported in (e.g. `USD`).
+	Currency string `json:"currency"`
+
+	// DiagramId Diagram (layer) ID this snapshot was computed for.
+	DiagramId string `json:"diagramId"`
+
+	// TimeRange Resolved cost window for the snapshot.
+	TimeRange CloudDiagramCostTimeRange `json:"timeRange"`
+
+	// TopResources Top resources by cost, capped at 5.
+	TopResources []CloudDiagramCostResource `json:"topResources"`
+
+	// Total Total cost across the entire diagram for the snapshot window.
+	Total float32 `json:"total"`
+
+	// Trend Most recent trend buckets at the requested interval, capped at 12.
+	Trend []CloudDiagramCostTrendBucket `json:"trend"`
+
+	// TrendingPct Period-over-period change as a fraction (e.g. 0.142 = +14.2%). `null` when no
+	// prior period of equal length is available for comparison.
+	TrendingPct *float32 `json:"trendingPct"`
+}
+
+// CloudDiagramCostTimeRange Resolved cost window for the snapshot.
+type CloudDiagramCostTimeRange struct {
+	// EndDate Inclusive end of the cost window (ISO date).
+	EndDate openapi_types.Date `json:"endDate"`
+
+	// Interval Bucket interval used for the trend series.
+	Interval CloudDiagramCostTimeRangeInterval `json:"interval"`
+
+	// StartDate Inclusive start of the cost window (ISO date).
+	StartDate openapi_types.Date `json:"startDate"`
+}
+
+// CloudDiagramCostTimeRangeInterval Bucket interval used for the trend series.
+type CloudDiagramCostTimeRangeInterval string
+
+// CloudDiagramCostTrendBucket A single bucket in the trend series.
+type CloudDiagramCostTrendBucket struct {
+	// Amount Total cost for this bucket.
+	Amount float32 `json:"amount"`
+
+	// BucketStart Inclusive start of this bucket. ISO date for `day` and `month`; week label for `week`.
+	BucketStart string `json:"bucketStart"`
 }
 
 // CloudDiagramElement An element component (application-layer component).
@@ -8758,6 +8881,21 @@ type GetCloudDiagramsStatsParams struct {
 	End time.Time `form:"end" json:"end"`
 }
 
+// GetCloudDiagramCostSnapshotParams defines parameters for GetCloudDiagramCostSnapshot.
+type GetCloudDiagramCostSnapshotParams struct {
+	// StartDate Inclusive start of the cost window (ISO date, e.g. `2026-04-01`).
+	StartDate openapi_types.Date `form:"startDate" json:"startDate"`
+
+	// EndDate Inclusive end of the cost window (ISO date, e.g. `2026-04-28`).
+	EndDate openapi_types.Date `form:"endDate" json:"endDate"`
+
+	// Interval Bucket interval for the trend series. Defaults to `day` when omitted.
+	Interval *GetCloudDiagramCostSnapshotParamsInterval `form:"interval,omitempty" json:"interval,omitempty"`
+}
+
+// GetCloudDiagramCostSnapshotParamsInterval defines parameters for GetCloudDiagramCostSnapshot.
+type GetCloudDiagramCostSnapshotParamsInterval string
+
 // GetStatussheetComponentsParams defines parameters for GetStatussheetComponents.
 type GetStatussheetComponentsParams struct {
 	// P Space-separated projection fields for component documents.
@@ -9526,6 +9664,9 @@ type ClientInterface interface {
 
 	// GetCloudDiagramsStats request
 	GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudDiagramCostSnapshot request
+	GetCloudDiagramCostSnapshot(ctx context.Context, id string, params *GetCloudDiagramCostSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ExportCloudDiagramJson request
 	ExportCloudDiagramJson(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -10789,6 +10930,18 @@ func (c *Client) SearchCloudDiagrams(ctx context.Context, body SearchCloudDiagra
 
 func (c *Client) GetCloudDiagramsStats(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCloudDiagramsStatsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCloudDiagramCostSnapshot(ctx context.Context, id string, params *GetCloudDiagramCostSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudDiagramCostSnapshotRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -15240,6 +15393,83 @@ func NewGetCloudDiagramsStatsRequest(server string, params *GetCloudDiagramsStat
 	return req, nil
 }
 
+// NewGetCloudDiagramCostSnapshotRequest generates requests for GetCloudDiagramCostSnapshot
+func NewGetCloudDiagramCostSnapshotRequest(server string, id string, params *GetCloudDiagramCostSnapshotParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clouddiagrams/v1/statussheet/%s/costs", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startDate", params.StartDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endDate", params.EndDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.Interval != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "interval", *params.Interval, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewExportCloudDiagramJsonRequest generates requests for ExportCloudDiagramJson
 func NewExportCloudDiagramJsonRequest(server string, id string) (*http.Request, error) {
 	var err error
@@ -18191,6 +18421,9 @@ type ClientWithResponsesInterface interface {
 	// GetCloudDiagramsStatsWithResponse request
 	GetCloudDiagramsStatsWithResponse(ctx context.Context, params *GetCloudDiagramsStatsParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramsStatsResp, error)
 
+	// GetCloudDiagramCostSnapshotWithResponse request
+	GetCloudDiagramCostSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramCostSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramCostSnapshotResp, error)
+
 	// ExportCloudDiagramJsonWithResponse request
 	ExportCloudDiagramJsonWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ExportCloudDiagramJsonResp, error)
 
@@ -20587,6 +20820,39 @@ func (r GetCloudDiagramsStatsResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetCloudDiagramsStatsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetCloudDiagramCostSnapshotResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CloudDiagramCostSnapshot
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403ResourceOrForbidden
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudDiagramCostSnapshotResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudDiagramCostSnapshotResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCloudDiagramCostSnapshotResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -23159,6 +23425,15 @@ func (c *ClientWithResponses) GetCloudDiagramsStatsWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseGetCloudDiagramsStatsResp(rsp)
+}
+
+// GetCloudDiagramCostSnapshotWithResponse request returning *GetCloudDiagramCostSnapshotResp
+func (c *ClientWithResponses) GetCloudDiagramCostSnapshotWithResponse(ctx context.Context, id string, params *GetCloudDiagramCostSnapshotParams, reqEditors ...RequestEditorFn) (*GetCloudDiagramCostSnapshotResp, error) {
+	rsp, err := c.GetCloudDiagramCostSnapshot(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudDiagramCostSnapshotResp(rsp)
 }
 
 // ExportCloudDiagramJsonWithResponse request returning *ExportCloudDiagramJsonResp
@@ -27224,6 +27499,53 @@ func ParseGetCloudDiagramsStatsResp(rsp *http.Response) (*GetCloudDiagramsStatsR
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
 		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudDiagramCostSnapshotResp parses an HTTP response from a GetCloudDiagramCostSnapshotWithResponse call
+func ParseGetCloudDiagramCostSnapshotResp(rsp *http.Response) (*GetCloudDiagramCostSnapshotResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudDiagramCostSnapshotResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudDiagramCostSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403ResourceOrForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
