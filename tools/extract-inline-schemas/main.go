@@ -647,34 +647,7 @@ func flattenAllOfSchemas(schemasNode *yaml.Node) {
 			continue
 		}
 
-		// Preserve parent-level fields (description, example) from outside the allOf.
-		parentDesc := getScalarNode(schemaNode, "description")
-		parentExample := getMappingValue(schemaNode, "example")
-
-		// Replace the schema node content with the merged result.
-		schemaNode.Content = merged.Content
-
-		// Re-add parent description, overriding any inherited from sub-schemas.
-		if parentDesc != nil && parentDesc.Value != "" {
-			removeMappingKey(schemaNode, "description")
-			schemaNode.Content = append(
-				[]*yaml.Node{
-					{Kind: yaml.ScalarNode, Value: "description", Tag: "!!str"},
-					{Kind: yaml.ScalarNode, Value: parentDesc.Value, Tag: "!!str", Style: parentDesc.Style},
-				},
-				schemaNode.Content...,
-			)
-		}
-
-		// Re-add parent example, overriding any inherited from sub-schemas.
-		if parentExample != nil {
-			removeMappingKey(schemaNode, "example")
-			schemaNode.Content = append(schemaNode.Content,
-				&yaml.Node{Kind: yaml.ScalarNode, Value: "example", Tag: "!!str"},
-				deepCopyNode(parentExample),
-			)
-		}
-
+		applyMergedAllOf(schemaNode, merged)
 		fmt.Printf("Flattened allOf in schema %s\n", schemaName)
 	}
 
@@ -707,35 +680,40 @@ func flattenInlineAllOf(node *yaml.Node, schemasNode *yaml.Node, path string) {
 			propPath := path + "." + propName
 			merged := flattenAllOf(allOfNode, schemasNode, propPath)
 			if merged != nil {
-				parentDesc := getScalarNode(propVal, "description")
-				parentExample := getMappingValue(propVal, "example")
-
-				propVal.Content = merged.Content
-
-				if parentDesc != nil && parentDesc.Value != "" {
-					removeMappingKey(propVal, "description")
-					propVal.Content = append(
-						[]*yaml.Node{
-							{Kind: yaml.ScalarNode, Value: "description", Tag: "!!str"},
-							{Kind: yaml.ScalarNode, Value: parentDesc.Value, Tag: "!!str", Style: parentDesc.Style},
-						},
-						propVal.Content...,
-					)
-				}
-
-				if parentExample != nil {
-					removeMappingKey(propVal, "example")
-					propVal.Content = append(propVal.Content,
-						&yaml.Node{Kind: yaml.ScalarNode, Value: "example", Tag: "!!str"},
-						deepCopyNode(parentExample),
-					)
-				}
-
+				applyMergedAllOf(propVal, merged)
 				fmt.Printf("Flattened inline allOf in %s\n", propPath)
 			}
 		}
 
 		flattenInlineAllOf(propsNode.Content[i+1], schemasNode, path+"."+propName)
+	}
+}
+
+// applyMergedAllOf replaces a node's content with a merged allOf result,
+// preserving any parent-level description and example fields.
+func applyMergedAllOf(target *yaml.Node, merged *yaml.Node) {
+	parentDesc := getScalarNode(target, "description")
+	parentExample := getMappingValue(target, "example")
+
+	target.Content = merged.Content
+
+	if parentDesc != nil && parentDesc.Value != "" {
+		removeMappingKey(target, "description")
+		target.Content = append(
+			[]*yaml.Node{
+				{Kind: yaml.ScalarNode, Value: "description", Tag: "!!str"},
+				{Kind: yaml.ScalarNode, Value: parentDesc.Value, Tag: "!!str", Style: parentDesc.Style},
+			},
+			target.Content...,
+		)
+	}
+
+	if parentExample != nil {
+		removeMappingKey(target, "example")
+		target.Content = append(target.Content,
+			&yaml.Node{Kind: yaml.ScalarNode, Value: "example", Tag: "!!str"},
+			deepCopyNode(parentExample),
+		)
 	}
 }
 
