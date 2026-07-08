@@ -232,6 +232,11 @@ data_sources:
     read:
       path: /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships
       method: GET
+  # Cloud Diagrams cost snapshot data source
+  cloud_diagrams_cost_snapshot:
+    read:
+      path: /clouddiagrams/v1/statussheet/{id}/costs
+      method: GET
   # Insight data sources
   insight:
     read:
