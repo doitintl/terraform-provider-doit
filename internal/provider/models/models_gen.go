@@ -1001,6 +1001,69 @@ func (e CloudIncidentListItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for CloudflowCollaboratorRole.
+const (
+	CloudflowCollaboratorRoleEditor CloudflowCollaboratorRole = "editor"
+	CloudflowCollaboratorRoleOwner  CloudflowCollaboratorRole = "owner"
+	CloudflowCollaboratorRoleUser   CloudflowCollaboratorRole = "user"
+)
+
+// Valid indicates whether the value is a known member of the CloudflowCollaboratorRole enum.
+func (e CloudflowCollaboratorRole) Valid() bool {
+	switch e {
+	case CloudflowCollaboratorRoleEditor:
+		return true
+	case CloudflowCollaboratorRoleOwner:
+		return true
+	case CloudflowCollaboratorRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudflowConnectionGcpConfigLevel.
+const (
+	CloudflowConnectionGcpConfigLevelFolder       CloudflowConnectionGcpConfigLevel = "folder"
+	CloudflowConnectionGcpConfigLevelOrganization CloudflowConnectionGcpConfigLevel = "organization"
+	CloudflowConnectionGcpConfigLevelProject      CloudflowConnectionGcpConfigLevel = "project"
+)
+
+// Valid indicates whether the value is a known member of the CloudflowConnectionGcpConfigLevel enum.
+func (e CloudflowConnectionGcpConfigLevel) Valid() bool {
+	switch e {
+	case CloudflowConnectionGcpConfigLevelFolder:
+		return true
+	case CloudflowConnectionGcpConfigLevelOrganization:
+		return true
+	case CloudflowConnectionGcpConfigLevelProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudflowGCPConfigRequestLevel.
+const (
+	CloudflowGCPConfigRequestLevelFolder       CloudflowGCPConfigRequestLevel = "folder"
+	CloudflowGCPConfigRequestLevelOrganization CloudflowGCPConfigRequestLevel = "organization"
+	CloudflowGCPConfigRequestLevelProject      CloudflowGCPConfigRequestLevel = "project"
+)
+
+// Valid indicates whether the value is a known member of the CloudflowGCPConfigRequestLevel enum.
+func (e CloudflowGCPConfigRequestLevel) Valid() bool {
+	switch e {
+	case CloudflowGCPConfigRequestLevelFolder:
+		return true
+	case CloudflowGCPConfigRequestLevelOrganization:
+		return true
+	case CloudflowGCPConfigRequestLevelProject:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CollaboratorRole.
 const (
 	CollaboratorRoleEditor CollaboratorRole = "editor"
@@ -1079,57 +1142,6 @@ func (e Condition) Valid() bool {
 	case ConditionPercentageChange:
 		return true
 	case ConditionValue:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ConnectionProvider.
-const (
-	AWS ConnectionProvider = "AWS"
-	GCP ConnectionProvider = "GCP"
-)
-
-// Valid indicates whether the value is a known member of the ConnectionProvider enum.
-func (e ConnectionProvider) Valid() bool {
-	switch e {
-	case AWS:
-		return true
-	case GCP:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ConnectionStatus.
-const (
-	ConnectionStatusActive             ConnectionStatus = "active"
-	ConnectionStatusCloudDeleted       ConnectionStatus = "cloud_deleted"
-	ConnectionStatusDisabled           ConnectionStatus = "disabled"
-	ConnectionStatusDraft              ConnectionStatus = "draft"
-	ConnectionStatusInactive           ConnectionStatus = "inactive"
-	ConnectionStatusPendingPermissions ConnectionStatus = "pending_permissions"
-	ConnectionStatusPermissionsFailed  ConnectionStatus = "permissions_failed"
-)
-
-// Valid indicates whether the value is a known member of the ConnectionStatus enum.
-func (e ConnectionStatus) Valid() bool {
-	switch e {
-	case ConnectionStatusActive:
-		return true
-	case ConnectionStatusCloudDeleted:
-		return true
-	case ConnectionStatusDisabled:
-		return true
-	case ConnectionStatusDraft:
-		return true
-	case ConnectionStatusInactive:
-		return true
-	case ConnectionStatusPendingPermissions:
-		return true
-	case ConnectionStatusPermissionsFailed:
 		return true
 	default:
 		return false
@@ -2069,48 +2081,6 @@ func (e ExternalSplitTargetType) Valid() bool {
 	}
 }
 
-// Defines values for FlowStatus.
-const (
-	FlowStatusDraft     FlowStatus = "draft"
-	FlowStatusNew       FlowStatus = "new"
-	FlowStatusPublished FlowStatus = "published"
-)
-
-// Valid indicates whether the value is a known member of the FlowStatus enum.
-func (e FlowStatus) Valid() bool {
-	switch e {
-	case FlowStatusDraft:
-		return true
-	case FlowStatusNew:
-		return true
-	case FlowStatusPublished:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for GCPConnectionConfigLevel.
-const (
-	GCPConnectionConfigLevelFolder       GCPConnectionConfigLevel = "folder"
-	GCPConnectionConfigLevelOrganization GCPConnectionConfigLevel = "organization"
-	GCPConnectionConfigLevelProject      GCPConnectionConfigLevel = "project"
-)
-
-// Valid indicates whether the value is a known member of the GCPConnectionConfigLevel enum.
-func (e GCPConnectionConfigLevel) Valid() bool {
-	switch e {
-	case GCPConnectionConfigLevelFolder:
-		return true
-	case GCPConnectionConfigLevelOrganization:
-		return true
-	case GCPConnectionConfigLevelProject:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for GetAnomaly200ResponseStatus.
 const (
 	GetAnomaly200ResponseStatusActive   GetAnomaly200ResponseStatus = "active"
@@ -2492,81 +2462,6 @@ func (e MetricFilterText) Valid() bool {
 	}
 }
 
-// Defines values for NodeType.
-const (
-	ActionNode         NodeType = "actionNode"
-	AvaNode            NodeType = "avaNode"
-	CliNode            NodeType = "cliNode"
-	CodeNode           NodeType = "codeNode"
-	ConditionNode      NodeType = "conditionNode"
-	DatastoreNode      NodeType = "datastoreNode"
-	DatetimeTransform  NodeType = "datetimeTransform"
-	FilterNode         NodeType = "filterNode"
-	FlowOutput         NodeType = "flowOutput"
-	HttpNode           NodeType = "httpNode"
-	ManualTrigger      NodeType = "manualTrigger"
-	NotificationNode   NodeType = "notificationNode"
-	Policy             NodeType = "policy"
-	ScheduleTrigger    NodeType = "scheduleTrigger"
-	SleepNode          NodeType = "sleepNode"
-	SqlNode            NodeType = "sqlNode"
-	SubFlowNode        NodeType = "subFlowNode"
-	SystemEventTrigger NodeType = "systemEventTrigger"
-	Transformation     NodeType = "transformation"
-	TriggerNode        NodeType = "triggerNode"
-	WebhookTrigger     NodeType = "webhookTrigger"
-)
-
-// Valid indicates whether the value is a known member of the NodeType enum.
-func (e NodeType) Valid() bool {
-	switch e {
-	case ActionNode:
-		return true
-	case AvaNode:
-		return true
-	case CliNode:
-		return true
-	case CodeNode:
-		return true
-	case ConditionNode:
-		return true
-	case DatastoreNode:
-		return true
-	case DatetimeTransform:
-		return true
-	case FilterNode:
-		return true
-	case FlowOutput:
-		return true
-	case HttpNode:
-		return true
-	case ManualTrigger:
-		return true
-	case NotificationNode:
-		return true
-	case Policy:
-		return true
-	case ScheduleTrigger:
-		return true
-	case SleepNode:
-		return true
-	case SqlNode:
-		return true
-	case SubFlowNode:
-		return true
-	case SystemEventTrigger:
-		return true
-	case Transformation:
-		return true
-	case TriggerNode:
-		return true
-	case WebhookTrigger:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for NotificationEventChannel.
 const (
 	Email   NotificationEventChannel = "email"
@@ -2582,24 +2477,6 @@ func (e NotificationEventChannel) Valid() bool {
 	case Msteams:
 		return true
 	case Slack:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ParentTransitionLabel.
-const (
-	ParentTransitionLabelFalse ParentTransitionLabel = "False"
-	ParentTransitionLabelTrue  ParentTransitionLabel = "True"
-)
-
-// Valid indicates whether the value is a known member of the ParentTransitionLabel enum.
-func (e ParentTransitionLabel) Valid() bool {
-	switch e {
-	case ParentTransitionLabelFalse:
-		return true
-	case ParentTransitionLabelTrue:
 		return true
 	default:
 		return false
@@ -2903,24 +2780,6 @@ func (e TimeSettingsSecondaryUnit) Valid() bool {
 	}
 }
 
-// Defines values for TransitionLabel.
-const (
-	TransitionLabelFalse TransitionLabel = "False"
-	TransitionLabelTrue  TransitionLabel = "True"
-)
-
-// Valid indicates whether the value is a known member of the TransitionLabel enum.
-func (e TransitionLabel) Valid() bool {
-	switch e {
-	case TransitionLabelFalse:
-		return true
-	case TransitionLabelTrue:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for UpdateLabelRequestColor.
 const (
 	Apricot    UpdateLabelRequestColor = "apricot"
@@ -2968,16 +2827,16 @@ func (e UpdateLabelRequestColor) Valid() bool {
 
 // Defines values for UpdateResourcePermissionRequestBodyPublic.
 const (
-	UpdateResourcePermissionRequestBodyPublicEditor UpdateResourcePermissionRequestBodyPublic = "editor"
-	UpdateResourcePermissionRequestBodyPublicViewer UpdateResourcePermissionRequestBodyPublic = "viewer"
+	Editor UpdateResourcePermissionRequestBodyPublic = "editor"
+	Viewer UpdateResourcePermissionRequestBodyPublic = "viewer"
 )
 
 // Valid indicates whether the value is a known member of the UpdateResourcePermissionRequestBodyPublic enum.
 func (e UpdateResourcePermissionRequestBodyPublic) Valid() bool {
 	switch e {
-	case UpdateResourcePermissionRequestBodyPublicEditor:
+	case Editor:
 		return true
-	case UpdateResourcePermissionRequestBodyPublicViewer:
+	case Viewer:
 		return true
 	default:
 		return false
@@ -3194,63 +3053,6 @@ func (e UserListItemStatus) Valid() bool {
 	case UserListItemStatusActive:
 		return true
 	case UserListItemStatusInvited:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for VariableInputElementType.
-const (
-	VariableInputElementTypeBoolean    VariableInputElementType = "boolean"
-	VariableInputElementTypeConnection VariableInputElementType = "connection"
-	VariableInputElementTypeFloat      VariableInputElementType = "float"
-	VariableInputElementTypeInteger    VariableInputElementType = "integer"
-	VariableInputElementTypeString     VariableInputElementType = "string"
-)
-
-// Valid indicates whether the value is a known member of the VariableInputElementType enum.
-func (e VariableInputElementType) Valid() bool {
-	switch e {
-	case VariableInputElementTypeBoolean:
-		return true
-	case VariableInputElementTypeConnection:
-		return true
-	case VariableInputElementTypeFloat:
-		return true
-	case VariableInputElementTypeInteger:
-		return true
-	case VariableInputElementTypeString:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for VariableType.
-const (
-	VariableTypeBoolean    VariableType = "boolean"
-	VariableTypeConnection VariableType = "connection"
-	VariableTypeFloat      VariableType = "float"
-	VariableTypeInteger    VariableType = "integer"
-	VariableTypeList       VariableType = "list"
-	VariableTypeString     VariableType = "string"
-)
-
-// Valid indicates whether the value is a known member of the VariableType enum.
-func (e VariableType) Valid() bool {
-	switch e {
-	case VariableTypeBoolean:
-		return true
-	case VariableTypeConnection:
-		return true
-	case VariableTypeFloat:
-		return true
-	case VariableTypeInteger:
-		return true
-	case VariableTypeList:
-		return true
-	case VariableTypeString:
 		return true
 	default:
 		return false
@@ -3882,59 +3684,6 @@ func (e UpdateResourcePermissionParamsResourceType) Valid() bool {
 	default:
 		return false
 	}
-}
-
-// AWSConnectionConfig AWS-specific connection configuration.
-type AWSConnectionConfig struct {
-	// Context List of AWS accounts linked to this connection.
-	Context []AWSConnectionContext `json:"context"`
-
-	// ManagementAccount AWS management account ID (payer account). When set, that account receives
-	// `active` status on create; all other accounts receive `pending_permissions`.
-	ManagementAccount *string `json:"managementAccount,omitempty"`
-
-	// OrganizationRootId AWS Organizations root ID (e.g. `r-xxxx`).
-	OrganizationRootId *string `json:"organizationRootId,omitempty"`
-
-	// Permissions IAM permissions granted to the CloudFlow role.
-	Permissions *AWSConnectionConfigPermissions `json:"permissions,omitempty"`
-
-	// RoleName IAM role name assumed by CloudFlow in each linked account.
-	RoleName string `json:"roleName"`
-
-	// ScopeExcludedAccountIds Account IDs explicitly excluded from scope.
-	ScopeExcludedAccountIds *[]string `json:"scopeExcludedAccountIds,omitempty"`
-
-	// ScopeExplicitAccountIds Account IDs explicitly included in scope.
-	ScopeExplicitAccountIds *[]string `json:"scopeExplicitAccountIds,omitempty"`
-
-	// ScopeManagementAccountExplicitInScope Whether the management account is explicitly included in scope.
-	ScopeManagementAccountExplicitInScope *bool `json:"scopeManagementAccountExplicitInScope,omitempty"`
-
-	// ScopeTargetedOrganizationalUnitIds OU IDs explicitly included in scope.
-	ScopeTargetedOrganizationalUnitIds *[]string `json:"scopeTargetedOrganizationalUnitIds,omitempty"`
-}
-
-// AWSConnectionConfigPermissions IAM permissions granted to the CloudFlow role.
-type AWSConnectionConfigPermissions struct {
-	// Actions Custom IAM action statements.
-	Actions *[]string `json:"actions,omitempty"`
-
-	// AwsManagedPolicies AWS-managed policy ARNs attached to the role.
-	AwsManagedPolicies *[]string `json:"awsManagedPolicies,omitempty"`
-}
-
-// AWSConnectionContext Per-account entry in an AWS connection.
-type AWSConnectionContext struct {
-	// AccountId AWS account ID.
-	AccountId string `json:"accountId"`
-
-	// Regions AWS regions accessible via this account. Empty means all regions.
-	Regions *[]string `json:"regions,omitempty"`
-
-	// Status Per-account permission status. Read-only — assigned by the server:
-	// management account → `active`; all other accounts → `pending_permissions` on create.
-	Status *string `json:"status,omitempty"`
 }
 
 // AccountManagerListItem Information of a DoiT account manager assigned to your organization.
@@ -5585,6 +5334,119 @@ type CloudIncidentListItemStatus string
 // CloudProvider The cloud provider associated with the resource.
 type CloudProvider = string
 
+// CloudflowAWSConfigRequest AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+type CloudflowAWSConfigRequest struct {
+	Context                               *[]CloudflowAWSConfigRequestContextItem `json:"context,omitempty"`
+	ManagementAccount                     *string                                 `json:"managementAccount,omitempty"`
+	OrganizationRootId                    *string                                 `json:"organizationRootId,omitempty"`
+	Permissions                           *map[string]interface{}                 `json:"permissions,omitempty"`
+	RoleName                              *string                                 `json:"roleName,omitempty"`
+	ScopeExcludedAccountIds               *[]string                               `json:"scopeExcludedAccountIds,omitempty"`
+	ScopeExplicitAccountIds               *[]string                               `json:"scopeExplicitAccountIds,omitempty"`
+	ScopeManagementAccountExplicitInScope *bool                                   `json:"scopeManagementAccountExplicitInScope,omitempty"`
+	ScopeTargetedOrganizationalUnitIds    *[]string                               `json:"scopeTargetedOrganizationalUnitIds,omitempty"`
+}
+
+// CloudflowAWSConfigRequestContextItem defines model for CloudflowAWSConfigRequestContextItem.
+type CloudflowAWSConfigRequestContextItem struct {
+	AccountId *string   `json:"accountId,omitempty"`
+	Regions   *[]string `json:"regions,omitempty"`
+}
+
+// CloudflowCollaborator defines model for CloudflowCollaborator.
+type CloudflowCollaborator struct {
+	Email *openapi_types.Email       `json:"email,omitempty"`
+	Role  *CloudflowCollaboratorRole `json:"role,omitempty"`
+}
+
+// CloudflowCollaboratorRole defines model for CloudflowCollaborator.Role.
+type CloudflowCollaboratorRole string
+
+// CloudflowConnection A cloud provider connection used in CloudFlow workflows.
+type CloudflowConnection struct {
+	// AwsConfig AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+	AwsConfig *struct {
+		Context                               *[]CloudflowConnectionAwsConfigAllOf1ContextItem `json:"context,omitempty"`
+		ManagementAccount                     *string                                          `json:"managementAccount,omitempty"`
+		OrganizationRootId                    *string                                          `json:"organizationRootId,omitempty"`
+		Permissions                           *map[string]interface{}                          `json:"permissions,omitempty"`
+		RoleName                              *string                                          `json:"roleName,omitempty"`
+		ScopeExcludedAccountIds               *[]string                                        `json:"scopeExcludedAccountIds,omitempty"`
+		ScopeExplicitAccountIds               *[]string                                        `json:"scopeExplicitAccountIds,omitempty"`
+		ScopeManagementAccountExplicitInScope *bool                                            `json:"scopeManagementAccountExplicitInScope,omitempty"`
+		ScopeTargetedOrganizationalUnitIds    *[]string                                        `json:"scopeTargetedOrganizationalUnitIds,omitempty"`
+	} `json:"awsConfig,omitempty"`
+	Collaborators *[]CloudflowCollaborator `json:"collaborators,omitempty"`
+
+	// ConnectionId Unique identifier for the connection.
+	ConnectionId *string    `json:"connectionId,omitempty"`
+	CreatedAt    *time.Time `json:"createdAt,omitempty"`
+	Description  *string    `json:"description,omitempty"`
+
+	// Enabled false when the connection is disabled.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// GcpConfig GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+	GcpConfig *struct {
+		CustomRole *CloudflowGCPConfigRequestCustomRole `json:"customRole,omitempty"`
+
+		// DeploymentCommand Generated deployment command.
+		DeploymentCommand          *string                            `json:"deploymentCommand,omitempty"`
+		FolderId                   *string                            `json:"folderId,omitempty"`
+		InfraManagerLocation       *string                            `json:"infraManagerLocation,omitempty"`
+		InfraManagerProject        *string                            `json:"infraManagerProject,omitempty"`
+		InfraManagerServiceAccount *string                            `json:"infraManagerServiceAccount,omitempty"`
+		Level                      *CloudflowConnectionGcpConfigLevel `json:"level,omitempty"`
+		OrganizationId             *string                            `json:"organizationId,omitempty"`
+		PredefinedRoles            *[]string                          `json:"predefinedRoles,omitempty"`
+		ProjectId                  *string                            `json:"projectId,omitempty"`
+		ServiceAccountName         *string                            `json:"serviceAccountName,omitempty"`
+
+		// Status Server-managed GCP config status.
+		Status *string `json:"status,omitempty"`
+	} `json:"gcpConfig,omitempty"`
+	Name *string `json:"name,omitempty"`
+
+	// Status Overall connection status.
+	Status    *string    `json:"status,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+}
+
+// CloudflowConnectionGcpConfigLevel defines model for CloudflowConnection.GcpConfig.Level.
+type CloudflowConnectionGcpConfigLevel string
+
+// CloudflowConnectionAwsConfigAllOf1ContextItem defines model for CloudflowConnectionAwsConfigAllOf1ContextItem.
+type CloudflowConnectionAwsConfigAllOf1ContextItem struct {
+	AccountId *string   `json:"accountId,omitempty"`
+	Regions   *[]string `json:"regions,omitempty"`
+
+	// Status Server-managed per-account deployment status.
+	Status *string `json:"status,omitempty"`
+}
+
+// CloudflowGCPConfigRequest GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+type CloudflowGCPConfigRequest struct {
+	CustomRole                 *CloudflowGCPConfigRequestCustomRole `json:"customRole,omitempty"`
+	FolderId                   *string                              `json:"folderId,omitempty"`
+	InfraManagerLocation       *string                              `json:"infraManagerLocation,omitempty"`
+	InfraManagerProject        *string                              `json:"infraManagerProject,omitempty"`
+	InfraManagerServiceAccount *string                              `json:"infraManagerServiceAccount,omitempty"`
+	Level                      *CloudflowGCPConfigRequestLevel      `json:"level,omitempty"`
+	OrganizationId             *string                              `json:"organizationId,omitempty"`
+	PredefinedRoles            *[]string                            `json:"predefinedRoles,omitempty"`
+	ProjectId                  *string                              `json:"projectId,omitempty"`
+	ServiceAccountName         *string                              `json:"serviceAccountName,omitempty"`
+}
+
+// CloudflowGCPConfigRequestLevel defines model for CloudflowGCPConfigRequest.Level.
+type CloudflowGCPConfigRequestLevel string
+
+// CloudflowGCPConfigRequestCustomRole defines model for CloudflowGCPConfigRequestCustomRole.
+type CloudflowGCPConfigRequestCustomRole struct {
+	Permissions *[]string `json:"permissions,omitempty"`
+	RoleId      *string   `json:"roleId,omitempty"`
+}
+
 // Collaborator A user or identity that has access to a resource.
 type Collaborator struct {
 	Email *string           `json:"email,omitempty"`
@@ -5753,70 +5615,6 @@ type CommitmentPeriod struct {
 // Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 type Condition string
 
-// Connection A cloud provider connection resource.
-type Connection struct {
-	// AwsConfig AWS configuration. Present when `cloudProvider` is `AWS`.
-	AwsConfig *AWSConnectionConfig `json:"awsConfig,omitempty"`
-
-	// CloudProvider Cloud provider that a connection is bound to.
-	CloudProvider ConnectionProvider `json:"cloudProvider"`
-
-	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// Enabled Whether this connection is enabled. Derived from `status`: `false` when
-	// `status` is `disabled`, `true` otherwise. Toggle via
-	// `PATCH /connections/{connectionId}` with `{ "enabled": true/false }`.
-	Enabled bool `json:"enabled"`
-
-	// Etag Strong ETag. `null` on dry-run create.
-	Etag *string `json:"etag"`
-
-	// GcpConfig GCP configuration. Present when `cloudProvider` is `GCP`.
-	GcpConfig *GCPConnectionConfig `json:"gcpConfig,omitempty"`
-
-	// Id Unique identifier. `null` on dry-run create responses.
-	Id *string `json:"id"`
-
-	// LastSyncedTime ISO 8601 (UTC) timestamp of the last successful sync with the cloud provider.
-	LastSyncedTime *time.Time `json:"lastSyncedTime,omitempty"`
-
-	// Name Display name.
-	Name string `json:"name"`
-
-	// Status Operational status of a connection.
-	// - `active` — the connection is valid and in use.
-	// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
-	// - `pending_permissions` — awaiting a permission grant in the cloud provider.
-	// - `permissions_failed` — permission setup failed.
-	// - `inactive` — deactivated.
-	// - `cloud_deleted` — the underlying cloud resource was deleted externally.
-	// - `draft` — connection is not yet fully configured.
-	Status ConnectionStatus `json:"status"`
-
-	// StatusMessage Human-readable explanation of a non-active status.
-	StatusMessage *string `json:"statusMessage,omitempty"`
-
-	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
-	UpdateTime *time.Time `json:"updateTime"`
-}
-
-// ConnectionProvider Cloud provider that a connection is bound to.
-type ConnectionProvider string
-
-// ConnectionStatus Operational status of a connection.
-// - `active` — the connection is valid and in use.
-// - `disabled` — disabled via `PATCH /connections/{connectionId}`.
-// - `pending_permissions` — awaiting a permission grant in the cloud provider.
-// - `permissions_failed` — permission setup failed.
-// - `inactive` — deactivated.
-// - `cloud_deleted` — the underlying cloud resource was deleted externally.
-// - `draft` — connection is not yet fully configured.
-type ConnectionStatus string
-
 // CreateAccountRoleRequestBody defines model for CreateAccountRoleRequestBody.
 type CreateAccountRoleRequestBody struct {
 	// AccountID The AWS account ID.
@@ -5872,22 +5670,22 @@ type CreateAnnotationRequest struct {
 // CreateCategory Allowed categories when creating insights via the public API.
 type CreateCategory string
 
-// CreateConnectionRequest Request body for `CreateConnection`. Supply exactly one of `gcpConfig` or `awsConfig` —
-// the provider is inferred from which field is present. Supplying both returns
-// `400 invalid_connection_config`.
-type CreateConnectionRequest struct {
-	// AwsConfig AWS configuration. Provide this (and omit `gcpConfig`) for an AWS connection.
-	AwsConfig   *AWSConnectionConfig `json:"awsConfig,omitempty"`
-	Description *string              `json:"description,omitempty"`
+// CreateCloudflowConnectionRequestBody defines model for CreateCloudflowConnectionRequestBody.
+type CreateCloudflowConnectionRequestBody struct {
+	// AwsConfig AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+	AwsConfig     *CloudflowAWSConfigRequest `json:"awsConfig,omitempty"`
+	Collaborators *[]CloudflowCollaborator   `json:"collaborators,omitempty"`
 
-	// GcpConfig GCP configuration. Provide this (and omit `awsConfig`) for a GCP connection.
-	GcpConfig *GCPConnectionConfig `json:"gcpConfig,omitempty"`
+	// Description Optional description.
+	Description *string `json:"description,omitempty"`
 
-	// Id Client-provided connection ID. Server assigns one if omitted. Providing a
-	// stable ID enables idempotent creation.
-	Id *string `json:"id,omitempty"`
+	// Enabled When false, the connection is created in a disabled state.
+	Enabled *bool `json:"enabled,omitempty"`
 
-	// Name Unique display name for the connection within the tenant.
+	// GcpConfig GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+	GcpConfig *CloudflowGCPConfigRequest `json:"gcpConfig,omitempty"`
+
+	// Name Human-readable connection name.
 	Name string `json:"name"`
 }
 
@@ -5930,24 +5728,6 @@ type CreateDatahubDatasetRequestBody struct {
 	Name string `json:"name"`
 }
 
-// CreateFlowRequest Request body for `CreateFlow`.
-type CreateFlowRequest struct {
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// Instructions Operator instructions or notes attached to the flow. Pass `null` or
-	// omit to leave empty.
-	Instructions *string `json:"instructions,omitempty"`
-
-	// Name Display name for the new flow.
-	Name string `json:"name"`
-
-	// TemplateId ID of a template (blueprint) to initialise the flow from. When supplied the
-	// new flow inherits the template's node graph and structure. The template itself
-	// is not modified. Omit to create a blank flow.
-	TemplateId *string `json:"templateId,omitempty"`
-}
-
 // CreateFolderRequest Request body for creating a folder.
 type CreateFolderRequest struct {
 	// Description Folder description.
@@ -5971,16 +5751,6 @@ type CreateLabelRequest struct {
 
 // CreateLabelRequestColor The color of the label.
 type CreateLabelRequestColor string
-
-// CreateNodeRequest Request body for `CreateNode`.
-type CreateNodeRequest struct {
-	// Node Node payload for create and update operations.
-	Node NodeInput `json:"node"`
-
-	// Transition Optional wiring to an existing parent node. When supplied, the new node is
-	// connected as a child of `parentNodeId` via the given branch value.
-	Transition *ParentTransition `json:"transition,omitempty"`
-}
 
 // CreateReportRequestBody defines model for CreateReportRequestBody.
 type CreateReportRequestBody struct {
@@ -6028,6 +5798,14 @@ type CustomTheme struct {
 
 	// UpdateTime The time when the custom theme was last updated.
 	UpdateTime *time.Time `json:"updateTime,omitempty"`
+}
+
+// DeleteCloudflowConnection409Response defines model for DeleteCloudflowConnection409Response.
+type DeleteCloudflowConnection409Response struct {
+	Code   *string `json:"code,omitempty"`
+	Status *int    `json:"status,omitempty"`
+	Title  *string `json:"title,omitempty"`
+	Type   *string `json:"type,omitempty"`
 }
 
 // DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
@@ -6516,67 +6294,6 @@ type FindCloudDiagramsResponseItem struct {
 	ImageUrl string `json:"imageUrl"`
 }
 
-// Flow A CloudFlow workflow resource.
-type Flow struct {
-	// CreateTime ISO 8601 timestamp (UTC) when the flow was created. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description string `json:"description"`
-
-	// Etag Strong ETag for this resource version. Pass as `If-Match` on subsequent mutations.
-	// `null` on dry-run create responses.
-	Etag *string `json:"etag"`
-
-	// FirstNodeId ID of the trigger (first) node. `null` if no trigger node has been set.
-	FirstNodeId *string `json:"firstNodeId,omitempty"`
-
-	// Id Server-assigned unique identifier. `null` on dry-run create responses
-	// (no resource was persisted).
-	Id *string `json:"id"`
-
-	// Instructions Operator instructions or notes attached to the flow.
-	Instructions *string `json:"instructions,omitempty"`
-
-	// LastExecutedTime ISO 8601 timestamp (UTC) of the most recent execution. `null` if never executed.
-	LastExecutedTime *time.Time `json:"lastExecutedTime,omitempty"`
-
-	// LastExecutionStatus Status string of the most recent execution. `null` if never executed.
-	LastExecutionStatus *string `json:"lastExecutionStatus,omitempty"`
-
-	// Name Display name of the flow.
-	Name string `json:"name"`
-
-	// NextRun ISO 8601 (UTC) timestamp of the next scheduled execution. `null` if the flow
-	// has no scheduled trigger, is unpublished, or scheduling is paused.
-	NextRun *time.Time `json:"nextRun,omitempty"`
-
-	// Nodes Embedded nodes. Populated by the `update-batch` response and by operations that
-	// return the full flow with nodes inline. Not present on standard list responses.
-	Nodes *[]Node `json:"nodes,omitempty"`
-
-	// Published Whether the flow is currently published. Readable on every response; use
-	// `POST /actions/publish` and `POST /actions/unpublish` to change this value.
-	Published bool `json:"published"`
-
-	// Status Lifecycle state. `null` on dry-run create responses.
-	Status *FlowStatus `json:"status"`
-
-	// TriggerType Node type of the trigger node. `null` if no trigger node has been set.
-	// One of the `NodeType` trigger variants: `triggerNode`, `manualTrigger`,
-	// `webhookTrigger`, `systemEventTrigger`, `scheduleTrigger`.
-	TriggerType *string `json:"triggerType,omitempty"`
-
-	// UpdateTime ISO 8601 timestamp (UTC) of the last modification. `null` if never modified or on dry-run.
-	UpdateTime *time.Time `json:"updateTime,omitempty"`
-}
-
-// FlowStatus Lifecycle state of a flow.
-// - `new` — initial state assigned on creation.
-// - `draft` — flow has been unpublished, imported, or copied; not yet published.
-// - `published` — published and available for scheduled/event-driven execution.
-type FlowStatus string
-
 // Folder A Cloud Analytics folder.
 type Folder struct {
 	// Description Folder description.
@@ -6590,48 +6307,6 @@ type Folder struct {
 
 	// ParentFolderId Identifier of the parent folder. Set to "root" if the folder is at the top level.
 	ParentFolderId *string `json:"parentFolderId,omitempty"`
-}
-
-// GCPConnectionConfig GCP-specific connection configuration.
-type GCPConnectionConfig struct {
-	// CustomRole Custom IAM role granted to the service account.
-	CustomRole *GCPConnectionConfigCustomRole `json:"customRole,omitempty"`
-
-	// FolderId GCP folder ID. Required when `level` is `folder`.
-	FolderId *string `json:"folderId,omitempty"`
-
-	// Level Binding level of the service account.
-	// - `project` — access scoped to a single project.
-	// - `organization` — access scoped to a GCP organization; `organizationId` required.
-	// - `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.
-	Level GCPConnectionConfigLevel `json:"level"`
-
-	// OrganizationId GCP organization ID. Required when `level` is `organization` or `folder`.
-	OrganizationId *string `json:"organizationId,omitempty"`
-
-	// PredefinedRoles Predefined GCP IAM roles granted to the service account.
-	PredefinedRoles *[]string `json:"predefinedRoles,omitempty"`
-
-	// ProjectId GCP project ID that hosts the CloudFlow service account.
-	ProjectId string `json:"projectId"`
-
-	// ServiceAccountName Name of the GCP service account (without the `@project.iam.gserviceaccount.com` suffix).
-	ServiceAccountName string `json:"serviceAccountName"`
-}
-
-// GCPConnectionConfigLevel Binding level of the service account.
-// - `project` — access scoped to a single project.
-// - `organization` — access scoped to a GCP organization; `organizationId` required.
-// - `folder` — access scoped to a GCP folder; `folderId` and `organizationId` required.
-type GCPConnectionConfigLevel string
-
-// GCPConnectionConfigCustomRole Custom IAM role granted to the service account.
-type GCPConnectionConfigCustomRole struct {
-	// Permissions IAM permissions included in the custom role.
-	Permissions *[]string `json:"permissions,omitempty"`
-
-	// RoleId Custom role ID.
-	RoleId *string `json:"roleId,omitempty"`
 }
 
 // GetAnomaly200Response defines model for GetAnomaly200Response.
@@ -7345,70 +7020,6 @@ type MetricFilterText string
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string
 
-// Node A single node within a CloudFlow.
-type Node struct {
-	// ActionId Identifier of the specific operation this node performs (e.g. AWS service action).
-	ActionId *string `json:"actionId,omitempty"`
-
-	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// Disabled When `true` this node is skipped during flow execution.
-	Disabled bool `json:"disabled"`
-
-	// Etag Strong ETag for this node version. `null` on dry-run create.
-	Etag *string `json:"etag"`
-
-	// Id Server-assigned unique identifier. `null` on dry-run create responses.
-	Id *string `json:"id"`
-
-	// Name Display name.
-	Name string `json:"name"`
-
-	// Parameters Node-specific configuration. The concrete shape depends on `type`. Refer to
-	// the CloudFlow node type documentation for the required fields per node type.
-	Parameters *map[string]interface{} `json:"parameters,omitempty"`
-
-	// Transitions Directed edges to child nodes.
-	Transitions *[]Transition `json:"transitions,omitempty"`
-
-	// Type Discriminator that identifies a node's role and determines the shape of its
-	// `parameters` field.
-	Type NodeType `json:"type"`
-
-	// UpdateTime ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
-	UpdateTime *time.Time `json:"updateTime,omitempty"`
-}
-
-// NodeInput Node payload for create and update operations.
-type NodeInput struct {
-	Description *string `json:"description,omitempty"`
-	Disabled    bool    `json:"disabled"`
-
-	// Id Client-provided node ID. Server assigns a ULID-based ID if omitted. Providing a
-	// stable ID enables idempotent batch operations.
-	Id   *string `json:"id,omitempty"`
-	Name string  `json:"name"`
-
-	// Parameters Node-specific configuration. See CloudFlow node type documentation for
-	// the required fields per `type`.
-	Parameters *map[string]interface{} `json:"parameters,omitempty"`
-
-	// Transitions Outgoing edges to child nodes.
-	Transitions *[]Transition `json:"transitions,omitempty"`
-
-	// Type Discriminator that identifies a node's role and determines the shape of its
-	// `parameters` field.
-	Type NodeType `json:"type"`
-}
-
-// NodeType Discriminator that identifies a node's role and determines the shape of its
-// `parameters` field.
-type NodeType string
-
 // NotificationEvent A successful notification dispatch for an anomaly.
 // This records that the API/worker sent the notification, not that delivery was confirmed.
 type NotificationEvent struct {
@@ -7442,18 +7053,6 @@ type Pagination struct {
 	// RowCount Number of items in this page.
 	RowCount int `json:"rowCount"`
 }
-
-// ParentTransition Wires the new node as a child of an existing parent node.
-type ParentTransition struct {
-	// Label Selects which branch of the parent node this node connects to. Required when the parent is a branch node; must be "True" or "False". Omit for all other parent node types.
-	Label *ParentTransitionLabel `json:"label,omitempty"`
-
-	// ParentNodeId ID of the existing parent node.
-	ParentNodeId string `json:"parentNodeId"`
-}
-
-// ParentTransitionLabel Selects which branch of the parent node this node connects to. Required when the parent is a branch node; must be "True" or "False". Omit for all other parent node types.
-type ParentTransitionLabel string
 
 // PlatformAPI Platform metadata used by product listing endpoints.
 type PlatformAPI struct {
@@ -8046,18 +7645,6 @@ type TimeSettingsSecondaryCustomTimeRange struct {
 	To *time.Time `json:"to,omitempty"`
 }
 
-// Transition Directed edge from a parent node to a child node.
-type Transition struct {
-	// Label Identifies the execution path for branch node transitions. Branch nodes have at most two outgoing transitions: one labeled "True" and one labeled "False". Required on branch node transitions; must be omitted for all other node types.
-	Label *TransitionLabel `json:"label,omitempty"`
-
-	// TargetNodeId ID of the target (child) node.
-	TargetNodeId string `json:"targetNodeId"`
-}
-
-// TransitionLabel Identifies the execution path for branch node transitions. Branch nodes have at most two outgoing transitions: one labeled "True" and one labeled "False". Required on branch node transitions; must be omitted for all other node types.
-type TransitionLabel string
-
 // UpdateAllocationRequest Request body for updating an allocation.
 type UpdateAllocationRequest struct {
 	// Description Allocation description
@@ -8104,11 +7691,19 @@ type UpdateAwsFeatureRequestBody struct {
 	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
 }
 
-// UpdateConnectionRequest Request body for `UpdateConnection`. Currently supports toggling the `enabled` flag only.
-type UpdateConnectionRequest struct {
-	// Enabled - `true` — enable the connection (transitions `disabled` → `active`).
-	// - `false` — disable the connection (transitions current status → `disabled`).
-	Enabled bool `json:"enabled"`
+// UpdateCloudflowConnectionRequestBody defines model for UpdateCloudflowConnectionRequestBody.
+type UpdateCloudflowConnectionRequestBody struct {
+	// AwsConfig AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+	AwsConfig     *CloudflowAWSConfigRequest `json:"awsConfig,omitempty"`
+	Collaborators *[]CloudflowCollaborator   `json:"collaborators,omitempty"`
+	Description   *string                    `json:"description,omitempty"`
+
+	// Enabled Set to false to disable the connection, true to re-enable it.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// GcpConfig GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+	GcpConfig *CloudflowGCPConfigRequest `json:"gcpConfig,omitempty"`
+	Name      *string                    `json:"name,omitempty"`
 }
 
 // UpdateCustomThemeRequest Request body for updating a custom theme. Only provided fields are modified.
@@ -8147,21 +7742,6 @@ type UpdateDatahubDatasetRequestBody struct {
 	Description *string `json:"description,omitempty"`
 
 	// Name Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed.
-	Name *string `json:"name,omitempty"`
-}
-
-// UpdateFlowRequest Request body for `UpdateFlow` (full replacement). All writable fields are replaced
-// with the supplied values. Optional fields that are omitted are reset to their defaults
-// (e.g. `instructions` is cleared if absent). Read-only fields (`id`, `status`,
-// `published`, `createTime`, `etag`) are silently ignored.
-type UpdateFlowRequest struct {
-	// Description New description.
-	Description *string `json:"description,omitempty"`
-
-	// Instructions New operator instructions. Omit to clear.
-	Instructions *string `json:"instructions,omitempty"`
-
-	// Name New display name.
 	Name *string `json:"name,omitempty"`
 }
 
@@ -8356,120 +7936,6 @@ type Value1 = float32
 
 // Value2 defines model for .
 type Value2 = int
-
-// Variable A CloudFlow variable resource (flow-scoped or global).
-type Variable struct {
-	// ConnectionType Connection provider type for `connection` variables (e.g. `AWS`, `GCP`). Required
-	// when `type` is `connection`; `null` for all other types.
-	ConnectionType *string `json:"connectionType,omitempty"`
-
-	// CreateTime ISO 8601 (UTC) creation timestamp. `null` on dry-run create.
-	CreateTime *time.Time `json:"createTime"`
-
-	// Description Human-readable description.
-	Description *string `json:"description,omitempty"`
-
-	// ElementType Element type for `list` variables (e.g. `string`, `integer`). Required when
-	// `type` is `list`; `null` for all other types.
-	ElementType *string `json:"elementType,omitempty"`
-
-	// Etag Strong ETag. `null` on dry-run create.
-	Etag *string `json:"etag"`
-
-	// Id Server-assigned unique identifier. `null` on dry-run create responses.
-	Id *string `json:"id"`
-
-	// Name Variable name. Alphanumeric characters, underscores, and dashes only (1–100 chars).
-	// Must be unique within scope (flow or global).
-	Name string `json:"name"`
-
-	// Required Whether a value must be provided before the flow can be published.
-	Required bool `json:"required"`
-
-	// Type Data type of a variable.
-	// - `string` — UTF-8 text.
-	// - `integer` — 64-bit signed integer.
-	// - `float` — 64-bit floating-point number.
-	// - `boolean` — true / false.
-	// - `list` — ordered collection; element type specified by `elementType`.
-	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
-	Type VariableType `json:"type"`
-
-	// UpdateTime ISO 8601 (UTC) last-modified timestamp.
-	UpdateTime *time.Time `json:"updateTime"`
-
-	// Value Current value, always string-encoded on the wire. `null` if no value has been set.
-	// Logical encoding by variable `type`:
-	// - `string` → the string value
-	// - `integer` → decimal string, e.g. `"42"`
-	// - `float` → decimal string, e.g. `"3.14"`
-	// - `boolean` → `"true"` or `"false"`
-	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
-	// - `connection` → connection ID string
-	Value *string `json:"value,omitempty"`
-}
-
-// VariableInput Request body for `CreateFlowVariable`, `CreateGlobalVariable`,
-// `UpdateFlowVariable`, and `UpdateGlobalVariable`.
-type VariableInput struct {
-	// ConnectionType Connection provider type for `connection` variables.
-	// Required when `type` is `connection`.
-	ConnectionType *ConnectionProvider `json:"connectionType,omitempty"`
-	Description    *string             `json:"description,omitempty"`
-
-	// ElementType Element type for `list` variables. Required when `type` is `list`.
-	ElementType *VariableInputElementType `json:"elementType,omitempty"`
-
-	// Name Variable name. Alphanumeric, underscore, and dash only. Must be unique
-	// within scope (flow-local or global).
-	Name string `json:"name"`
-
-	// Required Whether the flow requires a value before publishing.
-	Required bool `json:"required"`
-
-	// Type Data type of a variable.
-	// - `string` — UTF-8 text.
-	// - `integer` — 64-bit signed integer.
-	// - `float` — 64-bit floating-point number.
-	// - `boolean` — true / false.
-	// - `list` — ordered collection; element type specified by `elementType`.
-	// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
-	Type VariableType `json:"type"`
-
-	// Value Initial or updated value, always string-encoded on the wire. Encoding by `type`:
-	// - `string` → the string value
-	// - `integer` → decimal string, e.g. `"42"`
-	// - `float` → decimal string, e.g. `"3.14"`
-	// - `boolean` → `"true"` or `"false"`
-	// - `list` → JSON-encoded array string, e.g. `"[\"a\",\"b\"]"`
-	// - `connection` → connection ID string; the referenced connection must exist
-	//   within the tenant and be in an `active` or `inactive` state.
-	Value *string `json:"value,omitempty"`
-}
-
-// VariableInputElementType Element type for `list` variables. Required when `type` is `list`.
-type VariableInputElementType string
-
-// VariableType Data type of a variable.
-// - `string` — UTF-8 text.
-// - `integer` — 64-bit signed integer.
-// - `float` — 64-bit floating-point number.
-// - `boolean` — true / false.
-// - `list` — ordered collection; element type specified by `elementType`.
-// - `connection` — reference to a connection resource; provider type specified by `connectionType`.
-type VariableType string
-
-// ConnectionId defines model for ConnectionId.
-type ConnectionId = string
-
-// FlowId defines model for FlowId.
-type FlowId = string
-
-// NodeId defines model for NodeId.
-type NodeId = string
-
-// VariableId defines model for VariableId.
-type VariableId = string
 
 // MaxResults defines model for maxResults.
 type MaxResults = string
@@ -9145,32 +8611,11 @@ type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
 // GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
 type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 
-// CreateConnectionJSONRequestBody defines body for CreateConnection for application/json ContentType.
-type CreateConnectionJSONRequestBody = CreateConnectionRequest
+// CreateCloudflowConnectionJSONRequestBody defines body for CreateCloudflowConnection for application/json ContentType.
+type CreateCloudflowConnectionJSONRequestBody = CreateCloudflowConnectionRequestBody
 
-// UpdateConnectionJSONRequestBody defines body for UpdateConnection for application/json ContentType.
-type UpdateConnectionJSONRequestBody = UpdateConnectionRequest
-
-// CreateFlowJSONRequestBody defines body for CreateFlow for application/json ContentType.
-type CreateFlowJSONRequestBody = CreateFlowRequest
-
-// UpdateFlowJSONRequestBody defines body for UpdateFlow for application/json ContentType.
-type UpdateFlowJSONRequestBody = UpdateFlowRequest
-
-// CreateNodeJSONRequestBody defines body for CreateNode for application/json ContentType.
-type CreateNodeJSONRequestBody = CreateNodeRequest
-
-// CreateFlowVariableJSONRequestBody defines body for CreateFlowVariable for application/json ContentType.
-type CreateFlowVariableJSONRequestBody = VariableInput
-
-// UpdateFlowVariableJSONRequestBody defines body for UpdateFlowVariable for application/json ContentType.
-type UpdateFlowVariableJSONRequestBody = VariableInput
-
-// CreateGlobalVariableJSONRequestBody defines body for CreateGlobalVariable for application/json ContentType.
-type CreateGlobalVariableJSONRequestBody = VariableInput
-
-// UpdateGlobalVariableJSONRequestBody defines body for UpdateGlobalVariable for application/json ContentType.
-type UpdateGlobalVariableJSONRequestBody = VariableInput
+// UpdateCloudflowConnectionJSONRequestBody defines body for UpdateCloudflowConnection for application/json ContentType.
+type UpdateCloudflowConnectionJSONRequestBody = UpdateCloudflowConnectionRequestBody
 
 // CreateAccountRoleJSONRequestBody defines body for CreateAccountRole for application/json ContentType.
 type CreateAccountRoleJSONRequestBody = CreateAccountRoleRequestBody
@@ -9685,80 +9130,21 @@ type ClientInterface interface {
 	// ListCloudDiagramLayerSnapshots request
 	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateConnectionWithBody request with any body
-	CreateConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateCloudflowConnectionWithBody request with any body
+	CreateCloudflowConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateConnection(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateCloudflowConnection(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteConnection request
-	DeleteConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteCloudflowConnection request
+	DeleteCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetConnection request
-	GetConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetCloudflowConnection request
+	GetCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateConnectionWithBody request with any body
-	UpdateConnectionWithBody(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateCloudflowConnectionWithBody request with any body
+	UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateConnection(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// CreateFlowWithBody request with any body
-	CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteFlow request
-	DeleteFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetFlow request
-	GetFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// UpdateFlowWithBody request with any body
-	UpdateFlowWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	UpdateFlow(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// CreateNodeWithBody request with any body
-	CreateNodeWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateNode(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteNode request
-	DeleteNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetNode request
-	GetNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// CreateFlowVariableWithBody request with any body
-	CreateFlowVariableWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateFlowVariable(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteFlowVariable request
-	DeleteFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetFlowVariable request
-	GetFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// UpdateFlowVariableWithBody request with any body
-	UpdateFlowVariableWithBody(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	UpdateFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// CreateGlobalVariableWithBody request with any body
-	CreateGlobalVariableWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateGlobalVariable(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteGlobalVariable request
-	DeleteGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetGlobalVariable request
-	GetGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// UpdateGlobalVariableWithBody request with any body
-	UpdateGlobalVariableWithBody(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	UpdateGlobalVariable(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateCloudflowConnection(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateAccountRoleWithBody request with any body
 	CreateAccountRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -11024,8 +10410,8 @@ func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateConnectionRequestWithBody(c.Server, contentType, body)
+func (c *Client) CreateCloudflowConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCloudflowConnectionRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11036,8 +10422,8 @@ func (c *Client) CreateConnectionWithBody(ctx context.Context, contentType strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateConnection(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateConnectionRequest(c.Server, body)
+func (c *Client) CreateCloudflowConnection(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCloudflowConnectionRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11048,8 +10434,8 @@ func (c *Client) CreateConnection(ctx context.Context, body CreateConnectionJSON
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteConnectionRequest(c.Server, connectionId)
+func (c *Client) DeleteCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCloudflowConnectionRequest(c.Server, connectionId)
 	if err != nil {
 		return nil, err
 	}
@@ -11060,8 +10446,8 @@ func (c *Client) DeleteConnection(ctx context.Context, connectionId ConnectionId
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetConnection(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetConnectionRequest(c.Server, connectionId)
+func (c *Client) GetCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudflowConnectionRequest(c.Server, connectionId)
 	if err != nil {
 		return nil, err
 	}
@@ -11072,8 +10458,8 @@ func (c *Client) GetConnection(ctx context.Context, connectionId ConnectionId, r
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateConnectionWithBody(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateConnectionRequestWithBody(c.Server, connectionId, contentType, body)
+func (c *Client) UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCloudflowConnectionRequestWithBody(c.Server, connectionId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11084,272 +10470,8 @@ func (c *Client) UpdateConnectionWithBody(ctx context.Context, connectionId Conn
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateConnection(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateConnectionRequest(c.Server, connectionId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateFlowWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateFlow(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteFlowRequest(c.Server, flowId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetFlow(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetFlowRequest(c.Server, flowId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateFlowWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateFlowRequestWithBody(c.Server, flowId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateFlow(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateFlowRequest(c.Server, flowId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateNodeWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateNodeRequestWithBody(c.Server, flowId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateNode(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateNodeRequest(c.Server, flowId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteNodeRequest(c.Server, flowId, nodeId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetNode(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetNodeRequest(c.Server, flowId, nodeId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateFlowVariableWithBody(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowVariableRequestWithBody(c.Server, flowId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateFlowVariable(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateFlowVariableRequest(c.Server, flowId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteFlowVariableRequest(c.Server, flowId, variableId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetFlowVariableRequest(c.Server, flowId, variableId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateFlowVariableWithBody(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateFlowVariableRequestWithBody(c.Server, flowId, variableId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateFlowVariable(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateFlowVariableRequest(c.Server, flowId, variableId, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateGlobalVariableWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateGlobalVariableRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateGlobalVariable(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateGlobalVariableRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteGlobalVariableRequest(c.Server, variableId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetGlobalVariable(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetGlobalVariableRequest(c.Server, variableId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateGlobalVariableWithBody(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateGlobalVariableRequestWithBody(c.Server, variableId, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateGlobalVariable(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateGlobalVariableRequest(c.Server, variableId, body)
+func (c *Client) UpdateCloudflowConnection(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCloudflowConnectionRequest(c.Server, connectionId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -15812,19 +14934,19 @@ func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *
 	return req, nil
 }
 
-// NewCreateConnectionRequest calls the generic CreateConnection builder with application/json body
-func NewCreateConnectionRequest(server string, body CreateConnectionJSONRequestBody) (*http.Request, error) {
+// NewCreateCloudflowConnectionRequest calls the generic CreateCloudflowConnection builder with application/json body
+func NewCreateCloudflowConnectionRequest(server string, body CreateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateConnectionRequestWithBody(server, "application/json", bodyReader)
+	return NewCreateCloudflowConnectionRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateConnectionRequestWithBody generates requests for CreateConnection with any type of body
-func NewCreateConnectionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateCloudflowConnectionRequestWithBody generates requests for CreateCloudflowConnection with any type of body
+func NewCreateCloudflowConnectionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -15852,8 +14974,8 @@ func NewCreateConnectionRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// NewDeleteConnectionRequest generates requests for DeleteConnection
-func NewDeleteConnectionRequest(server string, connectionId ConnectionId) (*http.Request, error) {
+// NewDeleteCloudflowConnectionRequest generates requests for DeleteCloudflowConnection
+func NewDeleteCloudflowConnectionRequest(server string, connectionId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15886,8 +15008,8 @@ func NewDeleteConnectionRequest(server string, connectionId ConnectionId) (*http
 	return req, nil
 }
 
-// NewGetConnectionRequest generates requests for GetConnection
-func NewGetConnectionRequest(server string, connectionId ConnectionId) (*http.Request, error) {
+// NewGetCloudflowConnectionRequest generates requests for GetCloudflowConnection
+func NewGetCloudflowConnectionRequest(server string, connectionId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15920,19 +15042,19 @@ func NewGetConnectionRequest(server string, connectionId ConnectionId) (*http.Re
 	return req, nil
 }
 
-// NewUpdateConnectionRequest calls the generic UpdateConnection builder with application/json body
-func NewUpdateConnectionRequest(server string, connectionId ConnectionId, body UpdateConnectionJSONRequestBody) (*http.Request, error) {
+// NewUpdateCloudflowConnectionRequest calls the generic UpdateCloudflowConnection builder with application/json body
+func NewUpdateCloudflowConnectionRequest(server string, connectionId string, body UpdateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateConnectionRequestWithBody(server, connectionId, "application/json", bodyReader)
+	return NewUpdateCloudflowConnectionRequestWithBody(server, connectionId, "application/json", bodyReader)
 }
 
-// NewUpdateConnectionRequestWithBody generates requests for UpdateConnection with any type of body
-func NewUpdateConnectionRequestWithBody(server string, connectionId ConnectionId, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateCloudflowConnectionRequestWithBody generates requests for UpdateCloudflowConnection with any type of body
+func NewUpdateCloudflowConnectionRequestWithBody(server string, connectionId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -15958,628 +15080,6 @@ func NewUpdateConnectionRequestWithBody(server string, connectionId ConnectionId
 	}
 
 	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewCreateFlowRequest calls the generic CreateFlow builder with application/json body
-func NewCreateFlowRequest(server string, body CreateFlowJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateFlowRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewCreateFlowRequestWithBody generates requests for CreateFlow with any type of body
-func NewCreateFlowRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewDeleteFlowRequest generates requests for DeleteFlow
-func NewDeleteFlowRequest(server string, flowId FlowId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetFlowRequest generates requests for GetFlow
-func NewGetFlowRequest(server string, flowId FlowId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewUpdateFlowRequest calls the generic UpdateFlow builder with application/json body
-func NewUpdateFlowRequest(server string, flowId FlowId, body UpdateFlowJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewUpdateFlowRequestWithBody(server, flowId, "application/json", bodyReader)
-}
-
-// NewUpdateFlowRequestWithBody generates requests for UpdateFlow with any type of body
-func NewUpdateFlowRequestWithBody(server string, flowId FlowId, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewCreateNodeRequest calls the generic CreateNode builder with application/json body
-func NewCreateNodeRequest(server string, flowId FlowId, body CreateNodeJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateNodeRequestWithBody(server, flowId, "application/json", bodyReader)
-}
-
-// NewCreateNodeRequestWithBody generates requests for CreateNode with any type of body
-func NewCreateNodeRequestWithBody(server string, flowId FlowId, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/nodes", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewDeleteNodeRequest generates requests for DeleteNode
-func NewDeleteNodeRequest(server string, flowId FlowId, nodeId NodeId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "nodeId", nodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/nodes/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetNodeRequest generates requests for GetNode
-func NewGetNodeRequest(server string, flowId FlowId, nodeId NodeId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "nodeId", nodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/nodes/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewCreateFlowVariableRequest calls the generic CreateFlowVariable builder with application/json body
-func NewCreateFlowVariableRequest(server string, flowId FlowId, body CreateFlowVariableJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateFlowVariableRequestWithBody(server, flowId, "application/json", bodyReader)
-}
-
-// NewCreateFlowVariableRequestWithBody generates requests for CreateFlowVariable with any type of body
-func NewCreateFlowVariableRequestWithBody(server string, flowId FlowId, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewDeleteFlowVariableRequest generates requests for DeleteFlowVariable
-func NewDeleteFlowVariableRequest(server string, flowId FlowId, variableId VariableId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetFlowVariableRequest generates requests for GetFlowVariable
-func NewGetFlowVariableRequest(server string, flowId FlowId, variableId VariableId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewUpdateFlowVariableRequest calls the generic UpdateFlowVariable builder with application/json body
-func NewUpdateFlowVariableRequest(server string, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewUpdateFlowVariableRequestWithBody(server, flowId, variableId, "application/json", bodyReader)
-}
-
-// NewUpdateFlowVariableRequestWithBody generates requests for UpdateFlowVariable with any type of body
-func NewUpdateFlowVariableRequestWithBody(server string, flowId FlowId, variableId VariableId, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "flowId", flowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/flows/%s/variables/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewCreateGlobalVariableRequest calls the generic CreateGlobalVariable builder with application/json body
-func NewCreateGlobalVariableRequest(server string, body CreateGlobalVariableJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateGlobalVariableRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewCreateGlobalVariableRequestWithBody generates requests for CreateGlobalVariable with any type of body
-func NewCreateGlobalVariableRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewDeleteGlobalVariableRequest generates requests for DeleteGlobalVariable
-func NewDeleteGlobalVariableRequest(server string, variableId VariableId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetGlobalVariableRequest generates requests for GetGlobalVariable
-func NewGetGlobalVariableRequest(server string, variableId VariableId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewUpdateGlobalVariableRequest calls the generic UpdateGlobalVariable builder with application/json body
-func NewUpdateGlobalVariableRequest(server string, variableId VariableId, body UpdateGlobalVariableJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewUpdateGlobalVariableRequestWithBody(server, variableId, "application/json", bodyReader)
-}
-
-// NewUpdateGlobalVariableRequestWithBody generates requests for UpdateGlobalVariable with any type of body
-func NewUpdateGlobalVariableRequestWithBody(server string, variableId VariableId, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "variableId", variableId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/cloudflow/v1/global-variables/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -18441,80 +16941,21 @@ type ClientWithResponsesInterface interface {
 	// ListCloudDiagramLayerSnapshotsWithResponse request
 	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
 
-	// CreateConnectionWithBodyWithResponse request with any body
-	CreateConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error)
+	// CreateCloudflowConnectionWithBodyWithResponse request with any body
+	CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
 
-	CreateConnectionWithResponse(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error)
+	CreateCloudflowConnectionWithResponse(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
 
-	// DeleteConnectionWithResponse request
-	DeleteConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*DeleteConnectionResp, error)
+	// DeleteCloudflowConnectionWithResponse request
+	DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error)
 
-	// GetConnectionWithResponse request
-	GetConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*GetConnectionResp, error)
+	// GetCloudflowConnectionWithResponse request
+	GetCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*GetCloudflowConnectionResp, error)
 
-	// UpdateConnectionWithBodyWithResponse request with any body
-	UpdateConnectionWithBodyWithResponse(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
+	// UpdateCloudflowConnectionWithBodyWithResponse request with any body
+	UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
 
-	UpdateConnectionWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error)
-
-	// CreateFlowWithBodyWithResponse request with any body
-	CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
-
-	CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error)
-
-	// DeleteFlowWithResponse request
-	DeleteFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*DeleteFlowResp, error)
-
-	// GetFlowWithResponse request
-	GetFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*GetFlowResp, error)
-
-	// UpdateFlowWithBodyWithResponse request with any body
-	UpdateFlowWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error)
-
-	UpdateFlowWithResponse(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error)
-
-	// CreateNodeWithBodyWithResponse request with any body
-	CreateNodeWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateNodeResp, error)
-
-	CreateNodeWithResponse(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateNodeResp, error)
-
-	// DeleteNodeWithResponse request
-	DeleteNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*DeleteNodeResp, error)
-
-	// GetNodeWithResponse request
-	GetNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*GetNodeResp, error)
-
-	// CreateFlowVariableWithBodyWithResponse request with any body
-	CreateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error)
-
-	CreateFlowVariableWithResponse(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error)
-
-	// DeleteFlowVariableWithResponse request
-	DeleteFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteFlowVariableResp, error)
-
-	// GetFlowVariableWithResponse request
-	GetFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*GetFlowVariableResp, error)
-
-	// UpdateFlowVariableWithBodyWithResponse request with any body
-	UpdateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error)
-
-	UpdateFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error)
-
-	// CreateGlobalVariableWithBodyWithResponse request with any body
-	CreateGlobalVariableWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error)
-
-	CreateGlobalVariableWithResponse(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error)
-
-	// DeleteGlobalVariableWithResponse request
-	DeleteGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteGlobalVariableResp, error)
-
-	// GetGlobalVariableWithResponse request
-	GetGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*GetGlobalVariableResp, error)
-
-	// UpdateGlobalVariableWithBodyWithResponse request with any body
-	UpdateGlobalVariableWithBodyWithResponse(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error)
-
-	UpdateGlobalVariableWithResponse(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error)
+	UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
 
 	// CreateAccountRoleWithBodyWithResponse request with any body
 	CreateAccountRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountRoleResp, error)
@@ -21025,15 +19466,18 @@ func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
 	return ""
 }
 
-type CreateConnectionResp struct {
+type CreateCloudflowConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Connection
-	JSON201      *Connection
+	JSON201      *CloudflowConnection
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateConnectionResp) Status() string {
+func (r CreateCloudflowConnectionResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21041,7 +19485,7 @@ func (r CreateConnectionResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateConnectionResp) StatusCode() int {
+func (r CreateCloudflowConnectionResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21049,20 +19493,26 @@ func (r CreateConnectionResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r CreateConnectionResp) ContentType() string {
+func (r CreateCloudflowConnectionResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-type DeleteConnectionResp struct {
+type DeleteCloudflowConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON409      *DeleteCloudflowConnection409Response
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
-func (r DeleteConnectionResp) Status() string {
+func (r DeleteCloudflowConnectionResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21070,7 +19520,7 @@ func (r DeleteConnectionResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DeleteConnectionResp) StatusCode() int {
+func (r DeleteCloudflowConnectionResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21078,21 +19528,26 @@ func (r DeleteConnectionResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r DeleteConnectionResp) ContentType() string {
+func (r DeleteCloudflowConnectionResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-type GetConnectionResp struct {
+type GetCloudflowConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Connection
+	JSON200      *CloudflowConnection
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
-func (r GetConnectionResp) Status() string {
+func (r GetCloudflowConnectionResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21100,7 +19555,7 @@ func (r GetConnectionResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetConnectionResp) StatusCode() int {
+func (r GetCloudflowConnectionResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21108,21 +19563,26 @@ func (r GetConnectionResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetConnectionResp) ContentType() string {
+func (r GetCloudflowConnectionResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-type UpdateConnectionResp struct {
+type UpdateCloudflowConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Connection
+	JSON200      *CloudflowConnection
+	JSON400      *N400
+	JSON401      *N401
+	JSON403      *N403
+	JSON404      *N404
+	JSON500      *N500
 }
 
 // Status returns HTTPResponse.Status
-func (r UpdateConnectionResp) Status() string {
+func (r UpdateCloudflowConnectionResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -21130,7 +19590,7 @@ func (r UpdateConnectionResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r UpdateConnectionResp) StatusCode() int {
+func (r UpdateCloudflowConnectionResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21138,457 +19598,7 @@ func (r UpdateConnectionResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r UpdateConnectionResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type CreateFlowResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Flow
-	JSON201      *Flow
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateFlowResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateFlowResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r CreateFlowResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type DeleteFlowResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteFlowResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteFlowResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r DeleteFlowResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type GetFlowResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Flow
-}
-
-// Status returns HTTPResponse.Status
-func (r GetFlowResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetFlowResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetFlowResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type UpdateFlowResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Flow
-}
-
-// Status returns HTTPResponse.Status
-func (r UpdateFlowResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r UpdateFlowResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r UpdateFlowResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type CreateNodeResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Node
-	JSON201      *Node
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateNodeResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateNodeResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r CreateNodeResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type DeleteNodeResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteNodeResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteNodeResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r DeleteNodeResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type GetNodeResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Node
-}
-
-// Status returns HTTPResponse.Status
-func (r GetNodeResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetNodeResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetNodeResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type CreateFlowVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Variable
-	JSON201      *Variable
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateFlowVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateFlowVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r CreateFlowVariableResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type DeleteFlowVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteFlowVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteFlowVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r DeleteFlowVariableResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type GetFlowVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Variable
-}
-
-// Status returns HTTPResponse.Status
-func (r GetFlowVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetFlowVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetFlowVariableResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type UpdateFlowVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Variable
-}
-
-// Status returns HTTPResponse.Status
-func (r UpdateFlowVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r UpdateFlowVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r UpdateFlowVariableResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type CreateGlobalVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Variable
-	JSON201      *Variable
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateGlobalVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateGlobalVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r CreateGlobalVariableResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type DeleteGlobalVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteGlobalVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteGlobalVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r DeleteGlobalVariableResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type GetGlobalVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Variable
-}
-
-// Status returns HTTPResponse.Status
-func (r GetGlobalVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetGlobalVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetGlobalVariableResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
-type UpdateGlobalVariableResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Variable
-}
-
-// Status returns HTTPResponse.Status
-func (r UpdateGlobalVariableResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r UpdateGlobalVariableResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r UpdateGlobalVariableResp) ContentType() string {
+func (r UpdateCloudflowConnectionResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -23489,247 +21499,56 @@ func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx con
 	return ParseListCloudDiagramLayerSnapshotsResp(rsp)
 }
 
-// CreateConnectionWithBodyWithResponse request with arbitrary body returning *CreateConnectionResp
-func (c *ClientWithResponses) CreateConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error) {
-	rsp, err := c.CreateConnectionWithBody(ctx, contentType, body, reqEditors...)
+// CreateCloudflowConnectionWithBodyWithResponse request with arbitrary body returning *CreateCloudflowConnectionResp
+func (c *ClientWithResponses) CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
+	rsp, err := c.CreateCloudflowConnectionWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateConnectionResp(rsp)
+	return ParseCreateCloudflowConnectionResp(rsp)
 }
 
-func (c *ClientWithResponses) CreateConnectionWithResponse(ctx context.Context, body CreateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateConnectionResp, error) {
-	rsp, err := c.CreateConnection(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateCloudflowConnectionWithResponse(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
+	rsp, err := c.CreateCloudflowConnection(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateConnectionResp(rsp)
+	return ParseCreateCloudflowConnectionResp(rsp)
 }
 
-// DeleteConnectionWithResponse request returning *DeleteConnectionResp
-func (c *ClientWithResponses) DeleteConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*DeleteConnectionResp, error) {
-	rsp, err := c.DeleteConnection(ctx, connectionId, reqEditors...)
+// DeleteCloudflowConnectionWithResponse request returning *DeleteCloudflowConnectionResp
+func (c *ClientWithResponses) DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error) {
+	rsp, err := c.DeleteCloudflowConnection(ctx, connectionId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteConnectionResp(rsp)
+	return ParseDeleteCloudflowConnectionResp(rsp)
 }
 
-// GetConnectionWithResponse request returning *GetConnectionResp
-func (c *ClientWithResponses) GetConnectionWithResponse(ctx context.Context, connectionId ConnectionId, reqEditors ...RequestEditorFn) (*GetConnectionResp, error) {
-	rsp, err := c.GetConnection(ctx, connectionId, reqEditors...)
+// GetCloudflowConnectionWithResponse request returning *GetCloudflowConnectionResp
+func (c *ClientWithResponses) GetCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*GetCloudflowConnectionResp, error) {
+	rsp, err := c.GetCloudflowConnection(ctx, connectionId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetConnectionResp(rsp)
+	return ParseGetCloudflowConnectionResp(rsp)
 }
 
-// UpdateConnectionWithBodyWithResponse request with arbitrary body returning *UpdateConnectionResp
-func (c *ClientWithResponses) UpdateConnectionWithBodyWithResponse(ctx context.Context, connectionId ConnectionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error) {
-	rsp, err := c.UpdateConnectionWithBody(ctx, connectionId, contentType, body, reqEditors...)
+// UpdateCloudflowConnectionWithBodyWithResponse request with arbitrary body returning *UpdateCloudflowConnectionResp
+func (c *ClientWithResponses) UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
+	rsp, err := c.UpdateCloudflowConnectionWithBody(ctx, connectionId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateConnectionResp(rsp)
+	return ParseUpdateCloudflowConnectionResp(rsp)
 }
 
-func (c *ClientWithResponses) UpdateConnectionWithResponse(ctx context.Context, connectionId ConnectionId, body UpdateConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateConnectionResp, error) {
-	rsp, err := c.UpdateConnection(ctx, connectionId, body, reqEditors...)
+func (c *ClientWithResponses) UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
+	rsp, err := c.UpdateCloudflowConnection(ctx, connectionId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateConnectionResp(rsp)
-}
-
-// CreateFlowWithBodyWithResponse request with arbitrary body returning *CreateFlowResp
-func (c *ClientWithResponses) CreateFlowWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
-	rsp, err := c.CreateFlowWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateFlowResp(rsp)
-}
-
-func (c *ClientWithResponses) CreateFlowWithResponse(ctx context.Context, body CreateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowResp, error) {
-	rsp, err := c.CreateFlow(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateFlowResp(rsp)
-}
-
-// DeleteFlowWithResponse request returning *DeleteFlowResp
-func (c *ClientWithResponses) DeleteFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*DeleteFlowResp, error) {
-	rsp, err := c.DeleteFlow(ctx, flowId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteFlowResp(rsp)
-}
-
-// GetFlowWithResponse request returning *GetFlowResp
-func (c *ClientWithResponses) GetFlowWithResponse(ctx context.Context, flowId FlowId, reqEditors ...RequestEditorFn) (*GetFlowResp, error) {
-	rsp, err := c.GetFlow(ctx, flowId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetFlowResp(rsp)
-}
-
-// UpdateFlowWithBodyWithResponse request with arbitrary body returning *UpdateFlowResp
-func (c *ClientWithResponses) UpdateFlowWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error) {
-	rsp, err := c.UpdateFlowWithBody(ctx, flowId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateFlowResp(rsp)
-}
-
-func (c *ClientWithResponses) UpdateFlowWithResponse(ctx context.Context, flowId FlowId, body UpdateFlowJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowResp, error) {
-	rsp, err := c.UpdateFlow(ctx, flowId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateFlowResp(rsp)
-}
-
-// CreateNodeWithBodyWithResponse request with arbitrary body returning *CreateNodeResp
-func (c *ClientWithResponses) CreateNodeWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateNodeResp, error) {
-	rsp, err := c.CreateNodeWithBody(ctx, flowId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateNodeResp(rsp)
-}
-
-func (c *ClientWithResponses) CreateNodeWithResponse(ctx context.Context, flowId FlowId, body CreateNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateNodeResp, error) {
-	rsp, err := c.CreateNode(ctx, flowId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateNodeResp(rsp)
-}
-
-// DeleteNodeWithResponse request returning *DeleteNodeResp
-func (c *ClientWithResponses) DeleteNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*DeleteNodeResp, error) {
-	rsp, err := c.DeleteNode(ctx, flowId, nodeId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteNodeResp(rsp)
-}
-
-// GetNodeWithResponse request returning *GetNodeResp
-func (c *ClientWithResponses) GetNodeWithResponse(ctx context.Context, flowId FlowId, nodeId NodeId, reqEditors ...RequestEditorFn) (*GetNodeResp, error) {
-	rsp, err := c.GetNode(ctx, flowId, nodeId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetNodeResp(rsp)
-}
-
-// CreateFlowVariableWithBodyWithResponse request with arbitrary body returning *CreateFlowVariableResp
-func (c *ClientWithResponses) CreateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error) {
-	rsp, err := c.CreateFlowVariableWithBody(ctx, flowId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateFlowVariableResp(rsp)
-}
-
-func (c *ClientWithResponses) CreateFlowVariableWithResponse(ctx context.Context, flowId FlowId, body CreateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFlowVariableResp, error) {
-	rsp, err := c.CreateFlowVariable(ctx, flowId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateFlowVariableResp(rsp)
-}
-
-// DeleteFlowVariableWithResponse request returning *DeleteFlowVariableResp
-func (c *ClientWithResponses) DeleteFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteFlowVariableResp, error) {
-	rsp, err := c.DeleteFlowVariable(ctx, flowId, variableId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteFlowVariableResp(rsp)
-}
-
-// GetFlowVariableWithResponse request returning *GetFlowVariableResp
-func (c *ClientWithResponses) GetFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, reqEditors ...RequestEditorFn) (*GetFlowVariableResp, error) {
-	rsp, err := c.GetFlowVariable(ctx, flowId, variableId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetFlowVariableResp(rsp)
-}
-
-// UpdateFlowVariableWithBodyWithResponse request with arbitrary body returning *UpdateFlowVariableResp
-func (c *ClientWithResponses) UpdateFlowVariableWithBodyWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error) {
-	rsp, err := c.UpdateFlowVariableWithBody(ctx, flowId, variableId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateFlowVariableResp(rsp)
-}
-
-func (c *ClientWithResponses) UpdateFlowVariableWithResponse(ctx context.Context, flowId FlowId, variableId VariableId, body UpdateFlowVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateFlowVariableResp, error) {
-	rsp, err := c.UpdateFlowVariable(ctx, flowId, variableId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateFlowVariableResp(rsp)
-}
-
-// CreateGlobalVariableWithBodyWithResponse request with arbitrary body returning *CreateGlobalVariableResp
-func (c *ClientWithResponses) CreateGlobalVariableWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error) {
-	rsp, err := c.CreateGlobalVariableWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateGlobalVariableResp(rsp)
-}
-
-func (c *ClientWithResponses) CreateGlobalVariableWithResponse(ctx context.Context, body CreateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGlobalVariableResp, error) {
-	rsp, err := c.CreateGlobalVariable(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateGlobalVariableResp(rsp)
-}
-
-// DeleteGlobalVariableWithResponse request returning *DeleteGlobalVariableResp
-func (c *ClientWithResponses) DeleteGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*DeleteGlobalVariableResp, error) {
-	rsp, err := c.DeleteGlobalVariable(ctx, variableId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteGlobalVariableResp(rsp)
-}
-
-// GetGlobalVariableWithResponse request returning *GetGlobalVariableResp
-func (c *ClientWithResponses) GetGlobalVariableWithResponse(ctx context.Context, variableId VariableId, reqEditors ...RequestEditorFn) (*GetGlobalVariableResp, error) {
-	rsp, err := c.GetGlobalVariable(ctx, variableId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetGlobalVariableResp(rsp)
-}
-
-// UpdateGlobalVariableWithBodyWithResponse request with arbitrary body returning *UpdateGlobalVariableResp
-func (c *ClientWithResponses) UpdateGlobalVariableWithBodyWithResponse(ctx context.Context, variableId VariableId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error) {
-	rsp, err := c.UpdateGlobalVariableWithBody(ctx, variableId, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateGlobalVariableResp(rsp)
-}
-
-func (c *ClientWithResponses) UpdateGlobalVariableWithResponse(ctx context.Context, variableId VariableId, body UpdateGlobalVariableJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGlobalVariableResp, error) {
-	rsp, err := c.UpdateGlobalVariable(ctx, variableId, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateGlobalVariableResp(rsp)
+	return ParseUpdateCloudflowConnectionResp(rsp)
 }
 
 // CreateAccountRoleWithBodyWithResponse request with arbitrary body returning *CreateAccountRoleResp
@@ -27798,479 +25617,237 @@ func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiag
 	return response, nil
 }
 
-// ParseCreateConnectionResp parses an HTTP response from a CreateConnectionWithResponse call
-func ParseCreateConnectionResp(rsp *http.Response) (*CreateConnectionResp, error) {
+// ParseCreateCloudflowConnectionResp parses an HTTP response from a CreateCloudflowConnectionWithResponse call
+func ParseCreateCloudflowConnectionResp(rsp *http.Response) (*CreateCloudflowConnectionResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateConnectionResp{
+	response := &CreateCloudflowConnectionResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Connection
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Connection
+		var dest CloudflowConnection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON201 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
 	}
 
 	return response, nil
 }
 
-// ParseDeleteConnectionResp parses an HTTP response from a DeleteConnectionWithResponse call
-func ParseDeleteConnectionResp(rsp *http.Response) (*DeleteConnectionResp, error) {
+// ParseDeleteCloudflowConnectionResp parses an HTTP response from a DeleteCloudflowConnectionWithResponse call
+func ParseDeleteCloudflowConnectionResp(rsp *http.Response) (*DeleteCloudflowConnectionResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteConnectionResp{
+	response := &DeleteCloudflowConnectionResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest DeleteCloudflowConnection409Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
 	return response, nil
 }
 
-// ParseGetConnectionResp parses an HTTP response from a GetConnectionWithResponse call
-func ParseGetConnectionResp(rsp *http.Response) (*GetConnectionResp, error) {
+// ParseGetCloudflowConnectionResp parses an HTTP response from a GetCloudflowConnectionWithResponse call
+func ParseGetCloudflowConnectionResp(rsp *http.Response) (*GetCloudflowConnectionResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetConnectionResp{
+	response := &GetCloudflowConnectionResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Connection
+		var dest CloudflowConnection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
 	return response, nil
 }
 
-// ParseUpdateConnectionResp parses an HTTP response from a UpdateConnectionWithResponse call
-func ParseUpdateConnectionResp(rsp *http.Response) (*UpdateConnectionResp, error) {
+// ParseUpdateCloudflowConnectionResp parses an HTTP response from a UpdateCloudflowConnectionWithResponse call
+func ParseUpdateCloudflowConnectionResp(rsp *http.Response) (*UpdateCloudflowConnectionResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UpdateConnectionResp{
+	response := &UpdateCloudflowConnectionResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Connection
+		var dest CloudflowConnection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	}
-
-	return response, nil
-}
-
-// ParseCreateFlowResp parses an HTTP response from a CreateFlowWithResponse call
-func ParseCreateFlowResp(rsp *http.Response) (*CreateFlowResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateFlowResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Flow
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON400 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Flow
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON401 = &dest
 
-	}
-
-	return response, nil
-}
-
-// ParseDeleteFlowResp parses an HTTP response from a DeleteFlowWithResponse call
-func ParseDeleteFlowResp(rsp *http.Response) (*DeleteFlowResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteFlowResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetFlowResp parses an HTTP response from a GetFlowWithResponse call
-func ParseGetFlowResp(rsp *http.Response) (*GetFlowResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetFlowResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Flow
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON403 = &dest
 
-	}
-
-	return response, nil
-}
-
-// ParseUpdateFlowResp parses an HTTP response from a UpdateFlowWithResponse call
-func ParseUpdateFlowResp(rsp *http.Response) (*UpdateFlowResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &UpdateFlowResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Flow
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON404 = &dest
 
-	}
-
-	return response, nil
-}
-
-// ParseCreateNodeResp parses an HTTP response from a CreateNodeWithResponse call
-func ParseCreateNodeResp(rsp *http.Response) (*CreateNodeResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateNodeResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Node
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Node
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteNodeResp parses an HTTP response from a DeleteNodeWithResponse call
-func ParseDeleteNodeResp(rsp *http.Response) (*DeleteNodeResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteNodeResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetNodeResp parses an HTTP response from a GetNodeWithResponse call
-func ParseGetNodeResp(rsp *http.Response) (*GetNodeResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetNodeResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Node
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseCreateFlowVariableResp parses an HTTP response from a CreateFlowVariableWithResponse call
-func ParseCreateFlowVariableResp(rsp *http.Response) (*CreateFlowVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateFlowVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteFlowVariableResp parses an HTTP response from a DeleteFlowVariableWithResponse call
-func ParseDeleteFlowVariableResp(rsp *http.Response) (*DeleteFlowVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteFlowVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetFlowVariableResp parses an HTTP response from a GetFlowVariableWithResponse call
-func ParseGetFlowVariableResp(rsp *http.Response) (*GetFlowVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetFlowVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseUpdateFlowVariableResp parses an HTTP response from a UpdateFlowVariableWithResponse call
-func ParseUpdateFlowVariableResp(rsp *http.Response) (*UpdateFlowVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &UpdateFlowVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseCreateGlobalVariableResp parses an HTTP response from a CreateGlobalVariableWithResponse call
-func ParseCreateGlobalVariableResp(rsp *http.Response) (*CreateGlobalVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateGlobalVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteGlobalVariableResp parses an HTTP response from a DeleteGlobalVariableWithResponse call
-func ParseDeleteGlobalVariableResp(rsp *http.Response) (*DeleteGlobalVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteGlobalVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetGlobalVariableResp parses an HTTP response from a GetGlobalVariableWithResponse call
-func ParseGetGlobalVariableResp(rsp *http.Response) (*GetGlobalVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetGlobalVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseUpdateGlobalVariableResp parses an HTTP response from a UpdateGlobalVariableWithResponse call
-func ParseUpdateGlobalVariableResp(rsp *http.Response) (*UpdateGlobalVariableResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &UpdateGlobalVariableResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Variable
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+		response.JSON500 = &dest
 
 	}
 

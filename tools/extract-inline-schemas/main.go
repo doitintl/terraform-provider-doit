@@ -657,6 +657,66 @@ func flattenAllOfSchemas(schemasNode *yaml.Node) {
 
 		fmt.Printf("Flattened allOf in schema %s\n", schemaName)
 	}
+
+	for i := 0; i < len(schemasNode.Content)-1; i += 2 {
+		schemaName := schemasNode.Content[i].Value
+		schemaNode := schemasNode.Content[i+1]
+		flattenInlineAllOf(schemaNode, schemasNode, schemaName)
+	}
+}
+
+// flattenInlineAllOf recursively walks a schema node's properties and
+// flattens any inline multi-element allOf found in property values.
+func flattenInlineAllOf(node *yaml.Node, schemasNode *yaml.Node, path string) {
+	if node == nil || node.Kind != yaml.MappingNode {
+		return
+	}
+	propsNode := getMappingValue(node, "properties")
+	if propsNode == nil || propsNode.Kind != yaml.MappingNode {
+		return
+	}
+	for i := 0; i < len(propsNode.Content)-1; i += 2 {
+		propName := propsNode.Content[i].Value
+		propVal := propsNode.Content[i+1]
+		if propVal.Kind != yaml.MappingNode {
+			continue
+		}
+
+		allOfNode := getMappingValue(propVal, "allOf")
+		if allOfNode != nil && allOfNode.Kind == yaml.SequenceNode && len(allOfNode.Content) >= 2 {
+			propPath := path + "." + propName
+			merged := flattenAllOf(allOfNode, schemasNode, propPath)
+			if merged != nil {
+				parentDesc := getScalarNode(propVal, "description")
+				parentExample := getMappingValue(propVal, "example")
+
+				propVal.Content = merged.Content
+
+				if parentDesc != nil && parentDesc.Value != "" {
+					removeMappingKey(propVal, "description")
+					propVal.Content = append(
+						[]*yaml.Node{
+							{Kind: yaml.ScalarNode, Value: "description", Tag: "!!str"},
+							{Kind: yaml.ScalarNode, Value: parentDesc.Value, Tag: "!!str", Style: parentDesc.Style},
+						},
+						propVal.Content...,
+					)
+				}
+
+				if parentExample != nil {
+					removeMappingKey(propVal, "example")
+					propVal.Content = append(propVal.Content,
+						&yaml.Node{Kind: yaml.ScalarNode, Value: "example", Tag: "!!str"},
+						deepCopyNode(parentExample),
+					)
+				}
+
+				fmt.Printf("Flattened inline allOf in %s\n", propPath)
+			}
+		}
+
+		flattenInlineAllOf(propsNode.Content[i+1], schemasNode, path+"."+propName)
+	}
 }
 
 // flattenAllOf merges all sub-schemas of an allOf sequence node into a single

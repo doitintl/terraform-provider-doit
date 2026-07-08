@@ -207,45 +207,6 @@ resources:
     delete:
       path: /core/v1/cloudconnect/aws/accounts/{accountID}
       method: DELETE
-  cloudflow_flow:
-    create:
-      path: /cloudflow/v1/flows
-      method: POST
-    read:
-      path: /cloudflow/v1/flows/{flowId}
-      method: GET
-    update:
-      path: /cloudflow/v1/flows/{flowId}
-      method: PUT
-    delete:
-      path: /cloudflow/v1/flows/{flowId}
-      method: DELETE
-  cloudflow_flow_variable:
-    create:
-      path: /cloudflow/v1/flows/{flowId}/variables
-      method: POST
-    read:
-      path: /cloudflow/v1/flows/{flowId}/variables/{variableId}
-      method: GET
-    update:
-      path: /cloudflow/v1/flows/{flowId}/variables/{variableId}
-      method: PUT
-    delete:
-      path: /cloudflow/v1/flows/{flowId}/variables/{variableId}
-      method: DELETE
-  cloudflow_global_variable:
-    create:
-      path: /cloudflow/v1/global-variables
-      method: POST
-    read:
-      path: /cloudflow/v1/global-variables/{variableId}
-      method: GET
-    update:
-      path: /cloudflow/v1/global-variables/{variableId}
-      method: PUT
-    delete:
-      path: /cloudflow/v1/global-variables/{variableId}
-      method: DELETE
   cloudflow_connection:
     create:
       path: /cloudflow/v1/connections
@@ -258,14 +219,4 @@ resources:
       method: PATCH
     delete:
       path: /cloudflow/v1/connections/{connectionId}
-      method: DELETE
-  cloudflow_node:
-    create:
-      path: /cloudflow/v1/flows/{flowId}/nodes
-      method: POST
-    read:
-      path: /cloudflow/v1/flows/{flowId}/nodes/{nodeId}
-      method: GET
-    delete:
-      path: /cloudflow/v1/flows/{flowId}/nodes/{nodeId}
       method: DELETE

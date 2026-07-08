@@ -787,6 +787,139 @@ B:
 	})
 }
 
+func TestFlattenInlineAllOf(t *testing.T) {
+	t.Run("inline property allOf (CloudflowConnection pattern)", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+GCPConfigRequest:
+  type: object
+  properties:
+    projectId:
+      type: string
+    level:
+      type: string
+CloudflowConnection:
+  type: object
+  properties:
+    name:
+      type: string
+    gcpConfig:
+      allOf:
+        - $ref: "#/components/schemas/GCPConfigRequest"
+        - type: object
+          properties:
+            status:
+              type: string
+            deploymentCommand:
+              type: string
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		conn := getMappingValue(schemasNode, "CloudflowConnection")
+		gcpConfig := getMappingValue(getMappingValue(conn, "properties"), "gcpConfig")
+		if gcpConfig == nil {
+			t.Fatal("gcpConfig not found")
+		}
+		if getMappingValue(gcpConfig, "allOf") != nil {
+			t.Error("allOf should have been flattened")
+		}
+		if getScalarValue(gcpConfig, "type") != "object" {
+			t.Error("flattened gcpConfig should have type: object")
+		}
+		props := getMappingValue(gcpConfig, "properties")
+		if props == nil {
+			t.Fatal("properties not found on flattened gcpConfig")
+		}
+		for _, name := range []string{"projectId", "level", "status", "deploymentCommand"} {
+			if getMappingValue(props, name) == nil {
+				t.Errorf("expected property %q in flattened gcpConfig", name)
+			}
+		}
+	})
+
+	t.Run("nested inline allOf", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+Inner:
+  type: object
+  properties:
+    x:
+      type: string
+Outer:
+  type: object
+  properties:
+    wrapper:
+      type: object
+      properties:
+        nested:
+          allOf:
+            - $ref: "#/components/schemas/Inner"
+            - type: object
+              properties:
+                y:
+                  type: integer
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		outer := getMappingValue(schemasNode, "Outer")
+		wrapper := getMappingValue(getMappingValue(outer, "properties"), "wrapper")
+		nested := getMappingValue(getMappingValue(wrapper, "properties"), "nested")
+		if nested == nil {
+			t.Fatal("nested not found")
+		}
+		if getMappingValue(nested, "allOf") != nil {
+			t.Error("nested allOf should have been flattened")
+		}
+		props := getMappingValue(nested, "properties")
+		if getMappingValue(props, "x") == nil {
+			t.Error("expected property x from $ref")
+		}
+		if getMappingValue(props, "y") == nil {
+			t.Error("expected property y from inline extension")
+		}
+	})
+
+	t.Run("sibling key preservation", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+Base:
+  type: object
+  properties:
+    a:
+      type: string
+Parent:
+  type: object
+  properties:
+    child:
+      description: "Keep this description"
+      allOf:
+        - $ref: "#/components/schemas/Base"
+        - type: object
+          properties:
+            b:
+              type: integer
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		parent := getMappingValue(schemasNode, "Parent")
+		child := getMappingValue(getMappingValue(parent, "properties"), "child")
+		if child == nil {
+			t.Fatal("child not found")
+		}
+		desc := getScalarValue(child, "description")
+		if desc != "Keep this description" {
+			t.Errorf("expected parent description to be preserved, got %q", desc)
+		}
+		if getMappingValue(child, "allOf") != nil {
+			t.Error("allOf should have been flattened")
+		}
+		props := getMappingValue(child, "properties")
+		if getMappingValue(props, "a") == nil {
+			t.Error("expected property a from $ref")
+		}
+		if getMappingValue(props, "b") == nil {
+			t.Error("expected property b from inline extension")
+		}
+	})
+}
+
 // --- validateEquivalence with flattened allOf ---
 
 func TestValidateEquivalence_FlattenedAllOf(t *testing.T) {
