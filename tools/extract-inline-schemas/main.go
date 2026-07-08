@@ -546,11 +546,15 @@ func hasRef(node *yaml.Node) bool {
 }
 
 // wrapRefSiblings recursively walks the YAML tree and wraps any $ref node
-// that has sibling keywords (e.g., description, nullable) in a single-member
-// allOf. This converts valid OAS 3.1 patterns into 3.0-compatible structures.
+// that has sibling keywords (e.g., nullable) in a single-member allOf.
+// This converts valid OAS 3.1 patterns into 3.0-compatible structures.
 //
-// Before:  {$ref: "#/.../Foo", description: "...", nullable: true}.
-// After:   {allOf: [{$ref: "#/.../Foo"}], description: "...", nullable: true}.
+// Non-schema Reference Objects (where the only siblings are summary and/or
+// description) are left untouched — those are valid OAS 3.1 reference
+// annotations, not schema compositions.
+//
+// Before:  {$ref: "#/.../Foo", nullable: true}.
+// After:   {allOf: [{$ref: "#/.../Foo"}], nullable: true}.
 func wrapRefSiblings(node *yaml.Node) {
 	if node == nil {
 		return
@@ -564,7 +568,7 @@ func wrapRefSiblings(node *yaml.Node) {
 				break
 			}
 		}
-		if refIdx >= 0 && len(node.Content) > 2 {
+		if refIdx >= 0 && len(node.Content) > 2 && hasSchemaKeywordSiblings(node, refIdx) {
 			refKeyNode := node.Content[refIdx]
 			refValNode := node.Content[refIdx+1]
 
@@ -600,6 +604,22 @@ func wrapRefSiblings(node *yaml.Node) {
 			wrapRefSiblings(child)
 		}
 	}
+}
+
+// hasSchemaKeywordSiblings returns true if a mapping node has sibling keys
+// beyond $ref that are schema keywords (not just summary/description which
+// are valid on non-schema Reference Objects in OAS 3.1).
+func hasSchemaKeywordSiblings(node *yaml.Node, refIdx int) bool {
+	for i := 0; i < len(node.Content)-1; i += 2 {
+		if i == refIdx {
+			continue
+		}
+		key := node.Content[i].Value
+		if key != "summary" && key != "description" {
+			return true
+		}
+	}
+	return false
 }
 
 // flattenAllOfSchemas walks all named schemas in components/schemas and flattens
@@ -1081,16 +1101,16 @@ func resolveRefsWithVisited(v any, schemas map[string]any, visited map[string]bo
 					resolved := resolveRefsWithVisited(schema, schemas, newVisited)
 					if len(val) > 1 {
 						if resolvedMap, ok := resolved.(map[string]any); ok {
-							merged := make(map[string]any, len(resolvedMap)+len(val))
-							for k, v := range resolvedMap {
-								merged[k] = v
-							}
+							siblings := make(map[string]any, len(val)-1)
 							for k, v := range val {
 								if k != "$ref" {
-									merged[k] = resolveRefsWithVisited(v, schemas, newVisited)
+									siblings[k] = resolveRefsWithVisited(v, schemas, newVisited)
 								}
 							}
-							return merged
+							merged, ok := mergeAllOfItems([]any{resolvedMap, siblings})
+							if ok {
+								return merged
+							}
 						}
 					}
 					return resolved
@@ -1149,16 +1169,15 @@ func stripDocFields(v any) any {
 			if len(result) == 1 {
 				return inner
 			}
-			merged := make(map[string]any, len(inner)+len(result))
-			for k, v := range inner {
-				merged[k] = v
-			}
+			siblings := make(map[string]any, len(result)-1)
 			for k, v := range result {
 				if k != compKey {
-					merged[k] = v
+					siblings[k] = v
 				}
 			}
-			return merged
+			if m, ok := mergeAllOfItems([]any{inner, siblings}); ok {
+				return m
+			}
 		}
 		// Merge multi-element allOf: when all elements are objects, merge their
 		// properties and required arrays into a single flat object.
