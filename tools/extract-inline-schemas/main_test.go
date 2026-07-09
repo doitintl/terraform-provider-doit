@@ -503,7 +503,7 @@ func TestStripDocFields(t *testing.T) {
 		}
 	})
 
-	t.Run("does not unwrap allOf with other sibling keys", func(t *testing.T) {
+	t.Run("unwraps single-element allOf with sibling keys by merging", func(t *testing.T) {
 		input := map[string]any{
 			"type": "object",
 			"allOf": []any{
@@ -511,8 +511,50 @@ func TestStripDocFields(t *testing.T) {
 			},
 		}
 		got := stripDocFields(input).(map[string]any)
-		if _, ok := got["allOf"]; !ok {
-			t.Error("allOf with sibling type should NOT be unwrapped")
+		if _, ok := got["allOf"]; ok {
+			t.Error("single-element allOf with siblings should be unwrapped (merged)")
+		}
+		if got["type"] != "object" {
+			t.Error("sibling key 'type' should be preserved after merge")
+		}
+		if _, ok := got["properties"]; !ok {
+			t.Error("inner 'properties' should be present after merge")
+		}
+	})
+
+	t.Run("unwraps single-element allOf with overlapping properties using union", func(t *testing.T) {
+		input := map[string]any{
+			"properties": map[string]any{
+				"a": map[string]any{"type": "string"},
+			},
+			"required": []any{"a"},
+			"allOf": []any{
+				map[string]any{
+					"properties": map[string]any{
+						"b": map[string]any{"type": "integer"},
+					},
+					"required": []any{"b"},
+				},
+			},
+		}
+		got := stripDocFields(input).(map[string]any)
+		if _, ok := got["allOf"]; ok {
+			t.Error("single-element allOf should be unwrapped")
+		}
+		props := got["properties"].(map[string]any)
+		if _, ok := props["a"]; !ok {
+			t.Error("sibling property 'a' should be preserved")
+		}
+		if _, ok := props["b"]; !ok {
+			t.Error("inner property 'b' should be preserved")
+		}
+		req := got["required"].([]any)
+		seen := map[string]bool{}
+		for _, r := range req {
+			seen[r.(string)] = true
+		}
+		if !seen["a"] || !seen["b"] {
+			t.Errorf("required should contain both 'a' and 'b', got %v", req)
 		}
 	})
 }
@@ -601,6 +643,83 @@ func TestMergeAllOfItems(t *testing.T) {
 		req := merged["required"].([]any)
 		if len(req) != 3 {
 			t.Errorf("expected 3 unique required fields, got %d: %v", len(req), req)
+		}
+	})
+}
+
+// --- wrapRefSiblings ---
+
+func TestWrapRefSiblings(t *testing.T) {
+	t.Run("wraps $ref with schema keyword siblings", func(t *testing.T) {
+		node := mustParseYAML(t, `
+root:
+  $ref: "#/components/schemas/Foo"
+  nullable: true
+`)
+		root := getMappingValue(node, "root")
+		wrapRefSiblings(root)
+		if getMappingValue(root, "allOf") == nil {
+			t.Error("$ref with nullable should be wrapped in allOf")
+		}
+		if getMappingValue(root, "$ref") != nil {
+			t.Error("$ref should be moved inside allOf")
+		}
+	})
+
+	t.Run("skips $ref with only description sibling", func(t *testing.T) {
+		node := mustParseYAML(t, `
+root:
+  $ref: "#/components/responses/NotFound"
+  description: "Not found response"
+`)
+		root := getMappingValue(node, "root")
+		wrapRefSiblings(root)
+		if getMappingValue(root, "allOf") != nil {
+			t.Error("$ref with only description sibling should NOT be wrapped")
+		}
+		if getScalarValue(root, "$ref") != "#/components/responses/NotFound" {
+			t.Error("$ref should remain untouched")
+		}
+	})
+
+	t.Run("skips $ref with only summary sibling", func(t *testing.T) {
+		node := mustParseYAML(t, `
+root:
+  $ref: "#/components/schemas/Bar"
+  summary: "A bar"
+`)
+		root := getMappingValue(node, "root")
+		wrapRefSiblings(root)
+		if getMappingValue(root, "allOf") != nil {
+			t.Error("$ref with only summary sibling should NOT be wrapped")
+		}
+	})
+
+	t.Run("skips $ref with summary and description siblings only", func(t *testing.T) {
+		node := mustParseYAML(t, `
+root:
+  $ref: "#/components/parameters/PageToken"
+  summary: "Pagination token"
+  description: "The token returned from the previous page"
+`)
+		root := getMappingValue(node, "root")
+		wrapRefSiblings(root)
+		if getMappingValue(root, "allOf") != nil {
+			t.Error("$ref with only summary+description siblings should NOT be wrapped")
+		}
+	})
+
+	t.Run("wraps $ref with description and schema keyword siblings", func(t *testing.T) {
+		node := mustParseYAML(t, `
+root:
+  $ref: "#/components/schemas/Foo"
+  description: "A foo"
+  nullable: true
+`)
+		root := getMappingValue(node, "root")
+		wrapRefSiblings(root)
+		if getMappingValue(root, "allOf") == nil {
+			t.Error("$ref with description+nullable should be wrapped (nullable is a schema keyword)")
 		}
 	})
 }
@@ -777,6 +896,139 @@ B:
 		}
 		if getScalarValue(fieldProp, "description") != "override" {
 			t.Error("conflicting property description should use last definition")
+		}
+	})
+}
+
+func TestFlattenInlineAllOf(t *testing.T) {
+	t.Run("inline property allOf (CloudflowConnection pattern)", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+GCPConfigRequest:
+  type: object
+  properties:
+    projectId:
+      type: string
+    level:
+      type: string
+CloudflowConnection:
+  type: object
+  properties:
+    name:
+      type: string
+    gcpConfig:
+      allOf:
+        - $ref: "#/components/schemas/GCPConfigRequest"
+        - type: object
+          properties:
+            status:
+              type: string
+            deploymentCommand:
+              type: string
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		conn := getMappingValue(schemasNode, "CloudflowConnection")
+		gcpConfig := getMappingValue(getMappingValue(conn, "properties"), "gcpConfig")
+		if gcpConfig == nil {
+			t.Fatal("gcpConfig not found")
+		}
+		if getMappingValue(gcpConfig, "allOf") != nil {
+			t.Error("allOf should have been flattened")
+		}
+		if getScalarValue(gcpConfig, "type") != "object" {
+			t.Error("flattened gcpConfig should have type: object")
+		}
+		props := getMappingValue(gcpConfig, "properties")
+		if props == nil {
+			t.Fatal("properties not found on flattened gcpConfig")
+		}
+		for _, name := range []string{"projectId", "level", "status", "deploymentCommand"} {
+			if getMappingValue(props, name) == nil {
+				t.Errorf("expected property %q in flattened gcpConfig", name)
+			}
+		}
+	})
+
+	t.Run("nested inline allOf", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+Inner:
+  type: object
+  properties:
+    x:
+      type: string
+Outer:
+  type: object
+  properties:
+    wrapper:
+      type: object
+      properties:
+        nested:
+          allOf:
+            - $ref: "#/components/schemas/Inner"
+            - type: object
+              properties:
+                y:
+                  type: integer
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		outer := getMappingValue(schemasNode, "Outer")
+		wrapper := getMappingValue(getMappingValue(outer, "properties"), "wrapper")
+		nested := getMappingValue(getMappingValue(wrapper, "properties"), "nested")
+		if nested == nil {
+			t.Fatal("nested not found")
+		}
+		if getMappingValue(nested, "allOf") != nil {
+			t.Error("nested allOf should have been flattened")
+		}
+		props := getMappingValue(nested, "properties")
+		if getMappingValue(props, "x") == nil {
+			t.Error("expected property x from $ref")
+		}
+		if getMappingValue(props, "y") == nil {
+			t.Error("expected property y from inline extension")
+		}
+	})
+
+	t.Run("sibling key preservation", func(t *testing.T) {
+		schemasNode := mustParseYAML(t, `
+Base:
+  type: object
+  properties:
+    a:
+      type: string
+Parent:
+  type: object
+  properties:
+    child:
+      description: "Keep this description"
+      allOf:
+        - $ref: "#/components/schemas/Base"
+        - type: object
+          properties:
+            b:
+              type: integer
+`)
+		flattenAllOfSchemas(schemasNode)
+
+		parent := getMappingValue(schemasNode, "Parent")
+		child := getMappingValue(getMappingValue(parent, "properties"), "child")
+		if child == nil {
+			t.Fatal("child not found")
+		}
+		desc := getScalarValue(child, "description")
+		if desc != "Keep this description" {
+			t.Errorf("expected parent description to be preserved, got %q", desc)
+		}
+		if getMappingValue(child, "allOf") != nil {
+			t.Error("allOf should have been flattened")
+		}
+		props := getMappingValue(child, "properties")
+		if getMappingValue(props, "a") == nil {
+			t.Error("expected property a from $ref")
+		}
+		if getMappingValue(props, "b") == nil {
+			t.Error("expected property b from inline extension")
 		}
 	})
 }
@@ -963,6 +1215,46 @@ func TestResolveRefs(t *testing.T) {
 		got := resolveRefs(input, schemas).(map[string]any)
 		if got["$ref"] != "#/components/responses/NotFound" {
 			t.Error("non-schema ref should be left as-is")
+		}
+	})
+
+	t.Run("merges $ref with sibling properties using union", func(t *testing.T) {
+		schemas := map[string]any{
+			"Base": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"a": map[string]any{"type": "string"},
+					"b": map[string]any{"type": "string"},
+				},
+				"required": []any{"a"},
+			},
+		}
+		input := map[string]any{
+			"$ref": "#/components/schemas/Base",
+			"properties": map[string]any{
+				"c": map[string]any{"type": "integer"},
+			},
+			"required": []any{"b", "c"},
+		}
+		got := resolveRefs(input, schemas).(map[string]any)
+		props := got["properties"].(map[string]any)
+		for _, name := range []string{"a", "b", "c"} {
+			if _, ok := props[name]; !ok {
+				t.Errorf("expected property %q in merged result", name)
+			}
+		}
+		req := got["required"].([]any)
+		seen := map[string]bool{}
+		for _, r := range req {
+			seen[r.(string)] = true
+		}
+		for _, name := range []string{"a", "b", "c"} {
+			if !seen[name] {
+				t.Errorf("expected %q in required, got %v", name, req)
+			}
+		}
+		if len(req) != 3 {
+			t.Errorf("required should have 3 entries (deduped), got %d", len(req))
 		}
 	})
 }

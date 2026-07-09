@@ -4150,6 +4150,61 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403_resource_or_forbidden"
+  /clouddiagrams/v1/statussheet/{id}/costs:
+    get:
+      tags:
+        - Cloud Diagrams
+      summary: Get diagram cost snapshot
+      description: |-
+        Returns a bounded cost snapshot for the specified diagram layer over a date window.
+        The response composes the diagram's total spend, period-over-period change, top
+        resources by cost (capped at 5), top services by cost (capped at 5), and a trend
+        series (most recent 12 buckets at the requested interval).
+      operationId: getCloudDiagramCostSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Layer ID.
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: true
+          description: Inclusive start of the cost window (ISO date, e.g. `2026-04-01`).
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          description: Inclusive end of the cost window (ISO date, e.g. `2026-04-28`).
+          schema:
+            type: string
+            format: date
+        - name: interval
+          in: query
+          required: false
+          description: Bucket interval for the trend series. Defaults to `day` when omitted.
+          schema:
+            type: string
+            enum:
+              - day
+              - week
+              - month
+      responses:
+        "200":
+          description: OK - Diagram cost snapshot returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudDiagramCostSnapshot"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403_resource_or_forbidden"
   /clouddiagrams/v1/statussheet/{id}/snapshots:
     get:
       tags:
@@ -10319,6 +10374,127 @@ components:
           description: Exported notes.
           items:
             $ref: "#/components/schemas/CloudDiagramNote"
+    CloudDiagramCostTimeRange:
+      type: object
+      required:
+        - startDate
+        - endDate
+        - interval
+      description: Resolved cost window for the snapshot.
+      properties:
+        startDate:
+          type: string
+          format: date
+          description: Inclusive start of the cost window (ISO date).
+        endDate:
+          type: string
+          format: date
+          description: Inclusive end of the cost window (ISO date).
+        interval:
+          type: string
+          enum:
+            - day
+            - week
+            - month
+          description: Bucket interval used for the trend series.
+    CloudDiagramCostResource:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - amount
+      description: A single resource entry within the top-resources list.
+      properties:
+        id:
+          type: string
+          description: Resource id (cloud-native id when available; otherwise the diagram component id).
+        name:
+          type: string
+          description: Human-readable resource name.
+        type:
+          type: string
+          description: Resource type label (e.g. `ec2`, `rds`).
+        amount:
+          type: number
+          description: Cost amount for this resource within the snapshot window.
+    CloudDiagramCostServiceBreakdown:
+      type: object
+      required:
+        - service
+        - amount
+      description: A single service entry within the cost-by-service breakdown.
+      properties:
+        service:
+          type: string
+          description: Cloud service label (e.g. `EC2`).
+        amount:
+          type: number
+          description: Cost amount for this service within the snapshot window.
+    CloudDiagramCostTrendBucket:
+      type: object
+      required:
+        - bucketStart
+        - amount
+      description: A single bucket in the trend series.
+      properties:
+        bucketStart:
+          type: string
+          description: Inclusive start of this bucket. ISO date for `day` and `month`; week label for `week`.
+        amount:
+          type: number
+          description: Total cost for this bucket.
+    CloudDiagramCostSnapshot:
+      type: object
+      required:
+        - diagramId
+        - currency
+        - timeRange
+        - total
+        - trendingPct
+        - topResources
+        - byService
+        - trend
+      description: |-
+        Bounded cost snapshot for a diagram layer. Composes the diagram's total spend,
+        period-over-period change, top resources by cost (capped at 5), top services by
+        cost (capped at 5), and the most recent 12 trend buckets at the requested interval.
+      properties:
+        diagramId:
+          type: string
+          description: Diagram (layer) ID this snapshot was computed for.
+        currency:
+          type: string
+          description: Currency the cost numbers are reported in (e.g. `USD`).
+        timeRange:
+          $ref: "#/components/schemas/CloudDiagramCostTimeRange"
+        total:
+          type: number
+          description: Total cost across the entire diagram for the snapshot window.
+        trendingPct:
+          type: number
+          nullable: true
+          description: |-
+            Period-over-period change as a fraction (e.g. 0.142 = +14.2%). `null` when no
+            prior period of equal length is available for comparison.
+        topResources:
+          type: array
+          description: Top resources by cost, capped at 5.
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/CloudDiagramCostResource"
+        byService:
+          type: array
+          description: Top services by cost, capped at 5.
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/CloudDiagramCostServiceBreakdown"
+        trend:
+          type: array
+          description: Most recent trend buckets at the requested interval, capped at 12.
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/CloudDiagramCostTrendBucket"
     CloudDiagramLayerSnapshot:
       type: object
       required:
