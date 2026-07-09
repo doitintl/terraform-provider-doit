@@ -3,20 +3,32 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// supportRequestTagsResource is an association resource: it manages a Set of
+// tags on a parent ticket via surgical POST-add / DELETE-remove (there is no
+// single "update" endpoint). Like labelAssignmentsResource, its schema is
+// hand-written rather than taken from the generated resource_support_request_tags
+// package: that package is derived from the POST request/response shapes
+// (tags as a List, a write-only applied_tags echo field, ticket_id as
+// Optional+Computed) and cannot model a desired-state association resource. The
+// generated package is therefore intentionally unused.
 type (
 	supportRequestTagsResource struct {
 		client *models.ClientWithResponses
@@ -84,8 +96,22 @@ func (r *supportRequestTagsResource) Schema(ctx context.Context, _ resource.Sche
 			"tags": schema.SetAttribute{
 				ElementType:         types.StringType,
 				Required:            true,
-				Description:         "Set of tags to apply to the support request. Tags are normalized (trimmed and lowercased) by the API.",
-				MarkdownDescription: "Set of tags to apply to the support request. Tags are normalized (trimmed and lowercased) by the API.",
+				Description:         "Set of tags to apply to the support request. The API normalizes tags (trim + lowercase) on write; your configured representation is preserved in state, so no drift is produced.",
+				MarkdownDescription: "Set of tags to apply to the support request. The API normalizes tags (trim + lowercase) on write; your configured representation is preserved in state, so no drift is produced.",
+				// Mirrors the TagsRequest constraints in the OpenAPI spec: at most 50
+				// tags, each 1-80 characters and not blank/whitespace-only. An empty
+				// set is allowed and clears the managed tags (like label_assignments).
+				// Enforced at plan time so invalid configs fail before any API call.
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(50),
+					setvalidator.ValueStringsAre(
+						stringvalidator.LengthBetween(1, 80),
+						stringvalidator.RegexMatches(
+							regexp.MustCompile(`\S`),
+							"must not be blank or whitespace-only",
+						),
+					),
+				},
 			},
 			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
 				Create: true,

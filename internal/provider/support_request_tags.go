@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -43,17 +44,23 @@ func (r *supportRequestTagsResource) populateState(ctx context.Context, state *s
 		return diags
 	}
 
-	remoteTags := tagsResp.JSON200.Tags
-	if remoteTags == nil {
-		remoteTags = new([]string)
+	var apiTags []string
+	if tagsResp.JSON200.Tags != nil {
+		apiTags = *tagsResp.JSON200.Tags
 	}
 
-	tagValues := make([]types.String, 0, len(*remoteTags))
-	for _, t := range *remoteTags {
-		tagValues = append(tagValues, types.StringValue(t))
+	// Preserve the user's tag representation when the API returns a normalized
+	// (trim + lowercase) form of the same tag, to avoid false drift. This mirrors
+	// the Read-path reconciliation pattern used by normalizeDimensionsType and
+	// mergeSentinelValues: the plan is the source of truth for user-configured
+	// values, so Read only surfaces genuine external changes.
+	priorTags := tagsToStringSlice(state.Tags, &diags)
+	if diags.HasError() {
+		return diags
 	}
+	reconciled := reconcileTags(apiTags, priorTags)
 
-	tagsSet, setDiags := types.SetValueFrom(ctx, types.StringType, tagValues)
+	tagsSet, setDiags := types.SetValueFrom(ctx, types.StringType, reconciled)
 	diags.Append(setDiags...)
 	if diags.HasError() {
 		return diags
@@ -61,6 +68,35 @@ func (r *supportRequestTagsResource) populateState(ctx context.Context, state *s
 
 	state.Tags = tagsSet
 	return diags
+}
+
+// normalizeTag applies the same normalization the API performs on submitted
+// tags (trim + lowercase). See the TagsRequest schema in the OpenAPI spec.
+func normalizeTag(tag string) string {
+	return strings.ToLower(strings.TrimSpace(tag))
+}
+
+// reconcileTags returns the tag set to store in state after a Read. For each tag
+// the API returns, if a prior-state tag normalizes to the same value, the user's
+// original representation is preserved (avoiding drift from trim/lowercase
+// normalization). Tags present in the API response but not in prior state (e.g.
+// on import, or added externally) are taken as-is. Tags dropped by the API are
+// not carried over, so genuine external removals are still detected as drift.
+func reconcileTags(apiTags, priorTags []string) []string {
+	byNormalized := make(map[string]string, len(priorTags))
+	for _, t := range priorTags {
+		byNormalized[normalizeTag(t)] = t
+	}
+
+	result := make([]string, 0, len(apiTags))
+	for _, a := range apiTags {
+		if original, ok := byNormalized[normalizeTag(a)]; ok {
+			result = append(result, original)
+		} else {
+			result = append(result, a)
+		}
+	}
+	return result
 }
 
 func tagsToStringSlice(set types.Set, diags *diag.Diagnostics) []string {

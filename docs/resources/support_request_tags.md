@@ -24,7 +24,7 @@ resource "doit_support_request_tags" "example" {
 
 ### Required
 
-- `tags` (Set of String) Set of tags to apply to the support request. Tags are normalized (trimmed and lowercased) by the API.
+- `tags` (Set of String) Set of tags to apply to the support request. The API normalizes tags (trim + lowercase) on write; your configured representation is preserved in state, so no drift is produced.
 - `ticket_id` (Number) The ID of the support request to manage tags for.
 
 ### Optional
