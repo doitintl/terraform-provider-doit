@@ -178,7 +178,7 @@ linters:
     custom:
       diagsuppressed:
         type: "module"
-        description: "Detects suppressed diag.Diagnostics return values."
+        description: "Detects suppressed diag.Diagnostics return values (blank identifier or discarded bare call)."
       structliteral:
         type: "module"
         description: "Detects direct struct literal construction of generated Terraform Value types."
