@@ -106,6 +106,12 @@ func SupportRequestsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "The subject of the ticket.",
 							MarkdownDescription: "The subject of the ticket.",
 						},
+						"tags": schema.ListAttribute{
+							ElementType:         types.StringType,
+							Computed:            true,
+							Description:         "Ticket tags, filtered by caller type. DoiT employee (doer) callers\nreceive the full tag set verbatim, including internal namespaces\n(e.g. `tier/*`, `synapse_*`). Customer callers receive only tags\nunder the `customer_tag/` namespace, with that prefix stripped.\nAlways present; empty array when the caller has no visible tags.",
+							MarkdownDescription: "Ticket tags, filtered by caller type. DoiT employee (doer) callers\nreceive the full tag set verbatim, including internal namespaces\n(e.g. `tier/*`, `synapse_*`). Customer callers receive only tags\nunder the `customer_tag/` namespace, with that prefix stripped.\nAlways present; empty array when the caller has no visible tags.",
+						},
 						"update_time": schema.Int64Attribute{
 							Computed:            true,
 							Description:         "The time when this ticket was last updated, in milliseconds since the epoch.",
@@ -328,6 +334,24 @@ func (t TicketsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`subject expected to be basetypes.StringValue, was: %T`, subjectAttribute))
 	}
 
+	tagsAttribute, ok := attributes["tags"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tags is missing from object`)
+
+		return nil, diags
+	}
+
+	tagsVal, ok := tagsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tags expected to be basetypes.ListValue, was: %T`, tagsAttribute))
+	}
+
 	updateTimeAttribute, ok := attributes["update_time"]
 
 	if !ok {
@@ -378,6 +402,7 @@ func (t TicketsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		Severity:   severityVal,
 		Status:     statusVal,
 		Subject:    subjectVal,
+		Tags:       tagsVal,
 		UpdateTime: updateTimeVal,
 		UrlUi:      urlUiVal,
 		state:      attr.ValueStateKnown,
@@ -609,6 +634,24 @@ func NewTicketsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`subject expected to be basetypes.StringValue, was: %T`, subjectAttribute))
 	}
 
+	tagsAttribute, ok := attributes["tags"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tags is missing from object`)
+
+		return NewTicketsValueUnknown(), diags
+	}
+
+	tagsVal, ok := tagsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tags expected to be basetypes.ListValue, was: %T`, tagsAttribute))
+	}
+
 	updateTimeAttribute, ok := attributes["update_time"]
 
 	if !ok {
@@ -659,6 +702,7 @@ func NewTicketsValue(attributeTypes map[string]attr.Type, attributes map[string]
 		Severity:   severityVal,
 		Status:     statusVal,
 		Subject:    subjectVal,
+		Tags:       tagsVal,
 		UpdateTime: updateTimeVal,
 		UrlUi:      urlUiVal,
 		state:      attr.ValueStateKnown,
@@ -742,13 +786,14 @@ type TicketsValue struct {
 	Severity   basetypes.StringValue `tfsdk:"severity"`
 	Status     basetypes.StringValue `tfsdk:"status"`
 	Subject    basetypes.StringValue `tfsdk:"subject"`
+	Tags       basetypes.ListValue   `tfsdk:"tags"`
 	UpdateTime basetypes.Int64Value  `tfsdk:"update_time"`
 	UrlUi      basetypes.StringValue `tfsdk:"url_ui"`
 	state      attr.ValueState
 }
 
 func (v TicketsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 11)
+	attrTypes := make(map[string]tftypes.Type, 12)
 
 	var val tftypes.Value
 	var err error
@@ -762,6 +807,9 @@ func (v TicketsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 	attrTypes["severity"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["status"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["subject"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["tags"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
 	attrTypes["update_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["url_ui"] = basetypes.StringType{}.TerraformType(ctx)
 
@@ -769,7 +817,7 @@ func (v TicketsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 11)
+		vals := make(map[string]tftypes.Value, 12)
 
 		val, err = v.CreateTime.ToTerraformValue(ctx)
 
@@ -843,6 +891,14 @@ func (v TicketsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 		vals["subject"] = val
 
+		val, err = v.Tags.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["tags"] = val
+
 		val, err = v.UpdateTime.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -888,6 +944,37 @@ func (v TicketsValue) String() string {
 func (v TicketsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var tagsVal basetypes.ListValue
+	switch {
+	case v.Tags.IsUnknown():
+		tagsVal = types.ListUnknown(types.StringType)
+	case v.Tags.IsNull():
+		tagsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		tagsVal, d = types.ListValue(types.StringType, v.Tags.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"create_time": basetypes.Int64Type{},
+			"id":          basetypes.Int64Type{},
+			"is_public":   basetypes.BoolType{},
+			"platform":    basetypes.StringType{},
+			"product":     basetypes.StringType{},
+			"requester":   basetypes.StringType{},
+			"severity":    basetypes.StringType{},
+			"status":      basetypes.StringType{},
+			"subject":     basetypes.StringType{},
+			"tags": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"update_time": basetypes.Int64Type{},
+			"url_ui":      basetypes.StringType{},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"create_time": basetypes.Int64Type{},
 		"id":          basetypes.Int64Type{},
@@ -898,6 +985,9 @@ func (v TicketsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		"severity":    basetypes.StringType{},
 		"status":      basetypes.StringType{},
 		"subject":     basetypes.StringType{},
+		"tags": basetypes.ListType{
+			ElemType: types.StringType,
+		},
 		"update_time": basetypes.Int64Type{},
 		"url_ui":      basetypes.StringType{},
 	}
@@ -922,6 +1012,7 @@ func (v TicketsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			"severity":    v.Severity,
 			"status":      v.Status,
 			"subject":     v.Subject,
+			"tags":        tagsVal,
 			"update_time": v.UpdateTime,
 			"url_ui":      v.UrlUi,
 		})
@@ -980,6 +1071,10 @@ func (v TicketsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Tags.Equal(other.Tags) {
+		return false
+	}
+
 	if !v.UpdateTime.Equal(other.UpdateTime) {
 		return false
 	}
@@ -1010,6 +1105,9 @@ func (v TicketsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"severity":    basetypes.StringType{},
 		"status":      basetypes.StringType{},
 		"subject":     basetypes.StringType{},
+		"tags": basetypes.ListType{
+			ElemType: types.StringType,
+		},
 		"update_time": basetypes.Int64Type{},
 		"url_ui":      basetypes.StringType{},
 	}

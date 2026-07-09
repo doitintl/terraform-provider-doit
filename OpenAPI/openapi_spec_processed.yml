@@ -2789,6 +2789,132 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  /support/v1/tickets/{ticketId}/tags:
+    get:
+      tags:
+        - Support Requests
+      summary: List tags on a support request
+      description: |-
+        Returns the tags currently set on a support request.
+
+        DoiT employee (doer) callers receive the full tag set verbatim,
+        including internal namespaces (e.g. `tier/*`, `synapse_*`). Customer
+        callers receive only tags under the `customer_tag/` namespace, with
+        that prefix stripped (e.g. a tag added as `billing` reads back as
+        `billing`). Always present; empty array when the caller has no visible
+        tags.
+      operationId: listTicketTags
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsGetResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Support Requests
+      summary: Add tags to a support request
+      description: |-
+        Adds one or more tags to an existing support request. The operation is
+        surgical — only the tags listed in the request are added; existing tags
+        on the ticket are preserved. Re-adding a tag that is already present is
+        a successful no-op.
+
+        All submitted tags are normalized (trim + lowercase) before storage. For
+        customers, the system additionally applies a `customer_tag/` namespace
+        prefix to prevent collisions with internal DoiT process tags. The
+        response echoes the actual stored strings so callers can verify the
+        transform.
+      operationId: idOfTicketTagsAdd
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagsRequest"
+      responses:
+        "200":
+          description: OK - Tags added (or already present).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      tags:
+        - Support Requests
+      summary: Remove tags from a support request
+      description: |-
+        Removes one or more tags from an existing support request. The operation
+        is surgical — only the tags listed in the request are removed; tags not
+        listed are preserved. Removing a tag that is not present is a successful
+        no-op.
+
+        For customers, the system applies the same `customer_tag/` namespace
+        mapping as on add, so a customer who added `my_tag` (stored as
+        `customer_tag/my_tag`) can remove it by sending `my_tag`.
+      operationId: idOfTicketTagsRemove
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagsRequest"
+      responses:
+        "200":
+          description: OK - Tags removed (or already absent).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   /clouddiagrams/v1/scheme/find:
     post:
       tags:
@@ -9199,6 +9325,52 @@ components:
           type: integer
           description: The start time of the commitment interval, in milliseconds since the epoch.
           format: int64
+    TagsGetResponse:
+      type: object
+      description: |-
+        Response body for GET /support/v1/tickets/{ticketId}/tags. Contains
+        the current tags visible to the caller.
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+          description: |-
+            Ticket tags, filtered by caller type. DoiT employee (doer) callers
+            receive the full tag set verbatim, including internal namespaces
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+            under the `customer_tag/` namespace, with that prefix stripped.
+            Always present; empty array when the caller has no visible tags.
+    TagsRequest:
+      type: object
+      description: |
+        Request body for adding (POST) or removing (DELETE) tags on a support
+        request. The operation is surgical — only the tags listed are affected;
+        any other tags on the ticket are preserved.
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+          description: List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
+    TagsResponse:
+      type: object
+      description: |
+        Response body echoing the tags the operation actually acted on, after
+        server-side transformation (trim + lowercase + customer namespace prefix
+        where applicable).
+      properties:
+        applied_tags:
+          type: array
+          items:
+            type: string
+          description: The tags that were stored on (POST) or removed from (DELETE) the ticket.
     ThemeColors:
       type: object
       required:
@@ -9283,6 +9455,17 @@ components:
         is_public:
           type: boolean
           description: Whether the ticket is public.
+        tags:
+          type: array
+          items:
+            type: string
+          description: |-
+            Ticket tags, filtered by caller type. DoiT employee (doer) callers
+            receive the full tag set verbatim, including internal namespaces
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+            under the `customer_tag/` namespace, with that prefix stripped
+            (e.g. a tag added as `billing` reads back as `billing`). Always
+            present; empty array when the caller has no visible tags.
     TicketListItem:
       type: object
       description: Summary information about a support ticket.
@@ -9328,6 +9511,16 @@ components:
         urlUI:
           type: string
           description: Link to the report in DoiT console.
+        tags:
+          type: array
+          items:
+            type: string
+          description: |-
+            Ticket tags, filtered by caller type. DoiT employee (doer) callers
+            receive the full tag set verbatim, including internal namespaces
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+            under the `customer_tag/` namespace, with that prefix stripped.
+            Always present; empty array when the caller has no visible tags.
     TicketsList:
       type: object
       description: List of support tickets.

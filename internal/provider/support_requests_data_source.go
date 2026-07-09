@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -186,6 +187,24 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 				platformVal = types.StringNull()
 			}
 
+			var tagsVal types.List
+			if ticket.Tags != nil {
+				tagElems := make([]attr.Value, len(*ticket.Tags))
+				for j, t := range *ticket.Tags {
+					tagElems[j] = types.StringValue(t)
+				}
+				var d diag.Diagnostics
+				tagsVal, d = types.ListValue(types.StringType, tagElems)
+				resp.Diagnostics.Append(d...)
+			} else {
+				var d diag.Diagnostics
+				tagsVal, d = types.ListValue(types.StringType, []attr.Value{})
+				resp.Diagnostics.Append(d...)
+			}
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
 			ticketVal, diags := datasource_support_requests.NewTicketsValue(
 				datasource_support_requests.TicketsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
@@ -200,6 +219,7 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 					"status":      types.StringPointerValue(ticket.Status),
 					"subject":     types.StringPointerValue(ticket.Subject),
 					"url_ui":      types.StringPointerValue(ticket.UrlUI),
+					"tags":        tagsVal,
 				},
 			)
 			resp.Diagnostics.Append(diags...)

@@ -67,6 +67,12 @@ func SupportRequestDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The subject of the ticket.",
 				MarkdownDescription: "The subject of the ticket.",
 			},
+			"tags": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "Ticket tags, filtered by caller type. DoiT employee (doer) callers\nreceive the full tag set verbatim, including internal namespaces\n(e.g. `tier/*`, `synapse_*`). Customer callers receive only tags\nunder the `customer_tag/` namespace, with that prefix stripped\n(e.g. a tag added as `billing` reads back as `billing`). Always\npresent; empty array when the caller has no visible tags.",
+				MarkdownDescription: "Ticket tags, filtered by caller type. DoiT employee (doer) callers\nreceive the full tag set verbatim, including internal namespaces\n(e.g. `tier/*`, `synapse_*`). Customer callers receive only tags\nunder the `customer_tag/` namespace, with that prefix stripped\n(e.g. a tag added as `billing` reads back as `billing`). Always\npresent; empty array when the caller has no visible tags.",
+			},
 			"ticket_id": schema.Int64Attribute{
 				Required:            true,
 				Description:         "The unique identifier of the support request.",
@@ -100,6 +106,7 @@ type SupportRequestModel struct {
 	Severity     types.String `tfsdk:"severity"`
 	Status       types.String `tfsdk:"status"`
 	Subject      types.String `tfsdk:"subject"`
+	Tags         types.List   `tfsdk:"tags"`
 	TicketId     types.Int64  `tfsdk:"ticket_id"`
 	UpdateTime   types.Int64  `tfsdk:"update_time"`
 	UrlUi        types.String `tfsdk:"url_ui"`

@@ -3618,6 +3618,54 @@
 			}
 		},
 		{
+			"name": "support_request_tags",
+			"schema": {
+				"attributes": [
+					{
+						"name": "tags",
+						"list": {
+							"computed_optional_required": "required",
+							"element_type": {
+								"string": {}
+							},
+							"description": "List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.SizeBetween(1, 50)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "applied_tags",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "The tags that were stored on (POST) or removed from (DELETE) the ticket."
+						}
+					},
+					{
+						"name": "ticket_id",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The unique identifier of the support request."
+						}
+					}
+				],
+				"description": "Create and manage support tickets with DoiT.",
+				"markdown_description": "Create and manage support tickets with DoiT."
+			}
+		},
+		{
 			"name": "user",
 			"schema": {
 				"attributes": [

@@ -3746,6 +3746,43 @@ paths:
         "404":
           $ref: "#/components/responses/404"
   /support/v1/tickets/{ticketId}/tags:
+    get:
+      tags:
+        - Support Requests
+      summary: List tags on a support request
+      description: |-
+        Returns the tags currently set on a support request.
+
+        DoiT employee (doer) callers receive the full tag set verbatim,
+        including internal namespaces (e.g. `tier/*`, `synapse_*`). Customer
+        callers receive only tags under the `customer_tag/` namespace, with
+        that prefix stripped (e.g. a tag added as `billing` reads back as
+        `billing`). Always present; empty array when the caller has no visible
+        tags.
+      operationId: listTicketTags
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagsGetResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
     post:
       tags:
         - Support Requests
@@ -8989,6 +9026,16 @@ components:
         urlUI:
           type: string
           description: Link to the report in DoiT console.
+        tags:
+          type: array
+          items:
+            type: string
+          description: |-
+            Ticket tags, filtered by caller type. DoiT employee (doer) callers
+            receive the full tag set verbatim, including internal namespaces
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+            under the `customer_tag/` namespace, with that prefix stripped.
+            Always present; empty array when the caller has no visible tags.
     TicketResponseExtAPI:
       type: object
       description: Response returned after creating a ticket.
@@ -9110,6 +9157,17 @@ components:
         is_public:
           type: boolean
           description: Whether the ticket is public.
+        tags:
+          type: array
+          items:
+            type: string
+          description: |-
+            Ticket tags, filtered by caller type. DoiT employee (doer) callers
+            receive the full tag set verbatim, including internal namespaces
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+            under the `customer_tag/` namespace, with that prefix stripped
+            (e.g. a tag added as `billing` reads back as `billing`). Always
+            present; empty array when the caller has no visible tags.
     CommentExtAPI:
       type: object
       description: A comment on a support ticket.
@@ -9192,6 +9250,22 @@ components:
           items:
             type: string
           description: The tags that were stored on (POST) or removed from (DELETE) the ticket.
+    TagsGetResponse:
+      type: object
+      description: |-
+        Response body for GET /support/v1/tickets/{ticketId}/tags. Contains
+        the current tags visible to the caller.
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+          description: |-
+            Ticket tags, filtered by caller type. DoiT employee (doer) callers
+            receive the full tag set verbatim, including internal namespaces
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+            under the `customer_tag/` namespace, with that prefix stripped.
+            Always present; empty array when the caller has no visible tags.
     ResourceReference:
       type: object
       description: Reference to another resource, used when listing blockers or usages.
