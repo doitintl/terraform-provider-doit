@@ -140,30 +140,31 @@ func (r *supportRequestTagsResource) Create(ctx context.Context, req resource.Cr
 
 	ticketId := plan.TicketId.ValueInt64()
 
-	tags := tagsToStringSlice(plan.Tags, &resp.Diagnostics)
+	desiredTags := tagsToStringSlice(plan.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if len(tags) > 0 {
-		addReq := models.IdOfTicketTagsAddJSONRequestBody{
-			Tags: tags,
-		}
-		addResp, err := r.client.IdOfTicketTagsAddWithResponse(ctx, ticketId, addReq)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Creating Support Request Tags",
-				"Could not add tags: "+err.Error(),
-			)
-			return
-		}
-		if addResp.StatusCode() != 200 {
-			resp.Diagnostics.AddError(
-				"Error Creating Support Request Tags",
-				fmt.Sprintf("Could not add tags, status: %d, body: %s", addResp.StatusCode(), string(addResp.Body)),
-			)
-			return
-		}
+	// Reconcile the ticket's current visible tags to the desired set so Create is
+	// authoritative: it removes tags that aren't desired (including clearing all
+	// when the desired set is empty) and adds those that are missing. This matches
+	// the desired-state semantics of Update and the Read path.
+	currentTags, notFound, diags := r.fetchCurrentTags(ctx, ticketId)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if notFound {
+		resp.Diagnostics.AddError(
+			"Error Creating Support Request Tags",
+			fmt.Sprintf("Support request %d not found", ticketId),
+		)
+		return
+	}
+
+	r.syncTags(ctx, ticketId, currentTags, desiredTags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	plan.Id = types.StringValue(strconv.FormatInt(ticketId, 10))

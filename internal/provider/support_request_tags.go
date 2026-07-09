@@ -11,21 +11,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func (r *supportRequestTagsResource) populateState(ctx context.Context, state *supportRequestTagsResourceModel) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	tagsResp, err := r.client.ListTicketTagsWithResponse(ctx, state.TicketId.ValueInt64())
+// fetchCurrentTags reads the ticket's current visible tags via GET /tags.
+// notFound is true when the ticket does not exist (404).
+func (r *supportRequestTagsResource) fetchCurrentTags(ctx context.Context, ticketID int64) (tags []string, notFound bool, diags diag.Diagnostics) {
+	tagsResp, err := r.client.ListTicketTagsWithResponse(ctx, ticketID)
 	if err != nil {
 		diags.AddError(
 			"Error Reading Support Request Tags",
 			"Could not read tags: "+err.Error(),
 		)
-		return diags
+		return nil, false, diags
 	}
 
 	if tagsResp.StatusCode() == 404 {
-		state.Id = types.StringNull()
-		return diags
+		return nil, true, diags
 	}
 
 	if tagsResp.StatusCode() != 200 {
@@ -33,7 +32,7 @@ func (r *supportRequestTagsResource) populateState(ctx context.Context, state *s
 			"Error Reading Support Request Tags",
 			"Unexpected status code "+strconv.Itoa(tagsResp.StatusCode())+": "+string(tagsResp.Body),
 		)
-		return diags
+		return nil, false, diags
 	}
 
 	if tagsResp.JSON200 == nil {
@@ -41,12 +40,23 @@ func (r *supportRequestTagsResource) populateState(ctx context.Context, state *s
 			"Error Reading Support Request Tags",
 			"Received empty response body",
 		)
-		return diags
+		return nil, false, diags
 	}
 
-	var apiTags []string
 	if tagsResp.JSON200.Tags != nil {
-		apiTags = *tagsResp.JSON200.Tags
+		tags = *tagsResp.JSON200.Tags
+	}
+	return tags, false, diags
+}
+
+func (r *supportRequestTagsResource) populateState(ctx context.Context, state *supportRequestTagsResourceModel) diag.Diagnostics {
+	apiTags, notFound, diags := r.fetchCurrentTags(ctx, state.TicketId.ValueInt64())
+	if diags.HasError() {
+		return diags
+	}
+	if notFound {
+		state.Id = types.StringNull()
+		return diags
 	}
 
 	// Preserve the user's tag representation when the API returns a normalized
