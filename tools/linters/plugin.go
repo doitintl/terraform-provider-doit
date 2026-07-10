@@ -26,6 +26,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/modernize"
 )
 
 type analyzerPlugin struct {
@@ -127,5 +128,13 @@ func init() {
 
 	register.Plugin("clearableattr", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{clearableattr.Analyzer}}, nil
+	})
+
+	// modernize wraps the full x/tools modernize suite. Its "newexpr"
+	// analyzer shares a Name with our custom newexpr linter but targets a
+	// disjoint pattern (pointer-wrapper functions vs. temp-var-then-address),
+	// and both run fine side by side under separate golangci plugins.
+	register.Plugin("modernize", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: modernize.Suite}, nil
 	})
 }

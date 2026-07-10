@@ -33,9 +33,9 @@ func TestDCIRetryClient_RequestTimeout(t *testing.T) {
 	serverDelay := 3 * time.Second
 	clientTimeout := 1 * time.Second
 
-	var requestCount int64
+	var requestCount atomic.Int64
 	server := newTimeoutTestServer(func(w http.ResponseWriter, r *http.Request) {
-		atomic.AddInt64(&requestCount, 1)
+		requestCount.Add(1)
 		time.Sleep(serverDelay)
 		w.WriteHeader(http.StatusOK)
 	})
@@ -62,7 +62,7 @@ func TestDCIRetryClient_RequestTimeout(t *testing.T) {
 		t.Fatal("expected timeout error, got nil")
 	}
 
-	count := atomic.LoadInt64(&requestCount)
+	count := requestCount.Load()
 
 	// Should have made multiple attempts (each timing out at clientTimeout)
 	if count < 2 {
@@ -165,9 +165,9 @@ func TestDCIRetryClient_RetryRespectsContextDeadline(t *testing.T) {
 	requestTimeout := 30 * time.Second // High per-request timeout
 	contextDeadline := 3 * time.Second // Short context deadline
 
-	var requestCount int64
+	var requestCount atomic.Int64
 	server := newTimeoutTestServer(func(w http.ResponseWriter, r *http.Request) {
-		atomic.AddInt64(&requestCount, 1)
+		requestCount.Add(1)
 		w.WriteHeader(http.StatusServiceUnavailable) // 503 triggers retry
 	})
 	defer server.Close()
@@ -191,7 +191,7 @@ func TestDCIRetryClient_RetryRespectsContextDeadline(t *testing.T) {
 		t.Fatal("expected context deadline error, got nil")
 	}
 
-	count := atomic.LoadInt64(&requestCount)
+	count := requestCount.Load()
 
 	// Should have retried until the context deadline, not a hardcoded max elapsed time
 	if elapsed > 2*contextDeadline {

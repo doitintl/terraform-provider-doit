@@ -50,6 +50,7 @@ linters:
     - methodreceiver
     - requestguard
     - clearableattr
+    - modernize
   exclusions:
     generated: lax
     presets:
@@ -100,6 +101,7 @@ linters:
           - methodreceiver
           - requestguard
           - clearableattr
+          - modernize
       # Test files — exclude custom linters (except paralleltest which only applies to tests)
       - path: _test\.go
         linters:
@@ -242,6 +244,9 @@ linters:
       clearableattr:
         type: "module"
         description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."
+      modernize:
+        type: "module"
+        description: "x/tools modernize suite: suggests modern Go language/library features (any, min/max, slices/maps helpers, atomic types, etc.)."
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

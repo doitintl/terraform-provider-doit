@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 
@@ -112,10 +113,7 @@ func TestSupportRequestTagsTagValidators(t *testing.T) {
 		t.Fatal("expected tags attribute to declare validators")
 	}
 
-	longTag := ""
-	for range 81 {
-		longTag += "a"
-	}
+	longTag := strings.Repeat("a", 81)
 	manyTags := make([]string, 51)
 	for i := range manyTags {
 		manyTags[i] = fmt.Sprintf("tag-%d", i)

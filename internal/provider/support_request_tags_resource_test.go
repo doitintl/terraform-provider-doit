@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -159,13 +160,11 @@ func TestAccSupportRequestTags_Import(t *testing.T) {
 }
 
 func testAccSupportRequestTagsConfig(tags []string) string {
-	tagsList := ""
+	quoted := make([]string, len(tags))
 	for i, t := range tags {
-		if i > 0 {
-			tagsList += ", "
-		}
-		tagsList += fmt.Sprintf("%q", t)
+		quoted[i] = fmt.Sprintf("%q", t)
 	}
+	tagsList := strings.Join(quoted, ", ")
 
 	return fmt.Sprintf(`
 data "doit_support_requests" "all" {
