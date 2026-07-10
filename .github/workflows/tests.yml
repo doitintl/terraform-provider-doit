@@ -10,6 +10,14 @@ on:
     # Run daily at 5am UTC
     - cron: "0 5 * * *"
 
+# Acceptance tests mutate shared remote resources, so only one run of this
+# workflow may execute at a time. A single fixed group key serializes runs
+# across all branches/PRs. cancel-in-progress: false queues new runs behind
+# the in-progress one instead of cancelling it.
+concurrency:
+  group: acceptance-tests
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
