@@ -66,6 +66,12 @@ tags:
     description: Manage cloud insights representing recommendations and findings for cloud resources.
   - name: Cloud Connect
     description: Manage cloud provider connections and check feature availability for connected accounts.
+  - name: Connections
+    description: Manage cloud provider connections used in CloudFlow workflows (AWS and GCP).
+  - name: Templates
+    description: Browse the catalogue of read-only CloudFlow templates (blueprints) used to create flows.
+  - name: CloudFlow
+    description: Manage CloudFlow.
 
 paths:
   /analytics/v1/alerts:
@@ -3054,6 +3060,113 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  "/cloudflow/v1/trigger/{flowId}":
+    post:
+      tags:
+        - CloudFlow
+      summary: Trigger a webhook flow
+      description: |-
+        Triggers execution of a published CloudFlow whose first node is a webhook trigger.
+        The request body must be valid JSON and is passed to the flow as webhook payload data.
+      operationId: triggerCloudflowWebhook
+      parameters:
+        - name: flowId
+          in: path
+          description: The unique ID of the published CloudFlow to trigger.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              additionalProperties: true
+              description: Arbitrary JSON payload delivered to the webhook trigger node.
+            example:
+              key: value
+      responses:
+        "202":
+          description: Accepted - CloudFlow execution started.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - executionLink
+                properties:
+                  executionLink:
+                    type: string
+                    description: Console URL for the started CloudFlow execution history entry.
+                    example: "https://console.doit.com/customers/customer-id/cloudflow/history/execution-id"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: >-
+            Conflict - The CloudFlow already has an active execution and cannot be triggered until it completes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+  /cloudflow/v1/flows/{flowId}/actions/refine:
+    post:
+      tags:
+        - CloudFlow
+      summary: Refine a CloudFlow from natural language intent
+      description: >-
+        Refines the specified CloudFlow by generating and updating nodes and
+        connections based on the provided natural language intent. The operation
+        streams incremental build events as they are produced.
+      operationId: refineCloudFlow
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudFlowRefineRequest"
+      responses:
+        "200":
+          description: OK - Refine event stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "406":
+          description: Not Acceptable — the client did not include `text/event-stream` in the Accept header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+        "502":
+          description: Bad Gateway — the upstream refine service returned an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /iam/v1/users:
     get:
       tags:
@@ -3667,6 +3780,74 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TicketDetailExtAPI"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      tags:
+        - Support Requests
+      summary: Update a request
+      description: |-
+        Partially updates a support request. Supports setting the request
+        `status` and/or `assignee`. DoiT employees may set any of `open`,
+        `pending`, `hold`, or `solved` and may set the `assignee`; customers may
+        set only `solved` (parity with the console "mark as resolved" action)
+        and may not set an assignee. `closed` is not settable via the API
+        (Zendesk auto-closes from `solved`). The `assignee` is a DoiT-employee
+        email, resolved server-side to a Zendesk agent; an email that does not
+        resolve to an active agent returns `400`. At least one mutable field
+        must be present. The response echoes the fields that were applied.
+      operationId: idOfTicketUpdate
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          description: The unique identifier of the support request.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                status:
+                  type: string
+                  description: The status to set on the request.
+                  enum:
+                    - open
+                    - pending
+                    - hold
+                    - solved
+                assignee:
+                  type: string
+                  format: email
+                  description: |-
+                    Email of the DoiT employee to assign the request to,
+                    resolved to a Zendesk agent. DoiT employees only.
+      responses:
+        "200":
+          description: OK - Request updated. Echoes the fields that were applied.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                  status:
+                    type: string
+                  assignee:
+                    type: string
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -5284,8 +5465,598 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  # ============================================================
+  # CloudFlows
+  # ============================================================
+  /cloudflow/v1/flows:
+    get:
+      tags:
+        - CloudFlow
+      summary: List CloudFlows
+      description: Returns a cursor-paginated list of CloudFlows.
+      operationId: listCloudflows
+      parameters:
+        - name: maxResults
+          in: query
+          description: Maximum number of flows to return (1–500). Defaults to 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: pageToken
+          in: query
+          description: Opaque cursor for the next page, taken from `pageToken` in the previous response. Omit to start from the beginning.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated list of CloudFlows.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowListResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  # ============================================================
+  # CloudFlow Connections
+  # ============================================================
+  /cloudflow/v1/connections:
+    get:
+      tags:
+        - Connections
+      summary: List connections
+      description: Returns a cursor-paginated list of cloud provider connections for the authenticated tenant.
+      operationId: listCloudflowConnections
+      parameters:
+        - name: maxResults
+          in: query
+          description: Maximum number of connections to return (1–100). Defaults to 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: pageToken
+          in: query
+          description: Pagination cursor returned by a previous call.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowConnectionListResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Connections
+      summary: Create a connection
+      description: |-
+        Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+        Returns `400 invalid_connection_config` when both or neither are present.
+      operationId: createCloudflowConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Human-readable connection name.
+                description:
+                  type: string
+                  description: Optional description.
+                gcpConfig:
+                  $ref: "#/components/schemas/CloudflowGCPConfigRequest"
+                awsConfig:
+                  $ref: "#/components/schemas/CloudflowAWSConfigRequest"
+                collaborators:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CloudflowCollaborator"
+                enabled:
+                  type: boolean
+                  description: When false, the connection is created in a disabled state.
+                  default: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowConnection"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /cloudflow/v1/connections/{connectionId}:
+    get:
+      tags:
+        - Connections
+      summary: Retrieve a connection
+      description: Returns a single connection by ID.
+      operationId: getCloudflowConnection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowConnection"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Connections
+      summary: Update a connection
+      description: |-
+        Partially updates a connection. All fields are optional.
+        At most one of `gcpConfig` or `awsConfig` may be set per request.
+      operationId: updateCloudflowConnection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                gcpConfig:
+                  $ref: "#/components/schemas/CloudflowGCPConfigRequest"
+                awsConfig:
+                  $ref: "#/components/schemas/CloudflowAWSConfigRequest"
+                collaborators:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CloudflowCollaborator"
+                enabled:
+                  type: boolean
+                  description: Set to false to disable the connection, true to re-enable it.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowConnection"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Connections
+      summary: Delete a connection
+      description: Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
+      operationId: deleteCloudflowConnection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content — connection deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: Conflict — connection is in use by one or more flows.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+        "500":
+          $ref: "#/components/responses/500"
+  # ============================================================
+  # CloudFlow Templates
+  # ============================================================
+  /cloudflow/v1/templates:
+    get:
+      tags:
+        - Templates
+        - CloudFlow
+      summary: List templates
+      description: |-
+        Returns the catalogue of available CloudFlow templates (blueprints). Templates are
+        read-only. To create a flow from a template, use `POST /flows` with a `templateId`.
+      operationId: listCloudflowTemplates
+      parameters:
+        - name: maxResults
+          in: query
+          description: Maximum number of templates to return (1–500). Defaults to 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: pageToken
+          in: query
+          description: Opaque cursor for the next page, taken from `pageToken` in the previous response. Omit to start from the beginning.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowTemplateListResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /cloudflow/v1/templates/{templateId}:
+    get:
+      tags:
+        - Templates
+        - CloudFlow
+      summary: Retrieve a template
+      description: Returns a single CloudFlow template by ID.
+      operationId: getCloudflowTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowTemplate"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
 components:
   schemas:
+    CloudflowCollaborator:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [owner, editor, user]
+    CloudflowGCPConfigRequest:
+      type: object
+      description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+      properties:
+        organizationId:
+          type: string
+        folderId:
+          type: string
+        projectId:
+          type: string
+        level:
+          type: string
+          enum: [organization, folder, project]
+        serviceAccountName:
+          type: string
+        predefinedRoles:
+          type: array
+          items:
+            type: string
+        customRole:
+          type: object
+          properties:
+            roleId:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: string
+        infraManagerProject:
+          type: string
+        infraManagerLocation:
+          type: string
+        infraManagerServiceAccount:
+          type: string
+    CloudflowAWSConfigRequest:
+      type: object
+      description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+      properties:
+        context:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+              regions:
+                type: array
+                items:
+                  type: string
+        roleName:
+          type: string
+        permissions:
+          type: object
+        managementAccount:
+          type: string
+        organizationRootId:
+          type: string
+        scopeTargetedOrganizationalUnitIds:
+          type: array
+          items:
+            type: string
+        scopeExplicitAccountIds:
+          type: array
+          items:
+            type: string
+        scopeExcludedAccountIds:
+          type: array
+          items:
+            type: string
+        scopeManagementAccountExplicitInScope:
+          type: boolean
+    CloudflowConnection:
+      type: object
+      description: A cloud provider connection used in CloudFlow workflows.
+      properties:
+        connectionId:
+          type: string
+          description: Unique identifier for the connection.
+        name:
+          type: string
+        description:
+          type: string
+        gcpConfig:
+          allOf:
+            - $ref: "#/components/schemas/CloudflowGCPConfigRequest"
+            - type: object
+              description: Response extends request schema with server-owned read-only fields.
+              properties:
+                status:
+                  type: string
+                  description: Server-managed GCP config status.
+                deploymentCommand:
+                  type: string
+                  description: Generated deployment command.
+        awsConfig:
+          allOf:
+            - $ref: "#/components/schemas/CloudflowAWSConfigRequest"
+            - type: object
+              description: Response extends request schema with server-owned read-only fields.
+              properties:
+                context:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accountId:
+                        type: string
+                      regions:
+                        type: array
+                        items:
+                          type: string
+                      status:
+                        type: string
+                        description: Server-managed per-account deployment status.
+        collaborators:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowCollaborator"
+        enabled:
+          type: boolean
+          description: false when the connection is disabled.
+        status:
+          type: string
+          description: Overall connection status.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CloudflowTemplate:
+      type: object
+      description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.
+      required:
+        - id
+        - name
+        - createTime
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the template.
+        name:
+          type: string
+          description: Human-readable display name of the template.
+        description:
+          type: string
+          description: Short summary of what the template does and which use case it addresses.
+        instructions:
+          type: string
+          nullable: true
+          description: Step-by-step operator guidance for configuring a flow created from this template. `null` when no instructions have been authored.
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp.
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+    Cloudflow:
+      type: object
+      required:
+        - id
+        - name
+        - published
+        - createTime
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+          nullable: true
+        published:
+          type: boolean
+        triggerType:
+          type: string
+          nullable: true
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+        lastExecutedTime:
+          type: string
+          format: date-time
+          nullable: true
+        lastExecutionStatus:
+          type: string
+          nullable: true
+          enum: [pending, running, complete, pending-approval, failed, sleeping, stopped]
+        nextRun:
+          type: string
+          format: date-time
+          nullable: true
+          description: Next scheduled execution time. `null` when the CloudFlow has no active schedule.
+    CloudflowListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Cloudflow"
+          description: List of CloudFlows.
+        pageToken:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page. `null` when there are no more CloudFlows.
+        rowCount:
+          type: integer
+          nullable: true
+          description: Always `null`. Row count is not computed for this endpoint.
+    CloudflowConnectionListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow connections.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          description: List of connections for the current page.
+          items:
+            $ref: "#/components/schemas/CloudflowConnection"
+        pageToken:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type: integer
+          nullable: true
+          description: Always `null`. Row count is not computed for this endpoint.
+    CloudflowTemplateListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow templates.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowTemplate"
+        pageToken:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type: integer
+          nullable: true
+          description: Total number of templates matching the current query.
     AwsAccountResponse:
       type: object
       properties:
@@ -5352,10 +6123,12 @@ components:
           $ref: "#/components/schemas/Pagination"
     CreateResultsBody:
       type: object
-      description: Request body for creating multiple insights in a batch.
+      description: Request body for creating or updating multiple insights in a batch.
+      required:
+        - results
       properties:
         results:
-          description: List of insights to create.
+          description: List of insights to create or update.
           type: array
           items:
             $ref: "#/components/schemas/InsightRequest"

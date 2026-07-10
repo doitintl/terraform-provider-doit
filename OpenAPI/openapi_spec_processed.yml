@@ -66,6 +66,12 @@ tags:
     description: Manage cloud insights representing recommendations and findings for cloud resources.
   - name: Cloud Connect
     description: Manage cloud provider connections and check feature availability for connected accounts.
+  - name: Connections
+    description: Manage cloud provider connections used in CloudFlow workflows (AWS and GCP).
+  - name: Templates
+    description: Browse the catalogue of read-only CloudFlow templates (blueprints) used to create flows.
+  - name: CloudFlow
+    description: Manage CloudFlow.
 paths:
   /analytics/v1/alerts:
     get:
