@@ -39,8 +39,8 @@ func SupportRequestDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"platform_info": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector).",
-				MarkdownDescription: "The cloud asset identifier the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. Empty string\nwhen the ticket has no asset value (e.g. older tickets or tickets\nopened through paths that bypass the form selector).",
+				Description:         "The cloud asset identifier(s) the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. May contain\nmultiple identifiers as a comma-separated list (no spaces) when the\nrequester selected more than one asset, e.g.\n\"111111111111,222222222222\". Empty string when the ticket has no\nasset value (e.g. older tickets or tickets opened through paths that\nbypass the form selector).",
+				MarkdownDescription: "The cloud asset identifier(s) the requester selected on the support\nform's asset-selector control — typically the GCP project ID, AWS\naccount ID, Azure subscription ID, or equivalent. May contain\nmultiple identifiers as a comma-separated list (no spaces) when the\nrequester selected more than one asset, e.g.\n\"111111111111,222222222222\". Empty string when the ticket has no\nasset value (e.g. older tickets or tickets opened through paths that\nbypass the form selector).",
 			},
 			"product": schema.StringAttribute{
 				Computed:            true,
