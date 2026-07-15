@@ -9907,11 +9907,14 @@ components:
         platform_info:
           type: string
           description: |-
-            The cloud asset identifier the requester selected on the support
+            The cloud asset identifier(s) the requester selected on the support
             form's asset-selector control — typically the GCP project ID, AWS
-            account ID, Azure subscription ID, or equivalent. Empty string
-            when the ticket has no asset value (e.g. older tickets or tickets
-            opened through paths that bypass the form selector).
+            account ID, Azure subscription ID, or equivalent. May contain
+            multiple identifiers as a comma-separated list (no spaces) when the
+            requester selected more than one asset, e.g.
+            "111111111111,222222222222". Empty string when the ticket has no
+            asset value (e.g. older tickets or tickets opened through paths that
+            bypass the form selector).
           example: cmp-playground
         status:
           type: string
