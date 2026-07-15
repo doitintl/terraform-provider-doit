@@ -8,6 +8,7 @@ import (
 )
 
 type model struct{}
+
 func (m model) IsUnknown() bool { return false }
 
 type testDataSource struct{}

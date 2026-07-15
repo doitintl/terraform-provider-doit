@@ -531,9 +531,9 @@ func (r RulesValue) IsNull() bool    { return false }
 
 // ComponentsValue is the deeply nested element.
 type ComponentsValue struct {
-	Key            types.String
+	Key             types.String
 	CaseInsensitive types.Bool
-	Mode           types.String
+	Mode            types.String
 }
 
 func (c ComponentsValue) IsUnknown() bool { return false }

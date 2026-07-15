@@ -108,11 +108,11 @@ type GuardTestModel struct {
 
 // ConfigValue is the nested config model.
 type ConfigValue struct {
-	Type             types.String
-	CaseInsensitive  types.Bool
-	Currency         types.String
-	Filter           FilterValue
-	DisplaySettings  DisplaySettingsValue
+	Type            types.String
+	CaseInsensitive types.Bool
+	Currency        types.String
+	Filter          FilterValue
+	DisplaySettings DisplaySettingsValue
 }
 
 // FilterValue is the 2nd-level nested model.
@@ -125,8 +125,6 @@ type FilterValue struct {
 type DisplaySettingsValue struct {
 	ThemeId types.String
 }
-
-
 
 // guardTestResource is a mock resource.
 type guardTestResource struct{}

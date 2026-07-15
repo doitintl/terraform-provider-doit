@@ -6,6 +6,7 @@ import "context"
 type configureRequest struct{ ProviderData interface{} }
 type configureResponse struct{ Diagnostics diagList }
 type diagList struct{}
+
 func (d diagList) AddError(summary, detail string) {}
 
 type myResource struct{}

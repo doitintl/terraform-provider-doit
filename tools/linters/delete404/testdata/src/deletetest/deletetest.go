@@ -7,15 +7,17 @@ type deleteRequest struct{}
 type deleteResponse struct{ Diagnostics diagList }
 type diagList struct{}
 
-func (d diagList) Append(diags ...interface{})             {}
-func (d diagList) HasError() bool                          { return false }
-func (d diagList) AddError(summary, detail string)         {}
-func (d diagList) AddWarning(summary, detail string)       {}
+func (d diagList) Append(diags ...interface{})       {}
+func (d diagList) HasError() bool                    { return false }
+func (d diagList) AddError(summary, detail string)   {}
+func (d diagList) AddWarning(summary, detail string) {}
 
 type stateObj struct{}
+
 func (s stateObj) Get(ctx context.Context, v interface{}) diagList { return diagList{} }
 
 type httpResponse struct{ Body []byte }
+
 func (r httpResponse) StatusCode() int { return 200 }
 
 // --- BAD: Delete doesn't handle 404 ---

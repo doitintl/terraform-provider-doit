@@ -7,12 +7,12 @@ import (
 )
 
 // Stub mapping functions for test.
-func mapGoodToModel(apiResp *ApiResponse, m *GoodModel)             {}
-func mapBadMissingToModel(apiResp *ApiResponse, m *BadMissingModel) {}
+func mapGoodToModel(apiResp *ApiResponse, m *GoodModel)                         {}
+func mapBadMissingToModel(apiResp *ApiResponse, m *BadMissingModel)             {}
 func mapBadUnconditionalToModel(apiResp *ApiResponse, m *BadUnconditionalModel) {}
-func mapBadRequiredToModel(apiResp *ApiResponse, m *BadRequiredModel) {}
-func mapIfElseToModel(apiResp *Int64Pointer, m *IfElseModel)        {}
-func mapRequiredNestedToModel(apiResp *ApiResponse, m *RequiredNestedModel) {}
+func mapBadRequiredToModel(apiResp *ApiResponse, m *BadRequiredModel)           {}
+func mapIfElseToModel(apiResp *Int64Pointer, m *IfElseModel)                    {}
+func mapRequiredNestedToModel(apiResp *ApiResponse, m *RequiredNestedModel)     {}
 
 // --- GOOD: correct overlay with 2-phase pattern ---
 
@@ -281,7 +281,6 @@ func overlayPrefixedTypeBadComputedFields(apiResp *ApiResponse, plan *PrefixedTy
 }
 
 // --- GOOD: Sub-overlay handles all nested fields correctly ---
-
 
 func mapNestedListToModel(apiResp *ApiResponse, m *NestedListModel) {}
 
