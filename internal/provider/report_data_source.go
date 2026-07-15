@@ -279,7 +279,16 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		diags.Append(fsDiags...)
 		configMap["forecast_settings"] = fsVal
 	} else {
-		configMap["forecast_settings"] = datasource_report.NewForecastSettingsValueNull()
+		fsMap := map[string]attr.Value{
+			"future_custom_date_range":     datasource_report.NewFutureCustomDateRangeValueNull(),
+			"future_time_intervals":        types.Int64Null(),
+			"historical_custom_date_range": datasource_report.NewHistoricalCustomDateRangeValueNull(),
+			"historical_time_intervals":    types.Int64Null(),
+			"mode":                         types.StringValue("totals"),
+		}
+		fsVal, fsDiags := datasource_report.NewForecastSettingsValue(datasource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
+		diags.Append(fsDiags...)
+		configMap["forecast_settings"] = fsVal
 	}
 
 	// Nested Object: CustomTimeRange

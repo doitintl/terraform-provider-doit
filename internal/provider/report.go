@@ -989,57 +989,66 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.ForecastSettings.IsNull() && !config.ForecastSettings.IsUnknown() {
-		fs := &models.ExternalForecastSettings{}
-		if !config.ForecastSettings.FutureTimeIntervals.IsNull() && !config.ForecastSettings.FutureTimeIntervals.IsUnknown() {
-			fs.FutureTimeIntervals = config.ForecastSettings.FutureTimeIntervals.ValueInt64Pointer()
-		}
-		if !config.ForecastSettings.HistoricalTimeIntervals.IsNull() && !config.ForecastSettings.HistoricalTimeIntervals.IsUnknown() {
-			fs.HistoricalTimeIntervals = config.ForecastSettings.HistoricalTimeIntervals.ValueInt64Pointer()
-		}
-		if !config.ForecastSettings.Mode.IsNull() {
-			fs.Mode = new(models.ExternalForecastSettingsMode(config.ForecastSettings.Mode.ValueString()))
-		}
-		if !config.ForecastSettings.FutureCustomDateRange.IsNull() && !config.ForecastSettings.FutureCustomDateRange.IsUnknown() {
-			fcdr := models.ExternalForecastDateRange{}
-			if !config.ForecastSettings.FutureCustomDateRange.From.IsNull() && !config.ForecastSettings.FutureCustomDateRange.From.IsUnknown() {
-				fromTime, err := time.Parse(time.RFC3339, config.ForecastSettings.FutureCustomDateRange.From.ValueString())
-				if err != nil {
-					diags.AddError("Invalid From Time", "Could not parse ForecastSettings.FutureCustomDateRange.From as RFC3339: "+err.Error())
+		if config.ForecastSettings.FutureTimeIntervals.IsNull() &&
+			config.ForecastSettings.HistoricalTimeIntervals.IsNull() &&
+			config.ForecastSettings.FutureCustomDateRange.IsNull() &&
+			config.ForecastSettings.HistoricalCustomDateRange.IsNull() {
+			externalConfig.ForecastSettings = &models.ExternalForecastSettings{}
+		} else {
+			fs := &models.ExternalForecastSettings{}
+			if !config.ForecastSettings.FutureTimeIntervals.IsNull() && !config.ForecastSettings.FutureTimeIntervals.IsUnknown() {
+				fs.FutureTimeIntervals = config.ForecastSettings.FutureTimeIntervals.ValueInt64Pointer()
+			}
+			if !config.ForecastSettings.HistoricalTimeIntervals.IsNull() && !config.ForecastSettings.HistoricalTimeIntervals.IsUnknown() {
+				fs.HistoricalTimeIntervals = config.ForecastSettings.HistoricalTimeIntervals.ValueInt64Pointer()
+			}
+			if !config.ForecastSettings.Mode.IsNull() {
+				fs.Mode = new(models.ExternalForecastSettingsMode(config.ForecastSettings.Mode.ValueString()))
+			}
+			if !config.ForecastSettings.FutureCustomDateRange.IsNull() && !config.ForecastSettings.FutureCustomDateRange.IsUnknown() {
+				fcdr := models.ExternalForecastDateRange{}
+				if !config.ForecastSettings.FutureCustomDateRange.From.IsNull() && !config.ForecastSettings.FutureCustomDateRange.From.IsUnknown() {
+					fromTime, err := time.Parse(time.RFC3339, config.ForecastSettings.FutureCustomDateRange.From.ValueString())
+					if err != nil {
+						diags.AddError("Invalid From Time", "Could not parse ForecastSettings.FutureCustomDateRange.From as RFC3339: "+err.Error())
+					}
+					fcdr.From = &fromTime
 				}
-				fcdr.From = &fromTime
-			}
-			if !config.ForecastSettings.FutureCustomDateRange.To.IsNull() && !config.ForecastSettings.FutureCustomDateRange.To.IsUnknown() {
-				toTime, err := time.Parse(time.RFC3339, config.ForecastSettings.FutureCustomDateRange.To.ValueString())
-				if err != nil {
-					diags.AddError("Invalid To Time", "Could not parse ForecastSettings.FutureCustomDateRange.To as RFC3339: "+err.Error())
+				if !config.ForecastSettings.FutureCustomDateRange.To.IsNull() && !config.ForecastSettings.FutureCustomDateRange.To.IsUnknown() {
+					toTime, err := time.Parse(time.RFC3339, config.ForecastSettings.FutureCustomDateRange.To.ValueString())
+					if err != nil {
+						diags.AddError("Invalid To Time", "Could not parse ForecastSettings.FutureCustomDateRange.To as RFC3339: "+err.Error())
+					}
+					fcdr.To = &toTime
 				}
-				fcdr.To = &toTime
+				if !diags.HasError() {
+					fs.FutureCustomDateRange = &fcdr
+				}
 			}
-			if !diags.HasError() {
-				fs.FutureCustomDateRange = &fcdr
+			if !config.ForecastSettings.HistoricalCustomDateRange.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.IsUnknown() {
+				hcdr := models.ExternalForecastDateRange{}
+				if !config.ForecastSettings.HistoricalCustomDateRange.From.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.From.IsUnknown() {
+					fromTime, err := time.Parse(time.RFC3339, config.ForecastSettings.HistoricalCustomDateRange.From.ValueString())
+					if err != nil {
+						diags.AddError("Invalid From Time", "Could not parse ForecastSettings.HistoricalCustomDateRange.From as RFC3339: "+err.Error())
+					}
+					hcdr.From = &fromTime
+				}
+				if !config.ForecastSettings.HistoricalCustomDateRange.To.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.To.IsUnknown() {
+					toTime, err := time.Parse(time.RFC3339, config.ForecastSettings.HistoricalCustomDateRange.To.ValueString())
+					if err != nil {
+						diags.AddError("Invalid To Time", "Could not parse ForecastSettings.HistoricalCustomDateRange.To as RFC3339: "+err.Error())
+					}
+					hcdr.To = &toTime
+				}
+				if !diags.HasError() {
+					fs.HistoricalCustomDateRange = &hcdr
+				}
 			}
+			externalConfig.ForecastSettings = fs
 		}
-		if !config.ForecastSettings.HistoricalCustomDateRange.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.IsUnknown() {
-			hcdr := models.ExternalForecastDateRange{}
-			if !config.ForecastSettings.HistoricalCustomDateRange.From.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.From.IsUnknown() {
-				fromTime, err := time.Parse(time.RFC3339, config.ForecastSettings.HistoricalCustomDateRange.From.ValueString())
-				if err != nil {
-					diags.AddError("Invalid From Time", "Could not parse ForecastSettings.HistoricalCustomDateRange.From as RFC3339: "+err.Error())
-				}
-				hcdr.From = &fromTime
-			}
-			if !config.ForecastSettings.HistoricalCustomDateRange.To.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.To.IsUnknown() {
-				toTime, err := time.Parse(time.RFC3339, config.ForecastSettings.HistoricalCustomDateRange.To.ValueString())
-				if err != nil {
-					diags.AddError("Invalid To Time", "Could not parse ForecastSettings.HistoricalCustomDateRange.To as RFC3339: "+err.Error())
-				}
-				hcdr.To = &toTime
-			}
-			if !diags.HasError() {
-				fs.HistoricalCustomDateRange = &hcdr
-			}
-		}
-		externalConfig.ForecastSettings = fs
+	} else if config.ForecastSettings.IsNull() {
+		externalConfig.ForecastSettings = &models.ExternalForecastSettings{}
 	}
 
 	return externalConfig, diags
@@ -1666,7 +1675,11 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	}
 
 	// Nested Object: ForecastSettings
-	if config.ForecastSettings != nil {
+	if config.ForecastSettings != nil &&
+		(config.ForecastSettings.FutureTimeIntervals != nil ||
+			config.ForecastSettings.HistoricalTimeIntervals != nil ||
+			config.ForecastSettings.FutureCustomDateRange != nil ||
+			config.ForecastSettings.HistoricalCustomDateRange != nil) {
 		fsMap := map[string]attr.Value{
 			"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
 			"future_time_intervals":        types.Int64Null(),
@@ -1757,7 +1770,16 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		diags.Append(fsDiags...)
 		configMap["forecast_settings"] = fsVal
 	} else {
-		configMap["forecast_settings"] = resource_report.NewForecastSettingsValueNull()
+		fsMap := map[string]attr.Value{
+			"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
+			"future_time_intervals":        types.Int64Null(),
+			"historical_custom_date_range": resource_report.NewHistoricalCustomDateRangeValueNull(),
+			"historical_time_intervals":    types.Int64Null(),
+			"mode":                         types.StringValue("totals"),
+		}
+		fsVal, fsDiags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
+		diags.Append(fsDiags...)
+		configMap["forecast_settings"] = fsVal
 	}
 
 	state.Config, d = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
