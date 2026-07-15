@@ -2807,6 +2807,97 @@
 									}
 								},
 								{
+									"name": "forecast_settings",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "future_custom_date_range",
+												"single_nested": {
+													"computed_optional_required": "computed_optional",
+													"attributes": [
+														{
+															"name": "from",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "Start timestamp in RFC3339 format."
+															}
+														},
+														{
+															"name": "to",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "End timestamp in RFC3339 format."
+															}
+														}
+													],
+													"description": "Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.\nThe range must resolve to a futureTimeIntervals count within the allowed min/max for the report timeInterval."
+												}
+											},
+											{
+												"name": "future_time_intervals",
+												"int64": {
+													"computed_optional_required": "computed_optional",
+													"description": "How many future timeInterval periods of predicted costs to project.\nAllowed ranges by timeInterval: hour 1-1000, day 1-100, week 1-52, month 1-12, quarter 1-4, year 1-3."
+												}
+											},
+											{
+												"name": "historical_custom_date_range",
+												"single_nested": {
+													"computed_optional_required": "computed_optional",
+													"attributes": [
+														{
+															"name": "from",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "Start timestamp in RFC3339 format."
+															}
+														},
+														{
+															"name": "to",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "End timestamp in RFC3339 format."
+															}
+														}
+													],
+													"description": "Past date range of billed data the model learns from. Takes precedence over historicalTimeIntervals."
+												}
+											},
+											{
+												"name": "historical_time_intervals",
+												"int64": {
+													"computed_optional_required": "computed_optional",
+													"description": "How many past timeInterval periods of data the model learns from.\nAllowed ranges by timeInterval: hour 2-1000, day 2-500, week 2-100, month 2-36, quarter 2-12, year 2-6."
+												}
+											},
+											{
+												"name": "mode",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"default": {
+														"static": "totals"
+													},
+													"description": "Forecast granularity mode.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"totals\",\n\"grouping\",\n)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "Settings for cost forecasting on the report.\nHistorical fields choose which past data the model learns from.\nFuture fields choose how far ahead predicted costs are projected.\nWhen a custom date range is set for a side, it takes precedence over the corresponding interval count.\nfutureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.\nProviding forecastSettings enables forecast (advancedAnalysis.forecast) automatically.\nInterval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range."
+									}
+								},
+								{
 									"name": "group",
 									"list_nested": {
 										"computed_optional_required": "computed_optional",

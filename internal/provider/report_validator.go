@@ -156,12 +156,58 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 		}
 	}
 
+	futureCtrPaths := []path.Path{
+		path.Root("config").AtName("forecast_settings").AtName("future_custom_date_range"),
+	}
+	for _, p := range futureCtrPaths {
+		var ctr resource_report.FutureCustomDateRangeValue
+		diags := req.Config.GetAttribute(ctx, p, &ctr)
+		resp.Diagnostics.Append(diags...)
+		if diags.HasError() || ctr.IsNull() || ctr.IsUnknown() {
+			continue
+		}
+		fromEmpty := ctr.From.IsNull() || ctr.From.IsUnknown()
+		toEmpty := ctr.To.IsNull() || ctr.To.IsUnknown()
+		if fromEmpty && toEmpty {
+			resp.Diagnostics.AddAttributeError(
+				p,
+				"Empty Future Custom Date Range",
+				"future_custom_date_range requires at least one of `from` or `to` to be set.",
+			)
+		}
+	}
+
+	historicalCtrPaths := []path.Path{
+		path.Root("config").AtName("forecast_settings").AtName("historical_custom_date_range"),
+	}
+	for _, p := range historicalCtrPaths {
+		var ctr resource_report.HistoricalCustomDateRangeValue
+		diags := req.Config.GetAttribute(ctx, p, &ctr)
+		resp.Diagnostics.Append(diags...)
+		if diags.HasError() || ctr.IsNull() || ctr.IsUnknown() {
+			continue
+		}
+		fromEmpty := ctr.From.IsNull() || ctr.From.IsUnknown()
+		toEmpty := ctr.To.IsNull() || ctr.To.IsUnknown()
+		if fromEmpty && toEmpty {
+			resp.Diagnostics.AddAttributeError(
+				p,
+				"Empty Historical Custom Date Range",
+				"historical_custom_date_range requires at least one of `from` or `to` to be set.",
+			)
+		}
+	}
+
 	// Validate individual timestamp formats.
 	timestampPaths := []path.Path{
 		path.Root("config").AtName("custom_time_range").AtName("from"),
 		path.Root("config").AtName("custom_time_range").AtName("to"),
 		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("from"),
 		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("to"),
+		path.Root("config").AtName("forecast_settings").AtName("future_custom_date_range").AtName("from"),
+		path.Root("config").AtName("forecast_settings").AtName("future_custom_date_range").AtName("to"),
+		path.Root("config").AtName("forecast_settings").AtName("historical_custom_date_range").AtName("from"),
+		path.Root("config").AtName("forecast_settings").AtName("historical_custom_date_range").AtName("to"),
 	}
 
 	for _, p := range timestampPaths {

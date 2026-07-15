@@ -267,3 +267,58 @@ data "doit_report_query" "test" {
 }
 `
 }
+
+func TestAccReportQueryDataSource_ForecastSettings(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceForecastSettingsConfig(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceForecastSettingsConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        forecast_settings = {
+            future_time_intervals     = 3
+            historical_time_intervals = 12
+            mode                      = "totals"
+        }
+    }
+}
+`
+}

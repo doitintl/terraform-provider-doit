@@ -167,6 +167,17 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.secondary_time_range.include_current",        // API defaults to false
 		"config.secondary_time_range.custom_time_range.from", // API defaults from date
 		"config.secondary_time_range.custom_time_range.to",   // API defaults to date
+
+		// config.forecast_settings
+		"config.forecast_settings",
+		"config.forecast_settings.future_custom_date_range",
+		"config.forecast_settings.future_custom_date_range.from",
+		"config.forecast_settings.future_custom_date_range.to",
+		"config.forecast_settings.historical_custom_date_range",
+		"config.forecast_settings.historical_custom_date_range.from",
+		"config.forecast_settings.historical_custom_date_range.to",
+		"config.forecast_settings.future_time_intervals",
+		"config.forecast_settings.historical_time_intervals",
 	)
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{

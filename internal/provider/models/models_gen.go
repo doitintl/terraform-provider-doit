@@ -1758,6 +1758,24 @@ func (e ExternalDisplaySettingsNumberScale) Valid() bool {
 	}
 }
 
+// Defines values for ExternalForecastSettingsMode.
+const (
+	Grouping ExternalForecastSettingsMode = "grouping"
+	Totals   ExternalForecastSettingsMode = "totals"
+)
+
+// Valid indicates whether the value is a known member of the ExternalForecastSettingsMode enum.
+func (e ExternalForecastSettingsMode) Valid() bool {
+	switch e {
+	case Grouping:
+		return true
+	case Totals:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalMetricType.
 const (
 	ExternalMetricTypeBasic    ExternalMetricType = "basic"
@@ -5811,6 +5829,15 @@ type ExternalConfig struct {
 	// Filters The filters to apply to the report.
 	Filters *[]ExternalConfigFilter `json:"filters,omitempty"`
 
+	// ForecastSettings Settings for cost forecasting on the report.
+	// Historical fields choose which past data the model learns from.
+	// Future fields choose how far ahead predicted costs are projected.
+	// When a custom date range is set for a side, it takes precedence over the corresponding interval count.
+	// futureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.
+	// Providing forecastSettings enables forecast (advancedAnalysis.forecast) automatically.
+	// Interval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.
+	ForecastSettings *ExternalForecastSettings `json:"forecastSettings,omitempty"`
+
 	// Group The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by).
 	Group *[]Group `json:"group,omitempty"`
 
@@ -5953,6 +5980,45 @@ type ExternalDisplaySettingsDataLabelFontSize string
 
 // ExternalDisplaySettingsNumberScale Scale applied to numeric values when rendering the report.
 type ExternalDisplaySettingsNumberScale string
+
+// ExternalForecastDateRange Start and end timestamps in RFC3339 format.
+type ExternalForecastDateRange struct {
+	// From Start timestamp in RFC3339 format.
+	From *time.Time `json:"from,omitempty"`
+
+	// To End timestamp in RFC3339 format.
+	To *time.Time `json:"to,omitempty"`
+}
+
+// ExternalForecastSettings Settings for cost forecasting on the report.
+// Historical fields choose which past data the model learns from.
+// Future fields choose how far ahead predicted costs are projected.
+// When a custom date range is set for a side, it takes precedence over the corresponding interval count.
+// futureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.
+// Providing forecastSettings enables forecast (advancedAnalysis.forecast) automatically.
+// Interval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.
+type ExternalForecastSettings struct {
+	// FutureCustomDateRange Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.
+	// The range must resolve to a futureTimeIntervals count within the allowed min/max for the report timeInterval.
+	FutureCustomDateRange *ExternalForecastDateRange `json:"futureCustomDateRange,omitempty"`
+
+	// FutureTimeIntervals How many future timeInterval periods of predicted costs to project.
+	// Allowed ranges by timeInterval: hour 1-1000, day 1-100, week 1-52, month 1-12, quarter 1-4, year 1-3.
+	FutureTimeIntervals *int64 `json:"futureTimeIntervals,omitempty"`
+
+	// HistoricalCustomDateRange Past date range of billed data the model learns from. Takes precedence over historicalTimeIntervals.
+	HistoricalCustomDateRange *ExternalForecastDateRange `json:"historicalCustomDateRange,omitempty"`
+
+	// HistoricalTimeIntervals How many past timeInterval periods of data the model learns from.
+	// Allowed ranges by timeInterval: hour 2-1000, day 2-500, week 2-100, month 2-36, quarter 2-12, year 2-6.
+	HistoricalTimeIntervals *int64 `json:"historicalTimeIntervals,omitempty"`
+
+	// Mode Forecast granularity mode.
+	Mode *ExternalForecastSettingsMode `json:"mode,omitempty"`
+}
+
+// ExternalForecastSettingsMode Forecast granularity mode.
+type ExternalForecastSettingsMode string
 
 // ExternalMetric Metric selector used in reports and filters.
 type ExternalMetric struct {
