@@ -301,8 +301,6 @@ func resolveArgSchema(arg ast.Expr, callerSchemas map[string]attrMap) attrMap {
 	return nil
 }
 
-
-
 // isRequestBuilder returns true if the function name matches a request builder
 // pattern (toCreateRequest, toUpdateRequest, fillXxxCommon, toAlertConfig, etc.).
 func isRequestBuilder(name string) bool {
@@ -349,7 +347,8 @@ func resolveSchema(fn *ast.FuncDecl, receiverToSchema map[string]string, perSche
 
 // modelTypeToSchema derives the schema function name from a model type name.
 // E.g., "budgetResourceModel" → "BudgetResourceSchema",
-//       "cloudDiagramSearchDataSourceModel" → "CloudDiagramSearchDataSourceSchema".
+//
+//	"cloudDiagramSearchDataSourceModel" → "CloudDiagramSearchDataSourceSchema".
 func modelTypeToSchema(typeName string) string {
 	base := ""
 	if strings.HasSuffix(typeName, "ResourceModel") {
@@ -511,8 +510,6 @@ func buildSelectorChain(expr ast.Expr) []string {
 	}
 	return nil
 }
-
-
 
 // extractGuardedFromCond extracts field selector strings from conditions
 // containing negated IsUnknown() calls (!plan.X.IsUnknown()). Only negated

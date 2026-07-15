@@ -127,12 +127,12 @@ func (r *acknowledgedResource) Schema(ctx context.Context, _ resource.SchemaRequ
 
 	// Cat B: acknowledged as not clearable — replaces no-op if-blocks.
 	acknowledgeNotClearable(s,
-		"folder_id",              // API-assigned
-		"public",                 // API defaults to false
-		"config.currency",        // API defaults to org currency
-		"results[*].external_id", // API-assigned identity
+		"folder_id",               // API-assigned
+		"public",                  // API defaults to false
+		"config.currency",         // API defaults to org currency
+		"results[*].external_id",  // API-assigned identity
 		"results[*].external_url", // API-assigned
-		"results[*].metadata",    // API-assigned
+		"results[*].metadata",     // API-assigned
 	)
 
 	resp.Schema = s

@@ -18,14 +18,14 @@ func (l List) IsNull() bool       { return false }
 func (i Int64) IsUnknown() bool   { return false }
 func (i Int64) IsNull() bool      { return false }
 
-func (s String) ValueString() string      { return "" }
-func (s String) ValueStringPointer() *string { return nil }
-func (f Float64) ValueFloat64() float64   { return 0 }
+func (s String) ValueString() string            { return "" }
+func (s String) ValueStringPointer() *string    { return nil }
+func (f Float64) ValueFloat64() float64         { return 0 }
 func (f Float64) ValueFloat64Pointer() *float64 { return nil }
-func (b Bool) ValueBool() bool            { return false }
-func (b Bool) ValueBoolPointer() *bool    { return nil }
-func (i Int64) ValueInt64() int64         { return 0 }
-func (i Int64) ValueInt64Pointer() *int64 { return nil }
+func (b Bool) ValueBool() bool                  { return false }
+func (b Bool) ValueBoolPointer() *bool          { return nil }
+func (i Int64) ValueInt64() int64               { return 0 }
+func (i Int64) ValueInt64Pointer() *int64       { return nil }
 
 var StringType interface{} = nil
 

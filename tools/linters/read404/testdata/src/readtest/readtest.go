@@ -4,7 +4,10 @@ import "context"
 
 // Stubs
 type readRequest struct{ State stateObj }
-type readResponse struct{ Diagnostics diagList; State stateObj }
+type readResponse struct {
+	Diagnostics diagList
+	State       stateObj
+}
 type diagList struct{}
 
 func (d diagList) Append(diags ...interface{})     {}
@@ -12,15 +15,18 @@ func (d diagList) HasError() bool                  { return false }
 func (d diagList) AddError(summary, detail string) {}
 
 type stateObj struct{}
+
 func (s stateObj) Get(ctx context.Context, v interface{}) diagList { return diagList{} }
 func (s stateObj) Set(ctx context.Context, v interface{}) diagList { return diagList{} }
 func (s stateObj) RemoveResource(ctx context.Context)              {}
 
 type httpResponse struct{ Body []byte }
+
 func (r httpResponse) StatusCode() int { return 200 }
 
 type myModel struct{}
 type myClient struct{}
+
 func (c *myClient) GetResourceWithResponse(ctx context.Context, id string) (httpResponse, error) {
 	return httpResponse{}, nil
 }

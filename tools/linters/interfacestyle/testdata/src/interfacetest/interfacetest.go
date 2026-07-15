@@ -5,9 +5,11 @@ type MyInterface interface {
 }
 
 type myType struct{}
+
 func (m *myType) DoSomething() {}
 
 type anotherType struct{}
+
 func (a *anotherType) DoSomething() {}
 
 // BAD: uses &type{}

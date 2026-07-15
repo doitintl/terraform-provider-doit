@@ -20,8 +20,10 @@ func (i Int64) IsNull() bool      { return false }
 
 var StringType interface{} = nil
 
-func Int64Value(v int64) Int64 { return Int64{} }
-func Int64Null() Int64         { return Int64{} }
-func ListNull(elementType interface{}) List                          { return List{} }
-func ListValue(elementType interface{}, elements []interface{}) (List, interface{}) { return List{}, nil }
+func Int64Value(v int64) Int64              { return Int64{} }
+func Int64Null() Int64                      { return Int64{} }
+func ListNull(elementType interface{}) List { return List{} }
+func ListValue(elementType interface{}, elements []interface{}) (List, interface{}) {
+	return List{}, nil
+}
 func ListValueMust(elementType interface{}, elements []interface{}) List { return List{} }
