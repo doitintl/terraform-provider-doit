@@ -363,3 +363,50 @@ data "doit_report" "test" {
 }
 `, name)
 }
+
+func TestAccReportDataSource_ForecastSettings_Omitted(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-report-ds-fso")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportDataSourceForecastSettingsOmittedConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Verify forecast_settings is Null in data source state
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings"),
+						knownvalue.Null()),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDataSourceForecastSettingsOmittedConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = %q
+    description = "test report with omitted forecast settings for data source"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+
+data "doit_report" "test" {
+    id = doit_report.test.id
+}
+`, name)
+}

@@ -3352,19 +3352,19 @@ func TestAccReport_ForecastSettings_CustomRanges(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_report.forecast_custom_test",
 						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("from"),
-						knownvalue.StringExact("2024-02-02T00:00:00Z")),
+						knownvalue.StringExact("2024-02-02T00:00:00+02:00")),
 					statecheck.ExpectKnownValue(
 						"doit_report.forecast_custom_test",
 						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("to"),
-						knownvalue.StringExact("2024-08-02T00:00:00Z")),
+						knownvalue.StringExact("2024-08-02T00:00:00+02:00")),
 					statecheck.ExpectKnownValue(
 						"doit_report.forecast_custom_test",
 						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("from"),
-						knownvalue.StringExact("2023-01-01T00:00:00Z")),
+						knownvalue.StringExact("2023-01-01T00:00:00-05:00")),
 					statecheck.ExpectKnownValue(
 						"doit_report.forecast_custom_test",
 						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("to"),
-						knownvalue.StringExact("2023-12-31T23:59:59Z")),
+						knownvalue.StringExact("2023-12-31T23:59:59-05:00")),
 				},
 			},
 		},
@@ -3393,12 +3393,12 @@ resource "doit_report" "forecast_custom_test" {
 		}
 		forecast_settings = {
 			future_custom_date_range = {
-				from = "2024-02-02T00:00:00Z"
-				to   = "2024-08-02T00:00:00Z"
+				from = "2024-02-02T00:00:00+02:00"
+				to   = "2024-08-02T00:00:00+02:00"
 			}
 			historical_custom_date_range = {
-				from = "2023-01-01T00:00:00Z"
-				to   = "2023-12-31T23:59:59Z"
+				from = "2023-01-01T00:00:00-05:00"
+				to   = "2023-12-31T23:59:59-05:00"
 			}
 			mode = "totals"
 		}
@@ -3611,6 +3611,57 @@ resource "doit_report" "forecast_empty" {
 				to   = "2023-12-31T23:59:59Z"
 			}
 			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// TestAccReport_ForecastSettings_GroupingModeOnly tests that forecast_settings with mode = "grouping" only is preserved correctly.
+func TestAccReport_ForecastSettings_GroupingModeOnly(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithForecastSettingsGroupingModeOnly(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_grouping_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("mode"),
+						knownvalue.StringExact("grouping")),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsGroupingModeOnly(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_grouping_test" {
+    name = "test-forecast-grouping-%d"
+	description = "Report with forecast settings grouping mode only"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		forecast_settings = {
+			mode = "grouping"
 		}
 		data_source    = "billing"
 		display_values = "actuals_only"

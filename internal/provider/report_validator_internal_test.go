@@ -365,10 +365,18 @@ func buildReportConfigWithForecastSettings(ctx context.Context, t *testing.T, fu
 		"to":   types.StringNull(),
 	}
 	if futureFrom != "" {
-		fcdrMap["from"] = types.StringValue(futureFrom)
+		if futureFrom == "UNKNOWN" {
+			fcdrMap["from"] = types.StringUnknown()
+		} else {
+			fcdrMap["from"] = types.StringValue(futureFrom)
+		}
 	}
 	if futureTo != "" {
-		fcdrMap["to"] = types.StringValue(futureTo)
+		if futureTo == "UNKNOWN" {
+			fcdrMap["to"] = types.StringUnknown()
+		} else {
+			fcdrMap["to"] = types.StringValue(futureTo)
+		}
 	}
 	fcdrVal, diags := resource_report.NewFutureCustomDateRangeValue(resource_report.FutureCustomDateRangeValue{}.AttributeTypes(ctx), fcdrMap)
 	if diags.HasError() {
@@ -380,10 +388,18 @@ func buildReportConfigWithForecastSettings(ctx context.Context, t *testing.T, fu
 		"to":   types.StringNull(),
 	}
 	if histFrom != "" {
-		hcdrMap["from"] = types.StringValue(histFrom)
+		if histFrom == "UNKNOWN" {
+			hcdrMap["from"] = types.StringUnknown()
+		} else {
+			hcdrMap["from"] = types.StringValue(histFrom)
+		}
 	}
 	if histTo != "" {
-		hcdrMap["to"] = types.StringValue(histTo)
+		if histTo == "UNKNOWN" {
+			hcdrMap["to"] = types.StringUnknown()
+		} else {
+			hcdrMap["to"] = types.StringValue(histTo)
+		}
 	}
 	hcdrVal, diags := resource_report.NewHistoricalCustomDateRangeValue(resource_report.HistoricalCustomDateRangeValue{}.AttributeTypes(ctx), hcdrMap)
 	if diags.HasError() {
@@ -500,6 +516,22 @@ func TestReportTimestampValidator_ForecastSettings(t *testing.T) {
 			histFrom:   "2023-01-01T00:00:00Z",
 			histTo:     "2023-12-31T23:59:59Z",
 			expectErr:  true,
+		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (future from)",
+			futureFrom: "UNKNOWN",
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "2023-12-31T23:59:59Z",
+			expectErr:  false,
+		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (historical to)",
+			futureFrom: "2024-02-02T00:00:00Z",
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "UNKNOWN",
+			expectErr:  false,
 		},
 	}
 
