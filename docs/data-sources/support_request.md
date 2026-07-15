@@ -45,11 +45,14 @@ output "status" {
 - `id` (Number) Ticket ID.
 - `is_public` (Boolean) Whether the ticket is public.
 - `platform` (String) Platform of the ticket.
-- `platform_info` (String) The cloud asset identifier the requester selected on the support
+- `platform_info` (String) The cloud asset identifier(s) the requester selected on the support
 form's asset-selector control — typically the GCP project ID, AWS
-account ID, Azure subscription ID, or equivalent. Empty string
-when the ticket has no asset value (e.g. older tickets or tickets
-opened through paths that bypass the form selector).
+account ID, Azure subscription ID, or equivalent. May contain
+multiple identifiers as a comma-separated list (no spaces) when the
+requester selected more than one asset, e.g.
+"111111111111,222222222222". Empty string when the ticket has no
+asset value (e.g. older tickets or tickets opened through paths that
+bypass the form selector).
 - `product` (String) Ticket product.
 - `requester` (String) Email address of the ticket requester.
 - `severity` (String) Ticket severity.
