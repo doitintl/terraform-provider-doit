@@ -130,7 +130,7 @@ func (r *datahubDatasetResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	overlayDatahubDatasetComputedFields(createResp.JSON201.Name, createResp.JSON201.Description, createResp.JSON201.Records, createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
+	overlayDatahubDatasetComputedFields(createResp.JSON201.Name, createResp.JSON201.Description, nullableToPointer(createResp.JSON201.Records), createResp.JSON201.UpdatedBy, createResp.JSON201.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -215,7 +215,7 @@ func (r *datahubDatasetResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	overlayDatahubDatasetComputedFields(updateResp.JSON200.Name, updateResp.JSON200.Description, updateResp.JSON200.Records, updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
+	overlayDatahubDatasetComputedFields(updateResp.JSON200.Name, updateResp.JSON200.Description, nullableToPointer(updateResp.JSON200.Records), updateResp.JSON200.UpdatedBy, updateResp.JSON200.LastUpdated, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }

@@ -389,7 +389,7 @@ func (r *sharingResource) Delete(ctx context.Context, req resource.DeleteRequest
 		Permissions: &resetPerms,
 	}
 	if resType == "allocations" {
-		resetReq.Public = new(models.UpdateResourcePermissionRequestBodyPublic(""))
+		resetReq.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
 
 	putResp, err := r.client.UpdateResourcePermissionWithResponse(
@@ -497,8 +497,8 @@ func mapSharingToModel(ctx context.Context, apiResp *models.ResourcePermissionsR
 	// Map public — normalize empty string to null.
 	// Allocations return public:"" to mean "no public access" while other resource
 	// types return null. We normalize both to null to prevent spurious drift.
-	if apiResp.Public != nil && string(*apiResp.Public) != "" {
-		state.Public = types.StringValue(string(*apiResp.Public))
+	if publicVal := nullableToPointer(apiResp.Public); publicVal != nil && string(*publicVal) != "" {
+		state.Public = types.StringValue(string(*publicVal))
 	} else {
 		state.Public = types.StringNull()
 	}
@@ -568,12 +568,12 @@ func buildSharingRequest(ctx context.Context, plan *sharingResourceModel, resour
 
 	// Map public from plan to API type.
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
-		reqBody.Public = new(models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString()))
+		reqBody.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString()))
 	} else if resourceType == "allocations" {
 		// Allocations require the public field to be present in the request body.
 		// The API returns 500 if public is omitted or null. An empty string signals
 		// "no public access" and is the only accepted sentinel for allocations.
-		reqBody.Public = new(models.UpdateResourcePermissionRequestBodyPublic(""))
+		reqBody.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
 
 	return reqBody, diags

@@ -139,10 +139,10 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 	data.Name = types.StringPointerValue(allocation.Name)
 	data.Description = types.StringPointerValue(allocation.Description)
 	data.Type = types.StringPointerValue(allocation.Type)
-	data.AnomalyDetection = types.BoolPointerValue(allocation.AnomalyDetection)
+	data.AnomalyDetection = types.BoolPointerValue(nullableToPointer(allocation.AnomalyDetection))
 	data.CreateTime = types.Int64PointerValue(allocation.CreateTime)
 	data.UpdateTime = types.Int64PointerValue(allocation.UpdateTime)
-	data.UnallocatedCosts = types.StringPointerValue(allocation.UnallocatedCosts)
+	data.UnallocatedCosts = types.StringPointerValue(nullableToPointer(allocation.UnallocatedCosts))
 	data.FolderId = types.StringPointerValue(allocation.FolderId)
 
 	if allocation.AllocationType != nil {
@@ -152,11 +152,11 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 	}
 
 	// Map single Rule
-	if allocation.Rule != nil {
+	if rule := nullableToPointer(allocation.Rule); rule != nil {
 		ruleMap := map[string]attr.Value{
-			"formula": types.StringValue(allocation.Rule.Formula),
+			"formula": types.StringValue(rule.Formula),
 		}
-		componentsList, componentDiags := ds.mapComponentsToList(ctx, allocation.Rule.Components)
+		componentsList, componentDiags := ds.mapComponentsToList(ctx, rule.Components)
 		diags.Append(componentDiags...)
 		if diags.HasError() {
 			return
@@ -175,8 +175,13 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 
 	// Map Rules list (for group allocations)
 	if allocation.Rules != nil && len(*allocation.Rules) > 0 {
-		rules := make([]attr.Value, len(*allocation.Rules))
-		for i, rule := range *allocation.Rules {
+		rules := make([]attr.Value, 0, len(*allocation.Rules))
+		for _, ruleNullable := range *allocation.Rules {
+			rulePtr := nullableToPointer(ruleNullable)
+			if rulePtr == nil {
+				continue
+			}
+			rule := *rulePtr
 			ruleMap := map[string]attr.Value{
 				"action":      types.StringValue("select"), // Default action - not returned by API
 				"description": types.StringPointerValue(rule.Description),
@@ -201,11 +206,12 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 			ruleMap["components"] = componentsList
 
 			var ruleDiags diag.Diagnostics
-			rules[i], ruleDiags = datasource_allocation.NewRulesValue(datasource_allocation.RulesValue{}.AttributeTypes(ctx), ruleMap)
+			ruleVal, ruleDiags := datasource_allocation.NewRulesValue(datasource_allocation.RulesValue{}.AttributeTypes(ctx), ruleMap)
 			diags.Append(ruleDiags...)
 			if diags.HasError() {
 				return
 			}
+			rules = append(rules, ruleVal)
 		}
 		var rulesListDiags diag.Diagnostics
 		data.Rules, rulesListDiags = types.ListValueFrom(ctx, datasource_allocation.RulesValue{}.Type(ctx), rules)

@@ -182,26 +182,26 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	if len(allAnomalies) > 0 {
 		anomalyVals := make([]datasource_anomalies.AnomaliesValue, 0, len(allAnomalies))
 		for _, anomaly := range allAnomalies {
-			// Handle EndTime *int -> Int64
+			// Handle EndTime nullable.Nullable[int] -> Int64
 			var endTimeVal types.Int64
-			if anomaly.EndTime != nil {
-				endTimeVal = types.Int64Value(int64(*anomaly.EndTime))
+			if endTime := nullableToPointer(anomaly.EndTime); endTime != nil {
+				endTimeVal = types.Int64Value(int64(*endTime))
 			} else {
 				endTimeVal = types.Int64Null()
 			}
 
 			// Handle Status enum
 			var statusVal types.String
-			if anomaly.Status != nil {
-				statusVal = types.StringValue(string(*anomaly.Status))
+			if status := nullableToPointer(anomaly.Status); status != nil {
+				statusVal = types.StringValue(string(*status))
 			} else {
 				statusVal = types.StringNull()
 			}
 
-			// Map AcknowledgedAt (*time.Time)
+			// Map AcknowledgedAt (nullable.Nullable[time.Time])
 			var acknowledgedAtVal types.String
-			if anomaly.AcknowledgedAt != nil {
-				acknowledgedAtVal = types.StringValue(anomaly.AcknowledgedAt.UTC().Format(time.RFC3339))
+			if acknowledgedAt := nullableToPointer(anomaly.AcknowledgedAt); acknowledgedAt != nil {
+				acknowledgedAtVal = types.StringValue(acknowledgedAt.UTC().Format(time.RFC3339))
 			} else {
 				acknowledgedAtVal = types.StringNull()
 			}
@@ -221,7 +221,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 					"id":              types.StringPointerValue(anomaly.Id),
 					"acknowledged":    types.BoolPointerValue(anomaly.Acknowledged),
 					"acknowledged_at": acknowledgedAtVal,
-					"acknowledged_by": types.StringPointerValue(anomaly.AcknowledgedBy),
+					"acknowledged_by": types.StringPointerValue(nullableToPointer(anomaly.AcknowledgedBy)),
 					"attribution":     types.StringValue(anomaly.Attribution),
 					"billing_account": types.StringValue(anomaly.BillingAccount),
 					"cost_of_anomaly": types.Float64Value(anomaly.CostOfAnomaly),

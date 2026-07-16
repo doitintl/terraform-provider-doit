@@ -160,8 +160,8 @@ func mapSharingResponseToDataSourceModel(ctx context.Context, apiResp *models.Re
 	data.Permissions = mapDSPermissionsToList(ctx, apiResp.Permissions, &diags)
 
 	// Map public — normalize empty string to null (allocations return "" for "no public access")
-	if apiResp.Public != nil && string(*apiResp.Public) != "" {
-		data.Public = types.StringValue(string(*apiResp.Public))
+	if publicVal := nullableToPointer(apiResp.Public); publicVal != nil && string(*publicVal) != "" {
+		data.Public = types.StringValue(string(*publicVal))
 	} else {
 		data.Public = types.StringNull()
 	}

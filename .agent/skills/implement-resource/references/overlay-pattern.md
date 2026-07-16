@@ -41,6 +41,7 @@ func overlayMyResourceComputedFields(ctx context.Context, apiResp *models.MyReso
     var diags diag.Diagnostics
 
     // 1. Computed-only stable fields: ALWAYS set from API response.
+    //    Use nullableToPointer() when the response field is nullable.Nullable[T].
     plan.Id = types.StringPointerValue(apiResp.Id)
     plan.CreateTime = types.Int64PointerValue(apiResp.CreateTime)
 
@@ -51,8 +52,10 @@ func overlayMyResourceComputedFields(ctx context.Context, apiResp *models.MyReso
     }
 
     // 3. Optional+Computed scalars: resolve ONLY when unknown.
+    //    Response field may be *T or nullable.Nullable[T] — check models_gen.go.
     if plan.Formula.IsUnknown() {
-        plan.Formula = types.StringPointerValue(apiResp.Formula)
+        plan.Formula = types.StringPointerValue(apiResp.Formula)                   // *T field
+        // plan.Field = types.StringPointerValue(nullableToPointer(apiResp.Field)) // nullable field
     }
     // If plan.Formula is known, leave it untouched — user's value wins.
 

@@ -6,3 +6,4 @@ generate:
   client: true
 output-options:
   response-type-suffix: Resp
+  nullable-type: true

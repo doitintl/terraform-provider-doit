@@ -129,26 +129,26 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	data.SeverityLevel = types.StringValue(anomaly.SeverityLevel)
 	data.TimeFrame = types.StringValue(anomaly.TimeFrame)
 
-	// AcknowledgedAt is *time.Time
-	if anomaly.AcknowledgedAt != nil {
-		data.AcknowledgedAt = types.StringValue(anomaly.AcknowledgedAt.UTC().Format(time.RFC3339))
+	// AcknowledgedAt is nullable.Nullable[time.Time]
+	if acknowledgedAt := nullableToPointer(anomaly.AcknowledgedAt); acknowledgedAt != nil {
+		data.AcknowledgedAt = types.StringValue(acknowledgedAt.UTC().Format(time.RFC3339))
 	} else {
 		data.AcknowledgedAt = types.StringNull()
 	}
 
-	// AcknowledgedBy is *string
-	data.AcknowledgedBy = types.StringPointerValue(anomaly.AcknowledgedBy)
+	// AcknowledgedBy is nullable.Nullable[string]
+	data.AcknowledgedBy = types.StringPointerValue(nullableToPointer(anomaly.AcknowledgedBy))
 
-	// EndTime is *int in the API
-	if anomaly.EndTime != nil {
-		data.EndTime = types.Int64Value(int64(*anomaly.EndTime))
+	// EndTime is nullable.Nullable[int] in the API
+	if endTime := nullableToPointer(anomaly.EndTime); endTime != nil {
+		data.EndTime = types.Int64Value(int64(*endTime))
 	} else {
 		data.EndTime = types.Int64Null()
 	}
 
-	// Status is a pointer
-	if anomaly.Status != nil {
-		data.Status = types.StringValue(string(*anomaly.Status))
+	// Status is nullable.Nullable[models.GetAnomaly200ResponseStatus]
+	if status := nullableToPointer(anomaly.Status); status != nil {
+		data.Status = types.StringValue(string(*status))
 	} else {
 		data.Status = types.StringNull()
 	}

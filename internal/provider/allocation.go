@@ -8,6 +8,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/oapi-codegen/nullable"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -116,12 +117,12 @@ func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req m
 	}
 
 	req.Description = ""
-	if common.Description != nil {
-		req.Description = *common.Description
+	if desc := nullableToPointer(common.Description); desc != nil {
+		req.Description = *desc
 	}
 	req.Name = ""
-	if common.Name != nil {
-		req.Name = *common.Name
+	if name := nullableToPointer(common.Name); name != nil {
+		req.Name = *name
 	}
 	req.UnallocatedCosts = common.UnallocatedCosts
 	req.FolderId = common.FolderId
@@ -172,21 +173,20 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 
 // Helper to fill common fields into UpdateAllocationRequest model (which uses pointers).
 func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
-	req.Description = plan.Description.ValueStringPointer()
-	req.Name = plan.Name.ValueStringPointer()
+	req.Description = pointerToNullable(plan.Description.ValueStringPointer())
+	req.Name = pointerToNullable(plan.Name.ValueStringPointer())
 	req.FolderId = plan.FolderId.ValueStringPointer()
 	// UnallocatedCosts is only sent if not empty because it is invalid for "single" allocations.
 	if !plan.UnallocatedCosts.IsNull() && !plan.UnallocatedCosts.IsUnknown() {
 		if v := plan.UnallocatedCosts.ValueString(); v != "" {
-			req.UnallocatedCosts = &v
+			req.UnallocatedCosts = valueToNullable(v)
 		}
 	}
 
 	// Populate single Rule if present
 	if !plan.Rule.IsNull() && !plan.Rule.IsUnknown() {
-		req.Rule = &models.AllocationRule{
-			Formula: plan.Rule.Formula.ValueString(),
-		}
+		var rule models.AllocationRule
+		rule.Formula = plan.Rule.Formula.ValueString()
 		if !plan.Rule.Components.IsNull() {
 			planComponents := []resource_allocation.ComponentsValue{}
 			d := plan.Rule.Components.ElementsAs(ctx, &planComponents, false)
@@ -194,11 +194,12 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 			if diags.HasError() {
 				return diags
 			}
-			req.Rule.Components, diags = convertComponentsToModels(ctx, planComponents)
+			rule.Components, diags = convertComponentsToModels(ctx, planComponents)
 			if diags.HasError() {
 				return diags
 			}
 		}
+		req.Rule.Set(rule)
 	}
 
 	// Populate Group Rules if present.
@@ -213,15 +214,14 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 			return diags
 		}
 		if len(planRules) > 0 {
-			rules := make([]*models.GroupAllocationRule, len(planRules))
+			rules := make([]nullable.Nullable[models.GroupAllocationRule], len(planRules))
 			for i := range planRules {
-				rules[i] = &models.GroupAllocationRule{
-					Name:        planRules[i].Name.ValueStringPointer(),
-					Formula:     planRules[i].Formula.ValueStringPointer(),
-					Action:      models.GroupAllocationRuleAction(planRules[i].Action.ValueString()),
-					Id:          planRules[i].Id.ValueStringPointer(),
-					Description: planRules[i].Description.ValueStringPointer(),
-				}
+				var rule models.GroupAllocationRule
+				rule.Name = planRules[i].Name.ValueStringPointer()
+				rule.Formula = planRules[i].Formula.ValueStringPointer()
+				rule.Action = models.GroupAllocationRuleAction(planRules[i].Action.ValueString())
+				rule.Id = planRules[i].Id.ValueStringPointer()
+				rule.Description = planRules[i].Description.ValueStringPointer()
 
 				// Don't send components if selecting existing allocation (action "select")
 				// But for "create" or "update" action, components are required/allowed.
@@ -237,8 +237,9 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 					if diags.HasError() {
 						return diags
 					}
-					rules[i].Components = &createComponents
+					rule.Components = &createComponents
 				}
+				rules[i].Set(rule)
 			}
 			req.Rules = &rules
 		}
@@ -296,11 +297,11 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
 	state.Description = types.StringPointerValue(resp.Description)
-	state.AnomalyDetection = types.BoolPointerValue(resp.AnomalyDetection)
+	state.AnomalyDetection = types.BoolPointerValue(nullableToPointer(resp.AnomalyDetection))
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
 	state.Name = types.StringPointerValue(resp.Name)
-	state.UnallocatedCosts = types.StringPointerValue(resp.UnallocatedCosts)
+	state.UnallocatedCosts = types.StringPointerValue(nullableToPointer(resp.UnallocatedCosts))
 	// Defend against API returning nil: fall back to "root" to match the
 	// schema default and prevent perpetual plan drift.
 	if resp.FolderId != nil {
@@ -315,11 +316,11 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		state.AllocationType = types.StringNull()
 	}
 
-	if resp.Rule != nil {
+	if rule := nullableToPointer(resp.Rule); rule != nil {
 		m := map[string]attr.Value{
-			"formula": types.StringValue(resp.Rule.Formula),
+			"formula": types.StringValue(rule.Formula),
 		}
-		if resp.Rule.Components != nil {
+		if rule.Components != nil {
 			// Preserve existing component values from state for alias-type normalization
 			// and deprecated field round-tripping.
 			// - includeNull, inverse, caseInsensitive: use API value (reliably echoed),
@@ -335,7 +336,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				}
 			}
 			var d diag.Diagnostics
-			m["components"], d = toAllocationRuleComponentsListValue(ctx, resp.Rule.Components, existingComponents)
+			m["components"], d = toAllocationRuleComponentsListValue(ctx, rule.Components, existingComponents)
 			diags.Append(d...)
 			if diags.HasError() {
 				return
@@ -373,7 +374,8 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 
 		rules := make([]attr.Value, 0, len(*resp.Rules))
 		ruleIndex := 0
-		for _, rulePtr := range *resp.Rules {
+		for _, ruleNullable := range *resp.Rules {
+			rulePtr := nullableToPointer(ruleNullable)
 			if rulePtr == nil {
 				ruleIndex++
 				continue
@@ -410,10 +412,10 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
 				if err == nil && respHTTPFullAlloc.JSON200 != nil {
 					fullAlloc := respHTTPFullAlloc.JSON200
-					if fullAlloc.Rule != nil {
-						formula = fullAlloc.Rule.Formula
-						if fullAlloc.Rule.Components != nil {
-							components = fullAlloc.Rule.Components
+					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
+						formula = rulePtr.Formula
+						if rulePtr.Components != nil {
+							components = rulePtr.Components
 						}
 					}
 				} else {
@@ -466,7 +468,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		if diags.HasError() {
 			return
 		}
-	} else if resp.Rule != nil {
+	} else if nullableToPointer(resp.Rule) != nil {
 		// Single-rule allocation: the API returns rules=nil because this isn't a
 		// group allocation. Keep state.Rules null so it's omitted from subsequent
 		// update requests. Sending "rules": [] to the API causes a 500 error.
