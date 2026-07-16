@@ -117,14 +117,18 @@ if rule := nullableToPointer(resp.Rule); rule != nil {
 
 ### Write path (TF plan → API request)
 
-Prefer `valueToNullable` when the value is known non-nil — it avoids unnecessary pointer indirection:
+Prefer `valueToNullable` when the value is known non-nil — it avoids unnecessary pointer indirection.
+For `Optional` or `Optional+Computed` fields, ALWAYS verify they are not `Unknown` and not `Null` before using them:
 
 ```go
-// PREFERRED — concrete value
+// PREFERRED — concrete value (safe for Required fields)
 req.Name = valueToNullable(plan.Name.ValueString())
 
-// OK — when you already have a *T from ValueXxxPointer()
-req.Description = pointerToNullable(plan.Description.ValueStringPointer())
+// For Optional/Computed fields: guard against Unknown and Null states!
+if !plan.Description.IsUnknown() && !plan.Description.IsNull() {
+    // Both valueToNullable and pointerToNullable are safe here
+    req.Description = pointerToNullable(plan.Description.ValueStringPointer())
+}
 ```
 
 ### Nullable struct fields (`.Set()`)

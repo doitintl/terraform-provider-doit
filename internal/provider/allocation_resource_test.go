@@ -2464,3 +2464,58 @@ resource "doit_allocation" "folder_test" {
 }
 `, rName, testProject())
 }
+
+// TestAccAllocation_Computed_Required_Fields tests that using a computed value
+// (like an ID from another resource) for a required field (like name or description)
+// works correctly and does not trigger any Unknown pointer bugs during Create.
+func TestAccAllocation_Computed_Required_Fields(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "dependency" {
+    name = "%s-dep"
+    description = "Dependency allocation"
+    rule = {
+       formula = "A"
+       components = [
+         {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["US"]
+         }
+       ]
+    }
+}
+
+resource "doit_allocation" "dependent" {
+    // These required fields will be Unknown at plan time
+    name = doit_allocation.dependency.id
+    description = "Dependent on ${doit_allocation.dependency.id}"
+    rule = {
+       formula = "A"
+       components = [
+         {
+           key    = "country"
+           mode   = "is"
+           type   = "fixed"
+           values = ["JP"]
+         }
+       ]
+    }
+}
+`, rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_allocation.dependent", tfjsonpath.New("name"), knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}

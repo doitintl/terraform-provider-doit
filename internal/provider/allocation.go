@@ -468,7 +468,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		if diags.HasError() {
 			return
 		}
-	} else if resp.Rule != nil {
+	} else if nullableToPointer(resp.Rule) != nil {
 		// Single-rule allocation: the API returns rules=nil because this isn't a
 		// group allocation. Keep state.Rules null so it's omitted from subsequent
 		// update requests. Sending "rules": [] to the API causes a 500 error.

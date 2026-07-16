@@ -115,9 +115,9 @@ In `toCreateRequest` / `toUpdateRequest` and similar request builder functions, 
 
 For non-pointer value accessors (`ValueString()`, `ValueBool()`, `ValueFloat64()`, `ValueInt64()`), always guard with `IsUnknown()` when the field is Optional+Computed without Default — these accessors return zero values for Unknown, not nil.
 
-Pointer accessors (`ValueStringPointer()`, etc.) return `nil` for Unknown, which is often acceptable. When wrapping with `pointerToNullable`, `nil` produces an unspecified (empty) nullable — the field is omitted from the JSON request, preserving the same semantics as a nil pointer.
-
 **Nullable request fields:** Generated request structs may use `nullable.Nullable[T]` instead of `*T` for fields that support explicit null clearing. Use `valueToNullable(val)` for concrete values and `pointerToNullable(ptr)` for pointer values. See the [go-conventions](../go-conventions/SKILL.md#nullable-type-helpers-nullablenullablet) skill for the full helper reference.
+
+> **Warning (Unknown State pointers):** Be extremely careful with `.ValueStringPointer()` (or equivalent accessor methods) on framework attribute values. If the framework attribute has an `Unknown` state, `.ValueStringPointer()` returns a pointer to a **zero value** (e.g. `*""` or `*0`), NOT `nil`. If you pass this zero value pointer to `pointerToNullable()`, it will mark the `Nullable` as explicitly specified rather than `null`/omitted. Always guard access with `!plan.Attribute.IsUnknown()` for `Optional+Computed` fields before using their pointer methods.
 
 > **Linter:** `requestguard` — flags both redundant guards (dead code) and missing guards (bug risk) in request builder functions.
 
