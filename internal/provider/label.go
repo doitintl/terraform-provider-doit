@@ -98,7 +98,7 @@ func (plan *labelResourceModel) toCreateRequest() models.CreateLabelRequest {
 // toUpdateRequest converts the TF model to an UpdateLabelRequest.
 func (plan *labelResourceModel) toUpdateRequest() models.UpdateLabelRequest {
 	return models.UpdateLabelRequest{
-		Color: new(models.UpdateLabelRequestColor(plan.Color.ValueString())),
-		Name:  new(plan.Name.ValueString()),
+		Color: pointerToNullable(new(models.UpdateLabelRequestColor(plan.Color.ValueString()))),
+		Name:  pointerToNullable(new(plan.Name.ValueString())),
 	}
 }

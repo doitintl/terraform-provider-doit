@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/oapi-codegen/nullable"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -3775,7 +3776,7 @@ type Allocation struct {
 	AllocationType *AllocationAllocationType `json:"allocationType,omitempty"`
 
 	// AnomalyDetection Whether anomaly detection is enabled for this allocation.
-	AnomalyDetection *bool `json:"anomalyDetection,omitempty"`
+	AnomalyDetection nullable.Nullable[bool] `json:"anomalyDetection,omitempty"`
 
 	// CreateTime The time when the allocation was created (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
@@ -3793,14 +3794,14 @@ type Allocation struct {
 	Name *string `json:"name,omitempty"`
 
 	// Rule Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
-	Rule  *AllocationRule         `json:"rule,omitempty"`
-	Rules *[]*GroupAllocationRule `json:"rules,omitempty"`
+	Rule  nullable.Nullable[AllocationRule]         `json:"rule,omitempty"`
+	Rules *[]nullable.Nullable[GroupAllocationRule] `json:"rules,omitempty"`
 
 	// Type Type of allocation (preset or custom).
 	Type *string `json:"type,omitempty"`
 
 	// UnallocatedCosts Custom label for values that do not fit into allocation (required for group type allocation).
-	UnallocatedCosts *string `json:"unallocatedCosts,omitempty"`
+	UnallocatedCosts nullable.Nullable[string] `json:"unallocatedCosts,omitempty"`
 
 	// UpdateTime Last time the allocation was modified (in UNIX timestamp).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
@@ -3946,10 +3947,10 @@ type AnomalyItem struct {
 	Acknowledged *bool `json:"acknowledged,omitempty"`
 
 	// AcknowledgedAt When the anomaly was first acknowledged
-	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
+	AcknowledgedAt nullable.Nullable[time.Time] `json:"acknowledgedAt,omitempty"`
 
 	// AcknowledgedBy Email of the user who first acknowledged the anomaly
-	AcknowledgedBy *string `json:"acknowledgedBy,omitempty"`
+	AcknowledgedBy nullable.Nullable[string] `json:"acknowledgedBy,omitempty"`
 
 	// Attribution Attribution ID.
 	Attribution string `json:"attribution"`
@@ -3961,8 +3962,8 @@ type AnomalyItem struct {
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
 	// EndTime End of the anomaly.
-	EndTime *int    `json:"endTime,omitempty"`
-	Id      *string `json:"id,omitempty"`
+	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
+	Id      *string                `json:"id,omitempty"`
 
 	// Notifications Chronologically ordered notification dispatch events.
 	Notifications NotificationEventArray `json:"notifications"`
@@ -3983,8 +3984,8 @@ type AnomalyItem struct {
 	SeverityLevel string `json:"severityLevel"`
 
 	// StartTime Usage start time of the anomaly.
-	StartTime int64              `json:"startTime"`
-	Status    *AnomalyItemStatus `json:"status,omitempty"`
+	StartTime int64                                `json:"startTime"`
+	Status    nullable.Nullable[AnomalyItemStatus] `json:"status,omitempty"`
 
 	// TimeFrame Timeframe: Daily or Hourly
 	TimeFrame string `json:"timeFrame"`
@@ -4559,7 +4560,7 @@ type CloudDiagramCostSnapshot struct {
 
 	// TrendingPct Period-over-period change as a fraction (e.g. 0.142 = +14.2%). `null` when no
 	// prior period of equal length is available for comparison.
-	TrendingPct *float32 `json:"trendingPct"`
+	TrendingPct nullable.Nullable[float32] `json:"trendingPct"`
 }
 
 // CloudDiagramCostTimeRange Resolved cost window for the snapshot.
@@ -5469,11 +5470,11 @@ type CreateAllocationRequest struct {
 	Name string `json:"name"`
 
 	// Rule Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
-	Rule  *AllocationRule         `json:"rule,omitempty"`
-	Rules *[]*GroupAllocationRule `json:"rules,omitempty"`
+	Rule  nullable.Nullable[AllocationRule]         `json:"rule,omitempty"`
+	Rules *[]nullable.Nullable[GroupAllocationRule] `json:"rules,omitempty"`
 
 	// UnallocatedCosts Custom label for values that do not fit into allocation (required for group type allocation).
-	UnallocatedCosts *string `json:"unallocatedCosts,omitempty"`
+	UnallocatedCosts nullable.Nullable[string] `json:"unallocatedCosts,omitempty"`
 }
 
 // CreateAnnotationRequest Request body to create an annotation.
@@ -5518,7 +5519,7 @@ type CreateDatahubDataset201Response struct {
 	Name *string `json:"name,omitempty"`
 
 	// Records The number of records in the dataset.
-	Records *int64 `json:"records,omitempty"`
+	Records nullable.Nullable[int64] `json:"records,omitempty"`
 
 	// UpdatedBy The email of the user who last updated the dataset.
 	UpdatedBy *string `json:"updatedBy,omitempty"`
@@ -6112,10 +6113,10 @@ type GetAnomaly200Response struct {
 	Acknowledged *bool `json:"acknowledged,omitempty"`
 
 	// AcknowledgedAt When the anomaly was first acknowledged
-	AcknowledgedAt *time.Time `json:"acknowledgedAt,omitempty"`
+	AcknowledgedAt nullable.Nullable[time.Time] `json:"acknowledgedAt,omitempty"`
 
 	// AcknowledgedBy Email of the user who first acknowledged the anomaly
-	AcknowledgedBy *string `json:"acknowledgedBy,omitempty"`
+	AcknowledgedBy nullable.Nullable[string] `json:"acknowledgedBy,omitempty"`
 
 	// Attribution Attribution ID
 	Attribution string `json:"attribution"`
@@ -6127,7 +6128,7 @@ type GetAnomaly200Response struct {
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
 	// EndTime End of the anomaly
-	EndTime *int `json:"endTime,omitempty"`
+	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
 
 	// Notifications Chronologically ordered notification dispatch events.
 	Notifications NotificationEventArray `json:"notifications"`
@@ -6148,8 +6149,8 @@ type GetAnomaly200Response struct {
 	SeverityLevel string `json:"severityLevel"`
 
 	// StartTime Usage start time of the anomaly
-	StartTime int64                        `json:"startTime"`
-	Status    *GetAnomaly200ResponseStatus `json:"status,omitempty"`
+	StartTime int64                                          `json:"startTime"`
+	Status    nullable.Nullable[GetAnomaly200ResponseStatus] `json:"status,omitempty"`
 
 	// TimeFrame Timeframe: Daily or Hourly
 	TimeFrame string `json:"timeFrame"`
@@ -6287,13 +6288,13 @@ type GetReportResponseType string
 type GetReportResponseResult struct {
 	// CacheHit If true, results were fetched from the cache.
 	CacheHit     *bool                                `json:"cacheHit,omitempty"`
-	ForecastRows *[][]*Value                          `json:"forecastRows,omitempty"`
+	ForecastRows *[][]nullable.Nullable[Value]        `json:"forecastRows,omitempty"`
 	MlFeatures   *[]GetReportResponseResultMlFeatures `json:"mlFeatures,omitempty"`
-	Rows         *[][]*Value                          `json:"rows,omitempty"`
+	Rows         *[][]nullable.Nullable[Value]        `json:"rows,omitempty"`
 	Schema       *[]SchemaField                       `json:"schema,omitempty"`
 
 	// SecondaryRows Secondary time range rows.
-	SecondaryRows *[][]*Value `json:"secondaryRows,omitempty"`
+	SecondaryRows *[][]nullable.Nullable[Value] `json:"secondaryRows,omitempty"`
 }
 
 // GetReportResponseResultMlFeatures defines model for GetReportResponseResult.MlFeatures.
@@ -6942,7 +6943,7 @@ type ResourcePermissionsResponse struct {
 	Permissions *[]ResourcePermission `json:"permissions,omitempty"`
 
 	// Public Type of permissions users in the entire organization have for this resource
-	Public *ResourcePermissionsResponsePublic `json:"public,omitempty"`
+	Public nullable.Nullable[ResourcePermissionsResponsePublic] `json:"public,omitempty"`
 
 	// UpdateTime The time when this resource was last updated, in milliseconds since the epoch.
 	UpdateTime *int64 `json:"updateTime,omitempty"`
@@ -7171,13 +7172,13 @@ type RunReportResult struct {
 type RunReportResultResult struct {
 	// CacheHit If true, results were fetched from the cache.
 	CacheHit     *bool                              `json:"cacheHit,omitempty"`
-	ForecastRows *[][]*Value                        `json:"forecastRows,omitempty"`
+	ForecastRows *[][]nullable.Nullable[Value]      `json:"forecastRows,omitempty"`
 	MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
-	Rows         *[][]*Value                        `json:"rows,omitempty"`
+	Rows         *[][]nullable.Nullable[Value]      `json:"rows,omitempty"`
 	Schema       *[]SchemaField                     `json:"schema,omitempty"`
 
 	// SecondaryRows Secondary time range rows.
-	SecondaryRows *[][]*Value `json:"secondaryRows,omitempty"`
+	SecondaryRows *[][]nullable.Nullable[Value] `json:"secondaryRows,omitempty"`
 }
 
 // RunReportResultResultMlFeatures defines model for RunReportResultResult.MlFeatures.
@@ -7490,35 +7491,35 @@ type TimeSettingsSecondaryCustomTimeRange struct {
 // UpdateAllocationRequest Request body for updating an allocation.
 type UpdateAllocationRequest struct {
 	// Description Allocation description
-	Description *string `json:"description,omitempty"`
+	Description nullable.Nullable[string] `json:"description,omitempty"`
 
 	// FolderId Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
 	FolderId *string `json:"folderId,omitempty"`
 
 	// Name Allocation name
-	Name *string `json:"name,omitempty"`
+	Name nullable.Nullable[string] `json:"name,omitempty"`
 
 	// Rule Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type.
-	Rule  *AllocationRule         `json:"rule,omitempty"`
-	Rules *[]*GroupAllocationRule `json:"rules,omitempty"`
+	Rule  nullable.Nullable[AllocationRule]         `json:"rule,omitempty"`
+	Rules *[]nullable.Nullable[GroupAllocationRule] `json:"rules,omitempty"`
 
 	// UnallocatedCosts Custom label for values that do not fit into allocation (required for group type allocation).
-	UnallocatedCosts *string `json:"unallocatedCosts,omitempty"`
+	UnallocatedCosts nullable.Nullable[string] `json:"unallocatedCosts,omitempty"`
 }
 
 // UpdateAnnotationRequest Request body for updating an annotation.
 type UpdateAnnotationRequest struct {
 	// Content The content of the annotation.
-	Content *string `json:"content,omitempty"`
+	Content nullable.Nullable[string] `json:"content,omitempty"`
 
 	// Labels List of label IDs to associate with the annotation. Labels must already exist.
-	Labels *[]string `json:"labels,omitempty"`
+	Labels nullable.Nullable[[]string] `json:"labels,omitempty"`
 
 	// Reports List of report IDs associated with the annotation.
-	Reports *[]string `json:"reports,omitempty"`
+	Reports nullable.Nullable[[]string] `json:"reports,omitempty"`
 
 	// Timestamp The date associated with the annotation.
-	Timestamp *time.Time `json:"timestamp,omitempty"`
+	Timestamp nullable.Nullable[time.Time] `json:"timestamp,omitempty"`
 }
 
 // UpdateAwsFeatureRequestBody defines model for UpdateAwsFeatureRequestBody.
@@ -7539,7 +7540,7 @@ type UpdateCustomThemeRequest struct {
 	Colors *ThemeColors `json:"colors,omitempty"`
 
 	// Name The display name of the custom theme.
-	Name *string `json:"name,omitempty"`
+	Name nullable.Nullable[string] `json:"name,omitempty"`
 
 	// PrimaryColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
 	PrimaryColor *HexColor `json:"primaryColor,omitempty"`
@@ -7557,7 +7558,7 @@ type UpdateDatahubDataset200Response struct {
 	Name *string `json:"name,omitempty"`
 
 	// Records The number of records in the dataset.
-	Records *int64 `json:"records,omitempty"`
+	Records nullable.Nullable[int64] `json:"records,omitempty"`
 
 	// UpdatedBy The email of the user who last updated the dataset.
 	UpdatedBy *string `json:"updatedBy,omitempty"`
@@ -7588,10 +7589,10 @@ type UpdateFolderRequest struct {
 // UpdateLabelRequest Request body for updating a label.
 type UpdateLabelRequest struct {
 	// Color The color of the label.
-	Color *UpdateLabelRequestColor `json:"color,omitempty"`
+	Color nullable.Nullable[UpdateLabelRequestColor] `json:"color,omitempty"`
 
 	// Name The name of the label.
-	Name *string `json:"name,omitempty"`
+	Name nullable.Nullable[string] `json:"name,omitempty"`
 }
 
 // UpdateLabelRequestColor The color of the label.
@@ -7602,7 +7603,7 @@ type UpdateResourcePermissionRequestBody struct {
 	Permissions *[]ResourcePermission `json:"permissions,omitempty"`
 
 	// Public The type of permissions granted to all users in the organization for this resource.
-	Public *UpdateResourcePermissionRequestBodyPublic `json:"public,omitempty"`
+	Public nullable.Nullable[UpdateResourcePermissionRequestBodyPublic] `json:"public,omitempty"`
 }
 
 // UpdateResourcePermissionRequestBodyPublic The type of permissions granted to all users in the organization for this resource.

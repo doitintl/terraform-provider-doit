@@ -129,7 +129,7 @@ func (plan *customThemeResourceModel) toUpdateRequest(ctx context.Context) (mode
 	}
 
 	req := models.UpdateCustomThemeRequest{
-		Name:         new(plan.Name.ValueString()),
+		Name:         pointerToNullable(new(plan.Name.ValueString())),
 		PrimaryColor: hexColorPtr(plan.PrimaryColor),
 		Colors:       colorsPtr,
 	}

@@ -155,8 +155,8 @@ func (d *cloudDiagramsCostSnapshotDataSource) Read(ctx context.Context, req data
 	data.Currency = types.StringValue(snapshot.Currency)
 	data.Total = types.NumberValue(big.NewFloat(float64(snapshot.Total)))
 
-	if snapshot.TrendingPct != nil {
-		data.TrendingPct = types.NumberValue(big.NewFloat(float64(*snapshot.TrendingPct)))
+	if trendingPct := nullableToPointer(snapshot.TrendingPct); trendingPct != nil {
+		data.TrendingPct = types.NumberValue(big.NewFloat(float64(*trendingPct)))
 	} else {
 		data.TrendingPct = types.NumberNull()
 	}

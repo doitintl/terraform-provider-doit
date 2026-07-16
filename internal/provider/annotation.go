@@ -203,8 +203,8 @@ func (plan *annotationResourceModel) toUpdateRequest(ctx context.Context) (model
 	}
 
 	req := models.UpdateAnnotationRequest{
-		Content:   new(plan.Content.ValueString()),
-		Timestamp: &timestamp,
+		Content:   pointerToNullable(new(plan.Content.ValueString())),
+		Timestamp: pointerToNullable(&timestamp),
 	}
 
 	// Handle optional labels list
@@ -214,7 +214,7 @@ func (plan *annotationResourceModel) toUpdateRequest(ctx context.Context) (model
 		if diags.HasError() {
 			return req, diags
 		}
-		req.Labels = &labels
+		req.Labels = pointerToNullable(&labels)
 	}
 
 	// Handle optional reports list
@@ -224,7 +224,7 @@ func (plan *annotationResourceModel) toUpdateRequest(ctx context.Context) (model
 		if diags.HasError() {
 			return req, diags
 		}
-		req.Reports = &reports
+		req.Reports = pointerToNullable(&reports)
 	}
 
 	return req, diags
