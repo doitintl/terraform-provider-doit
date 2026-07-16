@@ -265,8 +265,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Settings for cost forecasting on the report.\nHistorical fields choose which past data the model learns from.\nFuture fields choose how far ahead predicted costs are projected.\nWhen a custom date range is set for a side, it takes precedence over the corresponding interval count.\nfutureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.\nProviding forecastSettings enables forecast (advancedAnalysis.forecast) automatically.\nInterval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.",
-						MarkdownDescription: "Settings for cost forecasting on the report.\nHistorical fields choose which past data the model learns from.\nFuture fields choose how far ahead predicted costs are projected.\nWhen a custom date range is set for a side, it takes precedence over the corresponding interval count.\nfutureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.\nProviding forecastSettings enables forecast (advancedAnalysis.forecast) automatically.\nInterval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.",
+						Description:         "Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.",
+						MarkdownDescription: "Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.",
 					},
 					"group": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{

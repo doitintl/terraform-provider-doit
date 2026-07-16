@@ -8,14 +8,10 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var (
@@ -88,7 +84,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			configAttr.Attributes["metric_filter"] = mfAttr
 		}
 		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(schema.SingleNestedAttribute); ok {
-			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useDefaultForecastSettingsWhenConfigNull())
+			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullForUnknownObjectWhenConfigNull())
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
 		s.Attributes["config"] = configAttr
@@ -432,37 +428,5 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 			fmt.Sprintf("Could not delete report, status: %d, body: %s", deleteResp.StatusCode(), string(deleteResp.Body)),
 		)
 		return
-	}
-}
-
-func useDefaultForecastSettingsWhenConfigNull() planmodifier.Object {
-	return useDefaultForecastSettingsWhenConfigNullModifier{}
-}
-
-type useDefaultForecastSettingsWhenConfigNullModifier struct{}
-
-func (m useDefaultForecastSettingsWhenConfigNullModifier) Description(_ context.Context) string {
-	return "Proposes a default object with totals mode and null values for other attributes if forecast_settings is omitted from configuration."
-}
-
-func (m useDefaultForecastSettingsWhenConfigNullModifier) MarkdownDescription(_ context.Context) string {
-	return "Proposes a default object with totals mode and null values for other attributes if forecast_settings is omitted from configuration."
-}
-
-func (m useDefaultForecastSettingsWhenConfigNullModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if req.ConfigValue.IsNull() {
-		attrTypes := resource_report.ForecastSettingsValue{}.AttributeTypes(ctx)
-		attrs := map[string]attr.Value{
-			"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
-			"future_time_intervals":        types.Int64Null(),
-			"historical_custom_date_range": resource_report.NewHistoricalCustomDateRangeValueNull(),
-			"historical_time_intervals":    types.Int64Null(),
-			"mode":                         types.StringValue("totals"),
-		}
-		defaultObj, diags := basetypes.NewObjectValue(attrTypes, attrs)
-		resp.Diagnostics.Append(diags...)
-		if !resp.Diagnostics.HasError() {
-			resp.PlanValue = defaultObj
-		}
 	}
 }

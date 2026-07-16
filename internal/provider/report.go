@@ -989,13 +989,17 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.ForecastSettings.IsNull() && !config.ForecastSettings.IsUnknown() {
+		isModeDefault := config.ForecastSettings.Mode.IsNull() ||
+			config.ForecastSettings.Mode.ValueString() == "totals"
+
 		if config.ForecastSettings.FutureTimeIntervals.IsNull() &&
 			config.ForecastSettings.HistoricalTimeIntervals.IsNull() &&
 			config.ForecastSettings.FutureCustomDateRange.IsNull() &&
-			config.ForecastSettings.HistoricalCustomDateRange.IsNull() {
-			externalConfig.ForecastSettings = &models.ExternalForecastSettings{}
+			config.ForecastSettings.HistoricalCustomDateRange.IsNull() &&
+			isModeDefault {
+			externalConfig.ForecastSettings.Set(models.ExternalForecastSettings{})
 		} else {
-			fs := &models.ExternalForecastSettings{}
+			fs := models.ExternalForecastSettings{}
 			if !config.ForecastSettings.FutureTimeIntervals.IsNull() && !config.ForecastSettings.FutureTimeIntervals.IsUnknown() {
 				fs.FutureTimeIntervals = config.ForecastSettings.FutureTimeIntervals.ValueInt64Pointer()
 			}
@@ -1003,7 +1007,8 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 				fs.HistoricalTimeIntervals = config.ForecastSettings.HistoricalTimeIntervals.ValueInt64Pointer()
 			}
 			if !config.ForecastSettings.Mode.IsNull() {
-				fs.Mode = new(models.ExternalForecastSettingsMode(config.ForecastSettings.Mode.ValueString()))
+				fs.Mode = new(models.ExternalForecastSettingsMode)
+				*fs.Mode = models.ExternalForecastSettingsMode(config.ForecastSettings.Mode.ValueString())
 			}
 			if !config.ForecastSettings.FutureCustomDateRange.IsNull() && !config.ForecastSettings.FutureCustomDateRange.IsUnknown() {
 				fcdr := models.ExternalForecastDateRange{}
@@ -1045,10 +1050,12 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					fs.HistoricalCustomDateRange = &hcdr
 				}
 			}
-			externalConfig.ForecastSettings = fs
+			if !diags.HasError() {
+				externalConfig.ForecastSettings.Set(fs)
+			}
 		}
 	} else if config.ForecastSettings.IsNull() {
-		externalConfig.ForecastSettings = &models.ExternalForecastSettings{}
+		externalConfig.ForecastSettings.SetNull()
 	}
 
 	return externalConfig, diags
@@ -1675,11 +1682,13 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	}
 
 	// Nested Object: ForecastSettings
-	if config.ForecastSettings != nil &&
-		(config.ForecastSettings.FutureTimeIntervals != nil ||
-			config.ForecastSettings.HistoricalTimeIntervals != nil ||
-			config.ForecastSettings.FutureCustomDateRange != nil ||
-			config.ForecastSettings.HistoricalCustomDateRange != nil) {
+	fs := nullableToPointer(config.ForecastSettings)
+	if fs != nil &&
+		(fs.FutureTimeIntervals != nil ||
+			fs.HistoricalTimeIntervals != nil ||
+			fs.FutureCustomDateRange != nil ||
+			fs.HistoricalCustomDateRange != nil ||
+			(fs.Mode != nil && *fs.Mode == models.Grouping)) {
 		fsMap := map[string]attr.Value{
 			"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
 			"future_time_intervals":        types.Int64Null(),
@@ -1688,17 +1697,17 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			"mode":                         types.StringValue("totals"),
 		}
 
-		if config.ForecastSettings.FutureTimeIntervals != nil {
-			fsMap["future_time_intervals"] = types.Int64Value(*config.ForecastSettings.FutureTimeIntervals)
+		if fs.FutureTimeIntervals != nil {
+			fsMap["future_time_intervals"] = types.Int64Value(*fs.FutureTimeIntervals)
 		}
-		if config.ForecastSettings.HistoricalTimeIntervals != nil {
-			fsMap["historical_time_intervals"] = types.Int64Value(*config.ForecastSettings.HistoricalTimeIntervals)
+		if fs.HistoricalTimeIntervals != nil {
+			fsMap["historical_time_intervals"] = types.Int64Value(*fs.HistoricalTimeIntervals)
 		}
-		if config.ForecastSettings.Mode != nil {
-			fsMap["mode"] = types.StringValue(string(*config.ForecastSettings.Mode))
+		if fs.Mode != nil {
+			fsMap["mode"] = types.StringValue(string(*fs.Mode))
 		}
 
-		if config.ForecastSettings.FutureCustomDateRange != nil {
+		if fs.FutureCustomDateRange != nil {
 			fcdrMap := map[string]attr.Value{
 				"from": types.StringNull(),
 				"to":   types.StringNull(),
@@ -1711,20 +1720,20 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 				existingFutureTo = state.Config.ForecastSettings.FutureCustomDateRange.To.ValueString()
 			}
 
-			if config.ForecastSettings.FutureCustomDateRange.From != nil {
+			if fs.FutureCustomDateRange.From != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingFutureFrom)
-				if err == nil && existingTime.Equal(*config.ForecastSettings.FutureCustomDateRange.From) {
+				if err == nil && existingTime.Equal(*fs.FutureCustomDateRange.From) {
 					fcdrMap["from"] = types.StringValue(existingFutureFrom)
 				} else {
-					fcdrMap["from"] = types.StringValue(config.ForecastSettings.FutureCustomDateRange.From.UTC().Format(time.RFC3339))
+					fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339))
 				}
 			}
-			if config.ForecastSettings.FutureCustomDateRange.To != nil {
+			if fs.FutureCustomDateRange.To != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingFutureTo)
-				if err == nil && existingTime.Equal(*config.ForecastSettings.FutureCustomDateRange.To) {
+				if err == nil && existingTime.Equal(*fs.FutureCustomDateRange.To) {
 					fcdrMap["to"] = types.StringValue(existingFutureTo)
 				} else {
-					fcdrMap["to"] = types.StringValue(config.ForecastSettings.FutureCustomDateRange.To.UTC().Format(time.RFC3339))
+					fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339))
 				}
 			}
 			fcdrVal, fcdrDiags := resource_report.NewFutureCustomDateRangeValue(resource_report.FutureCustomDateRangeValue{}.AttributeTypes(ctx), fcdrMap)
@@ -1732,7 +1741,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			fsMap["future_custom_date_range"] = fcdrVal
 		}
 
-		if config.ForecastSettings.HistoricalCustomDateRange != nil {
+		if fs.HistoricalCustomDateRange != nil {
 			hcdrMap := map[string]attr.Value{
 				"from": types.StringNull(),
 				"to":   types.StringNull(),
@@ -1745,20 +1754,20 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 				existingHistTo = state.Config.ForecastSettings.HistoricalCustomDateRange.To.ValueString()
 			}
 
-			if config.ForecastSettings.HistoricalCustomDateRange.From != nil {
+			if fs.HistoricalCustomDateRange.From != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingHistFrom)
-				if err == nil && existingTime.Equal(*config.ForecastSettings.HistoricalCustomDateRange.From) {
+				if err == nil && existingTime.Equal(*fs.HistoricalCustomDateRange.From) {
 					hcdrMap["from"] = types.StringValue(existingHistFrom)
 				} else {
-					hcdrMap["from"] = types.StringValue(config.ForecastSettings.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339))
+					hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339))
 				}
 			}
-			if config.ForecastSettings.HistoricalCustomDateRange.To != nil {
+			if fs.HistoricalCustomDateRange.To != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingHistTo)
-				if err == nil && existingTime.Equal(*config.ForecastSettings.HistoricalCustomDateRange.To) {
+				if err == nil && existingTime.Equal(*fs.HistoricalCustomDateRange.To) {
 					hcdrMap["to"] = types.StringValue(existingHistTo)
 				} else {
-					hcdrMap["to"] = types.StringValue(config.ForecastSettings.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339))
+					hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339))
 				}
 			}
 			hcdrVal, hcdrDiags := resource_report.NewHistoricalCustomDateRangeValue(resource_report.HistoricalCustomDateRangeValue{}.AttributeTypes(ctx), hcdrMap)
@@ -1770,16 +1779,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		diags.Append(fsDiags...)
 		configMap["forecast_settings"] = fsVal
 	} else {
-		fsMap := map[string]attr.Value{
-			"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
-			"future_time_intervals":        types.Int64Null(),
-			"historical_custom_date_range": resource_report.NewHistoricalCustomDateRangeValueNull(),
-			"historical_time_intervals":    types.Int64Null(),
-			"mode":                         types.StringValue("totals"),
-		}
-		fsVal, fsDiags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
-		diags.Append(fsDiags...)
-		configMap["forecast_settings"] = fsVal
+		configMap["forecast_settings"] = resource_report.NewForecastSettingsValueNull()
 	}
 
 	state.Config, d = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)

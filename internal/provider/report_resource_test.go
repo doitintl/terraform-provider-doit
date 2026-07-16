@@ -3435,7 +3435,19 @@ func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_report.forecast_intervals_test",
 						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("from"),
-						knownvalue.StringExact("2024-02-02T00:00:00Z")),
+						knownvalue.StringExact("2024-02-02T00:00:00+03:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("to"),
+						knownvalue.StringExact("2024-08-02T00:00:00+03:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("from"),
+						knownvalue.StringExact("2023-01-01T00:00:00-08:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("to"),
+						knownvalue.StringExact("2023-12-31T23:59:59-08:00")),
 				},
 			},
 			{
@@ -3478,12 +3490,12 @@ resource "doit_report" "forecast_intervals_test" {
 		}
 		forecast_settings = {
 			future_custom_date_range = {
-				from = "2024-02-02T00:00:00Z"
-				to   = "2024-08-02T00:00:00Z"
+				from = "2024-02-02T00:00:00+03:00"
+				to   = "2024-08-02T00:00:00+03:00"
 			}
 			historical_custom_date_range = {
-				from = "2023-01-01T00:00:00Z"
-				to   = "2023-12-31T23:59:59Z"
+				from = "2023-01-01T00:00:00-08:00"
+				to   = "2023-12-31T23:59:59-08:00"
 			}
 			mode = "totals"
 		}

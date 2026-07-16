@@ -533,6 +533,22 @@ func TestReportTimestampValidator_ForecastSettings(t *testing.T) {
 			histTo:     "UNKNOWN",
 			expectErr:  false,
 		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (only future from set as unknown, to null)",
+			futureFrom: "UNKNOWN",
+			futureTo:   "",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "2023-12-31T23:59:59Z",
+			expectErr:  false,
+		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (only historical to set as unknown, from null)",
+			futureFrom: "2024-02-02T00:00:00Z",
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "",
+			histTo:     "UNKNOWN",
+			expectErr:  false,
+		},
 	}
 
 	for _, tt := range tests {

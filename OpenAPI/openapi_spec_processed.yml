@@ -7265,7 +7265,11 @@ components:
         advancedAnalysis:
           $ref: "#/components/schemas/AdvancedAnalysis"
         forecastSettings:
-          $ref: "#/components/schemas/ExternalForecastSettings"
+          allOf:
+            - $ref: "#/components/schemas/ExternalForecastSettings"
+          nullable: true
+          description: |-
+            Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.
         timeInterval:
           description: Time interval for grouping data in the report.
           type: string
@@ -7585,6 +7589,8 @@ components:
         When a custom date range is set for a side, it takes precedence over the corresponding interval count.
         futureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.
         Providing forecastSettings enables forecast (advancedAnalysis.forecast) automatically.
+        On PATCH, omit forecastSettings to leave forecasting unchanged; send forecastSettings: null to clear/disable forecasting
+        (also removes the forecast feature flag). An empty object enables forecast with default mode totals.
         Interval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.
       properties:
         mode:

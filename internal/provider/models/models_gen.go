@@ -5829,14 +5829,8 @@ type ExternalConfig struct {
 	// Filters The filters to apply to the report.
 	Filters *[]ExternalConfigFilter `json:"filters,omitempty"`
 
-	// ForecastSettings Settings for cost forecasting on the report.
-	// Historical fields choose which past data the model learns from.
-	// Future fields choose how far ahead predicted costs are projected.
-	// When a custom date range is set for a side, it takes precedence over the corresponding interval count.
-	// futureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.
-	// Providing forecastSettings enables forecast (advancedAnalysis.forecast) automatically.
-	// Interval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.
-	ForecastSettings *ExternalForecastSettings `json:"forecastSettings,omitempty"`
+	// ForecastSettings Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.
+	ForecastSettings nullable.Nullable[ExternalForecastSettings] `json:"forecastSettings,omitempty"`
 
 	// Group The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by).
 	Group *[]Group `json:"group,omitempty"`
@@ -5996,6 +5990,8 @@ type ExternalForecastDateRange struct {
 // When a custom date range is set for a side, it takes precedence over the corresponding interval count.
 // futureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.
 // Providing forecastSettings enables forecast (advancedAnalysis.forecast) automatically.
+// On PATCH, omit forecastSettings to leave forecasting unchanged; send forecastSettings: null to clear/disable forecasting
+// (also removes the forecast feature flag). An empty object enables forecast with default mode totals.
 // Interval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.
 type ExternalForecastSettings struct {
 	// FutureCustomDateRange Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.
