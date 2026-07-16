@@ -82,9 +82,16 @@ If create and update use different API request types, implement both `toCreateRe
 When a schema field has a `Default` (e.g., `stringdefault.StaticString("cost")`), `mapXxxToModel` must map `nil` API responses to the default value, not to `null`:
 
 ```go
-// CORRECT — preserves the schema default on nil response
+// CORRECT — preserves the schema default on nil response (pointer field)
 if apiResp.Metric != nil {
     state.Metric = types.StringValue(*apiResp.Metric)
+} else {
+    state.Metric = types.StringValue("cost") // schema default
+}
+
+// CORRECT — nullable field variant
+if metric := nullableToPointer(apiResp.Metric); metric != nil {
+    state.Metric = types.StringValue(*metric)
 } else {
     state.Metric = types.StringValue("cost") // schema default
 }
@@ -108,7 +115,9 @@ In `toCreateRequest` / `toUpdateRequest` and similar request builder functions, 
 
 For non-pointer value accessors (`ValueString()`, `ValueBool()`, `ValueFloat64()`, `ValueInt64()`), always guard with `IsUnknown()` when the field is Optional+Computed without Default — these accessors return zero values for Unknown, not nil.
 
-Pointer accessors (`ValueStringPointer()`, etc.) return `nil` for Unknown, which is often acceptable.
+Pointer accessors (`ValueStringPointer()`, etc.) return `nil` for Unknown, which is often acceptable. When wrapping with `pointerToNullable`, `nil` produces an unspecified (empty) nullable — the field is omitted from the JSON request, preserving the same semantics as a nil pointer.
+
+**Nullable request fields:** Generated request structs may use `nullable.Nullable[T]` instead of `*T` for fields that support explicit null clearing. Use `valueToNullable(val)` for concrete values and `pointerToNullable(ptr)` for pointer values. See the [go-conventions](../go-conventions/SKILL.md#nullable-type-helpers-nullablenullablet) skill for the full helper reference.
 
 > **Linter:** `requestguard` — flags both redundant guards (dead code) and missing guards (bug risk) in request builder functions.
 

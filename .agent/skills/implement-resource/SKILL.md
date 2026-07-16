@@ -349,3 +349,15 @@ The Go models from OpenAPI may differ between Request and Response wrappers:
 - Request `Scopes`: `*[]ExternalConfigFilter`
 
 Check `models/models_gen.go` when compilation fails. You may need `&slice` for requests but use the slice directly from responses.
+
+### Nullable Fields
+
+Fields that support explicit `null` clearing use `nullable.Nullable[T]` instead of `*T`. Check `models_gen.go` for the actual field type — both variants coexist:
+
+| Field Type | Read (response → state) | Write (plan → request) |
+|------------|------------------------|----------------------|
+| `*T` | `types.StringPointerValue(resp.Field)` | `req.Field = new(plan.Field.ValueString())` |
+| `nullable.Nullable[T]` | `types.StringPointerValue(nullableToPointer(resp.Field))` | `req.Field = valueToNullable(plan.Field.ValueString())` |
+| `nullable.Nullable[StructT]` | `if s := nullableToPointer(resp.Field); s != nil { ... }` | `req.Field.Set(structVal)` |
+
+See the [go-conventions](../go-conventions/SKILL.md#nullable-type-helpers-nullablenullablet) skill for the full helper reference.

@@ -146,7 +146,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.EndTime = types.Int64Null()
 	}
 
-	// Status is nullable.Nullable[models.AnomalyItemStatus]
+	// Status is nullable.Nullable[models.GetAnomaly200ResponseStatus]
 	if status := nullableToPointer(anomaly.Status); status != nil {
 		data.Status = types.StringValue(string(*status))
 	} else {

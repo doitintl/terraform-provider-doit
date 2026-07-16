@@ -155,6 +155,24 @@ ruleVal := resource_allocation.NewRulesValueMust(attrTypes, map[string]attr.Valu
 })
 ```
 
+### Constructing API Response Objects with Nullable Fields
+
+When constructing `models.*` structs in unit tests, use `valueToNullable` for fields that are `nullable.Nullable[T]` in `models_gen.go`:
+
+```go
+// OLD — pointer field
+apiResp := &models.Allocation{
+    Rule: &models.AllocationRule{Formula: "A"},
+}
+
+// NEW — nullable field
+apiResp := &models.Allocation{
+    Rule: valueToNullable(models.AllocationRule{Formula: "A"}),
+}
+```
+
+Check `models_gen.go` for the actual field types — both `*T` and `nullable.Nullable[T]` coexist.
+
 ### Test Helper Pattern
 
 Create helpers for constructing properly initialized values:

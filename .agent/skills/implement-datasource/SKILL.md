@@ -204,8 +204,9 @@ budgetVal, diags := datasource_budgets.NewBudgetsValue(
 ### Type Handling Tips
 
 1. **Pointer vs Non-Pointer**: Check `models_gen.go` — pointer (`*string`) → `types.StringPointerValue()`, non-pointer → `types.StringValue()`
-2. **Enum Types**: Convert to string first — `types.StringValue(string(s.Mode))`
-3. **Nested Lists**: Create helper functions to map nested structures
+2. **Nullable fields**: `nullable.Nullable[T]` → wrap with `nullableToPointer()` before passing to `types.XxxPointerValue()`. Example: `types.StringPointerValue(nullableToPointer(resp.Field))`
+3. **Enum Types**: Convert to string first — `types.StringValue(string(s.Mode))`
+4. **Nested Lists**: Create helper functions to map nested structures
 
 ### RowCount Determinism
 
