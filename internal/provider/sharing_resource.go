@@ -389,7 +389,7 @@ func (r *sharingResource) Delete(ctx context.Context, req resource.DeleteRequest
 		Permissions: &resetPerms,
 	}
 	if resType == "allocations" {
-		resetReq.Public = pointerToNullable(new(models.UpdateResourcePermissionRequestBodyPublic("")))
+		resetReq.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
 
 	putResp, err := r.client.UpdateResourcePermissionWithResponse(
@@ -568,12 +568,12 @@ func buildSharingRequest(ctx context.Context, plan *sharingResourceModel, resour
 
 	// Map public from plan to API type.
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
-		reqBody.Public = pointerToNullable(new(models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString())))
+		reqBody.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString()))
 	} else if resourceType == "allocations" {
 		// Allocations require the public field to be present in the request body.
 		// The API returns 500 if public is omitted or null. An empty string signals
 		// "no public access" and is the only accepted sentinel for allocations.
-		reqBody.Public = pointerToNullable(new(models.UpdateResourcePermissionRequestBodyPublic("")))
+		reqBody.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
 
 	return reqBody, diags

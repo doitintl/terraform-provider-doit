@@ -20,3 +20,10 @@ func pointerToNullable[T any](p *T) nullable.Nullable[T] {
 	}
 	return n
 }
+
+// valueToNullable converts a value to a specified nullable.Nullable[T].
+func valueToNullable[T any](v T) nullable.Nullable[T] {
+	var n nullable.Nullable[T]
+	n.Set(v)
+	return n
+}

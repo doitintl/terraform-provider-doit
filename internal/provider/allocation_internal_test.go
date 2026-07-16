@@ -138,7 +138,7 @@ func TestMapAllocationToModel_SingleRule_RulesNull(t *testing.T) {
 	allocType := models.AllocationAllocationType("single")
 	apiResp := &models.Allocation{
 		AllocationType: &allocType,
-		Rule: pointerToNullable(&models.AllocationRule{
+		Rule: valueToNullable(models.AllocationRule{
 			Formula: "A",
 			Components: []models.AllocationComponent{
 				{

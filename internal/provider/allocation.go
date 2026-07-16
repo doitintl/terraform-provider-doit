@@ -179,7 +179,7 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 	// UnallocatedCosts is only sent if not empty because it is invalid for "single" allocations.
 	if !plan.UnallocatedCosts.IsNull() && !plan.UnallocatedCosts.IsUnknown() {
 		if v := plan.UnallocatedCosts.ValueString(); v != "" {
-			req.UnallocatedCosts = pointerToNullable(&v)
+			req.UnallocatedCosts = valueToNullable(v)
 		}
 	}
 
