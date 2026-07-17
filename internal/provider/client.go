@@ -220,9 +220,10 @@ func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVe
 			token.SetAuthHeader(req)
 			req.Header.Set("User-Agent", userAgent)
 			if customerContext != "" {
-				url := req.URL.Query()
-				url.Set("customerContext", customerContext)
-				req.URL.RawQuery = url.Encode()
+				// DoiT employees scope requests to a customer via the
+				// X-Tenant-Id header. This replaced the former
+				// customerContext query parameter.
+				req.Header.Set("X-Tenant-Id", customerContext)
 			}
 			return nil
 		}))
