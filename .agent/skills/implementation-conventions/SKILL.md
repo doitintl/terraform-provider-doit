@@ -293,16 +293,30 @@ Same pattern, simpler — only Read timeout. Use `datasource/timeouts` import (n
 All DoIT API requests require:
 
 1. **Bearer token** in the `Authorization` header
-2. **Customer context** via `customerContext` query parameter
+2. **Customer context** via the `X-Tenant-Id` header — **only** when using a DoiT
+   employee token. Set it to the target customer ID. Regular-user tokens must not
+   send it (the customer is derived from the token).
 
 ```bash
+# Regular user — no customer context header:
 curl -X GET \
-  "${DOIT_HOST}/analytics/v1/budgets?customerContext=${DOIT_CUSTOMER_CONTEXT}" \
+  "${DOIT_HOST}/analytics/v1/budgets" \
   -H "Authorization: Bearer ${DOIT_API_TOKEN}" \
+  -H "Accept: application/json"
+
+# DoiT employee — scope to a customer with the X-Tenant-Id header:
+curl -X GET \
+  "${DOIT_HOST}/analytics/v1/budgets" \
+  -H "Authorization: Bearer ${DOIT_API_TOKEN}" \
+  -H "X-Tenant-Id: ${DOIT_CUSTOMER_CONTEXT}" \
   -H "Accept: application/json"
 ```
 
-| Account Type | customerContext | Use Case |
-|-------------|----------------|----------|
+| Account Type | `X-Tenant-Id` header | Use Case |
+|-------------|----------------------|----------|
 | DoiT Employee | **REQUIRED** | Access any customer's resources |
 | Regular User | **MUST NOT set** | Access only own customer |
+
+> Historical note: this customer context was formerly passed as a
+> `customerContext` query parameter. The API migrated to the `X-Tenant-Id`
+> header; the query parameter is no longer used.
