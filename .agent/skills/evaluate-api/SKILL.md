@@ -105,9 +105,13 @@ Map each API field to a Terraform schema category:
 Compare the OpenAPI spec with actual API behavior. Discrepancies are findings — do not fix them locally:
 
 ```bash
-# Test actual API behavior
-curl -s -X POST "${DOIT_HOST}/<endpoint>?customerContext=${DOIT_CUSTOMER_CONTEXT}" \
+# Test actual API behavior.
+# Add -H "X-Tenant-Id: ${DOIT_CUSTOMER_CONTEXT}" ONLY when using a DoiT
+# employee token (scopes the request to a customer). Omit it for regular-user
+# tokens — the customer is derived from the token.
+curl -s -X POST "${DOIT_HOST}/<endpoint>" \
   -H "Authorization: Bearer ${DOIT_API_TOKEN}" \
+  -H "X-Tenant-Id: ${DOIT_CUSTOMER_CONTEXT}" \
   -H "Content-Type: application/json" \
   -d '{"name": "test"}' | jq .
 ```
