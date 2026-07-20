@@ -525,7 +525,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 <a id="nestedatt--config--limit_by_change"></a>
 ### Nested Schema for `config.limit_by_change`
 
-Required:
+Optional:
 
 - `change_type` (String) Possible values: `percentage`, `absolute`
 - `include_incomplete_data` (Boolean) When true, keeps rows whose deltas could not be evaluated.

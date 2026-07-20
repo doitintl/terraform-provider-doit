@@ -73,7 +73,51 @@ func TestAccReportQueryDataSource_InvalidConfig(t *testing.T) {
 	})
 }
 
+// TestAccReportQueryDataSource_MetricFieldsRequired verifies that report_query
+// enforces the same metric-field requirement as the resource: a metric object
+// missing type/value is rejected at plan time (not sent to the API as a bad
+// request).
+func TestAccReportQueryDataSource_MetricFieldsRequired(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceMissingMetricType(),
+				ExpectError: regexp.MustCompile(`Missing Required Metric Field`),
+			},
+		},
+	})
+}
+
 // --- Test config helpers ---
+
+func testAccReportQueryDataSourceMissingMetricType() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+    }
+}
+`
+}
 
 func testAccReportQueryDataSourceConfig() string {
 	return `

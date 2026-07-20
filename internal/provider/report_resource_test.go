@@ -3272,7 +3272,14 @@ func TestAccReport_MetricFilterOperand(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
 			},
-			// Step 3: omit operand -> resolves to the schema default single_value (Update).
+			// Step 3: import while operand is at its non-default value, verifying
+			// import reconstructs series_total.
+			{
+				ResourceName:      "doit_report.operand",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Step 4: omit operand -> resolves to the schema default single_value (Update).
 			{
 				Config: testAccReportOperand(n, ``),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -3287,7 +3294,7 @@ func TestAccReport_MetricFilterOperand(t *testing.T) {
 						knownvalue.StringExact("single_value")),
 				},
 			},
-			// Step 4: drift check on the defaulted value.
+			// Step 5: drift check on the defaulted value.
 			{
 				Config: testAccReportOperand(n, ``),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -3325,7 +3332,14 @@ func TestAccReport_LimitAggregation(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
 			},
-			// Step 3: update to none.
+			// Step 3: import while limit_aggregation is at its non-default value,
+			// verifying import reconstructs top.
+			{
+				ResourceName:      "doit_report.limitagg",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Step 4: update to none.
 			{
 				Config: testAccReportLimitAggregation(n, `limit_aggregation = "none"`),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -3340,8 +3354,8 @@ func TestAccReport_LimitAggregation(t *testing.T) {
 						knownvalue.StringExact("none")),
 				},
 			},
-			// Step 4: omit limit_aggregation -> resolves to the default none; no drift
-			// versus the explicit none from step 3.
+			// Step 5: omit limit_aggregation -> resolves to the default none; no drift
+			// versus the explicit none from step 4.
 			{
 				Config: testAccReportLimitAggregation(n, ``),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -3784,6 +3798,123 @@ resource "doit_report" "metric_no_value" {
     config = {
         metric = {
             type = "basic"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_LimitByChangeNotClearable verifies the key non-clearability
+// behavior: once limit_by_change is set, omitting it from config does NOT clear
+// it (the API ignores null/omit) and does NOT cause drift. Relaxing the object's
+// children to Optional+Computed lets Terraform retain the prior state on omit, so
+// the plan is empty and the value is preserved. A regression that reintroduced
+// Required children (permadiff) or that sent null to clear the object would fail
+// here.
+func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.lbc",
+		tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
+		knownvalue.StringExact(">="))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH limit_by_change.
+			{
+				Config:            testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: omit limit_by_change — retained, empty plan (no drift).
+			{
+				Config: testAccReportLimitByChangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 3: re-apply the omitted config — still stable, still present.
+			{
+				Config: testAccReportLimitByChangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+		},
+	})
+}
+
+// testAccReportLimitByChangeCleared is testAccReportLimitByChange with the
+// limit_by_change block removed but the same resource address and name, so it can
+// be used as a follow-up step to test omitting the attribute.
+func testAccReportLimitByChangeCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "lbc" {
+    name = "test-lbc-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_LimitByChangeFieldsRequired asserts that when limit_by_change is
+// set, its API-required fields must be provided. These fields are relaxed to
+// Optional+Computed in the schema (to avoid an omit-time permadiff), so the
+// requirement is enforced at plan time by reportLimitByChangeFieldsValidator.
+func TestAccReport_LimitByChangeFieldsRequired(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportLimitByChangeMissingOperator(n),
+				ExpectError: regexp.MustCompile(`Missing Required limit_by_change Field`),
+			},
+		},
+	})
+}
+
+func testAccReportLimitByChangeMissingOperator(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "lbc_no_op" {
+    name = "test-lbc-no-op-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        limit_by_change = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            change_type             = "percentage"
+            values                  = [50]
+            include_incomplete_data = false
         }
         aggregation    = "total"
         time_interval  = "month"

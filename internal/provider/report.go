@@ -266,9 +266,9 @@ func overlayMetricFilter(resolved, plan *resource_report.MetricFilterValue) {
 }
 
 func overlayLimitByChange(resolved, plan *resource_report.LimitByChangeValue) {
-	// change_type, operator, values and include_incomplete_data are Required, so
-	// they are always Known. Only the metric's type/value can be Unknown at plan
-	// time (Optional+Computed without Default).
+	// change_type, operator, values and include_incomplete_data are Required in the
+	// generated schema (validator-enforced at runtime), so they are always Known.
+	// Only the metric's type/value are Optional+Computed.
 	if plan.Metric.IsUnknown() {
 		plan.Metric = resolved.Metric
 	} else if !plan.Metric.IsNull() {
@@ -866,9 +866,10 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.LimitByChange.IsNull() && !config.LimitByChange.IsUnknown() {
-		// change_type, operator, values and include_incomplete_data are Required, so
-		// they are always Known here; metric is Required but its type/value are
-		// Optional+Computed (guarded inside baseTypeObjectValueToExternalMetric).
+		// change_type, operator, values, include_incomplete_data and metric are
+		// Required in the generated schema (relaxed to Optional+Computed at runtime to
+		// avoid an omit-time permadiff), and reportLimitByChangeFieldsValidator ensures
+		// they are set whenever the object is configured, so they are always Known here.
 		lbc := &models.ExternalLimitByChange{
 			ChangeType:            models.ExternalLimitByChangeChangeType(config.LimitByChange.ChangeType.ValueString()),
 			Operator:              models.ExternalLimitByChangeOperator(config.LimitByChange.Operator.ValueString()),

@@ -29,6 +29,7 @@ import (
 // Compile-time interface checks.
 var _ datasource.DataSource = (*reportQueryDataSource)(nil)
 var _ datasource.DataSourceWithConfigure = (*reportQueryDataSource)(nil)
+var _ datasource.DataSourceWithValidateConfig = (*reportQueryDataSource)(nil)
 
 // NewReportQueryDataSource creates a new instance of the data source.
 func NewReportQueryDataSource() datasource.DataSource {
@@ -145,6 +146,15 @@ func (d *reportQueryDataSource) Configure(_ context.Context, req datasource.Conf
 	}
 
 	d.client = client
+}
+
+// ValidateConfig enforces the same metric-field requirements as the report
+// resource (every metric object must set type and value). report_query reuses the
+// report config schema and toExternalConfig, so without this the query endpoint
+// would receive a metric missing type/value and return a cryptic HTTP 400.
+func (d *reportQueryDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportMetricFieldsConfig(ctx, req.Config, &resp.Diagnostics)
+	validateLimitByChangeFieldsConfig(ctx, req.Config, &resp.Diagnostics)
 }
 
 func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
