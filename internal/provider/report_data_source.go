@@ -171,10 +171,12 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		"include_promotional_credits": types.BoolNull(),
 		"include_subtotals":           types.BoolNull(),
 		"layout":                      types.StringNull(),
-		"limit_aggregation":           types.StringNull(),
-		"sort_dimensions":             types.StringNull(),
-		"sort_groups":                 types.StringNull(),
-		"time_interval":               types.StringNull(),
+		// limit_aggregation has the effective server default "none"; mirror the
+		// resource mapper and normalize a nil API response to that default.
+		"limit_aggregation": types.StringValue("none"),
+		"sort_dimensions":   types.StringNull(),
+		"sort_groups":       types.StringNull(),
+		"time_interval":     types.StringNull(),
 	}
 
 	if config.Aggregation != nil {
@@ -389,7 +391,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	if config.MetricFilter != nil {
 		mfMap := map[string]attr.Value{
 			"operator": types.StringValue(string(*config.MetricFilter.Operator)),
-			"operand":  types.StringNull(),
+			// operand has the effective server default "single_value"; mirror the
+			// resource mapper and normalize a nil API response to that default.
+			"operand": types.StringValue("single_value"),
 		}
 		if config.MetricFilter.Operand != nil {
 			mfMap["operand"] = types.StringValue(string(*config.MetricFilter.Operand))
