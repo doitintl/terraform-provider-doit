@@ -116,6 +116,12 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.metric_filter.metric.type",  // API provides default type
 		"config.metric_filter.metric.value", // API provides default value
 
+		// config.limit_by_change (the container is Optional+Computed but exempt from
+		// clearableattr; the API ignores null/omit so it is not clearable — matching
+		// the metric_filter precedent). Its metric.type/value are the flagged leaves.
+		"config.limit_by_change.metric.type",  // API requires/defaults type
+		"config.limit_by_change.metric.value", // API provides default value
+
 		// config.group
 		"config.group[*].id",                 // API-assigned group ID
 		"config.group[*].type",               // API provides default type

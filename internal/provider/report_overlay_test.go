@@ -281,3 +281,68 @@ func TestOverlayListElements_NullResolvedElement(t *testing.T) {
 		t.Errorf("Id should remain 'sku_description', got %q", result[0].Id.ValueString())
 	}
 }
+
+// TestOverlayLimitByChange_ResolvesMetricSubfields verifies that overlayLimitByChange
+// preserves the user's Known required fields while resolving Unknown metric type/value
+// (Optional+Computed) from the API response.
+func TestOverlayLimitByChange_ResolvesMetricSubfields(t *testing.T) {
+	ctx := context.Background()
+
+	resolvedMetric := resource_report.NewMetricValueMust(
+		resource_report.MetricValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"type":  types.StringValue("basic"),
+			"value": types.StringValue("cost"),
+		},
+	)
+	resolvedValues, d := types.ListValueFrom(ctx, types.Float64Type, []float64{50})
+	if d.HasError() {
+		t.Fatalf("building resolved values: %v", d)
+	}
+	resolved := resource_report.NewLimitByChangeValueMust(
+		resource_report.LimitByChangeValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"change_type":             types.StringValue("percentage"),
+			"operator":                types.StringValue(">="),
+			"include_incomplete_data": types.BoolValue(false),
+			"metric":                  resolvedMetric,
+			"values":                  resolvedValues,
+		},
+	)
+
+	// Plan: required fields set by the user; metric type/value Unknown.
+	planMetric := resource_report.NewMetricValueMust(
+		resource_report.MetricValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"type":  types.StringUnknown(),
+			"value": types.StringUnknown(),
+		},
+	)
+	planValues, d := types.ListValueFrom(ctx, types.Float64Type, []float64{50})
+	if d.HasError() {
+		t.Fatalf("building plan values: %v", d)
+	}
+	plan := resource_report.NewLimitByChangeValueMust(
+		resource_report.LimitByChangeValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"change_type":             types.StringValue("percentage"),
+			"operator":                types.StringValue(">="),
+			"include_incomplete_data": types.BoolValue(false),
+			"metric":                  planMetric,
+			"values":                  planValues,
+		},
+	)
+
+	overlayLimitByChange(&resolved, &plan)
+
+	if plan.Metric.MetricType.IsUnknown() || plan.Metric.MetricType.ValueString() != "basic" {
+		t.Errorf("expected metric.type resolved to basic, got %v", plan.Metric.MetricType)
+	}
+	if plan.Metric.Value.IsUnknown() || plan.Metric.Value.ValueString() != "cost" {
+		t.Errorf("expected metric.value resolved to cost, got %v", plan.Metric.Value)
+	}
+	// Required user values must be preserved.
+	if plan.Operator.ValueString() != ">=" {
+		t.Errorf("expected operator preserved as >=, got %v", plan.Operator)
+	}
+}

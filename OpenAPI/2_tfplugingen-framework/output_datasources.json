@@ -10088,6 +10088,75 @@
 									}
 								},
 								{
+									"name": "limit_aggregation",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Controls how rows excluded by limits are rendered. Applies when any limit type is active\n(`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure\nat most two of those three limit types — not all three. When `displayValues` is not\n`actuals_only`, this field must be `none` (or omitted, which defaults to `none`)."
+									}
+								},
+								{
+									"name": "limit_by_change",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "change_type",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "include_incomplete_data",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "When true, keeps rows whose deltas could not be evaluated."
+												}
+											},
+											{
+												"name": "metric",
+												"single_nested": {
+													"computed_optional_required": "computed",
+													"attributes": [
+														{
+															"name": "type",
+															"string": {
+																"computed_optional_required": "computed",
+																"description": "Type of metric to use."
+															}
+														},
+														{
+															"name": "value",
+															"string": {
+																"computed_optional_required": "computed",
+																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
+															}
+														}
+													],
+													"description": "Metric selector used in reports and filters."
+												}
+											},
+											{
+												"name": "operator",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Comparison operator for period-over-period deltas."
+												}
+											},
+											{
+												"name": "values",
+												"list": {
+													"computed_optional_required": "computed",
+													"element_type": {
+														"float64": {}
+													},
+													"description": "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries."
+												}
+											}
+										],
+										"description": "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three."
+									}
+								},
+								{
 									"name": "metric",
 									"single_nested": {
 										"computed_optional_required": "computed",
@@ -10139,10 +10208,17 @@
 												}
 											},
 											{
+												"name": "operand",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "Whether the threshold applies to each value (default) or the series total.\nSame field as the DoiT Console metric filter `operand` (`OperandSingleValue` /\n`OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses\necho the effective value (`single_value` or `series_total`)."
+												}
+											},
+											{
 												"name": "operator",
 												"string": {
 													"computed_optional_required": "computed",
-													"description": "Comparison operator for filtering metric values."
+													"description": "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`\u003e`, `\u003e=`, …) instead."
 												}
 											},
 											{

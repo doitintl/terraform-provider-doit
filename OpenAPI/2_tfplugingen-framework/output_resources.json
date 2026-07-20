@@ -2950,6 +2950,126 @@
 									}
 								},
 								{
+									"name": "limit_aggregation",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"default": {
+											"static": "none"
+										},
+										"description": "Controls how rows excluded by limits are rendered. Applies when any limit type is active\n(`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure\nat most two of those three limit types — not all three. When `displayValues` is not\n`actuals_only`, this field must be `none` (or omitted, which defaults to `none`).",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"none\",\n\"top\",\n\"all\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "limit_by_change",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "change_type",
+												"string": {
+													"computed_optional_required": "required",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"percentage\",\n\"absolute\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "include_incomplete_data",
+												"bool": {
+													"computed_optional_required": "required",
+													"description": "When true, keeps rows whose deltas could not be evaluated."
+												}
+											},
+											{
+												"name": "metric",
+												"single_nested": {
+													"computed_optional_required": "required",
+													"attributes": [
+														{
+															"name": "type",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "Type of metric to use.",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.OneOf(\n\"basic\",\n\"custom\",\n\"extended\",\n)"
+																		}
+																	}
+																]
+															}
+														},
+														{
+															"name": "value",
+															"string": {
+																"computed_optional_required": "computed_optional",
+																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
+															}
+														}
+													],
+													"description": "Metric selector used in reports and filters."
+												}
+											},
+											{
+												"name": "operator",
+												"string": {
+													"computed_optional_required": "required",
+													"description": "Comparison operator for period-over-period deltas.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"\u003e\",\n\"\u003e=\",\n\"\u003c\",\n\"\u003c=\",\n\"between\",\n\"not_between\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "values",
+												"list": {
+													"computed_optional_required": "required",
+													"element_type": {
+														"float64": {}
+													},
+													"description": "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries."
+												}
+											}
+										],
+										"description": "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three."
+									}
+								},
+								{
 									"name": "metric",
 									"single_nested": {
 										"computed_optional_required": "computed_optional",
@@ -3025,10 +3145,32 @@
 												}
 											},
 											{
+												"name": "operand",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"default": {
+														"static": "single_value"
+													},
+													"description": "Whether the threshold applies to each value (default) or the series total.\nSame field as the DoiT Console metric filter `operand` (`OperandSingleValue` /\n`OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses\necho the effective value (`single_value` or `series_total`).",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"single_value\",\n\"series_total\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
 												"name": "operator",
 												"string": {
 													"computed_optional_required": "computed_optional",
-													"description": "Comparison operator for filtering metric values.",
+													"description": "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`\u003e`, `\u003e=`, …) instead.",
 													"validators": [
 														{
 															"custom": {

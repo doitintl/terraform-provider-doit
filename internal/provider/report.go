@@ -141,6 +141,15 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 		overlayMetricFilter(&resolved.MetricFilter, &plan.MetricFilter)
 	}
 
+	if plan.LimitByChange.IsUnknown() {
+		plan.LimitByChange = resolved.LimitByChange
+	} else if !plan.LimitByChange.IsNull() {
+		overlayLimitByChange(&resolved.LimitByChange, &plan.LimitByChange)
+	}
+
+	// limit_aggregation is Optional+Computed with a Default — never Unknown at plan
+	// time, so no overlay is needed (layout/theme_id precedent).
+
 	if plan.TimeRange.IsUnknown() {
 		plan.TimeRange = resolved.TimeRange
 	} else if !plan.TimeRange.IsNull() {
@@ -249,6 +258,17 @@ func overlayMetricFilter(resolved, plan *resource_report.MetricFilterValue) {
 	if plan.Values.IsUnknown() {
 		plan.Values = resolved.Values
 	}
+	if plan.Metric.IsUnknown() {
+		plan.Metric = resolved.Metric
+	} else if !plan.Metric.IsNull() {
+		overlayMetric(&resolved.Metric, &plan.Metric)
+	}
+}
+
+func overlayLimitByChange(resolved, plan *resource_report.LimitByChangeValue) {
+	// change_type, operator, values and include_incomplete_data are Required, so
+	// they are always Known. Only the metric's type/value can be Unknown at plan
+	// time (Optional+Computed without Default).
 	if plan.Metric.IsUnknown() {
 		plan.Metric = resolved.Metric
 	} else if !plan.Metric.IsNull() {
@@ -658,6 +678,11 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	if !config.Layout.IsNull() && !config.Layout.IsUnknown() {
 		externalConfig.Layout = new(models.ExternalRenderer(config.Layout.ValueString()))
 	}
+	// limit_aggregation is Optional+Computed with a schema Default ("none"), so it
+	// is never Unknown at plan time — guard on IsNull only (theme_id precedent).
+	if !config.LimitAggregation.IsNull() {
+		externalConfig.LimitAggregation = new(models.ExternalConfigLimitAggregation(config.LimitAggregation.ValueString()))
+	}
 	if !config.SortDimensions.IsNull() {
 		externalConfig.SortDimensions = new(models.ExternalConfigSortDimensions(config.SortDimensions.ValueString()))
 	}
@@ -833,6 +858,29 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !config.MetricFilter.Operator.IsNull() && !config.MetricFilter.Operator.IsUnknown() {
 			externalConfig.MetricFilter.Operator = new(models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString()))
 		}
+		// operand is Optional+Computed with a schema Default ("single_value"), so it
+		// is never Unknown at plan time — guard on IsNull only.
+		if !config.MetricFilter.Operand.IsNull() {
+			externalConfig.MetricFilter.Operand = new(models.ExternalConfigMetricFilterOperand(config.MetricFilter.Operand.ValueString()))
+		}
+	}
+
+	if !config.LimitByChange.IsNull() && !config.LimitByChange.IsUnknown() {
+		// change_type, operator, values and include_incomplete_data are Required, so
+		// they are always Known here; metric is Required but its type/value are
+		// Optional+Computed (guarded inside baseTypeObjectValueToExternalMetric).
+		lbc := &models.ExternalLimitByChange{
+			ChangeType:            models.ExternalLimitByChangeChangeType(config.LimitByChange.ChangeType.ValueString()),
+			Operator:              models.ExternalLimitByChangeOperator(config.LimitByChange.Operator.ValueString()),
+			IncludeIncompleteData: config.LimitByChange.IncludeIncompleteData.ValueBool(),
+		}
+		if metric := baseTypeObjectValueToExternalMetric(config.LimitByChange.Metric); metric != nil {
+			lbc.Metric = *metric
+		}
+		var values []float64
+		diags.Append(config.LimitByChange.Values.ElementsAs(ctx, &values, false)...)
+		lbc.Values = values
+		externalConfig.LimitByChange = lbc
 	}
 
 	if !config.Splits.IsNull() && !config.Splits.IsUnknown() {
@@ -1019,6 +1067,13 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	}
 	if config.Layout != nil {
 		configMap["layout"] = types.StringValue(string(*config.Layout))
+	}
+	// limit_aggregation has schema Default "none"; map a nil API response to the
+	// default (not null) to avoid perpetual drift.
+	if config.LimitAggregation != nil {
+		configMap["limit_aggregation"] = types.StringValue(string(*config.LimitAggregation))
+	} else {
+		configMap["limit_aggregation"] = types.StringValue("none")
 	}
 	if config.SortDimensions != nil {
 		configMap["sort_dimensions"] = types.StringValue(string(*config.SortDimensions))
@@ -1372,6 +1427,11 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	if config.MetricFilter != nil {
 		mfMap := map[string]attr.Value{
 			"operator": types.StringValue(string(*config.MetricFilter.Operator)),
+			// operand has schema Default "single_value"; map nil to the default.
+			"operand": types.StringValue("single_value"),
+		}
+		if config.MetricFilter.Operand != nil {
+			mfMap["operand"] = types.StringValue(string(*config.MetricFilter.Operand))
 		}
 
 		metricFilterMetricVal, mfMetricDiags := externalMetricToBaseTypeObjectValue(ctx, config.MetricFilter.Metric)
@@ -1400,6 +1460,35 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		configMap["metric_filter"] = mfv
 	} else {
 		configMap["metric_filter"] = resource_report.NewMetricFilterValueNull()
+	}
+
+	// Nested Object: LimitByChange
+	if config.LimitByChange != nil {
+		lbcMetricVal, lbcMetricDiags := externalMetricToBaseTypeObjectValue(ctx, &config.LimitByChange.Metric)
+		diags.Append(lbcMetricDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		lbcValues, lbcValuesDiags := types.ListValueFrom(ctx, types.Float64Type, config.LimitByChange.Values)
+		diags.Append(lbcValuesDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		lbcMap := map[string]attr.Value{
+			"change_type":             types.StringValue(string(config.LimitByChange.ChangeType)),
+			"operator":                types.StringValue(string(config.LimitByChange.Operator)),
+			"include_incomplete_data": types.BoolValue(config.LimitByChange.IncludeIncompleteData),
+			"metric":                  lbcMetricVal,
+			"values":                  lbcValues,
+		}
+		lbcv, lbcvDiags := resource_report.NewLimitByChangeValue(resource_report.LimitByChangeValue{}.AttributeTypes(ctx), lbcMap)
+		diags.Append(lbcvDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		configMap["limit_by_change"] = lbcv
+	} else {
+		configMap["limit_by_change"] = resource_report.NewLimitByChangeValueNull()
 	}
 
 	// Nested List: Splits
