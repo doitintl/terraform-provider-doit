@@ -3680,3 +3680,118 @@ resource "doit_report" "three_limits" {
 }
 `, i)
 }
+
+// TestAccReport_MetricFieldsRequired asserts the DoiT API requirement (surfaced
+// by reportMetricFieldsValidator) that every configured metric object must set
+// both type and value. Before the validator existed, omitting these produced a
+// cryptic apply-time API error ("Field validation for 'Type'/'Value' failed on
+// the 'required' tag"); now it is a clear plan-time error. This covers the shared
+// metric handling consistently across contexts: limit_by_change.metric,
+// metric_filter.metric and the top-level metric.
+func TestAccReport_MetricFieldsRequired(t *testing.T) {
+	missingType := regexp.MustCompile(`Missing Required Metric Field`)
+
+	cases := []struct {
+		name   string
+		config func(int) string
+	}{
+		// limit_by_change.metric omitting type — the exact scenario Copilot flagged.
+		{"limit_by_change_metric_missing_type", testAccReportLimitByChangeMetricMissingType},
+		// metric_filter.metric omitting type — same shared metric handling.
+		{"metric_filter_metric_missing_type", testAccReportMetricFilterMetricMissingType},
+		// top-level metric omitting value — asserts value is required too.
+		{"metric_missing_value", testAccReportMetricMissingValue},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			n := acctest.RandInt()
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config(n),
+						ExpectError: missingType,
+					},
+				},
+			})
+		})
+	}
+}
+
+func testAccReportLimitByChangeMetricMissingType(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "lbc_no_type" {
+    name = "test-lbc-no-type-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        limit_by_change = {
+            metric = {
+                value = "cost"
+            }
+            change_type             = "percentage"
+            operator                = ">="
+            values                  = [50]
+            include_incomplete_data = false
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricFilterMetricMissingType(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_no_type" {
+    name = "test-mf-no-type-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                value = "cost"
+            }
+            operator = "gt"
+            values   = [100]
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricMissingValue(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_no_value" {
+    name = "test-metric-no-value-%d"
+    config = {
+        metric = {
+            type = "basic"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}

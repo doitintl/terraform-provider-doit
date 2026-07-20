@@ -1664,7 +1664,11 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric) {
 	metric = &models.ExternalMetric{}
-	if !metricValue.MetricType.IsNull() {
+	// Guard IsUnknown as well as IsNull (consistent with Value below): an Unknown
+	// type must be omitted, never serialized as an empty string. A plan-time
+	// validator (reportMetricFieldsValidator) rejects a null/omitted type, since
+	// the API requires it on every metric.
+	if !metricValue.MetricType.IsNull() && !metricValue.MetricType.IsUnknown() {
 		metric.Type = new(models.ExternalMetricType(metricValue.MetricType.ValueString()))
 	}
 	if !metricValue.Value.IsNull() && !metricValue.Value.IsUnknown() {

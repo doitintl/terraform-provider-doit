@@ -178,6 +178,140 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 	}
 }
 
+// reportMetricFieldsValidator validates that every configured metric object
+// specifies both `type` and `value`. The DoiT API requires both fields on every
+// ExternalMetric (in `metric`, `metric_filter.metric`, `limit_by_change.metric`,
+// `group[*].limit.metric` and `metrics[*]`) and rejects requests that omit them
+// with a cryptic "Field validation for 'Type'/'Value' failed on the 'required'
+// tag" error at apply time. The generated schema marks these leaves
+// Optional+Computed (the upstream OpenAPI ExternalMetric lists no required
+// fields), so this validator surfaces the requirement as a clear plan-time error.
+//
+// This is a ConfigValidator because attribute-level validators do not fire on
+// attributes inside SingleNestedAttribute with CustomType.
+type reportMetricFieldsValidator struct{}
+
+var _ resource.ConfigValidator = reportMetricFieldsValidator{}
+
+func (v reportMetricFieldsValidator) Description(_ context.Context) string {
+	return "Validates that every configured metric object specifies both type and value"
+}
+
+func (v reportMetricFieldsValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that every configured metric object specifies both `type` and `value`"
+}
+
+// validateMetricFields reports an error for each of type/value that is explicitly
+// null (omitted) on a configured metric. Unknown values (e.g. a custom-metric ID
+// resolved after apply) are left to the API.
+func validateMetricFields(metricType, value basetypes.StringValue, p path.Path, diags *diag.Diagnostics) {
+	if metricType.IsNull() {
+		diags.AddAttributeError(
+			p.AtName("type"),
+			"Missing Required Metric Field",
+			"`type` is required on every metric object. The DoiT API rejects metrics without a `type` "+
+				"(e.g. type = \"basic\").",
+		)
+	}
+	if value.IsNull() {
+		diags.AddAttributeError(
+			p.AtName("value"),
+			"Missing Required Metric Field",
+			"`value` is required on every metric object. The DoiT API rejects metrics without a `value` "+
+				"(e.g. value = \"cost\").",
+		)
+	}
+}
+
+func (v reportMetricFieldsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	// Singular MetricValue objects.
+	singular := map[string]resource_report.MetricValue{}
+	singularPaths := map[string]path.Path{
+		"metric":          path.Root("config").AtName("metric"),
+		"metric_filter":   path.Root("config").AtName("metric_filter").AtName("metric"),
+		"limit_by_change": path.Root("config").AtName("limit_by_change").AtName("metric"),
+	}
+
+	var metric resource_report.MetricValue
+	if d := req.Config.GetAttribute(ctx, path.Root("config").AtName("metric"), &metric); !d.HasError() {
+		singular["metric"] = metric
+	} else {
+		resp.Diagnostics.Append(d...)
+	}
+
+	var metricFilter resource_report.MetricFilterValue
+	if d := req.Config.GetAttribute(ctx, path.Root("config").AtName("metric_filter"), &metricFilter); !d.HasError() {
+		if !metricFilter.IsNull() && !metricFilter.IsUnknown() {
+			singular["metric_filter"] = metricFilter.Metric
+		}
+	} else {
+		resp.Diagnostics.Append(d...)
+	}
+
+	var limitByChange resource_report.LimitByChangeValue
+	if d := req.Config.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange); !d.HasError() {
+		if !limitByChange.IsNull() && !limitByChange.IsUnknown() {
+			singular["limit_by_change"] = limitByChange.Metric
+		}
+	} else {
+		resp.Diagnostics.Append(d...)
+	}
+
+	for key, m := range singular {
+		if m.IsNull() || m.IsUnknown() {
+			continue
+		}
+		validateMetricFields(m.MetricType, m.Value, singularPaths[key], &resp.Diagnostics)
+	}
+
+	// group[*].limit.metric
+	var groups types.List
+	groupDiags := req.Config.GetAttribute(ctx, path.Root("config").AtName("group"), &groups)
+	resp.Diagnostics.Append(groupDiags...)
+	if !groupDiags.HasError() && !groups.IsNull() && !groups.IsUnknown() {
+		var groupVals []resource_report.GroupValue
+		elemDiags := groups.ElementsAs(ctx, &groupVals, false)
+		resp.Diagnostics.Append(elemDiags...)
+		if !elemDiags.HasError() {
+			for i, g := range groupVals {
+				if g.Limit.IsNull() || g.Limit.IsUnknown() {
+					continue
+				}
+				if g.Limit.Metric.IsNull() || g.Limit.Metric.IsUnknown() {
+					continue
+				}
+				validateMetricFields(
+					g.Limit.Metric.MetricType, g.Limit.Metric.Value,
+					path.Root("config").AtName("group").AtListIndex(i).AtName("limit").AtName("metric"),
+					&resp.Diagnostics,
+				)
+			}
+		}
+	}
+
+	// metrics[*]
+	var metrics types.List
+	metricsDiags := req.Config.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
+	resp.Diagnostics.Append(metricsDiags...)
+	if !metricsDiags.HasError() && !metrics.IsNull() && !metrics.IsUnknown() {
+		var metricsVals []resource_report.MetricsValue
+		elemDiags := metrics.ElementsAs(ctx, &metricsVals, false)
+		resp.Diagnostics.Append(elemDiags...)
+		if !elemDiags.HasError() {
+			for i, m := range metricsVals {
+				if m.IsNull() || m.IsUnknown() {
+					continue
+				}
+				validateMetricFields(
+					m.MetricsType, m.Value,
+					path.Root("config").AtName("metrics").AtListIndex(i),
+					&resp.Diagnostics,
+				)
+			}
+		}
+	}
+}
+
 // reportFilterNAValidator warns when legacy NullFallback sentinel values such as
 // "[Service N/A]" are found in config.filters[*].values. Users should use
 // include_null = true on the filter block instead, which is semantically equivalent

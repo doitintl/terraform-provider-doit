@@ -207,6 +207,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportMetricsLengthValidator{},
 		// custom_time_range.from/to must be valid RFC3339 timestamps.
 		reportTimestampValidator{},
+		// Every configured metric object must set both type and value (API requires them).
+		reportMetricFieldsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
 	}
