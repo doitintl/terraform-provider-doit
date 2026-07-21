@@ -5572,6 +5572,14 @@ func (t ForecastSettingsType) String() string {
 func (t ForecastSettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewForecastSettingsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	futureCustomDateRangeAttribute, ok := attributes["future_custom_date_range"]
