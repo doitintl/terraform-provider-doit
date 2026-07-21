@@ -3462,9 +3462,7 @@ func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
 			{
 				Config: testAccReportWithForecastSettingsRemoved(n),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("doit_report.forecast_intervals_test", "config.forecast_settings.mode", "totals"),
-					resource.TestCheckNoResourceAttr("doit_report.forecast_intervals_test", "config.forecast_settings.future_time_intervals"),
-					resource.TestCheckNoResourceAttr("doit_report.forecast_intervals_test", "config.forecast_settings.historical_time_intervals"),
+					resource.TestCheckNoResourceAttr("doit_report.forecast_intervals_test", "config.forecast_settings"),
 				),
 			},
 		},

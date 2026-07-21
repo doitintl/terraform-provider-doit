@@ -1179,7 +1179,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		if config.CustomTimeRange.From != nil {
 			// Preserve user's timestamp format if semantically equal
 			existingTime, err := time.Parse(time.RFC3339, existingFrom)
-			if err == nil && existingTime.Equal(*config.CustomTimeRange.From) {
+			if err == nil && datesEqualUTC(existingTime, *config.CustomTimeRange.From) {
 				ctrMap["from"] = types.StringValue(existingFrom)
 			} else {
 				ctrMap["from"] = types.StringValue(config.CustomTimeRange.From.Format(time.RFC3339))
@@ -1188,7 +1188,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		if config.CustomTimeRange.To != nil {
 			// Preserve user's timestamp format if semantically equal
 			existingTime, err := time.Parse(time.RFC3339, existingTo)
-			if err == nil && existingTime.Equal(*config.CustomTimeRange.To) {
+			if err == nil && datesEqualUTC(existingTime, *config.CustomTimeRange.To) {
 				ctrMap["to"] = types.StringValue(existingTo)
 			} else {
 				ctrMap["to"] = types.StringValue(config.CustomTimeRange.To.Format(time.RFC3339))
@@ -1620,7 +1620,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 			if config.SecondaryTimeRange.CustomTimeRange.From != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingFrom)
-				if err == nil && existingTime.Equal(*config.SecondaryTimeRange.CustomTimeRange.From) {
+				if err == nil && datesEqualUTC(existingTime, *config.SecondaryTimeRange.CustomTimeRange.From) {
 					ctrMap["from"] = types.StringValue(existingFrom)
 				} else {
 					ctrMap["from"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.From.Format(time.RFC3339))
@@ -1628,7 +1628,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 			if config.SecondaryTimeRange.CustomTimeRange.To != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingTo)
-				if err == nil && existingTime.Equal(*config.SecondaryTimeRange.CustomTimeRange.To) {
+				if err == nil && datesEqualUTC(existingTime, *config.SecondaryTimeRange.CustomTimeRange.To) {
 					ctrMap["to"] = types.StringValue(existingTo)
 				} else {
 					ctrMap["to"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.To.Format(time.RFC3339))
@@ -1722,7 +1722,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 			if fs.FutureCustomDateRange.From != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingFutureFrom)
-				if err == nil && existingTime.Equal(*fs.FutureCustomDateRange.From) {
+				if err == nil && datesEqualUTC(existingTime, *fs.FutureCustomDateRange.From) {
 					fcdrMap["from"] = types.StringValue(existingFutureFrom)
 				} else {
 					fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339))
@@ -1730,7 +1730,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 			if fs.FutureCustomDateRange.To != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingFutureTo)
-				if err == nil && existingTime.Equal(*fs.FutureCustomDateRange.To) {
+				if err == nil && datesEqualUTC(existingTime, *fs.FutureCustomDateRange.To) {
 					fcdrMap["to"] = types.StringValue(existingFutureTo)
 				} else {
 					fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339))
@@ -1756,7 +1756,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 			if fs.HistoricalCustomDateRange.From != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingHistFrom)
-				if err == nil && existingTime.Equal(*fs.HistoricalCustomDateRange.From) {
+				if err == nil && datesEqualUTC(existingTime, *fs.HistoricalCustomDateRange.From) {
 					hcdrMap["from"] = types.StringValue(existingHistFrom)
 				} else {
 					hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339))
@@ -1764,7 +1764,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 			if fs.HistoricalCustomDateRange.To != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingHistTo)
-				if err == nil && existingTime.Equal(*fs.HistoricalCustomDateRange.To) {
+				if err == nil && datesEqualUTC(existingTime, *fs.HistoricalCustomDateRange.To) {
 					hcdrMap["to"] = types.StringValue(existingHistTo)
 				} else {
 					hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339))
@@ -1778,6 +1778,10 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		fsVal, fsDiags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
 		diags.Append(fsDiags...)
 		configMap["forecast_settings"] = fsVal
+	} else if config.AdvancedAnalysis != nil && config.AdvancedAnalysis.Forecast != nil && *config.AdvancedAnalysis.Forecast &&
+		!state.Config.IsNull() && !state.Config.IsUnknown() &&
+		!state.Config.ForecastSettings.IsNull() && !state.Config.ForecastSettings.IsUnknown() {
+		configMap["forecast_settings"] = state.Config.ForecastSettings
 	} else {
 		configMap["forecast_settings"] = resource_report.NewForecastSettingsValueNull()
 	}
@@ -1786,6 +1790,12 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	diags.Append(d...)
 
 	return diags
+}
+
+func datesEqualUTC(t1, t2 time.Time) bool {
+	u1 := t1.UTC()
+	u2 := t2.UTC()
+	return u1.Year() == u2.Year() && u1.Month() == u2.Month() && u1.Day() == u2.Day()
 }
 
 func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric) {

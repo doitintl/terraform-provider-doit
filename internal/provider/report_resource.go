@@ -89,7 +89,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 					ForecastSettingsType: baseType,
 				}
 			}
-			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullForUnknownObjectWhenConfigNull())
+			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullOrDefaultForForecastSettings())
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
 		s.Attributes["config"] = configAttr
