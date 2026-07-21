@@ -84,6 +84,11 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			configAttr.Attributes["metric_filter"] = mfAttr
 		}
 		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(schema.SingleNestedAttribute); ok {
+			if baseType, ok := fsAttr.CustomType.(resource_report.ForecastSettingsType); ok {
+				fsAttr.CustomType = SafeForecastSettingsType{
+					ForecastSettingsType: baseType,
+				}
+			}
 			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullForUnknownObjectWhenConfigNull())
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
