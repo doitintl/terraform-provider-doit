@@ -90,8 +90,66 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 				}
 			}
 			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullOrDefaultForForecastSettings())
+
+			// Support clearability when transitioning between Intervals and Custom Date Ranges (Category B attributes)
+			if attr, ok := fsAttr.Attributes["future_time_intervals"].(schema.Int64Attribute); ok {
+				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
+				fsAttr.Attributes["future_time_intervals"] = attr
+			}
+			if attr, ok := fsAttr.Attributes["historical_time_intervals"].(schema.Int64Attribute); ok {
+				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
+				fsAttr.Attributes["historical_time_intervals"] = attr
+			}
+			if attr, ok := fsAttr.Attributes["future_custom_date_range"].(schema.SingleNestedAttribute); ok {
+				if baseType, ok := attr.CustomType.(resource_report.FutureCustomDateRangeType); ok {
+					attr.CustomType = SafeFutureCustomDateRangeType{
+						FutureCustomDateRangeType: baseType,
+					}
+				}
+				attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
+				fsAttr.Attributes["future_custom_date_range"] = attr
+			}
+			if attr, ok := fsAttr.Attributes["historical_custom_date_range"].(schema.SingleNestedAttribute); ok {
+				if baseType, ok := attr.CustomType.(resource_report.HistoricalCustomDateRangeType); ok {
+					attr.CustomType = SafeHistoricalCustomDateRangeType{
+						HistoricalCustomDateRangeType: baseType,
+					}
+				}
+				attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
+				fsAttr.Attributes["historical_custom_date_range"] = attr
+			}
+
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
+
+		if attr, ok := configAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
+			if baseType, ok := attr.CustomType.(resource_report.CustomTimeRangeType); ok {
+				attr.CustomType = SafeCustomTimeRangeType{
+					CustomTimeRangeType: baseType,
+				}
+			}
+			attr.PlanModifiers = append(attr.PlanModifiers, UseNullWhenOmitted())
+			configAttr.Attributes["custom_time_range"] = attr
+		}
+		if strAttr, ok := configAttr.Attributes["secondary_time_range"].(schema.SingleNestedAttribute); ok {
+			if baseType, ok := strAttr.CustomType.(resource_report.SecondaryTimeRangeType); ok {
+				strAttr.CustomType = SafeSecondaryTimeRangeType{
+					SecondaryTimeRangeType: baseType,
+				}
+			}
+			if attr, ok := strAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
+				if baseType, ok := attr.CustomType.(resource_report.CustomTimeRangeType); ok {
+					attr.CustomType = SafeCustomTimeRangeType{
+						CustomTimeRangeType: baseType,
+					}
+				}
+				attr.PlanModifiers = append(attr.PlanModifiers, UseNullWhenOmitted())
+				strAttr.Attributes["custom_time_range"] = attr
+			}
+			strAttr.PlanModifiers = append(strAttr.PlanModifiers, UseNullWhenOmitted())
+			configAttr.Attributes["secondary_time_range"] = strAttr
+		}
+
 		s.Attributes["config"] = configAttr
 	}
 

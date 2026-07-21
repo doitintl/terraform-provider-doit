@@ -1778,10 +1778,24 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		fsVal, fsDiags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
 		diags.Append(fsDiags...)
 		configMap["forecast_settings"] = fsVal
-	} else if config.AdvancedAnalysis != nil && config.AdvancedAnalysis.Forecast != nil && *config.AdvancedAnalysis.Forecast &&
-		!state.Config.IsNull() && !state.Config.IsUnknown() &&
-		!state.Config.ForecastSettings.IsNull() && !state.Config.ForecastSettings.IsUnknown() {
-		configMap["forecast_settings"] = state.Config.ForecastSettings
+	} else if config.AdvancedAnalysis != nil && config.AdvancedAnalysis.Forecast != nil && *config.AdvancedAnalysis.Forecast {
+		if !state.Config.IsNull() && !state.Config.IsUnknown() &&
+			!state.Config.ForecastSettings.IsNull() && !state.Config.ForecastSettings.IsUnknown() {
+			configMap["forecast_settings"] = state.Config.ForecastSettings
+		} else {
+			attrs := map[string]attr.Value{
+				"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
+				"future_time_intervals":        types.Int64Null(),
+				"historical_custom_date_range": resource_report.NewHistoricalCustomDateRangeValueNull(),
+				"historical_time_intervals":    types.Int64Null(),
+				"mode":                         types.StringValue("totals"),
+			}
+			fsVal, fsDiags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), attrs)
+			diags.Append(fsDiags...)
+			if !fsDiags.HasError() {
+				configMap["forecast_settings"] = fsVal
+			}
+		}
 	} else {
 		configMap["forecast_settings"] = resource_report.NewForecastSettingsValueNull()
 	}

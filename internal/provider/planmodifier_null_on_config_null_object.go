@@ -27,7 +27,7 @@ func (m UseNullForUnknownObjectWhenConfigNullModifier) MarkdownDescription(ctx c
 }
 
 func (m UseNullForUnknownObjectWhenConfigNullModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if req.ConfigValue.IsNull() {
+	if req.ConfigValue.IsNull() && !req.StateValue.IsNull() {
 		resp.PlanValue = req.ConfigValue
 	}
 }
