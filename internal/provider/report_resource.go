@@ -108,15 +108,15 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		}
 
 		if attr, ok := configAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
-			attr.PlanModifiers = append(attr.PlanModifiers, UseNullWhenOmitted())
+			attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
 			configAttr.Attributes["custom_time_range"] = attr
 		}
 		if strAttr, ok := configAttr.Attributes["secondary_time_range"].(schema.SingleNestedAttribute); ok {
 			if attr, ok := strAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, UseNullWhenOmitted())
+				attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
 				strAttr.Attributes["custom_time_range"] = attr
 			}
-			strAttr.PlanModifiers = append(strAttr.PlanModifiers, UseNullWhenOmitted())
+			strAttr.PlanModifiers = append(strAttr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
 			configAttr.Attributes["secondary_time_range"] = strAttr
 		}
 

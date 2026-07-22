@@ -56,7 +56,12 @@ func (m useNullOrDefaultForForecastSettingsModifier) PlanModifyObject(ctx contex
 				"historical_time_intervals":    types.Int64Null(),
 				"mode":                         types.StringValue("totals"),
 			}
-			defaultObj, diags := types.ObjectValue(attrTypes, attrs)
+			fsVal, diags := resource_report.NewForecastSettingsValue(attrTypes, attrs)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			defaultObj, diags := fsVal.ToObjectValue(ctx)
 			resp.Diagnostics.Append(diags...)
 			if !resp.Diagnostics.HasError() {
 				resp.PlanValue = defaultObj
@@ -64,26 +69,6 @@ func (m useNullOrDefaultForForecastSettingsModifier) PlanModifyObject(ctx contex
 			return
 		}
 
-		resp.PlanValue = req.ConfigValue
-	}
-}
-
-func UseNullWhenOmitted() planmodifier.Object {
-	return useNullWhenOmittedModifier{}
-}
-
-type useNullWhenOmittedModifier struct{}
-
-func (m useNullWhenOmittedModifier) Description(_ context.Context) string {
-	return "Proposes a Null object when the configuration value is null (omitted)."
-}
-
-func (m useNullWhenOmittedModifier) MarkdownDescription(ctx context.Context) string {
-	return m.Description(ctx)
-}
-
-func (m useNullWhenOmittedModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if req.ConfigValue.IsNull() {
 		resp.PlanValue = req.ConfigValue
 	}
 }
