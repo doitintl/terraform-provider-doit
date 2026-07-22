@@ -69,6 +69,14 @@ func (t PlatformsType) String() string {
 func (t PlatformsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPlatformsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPlatformsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	displayNameAttribute, ok := attributes["display_name"]

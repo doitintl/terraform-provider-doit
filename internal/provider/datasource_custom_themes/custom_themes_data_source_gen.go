@@ -116,6 +116,14 @@ func (t ThemesType) String() string {
 func (t ThemesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewThemesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewThemesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	colorsAttribute, ok := attributes["colors"]
@@ -732,6 +740,14 @@ func (t ColorsType) String() string {
 
 func (t ColorsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewColorsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewColorsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

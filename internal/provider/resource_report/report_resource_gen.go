@@ -1039,6 +1039,14 @@ func (t ConfigType) String() string {
 func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewConfigValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewConfigValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	advancedAnalysisAttribute, ok := attributes["advanced_analysis"]
@@ -2704,6 +2712,14 @@ func (t AdvancedAnalysisType) String() string {
 func (t AdvancedAnalysisType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAdvancedAnalysisValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAdvancedAnalysisValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	forecastAttribute, ok := attributes["forecast"]
@@ -3193,6 +3209,14 @@ func (t CustomTimeRangeType) String() string {
 func (t CustomTimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCustomTimeRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCustomTimeRangeValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	fromAttribute, ok := attributes["from"]
@@ -3572,6 +3596,14 @@ func (t DimensionsType) String() string {
 func (t DimensionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDimensionsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDimensionsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -3950,6 +3982,14 @@ func (t DisplaySettingsType) String() string {
 
 func (t DisplaySettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewDisplaySettingsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDisplaySettingsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -4494,6 +4534,14 @@ func (t FiltersType) String() string {
 
 func (t FiltersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewFiltersValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewFiltersValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -5181,6 +5229,14 @@ func (t GroupType) String() string {
 func (t GroupType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewGroupValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewGroupValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -5632,6 +5688,14 @@ func (t LimitType) String() string {
 
 func (t LimitType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewLimitValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLimitValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -6085,6 +6149,14 @@ func (t MetricType) String() string {
 func (t MetricType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	typeAttribute, ok := attributes["type"]
@@ -6463,6 +6535,14 @@ func (t MetricFilterType) String() string {
 
 func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewMetricFilterValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricFilterValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -6948,6 +7028,14 @@ func (t MetricsType) String() string {
 func (t MetricsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	typeAttribute, ok := attributes["type"]
@@ -7326,6 +7414,14 @@ func (t SecondaryTimeRangeType) String() string {
 
 func (t SecondaryTimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSecondaryTimeRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -7833,6 +7929,14 @@ func (t SplitsType) String() string {
 
 func (t SplitsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSplitsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSplitsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -8463,6 +8567,14 @@ func (t OriginType) String() string {
 func (t OriginType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewOriginValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewOriginValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -8841,6 +8953,14 @@ func (t TargetsType) String() string {
 
 func (t TargetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTargetsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTargetsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -9275,6 +9395,14 @@ func (t TimeRangeType) String() string {
 
 func (t TimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTimeRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTimeRangeValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

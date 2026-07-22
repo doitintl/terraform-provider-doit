@@ -135,6 +135,14 @@ func (t DimensionsType) String() string {
 func (t DimensionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDimensionsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDimensionsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]

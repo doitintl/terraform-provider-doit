@@ -417,6 +417,14 @@ func (t AlertsType) String() string {
 func (t AlertsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAlertsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAlertsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	forecastedDateAttribute, ok := attributes["forecasted_date"]
@@ -851,6 +859,14 @@ func (t CollaboratorsType) String() string {
 func (t CollaboratorsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCollaboratorsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCollaboratorsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	emailAttribute, ok := attributes["email"]
@@ -1229,6 +1245,14 @@ func (t RecipientsSlackChannelsType) String() string {
 
 func (t RecipientsSlackChannelsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewRecipientsSlackChannelsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRecipientsSlackChannelsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -1828,6 +1852,14 @@ func (t ScopesType) String() string {
 
 func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewScopesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewScopesValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

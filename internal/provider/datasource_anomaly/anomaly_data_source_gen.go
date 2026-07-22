@@ -242,6 +242,14 @@ func (t NotificationsType) String() string {
 func (t NotificationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewNotificationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNotificationsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	channelAttribute, ok := attributes["channel"]
@@ -620,6 +628,14 @@ func (t ResourceDataType) String() string {
 
 func (t ResourceDataType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewResourceDataValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewResourceDataValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -1177,6 +1193,14 @@ func (t LabelsType) String() string {
 func (t LabelsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewLabelsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLabelsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	costAttribute, ok := attributes["cost"]
@@ -1610,6 +1634,14 @@ func (t Top3skusType) String() string {
 
 func (t Top3skusType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTop3skusValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTop3skusValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

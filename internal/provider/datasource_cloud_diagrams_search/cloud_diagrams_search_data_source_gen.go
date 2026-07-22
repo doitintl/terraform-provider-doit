@@ -269,6 +269,14 @@ func (t ComponentType) String() string {
 func (t ComponentType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewComponentValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewComponentValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -1161,6 +1169,14 @@ func (t PropsType) String() string {
 func (t PropsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPropsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPropsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	serviceTypeAttribute, ok := attributes["service_type"]
@@ -1484,6 +1500,14 @@ func (t PropType) String() string {
 
 func (t PropType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewPropValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPropValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -2376,6 +2400,14 @@ func (t SchemeType) String() string {
 
 func (t SchemeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSchemeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSchemeValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

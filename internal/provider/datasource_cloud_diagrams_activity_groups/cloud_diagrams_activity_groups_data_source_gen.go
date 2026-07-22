@@ -182,6 +182,14 @@ func (t CloudDiagramsActivityGroupsType) String() string {
 func (t CloudDiagramsActivityGroupsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCloudDiagramsActivityGroupsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCloudDiagramsActivityGroupsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -825,6 +833,14 @@ func (t ItemsType) String() string {
 
 func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewItemsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewItemsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

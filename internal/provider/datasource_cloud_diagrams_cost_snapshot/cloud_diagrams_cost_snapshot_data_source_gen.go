@@ -221,6 +221,14 @@ func (t ByServiceType) String() string {
 func (t ByServiceType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewByServiceValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewByServiceValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	amountAttribute, ok := attributes["amount"]
@@ -599,6 +607,14 @@ func (t TimeRangeType) String() string {
 
 func (t TimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTimeRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTimeRangeValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -1033,6 +1049,14 @@ func (t TopResourcesType) String() string {
 
 func (t TopResourcesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTopResourcesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTopResourcesValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -1522,6 +1546,14 @@ func (t TrendType) String() string {
 
 func (t TrendType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTrendValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTrendValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

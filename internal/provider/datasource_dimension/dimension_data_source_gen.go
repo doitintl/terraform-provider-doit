@@ -104,6 +104,14 @@ func (t ValuesType) String() string {
 func (t ValuesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewValuesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewValuesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	cloudAttribute, ok := attributes["cloud"]

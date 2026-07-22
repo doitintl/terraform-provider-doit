@@ -254,6 +254,14 @@ func (t PropertiesType) String() string {
 func (t PropertiesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPropertiesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPropertiesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	customerDomainAttribute, ok := attributes["customer_domain"]
@@ -760,6 +768,14 @@ func (t SubscriptionType) String() string {
 
 func (t SubscriptionType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSubscriptionValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSubscriptionValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -1689,6 +1705,14 @@ func (t PlanType) String() string {
 func (t PlanType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPlanValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPlanValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	commitmentIntervalAttribute, ok := attributes["commitment_interval"]
@@ -2141,6 +2165,14 @@ func (t CommitmentIntervalType) String() string {
 func (t CommitmentIntervalType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCommitmentIntervalValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCommitmentIntervalValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	endTimeAttribute, ok := attributes["end_time"]
@@ -2520,6 +2552,14 @@ func (t RenewalSettingsType) String() string {
 func (t RenewalSettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewRenewalSettingsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRenewalSettingsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	renewalTypeAttribute, ok := attributes["renewal_type"]
@@ -2843,6 +2883,14 @@ func (t SeatsType) String() string {
 
 func (t SeatsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSeatsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSeatsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
