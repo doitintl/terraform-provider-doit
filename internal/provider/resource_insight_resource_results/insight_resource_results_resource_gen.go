@@ -285,6 +285,14 @@ func (t ResourceResultsType) String() string {
 func (t ResourceResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewResourceResultsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewResourceResultsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	accountAttribute, ok := attributes["account"]
@@ -1305,6 +1313,14 @@ func (t EnhancementType) String() string {
 func (t EnhancementType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewEnhancementValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewEnhancementValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	lastUpdatedAtAttribute, ok := attributes["last_updated_at"]
@@ -1845,6 +1861,14 @@ func (t PriorityType) String() string {
 func (t PriorityType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPriorityValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPriorityValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	priorityScoreAttribute, ok := attributes["priority_score"]
@@ -2223,6 +2247,14 @@ func (t ResultType) String() string {
 
 func (t ResultType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewResultValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewResultValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

@@ -79,6 +79,14 @@ func (t OrganizationsType) String() string {
 func (t OrganizationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewOrganizationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewOrganizationsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]

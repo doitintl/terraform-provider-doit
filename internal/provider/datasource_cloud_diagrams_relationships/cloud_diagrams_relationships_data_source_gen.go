@@ -189,6 +189,14 @@ func (t AnchorType) String() string {
 func (t AnchorType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAnchorValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAnchorValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -677,6 +685,14 @@ func (t RelationsType) String() string {
 
 func (t RelationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewRelationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRelationsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

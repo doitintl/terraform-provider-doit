@@ -336,6 +336,14 @@ func (t PaginationType) String() string {
 func (t PaginationType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPaginationValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPaginationValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	pageTokenAttribute, ok := attributes["page_token"]
@@ -714,6 +722,14 @@ func (t ResultsType) String() string {
 
 func (t ResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewResultsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewResultsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -2028,6 +2044,14 @@ func (t DismissalDetailsType) String() string {
 func (t DismissalDetailsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDismissalDetailsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDismissalDetailsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	commentAttribute, ok := attributes["comment"]
@@ -2407,6 +2431,14 @@ func (t LastStatusChangeType) String() string {
 func (t LastStatusChangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewLastStatusChangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLastStatusChangeValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	lastChangedAtAttribute, ok := attributes["last_changed_at"]
@@ -2785,6 +2817,14 @@ func (t SummaryType) String() string {
 
 func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSummaryValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSummaryValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

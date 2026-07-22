@@ -808,6 +808,14 @@ func (t AttachmentType) String() string {
 func (t AttachmentType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAttachmentValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAttachmentValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -1788,6 +1796,14 @@ func (t IssuesType) String() string {
 func (t IssuesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewIssuesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewIssuesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -2276,6 +2292,14 @@ func (t CombinerType) String() string {
 
 func (t CombinerType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCombinerValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCombinerValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -2833,6 +2857,14 @@ func (t ItemsType) String() string {
 func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewItemsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewItemsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -3211,6 +3243,14 @@ func (t ElementType) String() string {
 
 func (t ElementType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewElementValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewElementValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -4191,6 +4231,14 @@ func (t GroupType) String() string {
 
 func (t GroupType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewGroupValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewGroupValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -5241,6 +5289,14 @@ func (t LinkType) String() string {
 
 func (t LinkType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewLinkValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLinkValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -6322,6 +6378,14 @@ func (t DestinationType) String() string {
 func (t DestinationType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDestinationValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDestinationValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -6811,6 +6875,14 @@ func (t OriginType) String() string {
 func (t OriginType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewOriginValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewOriginValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -7299,6 +7371,14 @@ func (t NodeType) String() string {
 
 func (t NodeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewNodeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNodeValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -8470,6 +8550,14 @@ func (t InfraNodeType) String() string {
 func (t InfraNodeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewInfraNodeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewInfraNodeValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -8903,6 +8991,14 @@ func (t NoteType) String() string {
 
 func (t NoteType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewNoteValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNoteValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

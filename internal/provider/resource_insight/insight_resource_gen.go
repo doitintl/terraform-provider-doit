@@ -271,6 +271,14 @@ func (t DismissalDetailsType) String() string {
 func (t DismissalDetailsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDismissalDetailsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDismissalDetailsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	commentAttribute, ok := attributes["comment"]
@@ -650,6 +658,14 @@ func (t LastStatusChangeType) String() string {
 func (t LastStatusChangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewLastStatusChangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLastStatusChangeValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	lastChangedAtAttribute, ok := attributes["last_changed_at"]
@@ -1028,6 +1044,14 @@ func (t SummaryType) String() string {
 
 func (t SummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSummaryValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSummaryValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

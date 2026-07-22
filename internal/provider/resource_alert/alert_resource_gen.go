@@ -315,6 +315,14 @@ func (t ConfigType) String() string {
 func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewConfigValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewConfigValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	attributionsAttribute, ok := attributes["attributions"]
@@ -1205,6 +1213,14 @@ func (t MetricType) String() string {
 func (t MetricType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	typeAttribute, ok := attributes["type"]
@@ -1583,6 +1599,14 @@ func (t ScopesType) String() string {
 
 func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewScopesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewScopesValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

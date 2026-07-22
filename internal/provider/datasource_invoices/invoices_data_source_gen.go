@@ -151,6 +151,14 @@ func (t InvoicesType) String() string {
 func (t InvoicesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewInvoicesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewInvoicesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	balanceAmountAttribute, ok := attributes["balance_amount"]

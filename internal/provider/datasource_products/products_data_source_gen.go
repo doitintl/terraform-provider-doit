@@ -77,6 +77,14 @@ func (t ProductsType) String() string {
 func (t ProductsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewProductsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewProductsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	displayNameAttribute, ok := attributes["display_name"]

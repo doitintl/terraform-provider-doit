@@ -181,6 +181,14 @@ func (t CloudDiagramsStatsType) String() string {
 func (t CloudDiagramsStatsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCloudDiagramsStatsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCloudDiagramsStatsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -975,6 +983,14 @@ func (t ChangesType) String() string {
 func (t ChangesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewChangesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewChangesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	countAttribute, ok := attributes["count"]
@@ -1408,6 +1424,14 @@ func (t ImportType) String() string {
 
 func (t ImportType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewImportValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewImportValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

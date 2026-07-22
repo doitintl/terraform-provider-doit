@@ -88,6 +88,14 @@ func (t DatasetsType) String() string {
 func (t DatasetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDatasetsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDatasetsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	descriptionAttribute, ok := attributes["description"]

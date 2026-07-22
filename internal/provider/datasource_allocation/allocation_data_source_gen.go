@@ -278,6 +278,14 @@ func (t RuleType) String() string {
 func (t RuleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewRuleValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRuleValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	componentsAttribute, ok := attributes["components"]
@@ -668,6 +676,14 @@ func (t ComponentsType) String() string {
 
 func (t ComponentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewComponentsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewComponentsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -1410,6 +1426,14 @@ func (t RulesType) String() string {
 
 func (t RulesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewRulesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRulesValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

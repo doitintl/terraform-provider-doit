@@ -170,6 +170,14 @@ func (t TicketsType) String() string {
 func (t TicketsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewTicketsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTicketsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	createTimeAttribute, ok := attributes["create_time"]

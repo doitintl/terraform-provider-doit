@@ -176,6 +176,14 @@ func (t AnnotationsType) String() string {
 func (t AnnotationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAnnotationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAnnotationsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	contentAttribute, ok := attributes["content"]
@@ -875,6 +883,14 @@ func (t LabelsType) String() string {
 
 func (t LabelsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewLabelsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLabelsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

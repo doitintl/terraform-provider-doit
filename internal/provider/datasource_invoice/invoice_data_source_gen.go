@@ -137,6 +137,14 @@ func (t LineItemsType) String() string {
 func (t LineItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewLineItemsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLineItemsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	currencyAttribute, ok := attributes["currency"]

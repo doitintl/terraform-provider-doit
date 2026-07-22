@@ -150,6 +150,14 @@ func (t PermissionsType) String() string {
 func (t PermissionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPermissionsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPermissionsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	roleAttribute, ok := attributes["role"]
