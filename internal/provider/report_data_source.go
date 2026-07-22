@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	dsSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -39,18 +38,6 @@ func (ds *reportDataSource) Metadata(_ context.Context, req datasource.MetadataR
 
 func (ds *reportDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_report.ReportDataSourceSchema(ctx)
-
-	if configAttr, ok := s.Attributes["config"].(dsSchema.SingleNestedAttribute); ok {
-		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(dsSchema.SingleNestedAttribute); ok {
-			if baseType, ok := fsAttr.CustomType.(datasource_report.ForecastSettingsType); ok {
-				fsAttr.CustomType = SafeForecastSettingsTypeDataSource{
-					ForecastSettingsType: baseType,
-				}
-			}
-			configAttr.Attributes["forecast_settings"] = fsAttr
-		}
-		s.Attributes["config"] = configAttr
-	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
