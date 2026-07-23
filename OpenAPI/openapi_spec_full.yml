@@ -8376,6 +8376,20 @@ components:
             $ref: "#/components/schemas/ExternalMetric"
         metricFilter:
           $ref: "#/components/schemas/ExternalConfigMetricFilter"
+        limitAggregation:
+          type: string
+          description: |-
+            Controls how rows excluded by limits are rendered. Applies when any limit type is active
+            (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
+            at most two of those three limit types — not all three. When `displayValues` is not
+            `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
+          enum:
+            - none
+            - top
+            - all
+          default: none
+        limitByChange:
+          $ref: "#/components/schemas/ExternalLimitByChange"
         aggregation:
           description: How to aggregate data values in the report.
           type: string
@@ -8504,6 +8518,16 @@ components:
           values:
             - -1
             - 1
+          operand: series_total
+        limitAggregation: top
+        limitByChange:
+          metric:
+            type: basic
+            value: cost
+          changeType: percentage
+          operator: ">="
+          values:
+            - 50
         aggregation: total
         advancedAnalysis:
           forecast: false
@@ -8654,7 +8678,9 @@ components:
         metric:
           $ref: "#/components/schemas/ExternalMetric"
         operator:
-          description: Comparison operator for filtering metric values.
+          description: |-
+            Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
+            `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
           type: string
           enum:
             - gt
@@ -8670,6 +8696,17 @@ components:
           items:
             type: number
             format: double
+        operand:
+          type: string
+          description: |-
+            Whether the threshold applies to each value (default) or the series total.
+            Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
+            `OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
+            echo the effective value (`single_value` or `series_total`).
+          enum:
+            - single_value
+            - series_total
+          default: single_value
       example:
         metric:
           type: basic
@@ -8677,6 +8714,55 @@ components:
         operator: gt
         values:
           - 50
+    ExternalLimitByChange:
+      description: |-
+        Limit by change filter. A report may configure at most two of
+        `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+      type: object
+      required:
+        - metric
+        - changeType
+        - operator
+        - values
+        - includeIncompleteData
+      properties:
+        metric:
+          $ref: "#/components/schemas/ExternalMetric"
+        changeType:
+          type: string
+          enum:
+            - percentage
+            - absolute
+        operator:
+          type: string
+          description: Comparison operator for period-over-period deltas.
+          enum:
+            - ">"
+            - ">="
+            - "<"
+            - "<="
+            - between
+            - not_between
+        values:
+          type: array
+          description: |-
+            Threshold value(s). Unary operators use one entry; `between` and `not_between`
+            require two ordered entries.
+          items:
+            type: number
+            format: double
+        includeIncompleteData:
+          type: boolean
+          description: When true, keeps rows whose deltas could not be evaluated.
+      example:
+        metric:
+          type: basic
+          value: cost
+        changeType: percentage
+        operator: ">="
+        values:
+          - 50
+        includeIncompleteData: false
     ExternalMetric:
       description: Metric selector used in reports and filters.
       type: object

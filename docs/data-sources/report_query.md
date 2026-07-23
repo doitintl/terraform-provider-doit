@@ -120,6 +120,13 @@ If set to **true**, the report must use time interval `month`, `quarter`, or `ye
 - `include_subtotals` (Boolean) Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
 - `layout` (String) Type of visualization or output format.
 Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`
+- `limit_aggregation` (String) Controls how rows excluded by limits are rendered. Applies when any limit type is active
+(`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
+at most two of those three limit types — not all three. When `displayValues` is not
+`actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
+Possible values: `none`, `top`, `all`
+- `limit_by_change` (Attributes) Limit by change filter. A report may configure at most two of
+`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three. (see [below for nested schema](#nestedatt--config--limit_by_change))
 - `metric` (Attributes) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric))
 - `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
@@ -235,6 +242,31 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 
+<a id="nestedatt--config--limit_by_change"></a>
+### Nested Schema for `config.limit_by_change`
+
+Required:
+
+- `change_type` (String) Possible values: `percentage`, `absolute`
+- `include_incomplete_data` (Boolean) When true, keeps rows whose deltas could not be evaluated.
+- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--limit_by_change--metric))
+- `operator` (String) Comparison operator for period-over-period deltas.
+Possible values: `>`, `>=`, `<`, `<=`, `between`, `not_between`
+- `values` (List of Number) Threshold value(s). Unary operators use one entry; `between` and `not_between`
+require two ordered entries.
+
+<a id="nestedatt--config--limit_by_change--metric"></a>
+### Nested Schema for `config.limit_by_change.metric`
+
+Optional:
+
+- `type` (String) Type of metric to use.
+Possible values: `basic`, `custom`, `extended`
+- `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
+If using custom metrics, the value must refer to an existing custom metric ID.
+
+
+
 <a id="nestedatt--config--metric"></a>
 ### Nested Schema for `config.metric`
 
@@ -252,7 +284,13 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 Optional:
 
 - `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
-- `operator` (String) Comparison operator for filtering metric values.
+- `operand` (String) Whether the threshold applies to each value (default) or the series total.
+Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
+`OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
+echo the effective value (`single_value` or `series_total`).
+Possible values: `single_value`, `series_total`
+- `operator` (String) Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
+`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
 Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)
 

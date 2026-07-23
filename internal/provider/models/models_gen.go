@@ -1539,6 +1539,27 @@ func (e ExternalConfigDisplayValues) Valid() bool {
 	}
 }
 
+// Defines values for ExternalConfigLimitAggregation.
+const (
+	ExternalConfigLimitAggregationAll  ExternalConfigLimitAggregation = "all"
+	ExternalConfigLimitAggregationNone ExternalConfigLimitAggregation = "none"
+	ExternalConfigLimitAggregationTop  ExternalConfigLimitAggregation = "top"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigLimitAggregation enum.
+func (e ExternalConfigLimitAggregation) Valid() bool {
+	switch e {
+	case ExternalConfigLimitAggregationAll:
+		return true
+	case ExternalConfigLimitAggregationNone:
+		return true
+	case ExternalConfigLimitAggregationTop:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalConfigSortDimensions.
 const (
 	ExternalConfigSortDimensionsAToZ ExternalConfigSortDimensions = "a_to_z"
@@ -1641,6 +1662,24 @@ func (e ExternalConfigFilterMode) Valid() bool {
 	case ExternalConfigFilterModeRegexp:
 		return true
 	case ExternalConfigFilterModeStartsWith:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigMetricFilterOperand.
+const (
+	SeriesTotal ExternalConfigMetricFilterOperand = "series_total"
+	SingleValue ExternalConfigMetricFilterOperand = "single_value"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigMetricFilterOperand enum.
+func (e ExternalConfigMetricFilterOperand) Valid() bool {
+	switch e {
+	case SeriesTotal:
+		return true
+	case SingleValue:
 		return true
 	default:
 		return false
@@ -1752,6 +1791,54 @@ func (e ExternalDisplaySettingsNumberScale) Valid() bool {
 	case Raw:
 		return true
 	case Thousands:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalLimitByChangeChangeType.
+const (
+	Absolute   ExternalLimitByChangeChangeType = "absolute"
+	Percentage ExternalLimitByChangeChangeType = "percentage"
+)
+
+// Valid indicates whether the value is a known member of the ExternalLimitByChangeChangeType enum.
+func (e ExternalLimitByChangeChangeType) Valid() bool {
+	switch e {
+	case Absolute:
+		return true
+	case Percentage:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalLimitByChangeOperator.
+const (
+	Between          ExternalLimitByChangeOperator = "between"
+	GreaterThan      ExternalLimitByChangeOperator = ">"
+	GreaterThanEqual ExternalLimitByChangeOperator = ">="
+	LessThan         ExternalLimitByChangeOperator = "<"
+	LessThanEqual    ExternalLimitByChangeOperator = "<="
+	NotBetween       ExternalLimitByChangeOperator = "not_between"
+)
+
+// Valid indicates whether the value is a known member of the ExternalLimitByChangeOperator enum.
+func (e ExternalLimitByChangeOperator) Valid() bool {
+	switch e {
+	case Between:
+		return true
+	case GreaterThan:
+		return true
+	case GreaterThanEqual:
+		return true
+	case LessThan:
+		return true
+	case LessThanEqual:
+		return true
+	case NotBetween:
 		return true
 	default:
 		return false
@@ -2552,22 +2639,22 @@ func (e ResourceResultRequestResultType) Valid() bool {
 
 // Defines values for RunReportResultResultMlFeatures.
 const (
-	RunReportResultResultMlFeaturesDecreasing RunReportResultResultMlFeatures = "decreasing"
-	RunReportResultResultMlFeaturesForecast   RunReportResultResultMlFeatures = "forecast"
-	RunReportResultResultMlFeaturesIncreasing RunReportResultResultMlFeatures = "increasing"
-	RunReportResultResultMlFeaturesNone       RunReportResultResultMlFeatures = "none"
+	Decreasing RunReportResultResultMlFeatures = "decreasing"
+	Forecast   RunReportResultResultMlFeatures = "forecast"
+	Increasing RunReportResultResultMlFeatures = "increasing"
+	None       RunReportResultResultMlFeatures = "none"
 )
 
 // Valid indicates whether the value is a known member of the RunReportResultResultMlFeatures enum.
 func (e RunReportResultResultMlFeatures) Valid() bool {
 	switch e {
-	case RunReportResultResultMlFeaturesDecreasing:
+	case Decreasing:
 		return true
-	case RunReportResultResultMlFeaturesForecast:
+	case Forecast:
 		return true
-	case RunReportResultResultMlFeaturesIncreasing:
+	case Increasing:
 		return true
-	case RunReportResultResultMlFeaturesNone:
+	case None:
 		return true
 	default:
 		return false
@@ -5824,6 +5911,16 @@ type ExternalConfig struct {
 	// Layout Type of visualization or output format.
 	Layout *ExternalRenderer `json:"layout,omitempty"`
 
+	// LimitAggregation Controls how rows excluded by limits are rendered. Applies when any limit type is active
+	// (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
+	// at most two of those three limit types — not all three. When `displayValues` is not
+	// `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
+	LimitAggregation *ExternalConfigLimitAggregation `json:"limitAggregation,omitempty"`
+
+	// LimitByChange Limit by change filter. A report may configure at most two of
+	// `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
+
 	// Metric Deprecated: Use 'metrics' instead.
 	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Metric *ExternalMetric `json:"metric,omitempty"`
@@ -5863,6 +5960,12 @@ type ExternalConfigDataSource string
 
 // ExternalConfigDisplayValues See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 type ExternalConfigDisplayValues string
+
+// ExternalConfigLimitAggregation Controls how rows excluded by limits are rendered. Applies when any limit type is active
+// (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
+// at most two of those three limit types — not all three. When `displayValues` is not
+// `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
+type ExternalConfigLimitAggregation string
 
 // ExternalConfigSortDimensions This option has no impact when reading reports via API.
 type ExternalConfigSortDimensions string
@@ -5916,12 +6019,26 @@ type ExternalConfigMetricFilter struct {
 	// Metric Metric selector used in reports and filters.
 	Metric *ExternalMetric `json:"metric,omitempty"`
 
-	// Operator Comparison operator for filtering metric values.
+	// Operand Whether the threshold applies to each value (default) or the series total.
+	// Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
+	// `OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
+	// echo the effective value (`single_value` or `series_total`).
+	Operand *ExternalConfigMetricFilterOperand `json:"operand,omitempty"`
+
+	// Operator Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
+	// `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
 	Operator *ExternalConfigMetricFilterOperator `json:"operator,omitempty"`
 	Values   *[]float64                          `json:"values,omitempty"`
 }
 
-// ExternalConfigMetricFilterOperator Comparison operator for filtering metric values.
+// ExternalConfigMetricFilterOperand Whether the threshold applies to each value (default) or the series total.
+// Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
+// `OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
+// echo the effective value (`single_value` or `series_total`).
+type ExternalConfigMetricFilterOperand string
+
+// ExternalConfigMetricFilterOperator Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
+// `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
 type ExternalConfigMetricFilterOperator string
 
 // ExternalDisplaySettings Display settings for the report.
@@ -5953,6 +6070,31 @@ type ExternalDisplaySettingsDataLabelFontSize string
 
 // ExternalDisplaySettingsNumberScale Scale applied to numeric values when rendering the report.
 type ExternalDisplaySettingsNumberScale string
+
+// ExternalLimitByChange Limit by change filter. A report may configure at most two of
+// `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+type ExternalLimitByChange struct {
+	ChangeType ExternalLimitByChangeChangeType `json:"changeType"`
+
+	// IncludeIncompleteData When true, keeps rows whose deltas could not be evaluated.
+	IncludeIncompleteData bool `json:"includeIncompleteData"`
+
+	// Metric Metric selector used in reports and filters.
+	Metric ExternalMetric `json:"metric"`
+
+	// Operator Comparison operator for period-over-period deltas.
+	Operator ExternalLimitByChangeOperator `json:"operator"`
+
+	// Values Threshold value(s). Unary operators use one entry; `between` and `not_between`
+	// require two ordered entries.
+	Values []float64 `json:"values"`
+}
+
+// ExternalLimitByChangeChangeType defines model for ExternalLimitByChange.ChangeType.
+type ExternalLimitByChangeChangeType string
+
+// ExternalLimitByChangeOperator Comparison operator for period-over-period deltas.
+type ExternalLimitByChangeOperator string
 
 // ExternalMetric Metric selector used in reports and filters.
 type ExternalMetric struct {

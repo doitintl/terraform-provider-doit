@@ -83,6 +83,39 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			}
 			configAttr.Attributes["metric_filter"] = mfAttr
 		}
+		// limit_by_change is an Optional+Computed nested object. The generator marks
+		// all its children Required (the upstream schema lists them as required). But
+		// an Optional+Computed object with Required children is a problem: when the
+		// object is omitted, Terraform cannot copy the prior state (as it does for an
+		// all-optional object like `metric`) and instead marks the whole object — and
+		// the entire parent `config` — "known after apply", producing a permadiff on
+		// every plan. Relaxing the children to Optional+Computed makes limit_by_change
+		// behave like `metric` (prior state is retained on omit, no drift). The API
+		// still requires these fields when the object is set; that is enforced at plan
+		// time by reportLimitByChangeFieldsValidator.
+		if lbcAttr, ok := configAttr.Attributes["limit_by_change"].(schema.SingleNestedAttribute); ok {
+			if a, ok := lbcAttr.Attributes["change_type"].(schema.StringAttribute); ok {
+				a.Required, a.Optional, a.Computed = false, true, true
+				lbcAttr.Attributes["change_type"] = a
+			}
+			if a, ok := lbcAttr.Attributes["operator"].(schema.StringAttribute); ok {
+				a.Required, a.Optional, a.Computed = false, true, true
+				lbcAttr.Attributes["operator"] = a
+			}
+			if a, ok := lbcAttr.Attributes["values"].(schema.ListAttribute); ok {
+				a.Required, a.Optional, a.Computed = false, true, true
+				lbcAttr.Attributes["values"] = a
+			}
+			if a, ok := lbcAttr.Attributes["include_incomplete_data"].(schema.BoolAttribute); ok {
+				a.Required, a.Optional, a.Computed = false, true, true
+				lbcAttr.Attributes["include_incomplete_data"] = a
+			}
+			if a, ok := lbcAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
+				a.Required, a.Optional, a.Computed = false, true, true
+				lbcAttr.Attributes["metric"] = a
+			}
+			configAttr.Attributes["limit_by_change"] = lbcAttr
+		}
 		s.Attributes["config"] = configAttr
 	}
 
@@ -108,21 +141,28 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.filters[*].inverse", // API defaults to false
 
 		// config.metrics
-		"config.metrics[*].type",  // API provides default type
-		"config.metrics[*].value", // API provides default value
+		"config.metrics[*].type",  // API requires type (not clearable)
+		"config.metrics[*].value", // API requires value (not clearable)
 
 		// config.metric_filter
 		"config.metric_filter.operator",     // API defaults operator
-		"config.metric_filter.metric.type",  // API provides default type
-		"config.metric_filter.metric.value", // API provides default value
+		"config.metric_filter.metric.type",  // API requires type (not clearable)
+		"config.metric_filter.metric.value", // API requires value (not clearable)
+
+		// config.limit_by_change: metric.type/value are Optional+Computed leaves the
+		// API requires (not clearable). The object's other children are Required in the
+		// generated schema (relaxed to Optional+Computed at runtime to avoid an omit-time
+		// permadiff; presence enforced by reportLimitByChangeFieldsValidator).
+		"config.limit_by_change.metric.type",  // API requires type (not clearable)
+		"config.limit_by_change.metric.value", // API requires value (not clearable)
 
 		// config.group
 		"config.group[*].id",                 // API-assigned group ID
 		"config.group[*].type",               // API provides default type
 		"config.group[*].limit.sort",         // API defaults sort direction
 		"config.group[*].limit.value",        // API defaults limit value
-		"config.group[*].limit.metric.type",  // API provides default type
-		"config.group[*].limit.metric.value", // API provides default value
+		"config.group[*].limit.metric.type",  // API requires type (not clearable)
+		"config.group[*].limit.metric.value", // API requires value (not clearable)
 
 		// config.advanced_analysis
 		"config.advanced_analysis.forecast",      // API defaults to false
@@ -158,8 +198,8 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.splits[*].targets[*].value", // API provides default value
 
 		// config.metric (top-level)
-		"config.metric.type",  // API provides default type
-		"config.metric.value", // API provides default value
+		"config.metric.type",  // API requires type (not clearable)
+		"config.metric.value", // API requires value (not clearable)
 
 		// config.secondary_time_range
 		"config.secondary_time_range.unit",                   // API defaults unit
@@ -201,6 +241,10 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportMetricsLengthValidator{},
 		// custom_time_range.from/to must be valid RFC3339 timestamps.
 		reportTimestampValidator{},
+		// Every configured metric object must set both type and value (API requires them).
+		reportMetricFieldsValidator{},
+		// When limit_by_change is set, its API-required fields must be provided.
+		reportLimitByChangeFieldsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
 	}

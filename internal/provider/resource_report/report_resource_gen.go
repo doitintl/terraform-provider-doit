@@ -502,6 +502,101 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							),
 						},
 					},
+					"limit_aggregation": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "Controls how rows excluded by limits are rendered. Applies when any limit type is active\n(`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure\nat most two of those three limit types — not all three. When `displayValues` is not\n`actuals_only`, this field must be `none` (or omitted, which defaults to `none`).\nPossible values: `none`, `top`, `all`",
+						MarkdownDescription: "Controls how rows excluded by limits are rendered. Applies when any limit type is active\n(`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure\nat most two of those three limit types — not all three. When `displayValues` is not\n`actuals_only`, this field must be `none` (or omitted, which defaults to `none`).\nPossible values: `none`, `top`, `all`",
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"none",
+								"top",
+								"all",
+							),
+						},
+						Default: stringdefault.StaticString("none"),
+					},
+					"limit_by_change": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"change_type": schema.StringAttribute{
+								Required:            true,
+								Description:         "Possible values: `percentage`, `absolute`",
+								MarkdownDescription: "Possible values: `percentage`, `absolute`",
+								Validators: []validator.String{
+									stringvalidator.OneOf(
+										"percentage",
+										"absolute",
+									),
+								},
+							},
+							"include_incomplete_data": schema.BoolAttribute{
+								Required:            true,
+								Description:         "When true, keeps rows whose deltas could not be evaluated.",
+								MarkdownDescription: "When true, keeps rows whose deltas could not be evaluated.",
+							},
+							"metric": schema.SingleNestedAttribute{
+								Attributes: map[string]schema.Attribute{
+									"type": schema.StringAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
+										MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
+										Validators: []validator.String{
+											stringvalidator.OneOf(
+												"basic",
+												"custom",
+												"extended",
+											),
+										},
+									},
+									"value": schema.StringAttribute{
+										Optional:            true,
+										Computed:            true,
+										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
+									},
+								},
+								CustomType: MetricType{
+									ObjectType: types.ObjectType{
+										AttrTypes: MetricValue{}.AttributeTypes(ctx),
+									},
+								},
+								Required:            true,
+								Description:         "Metric selector used in reports and filters.",
+								MarkdownDescription: "Metric selector used in reports and filters.",
+							},
+							"operator": schema.StringAttribute{
+								Required:            true,
+								Description:         "Comparison operator for period-over-period deltas.\nPossible values: `>`, `>=`, `<`, `<=`, `between`, `not_between`",
+								MarkdownDescription: "Comparison operator for period-over-period deltas.\nPossible values: `>`, `>=`, `<`, `<=`, `between`, `not_between`",
+								Validators: []validator.String{
+									stringvalidator.OneOf(
+										">",
+										">=",
+										"<",
+										"<=",
+										"between",
+										"not_between",
+									),
+								},
+							},
+							"values": schema.ListAttribute{
+								ElementType:         types.Float64Type,
+								Required:            true,
+								Description:         "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries.",
+								MarkdownDescription: "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries.",
+							},
+						},
+						CustomType: LimitByChangeType{
+							ObjectType: types.ObjectType{
+								AttrTypes: LimitByChangeValue{}.AttributeTypes(ctx),
+							},
+						},
+						Optional:            true,
+						Computed:            true,
+						Description:         "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.",
+						MarkdownDescription: "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.",
+					},
 					"metric": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
@@ -568,11 +663,24 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								Description:         "Metric selector used in reports and filters.",
 								MarkdownDescription: "Metric selector used in reports and filters.",
 							},
+							"operand": schema.StringAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Whether the threshold applies to each value (default) or the series total.\nSame field as the DoiT Console metric filter `operand` (`OperandSingleValue` /\n`OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses\necho the effective value (`single_value` or `series_total`).\nPossible values: `single_value`, `series_total`",
+								MarkdownDescription: "Whether the threshold applies to each value (default) or the series total.\nSame field as the DoiT Console metric filter `operand` (`OperandSingleValue` /\n`OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses\necho the effective value (`single_value` or `series_total`).\nPossible values: `single_value`, `series_total`",
+								Validators: []validator.String{
+									stringvalidator.OneOf(
+										"single_value",
+										"series_total",
+									),
+								},
+								Default: stringdefault.StaticString("single_value"),
+							},
 							"operator": schema.StringAttribute{
 								Optional:            true,
 								Computed:            true,
-								Description:         "Comparison operator for filtering metric values.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
-								MarkdownDescription: "Comparison operator for filtering metric values.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
+								Description:         "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
+								MarkdownDescription: "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
 								Validators: []validator.String{
 									stringvalidator.OneOf(
 										"gt",
@@ -1361,6 +1469,42 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`layout expected to be basetypes.StringValue, was: %T`, layoutAttribute))
 	}
 
+	limitAggregationAttribute, ok := attributes["limit_aggregation"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`limit_aggregation is missing from object`)
+
+		return nil, diags
+	}
+
+	limitAggregationVal, ok := limitAggregationAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit_aggregation expected to be basetypes.StringValue, was: %T`, limitAggregationAttribute))
+	}
+
+	limitByChangeAttribute, ok := attributes["limit_by_change"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`limit_by_change is missing from object`)
+
+		return nil, diags
+	}
+
+	limitByChangeVal, ok := limitByChangeAttribute.(LimitByChangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit_by_change expected to be LimitByChangeValue, was: %T`, limitByChangeAttribute))
+	}
+
 	metricAttribute, ok := attributes["metric"]
 
 	if !ok {
@@ -1645,6 +1789,8 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		IncludePromotionalCredits: includePromotionalCreditsVal,
 		IncludeSubtotals:          includeSubtotalsVal,
 		Layout:                    layoutVal,
+		LimitAggregation:          limitAggregationVal,
+		LimitByChange:             limitByChangeVal,
 		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
 		Metrics:                   metricsVal,
@@ -1955,6 +2101,42 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`layout expected to be basetypes.StringValue, was: %T`, layoutAttribute))
 	}
 
+	limitAggregationAttribute, ok := attributes["limit_aggregation"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`limit_aggregation is missing from object`)
+
+		return NewConfigValueUnknown(), diags
+	}
+
+	limitAggregationVal, ok := limitAggregationAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit_aggregation expected to be basetypes.StringValue, was: %T`, limitAggregationAttribute))
+	}
+
+	limitByChangeAttribute, ok := attributes["limit_by_change"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`limit_by_change is missing from object`)
+
+		return NewConfigValueUnknown(), diags
+	}
+
+	limitByChangeVal, ok := limitByChangeAttribute.(LimitByChangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit_by_change expected to be LimitByChangeValue, was: %T`, limitByChangeAttribute))
+	}
+
 	metricAttribute, ok := attributes["metric"]
 
 	if !ok {
@@ -2135,6 +2317,8 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		IncludePromotionalCredits: includePromotionalCreditsVal,
 		IncludeSubtotals:          includeSubtotalsVal,
 		Layout:                    layoutVal,
+		LimitAggregation:          limitAggregationVal,
+		LimitByChange:             limitByChangeVal,
 		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
 		Metrics:                   metricsVal,
@@ -2229,6 +2413,8 @@ type ConfigValue struct {
 	IncludePromotionalCredits basetypes.BoolValue     `tfsdk:"include_promotional_credits"`
 	IncludeSubtotals          basetypes.BoolValue     `tfsdk:"include_subtotals"`
 	Layout                    basetypes.StringValue   `tfsdk:"layout"`
+	LimitAggregation          basetypes.StringValue   `tfsdk:"limit_aggregation"`
+	LimitByChange             LimitByChangeValue      `tfsdk:"limit_by_change"`
 	Metric                    MetricValue             `tfsdk:"metric"`
 	MetricFilter              MetricFilterValue       `tfsdk:"metric_filter"`
 	Metrics                   basetypes.ListValue     `tfsdk:"metrics"`
@@ -2242,7 +2428,7 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 22)
+	attrTypes := make(map[string]tftypes.Type, 24)
 
 	var val tftypes.Value
 	var err error
@@ -2278,6 +2464,12 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["include_promotional_credits"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["include_subtotals"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["layout"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["limit_aggregation"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["limit_by_change"] = LimitByChangeType{
+		basetypes.ObjectType{
+			AttrTypes: LimitByChangeValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 	attrTypes["metric"] = MetricType{
 		basetypes.ObjectType{
 			AttrTypes: MetricValue{}.AttributeTypes(ctx),
@@ -2312,7 +2504,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 22)
+		vals := make(map[string]tftypes.Value, 24)
 
 		val, err = v.AdvancedAnalysis.ToTerraformValue(ctx)
 
@@ -2417,6 +2609,22 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["layout"] = val
+
+		val, err = v.LimitAggregation.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["limit_aggregation"] = val
+
+		val, err = v.LimitByChange.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["limit_by_change"] = val
 
 		val, err = v.Metric.ToTerraformValue(ctx)
 
@@ -2555,6 +2763,12 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		group = v.Group
 	}
 
+	var limitByChange attr.Value
+
+	{
+		limitByChange = v.LimitByChange
+	}
+
 	var metric attr.Value
 
 	{
@@ -2623,6 +2837,12 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"include_promotional_credits": basetypes.BoolType{},
 		"include_subtotals":           basetypes.BoolType{},
 		"layout":                      basetypes.StringType{},
+		"limit_aggregation":           basetypes.StringType{},
+		"limit_by_change": LimitByChangeType{
+			basetypes.ObjectType{
+				AttrTypes: LimitByChangeValue{}.AttributeTypes(ctx),
+			},
+		},
 		"metric": MetricType{
 			basetypes.ObjectType{
 				AttrTypes: MetricValue{}.AttributeTypes(ctx),
@@ -2678,6 +2898,8 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"include_promotional_credits": v.IncludePromotionalCredits,
 			"include_subtotals":           v.IncludeSubtotals,
 			"layout":                      v.Layout,
+			"limit_aggregation":           v.LimitAggregation,
+			"limit_by_change":             limitByChange,
 			"metric":                      metric,
 			"metric_filter":               metricFilter,
 			"metrics":                     metrics,
@@ -2756,6 +2978,14 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Layout.Equal(other.Layout) {
+		return false
+	}
+
+	if !v.LimitAggregation.Equal(other.LimitAggregation) {
+		return false
+	}
+
+	if !v.LimitByChange.Equal(other.LimitByChange) {
 		return false
 	}
 
@@ -2839,6 +3069,12 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"include_promotional_credits": basetypes.BoolType{},
 		"include_subtotals":           basetypes.BoolType{},
 		"layout":                      basetypes.StringType{},
+		"limit_aggregation":           basetypes.StringType{},
+		"limit_by_change": LimitByChangeType{
+			basetypes.ObjectType{
+				AttrTypes: LimitByChangeValue{}.AttributeTypes(ctx),
+			},
+		},
 		"metric": MetricType{
 			basetypes.ObjectType{
 				AttrTypes: MetricValue{}.AttributeTypes(ctx),
@@ -6747,14 +6983,14 @@ func (v MetricValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	}
 }
 
-var _ basetypes.ObjectTypable = MetricFilterType{}
+var _ basetypes.ObjectTypable = LimitByChangeType{}
 
-type MetricFilterType struct {
+type LimitByChangeType struct {
 	basetypes.ObjectType
 }
 
-func (t MetricFilterType) Equal(o attr.Type) bool {
-	other, ok := o.(MetricFilterType)
+func (t LimitByChangeType) Equal(o attr.Type) bool {
+	other, ok := o.(LimitByChangeType)
 
 	if !ok {
 		return false
@@ -6763,11 +6999,11 @@ func (t MetricFilterType) Equal(o attr.Type) bool {
 	return t.ObjectType.Equal(other.ObjectType)
 }
 
-func (t MetricFilterType) String() string {
-	return "MetricFilterType"
+func (t LimitByChangeType) String() string {
+	return "LimitByChangeType"
 }
 
-func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+func (t LimitByChangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if in.IsNull() {
@@ -6779,6 +7015,42 @@ func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.Obje
 	}
 
 	attributes := in.Attributes()
+
+	changeTypeAttribute, ok := attributes["change_type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`change_type is missing from object`)
+
+		return nil, diags
+	}
+
+	changeTypeVal, ok := changeTypeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`change_type expected to be basetypes.StringValue, was: %T`, changeTypeAttribute))
+	}
+
+	includeIncompleteDataAttribute, ok := attributes["include_incomplete_data"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_incomplete_data is missing from object`)
+
+		return nil, diags
+	}
+
+	includeIncompleteDataVal, ok := includeIncompleteDataAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_incomplete_data expected to be basetypes.BoolValue, was: %T`, includeIncompleteDataAttribute))
+	}
 
 	metricAttribute, ok := attributes["metric"]
 
@@ -6864,8 +7136,587 @@ func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
+	return LimitByChangeValue{
+		ChangeType:            changeTypeVal,
+		IncludeIncompleteData: includeIncompleteDataVal,
+		Metric:                metricVal,
+		Operator:              operatorVal,
+		Values:                valuesVal,
+		state:                 attr.ValueStateKnown,
+	}, diags
+}
+
+func NewLimitByChangeValueNull() LimitByChangeValue {
+	return LimitByChangeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewLimitByChangeValueUnknown() LimitByChangeValue {
+	return LimitByChangeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewLimitByChangeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (LimitByChangeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing LimitByChangeValue Attribute Value",
+				"While creating a LimitByChangeValue value, a missing attribute value was detected. "+
+					"A LimitByChangeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("LimitByChangeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid LimitByChangeValue Attribute Type",
+				"While creating a LimitByChangeValue value, an invalid attribute value was detected. "+
+					"A LimitByChangeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("LimitByChangeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("LimitByChangeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra LimitByChangeValue Attribute Value",
+				"While creating a LimitByChangeValue value, an extra attribute value was detected. "+
+					"A LimitByChangeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra LimitByChangeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewLimitByChangeValueUnknown(), diags
+	}
+
+	changeTypeAttribute, ok := attributes["change_type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`change_type is missing from object`)
+
+		return NewLimitByChangeValueUnknown(), diags
+	}
+
+	changeTypeVal, ok := changeTypeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`change_type expected to be basetypes.StringValue, was: %T`, changeTypeAttribute))
+	}
+
+	includeIncompleteDataAttribute, ok := attributes["include_incomplete_data"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`include_incomplete_data is missing from object`)
+
+		return NewLimitByChangeValueUnknown(), diags
+	}
+
+	includeIncompleteDataVal, ok := includeIncompleteDataAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`include_incomplete_data expected to be basetypes.BoolValue, was: %T`, includeIncompleteDataAttribute))
+	}
+
+	metricAttribute, ok := attributes["metric"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`metric is missing from object`)
+
+		return NewLimitByChangeValueUnknown(), diags
+	}
+
+	metricVal, ok := metricAttribute.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+	}
+
+	operatorAttribute, ok := attributes["operator"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`operator is missing from object`)
+
+		return NewLimitByChangeValueUnknown(), diags
+	}
+
+	operatorVal, ok := operatorAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`operator expected to be basetypes.StringValue, was: %T`, operatorAttribute))
+	}
+
+	valuesAttribute, ok := attributes["values"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`values is missing from object`)
+
+		return NewLimitByChangeValueUnknown(), diags
+	}
+
+	valuesVal, ok := valuesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`values expected to be basetypes.ListValue, was: %T`, valuesAttribute))
+	}
+
+	if diags.HasError() {
+		return NewLimitByChangeValueUnknown(), diags
+	}
+
+	return LimitByChangeValue{
+		ChangeType:            changeTypeVal,
+		IncludeIncompleteData: includeIncompleteDataVal,
+		Metric:                metricVal,
+		Operator:              operatorVal,
+		Values:                valuesVal,
+		state:                 attr.ValueStateKnown,
+	}, diags
+}
+
+func NewLimitByChangeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) LimitByChangeValue {
+	object, diags := NewLimitByChangeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewLimitByChangeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t LimitByChangeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewLimitByChangeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewLimitByChangeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewLimitByChangeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewLimitByChangeValueMust(LimitByChangeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t LimitByChangeType) ValueType(ctx context.Context) attr.Value {
+	return LimitByChangeValue{}
+}
+
+var _ basetypes.ObjectValuable = LimitByChangeValue{}
+
+type LimitByChangeValue struct {
+	ChangeType            basetypes.StringValue `tfsdk:"change_type"`
+	IncludeIncompleteData basetypes.BoolValue   `tfsdk:"include_incomplete_data"`
+	Metric                MetricValue           `tfsdk:"metric"`
+	Operator              basetypes.StringValue `tfsdk:"operator"`
+	Values                basetypes.ListValue   `tfsdk:"values"`
+	state                 attr.ValueState
+}
+
+func (v LimitByChangeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["change_type"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["include_incomplete_data"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["metric"] = MetricType{
+		basetypes.ObjectType{
+			AttrTypes: MetricValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["operator"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["values"] = basetypes.ListType{
+		ElemType: types.Float64Type,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.ChangeType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["change_type"] = val
+
+		val, err = v.IncludeIncompleteData.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["include_incomplete_data"] = val
+
+		val, err = v.Metric.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["metric"] = val
+
+		val, err = v.Operator.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["operator"] = val
+
+		val, err = v.Values.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["values"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v LimitByChangeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v LimitByChangeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v LimitByChangeValue) String() string {
+	return "LimitByChangeValue"
+}
+
+func (v LimitByChangeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var metric attr.Value
+
+	{
+		metric = v.Metric
+	}
+
+	var valuesVal basetypes.ListValue
+	switch {
+	case v.Values.IsUnknown():
+		valuesVal = types.ListUnknown(types.Float64Type)
+	case v.Values.IsNull():
+		valuesVal = types.ListNull(types.Float64Type)
+	default:
+		var d diag.Diagnostics
+		valuesVal, d = types.ListValue(types.Float64Type, v.Values.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"change_type":             basetypes.StringType{},
+			"include_incomplete_data": basetypes.BoolType{},
+			"metric": MetricType{
+				basetypes.ObjectType{
+					AttrTypes: MetricValue{}.AttributeTypes(ctx),
+				},
+			},
+			"operator": basetypes.StringType{},
+			"values": basetypes.ListType{
+				ElemType: types.Float64Type,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"change_type":             basetypes.StringType{},
+		"include_incomplete_data": basetypes.BoolType{},
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
+		},
+		"operator": basetypes.StringType{},
+		"values": basetypes.ListType{
+			ElemType: types.Float64Type,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"change_type":             v.ChangeType,
+			"include_incomplete_data": v.IncludeIncompleteData,
+			"metric":                  metric,
+			"operator":                v.Operator,
+			"values":                  valuesVal,
+		})
+
+	return objVal, diags
+}
+
+func (v LimitByChangeValue) Equal(o attr.Value) bool {
+	other, ok := o.(LimitByChangeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.ChangeType.Equal(other.ChangeType) {
+		return false
+	}
+
+	if !v.IncludeIncompleteData.Equal(other.IncludeIncompleteData) {
+		return false
+	}
+
+	if !v.Metric.Equal(other.Metric) {
+		return false
+	}
+
+	if !v.Operator.Equal(other.Operator) {
+		return false
+	}
+
+	if !v.Values.Equal(other.Values) {
+		return false
+	}
+
+	return true
+}
+
+func (v LimitByChangeValue) Type(ctx context.Context) attr.Type {
+	return LimitByChangeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v LimitByChangeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"change_type":             basetypes.StringType{},
+		"include_incomplete_data": basetypes.BoolType{},
+		"metric": MetricType{
+			basetypes.ObjectType{
+				AttrTypes: MetricValue{}.AttributeTypes(ctx),
+			},
+		},
+		"operator": basetypes.StringType{},
+		"values": basetypes.ListType{
+			ElemType: types.Float64Type,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = MetricFilterType{}
+
+type MetricFilterType struct {
+	basetypes.ObjectType
+}
+
+func (t MetricFilterType) Equal(o attr.Type) bool {
+	other, ok := o.(MetricFilterType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t MetricFilterType) String() string {
+	return "MetricFilterType"
+}
+
+func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	metricAttribute, ok := attributes["metric"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`metric is missing from object`)
+
+		return nil, diags
+	}
+
+	metricVal, ok := metricAttribute.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+	}
+
+	operandAttribute, ok := attributes["operand"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`operand is missing from object`)
+
+		return nil, diags
+	}
+
+	operandVal, ok := operandAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`operand expected to be basetypes.StringValue, was: %T`, operandAttribute))
+	}
+
+	operatorAttribute, ok := attributes["operator"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`operator is missing from object`)
+
+		return nil, diags
+	}
+
+	operatorVal, ok := operatorAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`operator expected to be basetypes.StringValue, was: %T`, operatorAttribute))
+	}
+
+	valuesAttribute, ok := attributes["values"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`values is missing from object`)
+
+		return nil, diags
+	}
+
+	valuesVal, ok := valuesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`values expected to be basetypes.ListValue, was: %T`, valuesAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
 	return MetricFilterValue{
 		Metric:   metricVal,
+		Operand:  operandVal,
 		Operator: operatorVal,
 		Values:   valuesVal,
 		state:    attr.ValueStateKnown,
@@ -6953,6 +7804,24 @@ func NewMetricFilterValue(attributeTypes map[string]attr.Type, attributes map[st
 			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
 	}
 
+	operandAttribute, ok := attributes["operand"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`operand is missing from object`)
+
+		return NewMetricFilterValueUnknown(), diags
+	}
+
+	operandVal, ok := operandAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`operand expected to be basetypes.StringValue, was: %T`, operandAttribute))
+	}
+
 	operatorAttribute, ok := attributes["operator"]
 
 	if !ok {
@@ -6995,6 +7864,7 @@ func NewMetricFilterValue(attributeTypes map[string]attr.Type, attributes map[st
 
 	return MetricFilterValue{
 		Metric:   metricVal,
+		Operand:  operandVal,
 		Operator: operatorVal,
 		Values:   valuesVal,
 		state:    attr.ValueStateKnown,
@@ -7070,13 +7940,14 @@ var _ basetypes.ObjectValuable = MetricFilterValue{}
 
 type MetricFilterValue struct {
 	Metric   MetricValue           `tfsdk:"metric"`
+	Operand  basetypes.StringValue `tfsdk:"operand"`
 	Operator basetypes.StringValue `tfsdk:"operator"`
 	Values   basetypes.ListValue   `tfsdk:"values"`
 	state    attr.ValueState
 }
 
 func (v MetricFilterValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
@@ -7086,6 +7957,7 @@ func (v MetricFilterValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 			AttrTypes: MetricValue{}.AttributeTypes(ctx),
 		},
 	}.TerraformType(ctx)
+	attrTypes["operand"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["operator"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["values"] = basetypes.ListType{
 		ElemType: types.Float64Type,
@@ -7095,7 +7967,7 @@ func (v MetricFilterValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.Metric.ToTerraformValue(ctx)
 
@@ -7104,6 +7976,14 @@ func (v MetricFilterValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 		}
 
 		vals["metric"] = val
+
+		val, err = v.Operand.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["operand"] = val
 
 		val, err = v.Operator.ToTerraformValue(ctx)
 
@@ -7175,6 +8055,7 @@ func (v MetricFilterValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 					AttrTypes: MetricValue{}.AttributeTypes(ctx),
 				},
 			},
+			"operand":  basetypes.StringType{},
 			"operator": basetypes.StringType{},
 			"values": basetypes.ListType{
 				ElemType: types.Float64Type,
@@ -7188,6 +8069,7 @@ func (v MetricFilterValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 				AttrTypes: MetricValue{}.AttributeTypes(ctx),
 			},
 		},
+		"operand":  basetypes.StringType{},
 		"operator": basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.Float64Type,
@@ -7206,6 +8088,7 @@ func (v MetricFilterValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 		attributeTypes,
 		map[string]attr.Value{
 			"metric":   metric,
+			"operand":  v.Operand,
 			"operator": v.Operator,
 			"values":   valuesVal,
 		})
@@ -7229,6 +8112,10 @@ func (v MetricFilterValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Metric.Equal(other.Metric) {
+		return false
+	}
+
+	if !v.Operand.Equal(other.Operand) {
 		return false
 	}
 
@@ -7258,6 +8145,7 @@ func (v MetricFilterValue) AttributeTypes(ctx context.Context) map[string]attr.T
 				AttrTypes: MetricValue{}.AttributeTypes(ctx),
 			},
 		},
+		"operand":  basetypes.StringType{},
 		"operator": basetypes.StringType{},
 		"values": basetypes.ListType{
 			ElemType: types.Float64Type,

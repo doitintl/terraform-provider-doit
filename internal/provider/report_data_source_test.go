@@ -229,3 +229,100 @@ data "doit_report" "test" {
 }
 `, name, name)
 }
+
+// TestAccReportDataSource_NewLimitAttributes verifies the data source reads back
+// the new config attributes: metric_filter.operand, limit_aggregation and
+// limit_by_change.
+func TestAccReportDataSource_NewLimitAttributes(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-report-ds-lim")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportDataSourceNewLimitAttributesConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// limit_aggregation is omitted -> the API defaults it to none, which
+					// the data source must read back.
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("limit_aggregation"),
+						knownvalue.StringExact("none")),
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("metric_filter").AtMapKey("operand"),
+						knownvalue.StringExact("series_total")),
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("change_type"),
+						knownvalue.StringExact("percentage")),
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
+						knownvalue.StringExact(">=")),
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("values").AtSliceIndex(0),
+						knownvalue.Float64Exact(50)),
+				},
+			},
+			// Drift verification.
+			{
+				Config: testAccReportDataSourceNewLimitAttributesConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDataSourceNewLimitAttributesConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = %q
+    description = "test report with new limit attributes for data source"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        # metric_filter and limit_by_change are two of the (at most two) allowed
+        # limit types; limit_aggregation is left to default to none.
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            operator = "gt"
+            values   = [100]
+            operand  = "series_total"
+        }
+        limit_by_change = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            change_type             = "percentage"
+            operator                = ">="
+            values                  = [50]
+            include_incomplete_data = false
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+
+data "doit_report" "test" {
+    id = doit_report.test.id
+}
+`, name)
+}

@@ -171,9 +171,12 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		"include_promotional_credits": types.BoolNull(),
 		"include_subtotals":           types.BoolNull(),
 		"layout":                      types.StringNull(),
-		"sort_dimensions":             types.StringNull(),
-		"sort_groups":                 types.StringNull(),
-		"time_interval":               types.StringNull(),
+		// limit_aggregation has the effective server default "none"; mirror the
+		// resource mapper and normalize a nil API response to that default.
+		"limit_aggregation": types.StringValue("none"),
+		"sort_dimensions":   types.StringNull(),
+		"sort_groups":       types.StringNull(),
+		"time_interval":     types.StringNull(),
 	}
 
 	if config.Aggregation != nil {
@@ -196,6 +199,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	}
 	if config.Layout != nil {
 		configMap["layout"] = types.StringValue(string(*config.Layout))
+	}
+	if config.LimitAggregation != nil {
+		configMap["limit_aggregation"] = types.StringValue(string(*config.LimitAggregation))
 	}
 	if config.SortDimensions != nil {
 		configMap["sort_dimensions"] = types.StringValue(string(*config.SortDimensions))
@@ -385,6 +391,12 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	if config.MetricFilter != nil {
 		mfMap := map[string]attr.Value{
 			"operator": types.StringValue(string(*config.MetricFilter.Operator)),
+			// operand has the effective server default "single_value"; mirror the
+			// resource mapper and normalize a nil API response to that default.
+			"operand": types.StringValue("single_value"),
+		}
+		if config.MetricFilter.Operand != nil {
+			mfMap["operand"] = types.StringValue(string(*config.MetricFilter.Operand))
 		}
 
 		metricFilterMetricVal, mfMetricDiags := ds.externalMetricToValue(ctx, config.MetricFilter.Metric)
@@ -416,6 +428,38 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		configMap["metric_filter"] = mfv
 	} else {
 		configMap["metric_filter"] = datasource_report.NewMetricFilterValueNull()
+	}
+
+	// Nested Object: LimitByChange
+	if config.LimitByChange != nil {
+		lbcMetricVal, lbcMetricDiags := ds.externalMetricToValue(ctx, &config.LimitByChange.Metric)
+		diags.Append(lbcMetricDiags...)
+		if diags.HasError() {
+			log.Println("Error creating limit_by_change metric value")
+			return diags
+		}
+		lbcValues, lbcValuesDiags := types.ListValueFrom(ctx, types.Float64Type, config.LimitByChange.Values)
+		diags.Append(lbcValuesDiags...)
+		if diags.HasError() {
+			log.Println("Error creating limit_by_change values")
+			return diags
+		}
+		lbcMap := map[string]attr.Value{
+			"change_type":             types.StringValue(string(config.LimitByChange.ChangeType)),
+			"operator":                types.StringValue(string(config.LimitByChange.Operator)),
+			"include_incomplete_data": types.BoolValue(config.LimitByChange.IncludeIncompleteData),
+			"metric":                  lbcMetricVal,
+			"values":                  lbcValues,
+		}
+		lbcv, lbcvDiags := datasource_report.NewLimitByChangeValue(datasource_report.LimitByChangeValue{}.AttributeTypes(ctx), lbcMap)
+		diags.Append(lbcvDiags...)
+		if diags.HasError() {
+			log.Println("Error creating limit_by_change value")
+			return diags
+		}
+		configMap["limit_by_change"] = lbcv
+	} else {
+		configMap["limit_by_change"] = datasource_report.NewLimitByChangeValueNull()
 	}
 
 	// Nested List: Splits

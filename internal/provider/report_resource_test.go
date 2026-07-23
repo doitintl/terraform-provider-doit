@@ -3244,3 +3244,685 @@ resource "doit_report" "this" {
 }
 `, i)
 }
+
+// TestAccReport_MetricFilterOperand covers the full lifecycle of the new
+// config.metric_filter.operand attribute (Optional+Computed, Default "single_value").
+func TestAccReport_MetricFilterOperand(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create with operand = series_total.
+			{
+				Config: testAccReportOperand(n, `operand = "series_total"`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.operand",
+						tfjsonpath.New("config").AtMapKey("metric_filter").AtMapKey("operand"),
+						knownvalue.StringExact("series_total")),
+				},
+			},
+			// Step 2: drift check.
+			{
+				Config: testAccReportOperand(n, `operand = "series_total"`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Step 3: import while operand is at its non-default value, verifying
+			// import reconstructs series_total.
+			{
+				ResourceName:      "doit_report.operand",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Step 4: omit operand -> resolves to the schema default single_value (Update).
+			{
+				Config: testAccReportOperand(n, ``),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.operand", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.operand",
+						tfjsonpath.New("config").AtMapKey("metric_filter").AtMapKey("operand"),
+						knownvalue.StringExact("single_value")),
+				},
+			},
+			// Step 5: drift check on the defaulted value.
+			{
+				Config: testAccReportOperand(n, ``),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitAggregation covers the full lifecycle of the new
+// config.limit_aggregation attribute (Optional+Computed, Default "none").
+func TestAccReport_LimitAggregation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create with limit_aggregation = top (a group limit is active).
+			{
+				Config: testAccReportLimitAggregation(n, `limit_aggregation = "top"`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.limitagg",
+						tfjsonpath.New("config").AtMapKey("limit_aggregation"),
+						knownvalue.StringExact("top")),
+				},
+			},
+			// Step 2: drift check.
+			{
+				Config: testAccReportLimitAggregation(n, `limit_aggregation = "top"`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Step 3: import while limit_aggregation is at its non-default value,
+			// verifying import reconstructs top.
+			{
+				ResourceName:      "doit_report.limitagg",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Step 4: update to none.
+			{
+				Config: testAccReportLimitAggregation(n, `limit_aggregation = "none"`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.limitagg", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.limitagg",
+						tfjsonpath.New("config").AtMapKey("limit_aggregation"),
+						knownvalue.StringExact("none")),
+				},
+			},
+			// Step 5: omit limit_aggregation -> resolves to the default none; no drift
+			// versus the explicit none from step 4.
+			{
+				Config: testAccReportLimitAggregation(n, ``),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.limitagg",
+						tfjsonpath.New("config").AtMapKey("limit_aggregation"),
+						knownvalue.StringExact("none")),
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitAggregationInvalidDisplayValues verifies the API constraint
+// that limit_aggregation must be none when display_values is not actuals_only.
+func TestAccReport_LimitAggregationInvalidDisplayValues(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportLimitAggregationBadView(n),
+				ExpectError: regexp.MustCompile(`INVALID_REMAINING_RESULTS_MODE`),
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitByChange covers the full lifecycle of the new
+// config.limit_by_change nested object: create, drift, import, and update.
+func TestAccReport_LimitByChange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create with a percentage/>=/[50] filter.
+			{
+				Config: testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("change_type"),
+						knownvalue.StringExact("percentage")),
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
+						knownvalue.StringExact(">=")),
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("include_incomplete_data"),
+						knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("values").AtSliceIndex(0),
+						knownvalue.Float64Exact(50)),
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("metric").AtMapKey("value"),
+						knownvalue.StringExact("cost")),
+				},
+			},
+			// Step 2: drift check.
+			{
+				Config: testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Step 3: import + verify.
+			{
+				ResourceName:      "doit_report.lbc",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Step 4: update to absolute/between/[10,90], include_incomplete_data = true.
+			{
+				Config: testAccReportLimitByChange(n, "absolute", "between", "[10, 90]", "true"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.lbc", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("change_type"),
+						knownvalue.StringExact("absolute")),
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
+						knownvalue.StringExact("between")),
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("include_incomplete_data"),
+						knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("values"),
+						knownvalue.ListSizeExact(2)),
+				},
+			},
+			// Step 5: drift check after update.
+			{
+				Config: testAccReportLimitByChange(n, "absolute", "between", "[10, 90]", "true"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitByChangeOmitted verifies that omitting limit_by_change yields
+// a null value that is stable across re-apply (matches the metric_filter precedent).
+func TestAccReport_LimitByChangeOmitted(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportMinimal(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.this",
+						tfjsonpath.New("config").AtMapKey("limit_by_change"),
+						knownvalue.Null()),
+				},
+			},
+			{
+				Config: testAccReportMinimal(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_ThreeLimitsNotAllowed verifies the API constraint that a report
+// may configure at most two of metric_filter, limit_by_change and a group limit.
+func TestAccReport_ThreeLimitsNotAllowed(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportThreeLimits(n),
+				ExpectError: regexp.MustCompile(`THREE_LIMITS_NOT_ALLOWED`),
+			},
+		},
+	})
+}
+
+func testAccReportOperand(i int, operandLine string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "operand" {
+    name = "test-operand-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            operator = "gt"
+            values   = [100]
+            %s
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i, operandLine)
+}
+
+func testAccReportLimitAggregation(i int, limitAggLine string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "limitagg" {
+    name = "test-limitagg-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        %s
+        group = [
+            {
+                id   = "sku_description"
+                type = "fixed"
+                limit = {
+                    value  = 5
+                    sort   = "desc"
+                    metric = {
+                        type  = "basic"
+                        value = "cost"
+                    }
+                }
+            }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i, limitAggLine)
+}
+
+func testAccReportLimitAggregationBadView(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "limitagg_badview" {
+    name = "test-limitagg-badview-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        limit_aggregation = "top"
+        group = [
+            {
+                id   = "sku_description"
+                type = "fixed"
+                limit = {
+                    value  = 5
+                    sort   = "desc"
+                    metric = {
+                        type  = "basic"
+                        value = "cost"
+                    }
+                }
+            }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "absolute_and_percentage"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportLimitByChange(i int, changeType, operator, values, includeIncomplete string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "lbc" {
+    name = "test-lbc-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        limit_by_change = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            change_type             = %q
+            operator                = %q
+            values                  = %s
+            include_incomplete_data = %s
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i, changeType, operator, values, includeIncomplete)
+}
+
+func testAccReportThreeLimits(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "three_limits" {
+    name = "test-three-limits-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            operator = "gt"
+            values   = [1]
+        }
+        limit_by_change = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            change_type             = "percentage"
+            operator                = ">="
+            values                  = [50]
+            include_incomplete_data = false
+        }
+        group = [
+            {
+                id   = "sku_description"
+                type = "fixed"
+                limit = {
+                    value  = 5
+                    sort   = "desc"
+                    metric = {
+                        type  = "basic"
+                        value = "cost"
+                    }
+                }
+            }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_MetricFieldsRequired asserts the DoiT API requirement (surfaced
+// by reportMetricFieldsValidator) that every configured metric object must set
+// both type and value. Before the validator existed, omitting these produced a
+// cryptic apply-time API error ("Field validation for 'Type'/'Value' failed on
+// the 'required' tag"); now it is a clear plan-time error. This covers the shared
+// metric handling consistently across contexts: limit_by_change.metric,
+// metric_filter.metric and the top-level metric.
+func TestAccReport_MetricFieldsRequired(t *testing.T) {
+	missingType := regexp.MustCompile(`Missing Required Metric Field`)
+
+	cases := []struct {
+		name   string
+		config func(int) string
+	}{
+		// limit_by_change.metric omitting type — the exact scenario Copilot flagged.
+		{"limit_by_change_metric_missing_type", testAccReportLimitByChangeMetricMissingType},
+		// metric_filter.metric omitting type — same shared metric handling.
+		{"metric_filter_metric_missing_type", testAccReportMetricFilterMetricMissingType},
+		// top-level metric omitting value — asserts value is required too.
+		{"metric_missing_value", testAccReportMetricMissingValue},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			n := acctest.RandInt()
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config(n),
+						ExpectError: missingType,
+					},
+				},
+			})
+		})
+	}
+}
+
+func testAccReportLimitByChangeMetricMissingType(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "lbc_no_type" {
+    name = "test-lbc-no-type-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        limit_by_change = {
+            metric = {
+                value = "cost"
+            }
+            change_type             = "percentage"
+            operator                = ">="
+            values                  = [50]
+            include_incomplete_data = false
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricFilterMetricMissingType(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_no_type" {
+    name = "test-mf-no-type-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                value = "cost"
+            }
+            operator = "gt"
+            values   = [100]
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricMissingValue(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_no_value" {
+    name = "test-metric-no-value-%d"
+    config = {
+        metric = {
+            type = "basic"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_LimitByChangeNotClearable verifies the key non-clearability
+// behavior: once limit_by_change is set, omitting it from config does NOT clear
+// it (the API ignores null/omit) and does NOT cause drift. Relaxing the object's
+// children to Optional+Computed lets Terraform retain the prior state on omit, so
+// the plan is empty and the value is preserved. A regression that reintroduced
+// Required children (permadiff) or that sent null to clear the object would fail
+// here.
+func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.lbc",
+		tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
+		knownvalue.StringExact(">="))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH limit_by_change.
+			{
+				Config:            testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: omit limit_by_change — retained, empty plan (no drift).
+			{
+				Config: testAccReportLimitByChangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 3: re-apply the omitted config — still stable, still present.
+			{
+				Config: testAccReportLimitByChangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+		},
+	})
+}
+
+// testAccReportLimitByChangeCleared is testAccReportLimitByChange with the
+// limit_by_change block removed but the same resource address and name, so it can
+// be used as a follow-up step to test omitting the attribute.
+func testAccReportLimitByChangeCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "lbc" {
+    name = "test-lbc-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_LimitByChangeFieldsRequired asserts that when limit_by_change is
+// set, its API-required fields must be provided. These fields are relaxed to
+// Optional+Computed in the schema (to avoid an omit-time permadiff), so the
+// requirement is enforced at plan time by reportLimitByChangeFieldsValidator.
+func TestAccReport_LimitByChangeFieldsRequired(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportLimitByChangeMissingOperator(n),
+				ExpectError: regexp.MustCompile(`Missing Required limit_by_change Field`),
+			},
+		},
+	})
+}
+
+func testAccReportLimitByChangeMissingOperator(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "lbc_no_op" {
+    name = "test-lbc-no-op-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        limit_by_change = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            change_type             = "percentage"
+            values                  = [50]
+            include_incomplete_data = false
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
