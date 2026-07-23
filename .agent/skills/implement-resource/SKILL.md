@@ -371,6 +371,22 @@ if timestamp, ok := s.Attributes["timestamp"]; ok {
 }
 ```
 
+### Config Validators and Custom Types
+
+When reading `SingleNestedAttribute` values in a `ConfigValidator` via `GetAttribute`, always use the generated custom type (e.g., `resource_report.ForecastSettingsValue`), **not** `types.Object`. The framework's reflect package requires the target type to match the schema's custom type — using a raw `basetypes.ObjectValue` causes a "Value Conversion Error" crash.
+
+```go
+// WRONG — crashes with "Value Conversion Error"
+var settings types.Object
+req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &settings)
+
+// CORRECT — matches the schema's custom type
+var settings resource_report.ForecastSettingsValue
+req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &settings)
+```
+
+This applies to all `GetAttribute` calls in validators, not just `SingleNestedAttribute` — always use the type that matches the schema definition.
+
 ## OpenAPI Spec vs. Go Types
 
 The Go models from OpenAPI may differ between Request and Response wrappers:
