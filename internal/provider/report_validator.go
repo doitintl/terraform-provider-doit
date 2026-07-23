@@ -113,6 +113,48 @@ func (v reportMetricsLengthValidator) ValidateResource(ctx context.Context, req 
 	}
 }
 
+// reportForecastConflictValidator rejects configurations where forecast_settings
+// is set but forecast is explicitly false. The API automatically enables forecast
+// when forecastSettings is provided, so sending forecast=false alongside it causes
+// a 500 server error or perpetual drift.
+type reportForecastConflictValidator struct{}
+
+var _ resource.ConfigValidator = reportForecastConflictValidator{}
+
+func (v reportForecastConflictValidator) Description(_ context.Context) string {
+	return "Validates that forecast_settings is not set when forecast is explicitly disabled"
+}
+
+func (v reportForecastConflictValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `forecast_settings` is not set when `forecast` is explicitly disabled"
+}
+
+func (v reportForecastConflictValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var forecastSettings resource_report.ForecastSettingsValue
+	diags := req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &forecastSettings)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || forecastSettings.IsNull() || forecastSettings.IsUnknown() {
+		return
+	}
+
+	var forecast types.Bool
+	diags = req.Config.GetAttribute(ctx, path.Root("config").AtName("advanced_analysis").AtName("forecast"), &forecast)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || forecast.IsNull() || forecast.IsUnknown() {
+		return
+	}
+
+	if !forecast.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("config").AtName("forecast_settings"),
+			"Conflicting Forecast Configuration",
+			"Cannot set forecast_settings when advanced_analysis.forecast is false. "+
+				"The API automatically enables forecasting when forecast_settings is provided. "+
+				"Either remove forecast_settings or set forecast = true.",
+		)
+	}
+}
+
 // reportTimestampValidator validates custom_time_range objects:
 // 1. When set, at least one of from/to must be specified (rejects empty `{}`).
 // 2. Any provided from/to values must be valid RFC3339 timestamps.

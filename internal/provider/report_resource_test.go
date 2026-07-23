@@ -3748,3 +3748,51 @@ resource "doit_report" "forecast_grouping_test" {
 }
 `, i)
 }
+
+func TestAccReport_ForecastSettings_Conflict(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithForecastSettingsConflict(n),
+				ExpectError: regexp.MustCompile(`Conflicting Forecast Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsConflict(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_conflict" {
+    name = "test-forecast-conflict-%d"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		advanced_analysis = {
+			forecast = false
+		}
+		forecast_settings = {
+			future_time_intervals = 6
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}

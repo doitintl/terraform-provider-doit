@@ -214,6 +214,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 	return []resource.ConfigValidator{
 		// Must have 1-4 metrics if specified; empty list causes state inconsistency.
 		reportMetricsLengthValidator{},
+		// forecast_settings + forecast=false is contradictory.
+		reportForecastConflictValidator{},
 		// custom_time_range.from/to must be valid RFC3339 timestamps.
 		reportTimestampValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
