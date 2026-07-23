@@ -85,39 +85,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		}
 		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(schema.SingleNestedAttribute); ok {
 			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullOrDefaultForForecastSettings())
-
-			// Support clearability when transitioning between Intervals and Custom Date Ranges (Category B attributes)
-			if attr, ok := fsAttr.Attributes["future_time_intervals"].(schema.Int64Attribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
-				fsAttr.Attributes["future_time_intervals"] = attr
-			}
-			if attr, ok := fsAttr.Attributes["historical_time_intervals"].(schema.Int64Attribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
-				fsAttr.Attributes["historical_time_intervals"] = attr
-			}
-			if attr, ok := fsAttr.Attributes["future_custom_date_range"].(schema.SingleNestedAttribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
-				fsAttr.Attributes["future_custom_date_range"] = attr
-			}
-			if attr, ok := fsAttr.Attributes["historical_custom_date_range"].(schema.SingleNestedAttribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
-				fsAttr.Attributes["historical_custom_date_range"] = attr
-			}
-
 			configAttr.Attributes["forecast_settings"] = fsAttr
-		}
-
-		if attr, ok := configAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
-			attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
-			configAttr.Attributes["custom_time_range"] = attr
-		}
-		if strAttr, ok := configAttr.Attributes["secondary_time_range"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := strAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
-				strAttr.Attributes["custom_time_range"] = attr
-			}
-			strAttr.PlanModifiers = append(strAttr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
-			configAttr.Attributes["secondary_time_range"] = strAttr
 		}
 
 		s.Attributes["config"] = configAttr

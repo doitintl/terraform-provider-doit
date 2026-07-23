@@ -1697,10 +1697,10 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			"mode":                         types.StringValue("totals"),
 		}
 
-		if fs.FutureTimeIntervals != nil && fs.FutureCustomDateRange == nil {
+		if fs.FutureTimeIntervals != nil {
 			fsMap["future_time_intervals"] = types.Int64Value(*fs.FutureTimeIntervals)
 		}
-		if fs.HistoricalTimeIntervals != nil && fs.HistoricalCustomDateRange == nil {
+		if fs.HistoricalTimeIntervals != nil {
 			fsMap["historical_time_intervals"] = types.Int64Value(*fs.HistoricalTimeIntervals)
 		}
 		if fs.Mode != nil {

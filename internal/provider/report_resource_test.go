@@ -3288,6 +3288,15 @@ func TestAccReport_ForecastSettings_Intervals(t *testing.T) {
 						knownvalue.StringExact("totals")),
 				},
 			},
+			// Drift check: re-apply same config, expect no changes.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -3367,6 +3376,15 @@ func TestAccReport_ForecastSettings_CustomRanges(t *testing.T) {
 						knownvalue.StringExact("2023-12-31T23:59:59-05:00")),
 				},
 			},
+			// Drift check: re-apply same config, expect no changes.
+			{
+				Config: testAccReportWithForecastSettingsCustomRanges(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -3420,6 +3438,7 @@ func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
+			// Step 1: Create with intervals.
 			{
 				Config: testAccReportWithForecastSettingsIntervals(n),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -3429,6 +3448,16 @@ func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
 						knownvalue.Int64Exact(12)),
 				},
 			},
+			// Drift check after Create.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: Switch to custom date ranges.
 			{
 				Config: testAccReportWithForecastSettingsCustomRangesUpdate(n),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -3450,6 +3479,16 @@ func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
 						knownvalue.StringExact("2023-12-31T23:59:59-08:00")),
 				},
 			},
+			// Drift check after switching to custom.
+			{
+				Config: testAccReportWithForecastSettingsCustomRangesUpdate(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Switch back to intervals.
 			{
 				Config: testAccReportWithForecastSettingsIntervals(n),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -3459,11 +3498,30 @@ func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
 						knownvalue.Int64Exact(12)),
 				},
 			},
+			// Drift check after switching back to intervals.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Remove forecast_settings entirely.
 			{
 				Config: testAccReportWithForecastSettingsRemoved(n),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckNoResourceAttr("doit_report.forecast_intervals_test", "config.forecast_settings"),
 				),
+			},
+			// Drift check after removal.
+			{
+				Config: testAccReportWithForecastSettingsRemoved(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
@@ -3647,6 +3705,15 @@ func TestAccReport_ForecastSettings_GroupingModeOnly(t *testing.T) {
 						"doit_report.forecast_grouping_test",
 						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("mode"),
 						knownvalue.StringExact("grouping")),
+				},
+			},
+			// Drift check.
+			{
+				Config: testAccReportWithForecastSettingsGroupingModeOnly(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},
