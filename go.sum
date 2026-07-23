@@ -50,8 +50,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260722140535-d4f68d4735b0 h1:3CExxL3BHZVGB+ZDbuclekfyJ+eWwgjLz3kezA6Cxb8=
-github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260722140535-d4f68d4735b0/go.mod h1:IxLiAxGac8tdJjjcvD604g/FDxKyNC18DQ9KBxLh8Z4=
+github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260723120000-eb6bfa74d554 h1:XBXSaL+GjGmE/x4RsjRRfHEyJ44hCdBeQ0/Uzj3FJmk=
+github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260723120000-eb6bfa74d554/go.mod h1:IxLiAxGac8tdJjjcvD604g/FDxKyNC18DQ9KBxLh8Z4=
 github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260605111443-a72258dfe4c6 h1:A196htHYMjXvDSRwbGibsygFz7HTEVKXhRcLWa7BkkY=
 github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260605111443-a72258dfe4c6/go.mod h1:X20JLZjGvx7MIS5S2CQ1maVFNUyPZ6/Q/tycb5QXC/0=
 github.com/dprotaso/go-yit v0.0.0-20191028211022-135eb7262960/go.mod h1:9HQzr9D/0PGwMEbC3d5AB7oi67+h4TsQqItC1GVYG58=
