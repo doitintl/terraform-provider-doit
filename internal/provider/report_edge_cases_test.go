@@ -57,6 +57,26 @@ func TestAccReport_ForecastSettings_Import(t *testing.T) {
 	})
 }
 
+func TestAccReport_ForecastSettings_ImportWithIntervals(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithIntervals(n),
+			},
+			{
+				ResourceName:      "doit_report.intervals_test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccReport_ForecastSettings_IntervalsToCustomTransition(t *testing.T) {
 	n := acctest.RandInt()
 
