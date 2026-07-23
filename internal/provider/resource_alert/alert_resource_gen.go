@@ -425,12 +425,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	operatorAttribute, ok := attributes["operator"]
