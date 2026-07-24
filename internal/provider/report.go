@@ -1722,7 +1722,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 			if fs.FutureCustomDateRange.From != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingFutureFrom)
-				if err == nil && existingTime.Equal(*fs.FutureCustomDateRange.From) {
+				if err == nil && datesEqualUTC(existingTime, *fs.FutureCustomDateRange.From) {
 					fcdrMap["from"] = types.StringValue(existingFutureFrom)
 				} else {
 					fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339))
@@ -1730,7 +1730,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 			if fs.FutureCustomDateRange.To != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingFutureTo)
-				if err == nil && existingTime.Equal(*fs.FutureCustomDateRange.To) {
+				if err == nil && datesEqualUTC(existingTime, *fs.FutureCustomDateRange.To) {
 					fcdrMap["to"] = types.StringValue(existingFutureTo)
 				} else {
 					fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339))
@@ -1756,7 +1756,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 			if fs.HistoricalCustomDateRange.From != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingHistFrom)
-				if err == nil && existingTime.Equal(*fs.HistoricalCustomDateRange.From) {
+				if err == nil && datesEqualUTC(existingTime, *fs.HistoricalCustomDateRange.From) {
 					hcdrMap["from"] = types.StringValue(existingHistFrom)
 				} else {
 					hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339))
@@ -1764,7 +1764,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 			if fs.HistoricalCustomDateRange.To != nil {
 				existingTime, err := time.Parse(time.RFC3339, existingHistTo)
-				if err == nil && existingTime.Equal(*fs.HistoricalCustomDateRange.To) {
+				if err == nil && datesEqualUTC(existingTime, *fs.HistoricalCustomDateRange.To) {
 					hcdrMap["to"] = types.StringValue(existingHistTo)
 				} else {
 					hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339))
@@ -1804,6 +1804,17 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	diags.Append(d...)
 
 	return diags
+}
+
+// datesEqualUTC compares two timestamps by UTC date only (year, month, day),
+// ignoring the time component. This is needed for forecast date ranges because
+// the API rounds 'from' to midnight UTC, which changes the time but preserves
+// the date. For example, "2026-08-02T00:00:00+02:00" (Aug 1 22:00 UTC) becomes
+// "2026-08-01T00:00:00Z" — different instant, same UTC date.
+func datesEqualUTC(t1, t2 time.Time) bool {
+	u1 := t1.UTC()
+	u2 := t2.UTC()
+	return u1.Year() == u2.Year() && u1.Month() == u2.Month() && u1.Day() == u2.Day()
 }
 
 func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric) {
