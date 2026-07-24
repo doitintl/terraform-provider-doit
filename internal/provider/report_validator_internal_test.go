@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 // ---------------------------------------------------------------------------
@@ -347,5 +348,226 @@ func TestWarnNASentinels_KnownValues_StillWarns(t *testing.T) {
 	}
 	if got := countWarnings(diags); got != 1 {
 		t.Errorf("expected 1 warning for sentinel value, got %d", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestReportTimestampValidator_ForecastSettings
+// ---------------------------------------------------------------------------
+
+func buildReportConfigWithForecastSettings(ctx context.Context, t *testing.T, futureFrom, futureTo, histFrom, histTo string) tfsdk.Config {
+	t.Helper()
+	schema := resource_report.ReportResourceSchema(ctx)
+
+	// Construct the forecast_settings values
+	fcdrMap := map[string]attr.Value{
+		"from": types.StringNull(),
+		"to":   types.StringNull(),
+	}
+	if futureFrom != "" {
+		if futureFrom == "UNKNOWN" {
+			fcdrMap["from"] = types.StringUnknown()
+		} else {
+			fcdrMap["from"] = types.StringValue(futureFrom)
+		}
+	}
+	if futureTo != "" {
+		if futureTo == "UNKNOWN" {
+			fcdrMap["to"] = types.StringUnknown()
+		} else {
+			fcdrMap["to"] = types.StringValue(futureTo)
+		}
+	}
+	fcdrVal, diags := resource_report.NewFutureCustomDateRangeValue(resource_report.FutureCustomDateRangeValue{}.AttributeTypes(ctx), fcdrMap)
+	if diags.HasError() {
+		t.Fatalf("NewFutureCustomDateRangeValue: %v", diags)
+	}
+
+	hcdrMap := map[string]attr.Value{
+		"from": types.StringNull(),
+		"to":   types.StringNull(),
+	}
+	if histFrom != "" {
+		if histFrom == "UNKNOWN" {
+			hcdrMap["from"] = types.StringUnknown()
+		} else {
+			hcdrMap["from"] = types.StringValue(histFrom)
+		}
+	}
+	if histTo != "" {
+		if histTo == "UNKNOWN" {
+			hcdrMap["to"] = types.StringUnknown()
+		} else {
+			hcdrMap["to"] = types.StringValue(histTo)
+		}
+	}
+	hcdrVal, diags := resource_report.NewHistoricalCustomDateRangeValue(resource_report.HistoricalCustomDateRangeValue{}.AttributeTypes(ctx), hcdrMap)
+	if diags.HasError() {
+		t.Fatalf("NewHistoricalCustomDateRangeValue: %v", diags)
+	}
+
+	fsMap := map[string]attr.Value{
+		"future_custom_date_range":     fcdrVal,
+		"future_time_intervals":        types.Int64Null(),
+		"historical_custom_date_range": hcdrVal,
+		"historical_time_intervals":    types.Int64Null(),
+		"mode":                         types.StringValue("totals"),
+	}
+	fsVal, diags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
+	if diags.HasError() {
+		t.Fatalf("NewForecastSettingsValue: %v", diags)
+	}
+
+	configMap := map[string]attr.Value{
+		"aggregation":                 types.StringNull(),
+		"currency":                    types.StringNull(),
+		"data_source":                 types.StringNull(),
+		"display_values":              types.StringNull(),
+		"include_promotional_credits": types.BoolNull(),
+		"include_subtotals":           types.BoolNull(),
+		"layout":                      types.StringNull(),
+		"sort_dimensions":             types.StringNull(),
+		"sort_groups":                 types.StringNull(),
+		"time_interval":               types.StringNull(),
+		"forecast_settings":           fsVal,
+		"custom_time_range":           resource_report.NewCustomTimeRangeValueNull(),
+		"secondary_time_range":        resource_report.NewSecondaryTimeRangeValueNull(),
+		"time_range":                  resource_report.NewTimeRangeValueNull(),
+		"advanced_analysis":           resource_report.NewAdvancedAnalysisValueNull(),
+		"display_settings":            resource_report.NewDisplaySettingsValueNull(),
+		"metric":                      resource_report.NewMetricValueNull(),
+		"metric_filter":               resource_report.NewMetricFilterValueNull(),
+		"dimensions":                  types.ListNull(resource_report.DimensionsValue{}.Type(ctx)),
+		"filters":                     types.ListNull(resource_report.FiltersValue{}.Type(ctx)),
+		"group":                       types.ListNull(resource_report.GroupValue{}.Type(ctx)),
+		"metrics":                     types.ListNull(resource_report.MetricsValue{}.Type(ctx)),
+		"splits":                      types.ListNull(resource_report.SplitsValue{}.Type(ctx)),
+	}
+	configVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
+	if diags.HasError() {
+		t.Fatalf("NewConfigValue: %v", diags)
+	}
+
+	// Build the tftypes.Value representing the top-level report resource structure
+	schemaType := schema.Type().TerraformType(ctx)
+	objType, ok := schemaType.(tftypes.Object)
+	if !ok {
+		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
+	}
+
+	attrValues := make(map[string]tftypes.Value, len(objType.AttributeTypes))
+	for name, attrType := range objType.AttributeTypes {
+		attrValues[name] = tftypes.NewValue(attrType, nil) // default to null
+	}
+
+	// Convert config value to terraform value
+	configTFVal, err := configVal.ToTerraformValue(ctx)
+	if err != nil {
+		t.Fatalf("Config ToTerraformValue: %v", err)
+	}
+	attrValues["config"] = configTFVal
+
+	rawValue := tftypes.NewValue(schemaType, attrValues)
+	return tfsdk.Config{
+		Schema: schema,
+		Raw:    rawValue,
+	}
+}
+
+func TestReportTimestampValidator_ForecastSettings(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name       string
+		futureFrom string
+		futureTo   string
+		histFrom   string
+		histTo     string
+		expectErr  bool
+	}{
+		{
+			name:       "valid RFC3339 timestamps",
+			futureFrom: "2024-02-02T00:00:00Z",
+			futureTo:   "2024-08-02T00:00:00+02:00",
+			histFrom:   "2023-01-01T00:00:00-05:00",
+			histTo:     "2023-12-31T23:59:59Z",
+			expectErr:  false,
+		},
+		{
+			name:       "invalid future_custom_date_range.from format",
+			futureFrom: "2024-02-02 00:00:00", // space instead of T, missing offset
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "2023-12-31T23:59:59Z",
+			expectErr:  true,
+		},
+		{
+			name:       "invalid historical_custom_date_range.to format",
+			futureFrom: "2024-02-02T00:00:00Z",
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "not-a-timestamp",
+			expectErr:  true,
+		},
+		{
+			name:       "empty custom date range (both from and to are empty/null)",
+			futureFrom: "",
+			futureTo:   "",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "2023-12-31T23:59:59Z",
+			expectErr:  true,
+		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (future from)",
+			futureFrom: "UNKNOWN",
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "2023-12-31T23:59:59Z",
+			expectErr:  false,
+		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (historical to)",
+			futureFrom: "2024-02-02T00:00:00Z",
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "UNKNOWN",
+			expectErr:  false,
+		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (only future from set as unknown, to null)",
+			futureFrom: "UNKNOWN",
+			futureTo:   "",
+			histFrom:   "2023-01-01T00:00:00Z",
+			histTo:     "2023-12-31T23:59:59Z",
+			expectErr:  false,
+		},
+		{
+			name:       "valid unresolved unknown timestamp during planning (only historical to set as unknown, from null)",
+			futureFrom: "2024-02-02T00:00:00Z",
+			futureTo:   "2024-08-02T00:00:00Z",
+			histFrom:   "",
+			histTo:     "UNKNOWN",
+			expectErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := buildReportConfigWithForecastSettings(ctx, t, tt.futureFrom, tt.futureTo, tt.histFrom, tt.histTo)
+			v := reportTimestampValidator{}
+			req := resource.ValidateConfigRequest{Config: config}
+			resp := &resource.ValidateConfigResponse{}
+			v.ValidateResource(ctx, req, resp)
+
+			if tt.expectErr {
+				if !resp.Diagnostics.HasError() {
+					t.Fatalf("expected validation error but got none")
+				}
+			} else {
+				if resp.Diagnostics.HasError() {
+					t.Fatalf("expected no validation error but got: %v", resp.Diagnostics)
+				}
+			}
+		})
 	}
 }

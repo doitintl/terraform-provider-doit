@@ -261,6 +261,36 @@ if plan.UpdateTime.IsUnknown() {
 }
 ```
 
+#### Clearable Nested Object Attributes (SingleNestedAttribute)
+
+When a `SingleNestedAttribute` supports explicit `null` clearing (Category A), use the `UseNullForUnknownObjectWhenConfigNull()` plan modifier. The API model field must be `nullable.Nullable[StructT]`.
+
+```go
+// In Schema():
+if attr, ok := parentAttr.Attributes["settings"].(schema.SingleNestedAttribute); ok {
+    attr.PlanModifiers = append(attr.PlanModifiers, UseNullForUnknownObjectWhenConfigNull())
+    parentAttr.Attributes["settings"] = attr
+}
+```
+
+**Serialization — send explicit `null` to the API:**
+
+```go
+// In toExternalConfig / toUpdateRequest:
+if !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
+    s := models.Settings{ /* map fields */ }
+    req.Settings.Set(s)
+} else if plan.Settings.IsNull() {
+    req.Settings.SetNull()  // sends "settings": null in JSON
+}
+```
+
+**Children of a clearable nested object** follow the same Category A / Category B classification as top-level attributes. A clearable parent can have Category B children (API-computed defaults that the user can't independently clear). These children go in `acknowledgeNotClearable` as usual.
+
+**Specialized plan modifiers:** When the clearing decision depends on a sibling attribute (e.g., `forecast_settings` should only be cleared when `forecast` is disabled), write a specialized plan modifier instead of using the generic `UseNullForUnknownObjectWhenConfigNull()`. See `useNullOrDefaultForForecastSettings` in `report_plan_modifiers.go` for the pattern. The modifier must produce typed values using `NewXxxValue()` + `ToObjectValue()`, not raw `types.ObjectValue()`, to preserve custom type information for nested children.
+
+**API-computed fields alongside user-configured fields:** Some APIs return computed values alongside user-configured ones (e.g., `futureTimeIntervals` computed from `futureCustomDateRange`). The read path (`mapXxxToModel`) should map all API-returned fields faithfully. The overlay preserves the user's plan values on Create/Update. On subsequent plans, the framework's default Optional+Computed behavior proposes the prior state value for omitted fields, so the computed value doesn't cause drift.
+
 #### Category B: Not clearable (API-computed default)
 
 **Do not add any plan modifier.** The default framework behavior (prior state sticks) is correct. Use `acknowledgeNotClearable(s, paths...)` in the Schema() method to declare that these attributes were consciously classified:
@@ -340,6 +370,22 @@ if timestamp, ok := s.Attributes["timestamp"]; ok {
     }
 }
 ```
+
+### Config Validators and Custom Types
+
+When reading `SingleNestedAttribute` values in a `ConfigValidator` via `GetAttribute`, always use the generated custom type (e.g., `resource_report.ForecastSettingsValue`), **not** `types.Object`. The framework's reflect package requires the target type to match the schema's custom type — using a raw `basetypes.ObjectValue` causes a "Value Conversion Error" crash.
+
+```go
+// WRONG — crashes with "Value Conversion Error"
+var settings types.Object
+req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &settings)
+
+// CORRECT — matches the schema's custom type
+var settings resource_report.ForecastSettingsValue
+req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &settings)
+```
+
+This applies to all `GetAttribute` calls in validators, not just `SingleNestedAttribute` — always use the type that matches the schema definition.
 
 ## OpenAPI Spec vs. Go Types
 

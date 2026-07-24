@@ -114,6 +114,7 @@ Possible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization
 - `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 Possible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolute_and_percentage`
 - `filters` (Attributes List) The filters to apply to the report. (see [below for nested schema](#nestedatt--config--filters))
+- `forecast_settings` (Attributes) Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting. (see [below for nested schema](#nestedatt--config--forecast_settings))
 - `group` (Attributes List) The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by). (see [below for nested schema](#nestedatt--config--group))
 - `include_promotional_credits` (Boolean) Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).
 If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
@@ -200,6 +201,40 @@ Optional:
 - `mode` (String) Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 Possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`
 - `values` (List of String) List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+
+
+<a id="nestedatt--config--forecast_settings"></a>
+### Nested Schema for `config.forecast_settings`
+
+Optional:
+
+- `future_custom_date_range` (Attributes) Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.
+The range must resolve to a futureTimeIntervals count within the allowed min/max for the report timeInterval. (see [below for nested schema](#nestedatt--config--forecast_settings--future_custom_date_range))
+- `future_time_intervals` (Number) How many future timeInterval periods of predicted costs to project.
+Allowed ranges by timeInterval: hour 1-1000, day 1-100, week 1-52, month 1-12, quarter 1-4, year 1-3.
+- `historical_custom_date_range` (Attributes) Past date range of billed data the model learns from. Takes precedence over historicalTimeIntervals. (see [below for nested schema](#nestedatt--config--forecast_settings--historical_custom_date_range))
+- `historical_time_intervals` (Number) How many past timeInterval periods of data the model learns from.
+Allowed ranges by timeInterval: hour 2-1000, day 2-500, week 2-100, month 2-36, quarter 2-12, year 2-6.
+- `mode` (String) Forecast granularity mode.
+Possible values: `totals`, `grouping`
+
+<a id="nestedatt--config--forecast_settings--future_custom_date_range"></a>
+### Nested Schema for `config.forecast_settings.future_custom_date_range`
+
+Optional:
+
+- `from` (String) Start timestamp in RFC3339 format.
+- `to` (String) End timestamp in RFC3339 format.
+
+
+<a id="nestedatt--config--forecast_settings--historical_custom_date_range"></a>
+### Nested Schema for `config.forecast_settings.historical_custom_date_range`
+
+Optional:
+
+- `from` (String) Start timestamp in RFC3339 format.
+- `to` (String) End timestamp in RFC3339 format.
+
 
 
 <a id="nestedatt--config--group"></a>

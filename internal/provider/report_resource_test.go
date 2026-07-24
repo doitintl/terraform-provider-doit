@@ -3244,3 +3244,555 @@ resource "doit_report" "this" {
 }
 `, i)
 }
+
+// =================================================================----------
+// Forecast Settings Acceptance Tests
+// =================================================================----------
+
+// TestAccReport_ForecastSettings_Intervals tests forecast settings with intervals.
+func TestAccReport_ForecastSettings_Intervals(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.forecast_intervals_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-forecast-intervals-%d", n))),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_time_intervals"),
+						knownvalue.Int64Exact(12)),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_time_intervals"),
+						knownvalue.Int64Exact(12)),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("mode"),
+						knownvalue.StringExact("totals")),
+				},
+			},
+			// Drift check: re-apply same config, expect no changes.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsIntervals(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_intervals_test" {
+    name = "test-forecast-intervals-%d"
+	description = "Report with forecast settings intervals"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		forecast_settings = {
+			future_time_intervals = 12
+			historical_time_intervals = 12
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// TestAccReport_ForecastSettings_CustomRanges tests forecast settings with custom ranges and timezone offsets preservation.
+func TestAccReport_ForecastSettings_CustomRanges(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithForecastSettingsCustomRanges(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.forecast_custom_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_custom_test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(fmt.Sprintf("test-forecast-custom-%d", n))),
+					// Verify original offset timezone strings are preserved perfectly
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_custom_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("from"),
+						knownvalue.StringExact("2024-02-02T00:00:00+02:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_custom_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("to"),
+						knownvalue.StringExact("2024-08-02T00:00:00+02:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_custom_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("from"),
+						knownvalue.StringExact("2023-01-01T00:00:00-05:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_custom_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("to"),
+						knownvalue.StringExact("2023-12-31T23:59:59-05:00")),
+				},
+			},
+			// Drift check: re-apply same config, expect no changes.
+			{
+				Config: testAccReportWithForecastSettingsCustomRanges(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsCustomRanges(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_custom_test" {
+    name = "test-forecast-custom-%d"
+	description = "Report with forecast settings custom date ranges"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "custom"
+			unit = "day"
+		}
+		custom_time_range = {
+			from = "2023-01-01T00:00:00-05:00"
+			to   = "2023-12-31T23:59:59-05:00"
+		}
+		forecast_settings = {
+			future_custom_date_range = {
+				from = "2024-02-02T00:00:00+02:00"
+				to   = "2024-08-02T00:00:00+02:00"
+			}
+			historical_custom_date_range = {
+				from = "2023-01-01T00:00:00-05:00"
+				to   = "2023-12-31T23:59:59-05:00"
+			}
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// TestAccReport_ForecastSettings_Lifecycle tests updating a forecast settings resource through its lifecycle (intervals -> custom -> intervals -> completely removed).
+func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with intervals.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_time_intervals"),
+						knownvalue.Int64Exact(12)),
+				},
+			},
+			// Drift check after Create.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: Switch to custom date ranges.
+			{
+				Config: testAccReportWithForecastSettingsCustomRangesUpdate(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("from"),
+						knownvalue.StringExact("2024-02-02T00:00:00+03:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range").AtMapKey("to"),
+						knownvalue.StringExact("2024-08-02T00:00:00+03:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("from"),
+						knownvalue.StringExact("2023-01-01T00:00:00-08:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range").AtMapKey("to"),
+						knownvalue.StringExact("2023-12-31T23:59:59-08:00")),
+				},
+			},
+			// Drift check after switching to custom.
+			{
+				Config: testAccReportWithForecastSettingsCustomRangesUpdate(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Switch back to intervals.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_time_intervals"),
+						knownvalue.Int64Exact(12)),
+				},
+			},
+			// Drift check after switching back to intervals.
+			{
+				Config: testAccReportWithForecastSettingsIntervals(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Remove forecast_settings entirely.
+			{
+				Config: testAccReportWithForecastSettingsRemoved(n),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("doit_report.forecast_intervals_test", "config.forecast_settings"),
+				),
+			},
+			// Drift check after removal.
+			{
+				Config: testAccReportWithForecastSettingsRemoved(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsCustomRangesUpdate(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_intervals_test" {
+    name = "test-forecast-intervals-%d"
+	description = "Report with forecast settings intervals updated to custom ranges"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		forecast_settings = {
+			future_custom_date_range = {
+				from = "2024-02-02T00:00:00+03:00"
+				to   = "2024-08-02T00:00:00+03:00"
+			}
+			historical_custom_date_range = {
+				from = "2023-01-01T00:00:00-08:00"
+				to   = "2023-12-31T23:59:59-08:00"
+			}
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+func testAccReportWithForecastSettingsRemoved(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_intervals_test" {
+    name = "test-forecast-intervals-%d"
+	description = "Report with forecast settings completely removed"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "custom"
+			unit = "day"
+		}
+		custom_time_range = {
+			from = "2023-01-01T00:00:00-05:00"
+			to   = "2023-12-31T23:59:59-05:00"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// TestAccReport_ForecastSettings_Invalid tests config validation for invalid forecast settings.
+func TestAccReport_ForecastSettings_Invalid(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithForecastSettingsInvalidTimestamp(n),
+				ExpectError: regexp.MustCompile(`Invalid RFC3339 Timestamp`),
+			},
+			{
+				Config:      testAccReportWithForecastSettingsEmptyCustomDateRange(n),
+				ExpectError: regexp.MustCompile(`Empty Future Custom Date Range`),
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsInvalidTimestamp(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_invalid" {
+    name = "test-forecast-invalid-%d"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "custom"
+			unit = "day"
+		}
+		custom_time_range = {
+			from = "2023-01-01T00:00:00Z"
+			to   = "2023-12-31T23:59:59Z"
+		}
+		forecast_settings = {
+			future_custom_date_range = {
+				from = "invalid-timestamp"
+				to   = "2024-08-02T00:00:00Z"
+			}
+			historical_custom_date_range = {
+				from = "2023-01-01T00:00:00Z"
+				to   = "2023-12-31T23:59:59Z"
+			}
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+func testAccReportWithForecastSettingsEmptyCustomDateRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_empty" {
+    name = "test-forecast-empty-%d"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "custom"
+			unit = "day"
+		}
+		custom_time_range = {
+			from = "2023-01-01T00:00:00Z"
+			to   = "2023-12-31T23:59:59Z"
+		}
+		forecast_settings = {
+			future_custom_date_range = {}
+			historical_custom_date_range = {
+				from = "2023-01-01T00:00:00Z"
+				to   = "2023-12-31T23:59:59Z"
+			}
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// TestAccReport_ForecastSettings_GroupingModeOnly tests that forecast_settings with mode = "grouping" only is preserved correctly.
+func TestAccReport_ForecastSettings_GroupingModeOnly(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithForecastSettingsGroupingModeOnly(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_grouping_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("mode"),
+						knownvalue.StringExact("grouping")),
+				},
+			},
+			// Drift check.
+			{
+				Config: testAccReportWithForecastSettingsGroupingModeOnly(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsGroupingModeOnly(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_grouping_test" {
+    name = "test-forecast-grouping-%d"
+	description = "Report with forecast settings grouping mode only"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		forecast_settings = {
+			mode = "grouping"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+func TestAccReport_ForecastSettings_Conflict(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithForecastSettingsConflict(n),
+				ExpectError: regexp.MustCompile(`Conflicting Forecast Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportWithForecastSettingsConflict(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "forecast_conflict" {
+    name = "test-forecast-conflict-%d"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		advanced_analysis = {
+			forecast = false
+		}
+		forecast_settings = {
+			future_time_intervals = 6
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
