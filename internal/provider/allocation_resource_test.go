@@ -2164,6 +2164,363 @@ resource "doit_allocation" "group" {
 `, rName, rName, rName, testProject(), rName, testProject())
 }
 
+// TestAccAllocation_GroupUpdate_DeleteFirstRule tests deleting the first rule from a group allocation.
+func TestAccAllocation_GroupUpdate_DeleteFirstRule(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a group allocation with JP and US rules.
+			{
+				Config: testAccAllocationGroup(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "2"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-jp-rule"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.1.name", rName+"-us-rule"),
+				),
+			},
+			// Step 2: Remove the first rule (JP), leaving only US rule.
+			{
+				Config: testAccAllocationGroupOnlyUS(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "1"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-us-rule"),
+				),
+			},
+			// Step 3: Drift check.
+			{
+				Config: testAccAllocationGroupOnlyUS(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupOnlyUS(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "test allocation group only US rule"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-us-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject())
+}
+
+// TestAccAllocation_GroupUpdate_ReorderRules tests reordering rules in a group allocation.
+func TestAccAllocation_GroupUpdate_ReorderRules(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a group allocation with JP at index 0, US at index 1.
+			{
+				Config: testAccAllocationGroup(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "2"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-jp-rule"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.1.name", rName+"-us-rule"),
+				),
+			},
+			// Step 2: Swap order: US at index 0, JP at index 1.
+			{
+				Config: testAccAllocationGroupReordered(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "2"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-us-rule"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.1.name", rName+"-jp-rule"),
+				),
+			},
+			// Step 3: Drift check.
+			{
+				Config: testAccAllocationGroupReordered(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupReordered(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "test allocation group reordered"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-us-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        },
+        {
+            action  = "create"
+            name    = "%s-jp-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject(), rName, testProject())
+}
+
+// TestAccAllocation_GroupUpdate_SelectToCreate tests transitioning a rule from action="select" to action="create".
+func TestAccAllocation_GroupUpdate_SelectToCreate(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create standalone allocation and group allocation referencing it via action="select".
+			{
+				Config: testAccAllocationGroupSelect(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group_select", "rules.#", "1"),
+					resource.TestCheckResourceAttr("doit_allocation.group_select", "rules.0.action", "select"),
+				),
+			},
+			// Step 2: Update rule to action="create", creating an in-line rule instead.
+			{
+				Config: testAccAllocationGroupSelectConvertedToCreate(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group_select",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group_select", "rules.#", "1"),
+					resource.TestCheckResourceAttr("doit_allocation.group_select", "rules.0.action", "create"),
+					resource.TestCheckResourceAttr("doit_allocation.group_select", "rules.0.name", rName+"-inline-rule"),
+				),
+			},
+			// Step 3: Drift check.
+			{
+				Config: testAccAllocationGroupSelectConvertedToCreate(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupSelectConvertedToCreate(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+    name        = "%s-source"
+    description = "test allocation source"
+    rule = {
+        formula = "A"
+        components = [
+            {
+                key    = "country"
+                mode   = "is"
+                type   = "fixed"
+                values = ["JP"]
+            }
+        ]
+    }
+}
+
+resource "doit_allocation" "group_select" {
+    name        = "%s-group-select"
+    description = "test allocation group select"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-inline-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["FR"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, rName, testProject())
+}
+
+// TestAccAllocation_GroupUpdate_CreateToUpdateWithoutId tests updating a rule by setting action="update"
+// without specifying an id in HCL, while also removing an earlier rule.
+func TestAccAllocation_GroupUpdate_CreateToUpdateWithoutId(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create group allocation with JP (index 0) and US (index 1) with action="create".
+			{
+				Config: testAccAllocationGroup(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "2"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-jp-rule"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.1.name", rName+"-us-rule"),
+				),
+			},
+			// Step 2: Remove JP, set action="update" on US without id in HCL.
+			{
+				Config: testAccAllocationGroupOnlyUSExplicitUpdate(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "1"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-us-rule"),
+				),
+			},
+			// Step 3: Drift check.
+			{
+				Config: testAccAllocationGroupOnlyUSExplicitUpdate(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupOnlyUSExplicitUpdate(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "test allocation group only US rule explicit update"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "update"
+            name    = "%s-us-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject())
+}
+
 // TestAccAllocation_GroupOmittedDefaults tests creating a group allocation where
 // the Optional+Computed field "description" is omitted from the config.
 // The provider must correctly resolve the unknown to the API default to avoid

@@ -36,6 +36,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*allocationResource)(nil)
 	_ resource.ResourceWithImportState      = (*allocationResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*allocationResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*allocationResource)(nil)
 )
 
 // NewAllocationResource creates a new allocation resource instance.
@@ -124,14 +125,6 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	if attr, ok := s.Attributes["type"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["type"] = attr
-	}
-
-	if rulesAttr, ok := s.Attributes["rules"].(schema.ListNestedAttribute); ok {
-		if idAttr, ok := rulesAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok {
-			idAttr.PlanModifiers = append(idAttr.PlanModifiers, useRuleIdFromStateWhenConfigNull())
-			rulesAttr.NestedObject.Attributes["id"] = idAttr
-		}
-		s.Attributes["rules"] = rulesAttr
 	}
 
 	// Category B: rule nested attributes are rule-type-dependent.
@@ -399,4 +392,131 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		)
 		return
 	}
+}
+
+// ModifyPlan implements identity-aware rule ID matching for group allocation in-line rules.
+// This matches in-line plan rules (action="create" or "update" without explicit ID) to existing
+// state in-line rules by name (and position fallback for renames) so that rule IDs are carried over
+// safely without positional/index corruption when rules are reordered or removed.
+func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Skip if state or plan is null (e.g. resource creation or deletion)
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var stateModel allocationResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	var planModel allocationResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Skip if rules list in state or plan is null or unknown
+	if stateModel.Rules.IsNull() || stateModel.Rules.IsUnknown() ||
+		planModel.Rules.IsNull() || planModel.Rules.IsUnknown() {
+		return
+	}
+
+	var stateRules []resource_allocation.RulesValue
+	resp.Diagnostics.Append(stateModel.Rules.ElementsAs(ctx, &stateRules, false)...)
+	var planRules []resource_allocation.RulesValue
+	resp.Diagnostics.Append(planModel.Rules.ElementsAs(ctx, &planRules, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Collect in-line state rule candidates.
+	// Only in-line state rules (action == "create" or "update" with known non-empty Id)
+	// can be matched to in-line plan rules. "select" rules reference standalone allocations
+	// and are excluded.
+	type inlineStateRule struct {
+		index int
+		id    string
+		name  string
+		used  bool
+	}
+
+	var inlineCandidates []inlineStateRule
+	for i, sRule := range stateRules {
+		if sRule.Id.IsNull() || sRule.Id.IsUnknown() || sRule.Id.ValueString() == "" {
+			continue
+		}
+		if sRule.Action.ValueString() == "select" {
+			continue
+		}
+		inlineCandidates = append(inlineCandidates, inlineStateRule{
+			index: i,
+			id:    sRule.Id.ValueString(),
+			name:  sRule.Name.ValueString(),
+			used:  false,
+		})
+	}
+
+	isInlineRuleNeedingID := func(pRule resource_allocation.RulesValue) bool {
+		action := pRule.Action.ValueString()
+		if action != "create" && action != "update" {
+			return false
+		}
+		if !pRule.Id.IsNull() && !pRule.Id.IsUnknown() && pRule.Id.ValueString() != "" {
+			return false
+		}
+		return true
+	}
+
+	planModified := false
+
+	// Pass 1: Exact Name Match
+	for i := range planRules {
+		if !isInlineRuleNeedingID(planRules[i]) {
+			continue
+		}
+		planName := planRules[i].Name.ValueString()
+		if planName == "" {
+			continue
+		}
+
+		for cIdx := range inlineCandidates {
+			cand := &inlineCandidates[cIdx]
+			if !cand.used && cand.name == planName {
+				cand.used = true
+				planRules[i].Id = types.StringValue(cand.id)
+				planModified = true
+				break
+			}
+		}
+	}
+
+	// Pass 2: Position Fallback Match for Renamed Rules
+	for i := range planRules {
+		if !isInlineRuleNeedingID(planRules[i]) {
+			continue
+		}
+		if !planRules[i].Id.IsNull() && !planRules[i].Id.IsUnknown() && planRules[i].Id.ValueString() != "" {
+			continue
+		}
+
+		for cIdx := range inlineCandidates {
+			cand := &inlineCandidates[cIdx]
+			if !cand.used && cand.index == i {
+				cand.used = true
+				planRules[i].Id = types.StringValue(cand.id)
+				planModified = true
+				break
+			}
+		}
+	}
+
+	if !planModified {
+		return
+	}
+
+	rulesValue, diags := types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), planRules)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	planModel.Rules = rulesValue
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &planModel)...)
 }
