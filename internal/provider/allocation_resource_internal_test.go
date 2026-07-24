@@ -295,7 +295,7 @@ func TestAllocationResource_ModifyPlan_RenameAndComponentChange(t *testing.T) {
 }
 
 // TestAllocationResource_ModifyPlan_RenameFormulaAndComponentChange verifies that when all three
-// fields change (name, formula, components), no tier can match. A warning is emitted for
+// fields change (name, formula, components), no tier can match. An error is emitted for
 // action="update" rules.
 func TestAllocationResource_ModifyPlan_RenameFormulaAndComponentChange(t *testing.T) {
 	sch := modifyPlanTestSchema(t)
@@ -595,5 +595,59 @@ func TestAllocationResource_ModifyPlan_TwoPlanRulesClaimSameCandidate(t *testing
 			t.Errorf("rule[%d] (%s): expected no ID when two plan rules claim the same candidate, got %q",
 				i, r.Name.ValueString(), r.Id.ValueString())
 		}
+	}
+}
+
+// TestAllocationResource_ModifyPlan_ExplicitIdReservesCandidate verifies that a plan rule with
+// an explicit known ID prevents content-matching from also claiming the same state candidate.
+// Without pre-reservation, a "select" rule with id="X" and a "create" rule with the same name
+// could both end up targeting allocation "X".
+func TestAllocationResource_ModifyPlan_ExplicitIdReservesCandidate(t *testing.T) {
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+
+	comp := modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"}))
+
+	// State: one rule with id "shared-id".
+	stateRule := modifyPlanTestRule(t, map[string]attr.Value{
+		"id":          types.StringValue("shared-id"),
+		"name":        types.StringValue("my-rule"),
+		"action":      types.StringValue("create"),
+		"formula":     types.StringValue("A"),
+		"description": types.StringNull(),
+		"components":  comp,
+	})
+	stateModel := modifyPlanTestModel(t, []attr.Value{stateRule}, tv)
+
+	// Plan: rule A explicitly references "shared-id" via action="select".
+	// Rule B has action="create" with the same name — Pass 1 would match it
+	// to the state candidate if the candidate isn't pre-reserved by rule A's explicit ID.
+	ruleA := modifyPlanTestRule(t, map[string]attr.Value{
+		"id":          types.StringValue("shared-id"),
+		"name":        types.StringValue("selected-rule"),
+		"action":      types.StringValue("select"),
+		"formula":     types.StringNull(),
+		"description": types.StringNull(),
+		"components":  comp,
+	})
+	ruleB := modifyPlanTestRule(t, map[string]attr.Value{
+		"id":          types.StringNull(),
+		"name":        types.StringValue("my-rule"),
+		"action":      types.StringValue("create"),
+		"formula":     types.StringValue("A"),
+		"description": types.StringNull(),
+		"components":  comp,
+	})
+	planModel := modifyPlanTestModel(t, []attr.Value{ruleA, ruleB}, tv)
+
+	result := runModifyPlan(t, sch, stateModel, planModel)
+
+	// Rule A already has its explicit ID — unchanged.
+	if got := result.rules[0].Id.ValueString(); got != "shared-id" {
+		t.Errorf("rule A: expected explicit id unchanged, got %q", got)
+	}
+	// Rule B should NOT get "shared-id" — the candidate is reserved by rule A.
+	if result.rules[1].Id.ValueString() == "shared-id" {
+		t.Errorf("rule B: incorrectly claimed candidate already reserved by rule A's explicit id")
 	}
 }

@@ -459,6 +459,25 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 		})
 	}
 
+	// Pre-reserve candidates whose IDs already appear as explicit IDs in plan rules
+	// (e.g. action="select" with id="X"). This prevents content-matching from also
+	// claiming the same candidate for a different rule.
+	for _, pRule := range planRules {
+		if pRule.Id.IsNull() || pRule.Id.IsUnknown() {
+			continue
+		}
+		explicitID := pRule.Id.ValueString()
+		if explicitID == "" {
+			continue
+		}
+		for cIdx := range inlineCandidates {
+			if !inlineCandidates[cIdx].used && inlineCandidates[cIdx].id == explicitID {
+				inlineCandidates[cIdx].used = true
+				break
+			}
+		}
+	}
+
 	isInlineRuleNeedingID := func(pRule resource_allocation.RulesValue) bool {
 		action := pRule.Action.ValueString()
 		if action != "create" && action != "update" {
