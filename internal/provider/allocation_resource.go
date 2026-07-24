@@ -541,15 +541,17 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 				unique = append(unique, tierMatch{planIdx: pIdx, candIdx: h.candIdx})
 			}
 		}
-		// Ensure no two plan rules claimed the same candidate.
-		seen := map[int]bool{}
+		// Count how many plan rules claimed each candidate. Drop any candidate
+		// claimed by more than one plan rule — neither claim is a true 1:1 match.
+		candClaims := map[int]int{}
+		for _, m := range unique {
+			candClaims[m.candIdx]++
+		}
 		var result []tierMatch
 		for _, m := range unique {
-			if seen[m.candIdx] {
-				continue
+			if candClaims[m.candIdx] == 1 {
+				result = append(result, m)
 			}
-			seen[m.candIdx] = true
-			result = append(result, m)
 		}
 		return result
 	}
@@ -578,13 +580,15 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 		return pf.Equal(stateRules[inlineCandidates[cIdx].stateIdx].Formula)
 	}))
 
-	// Warn about unmatched action="update" rules that will be sent without an ID.
+	// Error on unmatched action="update" rules — the API requires an ID for updates.
 	for i := range planRules {
 		if planRules[i].Action.ValueString() == "update" && isInlineRuleNeedingID(planRules[i]) {
-			resp.Diagnostics.AddWarning(
+			resp.Diagnostics.AddError(
 				"Unmatched allocation rule",
-				fmt.Sprintf("Rule %q with action \"update\" could not be matched to an existing rule and will be sent without an ID. "+
-					"Set the rule's id attribute explicitly to update an existing rule.", planRules[i].Name.ValueString()),
+				fmt.Sprintf("Rule %q has action \"update\" but could not be matched to an existing rule by name, formula, or components. "+
+					"Either set the rule's id attribute explicitly to target an existing rule, "+
+					"or change the action to \"create\" to create a new rule.",
+					planRules[i].Name.ValueString()),
 			)
 		}
 	}

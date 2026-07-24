@@ -163,10 +163,6 @@ func runModifyPlan(t *testing.T, sch schema.Schema, stateModel, planModel alloca
 
 	r.ModifyPlan(ctx, req, &resp)
 
-	if resp.Diagnostics.HasError() {
-		t.Fatalf("unexpected modify plan errors: %v", resp.Diagnostics)
-	}
-
 	var resultModel allocationResourceModel
 	diags = resp.Plan.Get(ctx, &resultModel)
 	if diags.HasError() {
@@ -334,15 +330,8 @@ func TestAllocationResource_ModifyPlan_RenameFormulaAndComponentChange(t *testin
 		t.Errorf("expected no ID match when name, formula, and components all change, got %q", result.rules[0].Id.ValueString())
 	}
 
-	hasWarning := false
-	for _, d := range result.diagnostics {
-		if d.Severity() == diag.SeverityWarning {
-			hasWarning = true
-			break
-		}
-	}
-	if !hasWarning {
-		t.Error("expected warning diagnostic for unmatched action=update rule")
+	if !result.diagnostics.HasError() {
+		t.Error("expected error diagnostic for unmatched action=update rule")
 	}
 }
 
@@ -396,11 +385,8 @@ func TestAllocationResource_ModifyPlan_DeleteAndRenameSameFormula(t *testing.T) 
 		t.Errorf("incorrectly assigned deleted JP rule's ID to renamed US rule")
 	}
 
-	// No warning expected since the rule was matched.
-	for _, d := range result.diagnostics {
-		if d.Severity() == diag.SeverityWarning {
-			t.Errorf("unexpected warning: %s", d.Detail())
-		}
+	if result.diagnostics.HasError() {
+		t.Errorf("unexpected errors: %v", result.diagnostics)
 	}
 }
 
@@ -450,15 +436,8 @@ func TestAllocationResource_ModifyPlan_AmbiguousFormulaRenameWithComponentChange
 		t.Errorf("expected no match when formula is ambiguous and components changed, got %q", result.rules[0].Id.ValueString())
 	}
 
-	hasWarning := false
-	for _, d := range result.diagnostics {
-		if d.Severity() == diag.SeverityWarning {
-			hasWarning = true
-			break
-		}
-	}
-	if !hasWarning {
-		t.Error("expected warning diagnostic for unmatched action=update rule")
+	if !result.diagnostics.HasError() {
+		t.Error("expected error diagnostic for unmatched action=update rule")
 	}
 }
 
@@ -566,5 +545,55 @@ func TestAllocationResource_ModifyPlan_UnknownComponentsRename(t *testing.T) {
 
 	if got := result.rules[0].Id.ValueString(); got != "id-a" {
 		t.Errorf("expected Tier 3 (formula match) to assign id-a despite unknown components, got %q", got)
+	}
+}
+
+// TestAllocationResource_ModifyPlan_TwoPlanRulesClaimSameCandidate verifies that when two plan
+// rules both uniquely match the same state candidate, neither gets the ID. Both claims must be
+// dropped to avoid nondeterministic assignment.
+func TestAllocationResource_ModifyPlan_TwoPlanRulesClaimSameCandidate(t *testing.T) {
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+
+	comp := modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"}))
+
+	// State: one rule.
+	stateRule := modifyPlanTestRule(t, map[string]attr.Value{
+		"id":          types.StringValue("id-a"),
+		"name":        types.StringValue("rule-a"),
+		"action":      types.StringValue("create"),
+		"formula":     types.StringValue("A"),
+		"description": types.StringNull(),
+		"components":  comp,
+	})
+	stateModel := modifyPlanTestModel(t, []attr.Value{stateRule}, tv)
+
+	// Plan: two NEW rules with different names but identical formula+components.
+	// Both match the same state candidate at Tier 1 — neither should get the ID.
+	planRule1 := modifyPlanTestRule(t, map[string]attr.Value{
+		"id":          types.StringNull(),
+		"name":        types.StringValue("rule-x"),
+		"action":      types.StringValue("create"),
+		"formula":     types.StringValue("A"),
+		"description": types.StringNull(),
+		"components":  comp,
+	})
+	planRule2 := modifyPlanTestRule(t, map[string]attr.Value{
+		"id":          types.StringNull(),
+		"name":        types.StringValue("rule-y"),
+		"action":      types.StringValue("create"),
+		"formula":     types.StringValue("A"),
+		"description": types.StringNull(),
+		"components":  comp,
+	})
+	planModel := modifyPlanTestModel(t, []attr.Value{planRule1, planRule2}, tv)
+
+	result := runModifyPlan(t, sch, stateModel, planModel)
+
+	for i, r := range result.rules {
+		if !r.Id.IsNull() {
+			t.Errorf("rule[%d] (%s): expected no ID when two plan rules claim the same candidate, got %q",
+				i, r.Name.ValueString(), r.Id.ValueString())
+		}
 	}
 }
