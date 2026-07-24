@@ -3269,6 +3269,8 @@ resource "doit_allocation" "dependent" {
 
 // TestAccAllocation_GroupUpdate_UnknownRuleElements verifies that ModifyPlan handles unknown rule elements
 // (e.g., when a rule attribute is derived from an unknown computed resource attribute) without failing the plan.
+// Step 1 creates the group; Step 2 updates the description so ModifyPlan runs with prior state and
+// unknown nested component values (from the computed doit_allocation.dep.id dependency).
 func TestAccAllocation_GroupUpdate_UnknownRuleElements(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
@@ -3278,8 +3280,36 @@ func TestAccAllocation_GroupUpdate_UnknownRuleElements(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
+			// Step 1: Create with a computed dependency in a component value.
 			{
-				Config: fmt.Sprintf(`
+				Config: testAccAllocationGroupUnknownRuleElements(rName, "initial description"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: Update description so ModifyPlan runs with prior state.
+			// The computed dependency (doit_allocation.dep.id) keeps components
+			// unknown during planning, exercising the allowUnknown=true path.
+			{
+				Config: testAccAllocationGroupUnknownRuleElements(rName, "updated description"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupUnknownRuleElements(rName, description string) string {
+	return fmt.Sprintf(`
 resource "doit_allocation" "dep" {
     name        = "%s-dep"
     description = "Dependency allocation"
@@ -3298,7 +3328,7 @@ resource "doit_allocation" "dep" {
 
 resource "doit_allocation" "group" {
     name        = "%s-group"
-    description = "Group with unknown rule name derived from dependency"
+    description = "%s"
     unallocated_costs = "%s-other"
     rules = [
         {
@@ -3322,15 +3352,7 @@ resource "doit_allocation" "group" {
         }
     ]
 }
-`, rName, rName, rName, testProject()),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNonEmptyPlan(),
-					},
-				},
-			},
-		},
-	})
+`, rName, rName, description, rName, testProject())
 }
 
 // TestAccAllocation_GroupUpdate_DeleteAndRenameRuleWithoutId tests deleting an earlier rule

@@ -395,9 +395,14 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 }
 
 // ModifyPlan implements identity-aware rule ID matching for group allocation in-line rules.
-// This matches in-line plan rules (action="create" or "update" without explicit ID) to existing
-// state in-line rules by name (and position fallback for renames) so that rule IDs are carried over
-// safely without positional/index corruption when rules are reordered or removed.
+// Pass 1 matches by exact name. Pass 2 uses tiered content-based matching for renamed rules:
+//   - Tier 1: formula + components both match (pure rename)
+//   - Tier 2: components only match (rename + formula change)
+//   - Tier 3: formula only match (rename + component change)
+//
+// Each tier requires a unique 1:1 match. If all three fields change simultaneously (name,
+// formula, and components), the rule cannot be matched and a warning is emitted for
+// action="update" rules — set the id attribute explicitly in that case.
 func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Skip if state or plan is null (e.g. resource creation or deletion)
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
@@ -426,30 +431,31 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 		return
 	}
 
-	// Collect in-line state rule candidates.
-	// Only in-line state rules (action == "create" or "update" with known non-empty Id)
-	// can be matched to in-line plan rules. "select" rules reference standalone allocations
-	// and are excluded.
+	// Collect state rule candidates with known non-empty IDs.
+	// All actions are included (not just "create"/"update") because after ImportState,
+	// fillAllocationCommon defaults every rule to action="select" since the API doesn't
+	// return the action field. Filtering on action would prevent ID recovery on reapply.
+	// Plan-side gating (isInlineRuleNeedingID) restricts matching to "create"/"update"
+	// plan rules, so genuine "select" plan rules won't consume candidates.
 	type inlineStateRule struct {
-		id      string
-		name    string
-		formula string
-		used    bool
+		stateIdx int
+		id       string
+		name     string
+		formula  string
+		used     bool
 	}
 
 	var inlineCandidates []inlineStateRule
-	for _, sRule := range stateRules {
+	for i, sRule := range stateRules {
 		if sRule.Id.IsNull() || sRule.Id.IsUnknown() || sRule.Id.ValueString() == "" {
 			continue
 		}
-		if sRule.Action.ValueString() == "select" {
-			continue
-		}
 		inlineCandidates = append(inlineCandidates, inlineStateRule{
-			id:      sRule.Id.ValueString(),
-			name:    sRule.Name.ValueString(),
-			formula: sRule.Formula.ValueString(),
-			used:    false,
+			stateIdx: i,
+			id:       sRule.Id.ValueString(),
+			name:     sRule.Name.ValueString(),
+			formula:  sRule.Formula.ValueString(),
+			used:     false,
 		})
 	}
 
@@ -487,44 +493,100 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 		}
 	}
 
-	// Pass 2: Formula-Based Match for Renamed Rules
-	// When a rule is renamed but keeps the same formula, Pass 1 (name match) misses it.
-	// Match by formula instead of list position, which breaks when rules are deleted or
-	// reordered. Only match when a formula appears exactly once on each side (unambiguous).
-	//
-	// Gap: if a user renames AND changes the formula simultaneously, neither pass matches
-	// and the rule is treated as new (delete + create). Provide an explicit id in HCL to
-	// force an in-place update in that case.
-	planByFormula := map[string][]int{}
+	// Pass 2: Tiered content-based matching for renamed rules.
+	// When a rule is renamed, Pass 1 (name match) misses it. We try three tiers of
+	// decreasing specificity, each requiring a unique 1:1 match. This ensures any
+	// single-field change (name, formula, or components) still produces an in-place update.
+	type tierMatch struct {
+		planIdx int
+		candIdx int
+	}
+
+	commitMatches := func(matches []tierMatch) {
+		for _, m := range matches {
+			cand := &inlineCandidates[m.candIdx]
+			cand.used = true
+			planRules[m.planIdx].Id = types.StringValue(cand.id)
+			planModified = true
+		}
+	}
+
+	runTier := func(matchFn func(planIdx, candIdx int) bool) []tierMatch {
+		type tentative struct {
+			candIdx int
+			count   int
+		}
+		planHits := map[int]*tentative{}
+		for i := range planRules {
+			if !isInlineRuleNeedingID(planRules[i]) {
+				continue
+			}
+			for cIdx := range inlineCandidates {
+				if inlineCandidates[cIdx].used {
+					continue
+				}
+				if matchFn(i, cIdx) {
+					if h, ok := planHits[i]; ok {
+						h.count++
+					} else {
+						planHits[i] = &tentative{candIdx: cIdx, count: 1}
+					}
+				}
+			}
+		}
+		// Only keep plan rules with exactly 1 candidate match.
+		var unique []tierMatch
+		for pIdx, h := range planHits {
+			if h.count == 1 {
+				unique = append(unique, tierMatch{planIdx: pIdx, candIdx: h.candIdx})
+			}
+		}
+		// Ensure no two plan rules claimed the same candidate.
+		seen := map[int]bool{}
+		var result []tierMatch
+		for _, m := range unique {
+			if seen[m.candIdx] {
+				continue
+			}
+			seen[m.candIdx] = true
+			result = append(result, m)
+		}
+		return result
+	}
+
+	// Tier 1: Formula + Components match (pure rename — strongest signal)
+	commitMatches(runTier(func(pIdx, cIdx int) bool {
+		return planRules[pIdx].Formula.Equal(stateRules[inlineCandidates[cIdx].stateIdx].Formula) &&
+			planRules[pIdx].Components.Equal(stateRules[inlineCandidates[cIdx].stateIdx].Components)
+	}))
+
+	// Tier 2: Components only match (rename + formula change)
+	commitMatches(runTier(func(pIdx, cIdx int) bool {
+		pc := planRules[pIdx].Components
+		if pc.IsNull() || pc.IsUnknown() {
+			return false
+		}
+		return pc.Equal(stateRules[inlineCandidates[cIdx].stateIdx].Components)
+	}))
+
+	// Tier 3: Formula only match (rename + component change — weakest signal)
+	commitMatches(runTier(func(pIdx, cIdx int) bool {
+		pf := planRules[pIdx].Formula
+		if pf.IsNull() || pf.IsUnknown() || pf.ValueString() == "" {
+			return false
+		}
+		return pf.Equal(stateRules[inlineCandidates[cIdx].stateIdx].Formula)
+	}))
+
+	// Warn about unmatched action="update" rules that will be sent without an ID.
 	for i := range planRules {
-		if !isInlineRuleNeedingID(planRules[i]) {
-			continue
+		if planRules[i].Action.ValueString() == "update" && isInlineRuleNeedingID(planRules[i]) {
+			resp.Diagnostics.AddWarning(
+				"Unmatched allocation rule",
+				fmt.Sprintf("Rule %q with action \"update\" could not be matched to an existing rule and will be sent without an ID. "+
+					"Set the rule's id attribute explicitly to update an existing rule.", planRules[i].Name.ValueString()),
+			)
 		}
-		f := planRules[i].Formula.ValueString()
-		if f == "" || planRules[i].Formula.IsNull() || planRules[i].Formula.IsUnknown() {
-			continue
-		}
-		planByFormula[f] = append(planByFormula[f], i)
-	}
-
-	stateByFormula := map[string][]int{}
-	for cIdx := range inlineCandidates {
-		c := &inlineCandidates[cIdx]
-		if c.used || c.formula == "" {
-			continue
-		}
-		stateByFormula[c.formula] = append(stateByFormula[c.formula], cIdx)
-	}
-
-	for formula, pIdxs := range planByFormula {
-		sIdxs, ok := stateByFormula[formula]
-		if !ok || len(pIdxs) != 1 || len(sIdxs) != 1 {
-			continue
-		}
-		cand := &inlineCandidates[sIdxs[0]]
-		cand.used = true
-		planRules[pIdxs[0]].Id = types.StringValue(cand.id)
-		planModified = true
 	}
 
 	if !planModified {
