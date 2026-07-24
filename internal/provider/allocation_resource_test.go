@@ -1774,6 +1774,396 @@ resource "doit_allocation" "group" {
 `, rName, rName, rName, testProject(), rName, testProject())
 }
 
+// TestAccAllocation_GroupUpdate_ExplicitActionUpdate tests updating a group allocation
+// where the config explicitly sets action = "update" and passes the rule id from state.
+func TestAccAllocation_GroupUpdate_ExplicitActionUpdate(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a group allocation with two rules.
+			{
+				Config: testAccAllocationGroup(rName),
+			},
+			// Step 2: Update with explicit action = "update" and id reference.
+			{
+				Config: testAccAllocationGroupExplicitUpdate(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 3: Drift check.
+			{
+				Config: testAccAllocationGroupExplicitUpdate(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupExplicitUpdate(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "test allocation group updated explicitly"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "update"
+            name    = "%s-jp-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        },
+        {
+            action  = "update"
+            name    = "%s-us-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["FR"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject(), rName, testProject())
+}
+
+// TestAccAllocation_GroupUpdate_AddAndRemoveRules tests adding a rule to an existing group
+// allocation, and then removing a rule from it.
+func TestAccAllocation_GroupUpdate_AddAndRemoveRules(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a group allocation with two rules.
+			{
+				Config: testAccAllocationGroup(rName),
+			},
+			// Step 2: Add a 3rd rule.
+			{
+				Config: testAccAllocationGroupThreeRules(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 3: Remove the second rule (scale back to 2 rules).
+			{
+				Config: testAccAllocationGroup(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 4: Drift check.
+			{
+				Config: testAccAllocationGroup(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupThreeRules(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "test allocation group three rules"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-jp-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        },
+        {
+            action  = "create"
+            name    = "%s-us-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        },
+        {
+            action  = "create"
+            name    = "%s-uk-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["GB"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject(), rName, testProject(), rName, testProject())
+}
+
+// TestAccAllocation_GroupUpdate_MixedActions tests updating a group allocation
+// containing both in-line rules (action = "create") and selected rules (action = "select").
+func TestAccAllocation_GroupUpdate_MixedActions(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create single allocation + group allocation referencing it via select action.
+			{
+				Config: testAccAllocationGroupMixed(rName, "initial"),
+			},
+			// Step 2: Update group allocation description.
+			{
+				Config: testAccAllocationGroupMixed(rName, "updated"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 3: Drift check.
+			{
+				Config: testAccAllocationGroupMixed(rName, "updated"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupMixed(rName, descSuffix string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "single" {
+    name        = "%s-standalone"
+    description = "standalone single allocation for select rule"
+    rule = {
+        formula = "A"
+        components = [
+            {
+                key    = "country"
+                mode   = "is"
+                type   = "fixed"
+                values = ["US"]
+            }
+        ]
+    }
+}
+
+resource "doit_allocation" "group" {
+    name              = "%s-group"
+    description       = "test allocation group mixed %s"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-inline-rule"
+            formula = "A"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                }
+            ]
+        },
+        {
+            action = "select"
+            id     = doit_allocation.single.id
+        }
+    ]
+}
+`, rName, rName, descSuffix, rName, rName)
+}
+
+// TestAccAllocation_GroupUpdate_RenameRule tests renaming an in-line rule on an existing group allocation.
+func TestAccAllocation_GroupUpdate_RenameRule(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a group allocation with two rules.
+			{
+				Config: testAccAllocationGroup(rName),
+			},
+			// Step 2: Rename rule 1 from jp-rule to japan-rule.
+			{
+				Config: testAccAllocationGroupRenamedRule(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 3: Drift check.
+			{
+				Config: testAccAllocationGroupRenamedRule(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupRenamedRule(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "test allocation group renamed rule"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%s-japan-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["JP"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        },
+        {
+            action  = "create"
+            name    = "%s-us-rule"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject(), rName, testProject())
+}
+
 // TestAccAllocation_GroupOmittedDefaults tests creating a group allocation where
 // the Optional+Computed field "description" is omitted from the config.
 // The provider must correctly resolve the unknown to the API default to avoid

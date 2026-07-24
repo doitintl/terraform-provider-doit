@@ -126,6 +126,14 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["type"] = attr
 	}
 
+	if rulesAttr, ok := s.Attributes["rules"].(schema.ListNestedAttribute); ok {
+		if idAttr, ok := rulesAttr.NestedObject.Attributes["id"].(schema.StringAttribute); ok {
+			idAttr.PlanModifiers = append(idAttr.PlanModifiers, useRuleIdFromStateWhenConfigNull())
+			rulesAttr.NestedObject.Attributes["id"] = idAttr
+		}
+		s.Attributes["rules"] = rulesAttr
+	}
+
 	// Category B: rule nested attributes are rule-type-dependent.
 	// For "select" rules, name/description/formula are API-computed from the
 	// source allocation. For "create" rules, they are user-authored. Since
@@ -134,7 +142,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	// cannot clear these fields on create rules via config removal — they must
 	// explicitly set them to "" instead.
 	acknowledgeNotClearable(s,
-		"rules[*].id",          // reference ID, not clearable
+		"rules[*].id",          // API-assigned on create, preserved when config null
 		"rules[*].name",        // API-computed for select rules
 		"rules[*].description", // API-computed for select rules
 		"rules[*].formula",     // API-computed for select rules
