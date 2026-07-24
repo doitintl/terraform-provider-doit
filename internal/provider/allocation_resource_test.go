@@ -3266,3 +3266,129 @@ resource "doit_allocation" "dependent" {
 		},
 	})
 }
+
+// TestAccAllocation_GroupUpdate_UnknownRuleElements verifies that ModifyPlan handles unknown rule elements
+// (e.g., when a rule attribute is derived from an unknown computed resource attribute) without failing the plan.
+func TestAccAllocation_GroupUpdate_UnknownRuleElements(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "dep" {
+    name        = "%s-dep"
+    description = "Dependency allocation"
+    rule = {
+        formula = "A"
+        components = [
+            {
+                key    = "country"
+                mode   = "is"
+                type   = "fixed"
+                values = ["US"]
+            }
+        ]
+    }
+}
+
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "Group with unknown rule name derived from dependency"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "rule-with-computed-component"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["FR", doit_allocation.dep.id]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_GroupUpdate_DeleteAndRenameRuleWithoutId tests deleting an earlier rule
+// while simultaneously renaming a later rule without specifying an explicit id.
+// This reproduces Copilot's finding where Pass 2 positional matching incorrectly assigns the deleted rule's ID.
+func TestAccAllocation_GroupUpdate_DeleteAndRenameRuleWithoutId(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create group allocation with JP (index 0) and US (index 1).
+			{
+				Config: testAccAllocationGroup(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "2"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-jp-rule"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.1.name", rName+"-us-rule"),
+				),
+			},
+			// Step 2: Delete JP rule (index 0) and rename US rule to us-rule-renamed without supplying an explicit id.
+			{
+				Config: fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name        = "%s-group"
+    description = "Group with 1 renamed rule"
+    unallocated_costs = "%s-other"
+    rules = [
+        {
+            action  = "update"
+            name    = "%s-us-rule-renamed"
+            formula = "A AND B"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                },
+                {
+                    key    = "project_id"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["%s"]
+                }
+            ]
+        }
+    ]
+}
+`, rName, rName, rName, testProject()),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.#", "1"),
+					resource.TestCheckResourceAttr("doit_allocation.group", "rules.0.name", rName+"-us-rule-renamed"),
+				),
+			},
+		},
+	})
+}

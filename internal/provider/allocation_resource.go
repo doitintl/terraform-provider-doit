@@ -421,7 +421,7 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 	var stateRules []resource_allocation.RulesValue
 	resp.Diagnostics.Append(stateModel.Rules.ElementsAs(ctx, &stateRules, false)...)
 	var planRules []resource_allocation.RulesValue
-	resp.Diagnostics.Append(planModel.Rules.ElementsAs(ctx, &planRules, false)...)
+	resp.Diagnostics.Append(planModel.Rules.ElementsAs(ctx, &planRules, true)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -431,14 +431,14 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 	// can be matched to in-line plan rules. "select" rules reference standalone allocations
 	// and are excluded.
 	type inlineStateRule struct {
-		index int
-		id    string
-		name  string
-		used  bool
+		id      string
+		name    string
+		formula string
+		used    bool
 	}
 
 	var inlineCandidates []inlineStateRule
-	for i, sRule := range stateRules {
+	for _, sRule := range stateRules {
 		if sRule.Id.IsNull() || sRule.Id.IsUnknown() || sRule.Id.ValueString() == "" {
 			continue
 		}
@@ -446,10 +446,10 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 			continue
 		}
 		inlineCandidates = append(inlineCandidates, inlineStateRule{
-			index: i,
-			id:    sRule.Id.ValueString(),
-			name:  sRule.Name.ValueString(),
-			used:  false,
+			id:      sRule.Id.ValueString(),
+			name:    sRule.Name.ValueString(),
+			formula: sRule.Formula.ValueString(),
+			used:    false,
 		})
 	}
 
@@ -487,24 +487,44 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 		}
 	}
 
-	// Pass 2: Position Fallback Match for Renamed Rules
+	// Pass 2: Formula-Based Match for Renamed Rules
+	// When a rule is renamed but keeps the same formula, Pass 1 (name match) misses it.
+	// Match by formula instead of list position, which breaks when rules are deleted or
+	// reordered. Only match when a formula appears exactly once on each side (unambiguous).
+	//
+	// Gap: if a user renames AND changes the formula simultaneously, neither pass matches
+	// and the rule is treated as new (delete + create). Provide an explicit id in HCL to
+	// force an in-place update in that case.
+	planByFormula := map[string][]int{}
 	for i := range planRules {
 		if !isInlineRuleNeedingID(planRules[i]) {
 			continue
 		}
-		if !planRules[i].Id.IsNull() && !planRules[i].Id.IsUnknown() && planRules[i].Id.ValueString() != "" {
+		f := planRules[i].Formula.ValueString()
+		if f == "" || planRules[i].Formula.IsNull() || planRules[i].Formula.IsUnknown() {
 			continue
 		}
+		planByFormula[f] = append(planByFormula[f], i)
+	}
 
-		for cIdx := range inlineCandidates {
-			cand := &inlineCandidates[cIdx]
-			if !cand.used && cand.index == i {
-				cand.used = true
-				planRules[i].Id = types.StringValue(cand.id)
-				planModified = true
-				break
-			}
+	stateByFormula := map[string][]int{}
+	for cIdx := range inlineCandidates {
+		c := &inlineCandidates[cIdx]
+		if c.used || c.formula == "" {
+			continue
 		}
+		stateByFormula[c.formula] = append(stateByFormula[c.formula], cIdx)
+	}
+
+	for formula, pIdxs := range planByFormula {
+		sIdxs, ok := stateByFormula[formula]
+		if !ok || len(pIdxs) != 1 || len(sIdxs) != 1 {
+			continue
+		}
+		cand := &inlineCandidates[sIdxs[0]]
+		cand.used = true
+		planRules[pIdxs[0]].Id = types.StringValue(cand.id)
+		planModified = true
 	}
 
 	if !planModified {
