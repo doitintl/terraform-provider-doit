@@ -154,7 +154,6 @@ func (d *reportQueryDataSource) Configure(_ context.Context, req datasource.Conf
 // would receive a metric missing type/value and return a cryptic HTTP 400.
 func (d *reportQueryDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
 	validateReportMetricFieldsConfig(ctx, req.Config, &resp.Diagnostics)
-	validateLimitByChangeFieldsConfig(ctx, req.Config, &resp.Diagnostics)
 }
 
 func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

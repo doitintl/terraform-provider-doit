@@ -322,64 +322,6 @@ func validateReportMetricFieldsConfig(ctx context.Context, config tfsdk.Config, 
 	}
 }
 
-// reportLimitByChangeFieldsValidator validates that when config.limit_by_change is
-// set, its API-required fields (change_type, operator, values, include_incomplete_data)
-// are provided. These are relaxed from Required to Optional+Computed in the schema so
-// the object does not cause a permadiff when omitted (see report_resource.go), so the
-// API requirement is enforced here at plan time instead. (metric.type/value are covered
-// by reportMetricFieldsValidator.)
-type reportLimitByChangeFieldsValidator struct{}
-
-var _ resource.ConfigValidator = reportLimitByChangeFieldsValidator{}
-
-func (v reportLimitByChangeFieldsValidator) Description(_ context.Context) string {
-	return "Validates that a configured limit_by_change provides all API-required fields"
-}
-
-func (v reportLimitByChangeFieldsValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that a configured `limit_by_change` provides all API-required fields"
-}
-
-func (v reportLimitByChangeFieldsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	validateLimitByChangeFieldsConfig(ctx, req.Config, &resp.Diagnostics)
-}
-
-// validateLimitByChangeFieldsConfig requires change_type, operator, values and
-// include_incomplete_data when limit_by_change is set. Shared by the report resource
-// and the report_query data source. Unknown values (resolved after apply) are left
-// to the API.
-func validateLimitByChangeFieldsConfig(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
-	var lbc resource_report.LimitByChangeValue
-	if d := config.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &lbc); d.HasError() {
-		diags.Append(d...)
-		return
-	}
-	if lbc.IsNull() || lbc.IsUnknown() {
-		return
-	}
-
-	base := path.Root("config").AtName("limit_by_change")
-	required := []struct {
-		name string
-		null bool
-	}{
-		{"change_type", lbc.ChangeType.IsNull()},
-		{"operator", lbc.Operator.IsNull()},
-		{"values", lbc.Values.IsNull()},
-		{"include_incomplete_data", lbc.IncludeIncompleteData.IsNull()},
-	}
-	for _, r := range required {
-		if r.null {
-			diags.AddAttributeError(
-				base.AtName(r.name),
-				"Missing Required limit_by_change Field",
-				fmt.Sprintf("`%s` is required when `limit_by_change` is set. The DoiT API rejects a "+
-					"limit_by_change without it.", r.name),
-			)
-		}
-	}
-}
-
 // reportFilterNAValidator warns when legacy NullFallback sentinel values such as
 // "[Service N/A]" are found in config.filters[*].values. Users should use
 // include_null = true on the filter block instead, which is semantically equivalent

@@ -3810,13 +3810,16 @@ resource "doit_report" "metric_no_value" {
 `, i)
 }
 
-// TestAccReport_LimitByChangeNotClearable verifies the key non-clearability
-// behavior: once limit_by_change is set, omitting it from config does NOT clear
-// it (the API ignores null/omit) and does NOT cause drift. Relaxing the object's
-// children to Optional+Computed lets Terraform retain the prior state on omit, so
-// the plan is empty and the value is preserved. A regression that reintroduced
-// Required children (permadiff) or that sent null to clear the object would fail
-// here.
+// TestAccReport_LimitByChangeNotClearable verifies that once limit_by_change is
+// set, it is not accidentally cleared. The API ignores null/omit, so the object is
+// preserved server-side and resolved back into state. A regression that sent null
+// to clear the object would drop it and fail the retention assertion.
+//
+// Note: omitting a previously-set limit_by_change re-plans an update every run
+// (the object is Optional+Computed with Required children, so Terraform cannot
+// copy prior state and marks it "known after apply") — the same limitation as the
+// existing metric_filter, and moot because the API cannot clear it anyway. Hence
+// ExpectNonEmptyPlan; the guarantee under test is retention, not a clean plan.
 func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -3835,21 +3838,12 @@ func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 				Config:            testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
 				ConfigStateChecks: []statecheck.StateCheck{present},
 			},
-			// Step 2: omit limit_by_change — retained, empty plan (no drift).
+			// Step 2: omit limit_by_change — the API preserves it, so it is retained
+			// in state (not cleared). The omit re-plans an update, hence ExpectNonEmptyPlan.
 			{
-				Config: testAccReportLimitByChangeCleared(n),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
-				},
-				ConfigStateChecks: []statecheck.StateCheck{present},
-			},
-			// Step 3: re-apply the omitted config — still stable, still present.
-			{
-				Config: testAccReportLimitByChangeCleared(n),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
-				},
-				ConfigStateChecks: []statecheck.StateCheck{present},
+				Config:             testAccReportLimitByChangeCleared(n),
+				ExpectNonEmptyPlan: true,
+				ConfigStateChecks:  []statecheck.StateCheck{present},
 			},
 		},
 	})
@@ -3866,55 +3860,6 @@ resource "doit_report" "lbc" {
         metric = {
             type  = "basic"
             value = "cost"
-        }
-        aggregation    = "total"
-        time_interval  = "month"
-        data_source    = "billing"
-        display_values = "actuals_only"
-        currency       = "USD"
-        layout         = "table"
-    }
-}
-`, i)
-}
-
-// TestAccReport_LimitByChangeFieldsRequired asserts that when limit_by_change is
-// set, its API-required fields must be provided. These fields are relaxed to
-// Optional+Computed in the schema (to avoid an omit-time permadiff), so the
-// requirement is enforced at plan time by reportLimitByChangeFieldsValidator.
-func TestAccReport_LimitByChangeFieldsRequired(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccReportLimitByChangeMissingOperator(n),
-				ExpectError: regexp.MustCompile(`Missing Required limit_by_change Field`),
-			},
-		},
-	})
-}
-
-func testAccReportLimitByChangeMissingOperator(i int) string {
-	return fmt.Sprintf(`
-resource "doit_report" "lbc_no_op" {
-    name = "test-lbc-no-op-%d"
-    config = {
-        metric = {
-            type  = "basic"
-            value = "cost"
-        }
-        limit_by_change = {
-            metric = {
-                type  = "basic"
-                value = "cost"
-            }
-            change_type             = "percentage"
-            values                  = [50]
-            include_incomplete_data = false
         }
         aggregation    = "total"
         time_interval  = "month"
