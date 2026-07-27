@@ -4096,6 +4096,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
     post:
       tags:
         - Support Requests
@@ -4154,6 +4158,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
     patch:
       tags:
         - Support Requests
@@ -4254,6 +4262,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
     post:
       tags:
         - Support Requests
@@ -12722,6 +12734,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    "409":
+      description: >-
+        Conflict - The request conflicts with the current state of the resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     "429":
       description: >-
         Too Many Requests.
@@ -12732,6 +12751,20 @@ components:
     "500":
       description: >-
         Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "502":
+      description: >-
+        Bad Gateway - The upstream support system returned an error that a retry will not resolve (e.g. an authentication or configuration problem). Escalation is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "503":
+      description: >-
+        Service Unavailable - The upstream support system is temporarily unavailable (rate limited, upstream 5xx, or a network error). Retry after the interval indicated by the Retry-After header.
       content:
         application/json:
           schema:

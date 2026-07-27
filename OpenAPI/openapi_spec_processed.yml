@@ -2737,6 +2737,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
   /support/v1/tickets/{ticketId}:
     get:
       tags:
@@ -2767,6 +2771,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
   /support/v1/tickets/{ticketId}/comments:
     get:
       tags:
@@ -2799,6 +2807,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
   /support/v1/tickets/{ticketId}/tags:
     get:
       tags:
@@ -10191,6 +10203,20 @@ components:
     "500":
       description: >-
         Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "502":
+      description: >-
+        Bad Gateway - The upstream support system returned an error that a retry will not resolve (e.g. an authentication or configuration problem). Escalation is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "503":
+      description: >-
+        Service Unavailable - The upstream support system is temporarily unavailable (rate limited, upstream 5xx, or a network error). Retry after the interval indicated by the Retry-After header.
       content:
         application/json:
           schema:

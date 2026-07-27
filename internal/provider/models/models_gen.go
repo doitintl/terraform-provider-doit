@@ -8008,6 +8008,12 @@ type N429 = Error
 // N500 Standard error response structure.
 type N500 = Error
 
+// N502 Standard error response structure.
+type N502 = Error
+
+// N503 Standard error response structure.
+type N503 = Error
+
 // apiKeyContextKey is the context key for api_key security scheme
 type apiKeyContextKey string
 
@@ -20415,6 +20421,8 @@ type IdOfTicketsResp struct {
 	JSON401      *N401
 	JSON403      *N403
 	JSON404      *N404
+	JSON502      *N502
+	JSON503      *N503
 }
 
 // Status returns HTTPResponse.Status
@@ -20449,6 +20457,8 @@ type IdOfTicketGetResp struct {
 	JSON401      *N401
 	JSON403      *N403
 	JSON404      *N404
+	JSON502      *N502
+	JSON503      *N503
 }
 
 // Status returns HTTPResponse.Status
@@ -20482,6 +20492,8 @@ type IdOfTicketCommentsListResp struct {
 	JSON401      *N401
 	JSON403      *N403
 	JSON404      *N404
+	JSON502      *N502
+	JSON503      *N503
 }
 
 // Status returns HTTPResponse.Status
@@ -27133,6 +27145,20 @@ func ParseIdOfTicketsResp(rsp *http.Response) (*IdOfTicketsResp, error) {
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest N502
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest N503
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
 	}
 
 	return response, nil
@@ -27187,6 +27213,20 @@ func ParseIdOfTicketGetResp(rsp *http.Response) (*IdOfTicketGetResp, error) {
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest N502
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest N503
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
 	}
 
 	return response, nil
@@ -27233,6 +27273,20 @@ func ParseIdOfTicketCommentsListResp(rsp *http.Response) (*IdOfTicketCommentsLis
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest N502
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest N503
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
