@@ -328,12 +328,38 @@ func (t PropertiesType) ValueFromObject(ctx context.Context, in basetypes.Object
 		return nil, diags
 	}
 
-	subscriptionVal, ok := subscriptionAttribute.(SubscriptionValue)
+	subscriptionValuable, ok := subscriptionAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`subscription expected to be SubscriptionValue, was: %T`, subscriptionAttribute))
+			fmt.Sprintf(`subscription expected to be basetypes.ObjectValuable, was: %T`, subscriptionAttribute))
+
+		return nil, diags
+	}
+
+	subscriptionObjVal, subscriptionObjValDiags := subscriptionValuable.ToObjectValue(ctx)
+	diags.Append(subscriptionObjValDiags...)
+
+	subscriptionTypable, ok := t.AttrTypes["subscription"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`subscription expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["subscription"]))
+
+		return nil, diags
+	}
+
+	subscriptionConverted, subscriptionConvertedDiags := subscriptionTypable.ValueFromObject(ctx, subscriptionObjVal)
+	diags.Append(subscriptionConvertedDiags...)
+
+	subscriptionVal, ok := subscriptionConverted.(SubscriptionValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`subscription expected to be SubscriptionValue, was: %T`, subscriptionConverted))
 	}
 
 	if diags.HasError() {
@@ -843,12 +869,38 @@ func (t SubscriptionType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
-	planVal, ok := planAttribute.(PlanValue)
+	planValuable, ok := planAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`plan expected to be PlanValue, was: %T`, planAttribute))
+			fmt.Sprintf(`plan expected to be basetypes.ObjectValuable, was: %T`, planAttribute))
+
+		return nil, diags
+	}
+
+	planObjVal, planObjValDiags := planValuable.ToObjectValue(ctx)
+	diags.Append(planObjValDiags...)
+
+	planTypable, ok := t.AttrTypes["plan"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`plan expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["plan"]))
+
+		return nil, diags
+	}
+
+	planConverted, planConvertedDiags := planTypable.ValueFromObject(ctx, planObjVal)
+	diags.Append(planConvertedDiags...)
+
+	planVal, ok := planConverted.(PlanValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`plan expected to be PlanValue, was: %T`, planConverted))
 	}
 
 	purchaseOrderIdAttribute, ok := attributes["purchase_order_id"]
@@ -879,12 +931,38 @@ func (t SubscriptionType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
-	renewalSettingsVal, ok := renewalSettingsAttribute.(RenewalSettingsValue)
+	renewalSettingsValuable, ok := renewalSettingsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`renewal_settings expected to be RenewalSettingsValue, was: %T`, renewalSettingsAttribute))
+			fmt.Sprintf(`renewal_settings expected to be basetypes.ObjectValuable, was: %T`, renewalSettingsAttribute))
+
+		return nil, diags
+	}
+
+	renewalSettingsObjVal, renewalSettingsObjValDiags := renewalSettingsValuable.ToObjectValue(ctx)
+	diags.Append(renewalSettingsObjValDiags...)
+
+	renewalSettingsTypable, ok := t.AttrTypes["renewal_settings"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renewal_settings expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["renewal_settings"]))
+
+		return nil, diags
+	}
+
+	renewalSettingsConverted, renewalSettingsConvertedDiags := renewalSettingsTypable.ValueFromObject(ctx, renewalSettingsObjVal)
+	diags.Append(renewalSettingsConvertedDiags...)
+
+	renewalSettingsVal, ok := renewalSettingsConverted.(RenewalSettingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renewal_settings expected to be RenewalSettingsValue, was: %T`, renewalSettingsConverted))
 	}
 
 	resourceUiurlAttribute, ok := attributes["resource_uiurl"]
@@ -915,12 +993,38 @@ func (t SubscriptionType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
-	seatsVal, ok := seatsAttribute.(SeatsValue)
+	seatsValuable, ok := seatsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`seats expected to be SeatsValue, was: %T`, seatsAttribute))
+			fmt.Sprintf(`seats expected to be basetypes.ObjectValuable, was: %T`, seatsAttribute))
+
+		return nil, diags
+	}
+
+	seatsObjVal, seatsObjValDiags := seatsValuable.ToObjectValue(ctx)
+	diags.Append(seatsObjValDiags...)
+
+	seatsTypable, ok := t.AttrTypes["seats"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`seats expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["seats"]))
+
+		return nil, diags
+	}
+
+	seatsConverted, seatsConvertedDiags := seatsTypable.ValueFromObject(ctx, seatsObjVal)
+	diags.Append(seatsConvertedDiags...)
+
+	seatsVal, ok := seatsConverted.(SeatsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`seats expected to be SeatsValue, was: %T`, seatsConverted))
 	}
 
 	skuIdAttribute, ok := attributes["sku_id"]
@@ -1725,12 +1829,38 @@ func (t PlanType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	commitmentIntervalVal, ok := commitmentIntervalAttribute.(CommitmentIntervalValue)
+	commitmentIntervalValuable, ok := commitmentIntervalAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`commitment_interval expected to be CommitmentIntervalValue, was: %T`, commitmentIntervalAttribute))
+			fmt.Sprintf(`commitment_interval expected to be basetypes.ObjectValuable, was: %T`, commitmentIntervalAttribute))
+
+		return nil, diags
+	}
+
+	commitmentIntervalObjVal, commitmentIntervalObjValDiags := commitmentIntervalValuable.ToObjectValue(ctx)
+	diags.Append(commitmentIntervalObjValDiags...)
+
+	commitmentIntervalTypable, ok := t.AttrTypes["commitment_interval"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`commitment_interval expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["commitment_interval"]))
+
+		return nil, diags
+	}
+
+	commitmentIntervalConverted, commitmentIntervalConvertedDiags := commitmentIntervalTypable.ValueFromObject(ctx, commitmentIntervalObjVal)
+	diags.Append(commitmentIntervalConvertedDiags...)
+
+	commitmentIntervalVal, ok := commitmentIntervalConverted.(CommitmentIntervalValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`commitment_interval expected to be CommitmentIntervalValue, was: %T`, commitmentIntervalConverted))
 	}
 
 	isCommitmentPlanAttribute, ok := attributes["is_commitment_plan"]

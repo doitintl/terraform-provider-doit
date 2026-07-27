@@ -168,6 +168,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		"currency":                    types.StringNull(),
 		"data_source":                 types.StringNull(),
 		"display_values":              types.StringNull(),
+		"forecast_settings":           datasource_report.NewForecastSettingsValueNull(),
 		"include_promotional_credits": types.BoolNull(),
 		"include_subtotals":           types.BoolNull(),
 		"layout":                      types.StringNull(),
@@ -220,6 +221,66 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		configMap["advanced_analysis"] = advVal
 	} else {
 		configMap["advanced_analysis"] = datasource_report.NewAdvancedAnalysisValueNull()
+	}
+
+	// Nested Object: ForecastSettings
+	fs := nullableToPointer(config.ForecastSettings)
+	if fs != nil {
+		fsMap := map[string]attr.Value{
+			"future_custom_date_range":     datasource_report.NewFutureCustomDateRangeValueNull(),
+			"future_time_intervals":        types.Int64Null(),
+			"historical_custom_date_range": datasource_report.NewHistoricalCustomDateRangeValueNull(),
+			"historical_time_intervals":    types.Int64Null(),
+			"mode":                         types.StringValue("totals"),
+		}
+
+		if fs.FutureTimeIntervals != nil {
+			fsMap["future_time_intervals"] = types.Int64Value(*fs.FutureTimeIntervals)
+		}
+		if fs.HistoricalTimeIntervals != nil {
+			fsMap["historical_time_intervals"] = types.Int64Value(*fs.HistoricalTimeIntervals)
+		}
+		if fs.Mode != nil {
+			fsMap["mode"] = types.StringValue(string(*fs.Mode))
+		}
+
+		if fs.FutureCustomDateRange != nil {
+			fcdrMap := map[string]attr.Value{
+				"from": types.StringNull(),
+				"to":   types.StringNull(),
+			}
+			if fs.FutureCustomDateRange.From != nil {
+				fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339))
+			}
+			if fs.FutureCustomDateRange.To != nil {
+				fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339))
+			}
+			fcdrVal, fcdrDiags := datasource_report.NewFutureCustomDateRangeValue(datasource_report.FutureCustomDateRangeValue{}.AttributeTypes(ctx), fcdrMap)
+			diags.Append(fcdrDiags...)
+			fsMap["future_custom_date_range"] = fcdrVal
+		}
+
+		if fs.HistoricalCustomDateRange != nil {
+			hcdrMap := map[string]attr.Value{
+				"from": types.StringNull(),
+				"to":   types.StringNull(),
+			}
+			if fs.HistoricalCustomDateRange.From != nil {
+				hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339))
+			}
+			if fs.HistoricalCustomDateRange.To != nil {
+				hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339))
+			}
+			hcdrVal, hcdrDiags := datasource_report.NewHistoricalCustomDateRangeValue(datasource_report.HistoricalCustomDateRangeValue{}.AttributeTypes(ctx), hcdrMap)
+			diags.Append(hcdrDiags...)
+			fsMap["historical_custom_date_range"] = hcdrVal
+		}
+
+		fsVal, fsDiags := datasource_report.NewForecastSettingsValue(datasource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
+		diags.Append(fsDiags...)
+		configMap["forecast_settings"] = fsVal
+	} else {
+		configMap["forecast_settings"] = datasource_report.NewForecastSettingsValueNull()
 	}
 
 	// Nested Object: CustomTimeRange

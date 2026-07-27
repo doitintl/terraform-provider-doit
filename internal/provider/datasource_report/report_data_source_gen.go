@@ -197,6 +197,77 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 						Description:         "The filters to apply to the report.",
 						MarkdownDescription: "The filters to apply to the report.",
 					},
+					"forecast_settings": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"future_custom_date_range": schema.SingleNestedAttribute{
+								Attributes: map[string]schema.Attribute{
+									"from": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Start timestamp in RFC3339 format.",
+										MarkdownDescription: "Start timestamp in RFC3339 format.",
+									},
+									"to": schema.StringAttribute{
+										Computed:            true,
+										Description:         "End timestamp in RFC3339 format.",
+										MarkdownDescription: "End timestamp in RFC3339 format.",
+									},
+								},
+								CustomType: FutureCustomDateRangeType{
+									ObjectType: types.ObjectType{
+										AttrTypes: FutureCustomDateRangeValue{}.AttributeTypes(ctx),
+									},
+								},
+								Computed:            true,
+								Description:         "Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.\nThe range must resolve to a futureTimeIntervals count within the allowed min/max for the report timeInterval.",
+								MarkdownDescription: "Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.\nThe range must resolve to a futureTimeIntervals count within the allowed min/max for the report timeInterval.",
+							},
+							"future_time_intervals": schema.Int64Attribute{
+								Computed:            true,
+								Description:         "How many future timeInterval periods of predicted costs to project.\nAllowed ranges by timeInterval: hour 1-1000, day 1-100, week 1-52, month 1-12, quarter 1-4, year 1-3.",
+								MarkdownDescription: "How many future timeInterval periods of predicted costs to project.\nAllowed ranges by timeInterval: hour 1-1000, day 1-100, week 1-52, month 1-12, quarter 1-4, year 1-3.",
+							},
+							"historical_custom_date_range": schema.SingleNestedAttribute{
+								Attributes: map[string]schema.Attribute{
+									"from": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Start timestamp in RFC3339 format.",
+										MarkdownDescription: "Start timestamp in RFC3339 format.",
+									},
+									"to": schema.StringAttribute{
+										Computed:            true,
+										Description:         "End timestamp in RFC3339 format.",
+										MarkdownDescription: "End timestamp in RFC3339 format.",
+									},
+								},
+								CustomType: HistoricalCustomDateRangeType{
+									ObjectType: types.ObjectType{
+										AttrTypes: HistoricalCustomDateRangeValue{}.AttributeTypes(ctx),
+									},
+								},
+								Computed:            true,
+								Description:         "Past date range of billed data the model learns from. Takes precedence over historicalTimeIntervals.",
+								MarkdownDescription: "Past date range of billed data the model learns from. Takes precedence over historicalTimeIntervals.",
+							},
+							"historical_time_intervals": schema.Int64Attribute{
+								Computed:            true,
+								Description:         "How many past timeInterval periods of data the model learns from.\nAllowed ranges by timeInterval: hour 2-1000, day 2-500, week 2-100, month 2-36, quarter 2-12, year 2-6.",
+								MarkdownDescription: "How many past timeInterval periods of data the model learns from.\nAllowed ranges by timeInterval: hour 2-1000, day 2-500, week 2-100, month 2-36, quarter 2-12, year 2-6.",
+							},
+							"mode": schema.StringAttribute{
+								Computed:            true,
+								Description:         "Forecast granularity mode.",
+								MarkdownDescription: "Forecast granularity mode.",
+							},
+						},
+						CustomType: ForecastSettingsType{
+							ObjectType: types.ObjectType{
+								AttrTypes: ForecastSettingsValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.",
+						MarkdownDescription: "Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.",
+					},
 					"group": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
@@ -648,12 +719,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	advancedAnalysisVal, ok := advancedAnalysisAttribute.(AdvancedAnalysisValue)
+	advancedAnalysisValuable, ok := advancedAnalysisAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`advanced_analysis expected to be AdvancedAnalysisValue, was: %T`, advancedAnalysisAttribute))
+			fmt.Sprintf(`advanced_analysis expected to be basetypes.ObjectValuable, was: %T`, advancedAnalysisAttribute))
+
+		return nil, diags
+	}
+
+	advancedAnalysisObjVal, advancedAnalysisObjValDiags := advancedAnalysisValuable.ToObjectValue(ctx)
+	diags.Append(advancedAnalysisObjValDiags...)
+
+	advancedAnalysisTypable, ok := t.AttrTypes["advanced_analysis"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`advanced_analysis expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["advanced_analysis"]))
+
+		return nil, diags
+	}
+
+	advancedAnalysisConverted, advancedAnalysisConvertedDiags := advancedAnalysisTypable.ValueFromObject(ctx, advancedAnalysisObjVal)
+	diags.Append(advancedAnalysisConvertedDiags...)
+
+	advancedAnalysisVal, ok := advancedAnalysisConverted.(AdvancedAnalysisValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`advanced_analysis expected to be AdvancedAnalysisValue, was: %T`, advancedAnalysisConverted))
 	}
 
 	aggregationAttribute, ok := attributes["aggregation"]
@@ -702,12 +799,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
+	customTimeRangeValuable, ok := customTimeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
+			fmt.Sprintf(`custom_time_range expected to be basetypes.ObjectValuable, was: %T`, customTimeRangeAttribute))
+
+		return nil, diags
+	}
+
+	customTimeRangeObjVal, customTimeRangeObjValDiags := customTimeRangeValuable.ToObjectValue(ctx)
+	diags.Append(customTimeRangeObjValDiags...)
+
+	customTimeRangeTypable, ok := t.AttrTypes["custom_time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["custom_time_range"]))
+
+		return nil, diags
+	}
+
+	customTimeRangeConverted, customTimeRangeConvertedDiags := customTimeRangeTypable.ValueFromObject(ctx, customTimeRangeObjVal)
+	diags.Append(customTimeRangeConvertedDiags...)
+
+	customTimeRangeVal, ok := customTimeRangeConverted.(CustomTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeConverted))
 	}
 
 	dataSourceAttribute, ok := attributes["data_source"]
@@ -756,12 +879,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	displaySettingsVal, ok := displaySettingsAttribute.(DisplaySettingsValue)
+	displaySettingsValuable, ok := displaySettingsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`display_settings expected to be DisplaySettingsValue, was: %T`, displaySettingsAttribute))
+			fmt.Sprintf(`display_settings expected to be basetypes.ObjectValuable, was: %T`, displaySettingsAttribute))
+
+		return nil, diags
+	}
+
+	displaySettingsObjVal, displaySettingsObjValDiags := displaySettingsValuable.ToObjectValue(ctx)
+	diags.Append(displaySettingsObjValDiags...)
+
+	displaySettingsTypable, ok := t.AttrTypes["display_settings"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`display_settings expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["display_settings"]))
+
+		return nil, diags
+	}
+
+	displaySettingsConverted, displaySettingsConvertedDiags := displaySettingsTypable.ValueFromObject(ctx, displaySettingsObjVal)
+	diags.Append(displaySettingsConvertedDiags...)
+
+	displaySettingsVal, ok := displaySettingsConverted.(DisplaySettingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`display_settings expected to be DisplaySettingsValue, was: %T`, displaySettingsConverted))
 	}
 
 	displayValuesAttribute, ok := attributes["display_values"]
@@ -798,6 +947,50 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`filters expected to be basetypes.ListValue, was: %T`, filtersAttribute))
+	}
+
+	forecastSettingsAttribute, ok := attributes["forecast_settings"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`forecast_settings is missing from object`)
+
+		return nil, diags
+	}
+
+	forecastSettingsValuable, ok := forecastSettingsAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`forecast_settings expected to be basetypes.ObjectValuable, was: %T`, forecastSettingsAttribute))
+
+		return nil, diags
+	}
+
+	forecastSettingsObjVal, forecastSettingsObjValDiags := forecastSettingsValuable.ToObjectValue(ctx)
+	diags.Append(forecastSettingsObjValDiags...)
+
+	forecastSettingsTypable, ok := t.AttrTypes["forecast_settings"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`forecast_settings expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["forecast_settings"]))
+
+		return nil, diags
+	}
+
+	forecastSettingsConverted, forecastSettingsConvertedDiags := forecastSettingsTypable.ValueFromObject(ctx, forecastSettingsObjVal)
+	diags.Append(forecastSettingsConvertedDiags...)
+
+	forecastSettingsVal, ok := forecastSettingsConverted.(ForecastSettingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`forecast_settings expected to be ForecastSettingsValue, was: %T`, forecastSettingsConverted))
 	}
 
 	groupAttribute, ok := attributes["group"]
@@ -882,12 +1075,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	metricFilterAttribute, ok := attributes["metric_filter"]
@@ -900,12 +1119,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricFilterVal, ok := metricFilterAttribute.(MetricFilterValue)
+	metricFilterValuable, ok := metricFilterAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterAttribute))
+			fmt.Sprintf(`metric_filter expected to be basetypes.ObjectValuable, was: %T`, metricFilterAttribute))
+
+		return nil, diags
+	}
+
+	metricFilterObjVal, metricFilterObjValDiags := metricFilterValuable.ToObjectValue(ctx)
+	diags.Append(metricFilterObjValDiags...)
+
+	metricFilterTypable, ok := t.AttrTypes["metric_filter"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric_filter expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric_filter"]))
+
+		return nil, diags
+	}
+
+	metricFilterConverted, metricFilterConvertedDiags := metricFilterTypable.ValueFromObject(ctx, metricFilterObjVal)
+	diags.Append(metricFilterConvertedDiags...)
+
+	metricFilterVal, ok := metricFilterConverted.(MetricFilterValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterConverted))
 	}
 
 	metricsAttribute, ok := attributes["metrics"]
@@ -936,12 +1181,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	secondaryTimeRangeVal, ok := secondaryTimeRangeAttribute.(SecondaryTimeRangeValue)
+	secondaryTimeRangeValuable, ok := secondaryTimeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`secondary_time_range expected to be SecondaryTimeRangeValue, was: %T`, secondaryTimeRangeAttribute))
+			fmt.Sprintf(`secondary_time_range expected to be basetypes.ObjectValuable, was: %T`, secondaryTimeRangeAttribute))
+
+		return nil, diags
+	}
+
+	secondaryTimeRangeObjVal, secondaryTimeRangeObjValDiags := secondaryTimeRangeValuable.ToObjectValue(ctx)
+	diags.Append(secondaryTimeRangeObjValDiags...)
+
+	secondaryTimeRangeTypable, ok := t.AttrTypes["secondary_time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`secondary_time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["secondary_time_range"]))
+
+		return nil, diags
+	}
+
+	secondaryTimeRangeConverted, secondaryTimeRangeConvertedDiags := secondaryTimeRangeTypable.ValueFromObject(ctx, secondaryTimeRangeObjVal)
+	diags.Append(secondaryTimeRangeConvertedDiags...)
+
+	secondaryTimeRangeVal, ok := secondaryTimeRangeConverted.(SecondaryTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`secondary_time_range expected to be SecondaryTimeRangeValue, was: %T`, secondaryTimeRangeConverted))
 	}
 
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
@@ -1026,12 +1297,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	timeRangeVal, ok := timeRangeAttribute.(TimeRangeValue)
+	timeRangeValuable, ok := timeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`time_range expected to be TimeRangeValue, was: %T`, timeRangeAttribute))
+			fmt.Sprintf(`time_range expected to be basetypes.ObjectValuable, was: %T`, timeRangeAttribute))
+
+		return nil, diags
+	}
+
+	timeRangeObjVal, timeRangeObjValDiags := timeRangeValuable.ToObjectValue(ctx)
+	diags.Append(timeRangeObjValDiags...)
+
+	timeRangeTypable, ok := t.AttrTypes["time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["time_range"]))
+
+		return nil, diags
+	}
+
+	timeRangeConverted, timeRangeConvertedDiags := timeRangeTypable.ValueFromObject(ctx, timeRangeObjVal)
+	diags.Append(timeRangeConvertedDiags...)
+
+	timeRangeVal, ok := timeRangeConverted.(TimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`time_range expected to be TimeRangeValue, was: %T`, timeRangeConverted))
 	}
 
 	if diags.HasError() {
@@ -1048,6 +1345,7 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		DisplaySettings:           displaySettingsVal,
 		DisplayValues:             displayValuesVal,
 		Filters:                   filtersVal,
+		ForecastSettings:          forecastSettingsVal,
 		Group:                     groupVal,
 		IncludePromotionalCredits: includePromotionalCreditsVal,
 		IncludeSubtotals:          includeSubtotalsVal,
@@ -1290,6 +1588,24 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`filters expected to be basetypes.ListValue, was: %T`, filtersAttribute))
 	}
 
+	forecastSettingsAttribute, ok := attributes["forecast_settings"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`forecast_settings is missing from object`)
+
+		return NewConfigValueUnknown(), diags
+	}
+
+	forecastSettingsVal, ok := forecastSettingsAttribute.(ForecastSettingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`forecast_settings expected to be ForecastSettingsValue, was: %T`, forecastSettingsAttribute))
+	}
+
 	groupAttribute, ok := attributes["group"]
 
 	if !ok {
@@ -1538,6 +1854,7 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		DisplaySettings:           displaySettingsVal,
 		DisplayValues:             displayValuesVal,
 		Filters:                   filtersVal,
+		ForecastSettings:          forecastSettingsVal,
 		Group:                     groupVal,
 		IncludePromotionalCredits: includePromotionalCreditsVal,
 		IncludeSubtotals:          includeSubtotalsVal,
@@ -1632,6 +1949,7 @@ type ConfigValue struct {
 	DisplaySettings           DisplaySettingsValue    `tfsdk:"display_settings"`
 	DisplayValues             basetypes.StringValue   `tfsdk:"display_values"`
 	Filters                   basetypes.ListValue     `tfsdk:"filters"`
+	ForecastSettings          ForecastSettingsValue   `tfsdk:"forecast_settings"`
 	Group                     basetypes.ListValue     `tfsdk:"group"`
 	IncludePromotionalCredits basetypes.BoolValue     `tfsdk:"include_promotional_credits"`
 	IncludeSubtotals          basetypes.BoolValue     `tfsdk:"include_subtotals"`
@@ -1649,7 +1967,7 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 22)
+	attrTypes := make(map[string]tftypes.Type, 23)
 
 	var val tftypes.Value
 	var err error
@@ -1678,6 +1996,11 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["display_values"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["filters"] = basetypes.ListType{
 		ElemType: FiltersValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["forecast_settings"] = ForecastSettingsType{
+		basetypes.ObjectType{
+			AttrTypes: ForecastSettingsValue{}.AttributeTypes(ctx),
+		},
 	}.TerraformType(ctx)
 	attrTypes["group"] = basetypes.ListType{
 		ElemType: GroupValue{}.Type(ctx),
@@ -1719,7 +2042,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 22)
+		vals := make(map[string]tftypes.Value, 23)
 
 		val, err = v.AdvancedAnalysis.ToTerraformValue(ctx)
 
@@ -1792,6 +2115,14 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["filters"] = val
+
+		val, err = v.ForecastSettings.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["forecast_settings"] = val
 
 		val, err = v.Group.ToTerraformValue(ctx)
 
@@ -1956,6 +2287,12 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		filters = v.Filters
 	}
 
+	var forecastSettings attr.Value
+
+	{
+		forecastSettings = v.ForecastSettings
+	}
+
 	var group attr.Value
 
 	{
@@ -2024,6 +2361,11 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"filters": basetypes.ListType{
 			ElemType: FiltersValue{}.Type(ctx),
 		},
+		"forecast_settings": ForecastSettingsType{
+			basetypes.ObjectType{
+				AttrTypes: ForecastSettingsValue{}.AttributeTypes(ctx),
+			},
+		},
 		"group": basetypes.ListType{
 			ElemType: GroupValue{}.Type(ctx),
 		},
@@ -2081,6 +2423,7 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"display_settings":            displaySettings,
 			"display_values":              v.DisplayValues,
 			"filters":                     filters,
+			"forecast_settings":           forecastSettings,
 			"group":                       group,
 			"include_promotional_credits": v.IncludePromotionalCredits,
 			"include_subtotals":           v.IncludeSubtotals,
@@ -2147,6 +2490,10 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Filters.Equal(other.Filters) {
+		return false
+	}
+
+	if !v.ForecastSettings.Equal(other.ForecastSettings) {
 		return false
 	}
 
@@ -2239,6 +2586,11 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"display_values": basetypes.StringType{},
 		"filters": basetypes.ListType{
 			ElemType: FiltersValue{}.Type(ctx),
+		},
+		"forecast_settings": ForecastSettingsType{
+			basetypes.ObjectType{
+				AttrTypes: ForecastSettingsValue{}.AttributeTypes(ctx),
+			},
 		},
 		"group": basetypes.ListType{
 			ElemType: GroupValue{}.Type(ctx),
@@ -4795,6 +5147,1420 @@ func (v FiltersValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	}
 }
 
+var _ basetypes.ObjectTypable = ForecastSettingsType{}
+
+type ForecastSettingsType struct {
+	basetypes.ObjectType
+}
+
+func (t ForecastSettingsType) Equal(o attr.Type) bool {
+	other, ok := o.(ForecastSettingsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ForecastSettingsType) String() string {
+	return "ForecastSettingsType"
+}
+
+func (t ForecastSettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewForecastSettingsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	futureCustomDateRangeAttribute, ok := attributes["future_custom_date_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`future_custom_date_range is missing from object`)
+
+		return nil, diags
+	}
+
+	futureCustomDateRangeValuable, ok := futureCustomDateRangeAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`future_custom_date_range expected to be basetypes.ObjectValuable, was: %T`, futureCustomDateRangeAttribute))
+
+		return nil, diags
+	}
+
+	futureCustomDateRangeObjVal, futureCustomDateRangeObjValDiags := futureCustomDateRangeValuable.ToObjectValue(ctx)
+	diags.Append(futureCustomDateRangeObjValDiags...)
+
+	futureCustomDateRangeTypable, ok := t.AttrTypes["future_custom_date_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`future_custom_date_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["future_custom_date_range"]))
+
+		return nil, diags
+	}
+
+	futureCustomDateRangeConverted, futureCustomDateRangeConvertedDiags := futureCustomDateRangeTypable.ValueFromObject(ctx, futureCustomDateRangeObjVal)
+	diags.Append(futureCustomDateRangeConvertedDiags...)
+
+	futureCustomDateRangeVal, ok := futureCustomDateRangeConverted.(FutureCustomDateRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`future_custom_date_range expected to be FutureCustomDateRangeValue, was: %T`, futureCustomDateRangeConverted))
+	}
+
+	futureTimeIntervalsAttribute, ok := attributes["future_time_intervals"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`future_time_intervals is missing from object`)
+
+		return nil, diags
+	}
+
+	futureTimeIntervalsVal, ok := futureTimeIntervalsAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`future_time_intervals expected to be basetypes.Int64Value, was: %T`, futureTimeIntervalsAttribute))
+	}
+
+	historicalCustomDateRangeAttribute, ok := attributes["historical_custom_date_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`historical_custom_date_range is missing from object`)
+
+		return nil, diags
+	}
+
+	historicalCustomDateRangeValuable, ok := historicalCustomDateRangeAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`historical_custom_date_range expected to be basetypes.ObjectValuable, was: %T`, historicalCustomDateRangeAttribute))
+
+		return nil, diags
+	}
+
+	historicalCustomDateRangeObjVal, historicalCustomDateRangeObjValDiags := historicalCustomDateRangeValuable.ToObjectValue(ctx)
+	diags.Append(historicalCustomDateRangeObjValDiags...)
+
+	historicalCustomDateRangeTypable, ok := t.AttrTypes["historical_custom_date_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`historical_custom_date_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["historical_custom_date_range"]))
+
+		return nil, diags
+	}
+
+	historicalCustomDateRangeConverted, historicalCustomDateRangeConvertedDiags := historicalCustomDateRangeTypable.ValueFromObject(ctx, historicalCustomDateRangeObjVal)
+	diags.Append(historicalCustomDateRangeConvertedDiags...)
+
+	historicalCustomDateRangeVal, ok := historicalCustomDateRangeConverted.(HistoricalCustomDateRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`historical_custom_date_range expected to be HistoricalCustomDateRangeValue, was: %T`, historicalCustomDateRangeConverted))
+	}
+
+	historicalTimeIntervalsAttribute, ok := attributes["historical_time_intervals"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`historical_time_intervals is missing from object`)
+
+		return nil, diags
+	}
+
+	historicalTimeIntervalsVal, ok := historicalTimeIntervalsAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`historical_time_intervals expected to be basetypes.Int64Value, was: %T`, historicalTimeIntervalsAttribute))
+	}
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return nil, diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ForecastSettingsValue{
+		FutureCustomDateRange:     futureCustomDateRangeVal,
+		FutureTimeIntervals:       futureTimeIntervalsVal,
+		HistoricalCustomDateRange: historicalCustomDateRangeVal,
+		HistoricalTimeIntervals:   historicalTimeIntervalsVal,
+		Mode:                      modeVal,
+		state:                     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewForecastSettingsValueNull() ForecastSettingsValue {
+	return ForecastSettingsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewForecastSettingsValueUnknown() ForecastSettingsValue {
+	return ForecastSettingsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewForecastSettingsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ForecastSettingsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ForecastSettingsValue Attribute Value",
+				"While creating a ForecastSettingsValue value, a missing attribute value was detected. "+
+					"A ForecastSettingsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ForecastSettingsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ForecastSettingsValue Attribute Type",
+				"While creating a ForecastSettingsValue value, an invalid attribute value was detected. "+
+					"A ForecastSettingsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ForecastSettingsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ForecastSettingsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ForecastSettingsValue Attribute Value",
+				"While creating a ForecastSettingsValue value, an extra attribute value was detected. "+
+					"A ForecastSettingsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ForecastSettingsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	futureCustomDateRangeAttribute, ok := attributes["future_custom_date_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`future_custom_date_range is missing from object`)
+
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	futureCustomDateRangeVal, ok := futureCustomDateRangeAttribute.(FutureCustomDateRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`future_custom_date_range expected to be FutureCustomDateRangeValue, was: %T`, futureCustomDateRangeAttribute))
+	}
+
+	futureTimeIntervalsAttribute, ok := attributes["future_time_intervals"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`future_time_intervals is missing from object`)
+
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	futureTimeIntervalsVal, ok := futureTimeIntervalsAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`future_time_intervals expected to be basetypes.Int64Value, was: %T`, futureTimeIntervalsAttribute))
+	}
+
+	historicalCustomDateRangeAttribute, ok := attributes["historical_custom_date_range"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`historical_custom_date_range is missing from object`)
+
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	historicalCustomDateRangeVal, ok := historicalCustomDateRangeAttribute.(HistoricalCustomDateRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`historical_custom_date_range expected to be HistoricalCustomDateRangeValue, was: %T`, historicalCustomDateRangeAttribute))
+	}
+
+	historicalTimeIntervalsAttribute, ok := attributes["historical_time_intervals"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`historical_time_intervals is missing from object`)
+
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	historicalTimeIntervalsVal, ok := historicalTimeIntervalsAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`historical_time_intervals expected to be basetypes.Int64Value, was: %T`, historicalTimeIntervalsAttribute))
+	}
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewForecastSettingsValueUnknown(), diags
+	}
+
+	return ForecastSettingsValue{
+		FutureCustomDateRange:     futureCustomDateRangeVal,
+		FutureTimeIntervals:       futureTimeIntervalsVal,
+		HistoricalCustomDateRange: historicalCustomDateRangeVal,
+		HistoricalTimeIntervals:   historicalTimeIntervalsVal,
+		Mode:                      modeVal,
+		state:                     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewForecastSettingsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ForecastSettingsValue {
+	object, diags := NewForecastSettingsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewForecastSettingsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ForecastSettingsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewForecastSettingsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewForecastSettingsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewForecastSettingsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewForecastSettingsValueMust(ForecastSettingsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ForecastSettingsType) ValueType(ctx context.Context) attr.Value {
+	return ForecastSettingsValue{}
+}
+
+var _ basetypes.ObjectValuable = ForecastSettingsValue{}
+
+type ForecastSettingsValue struct {
+	FutureCustomDateRange     FutureCustomDateRangeValue     `tfsdk:"future_custom_date_range"`
+	FutureTimeIntervals       basetypes.Int64Value           `tfsdk:"future_time_intervals"`
+	HistoricalCustomDateRange HistoricalCustomDateRangeValue `tfsdk:"historical_custom_date_range"`
+	HistoricalTimeIntervals   basetypes.Int64Value           `tfsdk:"historical_time_intervals"`
+	Mode                      basetypes.StringValue          `tfsdk:"mode"`
+	state                     attr.ValueState
+}
+
+func (v ForecastSettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["future_custom_date_range"] = FutureCustomDateRangeType{
+		basetypes.ObjectType{
+			AttrTypes: FutureCustomDateRangeValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["future_time_intervals"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["historical_custom_date_range"] = HistoricalCustomDateRangeType{
+		basetypes.ObjectType{
+			AttrTypes: HistoricalCustomDateRangeValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["historical_time_intervals"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.FutureCustomDateRange.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["future_custom_date_range"] = val
+
+		val, err = v.FutureTimeIntervals.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["future_time_intervals"] = val
+
+		val, err = v.HistoricalCustomDateRange.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["historical_custom_date_range"] = val
+
+		val, err = v.HistoricalTimeIntervals.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["historical_time_intervals"] = val
+
+		val, err = v.Mode.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["mode"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ForecastSettingsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ForecastSettingsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ForecastSettingsValue) String() string {
+	return "ForecastSettingsValue"
+}
+
+func (v ForecastSettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var futureCustomDateRange attr.Value
+
+	{
+		futureCustomDateRange = v.FutureCustomDateRange
+	}
+
+	var historicalCustomDateRange attr.Value
+
+	{
+		historicalCustomDateRange = v.HistoricalCustomDateRange
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"future_custom_date_range": FutureCustomDateRangeType{
+			basetypes.ObjectType{
+				AttrTypes: FutureCustomDateRangeValue{}.AttributeTypes(ctx),
+			},
+		},
+		"future_time_intervals": basetypes.Int64Type{},
+		"historical_custom_date_range": HistoricalCustomDateRangeType{
+			basetypes.ObjectType{
+				AttrTypes: HistoricalCustomDateRangeValue{}.AttributeTypes(ctx),
+			},
+		},
+		"historical_time_intervals": basetypes.Int64Type{},
+		"mode":                      basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"future_custom_date_range":     futureCustomDateRange,
+			"future_time_intervals":        v.FutureTimeIntervals,
+			"historical_custom_date_range": historicalCustomDateRange,
+			"historical_time_intervals":    v.HistoricalTimeIntervals,
+			"mode":                         v.Mode,
+		})
+
+	return objVal, diags
+}
+
+func (v ForecastSettingsValue) Equal(o attr.Value) bool {
+	other, ok := o.(ForecastSettingsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.FutureCustomDateRange.Equal(other.FutureCustomDateRange) {
+		return false
+	}
+
+	if !v.FutureTimeIntervals.Equal(other.FutureTimeIntervals) {
+		return false
+	}
+
+	if !v.HistoricalCustomDateRange.Equal(other.HistoricalCustomDateRange) {
+		return false
+	}
+
+	if !v.HistoricalTimeIntervals.Equal(other.HistoricalTimeIntervals) {
+		return false
+	}
+
+	if !v.Mode.Equal(other.Mode) {
+		return false
+	}
+
+	return true
+}
+
+func (v ForecastSettingsValue) Type(ctx context.Context) attr.Type {
+	return ForecastSettingsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ForecastSettingsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"future_custom_date_range": FutureCustomDateRangeType{
+			basetypes.ObjectType{
+				AttrTypes: FutureCustomDateRangeValue{}.AttributeTypes(ctx),
+			},
+		},
+		"future_time_intervals": basetypes.Int64Type{},
+		"historical_custom_date_range": HistoricalCustomDateRangeType{
+			basetypes.ObjectType{
+				AttrTypes: HistoricalCustomDateRangeValue{}.AttributeTypes(ctx),
+			},
+		},
+		"historical_time_intervals": basetypes.Int64Type{},
+		"mode":                      basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = FutureCustomDateRangeType{}
+
+type FutureCustomDateRangeType struct {
+	basetypes.ObjectType
+}
+
+func (t FutureCustomDateRangeType) Equal(o attr.Type) bool {
+	other, ok := o.(FutureCustomDateRangeType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t FutureCustomDateRangeType) String() string {
+	return "FutureCustomDateRangeType"
+}
+
+func (t FutureCustomDateRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewFutureCustomDateRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewFutureCustomDateRangeValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	fromAttribute, ok := attributes["from"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from is missing from object`)
+
+		return nil, diags
+	}
+
+	fromVal, ok := fromAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from expected to be basetypes.StringValue, was: %T`, fromAttribute))
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return nil, diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return FutureCustomDateRangeValue{
+		From:  fromVal,
+		To:    toVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFutureCustomDateRangeValueNull() FutureCustomDateRangeValue {
+	return FutureCustomDateRangeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewFutureCustomDateRangeValueUnknown() FutureCustomDateRangeValue {
+	return FutureCustomDateRangeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewFutureCustomDateRangeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (FutureCustomDateRangeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing FutureCustomDateRangeValue Attribute Value",
+				"While creating a FutureCustomDateRangeValue value, a missing attribute value was detected. "+
+					"A FutureCustomDateRangeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FutureCustomDateRangeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid FutureCustomDateRangeValue Attribute Type",
+				"While creating a FutureCustomDateRangeValue value, an invalid attribute value was detected. "+
+					"A FutureCustomDateRangeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("FutureCustomDateRangeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("FutureCustomDateRangeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra FutureCustomDateRangeValue Attribute Value",
+				"While creating a FutureCustomDateRangeValue value, an extra attribute value was detected. "+
+					"A FutureCustomDateRangeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra FutureCustomDateRangeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewFutureCustomDateRangeValueUnknown(), diags
+	}
+
+	fromAttribute, ok := attributes["from"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from is missing from object`)
+
+		return NewFutureCustomDateRangeValueUnknown(), diags
+	}
+
+	fromVal, ok := fromAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from expected to be basetypes.StringValue, was: %T`, fromAttribute))
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return NewFutureCustomDateRangeValueUnknown(), diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	if diags.HasError() {
+		return NewFutureCustomDateRangeValueUnknown(), diags
+	}
+
+	return FutureCustomDateRangeValue{
+		From:  fromVal,
+		To:    toVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewFutureCustomDateRangeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) FutureCustomDateRangeValue {
+	object, diags := NewFutureCustomDateRangeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewFutureCustomDateRangeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t FutureCustomDateRangeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewFutureCustomDateRangeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewFutureCustomDateRangeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewFutureCustomDateRangeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewFutureCustomDateRangeValueMust(FutureCustomDateRangeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t FutureCustomDateRangeType) ValueType(ctx context.Context) attr.Value {
+	return FutureCustomDateRangeValue{}
+}
+
+var _ basetypes.ObjectValuable = FutureCustomDateRangeValue{}
+
+type FutureCustomDateRangeValue struct {
+	From  basetypes.StringValue `tfsdk:"from"`
+	To    basetypes.StringValue `tfsdk:"to"`
+	state attr.ValueState
+}
+
+func (v FutureCustomDateRangeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["from"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["to"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.From.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["from"] = val
+
+		val, err = v.To.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["to"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v FutureCustomDateRangeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v FutureCustomDateRangeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v FutureCustomDateRangeValue) String() string {
+	return "FutureCustomDateRangeValue"
+}
+
+func (v FutureCustomDateRangeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"from": basetypes.StringType{},
+		"to":   basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"from": v.From,
+			"to":   v.To,
+		})
+
+	return objVal, diags
+}
+
+func (v FutureCustomDateRangeValue) Equal(o attr.Value) bool {
+	other, ok := o.(FutureCustomDateRangeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.From.Equal(other.From) {
+		return false
+	}
+
+	if !v.To.Equal(other.To) {
+		return false
+	}
+
+	return true
+}
+
+func (v FutureCustomDateRangeValue) Type(ctx context.Context) attr.Type {
+	return FutureCustomDateRangeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v FutureCustomDateRangeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"from": basetypes.StringType{},
+		"to":   basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = HistoricalCustomDateRangeType{}
+
+type HistoricalCustomDateRangeType struct {
+	basetypes.ObjectType
+}
+
+func (t HistoricalCustomDateRangeType) Equal(o attr.Type) bool {
+	other, ok := o.(HistoricalCustomDateRangeType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t HistoricalCustomDateRangeType) String() string {
+	return "HistoricalCustomDateRangeType"
+}
+
+func (t HistoricalCustomDateRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewHistoricalCustomDateRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewHistoricalCustomDateRangeValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	fromAttribute, ok := attributes["from"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from is missing from object`)
+
+		return nil, diags
+	}
+
+	fromVal, ok := fromAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from expected to be basetypes.StringValue, was: %T`, fromAttribute))
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return nil, diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return HistoricalCustomDateRangeValue{
+		From:  fromVal,
+		To:    toVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewHistoricalCustomDateRangeValueNull() HistoricalCustomDateRangeValue {
+	return HistoricalCustomDateRangeValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewHistoricalCustomDateRangeValueUnknown() HistoricalCustomDateRangeValue {
+	return HistoricalCustomDateRangeValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewHistoricalCustomDateRangeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (HistoricalCustomDateRangeValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing HistoricalCustomDateRangeValue Attribute Value",
+				"While creating a HistoricalCustomDateRangeValue value, a missing attribute value was detected. "+
+					"A HistoricalCustomDateRangeValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("HistoricalCustomDateRangeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid HistoricalCustomDateRangeValue Attribute Type",
+				"While creating a HistoricalCustomDateRangeValue value, an invalid attribute value was detected. "+
+					"A HistoricalCustomDateRangeValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("HistoricalCustomDateRangeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("HistoricalCustomDateRangeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra HistoricalCustomDateRangeValue Attribute Value",
+				"While creating a HistoricalCustomDateRangeValue value, an extra attribute value was detected. "+
+					"A HistoricalCustomDateRangeValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra HistoricalCustomDateRangeValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewHistoricalCustomDateRangeValueUnknown(), diags
+	}
+
+	fromAttribute, ok := attributes["from"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`from is missing from object`)
+
+		return NewHistoricalCustomDateRangeValueUnknown(), diags
+	}
+
+	fromVal, ok := fromAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`from expected to be basetypes.StringValue, was: %T`, fromAttribute))
+	}
+
+	toAttribute, ok := attributes["to"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`to is missing from object`)
+
+		return NewHistoricalCustomDateRangeValueUnknown(), diags
+	}
+
+	toVal, ok := toAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`to expected to be basetypes.StringValue, was: %T`, toAttribute))
+	}
+
+	if diags.HasError() {
+		return NewHistoricalCustomDateRangeValueUnknown(), diags
+	}
+
+	return HistoricalCustomDateRangeValue{
+		From:  fromVal,
+		To:    toVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewHistoricalCustomDateRangeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) HistoricalCustomDateRangeValue {
+	object, diags := NewHistoricalCustomDateRangeValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewHistoricalCustomDateRangeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t HistoricalCustomDateRangeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewHistoricalCustomDateRangeValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewHistoricalCustomDateRangeValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewHistoricalCustomDateRangeValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewHistoricalCustomDateRangeValueMust(HistoricalCustomDateRangeValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t HistoricalCustomDateRangeType) ValueType(ctx context.Context) attr.Value {
+	return HistoricalCustomDateRangeValue{}
+}
+
+var _ basetypes.ObjectValuable = HistoricalCustomDateRangeValue{}
+
+type HistoricalCustomDateRangeValue struct {
+	From  basetypes.StringValue `tfsdk:"from"`
+	To    basetypes.StringValue `tfsdk:"to"`
+	state attr.ValueState
+}
+
+func (v HistoricalCustomDateRangeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["from"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["to"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.From.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["from"] = val
+
+		val, err = v.To.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["to"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v HistoricalCustomDateRangeValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v HistoricalCustomDateRangeValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v HistoricalCustomDateRangeValue) String() string {
+	return "HistoricalCustomDateRangeValue"
+}
+
+func (v HistoricalCustomDateRangeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"from": basetypes.StringType{},
+		"to":   basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"from": v.From,
+			"to":   v.To,
+		})
+
+	return objVal, diags
+}
+
+func (v HistoricalCustomDateRangeValue) Equal(o attr.Value) bool {
+	other, ok := o.(HistoricalCustomDateRangeValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.From.Equal(other.From) {
+		return false
+	}
+
+	if !v.To.Equal(other.To) {
+		return false
+	}
+
+	return true
+}
+
+func (v HistoricalCustomDateRangeValue) Type(ctx context.Context) attr.Type {
+	return HistoricalCustomDateRangeType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v HistoricalCustomDateRangeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"from": basetypes.StringType{},
+		"to":   basetypes.StringType{},
+	}
+}
+
 var _ basetypes.ObjectTypable = GroupType{}
 
 type GroupType struct {
@@ -4856,12 +6622,38 @@ func (t GroupType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	limitVal, ok := limitAttribute.(LimitValue)
+	limitValuable, ok := limitAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`limit expected to be LimitValue, was: %T`, limitAttribute))
+			fmt.Sprintf(`limit expected to be basetypes.ObjectValuable, was: %T`, limitAttribute))
+
+		return nil, diags
+	}
+
+	limitObjVal, limitObjValDiags := limitValuable.ToObjectValue(ctx)
+	diags.Append(limitObjValDiags...)
+
+	limitTypable, ok := t.AttrTypes["limit"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["limit"]))
+
+		return nil, diags
+	}
+
+	limitConverted, limitConvertedDiags := limitTypable.ValueFromObject(ctx, limitObjVal)
+	diags.Append(limitConvertedDiags...)
+
+	limitVal, ok := limitConverted.(LimitValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit expected to be LimitValue, was: %T`, limitConverted))
 	}
 
 	typeAttribute, ok := attributes["type"]
@@ -5298,12 +7090,38 @@ func (t LimitType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	sortAttribute, ok := attributes["sort"]
@@ -6145,12 +7963,38 @@ func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	operatorAttribute, ok := attributes["operator"]
@@ -7042,12 +8886,38 @@ func (t SecondaryTimeRangeType) ValueFromObject(ctx context.Context, in basetype
 		return nil, diags
 	}
 
-	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
+	customTimeRangeValuable, ok := customTimeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
+			fmt.Sprintf(`custom_time_range expected to be basetypes.ObjectValuable, was: %T`, customTimeRangeAttribute))
+
+		return nil, diags
+	}
+
+	customTimeRangeObjVal, customTimeRangeObjValDiags := customTimeRangeValuable.ToObjectValue(ctx)
+	diags.Append(customTimeRangeObjValDiags...)
+
+	customTimeRangeTypable, ok := t.AttrTypes["custom_time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["custom_time_range"]))
+
+		return nil, diags
+	}
+
+	customTimeRangeConverted, customTimeRangeConvertedDiags := customTimeRangeTypable.ValueFromObject(ctx, customTimeRangeObjVal)
+	diags.Append(customTimeRangeConvertedDiags...)
+
+	customTimeRangeVal, ok := customTimeRangeConverted.(CustomTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeConverted))
 	}
 
 	includeCurrentAttribute, ok := attributes["include_current"]
@@ -7593,12 +9463,38 @@ func (t SplitsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	originVal, ok := originAttribute.(OriginValue)
+	originValuable, ok := originAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
+			fmt.Sprintf(`origin expected to be basetypes.ObjectValuable, was: %T`, originAttribute))
+
+		return nil, diags
+	}
+
+	originObjVal, originObjValDiags := originValuable.ToObjectValue(ctx)
+	diags.Append(originObjValDiags...)
+
+	originTypable, ok := t.AttrTypes["origin"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["origin"]))
+
+		return nil, diags
+	}
+
+	originConverted, originConvertedDiags := originTypable.ValueFromObject(ctx, originObjVal)
+	diags.Append(originConvertedDiags...)
+
+	originVal, ok := originConverted.(OriginValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originConverted))
 	}
 
 	targetsAttribute, ok := attributes["targets"]

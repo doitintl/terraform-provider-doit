@@ -815,12 +815,38 @@ func (t ResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	dismissalDetailsVal, ok := dismissalDetailsAttribute.(DismissalDetailsValue)
+	dismissalDetailsValuable, ok := dismissalDetailsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`dismissal_details expected to be DismissalDetailsValue, was: %T`, dismissalDetailsAttribute))
+			fmt.Sprintf(`dismissal_details expected to be basetypes.ObjectValuable, was: %T`, dismissalDetailsAttribute))
+
+		return nil, diags
+	}
+
+	dismissalDetailsObjVal, dismissalDetailsObjValDiags := dismissalDetailsValuable.ToObjectValue(ctx)
+	diags.Append(dismissalDetailsObjValDiags...)
+
+	dismissalDetailsTypable, ok := t.AttrTypes["dismissal_details"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`dismissal_details expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["dismissal_details"]))
+
+		return nil, diags
+	}
+
+	dismissalDetailsConverted, dismissalDetailsConvertedDiags := dismissalDetailsTypable.ValueFromObject(ctx, dismissalDetailsObjVal)
+	diags.Append(dismissalDetailsConvertedDiags...)
+
+	dismissalDetailsVal, ok := dismissalDetailsConverted.(DismissalDetailsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`dismissal_details expected to be DismissalDetailsValue, was: %T`, dismissalDetailsConverted))
 	}
 
 	displayStatusAttribute, ok := attributes["display_status"]
@@ -887,12 +913,38 @@ func (t ResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	lastStatusChangeVal, ok := lastStatusChangeAttribute.(LastStatusChangeValue)
+	lastStatusChangeValuable, ok := lastStatusChangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`last_status_change expected to be LastStatusChangeValue, was: %T`, lastStatusChangeAttribute))
+			fmt.Sprintf(`last_status_change expected to be basetypes.ObjectValuable, was: %T`, lastStatusChangeAttribute))
+
+		return nil, diags
+	}
+
+	lastStatusChangeObjVal, lastStatusChangeObjValDiags := lastStatusChangeValuable.ToObjectValue(ctx)
+	diags.Append(lastStatusChangeObjValDiags...)
+
+	lastStatusChangeTypable, ok := t.AttrTypes["last_status_change"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`last_status_change expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["last_status_change"]))
+
+		return nil, diags
+	}
+
+	lastStatusChangeConverted, lastStatusChangeConvertedDiags := lastStatusChangeTypable.ValueFromObject(ctx, lastStatusChangeObjVal)
+	diags.Append(lastStatusChangeConvertedDiags...)
+
+	lastStatusChangeVal, ok := lastStatusChangeConverted.(LastStatusChangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`last_status_change expected to be LastStatusChangeValue, was: %T`, lastStatusChangeConverted))
 	}
 
 	lastUpdatedAttribute, ok := attributes["last_updated"]
@@ -977,12 +1029,38 @@ func (t ResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		return nil, diags
 	}
 
-	summaryVal, ok := summaryAttribute.(SummaryValue)
+	summaryValuable, ok := summaryAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`summary expected to be SummaryValue, was: %T`, summaryAttribute))
+			fmt.Sprintf(`summary expected to be basetypes.ObjectValuable, was: %T`, summaryAttribute))
+
+		return nil, diags
+	}
+
+	summaryObjVal, summaryObjValDiags := summaryValuable.ToObjectValue(ctx)
+	diags.Append(summaryObjValDiags...)
+
+	summaryTypable, ok := t.AttrTypes["summary"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`summary expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["summary"]))
+
+		return nil, diags
+	}
+
+	summaryConverted, summaryConvertedDiags := summaryTypable.ValueFromObject(ctx, summaryObjVal)
+	diags.Append(summaryConvertedDiags...)
+
+	summaryVal, ok := summaryConverted.(SummaryValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`summary expected to be SummaryValue, was: %T`, summaryConverted))
 	}
 
 	tagsAttribute, ok := attributes["tags"]

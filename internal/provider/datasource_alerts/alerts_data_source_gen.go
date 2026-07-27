@@ -302,12 +302,38 @@ func (t AlertsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	configVal, ok := configAttribute.(ConfigValue)
+	configValuable, ok := configAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`config expected to be ConfigValue, was: %T`, configAttribute))
+			fmt.Sprintf(`config expected to be basetypes.ObjectValuable, was: %T`, configAttribute))
+
+		return nil, diags
+	}
+
+	configObjVal, configObjValDiags := configValuable.ToObjectValue(ctx)
+	diags.Append(configObjValDiags...)
+
+	configTypable, ok := t.AttrTypes["config"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["config"]))
+
+		return nil, diags
+	}
+
+	configConverted, configConvertedDiags := configTypable.ValueFromObject(ctx, configObjVal)
+	diags.Append(configConvertedDiags...)
+
+	configVal, ok := configConverted.(ConfigValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`config expected to be ConfigValue, was: %T`, configConverted))
 	}
 
 	createTimeAttribute, ok := attributes["create_time"]
@@ -1164,12 +1190,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	operatorAttribute, ok := attributes["operator"]

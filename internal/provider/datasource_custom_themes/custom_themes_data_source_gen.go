@@ -136,12 +136,38 @@ func (t ThemesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	colorsVal, ok := colorsAttribute.(ColorsValue)
+	colorsValuable, ok := colorsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`colors expected to be ColorsValue, was: %T`, colorsAttribute))
+			fmt.Sprintf(`colors expected to be basetypes.ObjectValuable, was: %T`, colorsAttribute))
+
+		return nil, diags
+	}
+
+	colorsObjVal, colorsObjValDiags := colorsValuable.ToObjectValue(ctx)
+	diags.Append(colorsObjValDiags...)
+
+	colorsTypable, ok := t.AttrTypes["colors"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`colors expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["colors"]))
+
+		return nil, diags
+	}
+
+	colorsConverted, colorsConvertedDiags := colorsTypable.ValueFromObject(ctx, colorsObjVal)
+	diags.Append(colorsConvertedDiags...)
+
+	colorsVal, ok := colorsConverted.(ColorsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`colors expected to be ColorsValue, was: %T`, colorsConverted))
 	}
 
 	createTimeAttribute, ok := attributes["create_time"]

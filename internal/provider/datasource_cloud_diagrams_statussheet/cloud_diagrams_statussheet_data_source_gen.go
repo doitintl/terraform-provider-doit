@@ -5418,12 +5418,38 @@ func (t LinkType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	destinationVal, ok := destinationAttribute.(DestinationValue)
+	destinationValuable, ok := destinationAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`destination expected to be DestinationValue, was: %T`, destinationAttribute))
+			fmt.Sprintf(`destination expected to be basetypes.ObjectValuable, was: %T`, destinationAttribute))
+
+		return nil, diags
+	}
+
+	destinationObjVal, destinationObjValDiags := destinationValuable.ToObjectValue(ctx)
+	diags.Append(destinationObjValDiags...)
+
+	destinationTypable, ok := t.AttrTypes["destination"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`destination expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["destination"]))
+
+		return nil, diags
+	}
+
+	destinationConverted, destinationConvertedDiags := destinationTypable.ValueFromObject(ctx, destinationObjVal)
+	diags.Append(destinationConvertedDiags...)
+
+	destinationVal, ok := destinationConverted.(DestinationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`destination expected to be DestinationValue, was: %T`, destinationConverted))
 	}
 
 	issuesAttribute, ok := attributes["issues"]
@@ -5472,12 +5498,38 @@ func (t LinkType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	originVal, ok := originAttribute.(OriginValue)
+	originValuable, ok := originAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
+			fmt.Sprintf(`origin expected to be basetypes.ObjectValuable, was: %T`, originAttribute))
+
+		return nil, diags
+	}
+
+	originObjVal, originObjValDiags := originValuable.ToObjectValue(ctx)
+	diags.Append(originObjValDiags...)
+
+	originTypable, ok := t.AttrTypes["origin"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["origin"]))
+
+		return nil, diags
+	}
+
+	originConverted, originConvertedDiags := originTypable.ValueFromObject(ctx, originObjVal)
+	diags.Append(originConvertedDiags...)
+
+	originVal, ok := originConverted.(OriginValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originConverted))
 	}
 
 	ownerSsIdAttribute, ok := attributes["owner_ss_id"]
@@ -7518,12 +7570,38 @@ func (t NodeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	infraNodeVal, ok := infraNodeAttribute.(InfraNodeValue)
+	infraNodeValuable, ok := infraNodeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`infra_node expected to be InfraNodeValue, was: %T`, infraNodeAttribute))
+			fmt.Sprintf(`infra_node expected to be basetypes.ObjectValuable, was: %T`, infraNodeAttribute))
+
+		return nil, diags
+	}
+
+	infraNodeObjVal, infraNodeObjValDiags := infraNodeValuable.ToObjectValue(ctx)
+	diags.Append(infraNodeObjValDiags...)
+
+	infraNodeTypable, ok := t.AttrTypes["infra_node"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`infra_node expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["infra_node"]))
+
+		return nil, diags
+	}
+
+	infraNodeConverted, infraNodeConvertedDiags := infraNodeTypable.ValueFromObject(ctx, infraNodeObjVal)
+	diags.Append(infraNodeConvertedDiags...)
+
+	infraNodeVal, ok := infraNodeConverted.(InfraNodeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`infra_node expected to be InfraNodeValue, was: %T`, infraNodeConverted))
 	}
 
 	instanceCountAttribute, ok := attributes["instance_count"]
