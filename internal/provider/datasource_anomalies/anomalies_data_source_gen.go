@@ -36,6 +36,11 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Email of the user who first acknowledged the anomaly",
 							MarkdownDescription: "Email of the user who first acknowledged the anomaly",
 						},
+						"actual_cost": schema.Float64Attribute{
+							Computed:            true,
+							Description:         "Observed (actual) cost of the anomaly.",
+							MarkdownDescription: "Observed (actual) cost of the anomaly.",
+						},
 						"attribution": schema.StringAttribute{
 							Computed:            true,
 							Description:         "Attribution ID.",
@@ -55,6 +60,11 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "End of the anomaly.",
 							MarkdownDescription: "End of the anomaly.",
+						},
+						"expected_max_cost": schema.Float64Attribute{
+							Computed:            true,
+							Description:         "Maximum cost within the expected normal range.",
+							MarkdownDescription: "Maximum cost within the expected normal range.",
 						},
 						"id": schema.StringAttribute{
 							Computed: true,
@@ -345,6 +355,24 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`acknowledged_by expected to be basetypes.StringValue, was: %T`, acknowledgedByAttribute))
 	}
 
+	actualCostAttribute, ok := attributes["actual_cost"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`actual_cost is missing from object`)
+
+		return nil, diags
+	}
+
+	actualCostVal, ok := actualCostAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`actual_cost expected to be basetypes.Float64Value, was: %T`, actualCostAttribute))
+	}
+
 	attributionAttribute, ok := attributes["attribution"]
 
 	if !ok {
@@ -415,6 +443,24 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`end_time expected to be basetypes.Int64Value, was: %T`, endTimeAttribute))
+	}
+
+	expectedMaxCostAttribute, ok := attributes["expected_max_cost"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`expected_max_cost is missing from object`)
+
+		return nil, diags
+	}
+
+	expectedMaxCostVal, ok := expectedMaxCostAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`expected_max_cost expected to be basetypes.Float64Value, was: %T`, expectedMaxCostAttribute))
 	}
 
 	idAttribute, ok := attributes["id"]
@@ -620,25 +666,27 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	}
 
 	return AnomaliesValue{
-		Acknowledged:   acknowledgedVal,
-		AcknowledgedAt: acknowledgedAtVal,
-		AcknowledgedBy: acknowledgedByVal,
-		Attribution:    attributionVal,
-		BillingAccount: billingAccountVal,
-		CostOfAnomaly:  costOfAnomalyVal,
-		EndTime:        endTimeVal,
-		Id:             idVal,
-		Notifications:  notificationsVal,
-		Platform:       platformVal,
-		ResourceData:   resourceDataVal,
-		Scope:          scopeVal,
-		ServiceName:    serviceNameVal,
-		SeverityLevel:  severityLevelVal,
-		StartTime:      startTimeVal,
-		Status:         statusVal,
-		TimeFrame:      timeFrameVal,
-		Top3skus:       top3skusVal,
-		state:          attr.ValueStateKnown,
+		Acknowledged:    acknowledgedVal,
+		AcknowledgedAt:  acknowledgedAtVal,
+		AcknowledgedBy:  acknowledgedByVal,
+		ActualCost:      actualCostVal,
+		Attribution:     attributionVal,
+		BillingAccount:  billingAccountVal,
+		CostOfAnomaly:   costOfAnomalyVal,
+		EndTime:         endTimeVal,
+		ExpectedMaxCost: expectedMaxCostVal,
+		Id:              idVal,
+		Notifications:   notificationsVal,
+		Platform:        platformVal,
+		ResourceData:    resourceDataVal,
+		Scope:           scopeVal,
+		ServiceName:     serviceNameVal,
+		SeverityLevel:   severityLevelVal,
+		StartTime:       startTimeVal,
+		Status:          statusVal,
+		TimeFrame:       timeFrameVal,
+		Top3skus:        top3skusVal,
+		state:           attr.ValueStateKnown,
 	}, diags
 }
 
@@ -759,6 +807,24 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`acknowledged_by expected to be basetypes.StringValue, was: %T`, acknowledgedByAttribute))
 	}
 
+	actualCostAttribute, ok := attributes["actual_cost"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`actual_cost is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	actualCostVal, ok := actualCostAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`actual_cost expected to be basetypes.Float64Value, was: %T`, actualCostAttribute))
+	}
+
 	attributionAttribute, ok := attributes["attribution"]
 
 	if !ok {
@@ -829,6 +895,24 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`end_time expected to be basetypes.Int64Value, was: %T`, endTimeAttribute))
+	}
+
+	expectedMaxCostAttribute, ok := attributes["expected_max_cost"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`expected_max_cost is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	expectedMaxCostVal, ok := expectedMaxCostAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`expected_max_cost expected to be basetypes.Float64Value, was: %T`, expectedMaxCostAttribute))
 	}
 
 	idAttribute, ok := attributes["id"]
@@ -1034,25 +1118,27 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 	}
 
 	return AnomaliesValue{
-		Acknowledged:   acknowledgedVal,
-		AcknowledgedAt: acknowledgedAtVal,
-		AcknowledgedBy: acknowledgedByVal,
-		Attribution:    attributionVal,
-		BillingAccount: billingAccountVal,
-		CostOfAnomaly:  costOfAnomalyVal,
-		EndTime:        endTimeVal,
-		Id:             idVal,
-		Notifications:  notificationsVal,
-		Platform:       platformVal,
-		ResourceData:   resourceDataVal,
-		Scope:          scopeVal,
-		ServiceName:    serviceNameVal,
-		SeverityLevel:  severityLevelVal,
-		StartTime:      startTimeVal,
-		Status:         statusVal,
-		TimeFrame:      timeFrameVal,
-		Top3skus:       top3skusVal,
-		state:          attr.ValueStateKnown,
+		Acknowledged:    acknowledgedVal,
+		AcknowledgedAt:  acknowledgedAtVal,
+		AcknowledgedBy:  acknowledgedByVal,
+		ActualCost:      actualCostVal,
+		Attribution:     attributionVal,
+		BillingAccount:  billingAccountVal,
+		CostOfAnomaly:   costOfAnomalyVal,
+		EndTime:         endTimeVal,
+		ExpectedMaxCost: expectedMaxCostVal,
+		Id:              idVal,
+		Notifications:   notificationsVal,
+		Platform:        platformVal,
+		ResourceData:    resourceDataVal,
+		Scope:           scopeVal,
+		ServiceName:     serviceNameVal,
+		SeverityLevel:   severityLevelVal,
+		StartTime:       startTimeVal,
+		Status:          statusVal,
+		TimeFrame:       timeFrameVal,
+		Top3skus:        top3skusVal,
+		state:           attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1124,29 +1210,31 @@ func (t AnomaliesType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = AnomaliesValue{}
 
 type AnomaliesValue struct {
-	Acknowledged   basetypes.BoolValue    `tfsdk:"acknowledged"`
-	AcknowledgedAt basetypes.StringValue  `tfsdk:"acknowledged_at"`
-	AcknowledgedBy basetypes.StringValue  `tfsdk:"acknowledged_by"`
-	Attribution    basetypes.StringValue  `tfsdk:"attribution"`
-	BillingAccount basetypes.StringValue  `tfsdk:"billing_account"`
-	CostOfAnomaly  basetypes.Float64Value `tfsdk:"cost_of_anomaly"`
-	EndTime        basetypes.Int64Value   `tfsdk:"end_time"`
-	Id             basetypes.StringValue  `tfsdk:"id"`
-	Notifications  basetypes.ListValue    `tfsdk:"notifications"`
-	Platform       basetypes.StringValue  `tfsdk:"platform"`
-	ResourceData   basetypes.ListValue    `tfsdk:"resource_data"`
-	Scope          basetypes.StringValue  `tfsdk:"scope"`
-	ServiceName    basetypes.StringValue  `tfsdk:"service_name"`
-	SeverityLevel  basetypes.StringValue  `tfsdk:"severity_level"`
-	StartTime      basetypes.Int64Value   `tfsdk:"start_time"`
-	Status         basetypes.StringValue  `tfsdk:"status"`
-	TimeFrame      basetypes.StringValue  `tfsdk:"time_frame"`
-	Top3skus       basetypes.ListValue    `tfsdk:"top3skus"`
-	state          attr.ValueState
+	Acknowledged    basetypes.BoolValue    `tfsdk:"acknowledged"`
+	AcknowledgedAt  basetypes.StringValue  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy  basetypes.StringValue  `tfsdk:"acknowledged_by"`
+	ActualCost      basetypes.Float64Value `tfsdk:"actual_cost"`
+	Attribution     basetypes.StringValue  `tfsdk:"attribution"`
+	BillingAccount  basetypes.StringValue  `tfsdk:"billing_account"`
+	CostOfAnomaly   basetypes.Float64Value `tfsdk:"cost_of_anomaly"`
+	EndTime         basetypes.Int64Value   `tfsdk:"end_time"`
+	ExpectedMaxCost basetypes.Float64Value `tfsdk:"expected_max_cost"`
+	Id              basetypes.StringValue  `tfsdk:"id"`
+	Notifications   basetypes.ListValue    `tfsdk:"notifications"`
+	Platform        basetypes.StringValue  `tfsdk:"platform"`
+	ResourceData    basetypes.ListValue    `tfsdk:"resource_data"`
+	Scope           basetypes.StringValue  `tfsdk:"scope"`
+	ServiceName     basetypes.StringValue  `tfsdk:"service_name"`
+	SeverityLevel   basetypes.StringValue  `tfsdk:"severity_level"`
+	StartTime       basetypes.Int64Value   `tfsdk:"start_time"`
+	Status          basetypes.StringValue  `tfsdk:"status"`
+	TimeFrame       basetypes.StringValue  `tfsdk:"time_frame"`
+	Top3skus        basetypes.ListValue    `tfsdk:"top3skus"`
+	state           attr.ValueState
 }
 
 func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 18)
+	attrTypes := make(map[string]tftypes.Type, 20)
 
 	var val tftypes.Value
 	var err error
@@ -1154,10 +1242,12 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 	attrTypes["acknowledged"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["acknowledged_at"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["acknowledged_by"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["actual_cost"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["attribution"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["billing_account"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["cost_of_anomaly"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["end_time"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["expected_max_cost"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["notifications"] = basetypes.ListType{
 		ElemType: NotificationsValue{}.Type(ctx),
@@ -1180,7 +1270,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 18)
+		vals := make(map[string]tftypes.Value, 20)
 
 		val, err = v.Acknowledged.ToTerraformValue(ctx)
 
@@ -1205,6 +1295,14 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["acknowledged_by"] = val
+
+		val, err = v.ActualCost.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["actual_cost"] = val
 
 		val, err = v.Attribution.ToTerraformValue(ctx)
 
@@ -1237,6 +1335,14 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["end_time"] = val
+
+		val, err = v.ExpectedMaxCost.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["expected_max_cost"] = val
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -1374,14 +1480,16 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"acknowledged":    basetypes.BoolType{},
-		"acknowledged_at": basetypes.StringType{},
-		"acknowledged_by": basetypes.StringType{},
-		"attribution":     basetypes.StringType{},
-		"billing_account": basetypes.StringType{},
-		"cost_of_anomaly": basetypes.Float64Type{},
-		"end_time":        basetypes.Int64Type{},
-		"id":              basetypes.StringType{},
+		"acknowledged":      basetypes.BoolType{},
+		"acknowledged_at":   basetypes.StringType{},
+		"acknowledged_by":   basetypes.StringType{},
+		"actual_cost":       basetypes.Float64Type{},
+		"attribution":       basetypes.StringType{},
+		"billing_account":   basetypes.StringType{},
+		"cost_of_anomaly":   basetypes.Float64Type{},
+		"end_time":          basetypes.Int64Type{},
+		"expected_max_cost": basetypes.Float64Type{},
+		"id":                basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},
@@ -1411,24 +1519,26 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"acknowledged":    v.Acknowledged,
-			"acknowledged_at": v.AcknowledgedAt,
-			"acknowledged_by": v.AcknowledgedBy,
-			"attribution":     v.Attribution,
-			"billing_account": v.BillingAccount,
-			"cost_of_anomaly": v.CostOfAnomaly,
-			"end_time":        v.EndTime,
-			"id":              v.Id,
-			"notifications":   notifications,
-			"platform":        v.Platform,
-			"resource_data":   resourceData,
-			"scope":           v.Scope,
-			"service_name":    v.ServiceName,
-			"severity_level":  v.SeverityLevel,
-			"start_time":      v.StartTime,
-			"status":          v.Status,
-			"time_frame":      v.TimeFrame,
-			"top3skus":        top3skus,
+			"acknowledged":      v.Acknowledged,
+			"acknowledged_at":   v.AcknowledgedAt,
+			"acknowledged_by":   v.AcknowledgedBy,
+			"actual_cost":       v.ActualCost,
+			"attribution":       v.Attribution,
+			"billing_account":   v.BillingAccount,
+			"cost_of_anomaly":   v.CostOfAnomaly,
+			"end_time":          v.EndTime,
+			"expected_max_cost": v.ExpectedMaxCost,
+			"id":                v.Id,
+			"notifications":     notifications,
+			"platform":          v.Platform,
+			"resource_data":     resourceData,
+			"scope":             v.Scope,
+			"service_name":      v.ServiceName,
+			"severity_level":    v.SeverityLevel,
+			"start_time":        v.StartTime,
+			"status":            v.Status,
+			"time_frame":        v.TimeFrame,
+			"top3skus":          top3skus,
 		})
 
 	return objVal, diags
@@ -1461,6 +1571,10 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.ActualCost.Equal(other.ActualCost) {
+		return false
+	}
+
 	if !v.Attribution.Equal(other.Attribution) {
 		return false
 	}
@@ -1474,6 +1588,10 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.EndTime.Equal(other.EndTime) {
+		return false
+	}
+
+	if !v.ExpectedMaxCost.Equal(other.ExpectedMaxCost) {
 		return false
 	}
 
@@ -1534,14 +1652,16 @@ func (v AnomaliesValue) Type(ctx context.Context) attr.Type {
 
 func (v AnomaliesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"acknowledged":    basetypes.BoolType{},
-		"acknowledged_at": basetypes.StringType{},
-		"acknowledged_by": basetypes.StringType{},
-		"attribution":     basetypes.StringType{},
-		"billing_account": basetypes.StringType{},
-		"cost_of_anomaly": basetypes.Float64Type{},
-		"end_time":        basetypes.Int64Type{},
-		"id":              basetypes.StringType{},
+		"acknowledged":      basetypes.BoolType{},
+		"acknowledged_at":   basetypes.StringType{},
+		"acknowledged_by":   basetypes.StringType{},
+		"actual_cost":       basetypes.Float64Type{},
+		"attribution":       basetypes.StringType{},
+		"billing_account":   basetypes.StringType{},
+		"cost_of_anomaly":   basetypes.Float64Type{},
+		"end_time":          basetypes.Int64Type{},
+		"expected_max_cost": basetypes.Float64Type{},
+		"id":                basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},

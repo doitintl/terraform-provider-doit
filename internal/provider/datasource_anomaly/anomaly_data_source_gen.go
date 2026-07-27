@@ -33,6 +33,11 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Email of the user who first acknowledged the anomaly",
 				MarkdownDescription: "Email of the user who first acknowledged the anomaly",
 			},
+			"actual_cost": schema.Float64Attribute{
+				Computed:            true,
+				Description:         "Observed (actual) cost of the anomaly.",
+				MarkdownDescription: "Observed (actual) cost of the anomaly.",
+			},
 			"attribution": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Attribution ID",
@@ -52,6 +57,11 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "End of the anomaly",
 				MarkdownDescription: "End of the anomaly",
+			},
+			"expected_max_cost": schema.Float64Attribute{
+				Computed:            true,
+				Description:         "Maximum cost within the expected normal range.",
+				MarkdownDescription: "Maximum cost within the expected normal range.",
 			},
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -199,24 +209,26 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AnomalyModel struct {
-	Acknowledged   types.Bool    `tfsdk:"acknowledged"`
-	AcknowledgedAt types.String  `tfsdk:"acknowledged_at"`
-	AcknowledgedBy types.String  `tfsdk:"acknowledged_by"`
-	Attribution    types.String  `tfsdk:"attribution"`
-	BillingAccount types.String  `tfsdk:"billing_account"`
-	CostOfAnomaly  types.Float64 `tfsdk:"cost_of_anomaly"`
-	EndTime        types.Int64   `tfsdk:"end_time"`
-	Id             types.String  `tfsdk:"id"`
-	Notifications  types.List    `tfsdk:"notifications"`
-	Platform       types.String  `tfsdk:"platform"`
-	ResourceData   types.List    `tfsdk:"resource_data"`
-	Scope          types.String  `tfsdk:"scope"`
-	ServiceName    types.String  `tfsdk:"service_name"`
-	SeverityLevel  types.String  `tfsdk:"severity_level"`
-	StartTime      types.Int64   `tfsdk:"start_time"`
-	Status         types.String  `tfsdk:"status"`
-	TimeFrame      types.String  `tfsdk:"time_frame"`
-	Top3skus       types.List    `tfsdk:"top3skus"`
+	Acknowledged    types.Bool    `tfsdk:"acknowledged"`
+	AcknowledgedAt  types.String  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy  types.String  `tfsdk:"acknowledged_by"`
+	ActualCost      types.Float64 `tfsdk:"actual_cost"`
+	Attribution     types.String  `tfsdk:"attribution"`
+	BillingAccount  types.String  `tfsdk:"billing_account"`
+	CostOfAnomaly   types.Float64 `tfsdk:"cost_of_anomaly"`
+	EndTime         types.Int64   `tfsdk:"end_time"`
+	ExpectedMaxCost types.Float64 `tfsdk:"expected_max_cost"`
+	Id              types.String  `tfsdk:"id"`
+	Notifications   types.List    `tfsdk:"notifications"`
+	Platform        types.String  `tfsdk:"platform"`
+	ResourceData    types.List    `tfsdk:"resource_data"`
+	Scope           types.String  `tfsdk:"scope"`
+	ServiceName     types.String  `tfsdk:"service_name"`
+	SeverityLevel   types.String  `tfsdk:"severity_level"`
+	StartTime       types.Int64   `tfsdk:"start_time"`
+	Status          types.String  `tfsdk:"status"`
+	TimeFrame       types.String  `tfsdk:"time_frame"`
+	Top3skus        types.List    `tfsdk:"top3skus"`
 }
 
 var _ basetypes.ObjectTypable = NotificationsType{}

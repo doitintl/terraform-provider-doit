@@ -287,10 +287,12 @@ Read-Only:
 - `acknowledged` (Boolean) Has the anomaly been acknowledged
 - `acknowledged_at` (String) When the anomaly was first acknowledged
 - `acknowledged_by` (String) Email of the user who first acknowledged the anomaly
+- `actual_cost` (Number) Observed (actual) cost of the anomaly.
 - `attribution` (String) Attribution ID.
 - `billing_account` (String) Billing account ID.
 - `cost_of_anomaly` (Number) Excess cost over and above the expected normal cost.
 - `end_time` (Number) End of the anomaly.
+- `expected_max_cost` (Number) Maximum cost within the expected normal range.
 - `id` (String)
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--anomalies--notifications))
 - `platform` (String) Cloud Provider name.
