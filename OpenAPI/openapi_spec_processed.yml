@@ -7,7 +7,7 @@ servers:
   - url: ${API_BASE_URL}
 security:
   - api_key: []
-  - customerContext: []
+  - tenantId: []
     api_key: []
 tags:
   - name: Alerts
@@ -58,6 +58,8 @@ tags:
     description: Metadata about cloud services and offerings.
   - name: Support Requests
     description: Create and manage support tickets with DoiT.
+  - name: Contracts
+    description: List and manage tenant-scoped contracts as a T1/T2 PartnerOps caller.
   - name: Commitment Manager
     description: View and manage commitment contracts with DoiT.
   - name: Ava
@@ -10247,10 +10249,23 @@ components:
       name: Authorization
       description: Use the "Bearer <API_KEY>" format or sign in for autofill
       in: header
-    customerContext:
+    tenantId:
       type: apiKey
-      name: customerContext
-      in: query
+      name: X-Tenant-Id
+      description: |
+        Tenant (customer) ID that sets the request's customer context.
+
+        Required when the credential can access more than one tenant; omit when the
+        credential is scoped to exactly one tenant (the server resolves that tenant
+        automatically). If omitted for a multi-tenant credential, the request fails
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+        credential's tenant scope, the request fails with `400` and code
+        `tenant_id_mismatch`.
+
+        Use this header over the legacy `customerContext` query parameter, which
+        only applies to legacy API keys and is ignored by personal and service-account
+        API tokens.
+      in: header
     oauth2:
       type: oauth2
       flows:

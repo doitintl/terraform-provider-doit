@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	Api_keyScopes         apiKeyContextKey          = "api_key.Scopes"
-	CustomerContextScopes customerContextContextKey = "customerContext.Scopes"
+	Api_keyScopes  apiKeyContextKey   = "api_key.Scopes"
+	TenantIdScopes tenantIdContextKey = "tenantId.Scopes"
 )
 
 // Defines values for AlertConfigDataSource.
@@ -8011,11 +8011,11 @@ type N500 = Error
 // apiKeyContextKey is the context key for api_key security scheme
 type apiKeyContextKey string
 
-// customerContextContextKey is the context key for customerContext security scheme
-type customerContextContextKey string
-
 // oauth2ContextKey is the context key for oauth2 security scheme
 type oauth2ContextKey string
+
+// tenantIdContextKey is the context key for tenantId security scheme
+type tenantIdContextKey string
 
 // ListAlertsParams defines parameters for ListAlerts.
 type ListAlertsParams struct {
