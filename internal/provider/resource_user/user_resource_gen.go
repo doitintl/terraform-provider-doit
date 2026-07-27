@@ -191,6 +191,14 @@ func (t UserType) String() string {
 func (t UserType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewUserValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewUserValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	displayNameAttribute, ok := attributes["display_name"]

@@ -103,6 +103,14 @@ func (t FoldersType) String() string {
 func (t FoldersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewFoldersValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewFoldersValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	descriptionAttribute, ok := attributes["description"]

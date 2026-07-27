@@ -315,6 +315,14 @@ func (t ConfigType) String() string {
 func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewConfigValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewConfigValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	attributionsAttribute, ok := attributes["attributions"]
@@ -417,12 +425,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	operatorAttribute, ok := attributes["operator"]
@@ -1205,6 +1239,14 @@ func (t MetricType) String() string {
 func (t MetricType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	typeAttribute, ok := attributes["type"]
@@ -1583,6 +1625,14 @@ func (t ScopesType) String() string {
 
 func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewScopesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewScopesValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

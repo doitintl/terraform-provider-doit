@@ -269,6 +269,14 @@ func (t ComponentType) String() string {
 func (t ComponentType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewComponentValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewComponentValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -407,12 +415,38 @@ func (t ComponentType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		return nil, diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsValuable, ok := propsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be basetypes.ObjectValuable, was: %T`, propsAttribute))
+
+		return nil, diags
+	}
+
+	propsObjVal, propsObjValDiags := propsValuable.ToObjectValue(ctx)
+	diags.Append(propsObjValDiags...)
+
+	propsTypable, ok := t.AttrTypes["props"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`props expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["props"]))
+
+		return nil, diags
+	}
+
+	propsConverted, propsConvertedDiags := propsTypable.ValueFromObject(ctx, propsObjVal)
+	diags.Append(propsConvertedDiags...)
+
+	propsVal, ok := propsConverted.(PropsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsConverted))
 	}
 
 	schemeIdAttribute, ok := attributes["scheme_id"]
@@ -1161,6 +1195,14 @@ func (t PropsType) String() string {
 func (t PropsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPropsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPropsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	serviceTypeAttribute, ok := attributes["service_type"]
@@ -1485,6 +1527,14 @@ func (t PropType) String() string {
 func (t PropType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPropValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPropValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -1623,12 +1673,38 @@ func (t PropType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		return nil, diags
 	}
 
-	propsVal, ok := propsAttribute.(PropsValue)
+	propsValuable, ok := propsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsAttribute))
+			fmt.Sprintf(`props expected to be basetypes.ObjectValuable, was: %T`, propsAttribute))
+
+		return nil, diags
+	}
+
+	propsObjVal, propsObjValDiags := propsValuable.ToObjectValue(ctx)
+	diags.Append(propsObjValDiags...)
+
+	propsTypable, ok := t.AttrTypes["props"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`props expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["props"]))
+
+		return nil, diags
+	}
+
+	propsConverted, propsConvertedDiags := propsTypable.ValueFromObject(ctx, propsObjVal)
+	diags.Append(propsConvertedDiags...)
+
+	propsVal, ok := propsConverted.(PropsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`props expected to be PropsValue, was: %T`, propsConverted))
 	}
 
 	schemeIdAttribute, ok := attributes["scheme_id"]
@@ -2376,6 +2452,14 @@ func (t SchemeType) String() string {
 
 func (t SchemeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSchemeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSchemeValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

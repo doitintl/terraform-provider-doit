@@ -78,6 +78,14 @@ func (t AccountManagersType) String() string {
 func (t AccountManagersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAccountManagersValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAccountManagersValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	calendlyLinkAttribute, ok := attributes["calendly_link"]

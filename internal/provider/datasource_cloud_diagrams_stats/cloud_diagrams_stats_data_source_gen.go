@@ -181,6 +181,14 @@ func (t CloudDiagramsStatsType) String() string {
 func (t CloudDiagramsStatsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCloudDiagramsStatsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCloudDiagramsStatsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -283,12 +291,38 @@ func (t CloudDiagramsStatsType) ValueFromObject(ctx context.Context, in basetype
 		return nil, diags
 	}
 
-	importVal, ok := importAttribute.(ImportValue)
+	importValuable, ok := importAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`import expected to be ImportValue, was: %T`, importAttribute))
+			fmt.Sprintf(`import expected to be basetypes.ObjectValuable, was: %T`, importAttribute))
+
+		return nil, diags
+	}
+
+	importObjVal, importObjValDiags := importValuable.ToObjectValue(ctx)
+	diags.Append(importObjValDiags...)
+
+	importTypable, ok := t.AttrTypes["import"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`import expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["import"]))
+
+		return nil, diags
+	}
+
+	importConverted, importConvertedDiags := importTypable.ValueFromObject(ctx, importObjVal)
+	diags.Append(importConvertedDiags...)
+
+	importVal, ok := importConverted.(ImportValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`import expected to be ImportValue, was: %T`, importConverted))
 	}
 
 	nameAttribute, ok := attributes["name"]
@@ -975,6 +1009,14 @@ func (t ChangesType) String() string {
 func (t ChangesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewChangesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewChangesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	countAttribute, ok := attributes["count"]
@@ -1408,6 +1450,14 @@ func (t ImportType) String() string {
 
 func (t ImportType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewImportValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewImportValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

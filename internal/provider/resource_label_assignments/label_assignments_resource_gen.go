@@ -156,6 +156,14 @@ func (t AddType) String() string {
 func (t AddType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAddValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAddValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	objectIdAttribute, ok := attributes["object_id"]
@@ -535,6 +543,14 @@ func (t AssignmentsType) String() string {
 func (t AssignmentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAssignmentsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAssignmentsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	objectIdAttribute, ok := attributes["object_id"]
@@ -913,6 +929,14 @@ func (t RemoveType) String() string {
 
 func (t RemoveType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewRemoveValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRemoveValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

@@ -161,6 +161,14 @@ func (t ReportsType) String() string {
 func (t ReportsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewReportsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewReportsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	createTimeAttribute, ok := attributes["create_time"]
@@ -881,6 +889,14 @@ func (t LabelsType) String() string {
 
 func (t LabelsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewLabelsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLabelsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

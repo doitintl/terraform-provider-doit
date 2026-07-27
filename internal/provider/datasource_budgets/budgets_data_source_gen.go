@@ -220,6 +220,14 @@ func (t BudgetsType) String() string {
 func (t BudgetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewBudgetsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewBudgetsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	alertThresholdsAttribute, ok := attributes["alert_thresholds"]
@@ -1438,6 +1446,14 @@ func (t AlertThresholdsType) String() string {
 func (t AlertThresholdsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAlertThresholdsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAlertThresholdsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	amountAttribute, ok := attributes["amount"]
@@ -1816,6 +1832,14 @@ func (t ScopesType) String() string {
 
 func (t ScopesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewScopesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewScopesValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

@@ -112,6 +112,14 @@ func (t CommentsType) String() string {
 func (t CommentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCommentsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCommentsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	attachmentsAttribute, ok := attributes["attachments"]
@@ -667,6 +675,14 @@ func (t AttachmentsType) String() string {
 
 func (t AttachmentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewAttachmentsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAttachmentsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

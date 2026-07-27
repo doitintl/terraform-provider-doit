@@ -118,6 +118,14 @@ func (t CloudDiagramsSnapshotsType) String() string {
 func (t CloudDiagramsSnapshotsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCloudDiagramsSnapshotsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCloudDiagramsSnapshotsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]

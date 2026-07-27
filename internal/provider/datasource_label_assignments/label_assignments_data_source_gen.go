@@ -81,6 +81,14 @@ func (t AssignmentsType) String() string {
 func (t AssignmentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAssignmentsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAssignmentsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	objectIdAttribute, ok := attributes["object_id"]

@@ -173,6 +173,14 @@ func (t AllocationsType) String() string {
 func (t AllocationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAllocationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAllocationsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	allocationTypeAttribute, ok := attributes["allocation_type"]

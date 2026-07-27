@@ -75,6 +75,14 @@ func (t CloudDiagramsType) String() string {
 func (t CloudDiagramsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCloudDiagramsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCloudDiagramsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	diagramUrlAttribute, ok := attributes["diagram_url"]

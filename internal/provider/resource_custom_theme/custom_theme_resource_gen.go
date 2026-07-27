@@ -119,6 +119,14 @@ func (t ColorsType) String() string {
 func (t ColorsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewColorsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewColorsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	darkAttribute, ok := attributes["dark"]

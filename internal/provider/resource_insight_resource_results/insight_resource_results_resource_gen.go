@@ -285,6 +285,14 @@ func (t ResourceResultsType) String() string {
 func (t ResourceResultsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewResourceResultsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewResourceResultsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	accountAttribute, ok := attributes["account"]
@@ -333,12 +341,38 @@ func (t ResourceResultsType) ValueFromObject(ctx context.Context, in basetypes.O
 		return nil, diags
 	}
 
-	enhancementVal, ok := enhancementAttribute.(EnhancementValue)
+	enhancementValuable, ok := enhancementAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`enhancement expected to be EnhancementValue, was: %T`, enhancementAttribute))
+			fmt.Sprintf(`enhancement expected to be basetypes.ObjectValuable, was: %T`, enhancementAttribute))
+
+		return nil, diags
+	}
+
+	enhancementObjVal, enhancementObjValDiags := enhancementValuable.ToObjectValue(ctx)
+	diags.Append(enhancementObjValDiags...)
+
+	enhancementTypable, ok := t.AttrTypes["enhancement"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`enhancement expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["enhancement"]))
+
+		return nil, diags
+	}
+
+	enhancementConverted, enhancementConvertedDiags := enhancementTypable.ValueFromObject(ctx, enhancementObjVal)
+	diags.Append(enhancementConvertedDiags...)
+
+	enhancementVal, ok := enhancementConverted.(EnhancementValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`enhancement expected to be EnhancementValue, was: %T`, enhancementConverted))
 	}
 
 	externalIdAttribute, ok := attributes["external_id"]
@@ -477,12 +511,38 @@ func (t ResourceResultsType) ValueFromObject(ctx context.Context, in basetypes.O
 		return nil, diags
 	}
 
-	resultVal, ok := resultAttribute.(ResultValue)
+	resultValuable, ok := resultAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`result expected to be ResultValue, was: %T`, resultAttribute))
+			fmt.Sprintf(`result expected to be basetypes.ObjectValuable, was: %T`, resultAttribute))
+
+		return nil, diags
+	}
+
+	resultObjVal, resultObjValDiags := resultValuable.ToObjectValue(ctx)
+	diags.Append(resultObjValDiags...)
+
+	resultTypable, ok := t.AttrTypes["result"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`result expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["result"]))
+
+		return nil, diags
+	}
+
+	resultConverted, resultConvertedDiags := resultTypable.ValueFromObject(ctx, resultObjVal)
+	diags.Append(resultConvertedDiags...)
+
+	resultVal, ok := resultConverted.(ResultValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`result expected to be ResultValue, was: %T`, resultConverted))
 	}
 
 	resultTypeAttribute, ok := attributes["result_type"]
@@ -1305,6 +1365,14 @@ func (t EnhancementType) String() string {
 func (t EnhancementType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewEnhancementValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewEnhancementValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	lastUpdatedAtAttribute, ok := attributes["last_updated_at"]
@@ -1353,12 +1421,38 @@ func (t EnhancementType) ValueFromObject(ctx context.Context, in basetypes.Objec
 		return nil, diags
 	}
 
-	priorityVal, ok := priorityAttribute.(PriorityValue)
+	priorityValuable, ok := priorityAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`priority expected to be PriorityValue, was: %T`, priorityAttribute))
+			fmt.Sprintf(`priority expected to be basetypes.ObjectValuable, was: %T`, priorityAttribute))
+
+		return nil, diags
+	}
+
+	priorityObjVal, priorityObjValDiags := priorityValuable.ToObjectValue(ctx)
+	diags.Append(priorityObjValDiags...)
+
+	priorityTypable, ok := t.AttrTypes["priority"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`priority expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["priority"]))
+
+		return nil, diags
+	}
+
+	priorityConverted, priorityConvertedDiags := priorityTypable.ValueFromObject(ctx, priorityObjVal)
+	diags.Append(priorityConvertedDiags...)
+
+	priorityVal, ok := priorityConverted.(PriorityValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`priority expected to be PriorityValue, was: %T`, priorityConverted))
 	}
 
 	tagsAttribute, ok := attributes["tags"]
@@ -1845,6 +1939,14 @@ func (t PriorityType) String() string {
 func (t PriorityType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPriorityValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPriorityValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	priorityScoreAttribute, ok := attributes["priority_score"]
@@ -2223,6 +2325,14 @@ func (t ResultType) String() string {
 
 func (t ResultType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewResultValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewResultValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

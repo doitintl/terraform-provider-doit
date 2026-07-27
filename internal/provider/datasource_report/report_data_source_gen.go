@@ -691,6 +691,14 @@ func (t ConfigType) String() string {
 func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewConfigValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewConfigValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	advancedAnalysisAttribute, ok := attributes["advanced_analysis"]
@@ -703,12 +711,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	advancedAnalysisVal, ok := advancedAnalysisAttribute.(AdvancedAnalysisValue)
+	advancedAnalysisValuable, ok := advancedAnalysisAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`advanced_analysis expected to be AdvancedAnalysisValue, was: %T`, advancedAnalysisAttribute))
+			fmt.Sprintf(`advanced_analysis expected to be basetypes.ObjectValuable, was: %T`, advancedAnalysisAttribute))
+
+		return nil, diags
+	}
+
+	advancedAnalysisObjVal, advancedAnalysisObjValDiags := advancedAnalysisValuable.ToObjectValue(ctx)
+	diags.Append(advancedAnalysisObjValDiags...)
+
+	advancedAnalysisTypable, ok := t.AttrTypes["advanced_analysis"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`advanced_analysis expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["advanced_analysis"]))
+
+		return nil, diags
+	}
+
+	advancedAnalysisConverted, advancedAnalysisConvertedDiags := advancedAnalysisTypable.ValueFromObject(ctx, advancedAnalysisObjVal)
+	diags.Append(advancedAnalysisConvertedDiags...)
+
+	advancedAnalysisVal, ok := advancedAnalysisConverted.(AdvancedAnalysisValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`advanced_analysis expected to be AdvancedAnalysisValue, was: %T`, advancedAnalysisConverted))
 	}
 
 	aggregationAttribute, ok := attributes["aggregation"]
@@ -757,12 +791,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
+	customTimeRangeValuable, ok := customTimeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
+			fmt.Sprintf(`custom_time_range expected to be basetypes.ObjectValuable, was: %T`, customTimeRangeAttribute))
+
+		return nil, diags
+	}
+
+	customTimeRangeObjVal, customTimeRangeObjValDiags := customTimeRangeValuable.ToObjectValue(ctx)
+	diags.Append(customTimeRangeObjValDiags...)
+
+	customTimeRangeTypable, ok := t.AttrTypes["custom_time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["custom_time_range"]))
+
+		return nil, diags
+	}
+
+	customTimeRangeConverted, customTimeRangeConvertedDiags := customTimeRangeTypable.ValueFromObject(ctx, customTimeRangeObjVal)
+	diags.Append(customTimeRangeConvertedDiags...)
+
+	customTimeRangeVal, ok := customTimeRangeConverted.(CustomTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeConverted))
 	}
 
 	dataSourceAttribute, ok := attributes["data_source"]
@@ -811,12 +871,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	displaySettingsVal, ok := displaySettingsAttribute.(DisplaySettingsValue)
+	displaySettingsValuable, ok := displaySettingsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`display_settings expected to be DisplaySettingsValue, was: %T`, displaySettingsAttribute))
+			fmt.Sprintf(`display_settings expected to be basetypes.ObjectValuable, was: %T`, displaySettingsAttribute))
+
+		return nil, diags
+	}
+
+	displaySettingsObjVal, displaySettingsObjValDiags := displaySettingsValuable.ToObjectValue(ctx)
+	diags.Append(displaySettingsObjValDiags...)
+
+	displaySettingsTypable, ok := t.AttrTypes["display_settings"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`display_settings expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["display_settings"]))
+
+		return nil, diags
+	}
+
+	displaySettingsConverted, displaySettingsConvertedDiags := displaySettingsTypable.ValueFromObject(ctx, displaySettingsObjVal)
+	diags.Append(displaySettingsConvertedDiags...)
+
+	displaySettingsVal, ok := displaySettingsConverted.(DisplaySettingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`display_settings expected to be DisplaySettingsValue, was: %T`, displaySettingsConverted))
 	}
 
 	displayValuesAttribute, ok := attributes["display_values"]
@@ -973,12 +1059,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	metricFilterAttribute, ok := attributes["metric_filter"]
@@ -991,12 +1103,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	metricFilterVal, ok := metricFilterAttribute.(MetricFilterValue)
+	metricFilterValuable, ok := metricFilterAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterAttribute))
+			fmt.Sprintf(`metric_filter expected to be basetypes.ObjectValuable, was: %T`, metricFilterAttribute))
+
+		return nil, diags
+	}
+
+	metricFilterObjVal, metricFilterObjValDiags := metricFilterValuable.ToObjectValue(ctx)
+	diags.Append(metricFilterObjValDiags...)
+
+	metricFilterTypable, ok := t.AttrTypes["metric_filter"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric_filter expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric_filter"]))
+
+		return nil, diags
+	}
+
+	metricFilterConverted, metricFilterConvertedDiags := metricFilterTypable.ValueFromObject(ctx, metricFilterObjVal)
+	diags.Append(metricFilterConvertedDiags...)
+
+	metricFilterVal, ok := metricFilterConverted.(MetricFilterValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric_filter expected to be MetricFilterValue, was: %T`, metricFilterConverted))
 	}
 
 	metricsAttribute, ok := attributes["metrics"]
@@ -1027,12 +1165,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	secondaryTimeRangeVal, ok := secondaryTimeRangeAttribute.(SecondaryTimeRangeValue)
+	secondaryTimeRangeValuable, ok := secondaryTimeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`secondary_time_range expected to be SecondaryTimeRangeValue, was: %T`, secondaryTimeRangeAttribute))
+			fmt.Sprintf(`secondary_time_range expected to be basetypes.ObjectValuable, was: %T`, secondaryTimeRangeAttribute))
+
+		return nil, diags
+	}
+
+	secondaryTimeRangeObjVal, secondaryTimeRangeObjValDiags := secondaryTimeRangeValuable.ToObjectValue(ctx)
+	diags.Append(secondaryTimeRangeObjValDiags...)
+
+	secondaryTimeRangeTypable, ok := t.AttrTypes["secondary_time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`secondary_time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["secondary_time_range"]))
+
+		return nil, diags
+	}
+
+	secondaryTimeRangeConverted, secondaryTimeRangeConvertedDiags := secondaryTimeRangeTypable.ValueFromObject(ctx, secondaryTimeRangeObjVal)
+	diags.Append(secondaryTimeRangeConvertedDiags...)
+
+	secondaryTimeRangeVal, ok := secondaryTimeRangeConverted.(SecondaryTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`secondary_time_range expected to be SecondaryTimeRangeValue, was: %T`, secondaryTimeRangeConverted))
 	}
 
 	sortDimensionsAttribute, ok := attributes["sort_dimensions"]
@@ -1117,12 +1281,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	timeRangeVal, ok := timeRangeAttribute.(TimeRangeValue)
+	timeRangeValuable, ok := timeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`time_range expected to be TimeRangeValue, was: %T`, timeRangeAttribute))
+			fmt.Sprintf(`time_range expected to be basetypes.ObjectValuable, was: %T`, timeRangeAttribute))
+
+		return nil, diags
+	}
+
+	timeRangeObjVal, timeRangeObjValDiags := timeRangeValuable.ToObjectValue(ctx)
+	diags.Append(timeRangeObjValDiags...)
+
+	timeRangeTypable, ok := t.AttrTypes["time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["time_range"]))
+
+		return nil, diags
+	}
+
+	timeRangeConverted, timeRangeConvertedDiags := timeRangeTypable.ValueFromObject(ctx, timeRangeObjVal)
+	diags.Append(timeRangeConvertedDiags...)
+
+	timeRangeVal, ok := timeRangeConverted.(TimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`time_range expected to be TimeRangeValue, was: %T`, timeRangeConverted))
 	}
 
 	if diags.HasError() {
@@ -2484,6 +2674,14 @@ func (t AdvancedAnalysisType) String() string {
 func (t AdvancedAnalysisType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAdvancedAnalysisValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAdvancedAnalysisValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	forecastAttribute, ok := attributes["forecast"]
@@ -2973,6 +3171,14 @@ func (t CustomTimeRangeType) String() string {
 func (t CustomTimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewCustomTimeRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCustomTimeRangeValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	fromAttribute, ok := attributes["from"]
@@ -3352,6 +3558,14 @@ func (t DimensionsType) String() string {
 func (t DimensionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDimensionsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDimensionsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -3730,6 +3944,14 @@ func (t DisplaySettingsType) String() string {
 
 func (t DisplaySettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewDisplaySettingsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDisplaySettingsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -4274,6 +4496,14 @@ func (t FiltersType) String() string {
 
 func (t FiltersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewFiltersValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewFiltersValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -4961,6 +5191,14 @@ func (t GroupType) String() string {
 func (t GroupType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewGroupValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewGroupValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -4991,12 +5229,38 @@ func (t GroupType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	limitVal, ok := limitAttribute.(LimitValue)
+	limitValuable, ok := limitAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`limit expected to be LimitValue, was: %T`, limitAttribute))
+			fmt.Sprintf(`limit expected to be basetypes.ObjectValuable, was: %T`, limitAttribute))
+
+		return nil, diags
+	}
+
+	limitObjVal, limitObjValDiags := limitValuable.ToObjectValue(ctx)
+	diags.Append(limitObjValDiags...)
+
+	limitTypable, ok := t.AttrTypes["limit"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["limit"]))
+
+		return nil, diags
+	}
+
+	limitConverted, limitConvertedDiags := limitTypable.ValueFromObject(ctx, limitObjVal)
+	diags.Append(limitConvertedDiags...)
+
+	limitVal, ok := limitConverted.(LimitValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit expected to be LimitValue, was: %T`, limitConverted))
 	}
 
 	typeAttribute, ok := attributes["type"]
@@ -5413,6 +5677,14 @@ func (t LimitType) String() string {
 func (t LimitType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewLimitValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLimitValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	metricAttribute, ok := attributes["metric"]
@@ -5425,12 +5697,38 @@ func (t LimitType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	sortAttribute, ok := attributes["sort"]
@@ -5865,6 +6163,14 @@ func (t MetricType) String() string {
 func (t MetricType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	typeAttribute, ok := attributes["type"]
@@ -6244,6 +6550,14 @@ func (t LimitByChangeType) String() string {
 func (t LimitByChangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricFilterValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricFilterValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	changeTypeAttribute, ok := attributes["change_type"]
@@ -6292,12 +6606,38 @@ func (t LimitByChangeType) ValueFromObject(ctx context.Context, in basetypes.Obj
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	operatorAttribute, ok := attributes["operator"]
@@ -7380,6 +7720,14 @@ func (t MetricsType) String() string {
 func (t MetricsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	typeAttribute, ok := attributes["type"]
@@ -7759,6 +8107,14 @@ func (t SecondaryTimeRangeType) String() string {
 func (t SecondaryTimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewSecondaryTimeRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSecondaryTimeRangeValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	amountAttribute, ok := attributes["amount"]
@@ -7789,12 +8145,38 @@ func (t SecondaryTimeRangeType) ValueFromObject(ctx context.Context, in basetype
 		return nil, diags
 	}
 
-	customTimeRangeVal, ok := customTimeRangeAttribute.(CustomTimeRangeValue)
+	customTimeRangeValuable, ok := customTimeRangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeAttribute))
+			fmt.Sprintf(`custom_time_range expected to be basetypes.ObjectValuable, was: %T`, customTimeRangeAttribute))
+
+		return nil, diags
+	}
+
+	customTimeRangeObjVal, customTimeRangeObjValDiags := customTimeRangeValuable.ToObjectValue(ctx)
+	diags.Append(customTimeRangeObjValDiags...)
+
+	customTimeRangeTypable, ok := t.AttrTypes["custom_time_range"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["custom_time_range"]))
+
+		return nil, diags
+	}
+
+	customTimeRangeConverted, customTimeRangeConvertedDiags := customTimeRangeTypable.ValueFromObject(ctx, customTimeRangeObjVal)
+	diags.Append(customTimeRangeConvertedDiags...)
+
+	customTimeRangeVal, ok := customTimeRangeConverted.(CustomTimeRangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`custom_time_range expected to be CustomTimeRangeValue, was: %T`, customTimeRangeConverted))
 	}
 
 	includeCurrentAttribute, ok := attributes["include_current"]
@@ -8266,6 +8648,14 @@ func (t SplitsType) String() string {
 func (t SplitsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewSplitsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSplitsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -8332,12 +8722,38 @@ func (t SplitsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	originVal, ok := originAttribute.(OriginValue)
+	originValuable, ok := originAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
+			fmt.Sprintf(`origin expected to be basetypes.ObjectValuable, was: %T`, originAttribute))
+
+		return nil, diags
+	}
+
+	originObjVal, originObjValDiags := originValuable.ToObjectValue(ctx)
+	diags.Append(originObjValDiags...)
+
+	originTypable, ok := t.AttrTypes["origin"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["origin"]))
+
+		return nil, diags
+	}
+
+	originConverted, originConvertedDiags := originTypable.ValueFromObject(ctx, originObjVal)
+	diags.Append(originConvertedDiags...)
+
+	originVal, ok := originConverted.(OriginValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originConverted))
 	}
 
 	targetsAttribute, ok := attributes["targets"]
@@ -8895,6 +9311,14 @@ func (t OriginType) String() string {
 func (t OriginType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewOriginValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewOriginValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	idAttribute, ok := attributes["id"]
@@ -9273,6 +9697,14 @@ func (t TargetsType) String() string {
 
 func (t TargetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTargetsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTargetsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -9707,6 +10139,14 @@ func (t TimeRangeType) String() string {
 
 func (t TimeRangeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewTimeRangeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewTimeRangeValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

@@ -842,6 +842,14 @@ func (t AttachmentsType) String() string {
 func (t AttachmentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAttachmentsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAttachmentsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -1822,6 +1830,14 @@ func (t IssuesType) String() string {
 func (t IssuesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewIssuesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewIssuesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -2310,6 +2326,14 @@ func (t CombinersType) String() string {
 
 func (t CombinersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCombinersValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCombinersValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -2867,6 +2891,14 @@ func (t ItemsType) String() string {
 func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewItemsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewItemsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -3245,6 +3277,14 @@ func (t ElementsType) String() string {
 
 func (t ElementsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewElementsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewElementsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -4225,6 +4265,14 @@ func (t GroupsType) String() string {
 
 func (t GroupsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewGroupsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewGroupsValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -5276,6 +5324,14 @@ func (t LinksType) String() string {
 func (t LinksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewLinksValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewLinksValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -5396,12 +5452,38 @@ func (t LinksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	destinationVal, ok := destinationAttribute.(DestinationValue)
+	destinationValuable, ok := destinationAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`destination expected to be DestinationValue, was: %T`, destinationAttribute))
+			fmt.Sprintf(`destination expected to be basetypes.ObjectValuable, was: %T`, destinationAttribute))
+
+		return nil, diags
+	}
+
+	destinationObjVal, destinationObjValDiags := destinationValuable.ToObjectValue(ctx)
+	diags.Append(destinationObjValDiags...)
+
+	destinationTypable, ok := t.AttrTypes["destination"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`destination expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["destination"]))
+
+		return nil, diags
+	}
+
+	destinationConverted, destinationConvertedDiags := destinationTypable.ValueFromObject(ctx, destinationObjVal)
+	diags.Append(destinationConvertedDiags...)
+
+	destinationVal, ok := destinationConverted.(DestinationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`destination expected to be DestinationValue, was: %T`, destinationConverted))
 	}
 
 	issuesAttribute, ok := attributes["issues"]
@@ -5450,12 +5532,38 @@ func (t LinksType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	originVal, ok := originAttribute.(OriginValue)
+	originValuable, ok := originAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originAttribute))
+			fmt.Sprintf(`origin expected to be basetypes.ObjectValuable, was: %T`, originAttribute))
+
+		return nil, diags
+	}
+
+	originObjVal, originObjValDiags := originValuable.ToObjectValue(ctx)
+	diags.Append(originObjValDiags...)
+
+	originTypable, ok := t.AttrTypes["origin"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["origin"]))
+
+		return nil, diags
+	}
+
+	originConverted, originConvertedDiags := originTypable.ValueFromObject(ctx, originObjVal)
+	diags.Append(originConvertedDiags...)
+
+	originVal, ok := originConverted.(OriginValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`origin expected to be OriginValue, was: %T`, originConverted))
 	}
 
 	ownerSsIdAttribute, ok := attributes["owner_ss_id"]
@@ -6356,6 +6464,14 @@ func (t DestinationType) String() string {
 func (t DestinationType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewDestinationValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDestinationValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -6845,6 +6961,14 @@ func (t OriginType) String() string {
 func (t OriginType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewOriginValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewOriginValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -7333,6 +7457,14 @@ func (t MetadataType) String() string {
 
 func (t MetadataType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewMetadataValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetadataValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 
@@ -7852,6 +7984,14 @@ func (t NodesType) String() string {
 func (t NodesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewNodesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNodesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -7990,12 +8130,38 @@ func (t NodesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	infraNodeVal, ok := infraNodeAttribute.(InfraNodeValue)
+	infraNodeValuable, ok := infraNodeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`infra_node expected to be InfraNodeValue, was: %T`, infraNodeAttribute))
+			fmt.Sprintf(`infra_node expected to be basetypes.ObjectValuable, was: %T`, infraNodeAttribute))
+
+		return nil, diags
+	}
+
+	infraNodeObjVal, infraNodeObjValDiags := infraNodeValuable.ToObjectValue(ctx)
+	diags.Append(infraNodeObjValDiags...)
+
+	infraNodeTypable, ok := t.AttrTypes["infra_node"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`infra_node expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["infra_node"]))
+
+		return nil, diags
+	}
+
+	infraNodeConverted, infraNodeConvertedDiags := infraNodeTypable.ValueFromObject(ctx, infraNodeObjVal)
+	diags.Append(infraNodeConvertedDiags...)
+
+	infraNodeVal, ok := infraNodeConverted.(InfraNodeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`infra_node expected to be InfraNodeValue, was: %T`, infraNodeConverted))
 	}
 
 	instanceCountAttribute, ok := attributes["instance_count"]
@@ -9022,6 +9188,14 @@ func (t InfraNodeType) String() string {
 func (t InfraNodeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewInfraNodeValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewInfraNodeValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	underscoreIdAttribute, ok := attributes["_id"]
@@ -9455,6 +9629,14 @@ func (t NotesType) String() string {
 
 func (t NotesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewNotesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNotesValueUnknown(), diags
+	}
 
 	attributes := in.Attributes()
 

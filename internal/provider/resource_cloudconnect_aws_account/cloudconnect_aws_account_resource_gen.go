@@ -114,6 +114,14 @@ func (t SupportedFeaturesType) String() string {
 func (t SupportedFeaturesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewSupportedFeaturesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSupportedFeaturesValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	hasRequiredPermissionsAttribute, ok := attributes["has_required_permissions"]

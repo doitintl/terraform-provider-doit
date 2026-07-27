@@ -172,6 +172,14 @@ func (t PeriodsType) String() string {
 func (t PeriodsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewPeriodsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPeriodsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	commitmentValueAttribute, ok := attributes["commitment_value"]

@@ -122,6 +122,14 @@ func (t AssetsType) String() string {
 func (t AssetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewAssetsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAssetsValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	createTimeAttribute, ok := attributes["create_time"]
