@@ -58,6 +58,8 @@ tags:
     description: Metadata about cloud services and offerings.
   - name: Support Requests
     description: Create and manage support tickets with DoiT.
+  - name: Contracts
+    description: List and manage tenant-scoped contracts as a T1/T2 PartnerOps caller.
   - name: Commitment Manager
     description: View and manage commitment contracts with DoiT.
   - name: Ava
@@ -2033,6 +2035,212 @@ paths:
           $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
+  "/customers/{customerID}/contracts":
+    get:
+      tags:
+        - Contracts
+      summary: List contracts
+      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires contractsReadOnly, contractsViewer, or a write-capable role (without contractsReadOnly). User API tokens must include the matching permission in their scope.
+      operationId: listContracts
+      parameters:
+        - name: customerID
+          in: path
+          description: The customer (tenant) whose contracts are requested.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MTSContractResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+    post:
+      tags:
+        - Contracts
+      summary: Create contract
+      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires a role without contractsReadOnly; user API tokens must include the matching permission in their scope.
+      operationId: createContract
+      parameters:
+        - name: customerID
+          in: path
+          description: The customer (tenant) the contract is created for.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MTSContractInput"
+      responses:
+        "201":
+          description: Created - The contract draft was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateContractResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+  "/customers/{customerID}/contracts/{contractID}":
+    get:
+      tags:
+        - Contracts
+      summary: Retrieve a contract
+      description: Returns the specified contract.
+      operationId: getContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MTSContractDetailResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Contracts
+      summary: Update contract
+      description: Creates a new version of the contract. The contract type is immutable and cannot be changed by an update.
+      operationId: updateContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MTSContractInput"
+      responses:
+        "200":
+          description: OK - New contract version created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateContractResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+  "/customers/{customerID}/contracts/{contractID}/activate":
+    post:
+      tags:
+        - Contracts
+      summary: Activate contract
+      description: Transitions a draft contract to active or scheduled (when the start date is in the future). Produces the same system state as activating via the Console.
+      operationId: activateContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract activated or scheduled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractLifecycleResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: Conflict - An active contract of the same type already exists for this tier.
+  "/customers/{customerID}/contracts/{contractID}/cancel":
+    post:
+      tags:
+        - Contracts
+      summary: Cancel contract
+      description: Cancels (deactivates) a contract. Active contracts cannot be deleted; cancel is the terminal operation.
+      operationId: cancelContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Optional cancellation reason.
+      responses:
+        "200":
+          description: OK - Contract cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractLifecycleResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   /anomalies/v1:
     get:
       tags:
@@ -11732,6 +11940,200 @@ components:
           description: The status of the user (invited)
           enum:
             - invited
+    MTSContractResponse:
+      type: object
+      description: External view of a contract. DoiT-internal fields are not exposed.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the contract.
+        customerId:
+          type: string
+          description: The customer (tenant) that holds the contract.
+        type:
+          type: string
+          description: The immutable contract type.
+        status:
+          type: string
+          description: The contract status.
+          enum:
+            - draft
+            - scheduled
+            - active
+            - cancelled
+            - expired
+            - superseded
+        name:
+          type: string
+          description: The contract name.
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: The contract start date.
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: The contract end date.
+        renewalPolicy:
+          type: string
+          description: The renewal policy.
+          enum:
+            - auto
+            - manual
+            - fixed
+        currentVersionNumber:
+          type: integer
+          nullable: true
+          description: The current version number of the contract.
+        timeCreated:
+          type: string
+          format: date-time
+          description: When the contract was created.
+    MTSContractDetailResponse:
+      description: A single contract with its version terms. DoiT-internal fields are not exposed.
+      allOf:
+        - $ref: "#/components/schemas/MTSContractResponse"
+        - type: object
+          properties:
+            versions:
+              type: array
+              description: The contract versions, newest last, with their billing terms.
+              items:
+                type: object
+                properties:
+                  version:
+                    type: integer
+                    description: Contract version number.
+                  status:
+                    type: string
+                    description: Version status.
+                  name:
+                    type: string
+                  startDate:
+                    type: string
+                    format: date-time
+                  endDate:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  effectiveStart:
+                    type: string
+                    format: date-time
+                  effectiveEnd:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  renewalPolicy:
+                    type: string
+                  cancellationReason:
+                    type: string
+                    nullable: true
+                  billingProfile:
+                    type: object
+                  invoicesEmail:
+                    type: string
+                    format: email
+                  contractUpdatesEmail:
+                    type: string
+                    format: email
+                  managementAccounts:
+                    type: array
+                    items:
+                      type: string
+                  billingRules:
+                    type: array
+                    items:
+                      type: object
+                  priceBooks:
+                    type: array
+                    items:
+                      type: object
+                  customLineItems:
+                    type: array
+                    items:
+                      type: object
+    MTSContractInput:
+      type: object
+      description: Contract create/update payload. Full field-level validation is applied server-side.
+      required:
+        - name
+        - startDate
+        - renewalPolicy
+        - invoicesEmail
+        - contractUpdatesEmail
+        - billingProfile
+      properties:
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        renewalPolicy:
+          type: string
+          enum:
+            - auto
+            - manual
+            - fixed
+        invoicesEmail:
+          type: string
+          format: email
+        contractUpdatesEmail:
+          type: string
+          format: email
+        billingProfile:
+          type: object
+          description: The billing profile (name, country, state, city, address, zip).
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        billingRules:
+          type: array
+          items:
+            type: object
+        priceBooks:
+          type: array
+          items:
+            type: object
+        customLineItems:
+          type: array
+          items:
+            type: object
+    CreateContractResponse:
+      type: object
+      description: The result of creating a contract or contract version.
+      properties:
+        contractId:
+          type: string
+        version:
+          type: integer
+        status:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    ContractLifecycleResponse:
+      type: object
+      description: Result of an activate or cancel operation.
+      properties:
+        contractId:
+          type: string
+          description: The contract identifier.
+        status:
+          type: string
+          description: The contract status after the operation (`active`, `scheduled`, or `cancelled`).
+          enum:
+            - active
+            - scheduled
+            - cancelled
     CommitmentExternal:
       type: object
       description: A commitment contract.
