@@ -571,3 +571,88 @@ func TestReportTimestampValidator_ForecastSettings(t *testing.T) {
 		})
 	}
 }
+
+// buildForecastConfigValue builds a ConfigValue with forecast_settings set and,
+// when forecast is non-nil, advanced_analysis.forecast set to that value.
+func buildForecastConfigValue(ctx context.Context, t *testing.T, forecast *bool) resource_report.ConfigValue {
+	t.Helper()
+
+	fsMap := map[string]attr.Value{
+		"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
+		"future_time_intervals":        types.Int64Value(12),
+		"historical_custom_date_range": resource_report.NewHistoricalCustomDateRangeValueNull(),
+		"historical_time_intervals":    types.Int64Null(),
+		"mode":                         types.StringValue("totals"),
+	}
+	fsVal, diags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), fsMap)
+	if diags.HasError() {
+		t.Fatalf("NewForecastSettingsValue: %v", diags)
+	}
+
+	advVal := resource_report.NewAdvancedAnalysisValueNull()
+	if forecast != nil {
+		advVal, diags = resource_report.NewAdvancedAnalysisValue(resource_report.AdvancedAnalysisValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"forecast":      types.BoolValue(*forecast),
+			"not_trending":  types.BoolNull(),
+			"trending_down": types.BoolNull(),
+			"trending_up":   types.BoolNull(),
+		})
+		if diags.HasError() {
+			t.Fatalf("NewAdvancedAnalysisValue: %v", diags)
+		}
+	}
+
+	configMap := map[string]attr.Value{
+		"aggregation":                 types.StringNull(),
+		"currency":                    types.StringNull(),
+		"data_source":                 types.StringNull(),
+		"display_values":              types.StringNull(),
+		"include_promotional_credits": types.BoolNull(),
+		"include_subtotals":           types.BoolNull(),
+		"layout":                      types.StringNull(),
+		"sort_dimensions":             types.StringNull(),
+		"sort_groups":                 types.StringNull(),
+		"time_interval":               types.StringNull(),
+		"forecast_settings":           fsVal,
+		"custom_time_range":           resource_report.NewCustomTimeRangeValueNull(),
+		"secondary_time_range":        resource_report.NewSecondaryTimeRangeValueNull(),
+		"time_range":                  resource_report.NewTimeRangeValueNull(),
+		"advanced_analysis":           advVal,
+		"display_settings":            resource_report.NewDisplaySettingsValueNull(),
+		"metric":                      resource_report.NewMetricValueNull(),
+		"metric_filter":               resource_report.NewMetricFilterValueNull(),
+		"dimensions":                  types.ListNull(resource_report.DimensionsValue{}.Type(ctx)),
+		"filters":                     types.ListNull(resource_report.FiltersValue{}.Type(ctx)),
+		"group":                       types.ListNull(resource_report.GroupValue{}.Type(ctx)),
+		"metrics":                     types.ListNull(resource_report.MetricsValue{}.Type(ctx)),
+		"splits":                      types.ListNull(resource_report.SplitsValue{}.Type(ctx)),
+	}
+	configVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
+	if diags.HasError() {
+		t.Fatalf("NewConfigValue: %v", diags)
+	}
+	return configVal
+}
+
+// TestToExternalConfig_ForecastFalseWithSettings verifies that when
+// advanced_analysis.forecast=false accompanies forecast_settings, toExternalConfig
+// serializes both the false flag and the non-null settings (the API tolerates this
+// and enables forecasting; see TestAccReport_ForecastSettings_RetainedForecastFalse).
+func TestToExternalConfig_ForecastFalseWithSettings(t *testing.T) {
+	ctx := context.Background()
+	forecastFalse := false
+
+	cfg := buildForecastConfigValue(ctx, t, &forecastFalse)
+	ext, diags := toExternalConfig(ctx, cfg)
+	if diags.HasError() {
+		t.Fatalf("toExternalConfig: %v", diags)
+	}
+
+	if !ext.ForecastSettings.IsSpecified() || ext.ForecastSettings.IsNull() {
+		t.Fatalf("expected forecast_settings to be sent, got specified=%v null=%v",
+			ext.ForecastSettings.IsSpecified(), ext.ForecastSettings.IsNull())
+	}
+	if ext.AdvancedAnalysis == nil || ext.AdvancedAnalysis.Forecast == nil || *ext.AdvancedAnalysis.Forecast {
+		t.Fatalf("expected serialized request to carry advanced_analysis.forecast=false alongside forecast_settings")
+	}
+}

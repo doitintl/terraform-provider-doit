@@ -29,6 +29,7 @@ import (
 // Compile-time interface checks.
 var _ datasource.DataSource = (*reportQueryDataSource)(nil)
 var _ datasource.DataSourceWithConfigure = (*reportQueryDataSource)(nil)
+var _ datasource.DataSourceWithConfigValidators = (*reportQueryDataSource)(nil)
 
 // NewReportQueryDataSource creates a new instance of the data source.
 func NewReportQueryDataSource() datasource.DataSource {
@@ -127,6 +128,14 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			},
 			"timeouts": timeouts.Attributes(ctx),
 		},
+	}
+}
+
+func (d *reportQueryDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
+	return []datasource.ConfigValidator{
+		// Same empty-range / RFC3339 checks as the resource; the query config
+		// reuses the report resource's config types.
+		reportTimestampDataSourceValidator{},
 	}
 }
 

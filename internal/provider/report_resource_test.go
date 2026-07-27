@@ -668,6 +668,16 @@ func TestAccReport_CustomTimeRangeTimezonePreservation(t *testing.T) {
 						knownvalue.StringExact("2024-02-01T00:00:00-05:00")),
 				},
 			},
+			// Re-apply must produce no plan: the -05:00 offset survives the Read-path
+			// comparison (time.Time.Equal) for primary custom_time_range.
+			{
+				Config: testAccReportWithTimezoneOffset(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -1480,6 +1490,78 @@ resource "doit_report" "secondary_custom" {
           custom_time_range = {
             from = "2023-01-01T00:00:00Z"
             to   = "2023-12-31T23:59:59Z"
+          }
+        }
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_SecondaryCustomTimeRangeTimezonePreservation round-trips
+// secondary_time_range.custom_time_range with a non-UTC offset (-05:00) and
+// drift-checks, verifying the offset is preserved with no drift.
+func TestAccReport_SecondaryCustomTimeRangeTimezonePreservation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportWithSecondaryTimeRangeOffset(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_offset",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("from"),
+						knownvalue.StringExact("2023-01-01T00:00:00-05:00")),
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_offset",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("to"),
+						knownvalue.StringExact("2023-12-31T23:59:59-05:00")),
+				},
+			},
+			// Drift check — exercises the secondary Read path (time.Time.Equal).
+			{
+				Config: testAccReportWithSecondaryTimeRangeOffset(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSecondaryTimeRangeOffset(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "secondary_offset" {
+    name = "test-sec-offset-%d"
+    description = "Report with secondary custom time range using non-UTC offset"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        custom_time_range = {
+          from = "2024-01-01T00:00:00Z"
+          to   = "2024-12-31T23:59:59Z"
+        }
+        time_range = {
+          mode = "custom"
+          unit = "day"
+        }
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2023-01-01T00:00:00-05:00"
+            to   = "2023-12-31T23:59:59-05:00"
           }
         }
         data_source    = "billing"
@@ -3496,6 +3578,16 @@ func TestAccReport_ForecastSettings_Lifecycle(t *testing.T) {
 						"doit_report.forecast_intervals_test",
 						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_time_intervals"),
 						knownvalue.Int64Exact(12)),
+					// Switching back to intervals must clear the custom ranges; if retained
+					// they would be sent to the API and take precedence over the intervals.
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_custom_date_range"),
+						knownvalue.Null()),
+					statecheck.ExpectKnownValue(
+						"doit_report.forecast_intervals_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("historical_custom_date_range"),
+						knownvalue.Null()),
 				},
 			},
 			// Drift check after switching back to intervals.
@@ -3786,6 +3878,129 @@ resource "doit_report" "forecast_conflict" {
 		}
 		forecast_settings = {
 			future_time_intervals = 6
+			mode = "totals"
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+// TestAccReport_ForecastSettings_RetainedForecastFalse creates a non-forecast report
+// (advanced_analysis set, forecast omitted so the API persists false), then adds
+// forecast_settings while still omitting forecast. It verifies forecasting is enabled
+// and the result is stable — no apply error and no drift.
+func TestAccReport_ForecastSettings_RetainedForecastFalse(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: non-forecast report; forecast omitted from advanced_analysis.
+			{
+				Config: testAccReportRetainedForecastFalseNoSettings(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// The API persists forecast=false for a non-forecast report; this is
+					// what Optional+Computed then retains into the next plan.
+					statecheck.ExpectKnownValue(
+						"doit_report.retained_forecast_test",
+						tfjsonpath.New("config").AtMapKey("advanced_analysis").AtMapKey("forecast"),
+						knownvalue.Bool(false)),
+				},
+			},
+			// Drift check after create.
+			{
+				Config: testAccReportRetainedForecastFalseNoSettings(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: add forecast_settings, still omitting forecast.
+			{
+				Config: testAccReportRetainedForecastFalseWithSettings(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.retained_forecast_test",
+						tfjsonpath.New("config").AtMapKey("forecast_settings").AtMapKey("future_time_intervals"),
+						knownvalue.Int64Exact(12)),
+					// Adding forecast_settings enables forecasting: forecast resolves to true.
+					statecheck.ExpectKnownValue(
+						"doit_report.retained_forecast_test",
+						tfjsonpath.New("config").AtMapKey("advanced_analysis").AtMapKey("forecast"),
+						knownvalue.Bool(true)),
+				},
+			},
+			// Drift check after adding settings.
+			{
+				Config: testAccReportRetainedForecastFalseWithSettings(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportRetainedForecastFalseNoSettings(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "retained_forecast_test" {
+    name = "test-retained-forecast-%d"
+	description = "Non-forecast report; forecast omitted from advanced_analysis"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		advanced_analysis = {
+			not_trending = true
+		}
+		data_source    = "billing"
+		display_values = "actuals_only"
+		currency       = "USD"
+		layout         = "table"
+	}
+}
+`, i)
+}
+
+func testAccReportRetainedForecastFalseWithSettings(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "retained_forecast_test" {
+    name = "test-retained-forecast-%d"
+	description = "Forecast settings added while forecast still omitted"
+	config = {
+		metric = {
+		  type  = "basic"
+		  value = "cost"
+		}
+		aggregation   = "total"
+		time_interval = "month"
+		time_range = {
+			mode = "last"
+			unit = "month"
+			value = 12
+		}
+		advanced_analysis = {
+			not_trending = true
+		}
+		forecast_settings = {
+			future_time_intervals = 12
 			mode = "totals"
 		}
 		data_source    = "billing"
