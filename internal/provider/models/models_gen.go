@@ -4057,6 +4057,9 @@ type AnomalyItem struct {
 	// AcknowledgedBy Email of the user who first acknowledged the anomaly
 	AcknowledgedBy nullable.Nullable[string] `json:"acknowledgedBy,omitempty"`
 
+	// ActualCost Observed (actual) cost of the anomaly.
+	ActualCost nullable.Nullable[float64] `json:"actualCost,omitempty"`
+
 	// Attribution Attribution ID.
 	Attribution string `json:"attribution"`
 
@@ -4068,7 +4071,10 @@ type AnomalyItem struct {
 
 	// EndTime End of the anomaly.
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
-	Id      *string                `json:"id,omitempty"`
+
+	// ExpectedMaxCost Maximum cost within the expected normal range.
+	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
+	Id              *string                    `json:"id,omitempty"`
 
 	// Notifications Chronologically ordered notification dispatch events.
 	Notifications NotificationEventArray `json:"notifications"`
@@ -6322,6 +6328,9 @@ type GetAnomaly200Response struct {
 	// AcknowledgedBy Email of the user who first acknowledged the anomaly
 	AcknowledgedBy nullable.Nullable[string] `json:"acknowledgedBy,omitempty"`
 
+	// ActualCost Observed (actual) cost of the anomaly.
+	ActualCost nullable.Nullable[float64] `json:"actualCost,omitempty"`
+
 	// Attribution Attribution ID
 	Attribution string `json:"attribution"`
 
@@ -6333,6 +6342,9 @@ type GetAnomaly200Response struct {
 
 	// EndTime End of the anomaly
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
+
+	// ExpectedMaxCost Maximum cost within the expected normal range.
+	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 
 	// Notifications Chronologically ordered notification dispatch events.
 	Notifications NotificationEventArray `json:"notifications"`

@@ -158,3 +158,51 @@ output "resource_labels" {
 }
 `, id)
 }
+
+// TestAccAnomalyDataSource_CostFields verifies that the actual_cost and
+// expected_max_cost attributes are accessible.
+func TestAccAnomalyDataSource_CostFields(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomalyDataSourceCostConfig(anomalyID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomalyDataSourceCostConfig(anomalyID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceCostConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "actual_cost" {
+  value = data.doit_anomaly.test.actual_cost != null ? data.doit_anomaly.test.actual_cost : 0.0
+}
+
+output "expected_max_cost" {
+  value = data.doit_anomaly.test.expected_max_cost != null ? data.doit_anomaly.test.expected_max_cost : 0.0
+}
+`, id)
+}

@@ -1308,6 +1308,13 @@
 										}
 									},
 									{
+										"name": "actual_cost",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Observed (actual) cost of the anomaly."
+										}
+									},
+									{
 										"name": "attribution",
 										"string": {
 											"computed_optional_required": "computed",
@@ -1333,6 +1340,13 @@
 										"int64": {
 											"computed_optional_required": "computed",
 											"description": "End of the anomaly."
+										}
+									},
+									{
+										"name": "expected_max_cost",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Maximum cost within the expected normal range."
 										}
 									},
 									{
@@ -1553,6 +1567,13 @@
 						}
 					},
 					{
+						"name": "actual_cost",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Observed (actual) cost of the anomaly."
+						}
+					},
+					{
 						"name": "attribution",
 						"string": {
 							"computed_optional_required": "computed",
@@ -1578,6 +1599,13 @@
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "End of the anomaly"
+						}
+					},
+					{
+						"name": "expected_max_cost",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Maximum cost within the expected normal range."
 						}
 					},
 					{

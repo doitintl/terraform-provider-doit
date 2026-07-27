@@ -331,6 +331,49 @@ output "notification_channels" {
 `, includeNotifications)
 }
 
+// TestAccAnomaliesDataSource_CostFields verifies that the actual_cost and
+// expected_max_cost attributes are accessible on anomalies list items.
+func TestAccAnomaliesDataSource_CostFields(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceCostConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.cost_test", "row_count"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceCostConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceCostConfig() string {
+	return `
+data "doit_anomalies" "cost_test" {
+  max_results = 1
+}
+
+output "anomaly_actual_cost" {
+  value = [for a in data.doit_anomalies.cost_test.anomalies : a.actual_cost != null ? a.actual_cost : 0.0]
+}
+
+output "anomaly_expected_max_cost" {
+  value = [for a in data.doit_anomalies.cost_test.anomalies : a.expected_max_cost != null ? a.expected_max_cost : 0.0]
+}
+`
+}
+
 // Helper functions
 
 var (

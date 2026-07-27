@@ -4637,6 +4637,16 @@ components:
           type: number
           description: Excess cost over and above the expected normal cost.
           format: double
+        actualCost:
+          type: number
+          format: double
+          nullable: true
+          description: Observed (actual) cost of the anomaly.
+        expectedMaxCost:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum cost within the expected normal range.
         id:
           type: string
         platform:
@@ -8007,6 +8017,16 @@ components:
           type: number
           description: The difference between the actual cost and the maximum cost in the normal range.
           format: double
+        actualCost:
+          type: number
+          format: double
+          nullable: true
+          description: Observed (actual) cost of the anomaly.
+        expectedMaxCost:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum cost within the expected normal range.
         platform:
           type: string
           description: Cloud Provider name
