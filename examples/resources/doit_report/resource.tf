@@ -68,6 +68,54 @@ resource "doit_report" "my_report" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Limiting report rows (metric_filter, limit_by_change, limit_aggregation)
+# ─────────────────────────────────────────────────────────────────────────────
+# A report may configure at most two of these three limit types:
+#   - metric_filter  (filter rows by a metric threshold)
+#   - limit_by_change (filter rows by period-over-period change)
+#   - a top/bottom group limit (config.group[*].limit)
+# limit_aggregation controls how rows excluded by an active limit are rendered
+# and must be "none" unless display_values = "actuals_only".
+
+resource "doit_report" "limited" {
+  name        = "Top Movers Report"
+  description = "Rows filtered by metric threshold and by change, top-aggregated"
+  config = {
+    metrics       = [{ type = "basic", value = "cost" }]
+    aggregation   = "total"
+    data_source   = "billing"
+    time_interval = "month"
+    dimensions    = [{ id = "service_description", type = "fixed" }]
+    time_range = {
+      mode            = "last"
+      amount          = 3
+      include_current = true
+      unit            = "month"
+    }
+    # Limit type 1: only rows whose cost (as a series total) exceeds 1000.
+    metric_filter = {
+      metric   = { type = "basic", value = "cost" }
+      operator = "gt"
+      values   = [1000]
+      operand  = "series_total"
+    }
+    # Limit type 2: only rows whose cost grew by 50% or more period-over-period.
+    limit_by_change = {
+      metric                  = { type = "basic", value = "cost" }
+      change_type             = "percentage"
+      operator                = ">="
+      values                  = [50]
+      include_incomplete_data = false
+    }
+    # Render excluded rows aggregated into a single "top" row.
+    limit_aggregation = "top"
+    display_values    = "actuals_only"
+    layout            = "table"
+    currency          = "USD"
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Organizing reports in folders
 # ─────────────────────────────────────────────────────────────────────────────
 # Use folder_id to place a report inside a Cloud Analytics folder.

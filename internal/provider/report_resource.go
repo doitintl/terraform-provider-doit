@@ -113,21 +113,26 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.filters[*].inverse", // API defaults to false
 
 		// config.metrics
-		"config.metrics[*].type",  // API provides default type
-		"config.metrics[*].value", // API provides default value
+		"config.metrics[*].type",  // API requires type (not clearable)
+		"config.metrics[*].value", // API requires value (not clearable)
 
 		// config.metric_filter
 		"config.metric_filter.operator",     // API defaults operator
-		"config.metric_filter.metric.type",  // API provides default type
-		"config.metric_filter.metric.value", // API provides default value
+		"config.metric_filter.metric.type",  // API requires type (not clearable)
+		"config.metric_filter.metric.value", // API requires value (not clearable)
+
+		// config.limit_by_change.metric.type/value are Optional+Computed leaves the API
+		// requires (not clearable). The object's other children are Required in the schema.
+		"config.limit_by_change.metric.type",  // API requires type (not clearable)
+		"config.limit_by_change.metric.value", // API requires value (not clearable)
 
 		// config.group
 		"config.group[*].id",                 // API-assigned group ID
 		"config.group[*].type",               // API provides default type
 		"config.group[*].limit.sort",         // API defaults sort direction
 		"config.group[*].limit.value",        // API defaults limit value
-		"config.group[*].limit.metric.type",  // API provides default type
-		"config.group[*].limit.metric.value", // API provides default value
+		"config.group[*].limit.metric.type",  // API requires type (not clearable)
+		"config.group[*].limit.metric.value", // API requires value (not clearable)
 
 		// config.advanced_analysis
 		"config.advanced_analysis.forecast",      // API defaults to false
@@ -163,8 +168,8 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.splits[*].targets[*].value", // API provides default value
 
 		// config.metric (top-level)
-		"config.metric.type",  // API provides default type
-		"config.metric.value", // API provides default value
+		"config.metric.type",  // API requires type (not clearable)
+		"config.metric.value", // API requires value (not clearable)
 
 		// config.secondary_time_range
 		"config.secondary_time_range.unit",                   // API defaults unit
@@ -218,6 +223,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportForecastConflictValidator{},
 		// custom_time_range.from/to must be valid RFC3339 timestamps.
 		reportTimestampValidator{},
+		// Every configured metric object must set both type and value (API requires them).
+		reportMetricFieldsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
 	}
