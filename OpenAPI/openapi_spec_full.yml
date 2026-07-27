@@ -7,7 +7,7 @@ servers:
   - url: ${API_BASE_URL}
 security:
   - api_key: []
-  - customerContext: []
+  - tenantId: []
     api_key: []
 tags:
   - name: Alerts
@@ -46,6 +46,8 @@ tags:
     description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
   - name: AccountTeam
     description: Find DoiT account managers assigned to your organization.
+  - name: Contract Templates
+    description: Manage contract templates for PartnerOps resellers (T1/T2).
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Roles
@@ -58,6 +60,8 @@ tags:
     description: Metadata about cloud services and offerings.
   - name: Support Requests
     description: Create and manage support tickets with DoiT.
+  - name: Contracts
+    description: List and manage tenant-scoped contracts as a T1/T2 PartnerOps caller.
   - name: Commitment Manager
     description: View and manage commitment contracts with DoiT.
   - name: Ava
@@ -2033,6 +2037,212 @@ paths:
           $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
+  "/customers/{customerID}/contracts":
+    get:
+      tags:
+        - Contracts
+      summary: List contracts
+      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires contractsReadOnly, contractsViewer, or a write-capable role (without contractsReadOnly). User API tokens must include the matching permission in their scope.
+      operationId: listContracts
+      parameters:
+        - name: customerID
+          in: path
+          description: The customer (tenant) whose contracts are requested.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MTSContractResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+    post:
+      tags:
+        - Contracts
+      summary: Create contract
+      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires a role without contractsReadOnly; user API tokens must include the matching permission in their scope.
+      operationId: createContract
+      parameters:
+        - name: customerID
+          in: path
+          description: The customer (tenant) the contract is created for.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MTSContractInput"
+      responses:
+        "201":
+          description: Created - The contract draft was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateContractResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+  "/customers/{customerID}/contracts/{contractID}":
+    get:
+      tags:
+        - Contracts
+      summary: Retrieve a contract
+      description: Returns the specified contract.
+      operationId: getContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MTSContractDetailResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+    post:
+      tags:
+        - Contracts
+      summary: Update contract
+      description: Creates a new version of the contract. The contract type is immutable and cannot be changed by an update.
+      operationId: updateContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MTSContractInput"
+      responses:
+        "200":
+          description: OK - New contract version created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateContractResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+  "/customers/{customerID}/contracts/{contractID}/activate":
+    post:
+      tags:
+        - Contracts
+      summary: Activate contract
+      description: Transitions a draft contract to active or scheduled (when the start date is in the future). Produces the same system state as activating via the Console.
+      operationId: activateContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract activated or scheduled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractLifecycleResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: Conflict - An active contract of the same type already exists for this tier.
+  "/customers/{customerID}/contracts/{contractID}/cancel":
+    post:
+      tags:
+        - Contracts
+      summary: Cancel contract
+      description: Cancels (deactivates) a contract. Active contracts cannot be deleted; cancel is the terminal operation.
+      operationId: cancelContract
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contractID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Optional cancellation reason.
+      responses:
+        "200":
+          description: OK - Contract cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractLifecycleResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   /anomalies/v1:
     get:
       tags:
@@ -3035,6 +3245,162 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  /billing/v1/contract-templates:
+    get:
+      tags:
+        - Contract Templates
+      summary: List contract templates
+      description: >-
+        Lists contract templates owned by the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: listContractTemplates
+      responses:
+        "200":
+          description: OK - Contract templates returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContractTemplateResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Contract Templates
+      summary: Create contract template
+      description: >-
+        Creates a contract template for the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: createContractTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractTemplateInput"
+      responses:
+        "201":
+          description: Created - Contract template created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+  "/billing/v1/contract-templates/{templateID}":
+    get:
+      tags:
+        - Contract Templates
+      summary: Get contract template
+      description: >-
+        Returns a single contract template owned by the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: getContractTemplate
+      parameters:
+        - name: templateID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract template returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    put:
+      tags:
+        - Contract Templates
+      summary: Update contract template
+      description: >-
+        Updates a contract template owned by the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: updateContractTemplate
+      parameters:
+        - name: templateID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractTemplateInput"
+      responses:
+        "200":
+          description: OK - Contract template updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Contract Templates
+      summary: Archive contract template
+      description: >-
+        Soft-deletes (archives) a contract template owned by the authenticated tenant
+        (from the bearer token). Instantiated contracts are unaffected.
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: archiveContractTemplate
+      parameters:
+        - name: templateID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract template archived.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
   /customers/v1/accountTeam:
     get:
       tags:
@@ -3730,6 +4096,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
     post:
       tags:
         - Support Requests
@@ -3788,6 +4158,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
     patch:
       tags:
         - Support Requests
@@ -3888,6 +4262,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
     post:
       tags:
         - Support Requests
@@ -7148,6 +7526,141 @@ components:
             - ends_with
             - contains
             - regexp
+    ContractTemplateInput:
+      type: object
+      description: Payload for creating or updating a contract template.
+      required:
+        - name
+        - platform
+        - structure
+        - eligibleFrom
+      properties:
+        name:
+          type: string
+        platform:
+          type: string
+        structure:
+          type: string
+        eligibleFrom:
+          type: string
+          format: date-time
+        eligibleTo:
+          type: string
+          format: date-time
+        billingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplateBillingRule"
+        priceBooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplatePriceBook"
+        customLineItems:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    ContractTemplateResponse:
+      type: object
+      description: Contract template returned by the PartnerOps external API.
+      properties:
+        templateId:
+          type: string
+        name:
+          type: string
+        platform:
+          type: string
+        status:
+          type: string
+          enum: [active, archived]
+        structure:
+          type: string
+        eligibleFrom:
+          type: string
+          format: date-time
+        eligibleTo:
+          type: string
+          format: date-time
+        billingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplateBillingRule"
+        priceBooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplatePriceBook"
+        customLineItems:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        archivedAt:
+          type: string
+          format: date-time
+    ContractTemplateBillingRule:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+    ContractTemplatePriceBook:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplatePriceBookRule"
+    ContractTemplatePriceBookRule:
+      type: object
+      properties:
+        name:
+          type: string
+        percentageChange:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+        cloud:
+          type: string
+        lineItemDescription:
+          type: string
+        applyInLine:
+          type: boolean
+        includeCredits:
+          type: boolean
+        applyAWSEligibleDiscount:
+          type: boolean
+
     CreateAllocationRequest:
       required:
         - name
@@ -11732,6 +12245,200 @@ components:
           description: The status of the user (invited)
           enum:
             - invited
+    MTSContractResponse:
+      type: object
+      description: External view of a contract. DoiT-internal fields are not exposed.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the contract.
+        customerId:
+          type: string
+          description: The customer (tenant) that holds the contract.
+        type:
+          type: string
+          description: The immutable contract type.
+        status:
+          type: string
+          description: The contract status.
+          enum:
+            - draft
+            - scheduled
+            - active
+            - cancelled
+            - expired
+            - superseded
+        name:
+          type: string
+          description: The contract name.
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: The contract start date.
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: The contract end date.
+        renewalPolicy:
+          type: string
+          description: The renewal policy.
+          enum:
+            - auto
+            - manual
+            - fixed
+        currentVersionNumber:
+          type: integer
+          nullable: true
+          description: The current version number of the contract.
+        timeCreated:
+          type: string
+          format: date-time
+          description: When the contract was created.
+    MTSContractDetailResponse:
+      description: A single contract with its version terms. DoiT-internal fields are not exposed.
+      allOf:
+        - $ref: "#/components/schemas/MTSContractResponse"
+        - type: object
+          properties:
+            versions:
+              type: array
+              description: The contract versions, newest last, with their billing terms.
+              items:
+                type: object
+                properties:
+                  version:
+                    type: integer
+                    description: Contract version number.
+                  status:
+                    type: string
+                    description: Version status.
+                  name:
+                    type: string
+                  startDate:
+                    type: string
+                    format: date-time
+                  endDate:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  effectiveStart:
+                    type: string
+                    format: date-time
+                  effectiveEnd:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  renewalPolicy:
+                    type: string
+                  cancellationReason:
+                    type: string
+                    nullable: true
+                  billingProfile:
+                    type: object
+                  invoicesEmail:
+                    type: string
+                    format: email
+                  contractUpdatesEmail:
+                    type: string
+                    format: email
+                  managementAccounts:
+                    type: array
+                    items:
+                      type: string
+                  billingRules:
+                    type: array
+                    items:
+                      type: object
+                  priceBooks:
+                    type: array
+                    items:
+                      type: object
+                  customLineItems:
+                    type: array
+                    items:
+                      type: object
+    MTSContractInput:
+      type: object
+      description: Contract create/update payload. Full field-level validation is applied server-side.
+      required:
+        - name
+        - startDate
+        - renewalPolicy
+        - invoicesEmail
+        - contractUpdatesEmail
+        - billingProfile
+      properties:
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        renewalPolicy:
+          type: string
+          enum:
+            - auto
+            - manual
+            - fixed
+        invoicesEmail:
+          type: string
+          format: email
+        contractUpdatesEmail:
+          type: string
+          format: email
+        billingProfile:
+          type: object
+          description: The billing profile (name, country, state, city, address, zip).
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        billingRules:
+          type: array
+          items:
+            type: object
+        priceBooks:
+          type: array
+          items:
+            type: object
+        customLineItems:
+          type: array
+          items:
+            type: object
+    CreateContractResponse:
+      type: object
+      description: The result of creating a contract or contract version.
+      properties:
+        contractId:
+          type: string
+        version:
+          type: integer
+        status:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    ContractLifecycleResponse:
+      type: object
+      description: Result of an activate or cancel operation.
+      properties:
+        contractId:
+          type: string
+          description: The contract identifier.
+        status:
+          type: string
+          description: The contract status after the operation (`active`, `scheduled`, or `cancelled`).
+          enum:
+            - active
+            - scheduled
+            - cancelled
     CommitmentExternal:
       type: object
       description: A commitment contract.
@@ -12027,6 +12734,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    "409":
+      description: >-
+        Conflict - The request conflicts with the current state of the resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     "429":
       description: >-
         Too Many Requests.
@@ -12037,6 +12751,20 @@ components:
     "500":
       description: >-
         Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "502":
+      description: >-
+        Bad Gateway - The upstream support system returned an error that a retry will not resolve (e.g. an authentication or configuration problem). Escalation is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "503":
+      description: >-
+        Service Unavailable - The upstream support system is temporarily unavailable (rate limited, upstream 5xx, or a network error). Retry after the interval indicated by the Retry-After header.
       content:
         application/json:
           schema:
@@ -12113,6 +12841,183 @@ components:
                 $ref: "#/components/schemas/AnomalySKUArray"
               resourceData:
                 $ref: "#/components/schemas/AnomalyResourceArray"
+    BadRequest:
+      description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          examples:
+            validationFailed:
+              summary: Missing or invalid parameter
+              value:
+                type: https://developer.doit.com/errors/validation_failed
+                title: Validation failed
+                status: 400
+                detail: The request is missing a required parameter or contains an invalid value.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: validation_failed
+                retryable: false
+            tenantIdRequired:
+              summary: Tenant scope not resolvable (§15)
+              value:
+                type: https://developer.doit.com/errors/tenant_id_required
+                title: Tenant ID required
+                status: 400
+                detail: X-Tenant-Id header is required when the credential can access more than one tenant.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_required
+                retryable: false
+            tenantIdMismatch:
+              summary: Header conflicts with the key's tenant (§15)
+              value:
+                type: https://developer.doit.com/errors/tenant_id_mismatch
+                title: Tenant ID mismatch
+                status: 400
+                detail: X-Tenant-Id does not match the tenant the credential is scoped to.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_mismatch
+                retryable: false
+            gcpServiceRequired:
+              summary: GCP region filter without product line
+              value:
+                type: https://developer.doit.com/errors/gcp_service_required
+                title: GCP service required
+                status: 400
+                detail: The region query parameter requires gcp_service.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: gcp_service_required
+                retryable: false
+            paginationTokenInvalid:
+              summary: Structurally invalid pagination cursor (§8)
+              value:
+                type: https://developer.doit.com/errors/pagination_token_invalid
+                title: Invalid pagination token
+                status: 400
+                detail: The pageToken cursor is structurally invalid (decode failure or tampering).
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_invalid
+                retryable: false
+            paginationTokenExpired:
+              summary: Expired pagination cursor (§8)
+              value:
+                type: https://developer.doit.com/errors/pagination_token_expired
+                title: Expired pagination token
+                status: 400
+                detail: The pageToken cursor is no longer valid; restart pagination from the beginning.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_expired
+                retryable: false
+    Unauthorized:
+      description: Missing or invalid credentials.
+      headers:
+        WWW-Authenticate:
+          description: Bearer challenge per RFC 6750.
+          schema:
+            type: string
+            example: Bearer realm="api.doit.com"
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: missing or invalid bearer token
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unauthorized
+            retryable: false
+    Forbidden:
+      description: Authenticated but not authorised to access this customer's PS4C resources.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/forbidden
+            title: Forbidden
+            status: 403
+            detail: caller does not have permission to access this customer's commitments
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: forbidden
+            retryable: false
+    NotFound:
+      description: The requested resource does not exist.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/not_found
+            title: Resource not found
+            status: 404
+            detail: payer account not found
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: not_found
+            retryable: false
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/internal_error
+            title: Internal server error
+            status: 500
+            detail: an unexpected error occurred
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: internal_error
+            retryable: true
+    ServiceUnavailable:
+      description: Service temporarily unavailable; retry after the indicated delay.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            example: 30
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/service_unavailable
+            title: Service unavailable
+            status: 503
+            detail: entitlement check temporarily unavailable
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: service_unavailable
+            retryable: true
   parameters:
     maxResults:
       name: maxResults
@@ -12163,16 +13068,122 @@ components:
       required: true
       schema:
         type: string
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: |
+        Tenant (customer) identifier that conveys the tenant scope for the request
+        (DoiT API Design Standards §15).
+
+        Resolution when the header is absent:
+        - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+          optional.
+        - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+          header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+          server does not guess across tenant scopes.
+
+        When the header is present but conflicts with the tenant the key is scoped to, the request is
+        rejected with `400` and code `tenant_id_mismatch`.
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    payerAccountId:
+      in: path
+      name: payerAccountId
+      required: true
+      description: AWS Master Payer Account ID (12-digit AWS account number) that scopes the request.
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "123456789012"
+    ps4cPageToken:
+      in: query
+      name: pageToken
+      required: false
+      description: |
+        Opaque cursor token returned by a previous list response. Omit to start from the beginning;
+        an empty or absent token in a response means there are no more results. Do not parse it.
+        A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
+        cursor returns `400` with code `pagination_token_expired` — restart pagination from the
+        beginning.
+      schema:
+        type: string
+    ps4cMaxResults:
+      in: query
+      name: maxResults
+      required: false
+      description: Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    service:
+      in: query
+      name: service
+      required: false
+      description: Filter by PS4C product line (AWS planned purchases).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    serviceId:
+      in: path
+      name: serviceId
+      required: true
+      description: Service ID (compute|database).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    eligibleSpendGranularity:
+      in: query
+      name: granularity
+      required: false
+      description: Time bucket for eligible spend data points.
+      schema:
+        type: string
+        enum:
+          - hour
+          - day
+          - week
+          - month
+        default: day
+    linkedAccountId:
+      in: path
+      name: linkedAccountId
+      required: true
+      description: AWS linked (member) account ID (12-digit AWS account number).
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "987654321098"
   securitySchemes:
     api_key:
       type: apiKey
       name: Authorization
       description: Use the "Bearer <API_KEY>" format or sign in for autofill
       in: header
-    customerContext:
+    tenantId:
       type: apiKey
-      name: customerContext
-      in: query
+      name: X-Tenant-Id
+      description: |
+        Tenant (customer) ID that sets the request's customer context.
+
+        Required when the credential can access more than one tenant; omit when the
+        credential is scoped to exactly one tenant (the server resolves that tenant
+        automatically). If omitted for a multi-tenant credential, the request fails
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+        credential's tenant scope, the request fails with `400` and code
+        `tenant_id_mismatch`.
+
+        Use this header over the legacy `customerContext` query parameter, which
+        only applies to legacy API keys and is ignored by personal and service-account
+        API tokens.
+      in: header
     oauth2:
       type: oauth2
       flows:

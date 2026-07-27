@@ -7,7 +7,7 @@ servers:
   - url: ${API_BASE_URL}
 security:
   - api_key: []
-  - customerContext: []
+  - tenantId: []
     api_key: []
 tags:
   - name: Alerts
@@ -46,6 +46,8 @@ tags:
     description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
   - name: AccountTeam
     description: Find DoiT account managers assigned to your organization.
+  - name: Contract Templates
+    description: Manage contract templates for PartnerOps resellers (T1/T2).
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Roles
@@ -58,6 +60,8 @@ tags:
     description: Metadata about cloud services and offerings.
   - name: Support Requests
     description: Create and manage support tickets with DoiT.
+  - name: Contracts
+    description: List and manage tenant-scoped contracts as a T1/T2 PartnerOps caller.
   - name: Commitment Manager
     description: View and manage commitment contracts with DoiT.
   - name: Ava
@@ -2733,6 +2737,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
   /support/v1/tickets/{ticketId}:
     get:
       tags:
@@ -2763,6 +2771,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
   /support/v1/tickets/{ticketId}/comments:
     get:
       tags:
@@ -2795,6 +2807,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "502":
+          $ref: "#/components/responses/502"
+        "503":
+          $ref: "#/components/responses/503"
   /support/v1/tickets/{ticketId}/tags:
     get:
       tags:
@@ -10191,6 +10207,20 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    "502":
+      description: >-
+        Bad Gateway - The upstream support system returned an error that a retry will not resolve (e.g. an authentication or configuration problem). Escalation is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "503":
+      description: >-
+        Service Unavailable - The upstream support system is temporarily unavailable (rate limited, upstream 5xx, or a network error). Retry after the interval indicated by the Retry-After header.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   parameters:
     maxResults:
       name: maxResults
@@ -10241,16 +10271,122 @@ components:
       required: true
       schema:
         type: string
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: |
+        Tenant (customer) identifier that conveys the tenant scope for the request
+        (DoiT API Design Standards §15).
+
+        Resolution when the header is absent:
+        - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+          optional.
+        - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+          header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+          server does not guess across tenant scopes.
+
+        When the header is present but conflicts with the tenant the key is scoped to, the request is
+        rejected with `400` and code `tenant_id_mismatch`.
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    payerAccountId:
+      in: path
+      name: payerAccountId
+      required: true
+      description: AWS Master Payer Account ID (12-digit AWS account number) that scopes the request.
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "123456789012"
+    ps4cPageToken:
+      in: query
+      name: pageToken
+      required: false
+      description: |
+        Opaque cursor token returned by a previous list response. Omit to start from the beginning;
+        an empty or absent token in a response means there are no more results. Do not parse it.
+        A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
+        cursor returns `400` with code `pagination_token_expired` — restart pagination from the
+        beginning.
+      schema:
+        type: string
+    ps4cMaxResults:
+      in: query
+      name: maxResults
+      required: false
+      description: Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    service:
+      in: query
+      name: service
+      required: false
+      description: Filter by PS4C product line (AWS planned purchases).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    serviceId:
+      in: path
+      name: serviceId
+      required: true
+      description: Service ID (compute|database).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    eligibleSpendGranularity:
+      in: query
+      name: granularity
+      required: false
+      description: Time bucket for eligible spend data points.
+      schema:
+        type: string
+        enum:
+          - hour
+          - day
+          - week
+          - month
+        default: day
+    linkedAccountId:
+      in: path
+      name: linkedAccountId
+      required: true
+      description: AWS linked (member) account ID (12-digit AWS account number).
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "987654321098"
   securitySchemes:
     api_key:
       type: apiKey
       name: Authorization
       description: Use the "Bearer <API_KEY>" format or sign in for autofill
       in: header
-    customerContext:
+    tenantId:
       type: apiKey
-      name: customerContext
-      in: query
+      name: X-Tenant-Id
+      description: |
+        Tenant (customer) ID that sets the request's customer context.
+
+        Required when the credential can access more than one tenant; omit when the
+        credential is scoped to exactly one tenant (the server resolves that tenant
+        automatically). If omitted for a multi-tenant credential, the request fails
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+        credential's tenant scope, the request fails with `400` and code
+        `tenant_id_mismatch`.
+
+        Use this header over the legacy `customerContext` query parameter, which
+        only applies to legacy API keys and is ignored by personal and service-account
+        API tokens.
+      in: header
     oauth2:
       type: oauth2
       flows:
