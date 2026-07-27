@@ -1497,12 +1497,38 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		return nil, diags
 	}
 
-	limitByChangeVal, ok := limitByChangeAttribute.(LimitByChangeValue)
+	limitByChangeValuable, ok := limitByChangeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`limit_by_change expected to be LimitByChangeValue, was: %T`, limitByChangeAttribute))
+			fmt.Sprintf(`limit_by_change expected to be basetypes.ObjectValuable, was: %T`, limitByChangeAttribute))
+
+		return nil, diags
+	}
+
+	limitByChangeObjVal, limitByChangeObjValDiags := limitByChangeValuable.ToObjectValue(ctx)
+	diags.Append(limitByChangeObjValDiags...)
+
+	limitByChangeTypable, ok := t.AttrTypes["limit_by_change"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit_by_change expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["limit_by_change"]))
+
+		return nil, diags
+	}
+
+	limitByChangeConverted, limitByChangeConvertedDiags := limitByChangeTypable.ValueFromObject(ctx, limitByChangeObjVal)
+	diags.Append(limitByChangeConvertedDiags...)
+
+	limitByChangeVal, ok := limitByChangeConverted.(LimitByChangeValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit_by_change expected to be LimitByChangeValue, was: %T`, limitByChangeConverted))
 	}
 
 	metricAttribute, ok := attributes["metric"]
@@ -7007,11 +7033,11 @@ func (t LimitByChangeType) ValueFromObject(ctx context.Context, in basetypes.Obj
 	var diags diag.Diagnostics
 
 	if in.IsNull() {
-		return NewMetricFilterValueNull(), diags
+		return NewLimitByChangeValueNull(), diags
 	}
 
 	if in.IsUnknown() {
-		return NewMetricFilterValueUnknown(), diags
+		return NewLimitByChangeValueUnknown(), diags
 	}
 
 	attributes := in.Attributes()
@@ -7636,6 +7662,14 @@ func (t MetricFilterType) String() string {
 func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if in.IsNull() {
+		return NewMetricFilterValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMetricFilterValueUnknown(), diags
+	}
+
 	attributes := in.Attributes()
 
 	metricAttribute, ok := attributes["metric"]
@@ -7648,12 +7682,38 @@ func (t MetricFilterType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
-	metricVal, ok := metricAttribute.(MetricValue)
+	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
+			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
+
+		return nil, diags
+	}
+
+	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
+	diags.Append(metricObjValDiags...)
+
+	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
+
+		return nil, diags
+	}
+
+	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
+	diags.Append(metricConvertedDiags...)
+
+	metricVal, ok := metricConverted.(MetricValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
 	}
 
 	operandAttribute, ok := attributes["operand"]
