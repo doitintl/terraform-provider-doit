@@ -220,8 +220,20 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 				rule.Name = planRules[i].Name.ValueStringPointer()
 				rule.Formula = planRules[i].Formula.ValueStringPointer()
 				rule.Action = models.GroupAllocationRuleAction(planRules[i].Action.ValueString())
-				rule.Id = planRules[i].Id.ValueStringPointer()
 				rule.Description = planRules[i].Description.ValueStringPointer()
+
+				// If rule has an existing Known, non-empty ID from state (via plan modifier or HCL) and action is "create",
+				// convert action to "update" for the API request payload so the API updates the
+				// existing single allocation instead of attempting to create a duplicate one.
+				if !planRules[i].Id.IsUnknown() && !planRules[i].Id.IsNull() {
+					idVal := planRules[i].Id.ValueString()
+					if idVal != "" {
+						rule.Id = &idVal
+						if rule.Action == models.Create || rule.Action == "create" {
+							rule.Action = models.Update
+						}
+					}
+				}
 
 				// Don't send components if selecting existing allocation (action "select")
 				// But for "create" or "update" action, components are required/allowed.
