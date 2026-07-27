@@ -76,6 +76,7 @@ Read-Only:
 
 - `advanced_analysis` (Attributes) Advanced analysis options. Each can be set independently. (see [below for nested schema](#nestedatt--config--advanced_analysis))
 - `aggregation` (String) How to aggregate data values in the report.
+- `count` (Attributes) The field to count distinct values of. Only applicable when aggregation is set to "count". (see [below for nested schema](#nestedatt--config--count))
 - `currency` (String) Currency code for monetary values.
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
@@ -116,6 +117,15 @@ Read-Only:
 - `not_trending` (Boolean)
 - `trending_down` (Boolean)
 - `trending_up` (Boolean)
+
+
+<a id="nestedatt--config--count"></a>
+### Nested Schema for `config.count`
+
+Read-Only:
+
+- `id` (String) The field identifier to count distinct values of.
+- `type` (String) The metadata field type.
 
 
 <a id="nestedatt--config--custom_time_range"></a>

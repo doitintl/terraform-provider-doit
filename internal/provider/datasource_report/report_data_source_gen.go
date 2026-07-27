@@ -49,6 +49,28 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 						Description:         "How to aggregate data values in the report.",
 						MarkdownDescription: "How to aggregate data values in the report.",
 					},
+					"count": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								Computed:            true,
+								Description:         "The field identifier to count distinct values of.",
+								MarkdownDescription: "The field identifier to count distinct values of.",
+							},
+							"type": schema.StringAttribute{
+								Computed:            true,
+								Description:         "The metadata field type.",
+								MarkdownDescription: "The metadata field type.",
+							},
+						},
+						CustomType: CountType{
+							ObjectType: types.ObjectType{
+								AttrTypes: CountValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "The field to count distinct values of. Only applicable when aggregation is set to \"count\".",
+						MarkdownDescription: "The field to count distinct values of. Only applicable when aggregation is set to \"count\".",
+					},
 					"currency": schema.StringAttribute{
 						Computed:            true,
 						Description:         "Currency code for monetary values.",
@@ -834,6 +856,50 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`aggregation expected to be basetypes.StringValue, was: %T`, aggregationAttribute))
 	}
 
+	countAttribute, ok := attributes["count"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`count is missing from object`)
+
+		return nil, diags
+	}
+
+	countValuable, ok := countAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count expected to be basetypes.ObjectValuable, was: %T`, countAttribute))
+
+		return nil, diags
+	}
+
+	countObjVal, countObjValDiags := countValuable.ToObjectValue(ctx)
+	diags.Append(countObjValDiags...)
+
+	countTypable, ok := t.AttrTypes["count"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["count"]))
+
+		return nil, diags
+	}
+
+	countConverted, countConvertedDiags := countTypable.ValueFromObject(ctx, countObjVal)
+	diags.Append(countConvertedDiags...)
+
+	countVal, ok := countConverted.(CountValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count expected to be CountValue, was: %T`, countConverted))
+	}
+
 	currencyAttribute, ok := attributes["currency"]
 
 	if !ok {
@@ -1463,6 +1529,7 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	return ConfigValue{
 		AdvancedAnalysis:          advancedAnalysisVal,
 		Aggregation:               aggregationVal,
+		Count:                     countVal,
 		Currency:                  currencyVal,
 		CustomTimeRange:           customTimeRangeVal,
 		DataSource:                dataSourceVal,
@@ -1587,6 +1654,24 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`aggregation expected to be basetypes.StringValue, was: %T`, aggregationAttribute))
+	}
+
+	countAttribute, ok := attributes["count"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`count is missing from object`)
+
+		return NewConfigValueUnknown(), diags
+	}
+
+	countVal, ok := countAttribute.(CountValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count expected to be CountValue, was: %T`, countAttribute))
 	}
 
 	currencyAttribute, ok := attributes["currency"]
@@ -2010,6 +2095,7 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 	return ConfigValue{
 		AdvancedAnalysis:          advancedAnalysisVal,
 		Aggregation:               aggregationVal,
+		Count:                     countVal,
 		Currency:                  currencyVal,
 		CustomTimeRange:           customTimeRangeVal,
 		DataSource:                dataSourceVal,
@@ -2107,6 +2193,7 @@ var _ basetypes.ObjectValuable = ConfigValue{}
 type ConfigValue struct {
 	AdvancedAnalysis          AdvancedAnalysisValue   `tfsdk:"advanced_analysis"`
 	Aggregation               basetypes.StringValue   `tfsdk:"aggregation"`
+	Count                     CountValue              `tfsdk:"count"`
 	Currency                  basetypes.StringValue   `tfsdk:"currency"`
 	CustomTimeRange           CustomTimeRangeValue    `tfsdk:"custom_time_range"`
 	DataSource                basetypes.StringValue   `tfsdk:"data_source"`
@@ -2134,7 +2221,7 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 25)
+	attrTypes := make(map[string]tftypes.Type, 26)
 
 	var val tftypes.Value
 	var err error
@@ -2145,6 +2232,11 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		},
 	}.TerraformType(ctx)
 	attrTypes["aggregation"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["count"] = CountType{
+		basetypes.ObjectType{
+			AttrTypes: CountValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["custom_time_range"] = CustomTimeRangeType{
 		basetypes.ObjectType{
@@ -2215,7 +2307,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 25)
+		vals := make(map[string]tftypes.Value, 26)
 
 		val, err = v.AdvancedAnalysis.ToTerraformValue(ctx)
 
@@ -2232,6 +2324,14 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["aggregation"] = val
+
+		val, err = v.Count.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["count"] = val
 
 		val, err = v.Currency.ToTerraformValue(ctx)
 
@@ -2452,6 +2552,12 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		advancedAnalysis = v.AdvancedAnalysis
 	}
 
+	var count attr.Value
+
+	{
+		count = v.Count
+	}
+
 	var customTimeRange attr.Value
 
 	{
@@ -2537,7 +2643,12 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			},
 		},
 		"aggregation": basetypes.StringType{},
-		"currency":    basetypes.StringType{},
+		"count": CountType{
+			basetypes.ObjectType{
+				AttrTypes: CountValue{}.AttributeTypes(ctx),
+			},
+		},
+		"currency": basetypes.StringType{},
 		"custom_time_range": CustomTimeRangeType{
 			basetypes.ObjectType{
 				AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
@@ -2617,6 +2728,7 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		map[string]attr.Value{
 			"advanced_analysis":           advancedAnalysis,
 			"aggregation":                 v.Aggregation,
+			"count":                       count,
 			"currency":                    v.Currency,
 			"custom_time_range":           customTimeRange,
 			"data_source":                 v.DataSource,
@@ -2665,6 +2777,10 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Aggregation.Equal(other.Aggregation) {
+		return false
+	}
+
+	if !v.Count.Equal(other.Count) {
 		return false
 	}
 
@@ -2779,7 +2895,12 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 			},
 		},
 		"aggregation": basetypes.StringType{},
-		"currency":    basetypes.StringType{},
+		"count": CountType{
+			basetypes.ObjectType{
+				AttrTypes: CountValue{}.AttributeTypes(ctx),
+			},
+		},
+		"currency": basetypes.StringType{},
 		"custom_time_range": CustomTimeRangeType{
 			basetypes.ObjectType{
 				AttrTypes: CustomTimeRangeValue{}.AttributeTypes(ctx),
@@ -3341,6 +3462,393 @@ func (v AdvancedAnalysisValue) AttributeTypes(ctx context.Context) map[string]at
 		"not_trending":  basetypes.BoolType{},
 		"trending_down": basetypes.BoolType{},
 		"trending_up":   basetypes.BoolType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = CountType{}
+
+type CountType struct {
+	basetypes.ObjectType
+}
+
+func (t CountType) Equal(o attr.Type) bool {
+	other, ok := o.(CountType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CountType) String() string {
+	return "CountType"
+}
+
+func (t CountType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCountValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCountValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return nil, diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CountValue{
+		Id:        idVal,
+		CountType: typeVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCountValueNull() CountValue {
+	return CountValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCountValueUnknown() CountValue {
+	return CountValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCountValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CountValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CountValue Attribute Value",
+				"While creating a CountValue value, a missing attribute value was detected. "+
+					"A CountValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CountValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CountValue Attribute Type",
+				"While creating a CountValue value, an invalid attribute value was detected. "+
+					"A CountValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CountValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CountValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CountValue Attribute Value",
+				"While creating a CountValue value, an extra attribute value was detected. "+
+					"A CountValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CountValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCountValueUnknown(), diags
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewCountValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	typeAttribute, ok := attributes["type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`type is missing from object`)
+
+		return NewCountValueUnknown(), diags
+	}
+
+	typeVal, ok := typeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`type expected to be basetypes.StringValue, was: %T`, typeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewCountValueUnknown(), diags
+	}
+
+	return CountValue{
+		Id:        idVal,
+		CountType: typeVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCountValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CountValue {
+	object, diags := NewCountValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCountValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CountType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCountValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCountValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCountValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCountValueMust(CountValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CountType) ValueType(ctx context.Context) attr.Value {
+	return CountValue{}
+}
+
+var _ basetypes.ObjectValuable = CountValue{}
+
+type CountValue struct {
+	Id        basetypes.StringValue `tfsdk:"id"`
+	CountType basetypes.StringValue `tfsdk:"type"`
+	state     attr.ValueState
+}
+
+func (v CountValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.CountType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["type"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CountValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CountValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CountValue) String() string {
+	return "CountValue"
+}
+
+func (v CountValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"id":   basetypes.StringType{},
+		"type": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"id":   v.Id,
+			"type": v.CountType,
+		})
+
+	return objVal, diags
+}
+
+func (v CountValue) Equal(o attr.Value) bool {
+	other, ok := o.(CountValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.CountType.Equal(other.CountType) {
+		return false
+	}
+
+	return true
+}
+
+func (v CountValue) Type(ctx context.Context) attr.Type {
+	return CountType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CountValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":   basetypes.StringType{},
+		"type": basetypes.StringType{},
 	}
 }
 

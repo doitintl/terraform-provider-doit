@@ -441,6 +441,59 @@ func validateReportMetricFieldsConfig(ctx context.Context, config tfsdk.Config, 
 	}
 }
 
+// reportCountAggregationValidator rejects configurations where config.count is
+// set but config.aggregation is not "count". The count object selects the field
+// whose distinct values are counted and is only meaningful for count aggregation;
+// the API ignores or rejects it otherwise, causing confusion or drift.
+//
+// This is a ConfigValidator because attribute-level validators do not fire on
+// attributes inside SingleNestedAttribute with CustomType.
+type reportCountAggregationValidator struct{}
+
+var _ resource.ConfigValidator = reportCountAggregationValidator{}
+
+func (v reportCountAggregationValidator) Description(_ context.Context) string {
+	return "Validates that count is only set when aggregation is \"count\""
+}
+
+func (v reportCountAggregationValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `count` is only set when `aggregation` is `\"count\"`"
+}
+
+func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
+}
+
+// validateReportCountAggregation is the shared body used by both the report
+// resource and the report_query data source, which build the same ExternalConfig
+// from an identical schema. It errors when count is configured alongside an
+// aggregation other than "count". Null/unknown aggregation is deferred to the API
+// (conservative, matching the other report validators).
+func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
+	var count resource_report.CountValue
+	d := config.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
+	diags.Append(d...)
+	if d.HasError() || count.IsNull() || count.IsUnknown() {
+		return
+	}
+
+	var aggregation types.String
+	d = config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	diags.Append(d...)
+	if d.HasError() || aggregation.IsNull() || aggregation.IsUnknown() {
+		return
+	}
+
+	if aggregation.ValueString() != "count" {
+		diags.AddAttributeError(
+			path.Root("config").AtName("count"),
+			"Invalid Count Configuration",
+			fmt.Sprintf("`count` is only applicable when `aggregation = \"count\"`, but aggregation is %q. "+
+				"Either set aggregation = \"count\" or remove the count block.", aggregation.ValueString()),
+		)
+	}
+}
+
 // reportFilterNAValidator warns when legacy NullFallback sentinel values such as
 // "[Service N/A]" are found in config.filters[*].values. Users should use
 // include_null = true on the filter block instead, which is semantically equivalent

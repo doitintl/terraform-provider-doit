@@ -1641,6 +1641,33 @@ func (e ExternalConfigTimeInterval) Valid() bool {
 	}
 }
 
+// Defines values for ExternalConfigCountType.
+const (
+	ExternalConfigCountTypeFixed        ExternalConfigCountType = "fixed"
+	ExternalConfigCountTypeLabel        ExternalConfigCountType = "label"
+	ExternalConfigCountTypeProjectLabel ExternalConfigCountType = "project_label"
+	ExternalConfigCountTypeSystemLabel  ExternalConfigCountType = "system_label"
+	ExternalConfigCountTypeTag          ExternalConfigCountType = "tag"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigCountType enum.
+func (e ExternalConfigCountType) Valid() bool {
+	switch e {
+	case ExternalConfigCountTypeFixed:
+		return true
+	case ExternalConfigCountTypeLabel:
+		return true
+	case ExternalConfigCountTypeProjectLabel:
+		return true
+	case ExternalConfigCountTypeSystemLabel:
+		return true
+	case ExternalConfigCountTypeTag:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalConfigFilterMode.
 const (
 	ExternalConfigFilterModeContains   ExternalConfigFilterMode = "contains"
@@ -3284,28 +3311,28 @@ func (e ListAnnotationsParamsSortOrder) Valid() bool {
 
 // Defines values for ListCommitmentsParamsSortBy.
 const (
-	CreateTime ListCommitmentsParamsSortBy = "createTime"
-	EndDate    ListCommitmentsParamsSortBy = "endDate"
-	Name       ListCommitmentsParamsSortBy = "name"
-	Provider   ListCommitmentsParamsSortBy = "provider"
-	StartDate  ListCommitmentsParamsSortBy = "startDate"
-	UpdateTime ListCommitmentsParamsSortBy = "updateTime"
+	ListCommitmentsParamsSortByCreateTime ListCommitmentsParamsSortBy = "createTime"
+	ListCommitmentsParamsSortByEndDate    ListCommitmentsParamsSortBy = "endDate"
+	ListCommitmentsParamsSortByName       ListCommitmentsParamsSortBy = "name"
+	ListCommitmentsParamsSortByProvider   ListCommitmentsParamsSortBy = "provider"
+	ListCommitmentsParamsSortByStartDate  ListCommitmentsParamsSortBy = "startDate"
+	ListCommitmentsParamsSortByUpdateTime ListCommitmentsParamsSortBy = "updateTime"
 )
 
 // Valid indicates whether the value is a known member of the ListCommitmentsParamsSortBy enum.
 func (e ListCommitmentsParamsSortBy) Valid() bool {
 	switch e {
-	case CreateTime:
+	case ListCommitmentsParamsSortByCreateTime:
 		return true
-	case EndDate:
+	case ListCommitmentsParamsSortByEndDate:
 		return true
-	case Name:
+	case ListCommitmentsParamsSortByName:
 		return true
-	case Provider:
+	case ListCommitmentsParamsSortByProvider:
 		return true
-	case StartDate:
+	case ListCommitmentsParamsSortByStartDate:
 		return true
-	case UpdateTime:
+	case ListCommitmentsParamsSortByUpdateTime:
 		return true
 	default:
 		return false
@@ -5901,6 +5928,9 @@ type ExternalConfig struct {
 	// Aggregation How to aggregate data values in the report.
 	Aggregation *ExternalConfigAggregation `json:"aggregation,omitempty"`
 
+	// Count The field to count distinct values of. Only applicable when aggregation is set to "count".
+	Count *ExternalConfigCount `json:"count,omitempty"`
+
 	// Currency Currency code for monetary values.
 	Currency *Currency `json:"currency,omitempty"`
 
@@ -6002,6 +6032,18 @@ type ExternalConfigSortGroups string
 
 // ExternalConfigTimeInterval Time interval for grouping data in the report.
 type ExternalConfigTimeInterval string
+
+// ExternalConfigCount The field to count distinct values of. Only applicable when aggregation is set to "count".
+type ExternalConfigCount struct {
+	// Id The field identifier to count distinct values of.
+	Id string `json:"id"`
+
+	// Type The metadata field type.
+	Type ExternalConfigCountType `json:"type"`
+}
+
+// ExternalConfigCountType The metadata field type.
+type ExternalConfigCountType string
 
 // ExternalConfigCustomTimeRange Required when the time range is set to "custom".
 type ExternalConfigCustomTimeRange struct {

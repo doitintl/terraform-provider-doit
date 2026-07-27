@@ -89,6 +89,11 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 	if plan.Aggregation.IsUnknown() {
 		plan.Aggregation = resolved.Aggregation
 	}
+	// count: nested object whose children are Required (never Unknown), so a
+	// whole-object resolve is sufficient when the user omitted it.
+	if plan.Count.IsUnknown() {
+		plan.Count = resolved.Count
+	}
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
 	}
@@ -709,6 +714,22 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	if !config.Aggregation.IsNull() && !config.Aggregation.IsUnknown() {
 		externalConfig.Aggregation = new(models.ExternalConfigAggregation(config.Aggregation.ValueString()))
 	}
+	// count is a nested object (id + type); only applicable when aggregation is
+	// "count". Children are Required, so no per-field unknown guards are needed once
+	// the object itself is known.
+	//
+	// NOTE: the report update is a PATCH that merges config, and count is
+	// *ExternalConfigCount (omitempty) with no null representation, so a stored count
+	// cannot be cleared once set. Switching aggregation away from "count" is therefore
+	// not supported (the API returns 400 "count field is only valid when aggregation
+	// is 'count'"). The reportCountAggregationValidator blocks the misconfiguration at
+	// plan time for the cases it can detect.
+	if !config.Count.IsNull() && !config.Count.IsUnknown() {
+		externalConfig.Count = &models.ExternalConfigCount{
+			Id:   config.Count.Id.ValueString(),
+			Type: models.ExternalConfigCountType(config.Count.CountType.ValueString()),
+		}
+	}
 	if !config.Currency.IsNull() && !config.Currency.IsUnknown() {
 		externalConfig.Currency = new(models.Currency(config.Currency.ValueString()))
 	}
@@ -1164,6 +1185,20 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	if config.Aggregation != nil {
 		configMap["aggregation"] = types.StringValue(string(*config.Aggregation))
 	}
+
+	// Nested Object: Count (id + type). Default null; populate when present.
+	configMap["count"] = resource_report.NewCountValueNull()
+	if config.Count != nil {
+		countVal, countDiags := resource_report.NewCountValue(
+			resource_report.CountValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"id":   types.StringValue(config.Count.Id),
+				"type": types.StringValue(string(config.Count.Type)),
+			})
+		diags.Append(countDiags...)
+		configMap["count"] = countVal
+	}
+
 	if config.Currency != nil {
 		configMap["currency"] = types.StringValue(string(*config.Currency))
 	}

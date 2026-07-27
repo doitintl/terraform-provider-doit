@@ -9848,6 +9848,29 @@
 									}
 								},
 								{
+									"name": "count",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "id",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "The field identifier to count distinct values of."
+												}
+											},
+											{
+												"name": "type",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "The metadata field type."
+												}
+											}
+										],
+										"description": "The field to count distinct values of. Only applicable when aggregation is set to \"count\"."
+									}
+								},
+								{
 									"name": "currency",
 									"string": {
 										"computed_optional_required": "computed",

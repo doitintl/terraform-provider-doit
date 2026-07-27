@@ -9102,6 +9102,26 @@ components:
               format: date-time
               description: The end timestamp of the time range in RFC3339 format.
               example: "2024-03-12T23:00:00Z"
+        count:
+          type: object
+          description: |-
+            The field to count distinct values of. Only applicable when aggregation is set to "count".
+          required:
+            - id
+            - type
+          properties:
+            id:
+              type: string
+              description: The field identifier to count distinct values of.
+            type:
+              type: string
+              enum:
+                - fixed
+                - label
+                - tag
+                - project_label
+                - system_label
+              description: The metadata field type.
       example:
         metrics:
           - type: basic

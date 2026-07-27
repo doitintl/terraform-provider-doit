@@ -225,6 +225,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportTimestampValidator{},
 		// Every configured metric object must set both type and value (API requires them).
 		reportMetricFieldsValidator{},
+		// count is only valid when aggregation is "count".
+		reportCountAggregationValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
 	}

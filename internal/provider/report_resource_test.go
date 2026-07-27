@@ -4638,3 +4638,231 @@ resource "doit_report" "lbc" {
 }
 `, i)
 }
+
+// TestAccReport_Count_Lifecycle exercises the full lifecycle of the config.count
+// nested object: create with aggregation="count", drift, update the counted field,
+// drift, import, then transition aggregation away and drop count.
+func TestAccReport_Count_Lifecycle(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with count.
+			{
+				Config: testAccReportCount(n, "service_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.count_test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("id"),
+						knownvalue.StringExact("service_description")),
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("type"),
+						knownvalue.StringExact("fixed")),
+				},
+			},
+			// Drift check after Create.
+			{
+				Config: testAccReportCount(n, "service_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: Update the counted field.
+			{
+				Config: testAccReportCount(n, "sku_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_report.count_test",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("id"),
+						knownvalue.StringExact("sku_description")),
+				},
+			},
+			// Drift check after Update.
+			{
+				Config: testAccReportCount(n, "sku_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Import mid-lifecycle.
+			{
+				ResourceName:      "doit_report.count_test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+// TestAccReport_Count_AggregationTransitionUnsupported documents an API
+// limitation: the report update is a PATCH that merges config, and count has no
+// null representation (*ExternalConfigCount + omitempty), so a stored count cannot
+// be cleared. Switching aggregation away from "count" once count is set is rejected
+// by the API. This test locks in that behavior; if the API gains count-clearing
+// support, this test will start failing and should be converted into a passing
+// transition lifecycle.
+func TestAccReport_Count_AggregationTransitionUnsupported(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Create with count.
+			{
+				Config: testAccReportCount(n, "service_description", "fixed"),
+			},
+			// Attempt to switch aggregation to "total" and drop count — the API
+			// retains the merged count and rejects it.
+			{
+				Config:      testAccReportCountOmitted(n),
+				ExpectError: regexp.MustCompile(`count field is only valid`),
+			},
+		},
+	})
+}
+
+// TestAccReport_Count_Omitted verifies that omitting count (non-count aggregation)
+// leaves config.count null and produces no drift.
+func TestAccReport_Count_Omitted(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportCountOmitted(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count"),
+						knownvalue.Null()),
+				},
+			},
+			// Drift check.
+			{
+				Config: testAccReportCountOmitted(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_Count_InvalidAggregation verifies the cross-field validator rejects
+// count when aggregation is not "count".
+func TestAccReport_Count_InvalidAggregation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportCountInvalidAggregation(n),
+				ExpectError: regexp.MustCompile(`Invalid Count Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCount(i int, id, ctype string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "count_test" {
+    name = "test-count-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "count"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        count = {
+            id   = %q
+            type = %q
+        }
+    }
+}
+`, i, id, ctype)
+}
+
+func testAccReportCountOmitted(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "count_test" {
+    name = "test-count-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportCountInvalidAggregation(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "count_invalid" {
+    name = "test-count-invalid-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        count = {
+            id   = "service_description"
+            type = "fixed"
+        }
+    }
+}
+`, i)
+}

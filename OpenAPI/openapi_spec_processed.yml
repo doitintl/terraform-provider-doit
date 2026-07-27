@@ -7400,6 +7400,11 @@ components:
           description: Required when the time range is set to "custom".
           allOf:
             - $ref: '#/components/schemas/ExternalConfigCustomTimeRange'
+        count:
+          description: |-
+            The field to count distinct values of. Only applicable when aggregation is set to "count".
+          allOf:
+            - $ref: '#/components/schemas/ExternalConfigCount'
       example:
         metrics:
           - type: basic
@@ -7476,6 +7481,26 @@ components:
         sortGroups: a_to_z
         sortDimensions: a_to_z
         dataSource: billing
+    ExternalConfigCount:
+      type: object
+      description: |-
+        The field to count distinct values of. Only applicable when aggregation is set to "count".
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          description: The field identifier to count distinct values of.
+        type:
+          type: string
+          enum:
+            - fixed
+            - label
+            - tag
+            - project_label
+            - system_label
+          description: The metadata field type.
     ExternalConfigCustomTimeRange:
       description: Required when the time range is set to "custom".
       type: object
