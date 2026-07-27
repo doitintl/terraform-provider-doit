@@ -46,6 +46,8 @@ tags:
     description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
   - name: AccountTeam
     description: Find DoiT account managers assigned to your organization.
+  - name: Contract Templates
+    description: Manage contract templates for PartnerOps resellers (T1/T2).
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Roles
@@ -3243,6 +3245,162 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  /billing/v1/contract-templates:
+    get:
+      tags:
+        - Contract Templates
+      summary: List contract templates
+      description: >-
+        Lists contract templates owned by the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: listContractTemplates
+      responses:
+        "200":
+          description: OK - Contract templates returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContractTemplateResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Contract Templates
+      summary: Create contract template
+      description: >-
+        Creates a contract template for the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: createContractTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractTemplateInput"
+      responses:
+        "201":
+          description: Created - Contract template created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+  "/billing/v1/contract-templates/{templateID}":
+    get:
+      tags:
+        - Contract Templates
+      summary: Get contract template
+      description: >-
+        Returns a single contract template owned by the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: getContractTemplate
+      parameters:
+        - name: templateID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract template returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    put:
+      tags:
+        - Contract Templates
+      summary: Update contract template
+      description: >-
+        Updates a contract template owned by the authenticated tenant (from the bearer token).
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: updateContractTemplate
+      parameters:
+        - name: templateID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractTemplateInput"
+      responses:
+        "200":
+          description: OK - Contract template updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Contract Templates
+      summary: Archive contract template
+      description: >-
+        Soft-deletes (archives) a contract template owned by the authenticated tenant
+        (from the bearer token). Instantiated contracts are unaffected.
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: archiveContractTemplate
+      parameters:
+        - name: templateID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Contract template archived.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractTemplateResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
   /customers/v1/accountTeam:
     get:
       tags:
@@ -7356,6 +7514,141 @@ components:
             - ends_with
             - contains
             - regexp
+    ContractTemplateInput:
+      type: object
+      description: Payload for creating or updating a contract template.
+      required:
+        - name
+        - platform
+        - structure
+        - eligibleFrom
+      properties:
+        name:
+          type: string
+        platform:
+          type: string
+        structure:
+          type: string
+        eligibleFrom:
+          type: string
+          format: date-time
+        eligibleTo:
+          type: string
+          format: date-time
+        billingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplateBillingRule"
+        priceBooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplatePriceBook"
+        customLineItems:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    ContractTemplateResponse:
+      type: object
+      description: Contract template returned by the PartnerOps external API.
+      properties:
+        templateId:
+          type: string
+        name:
+          type: string
+        platform:
+          type: string
+        status:
+          type: string
+          enum: [active, archived]
+        structure:
+          type: string
+        eligibleFrom:
+          type: string
+          format: date-time
+        eligibleTo:
+          type: string
+          format: date-time
+        billingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplateBillingRule"
+        priceBooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplatePriceBook"
+        customLineItems:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        archivedAt:
+          type: string
+          format: date-time
+    ContractTemplateBillingRule:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+    ContractTemplatePriceBook:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContractTemplatePriceBookRule"
+    ContractTemplatePriceBookRule:
+      type: object
+      properties:
+        name:
+          type: string
+        percentageChange:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+        cloud:
+          type: string
+        lineItemDescription:
+          type: string
+        applyInLine:
+          type: boolean
+        includeCredits:
+          type: boolean
+        applyAWSEligibleDiscount:
+          type: boolean
+
     CreateAllocationRequest:
       required:
         - name
@@ -12742,6 +13035,99 @@ components:
       required: true
       schema:
         type: string
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: |
+        Tenant (customer) identifier that conveys the tenant scope for the request
+        (DoiT API Design Standards §15).
+
+        Resolution when the header is absent:
+        - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+          optional.
+        - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+          header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+          server does not guess across tenant scopes.
+
+        When the header is present but conflicts with the tenant the key is scoped to, the request is
+        rejected with `400` and code `tenant_id_mismatch`.
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    payerAccountId:
+      in: path
+      name: payerAccountId
+      required: true
+      description: AWS Master Payer Account ID (12-digit AWS account number) that scopes the request.
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "123456789012"
+    ps4cPageToken:
+      in: query
+      name: pageToken
+      required: false
+      description: |
+        Opaque cursor token returned by a previous list response. Omit to start from the beginning;
+        an empty or absent token in a response means there are no more results. Do not parse it.
+        A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
+        cursor returns `400` with code `pagination_token_expired` — restart pagination from the
+        beginning.
+      schema:
+        type: string
+    ps4cMaxResults:
+      in: query
+      name: maxResults
+      required: false
+      description: Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    service:
+      in: query
+      name: service
+      required: false
+      description: Filter by PS4C product line (AWS planned purchases).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    serviceId:
+      in: path
+      name: serviceId
+      required: true
+      description: Service ID (compute|database).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    eligibleSpendGranularity:
+      in: query
+      name: granularity
+      required: false
+      description: Time bucket for eligible spend data points.
+      schema:
+        type: string
+        enum:
+          - hour
+          - day
+          - week
+          - month
+        default: day
+    linkedAccountId:
+      in: path
+      name: linkedAccountId
+      required: true
+      description: AWS linked (member) account ID (12-digit AWS account number).
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "987654321098"
   securitySchemes:
     api_key:
       type: apiKey

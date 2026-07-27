@@ -46,6 +46,8 @@ tags:
     description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
   - name: AccountTeam
     description: Find DoiT account managers assigned to your organization.
+  - name: Contract Templates
+    description: Manage contract templates for PartnerOps resellers (T1/T2).
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Roles
@@ -10243,6 +10245,99 @@ components:
       required: true
       schema:
         type: string
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: |
+        Tenant (customer) identifier that conveys the tenant scope for the request
+        (DoiT API Design Standards §15).
+
+        Resolution when the header is absent:
+        - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+          optional.
+        - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+          header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+          server does not guess across tenant scopes.
+
+        When the header is present but conflicts with the tenant the key is scoped to, the request is
+        rejected with `400` and code `tenant_id_mismatch`.
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    payerAccountId:
+      in: path
+      name: payerAccountId
+      required: true
+      description: AWS Master Payer Account ID (12-digit AWS account number) that scopes the request.
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "123456789012"
+    ps4cPageToken:
+      in: query
+      name: pageToken
+      required: false
+      description: |
+        Opaque cursor token returned by a previous list response. Omit to start from the beginning;
+        an empty or absent token in a response means there are no more results. Do not parse it.
+        A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
+        cursor returns `400` with code `pagination_token_expired` — restart pagination from the
+        beginning.
+      schema:
+        type: string
+    ps4cMaxResults:
+      in: query
+      name: maxResults
+      required: false
+      description: Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    service:
+      in: query
+      name: service
+      required: false
+      description: Filter by PS4C product line (AWS planned purchases).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    serviceId:
+      in: path
+      name: serviceId
+      required: true
+      description: Service ID (compute|database).
+      schema:
+        type: string
+        enum:
+          - compute
+          - database
+    eligibleSpendGranularity:
+      in: query
+      name: granularity
+      required: false
+      description: Time bucket for eligible spend data points.
+      schema:
+        type: string
+        enum:
+          - hour
+          - day
+          - week
+          - month
+        default: day
+    linkedAccountId:
+      in: path
+      name: linkedAccountId
+      required: true
+      description: AWS linked (member) account ID (12-digit AWS account number).
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: "987654321098"
   securitySchemes:
     api_key:
       type: apiKey
