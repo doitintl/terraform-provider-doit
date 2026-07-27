@@ -261,6 +261,74 @@ if plan.UpdateTime.IsUnknown() {
 }
 ```
 
+#### Clearable Nested Object Attributes (SingleNestedAttribute)
+
+When a `SingleNestedAttribute` supports explicit `null` clearing (Category A), attach a custom `planmodifier.Object`. Unlike scalars and lists (which have generic modifiers like `useNullForUnknownListWhenConfigNull`), this provider has **no generic object clearing modifier** — you write a dedicated `planmodifier.Object` per attribute. Its job is to override the Optional+Computed prior-state copy (which otherwise retains the old value when config is null) and decide the plan value: null to clear, or a resolved default. The API model field must be `nullable.Nullable[StructT]`.
+
+Attach it in `Schema()`:
+
+```go
+// In Schema() — useNullForUnknownSettings() is the custom planmodifier.Object you implement (see below):
+if attr, ok := parentAttr.Attributes["settings"].(schema.SingleNestedAttribute); ok {
+    attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownSettings())
+    parentAttr.Attributes["settings"] = attr
+}
+```
+
+The modifier takes one of two shapes depending on whether the clearing decision is self-contained or depends on a sibling attribute.
+
+**Pattern A — simple clearing (no sibling dependency).** When a null config should always clear the object, propose the (null) config value whenever config is null. This is the object equivalent of the scalar/list clearing modifiers:
+
+```go
+func (m useNullForUnknownSettingsModifier) PlanModifyObject(_ context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+    if req.ConfigValue.IsNull() {
+        // Override the Optional+Computed prior-state copy so omitting the block clears it.
+        resp.PlanValue = req.ConfigValue // null
+    }
+}
+```
+
+**Pattern B — sibling-dependent clear or default.** When whether to clear (or what default to inject) depends on another attribute, read the sibling from `req.Config` / `req.Plan` and branch. `useNullOrDefaultForForecastSettings` in `report_plan_modifiers.go` is the current example: with sibling `forecast` disabled it proposes null (clear); enabled but the block omitted it proposes a typed default (`mode = "totals"`); and while the sibling is unknown it proposes `types.ObjectUnknown(...)` to defer resolution. When the modifier builds an object value (a default), it **must** use `NewXxxValue()` + `ToObjectValue()`, never raw `types.ObjectValue()`, to preserve custom type information for nested children:
+
+```go
+func (m useNullOrDefaultForSettingsModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+    if !req.ConfigValue.IsNull() {
+        return // user set the block explicitly — leave it alone
+    }
+    attrTypes := resource_report.SettingsValue{}.AttributeTypes(ctx)
+    var sibling types.Bool
+    resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("sibling"), &sibling)...)
+    switch {
+    case sibling.IsUnknown():
+        resp.PlanValue = types.ObjectUnknown(attrTypes) // defer until the dependency resolves
+    case !sibling.IsNull() && sibling.ValueBool():
+        v, d := resource_report.NewSettingsValue(attrTypes, defaultAttrs)
+        resp.Diagnostics.Append(d...)
+        obj, d := v.ToObjectValue(ctx) // typed conversion preserves nested custom types
+        resp.Diagnostics.Append(d...)
+        resp.PlanValue = obj
+    default:
+        resp.PlanValue = req.ConfigValue // null → clears
+    }
+}
+```
+
+**Serialization — send explicit `null` to the API (both patterns):**
+
+```go
+// In toExternalConfig / toUpdateRequest:
+if !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
+    s := models.Settings{ /* map fields */ }
+    req.Settings.Set(s)
+} else if plan.Settings.IsNull() {
+    req.Settings.SetNull()  // sends "settings": null in JSON
+}
+```
+
+**Children of a clearable nested object** follow the same Category A / Category B classification as top-level attributes. A clearable parent can have Category B children (API-computed defaults that the user can't independently clear). These children go in `acknowledgeNotClearable` as usual.
+
+**API-computed fields alongside user-configured fields:** Some APIs return computed values alongside user-configured ones (e.g., `futureTimeIntervals` computed from `futureCustomDateRange`). The read path (`mapXxxToModel`) should map all API-returned fields faithfully. The overlay preserves the user's plan values on Create/Update. On subsequent plans, the framework's default Optional+Computed behavior proposes the prior state value for omitted fields, so the computed value doesn't cause drift.
+
 #### Category B: Not clearable (API-computed default)
 
 **Do not add any plan modifier.** The default framework behavior (prior state sticks) is correct. Use `acknowledgeNotClearable(s, paths...)` in the Schema() method to declare that these attributes were consciously classified:
@@ -340,6 +408,22 @@ if timestamp, ok := s.Attributes["timestamp"]; ok {
     }
 }
 ```
+
+### Config Validators and Custom Types
+
+When reading `SingleNestedAttribute` values in a `ConfigValidator` via `GetAttribute`, always use the generated custom type (e.g., `resource_report.ForecastSettingsValue`), **not** `types.Object`. The framework's reflect package requires the target type to match the schema's custom type — using a raw `basetypes.ObjectValue` causes a "Value Conversion Error" crash.
+
+```go
+// WRONG — crashes with "Value Conversion Error"
+var settings types.Object
+req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &settings)
+
+// CORRECT — matches the schema's custom type
+var settings resource_report.ForecastSettingsValue
+req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &settings)
+```
+
+This applies to all `GetAttribute` calls in validators, not just `SingleNestedAttribute` — always use the type that matches the schema definition.
 
 ## OpenAPI Spec vs. Go Types
 

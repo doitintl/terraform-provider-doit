@@ -83,6 +83,11 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			}
 			configAttr.Attributes["metric_filter"] = mfAttr
 		}
+		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(schema.SingleNestedAttribute); ok {
+			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullOrDefaultForForecastSettings())
+			configAttr.Attributes["forecast_settings"] = fsAttr
+		}
+
 		s.Attributes["config"] = configAttr
 	}
 
@@ -167,6 +172,16 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.secondary_time_range.include_current",        // API defaults to false
 		"config.secondary_time_range.custom_time_range.from", // API defaults from date
 		"config.secondary_time_range.custom_time_range.to",   // API defaults to date
+
+		// config.forecast_settings
+		"config.forecast_settings.future_custom_date_range",
+		"config.forecast_settings.future_custom_date_range.from",
+		"config.forecast_settings.future_custom_date_range.to",
+		"config.forecast_settings.historical_custom_date_range",
+		"config.forecast_settings.historical_custom_date_range.from",
+		"config.forecast_settings.historical_custom_date_range.to",
+		"config.forecast_settings.future_time_intervals",
+		"config.forecast_settings.historical_time_intervals",
 	)
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
@@ -199,6 +214,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 	return []resource.ConfigValidator{
 		// Must have 1-4 metrics if specified; empty list causes state inconsistency.
 		reportMetricsLengthValidator{},
+		// forecast_settings + forecast=false is contradictory.
+		reportForecastConflictValidator{},
 		// custom_time_range.from/to must be valid RFC3339 timestamps.
 		reportTimestampValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
