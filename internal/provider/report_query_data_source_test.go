@@ -311,3 +311,164 @@ data "doit_report_query" "test" {
 }
 `
 }
+
+func TestAccReportQueryDataSource_ForecastSettings(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceForecastSettingsConfig(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// result_json must contain forecastRows, proving forecast_settings is
+					// applied rather than silently ignored.
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+// TestAccReportQueryDataSource_ForecastConflict verifies that forecast=false plus
+// forecast_settings is accepted by the query: the API enables forecasting from the
+// presence of forecast_settings and still returns forecast rows.
+func TestAccReportQueryDataSource_ForecastConflict(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceForecastConflictConfig(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+				},
+			},
+		},
+	})
+}
+
+// TestAccReportQueryDataSource_EmptyForecastRange verifies an empty forecast custom
+// date range is rejected at plan time (matching the report resource) rather than
+// only failing at the API.
+func TestAccReportQueryDataSource_EmptyForecastRange(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceEmptyForecastRangeConfig(),
+				ExpectError: regexp.MustCompile(`Empty Future Custom Date Range`),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceForecastSettingsConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        forecast_settings = {
+            future_time_intervals     = 3
+            historical_time_intervals = 12
+            mode                      = "totals"
+        }
+    }
+}
+`
+}
+
+func testAccReportQueryDataSourceForecastConflictConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        advanced_analysis = {
+            forecast = false
+        }
+        forecast_settings = {
+            future_time_intervals = 3
+            mode                  = "totals"
+        }
+    }
+}
+`
+}
+
+func testAccReportQueryDataSourceEmptyForecastRangeConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        forecast_settings = {
+            future_custom_date_range = {}
+            mode                     = "totals"
+        }
+    }
+}
+`
+}

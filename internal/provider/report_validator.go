@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -114,6 +115,48 @@ func (v reportMetricsLengthValidator) ValidateResource(ctx context.Context, req 
 	}
 }
 
+// reportForecastConflictValidator rejects configurations where forecast_settings
+// is set but forecast is explicitly false. The API automatically enables forecast
+// when forecastSettings is provided, so sending forecast=false alongside it causes
+// a 500 server error or perpetual drift.
+type reportForecastConflictValidator struct{}
+
+var _ resource.ConfigValidator = reportForecastConflictValidator{}
+
+func (v reportForecastConflictValidator) Description(_ context.Context) string {
+	return "Validates that forecast_settings is not set when forecast is explicitly disabled"
+}
+
+func (v reportForecastConflictValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `forecast_settings` is not set when `forecast` is explicitly disabled"
+}
+
+func (v reportForecastConflictValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var forecastSettings resource_report.ForecastSettingsValue
+	diags := req.Config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &forecastSettings)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || forecastSettings.IsNull() || forecastSettings.IsUnknown() {
+		return
+	}
+
+	var forecast types.Bool
+	diags = req.Config.GetAttribute(ctx, path.Root("config").AtName("advanced_analysis").AtName("forecast"), &forecast)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || forecast.IsNull() || forecast.IsUnknown() {
+		return
+	}
+
+	if !forecast.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("config").AtName("forecast_settings"),
+			"Conflicting Forecast Configuration",
+			"Cannot set forecast_settings when advanced_analysis.forecast is false. "+
+				"The API automatically enables forecasting when forecast_settings is provided. "+
+				"Either remove forecast_settings or set forecast = true.",
+		)
+	}
+}
+
 // reportTimestampValidator validates custom_time_range objects:
 // 1. When set, at least one of from/to must be specified (rejects empty `{}`).
 // 2. Any provided from/to values must be valid RFC3339 timestamps.
@@ -134,6 +177,34 @@ func (v reportTimestampValidator) MarkdownDescription(_ context.Context) string 
 }
 
 func (v reportTimestampValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportTimestamps(ctx, req.Config, &resp.Diagnostics)
+}
+
+// reportTimestampDataSourceValidator is the data-source counterpart of
+// reportTimestampValidator. The report_query data source reuses the report
+// resource's config types, so the same validation applies — rejecting empty date
+// ranges at plan time instead of letting them fail at the API.
+type reportTimestampDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportTimestampDataSourceValidator{}
+
+func (v reportTimestampDataSourceValidator) Description(_ context.Context) string {
+	return "Validates custom_time_range objects are non-empty and contain valid RFC3339 timestamps"
+}
+
+func (v reportTimestampDataSourceValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates `custom_time_range` objects are non-empty and contain valid RFC3339 timestamps"
+}
+
+func (v reportTimestampDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportTimestamps(ctx, req.Config, &resp.Diagnostics)
+}
+
+// validateReportTimestamps is the shared body used by both the resource and the
+// report_query data source. It rejects empty custom/forecast date ranges and
+// validates that any provided from/to values are RFC3339. Unknown values are
+// deferred (not treated as empty) so dynamic references validate once resolved.
+func validateReportTimestamps(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
 	// Reject empty custom_time_range objects (set but both from and to are null).
 	ctrPaths := []path.Path{
 		path.Root("config").AtName("custom_time_range"),
@@ -141,18 +212,62 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 	}
 	for _, p := range ctrPaths {
 		var ctr resource_report.CustomTimeRangeValue
-		diags := req.Config.GetAttribute(ctx, p, &ctr)
-		resp.Diagnostics.Append(diags...)
-		if diags.HasError() || ctr.IsNull() || ctr.IsUnknown() {
+		d := config.GetAttribute(ctx, p, &ctr)
+		diags.Append(d...)
+		if d.HasError() || ctr.IsNull() || ctr.IsUnknown() {
 			continue
 		}
 		fromEmpty := ctr.From.IsNull() || ctr.From.IsUnknown()
 		toEmpty := ctr.To.IsNull() || ctr.To.IsUnknown()
 		if fromEmpty && toEmpty {
-			resp.Diagnostics.AddAttributeError(
+			diags.AddAttributeError(
 				p,
 				"Empty Custom Time Range",
 				"custom_time_range requires at least one of `from` or `to` to be set.",
+			)
+		}
+	}
+
+	futureCtrPaths := []path.Path{
+		path.Root("config").AtName("forecast_settings").AtName("future_custom_date_range"),
+	}
+	for _, p := range futureCtrPaths {
+		var ctr resource_report.FutureCustomDateRangeValue
+		d := config.GetAttribute(ctx, p, &ctr)
+		diags.Append(d...)
+		if d.HasError() || ctr.IsNull() || ctr.IsUnknown() {
+			continue
+		}
+		if ctr.From.IsUnknown() || ctr.To.IsUnknown() {
+			continue // defer validation until values are known
+		}
+		if ctr.From.IsNull() && ctr.To.IsNull() {
+			diags.AddAttributeError(
+				p,
+				"Empty Future Custom Date Range",
+				"future_custom_date_range requires at least one of `from` or `to` to be set.",
+			)
+		}
+	}
+
+	historicalCtrPaths := []path.Path{
+		path.Root("config").AtName("forecast_settings").AtName("historical_custom_date_range"),
+	}
+	for _, p := range historicalCtrPaths {
+		var ctr resource_report.HistoricalCustomDateRangeValue
+		d := config.GetAttribute(ctx, p, &ctr)
+		diags.Append(d...)
+		if d.HasError() || ctr.IsNull() || ctr.IsUnknown() {
+			continue
+		}
+		if ctr.From.IsUnknown() || ctr.To.IsUnknown() {
+			continue // defer validation until values are known
+		}
+		if ctr.From.IsNull() && ctr.To.IsNull() {
+			diags.AddAttributeError(
+				p,
+				"Empty Historical Custom Date Range",
+				"historical_custom_date_range requires at least one of `from` or `to` to be set.",
 			)
 		}
 	}
@@ -163,19 +278,23 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 		path.Root("config").AtName("custom_time_range").AtName("to"),
 		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("from"),
 		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range").AtName("to"),
+		path.Root("config").AtName("forecast_settings").AtName("future_custom_date_range").AtName("from"),
+		path.Root("config").AtName("forecast_settings").AtName("future_custom_date_range").AtName("to"),
+		path.Root("config").AtName("forecast_settings").AtName("historical_custom_date_range").AtName("from"),
+		path.Root("config").AtName("forecast_settings").AtName("historical_custom_date_range").AtName("to"),
 	}
 
 	for _, p := range timestampPaths {
 		var val types.String
-		diags := req.Config.GetAttribute(ctx, p, &val)
-		resp.Diagnostics.Append(diags...)
-		if diags.HasError() {
+		d := config.GetAttribute(ctx, p, &val)
+		diags.Append(d...)
+		if d.HasError() {
 			continue
 		}
 		if val.IsNull() || val.IsUnknown() {
 			continue
 		}
-		validateRFC3339(val.ValueString(), p, &resp.Diagnostics)
+		validateRFC3339(val.ValueString(), p, diags)
 	}
 }
 
