@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"resource_qual"
 )
 
 // --- BAD: Schema() with unclassified Optional+Computed fields ---
@@ -289,6 +290,62 @@ func (r *listElementResource) Schema(ctx context.Context, _ resource.SchemaReque
 	}
 
 	resp.Schema = s
+}
+
+// --- BAD: nested O+C object with only a NON-clearing modifier (UseStateForUnknown) ---
+
+type bogusModifierResource struct{}
+
+func (r *bogusModifierResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := BogusModifierResourceSchema(ctx)
+
+	// UseStateForUnknown does not propose null when config is null, so widget must
+	// NOT be treated as Category A — it stays unclassified and is flagged.
+	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
+		if w, ok := configAttr.Attributes["widget"].(schema.SingleNestedAttribute); ok { // want `nested Optional\+Computed attribute "config.widget" has no clearable classification`
+			w.PlanModifiers = append(w.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+			configAttr.Attributes["widget"] = w
+		}
+		s.Attributes["config"] = configAttr
+	}
+
+	resp.Schema = s
+}
+
+// --- BAD: Category A object in a package-qualified schema whose only .SetNull()
+// is package-agnostic (global). The global bucket must NOT satisfy a qualified
+// schema, so config.widget is flagged for a missing null-send. ---
+
+type qualLeakResource struct{}
+
+func (r *qualLeakResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := resource_qual.QualResourceSchema(ctx)
+
+	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
+		if w, ok := configAttr.Attributes["widget"].(schema.SingleNestedAttribute); ok { // want `clearable nested attribute "config.widget" must send an explicit null`
+			w.PlanModifiers = append(w.PlanModifiers, useNullOrDefaultForForecastSettings())
+			configAttr.Attributes["widget"] = w
+		}
+		s.Attributes["config"] = configAttr
+	}
+
+	resp.Schema = s
+}
+
+// globalWidgetNull sends null for a "Widget" field but references no resource_*
+// package, so the call lands in the global bucket. It must not satisfy the
+// package-qualified qualLeakResource above.
+func globalWidgetNull() {
+	var x extConfigQual
+	x.Widget.SetNull()
+}
+
+type nullableObjQual struct{}
+
+func (nullableObjQual) SetNull() {}
+
+type extConfigQual struct {
+	Widget nullableObjQual
 }
 
 // useEmptyForUnknownWhenConfigNull is a stub for the plan modifier.

@@ -297,10 +297,11 @@ func AcknowledgedResourceSchema(ctx context.Context) schema.Schema {
 }
 
 // Each of the following schemas has a top-level Optional+Computed "config" wrapper
-// (exempt from the container check) holding one nested Optional+Computed
-// single-nested object with Required leaf children, so only the nested container
-// itself is a classification concern. The nested object's name differs per schema
-// so the package-wide .SetNull() scan does not cross-contaminate the fixtures.
+// (itself acknowledged in the corresponding Schema() method) holding one nested
+// Optional+Computed single-nested object with Required leaf children — the nested
+// container is the classification case under test. The nested object's name
+// differs per schema so the package-scoped .SetNull() scan does not
+// cross-contaminate the fixtures.
 
 // CatANullSendResourceSchema — config.forecast_settings: Category A (clearable).
 func CatANullSendResourceSchema(ctx context.Context) schema.Schema {
@@ -449,6 +450,29 @@ func CatBContainerResourceSchema(ctx context.Context) schema.Schema {
 						Attributes: map[string]schema.Attribute{
 							"id":   schema.StringAttribute{Required: true},
 							"kind": schema.StringAttribute{Required: true},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// BogusModifierResourceSchema — config.widget is a nested O+C object that will be
+// given a NON-clearing plan modifier (UseStateForUnknown); it must still be flagged
+// (not treated as Category A). config is Required so only widget is under test.
+func BogusModifierResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"config": schema.SingleNestedAttribute{
+				Required: true,
+				Attributes: map[string]schema.Attribute{
+					"widget": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{Required: true},
 						},
 					},
 				},

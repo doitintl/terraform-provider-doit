@@ -159,22 +159,32 @@ func run(pass *analysis.Pass) (any, error) {
 			return int(a.kind) - int(b.kind)
 		})
 
-		// Report each finding at a unique position.
+		// Report each finding at a unique line. Findings with an override block use
+		// its line; the rest borrow distinct body lines. If the body has fewer
+		// distinct lines than findings (a small Schema() override over a generated
+		// schema with many unclassified attributes), the surplus can't get its own
+		// line — reporting them at shared positions would let uniq-by-line silently
+		// drop all but one. Instead, collect the overflow and emit it as a single
+		// combined diagnostic, so no finding is ever lost.
 		fallbackIdx := 0
+		var overflow []string
 		for _, f := range findings {
-			var pos token.Pos
 			if p, ok := attrPositions[f.path]; ok {
-				pos = p
+				pass.Reportf(p, messageFor(f), f.path)
 			} else if fallbackIdx < len(fallbackPositions) {
-				pos = fallbackPositions[fallbackIdx]
+				pass.Reportf(fallbackPositions[fallbackIdx], messageFor(f), f.path)
 				fallbackIdx++
 			} else {
-				// Should not happen for real schemas (bodies have far more lines
-				// than findings); offset from the brace as a last resort.
-				pos = fn.Body.Lbrace + token.Pos(fallbackIdx)
-				fallbackIdx++
+				overflow = append(overflow, f.path)
 			}
-			pass.Reportf(pos, messageFor(f), f.path)
+		}
+		if len(overflow) > 0 {
+			pass.Reportf(fn.Body.Lbrace,
+				"Optional+Computed attributes have no clearable classification "+
+					"(too many unclassified attributes to anchor on distinct lines): %s.\n"+
+					"\tClassify each (Category A/B/C) — see "+
+					"https://github.com/doitintl/terraform-provider-doit/issues/233",
+				strings.Join(overflow, ", "))
 		}
 	})
 
@@ -282,13 +292,30 @@ func collectUnclassified(attrs map[string]*schemaparser.AttrInfo, prefix, schema
 	}
 }
 
+// nonClearingObjectModifiers are plan modifiers that do NOT propose null/default
+// when config is null, so their presence must not mark an object as Category A
+// (which would otherwise let a coincidental .SetNull() elsewhere satisfy the
+// check). Object clearing modifiers use bespoke names (e.g.
+// useNullOrDefaultForForecastSettings) that don't follow the scalar/list
+// use…WhenConfigNull convention, so we can't allowlist by name — instead we
+// denylist the known framework stability/replacement modifiers.
+var nonClearingObjectModifiers = map[string]bool{
+	"UseStateForUnknown":          true,
+	"RequiresReplace":             true,
+	"RequiresReplaceIf":           true,
+	"RequiresReplaceIfConfigured": true,
+}
+
 // hasObjectClearingModifier reports whether a single-nested object container has a
-// plan modifier attached. In this codebase a SingleNestedAttribute only receives a
-// plan modifier to handle clearing (e.g. useNullOrDefaultForForecastSettings),
-// which does not follow the scalar/list use…WhenConfigNull naming convention, so
-// any modifier presence marks the container as Category A (clearable).
+// clearing plan modifier attached — any modifier other than the known
+// non-clearing ones (see nonClearingObjectModifiers).
 func hasObjectClearingModifier(info *schemaparser.AttrInfo) bool {
-	return len(info.PlanModifiers) > 0
+	for _, m := range info.PlanModifiers {
+		if !nonClearingObjectModifiers[m] {
+			return true
+		}
+	}
+	return false
 }
 
 // setNullIndex records, for every <recv>.SetNull() call in the package, the
@@ -301,16 +328,22 @@ type setNullIndex struct {
 	global map[string]bool            // dotted snake field-paths, no package tie
 }
 
-// satisfies reports whether some .SetNull() call in the given schema package (or a
-// package-agnostic one) targets a field-path that is a suffix of the container's
-// full attribute path. Suffix matching accepts both fully-qualified accessors
+// satisfies reports whether some .SetNull() call tied to the container's schema
+// package targets a field-path that is a suffix of the container's full attribute
+// path. Suffix matching accepts both fully-qualified accessors
 // (plan.Config.ForecastSettings → "config.forecast_settings") and the common
 // flattened form (externalConfig.ForecastSettings → "forecast_settings").
+//
+// The package-agnostic (global) bucket is consulted ONLY for unqualified
+// (same-package) schemas, where there is no generated package to scope by. For a
+// package-qualified schema, requiring a same-package null-send prevents an
+// untieable .SetNull() elsewhere from masking a genuinely missing null-send here
+// (the cross-resource bug this scoping exists to catch).
 func (idx *setNullIndex) satisfies(schemaPkg, path string) bool {
-	if suffixMatch(idx.global, path) {
+	if paths, ok := idx.byPkg[schemaPkg]; ok && suffixMatch(paths, path) {
 		return true
 	}
-	if paths, ok := idx.byPkg[schemaPkg]; ok && suffixMatch(paths, path) {
+	if schemaPkg == "" && suffixMatch(idx.global, path) {
 		return true
 	}
 	return false
