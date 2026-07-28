@@ -4587,6 +4587,10 @@ resource "doit_report" "metric_no_value" {
 // copy prior state and marks it "known after apply") — the same limitation as the
 // existing metric_filter, and moot because the API cannot clear it anyway. Hence
 // ExpectNonEmptyPlan; the guarantee under test is retention, not a clean plan.
+// TestAccReport_LimitByChangeNotClearable proves config.limit_by_change cannot be
+// cleared in place (an in-place update perpetually drifts, since the PATCH merge
+// retains the stored value), so ModifyPlan forces a destroy+create (Category C)
+// when it is removed.
 func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -4605,12 +4609,33 @@ func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 				Config:            testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
 				ConfigStateChecks: []statecheck.StateCheck{present},
 			},
-			// Step 2: omit limit_by_change — the API preserves it, so it is retained
-			// in state (not cleared). The omit re-plans an update, hence ExpectNonEmptyPlan.
+			// Step 2: omit limit_by_change — removal forces a replacement, and the
+			// recreated report has no limit_by_change.
 			{
-				Config:             testAccReportLimitByChangeCleared(n),
-				ExpectNonEmptyPlan: true,
-				ConfigStateChecks:  []statecheck.StateCheck{present},
+				Config: testAccReportLimitByChangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.lbc",
+							plancheck.ResourceActionDestroyBeforeCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.lbc",
+						tfjsonpath.New("config").AtMapKey("limit_by_change"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 3: drift check after replacement.
+			{
+				Config: testAccReportLimitByChangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
@@ -4958,6 +4983,678 @@ resource "doit_report" "count_aggnoblock" {
             value = "cost"
         }
         aggregation    = "count"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// -----------------------------------------------------------------------------
+// clearableattr (issue #233): removal behavior for the nested Optional+Computed
+// objects the linter flags in config.
+//
+// Each object is serialized in the update request as *T with `omitempty` (see
+// ExternalConfig in models_gen.go), and the report update is a PATCH that merges
+// config with no null representation. None can be cleared in place; the observed
+// removal behavior splits into two groups:
+//
+// Silently preserved (Category B behavior — removal is idempotent, the prior value
+// sticks with no drift and no error; left as-is, forcing a replace would be
+// gratuitously destructive):
+//   - advanced_analysis, display_settings, time_range, secondary_time_range
+//   - metric (deprecated): mirrors metrics[0] rather than clearing
+//   - forecast_settings.future/historical_custom_date_range: retained when dropped
+//     while keeping forecast_settings (they only clear when time_intervals are
+//     supplied instead, via the API's server-side mutual exclusion — see
+//     TestAccReport_ForecastSettings_Lifecycle)
+//
+// Harmful — remediated with Category C replace-on-clear in reportResource.ModifyPlan
+// (requiresReplaceWhenCleared), so removing the block destroys+recreates:
+//   - limit_by_change: would otherwise perpetually drift
+//   - metric_filter (+ its required nested metric): the update would send an empty
+//     metricFilter and the API would reject it (400)
+//   - custom_time_range: the stale range would conflict with a changed
+//     time_range.mode and the API would reject the update (400)
+//
+// (config.count is the pre-existing Category C case; see TestAccReport_Count_*.)
+// -----------------------------------------------------------------------------
+
+// TestAccReport_AdvancedAnalysis_NotClearable proves config.advanced_analysis
+// cannot be cleared in place: removing it re-plans an update forever.
+func TestAccReport_AdvancedAnalysis_NotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.aa_clear",
+		tfjsonpath.New("config").AtMapKey("advanced_analysis").AtMapKey("trending_up"),
+		knownvalue.Bool(true))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH advanced_analysis.
+			{
+				Config:            testAccReportWithAdvancedAnalysis(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: omit advanced_analysis. The API silently preserves it, so the
+			// removal applies idempotently (no error) and the value stays in state.
+			{
+				Config:            testAccReportAdvancedAnalysisCleared(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 3: drift check — the retained value produces no diff, confirming
+			// removal is silently ignored rather than causing a permadiff.
+			{
+				Config: testAccReportAdvancedAnalysisCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithAdvancedAnalysis(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "aa_clear" {
+    name = "test-aa-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        advanced_analysis = {
+            trending_up   = true
+            trending_down = true
+            not_trending  = true
+            forecast      = false
+        }
+    }
+}
+`, i)
+}
+
+func testAccReportAdvancedAnalysisCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "aa_clear" {
+    name = "test-aa-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_CustomTimeRange_RemovalForcesReplace proves config.custom_time_range
+// cannot be cleared in place. It is only meaningful with time_range.mode = "custom";
+// an in-place update that switches the mode to "last" and drops the block would
+// leave the stale custom range in the merged config and the API would reject it
+// (400). ModifyPlan forces a destroy+create (Category C) when it is removed.
+func TestAccReport_CustomTimeRange_RemovalForcesReplace(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.ctr_clear",
+		tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("from"),
+		knownvalue.StringExact("2024-01-01T00:00:00Z"))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH a custom time range.
+			{
+				Config:            testAccReportWithCustomTimeRange(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: switch to a relative range and drop custom_time_range —
+			// removal forces a replacement, and the recreated report has no
+			// custom_time_range.
+			{
+				Config: testAccReportCustomTimeRangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.ctr_clear",
+							plancheck.ResourceActionDestroyBeforeCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.ctr_clear",
+						tfjsonpath.New("config").AtMapKey("custom_time_range"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 3: drift check after replacement.
+			{
+				Config: testAccReportCustomTimeRangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithCustomTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_clear" {
+    name = "test-ctr-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+            mode = "custom"
+            unit = "day"
+        }
+        custom_time_range = {
+            from = "2024-01-01T00:00:00Z"
+            to   = "2024-02-01T00:00:00Z"
+        }
+    }
+}
+`, i)
+}
+
+func testAccReportCustomTimeRangeCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_clear" {
+    name = "test-ctr-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+            mode   = "last"
+            amount = 3
+            unit   = "month"
+        }
+    }
+}
+`, i)
+}
+
+// TestAccReport_DisplaySettings_NotClearable proves config.display_settings
+// cannot be cleared in place: removing it re-plans an update forever.
+func TestAccReport_DisplaySettings_NotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.ds_test",
+		tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("number_scale"),
+		knownvalue.StringExact("millions"))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH display_settings.
+			{
+				Config:            testAccReportWithDisplaySettings(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: omit display_settings. The API silently preserves it, so the
+			// removal applies idempotently (no error) and the value stays in state.
+			{
+				Config:            testAccReportDisplaySettingsCleared(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 3: drift check — the retained value produces no diff, confirming
+			// removal is silently ignored rather than causing a permadiff.
+			{
+				Config: testAccReportDisplaySettingsCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDisplaySettingsCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ds_test" {
+    name        = "test-display-settings-%d"
+    description = "Report testing display_settings block"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_Metric_NotClearable proves config.metric (the deprecated singular
+// metric) cannot be cleared to null: it is a computed mirror of metrics[0].
+// Setting metric then switching to a metrics list drops the block from config, but
+// the API keeps metric populated (now mirroring metrics[0]="usage"). The removal
+// applies idempotently — the mirror does not drift (no permadiff).
+func TestAccReport_Metric_NotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	// Step 1: the singular metric is set to "cost".
+	metricCost := statecheck.ExpectKnownValue(
+		"doit_report.metric_clear",
+		tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
+		knownvalue.StringExact("cost"))
+	// Step 2: after switching to metrics=[usage] and dropping the metric block,
+	// config.metric is not cleared — it mirrors metrics[0] ("usage").
+	metricMirrored := statecheck.ExpectKnownValue(
+		"doit_report.metric_clear",
+		tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
+		knownvalue.StringExact("usage"))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH the singular metric.
+			{
+				Config:            testAccReportWithSingularMetric(n),
+				ConfigStateChecks: []statecheck.StateCheck{metricCost},
+			},
+			// Step 2: switch to metrics list, dropping metric — metric is not
+			// cleared (mirrors metrics[0]); removal applies idempotently.
+			{
+				Config:            testAccReportMetricCleared(n),
+				ConfigStateChecks: []statecheck.StateCheck{metricMirrored},
+			},
+			// Step 3: drift check — the mirrored metric produces no diff.
+			{
+				Config: testAccReportMetricCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSingularMetric(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_clear" {
+    name = "test-metric-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "metric_clear" {
+    name = "test-metric-clear-%d"
+    config = {
+        metrics = [
+            {
+                type  = "basic"
+                value = "usage"
+            }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_MetricFilter_RemovalForcesReplace proves config.metric_filter (and
+// its required nested config.metric_filter.metric) cannot be cleared in place — an
+// in-place update would send an empty metricFilter and the API would reject it
+// (400) — so ModifyPlan forces a destroy+create (Category C) when it is removed.
+func TestAccReport_MetricFilter_RemovalForcesReplace(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.mf_clear",
+		tfjsonpath.New("config").AtMapKey("metric_filter").AtMapKey("operator"),
+		knownvalue.StringExact("gt"))
+	presentNested := statecheck.ExpectKnownValue(
+		"doit_report.mf_clear",
+		tfjsonpath.New("config").AtMapKey("metric_filter").AtMapKey("metric").AtMapKey("value"),
+		knownvalue.StringExact("cost"))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH metric_filter (including its nested metric).
+			{
+				Config:            testAccReportWithMetricFilter(n),
+				ConfigStateChecks: []statecheck.StateCheck{present, presentNested},
+			},
+			// Step 2: omit metric_filter — removal forces a replacement, and the
+			// recreated report has no metric_filter.
+			{
+				Config: testAccReportMetricFilterCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.mf_clear",
+							plancheck.ResourceActionDestroyBeforeCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.mf_clear",
+						tfjsonpath.New("config").AtMapKey("metric_filter"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 3: drift check after replacement.
+			{
+				Config: testAccReportMetricFilterCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithMetricFilter(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_clear" {
+    name = "test-mf-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            operator = "gt"
+            values   = [100]
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricFilterCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_clear" {
+    name = "test-mf-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_SecondaryTimeRange_NotClearable proves config.secondary_time_range
+// (and its nested config.secondary_time_range.custom_time_range) cannot be cleared
+// in place: removing the block re-plans an update forever.
+func TestAccReport_SecondaryTimeRange_NotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.str_clear",
+		tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("from"),
+		knownvalue.StringExact("2023-01-01T00:00:00Z"))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH a secondary time range (custom dates).
+			{
+				Config:            testAccReportWithSecondaryCustom(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: omit secondary_time_range. The API silently preserves it, so the
+			// removal applies idempotently (no error) and the value stays in state.
+			{
+				Config:            testAccReportSecondaryCleared(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 3: drift check — the retained value produces no diff, confirming
+			// removal is silently ignored rather than causing a permadiff.
+			{
+				Config: testAccReportSecondaryCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithSecondaryCustom(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "str_clear" {
+    name = "test-str-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        time_range = {
+            mode = "custom"
+            unit = "day"
+        }
+        custom_time_range = {
+            from = "2024-01-01T00:00:00Z"
+            to   = "2024-12-31T23:59:59Z"
+        }
+        secondary_time_range = {
+            custom_time_range = {
+                from = "2023-01-01T00:00:00Z"
+                to   = "2023-12-31T23:59:59Z"
+            }
+        }
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportSecondaryCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "str_clear" {
+    name = "test-str-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation   = "total"
+        time_interval = "month"
+        time_range = {
+            mode = "custom"
+            unit = "day"
+        }
+        custom_time_range = {
+            from = "2024-01-01T00:00:00Z"
+            to   = "2024-12-31T23:59:59Z"
+        }
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_TimeRange_NotClearable proves config.time_range cannot be cleared
+// in place: removing the explicit block leaves the stored range in state and
+// re-plans an update forever.
+func TestAccReport_TimeRange_NotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.tr_clear",
+		tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("amount"),
+		knownvalue.Int64Exact(3))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH an explicit relative time range.
+			{
+				Config:            testAccReportWithExplicitTimeRange(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: omit time_range. The API silently preserves the stored range, so
+			// the removal applies idempotently (no error) and the value stays in state.
+			{
+				Config:            testAccReportTimeRangeCleared(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 3: drift check — the retained value produces no diff, confirming
+			// removal is silently ignored rather than causing a permadiff.
+			{
+				Config: testAccReportTimeRangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithExplicitTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "tr_clear" {
+    name = "test-tr-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+            mode   = "last"
+            amount = 3
+            unit   = "month"
+        }
+    }
+}
+`, i)
+}
+
+func testAccReportTimeRangeCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "tr_clear" {
+    name = "test-tr-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
         display_values = "actuals_only"

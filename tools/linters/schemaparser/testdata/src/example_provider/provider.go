@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"example_gen"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
@@ -51,6 +52,19 @@ func (r *exampleResource) Schema(ctx context.Context, req schemaRequest, resp *s
 	resp.Schema = s
 }
 
+// ModifyPlan marks config.count as Category C (replace-on-clear).
+func (r *exampleResource) ModifyPlan(ctx context.Context, req modifyPlanRequest, resp *modifyPlanResponse) {
+	requiresReplaceWhenCleared[countValue](ctx, req, resp, path.Root("config").AtName("count"))
+}
+
 // Stubs.
 type schemaRequest struct{}
 type schemaResponse struct{ Schema schema.Schema }
+
+type modifyPlanRequest struct{}
+type modifyPlanResponse struct{}
+
+type countValue struct{}
+
+func requiresReplaceWhenCleared[T any](_ context.Context, _ modifyPlanRequest, _ *modifyPlanResponse, _ path.Path) {
+}

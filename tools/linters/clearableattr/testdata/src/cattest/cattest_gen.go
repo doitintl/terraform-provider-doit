@@ -296,5 +296,166 @@ func AcknowledgedResourceSchema(ctx context.Context) schema.Schema {
 	}
 }
 
+// Each of the following schemas has a top-level Optional+Computed "config" wrapper
+// (exempt from the container check) holding one nested Optional+Computed
+// single-nested object with Required leaf children, so only the nested container
+// itself is a classification concern. The nested object's name differs per schema
+// so the package-wide .SetNull() scan does not cross-contaminate the fixtures.
+
+// CatANullSendResourceSchema — config.forecast_settings: Category A (clearable).
+func CatANullSendResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"config": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{Required: true},
+					"forecast_settings": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id":   schema.StringAttribute{Required: true},
+							"kind": schema.StringAttribute{Required: true},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// CatAMissingNullResourceSchema — config.budget_settings: Category A but the
+// resource never sends an explicit null.
+func CatAMissingNullResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"config": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{Required: true},
+					"budget_settings": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id":   schema.StringAttribute{Required: true},
+							"kind": schema.StringAttribute{Required: true},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// CatCResourceSchema — config.count: Category C (replace-on-clear via ModifyPlan).
+func CatCResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"config": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{Required: true},
+					"count": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id":   schema.StringAttribute{Required: true},
+							"kind": schema.StringAttribute{Required: true},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// UnclassifiedResourceSchema — config.threshold: neither Category A nor C.
+func UnclassifiedResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"config": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{Required: true},
+					"threshold": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id":   schema.StringAttribute{Required: true},
+							"kind": schema.StringAttribute{Required: true},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// ListElementResourceSchema — a single-nested O+C object nested inside a list
+// element. The nested object must NOT be flagged as a container (the list is the
+// clearable unit); its O+C leaf must still be flagged.
+func ListElementResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"items": schema.ListNestedAttribute{
+				Optional: true,
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"key": schema.StringAttribute{Required: true},
+						// Nested single-nested object inside a list element — exempt.
+						"detail": schema.SingleNestedAttribute{
+							Optional: true,
+							Computed: true,
+							Attributes: map[string]schema.Attribute{
+								"required_child": schema.StringAttribute{Required: true},
+								// O+C leaf inside the list-element object — still flagged.
+								"note": schema.StringAttribute{
+									Optional: true,
+									Computed: true,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// CatBContainerResourceSchema — config.settings: a nested single-nested O+C object
+// that is silently preserved (no drift), classifiable as Category B.
+func CatBContainerResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"config": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{Required: true},
+					"settings": schema.SingleNestedAttribute{
+						Optional: true,
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"id":   schema.StringAttribute{Required: true},
+							"kind": schema.StringAttribute{Required: true},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 var _ context.Context
 var _ = booldefault.StaticBool

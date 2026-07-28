@@ -159,5 +159,27 @@ func TestSchemaParserOverrides(t *testing.T) {
 				t.Error("expected update_time to be deleted from schema")
 			}
 		})
+
+		// Category C: ModifyPlan calls requiresReplaceWhenCleared for config.count.
+		t.Run("config.count_requires_replace_on_clear", func(t *testing.T) {
+			config, ok := schema.Attrs["config"]
+			if !ok || config.NestedAttrs == nil {
+				t.Fatal("expected config with nested attributes")
+			}
+			count, ok := config.NestedAttrs["count"]
+			if !ok {
+				t.Fatal("expected config.count attribute")
+			}
+			if !count.RequiresReplaceOnClear {
+				t.Error("expected config.count.RequiresReplaceOnClear = true")
+			}
+		})
+
+		// Negative control: currency must not be marked replace-on-clear.
+		t.Run("currency_not_replace_on_clear", func(t *testing.T) {
+			if info, ok := schema.Attrs["currency"]; ok && info.RequiresReplaceOnClear {
+				t.Error("expected currency.RequiresReplaceOnClear = false")
+			}
+		})
 	}
 }

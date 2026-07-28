@@ -77,6 +77,11 @@ type AttrInfo struct {
 	// as not user-clearable via acknowledgeNotClearable(). The clearableattr
 	// linter skips these attributes.
 	NotClearable bool
+	// RequiresReplaceOnClear is true when the resource's ModifyPlan method calls
+	// requiresReplaceWhenCleared(..., <path>) for this attribute (Category C:
+	// removing it from config forces a destroy+create instead of an in-place
+	// clear). Populated by applyReplaceOnClearFacts.
+	RequiresReplaceOnClear bool
 }
 
 // SchemaInfo holds the parsed schema for a single resource or data source.
@@ -386,6 +391,12 @@ func unquote(expr ast.Expr) string {
 // which generated schema they reference, and applies runtime overrides to produce
 // the effective schema classification.
 func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
+	// receiverToSchema maps a resource receiver type name (e.g. "reportResource")
+	// to the base generated schema name its Schema() method references. This lets
+	// applyReplaceOnClearFacts associate a ModifyPlan method (same receiver) with
+	// the schema it governs.
+	receiverToSchema := make(map[string]string)
+
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
@@ -401,6 +412,11 @@ func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
 		baseSchemaName, schemaVar := findBaseSchemaCall(fn)
 		if baseSchemaName == "" || schemaVar == "" {
 			return
+		}
+
+		// Record the receiver → schema mapping for the ModifyPlan pass.
+		if recv := receiverTypeName(fn); recv != "" {
+			receiverToSchema[recv] = baseSchemaName
 		}
 
 		// Look up the base schema in the aggregated facts.
@@ -420,6 +436,123 @@ func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
 		// Store the merged schema under the same key (replaces the generated one).
 		facts.Schemas[baseSchemaName] = merged
 	})
+
+	// Apply Category C facts from ModifyPlan methods after all Schema() overrides
+	// (and the receiver→schema map) are in place.
+	applyReplaceOnClearFacts(insp, facts, receiverToSchema)
+}
+
+// receiverTypeName returns the receiver type name of a method declaration,
+// unwrapping a pointer receiver (e.g. "*reportResource" → "reportResource").
+// Returns "" if the receiver is not a simple (optionally pointer) named type.
+func receiverTypeName(fn *ast.FuncDecl) string {
+	if fn.Recv == nil || len(fn.Recv.List) == 0 {
+		return ""
+	}
+	expr := fn.Recv.List[0].Type
+	if star, ok := expr.(*ast.StarExpr); ok {
+		expr = star.X
+	}
+	if ident, ok := expr.(*ast.Ident); ok {
+		return ident.Name
+	}
+	return ""
+}
+
+// applyReplaceOnClearFacts scans ModifyPlan methods for
+// requiresReplaceWhenCleared[...](..., <path>) calls and marks the referenced
+// attribute paths as RequiresReplaceOnClear (Category C) on the schema governed
+// by the method's receiver.
+func applyReplaceOnClearFacts(insp *inspector.Inspector, facts *SchemaFacts, receiverToSchema map[string]string) {
+	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		fn := n.(*ast.FuncDecl)
+		if fn.Name == nil || fn.Body == nil || fn.Name.Name != "ModifyPlan" {
+			return
+		}
+		recv := receiverTypeName(fn)
+		if recv == "" {
+			return
+		}
+		schemaName, ok := receiverToSchema[recv]
+		if !ok {
+			return
+		}
+		schema, ok := facts.Schemas[schemaName]
+		if !ok {
+			return
+		}
+
+		ast.Inspect(fn.Body, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			if !isRequiresReplaceWhenClearedCall(call) || len(call.Args) == 0 {
+				return true
+			}
+			// The path is the last argument.
+			if p := pathExprToDotted(call.Args[len(call.Args)-1]); p != "" {
+				markRequiresReplaceOnClear(schema, p)
+			}
+			return true
+		})
+	})
+}
+
+// isRequiresReplaceWhenClearedCall reports whether a call expression targets the
+// requiresReplaceWhenCleared helper. The helper is generic, so the call's Fun is
+// an index expression (requiresReplaceWhenCleared[T] or [T1, T2]) wrapping the
+// base identifier.
+func isRequiresReplaceWhenClearedCall(call *ast.CallExpr) bool {
+	fun := call.Fun
+	switch f := fun.(type) {
+	case *ast.IndexExpr:
+		fun = f.X
+	case *ast.IndexListExpr:
+		fun = f.X
+	}
+	ident, ok := fun.(*ast.Ident)
+	return ok && ident.Name == "requiresReplaceWhenCleared"
+}
+
+// pathExprToDotted converts a terraform-plugin-framework path expression like
+// path.Root("config").AtName("count") into the dotted path "config.count" used by
+// the schema's nested AttrInfo tree. It handles the Root/AtName chain; list/map/set
+// steps (AtListIndex/AtMapKey/AtSetValue) are not expected for object clearing and
+// yield "".
+func pathExprToDotted(expr ast.Expr) string {
+	var segments []string
+	for {
+		call, ok := expr.(*ast.CallExpr)
+		if !ok {
+			return ""
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return ""
+		}
+		switch sel.Sel.Name {
+		case "Root", "AtName":
+			if len(call.Args) != 1 {
+				return ""
+			}
+			seg := unquote(call.Args[0])
+			if seg == "" {
+				return ""
+			}
+			segments = append([]string{seg}, segments...)
+			if sel.Sel.Name == "Root" {
+				// path.Root is the chain's origin; its receiver is the "path"
+				// package identifier, so we're done.
+				return strings.Join(segments, ".")
+			}
+			expr = sel.X
+		default:
+			// Unsupported step (e.g. AtListIndex) — bail out.
+			return ""
+		}
+	}
 }
 
 // findBaseSchemaCall finds the call to the generated schema function in a Schema()
@@ -758,6 +891,35 @@ func markNotClearable(schema *SchemaInfo, path string) {
 	}
 }
 
+// markRequiresReplaceOnClear walks a dotted attribute path (e.g., "config.count")
+// into the schema's nested AttrInfo tree and sets RequiresReplaceOnClear = true on
+// the leaf attribute. It mirrors markNotClearable: "[*]" suffixes are stripped and
+// missing attributes get a stub so downstream linters can still see the fact.
+func markRequiresReplaceOnClear(schema *SchemaInfo, path string) {
+	segments := strings.Split(path, ".")
+	attrs := schema.Attrs
+
+	for i, seg := range segments {
+		seg = strings.TrimSuffix(seg, "[*]")
+
+		info, ok := attrs[seg]
+		if !ok {
+			info = &AttrInfo{}
+			attrs[seg] = info
+		}
+
+		if i == len(segments)-1 {
+			info.RequiresReplaceOnClear = true
+			return
+		}
+
+		if info.NestedAttrs == nil {
+			info.NestedAttrs = make(map[string]*AttrInfo)
+		}
+		attrs = info.NestedAttrs
+	}
+}
+
 // isSchemaAttributes checks if an expression is schemaVar.Attributes
 // (e.g., s.Attributes).
 func isSchemaAttributes(expr ast.Expr, schemaVar string) bool {
@@ -825,11 +987,12 @@ func cloneSchemaInfo(src *SchemaInfo) *SchemaInfo {
 // cloneAttrInfo creates a deep copy of an AttrInfo.
 func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 	dst := &AttrInfo{
-		Class:        src.Class,
-		IsList:       src.IsList,
-		HasDefault:   src.HasDefault,
-		DefaultValue: src.DefaultValue,
-		NotClearable: src.NotClearable,
+		Class:                  src.Class,
+		IsList:                 src.IsList,
+		HasDefault:             src.HasDefault,
+		DefaultValue:           src.DefaultValue,
+		NotClearable:           src.NotClearable,
+		RequiresReplaceOnClear: src.RequiresReplaceOnClear,
 	}
 	if len(src.PlanModifiers) > 0 {
 		dst.PlanModifiers = make([]string, len(src.PlanModifiers))

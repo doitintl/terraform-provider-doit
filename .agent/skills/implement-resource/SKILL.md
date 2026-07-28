@@ -357,6 +357,8 @@ acknowledgeNotClearable(s,
 
 **Placement:** `acknowledgeNotClearable` must be a **top-level statement** in Schema() — not inside an `if` block. The schemaparser only detects calls at function scope. If you also need an if-block for the same attribute container (e.g., to add Cat A modifiers), place the `acknowledgeNotClearable` call before or after the if-block.
 
+**Nested objects:** Category B applies to leaves **and** to a nested single-nested **object** that is silently preserved without drift — acknowledge the object's own path (e.g. `"config.settings"`). Only some nested objects drift; verify empirically. The ones that don't need Cat A (null-send) or Cat C (replace-on-clear) — a plain `acknowledgeNotClearable` entry satisfies the `clearableattr` linter. See [Category C](#category-c-replace-on-clear-cannot-be-cleared-in-place) for the full nested-object decision.
+
 **When to use `//nolint:clearableattr` instead:** Use the inline nolint comment only when an attribute's if-block already adds a plan modifier (Cat A + needs nolint for a separate reason, e.g., `organization_id` has `RequiresReplace` + `UseStateForUnknown`).
 
 - Fields where the API assigns a meaningful default: `currency`, `time_interval`
@@ -372,10 +374,12 @@ Some Optional+Computed attributes **cannot be cleared by an update at all**: the
 update is a PATCH that merges config and the field has no null representation (a nil
 pointer just omits it), so the stored value always survives. Leaving such an attribute
 as Category B (prior state sticks) is wrong when removal must actually take effect, or
-when prior-state does **not** stick cleanly — e.g. a **nested** Optional+Computed
-object, which the framework re-marks "known after apply" whenever it is absent from
-config, causing perpetual drift. (A nested `objectplanmodifier` cannot fix this: object
-plan modifiers on custom-typed parents like `config.*` do not fire.)
+when prior-state does **not** stick cleanly — **some** (not all) **nested**
+Optional+Computed objects are re-marked "known after apply" whenever they are absent
+from config, causing perpetual drift. (A nested `objectplanmodifier` cannot fix this:
+object plan modifiers on custom-typed parents like `config.*` do not fire.) Whether a
+given nested object actually drifts must be **verified empirically** — many are silently
+preserved and are correctly handled as Category B (see below).
 
 For these, force replacement when the attribute is removed from config, via
 `ResourceWithModifyPlan` + the `requiresReplaceWhenCleared` helper
@@ -397,9 +401,28 @@ func (r *xResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReque
 
 `config.count` on `doit_report` is the current example. This is a stopgap until the
 API/schema gains a null/clear representation for the field (then it becomes Category A,
-like `forecast_settings`). The `clearableattr` linter skips container attributes, so a
+like `forecast_settings`).
+
+The `clearableattr` linter enforces this classification for **nested single-nested
+object** attributes (an Optional+Computed object nested inside another object, such as
+`config.count` / `config.forecast_settings`): each must be one of
+
+- **Category A** — an object plan modifier plus an explicit `.SetNull()` in the request
+  builder (for objects the API can clear in place);
+- **Category C** — `requiresReplaceWhenCleared(...)` for its path in `ModifyPlan` (for
+  objects that drift or hit an API error on removal and can't be cleared in place);
+- **Category B** — `acknowledgeNotClearable("config.<obj>")`, for a nested object you
+  have **verified is silently preserved without drift** (behaves like a Cat B leaf).
+
+The linter reads the `requiresReplaceWhenCleared` path from `ModifyPlan`, so a
 Category-C **object** needs no `acknowledgeNotClearable` entry; a Category-C **scalar**
-still does (it is not user-clearable in place).
+still does (it is not user-clearable in place). The container check is skipped (only
+leaves are checked) for
+top-level single-nested wrappers (e.g. `config` itself, effectively always present),
+list containers, and any object nested inside a **list element** (e.g.
+`config.group[*].limit`) — a list clears as a whole via `[]` and Category C cannot
+target an individual element, so the list, not its element sub-objects, is the
+clearable unit.
 
 #### Classification rules
 
@@ -409,6 +432,7 @@ still does (it is not user-clearable in place).
 | Is the field purely user-authored content with no server-side semantics?                             | **Category A** — clearable     |
 | Does the API assign a non-null default when the field is omitted from the request?                   | **Category B** — not clearable |
 | Does the API always return a value regardless of what was sent?                                      | **Category B** — not clearable |
+| Is it a nested object that is silently preserved on removal (verified: no permadiff)?                 | **Category B** — acknowledge the object path |
 | Can the API not clear it at all (PATCH merge, no null repr) AND removal must take effect / it drifts if left? | **Category C** — replace-on-clear |
 
 #### Testing requirements
