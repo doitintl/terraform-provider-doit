@@ -183,6 +183,20 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	if config.Aggregation != nil {
 		configMap["aggregation"] = types.StringValue(string(*config.Aggregation))
 	}
+
+	// Nested Object: Count (id + type). Default null; populate when present.
+	configMap["count"] = datasource_report.NewCountValueNull()
+	if config.Count != nil {
+		countVal, countDiags := datasource_report.NewCountValue(
+			datasource_report.CountValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"id":   types.StringValue(config.Count.Id),
+				"type": types.StringValue(string(config.Count.Type)),
+			})
+		diags.Append(countDiags...)
+		configMap["count"] = countVal
+	}
+
 	if config.Currency != nil {
 		configMap["currency"] = types.StringValue(string(*config.Currency))
 	}

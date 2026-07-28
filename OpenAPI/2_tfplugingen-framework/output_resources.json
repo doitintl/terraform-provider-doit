@@ -2502,6 +2502,41 @@
 									}
 								},
 								{
+									"name": "count",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "id",
+												"string": {
+													"computed_optional_required": "required",
+													"description": "The field identifier to count distinct values of."
+												}
+											},
+											{
+												"name": "type",
+												"string": {
+													"computed_optional_required": "required",
+													"description": "The metadata field type.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"fixed\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "The field to count distinct values of. Only applicable when aggregation is set to \"count\"."
+									}
+								},
+								{
 									"name": "currency",
 									"string": {
 										"computed_optional_required": "computed_optional",

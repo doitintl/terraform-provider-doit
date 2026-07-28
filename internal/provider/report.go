@@ -89,6 +89,11 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 	if plan.Aggregation.IsUnknown() {
 		plan.Aggregation = resolved.Aggregation
 	}
+	// count: nested object whose children are Required (never Unknown), so a
+	// whole-object resolve is sufficient when the user omitted it.
+	if plan.Count.IsUnknown() {
+		plan.Count = resolved.Count
+	}
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
 	}
@@ -709,6 +714,30 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	if !config.Aggregation.IsNull() && !config.Aggregation.IsUnknown() {
 		externalConfig.Aggregation = new(models.ExternalConfigAggregation(config.Aggregation.ValueString()))
 	}
+	// count is a nested object (id + type); only applicable when aggregation is
+	// "count". Children are Required, so no per-field unknown guards are needed once
+	// the object itself is known.
+	//
+	// NOTE: count cannot be cleared in place. The report update is a PATCH that
+	// MERGES config, and count is *ExternalConfigCount (omitempty) with no null
+	// representation — a nil pointer omits the field entirely (we never send an
+	// explicit null), so the server's stored copy survives the merge. Removing the
+	// count block from config is therefore handled by RequiresReplace (see
+	// reportResource.ModifyPlan / requiresReplaceWhenCleared): the resource is
+	// recreated, which honors the removal via destroy+create instead of drifting
+	// (nested O+C count is otherwise re-marked "known after apply" every plan) or
+	// failing at the API (400 when aggregation also changes away from "count").
+	// Making count clearable in place would require the upstream schema to mark it
+	// nullable (generating nullable.Nullable so we can send an explicit null, like
+	// forecast_settings). reportCountAggregationValidator separately catches the
+	// in-config misconfiguration (count set with a non-"count"/omitted aggregation)
+	// at plan time.
+	if !config.Count.IsNull() && !config.Count.IsUnknown() {
+		externalConfig.Count = &models.ExternalConfigCount{
+			Id:   config.Count.Id.ValueString(),
+			Type: models.ExternalConfigCountType(config.Count.CountType.ValueString()),
+		}
+	}
 	if !config.Currency.IsNull() && !config.Currency.IsUnknown() {
 		externalConfig.Currency = new(models.Currency(config.Currency.ValueString()))
 	}
@@ -1164,6 +1193,20 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	if config.Aggregation != nil {
 		configMap["aggregation"] = types.StringValue(string(*config.Aggregation))
 	}
+
+	// Nested Object: Count (id + type). Default null; populate when present.
+	configMap["count"] = resource_report.NewCountValueNull()
+	if config.Count != nil {
+		countVal, countDiags := resource_report.NewCountValue(
+			resource_report.CountValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"id":   types.StringValue(config.Count.Id),
+				"type": types.StringValue(string(config.Count.Type)),
+			})
+		diags.Append(countDiags...)
+		configMap["count"] = countVal
+	}
+
 	if config.Currency != nil {
 		configMap["currency"] = types.StringValue(string(*config.Currency))
 	}

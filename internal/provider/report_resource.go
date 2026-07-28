@@ -19,6 +19,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*reportResource)(nil)
 	_ resource.ResourceWithImportState      = (*reportResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*reportResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*reportResource)(nil)
 )
 
 // NewReportResource creates a new report resource instance.
@@ -225,9 +226,26 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportTimestampValidator{},
 		// Every configured metric object must set both type and value (API requires them).
 		reportMetricFieldsValidator{},
+		// count is only valid when aggregation is "count".
+		reportCountAggregationValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
 	}
+}
+
+// ModifyPlan forces replacement for Optional+Computed attributes that the API
+// cannot clear in place when they are removed from config. config.count is the
+// current case: the report update is a PATCH that merges config and count has no
+// null representation, so removing it would otherwise perpetually drift (or, if
+// aggregation also changes away from "count", fail at the API). Replacing the
+// resource honors the removal via destroy+create instead.
+func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Skip on create (no prior state) and destroy (no plan).
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	requiresReplaceWhenCleared[resource_report.CountValue](ctx, req, resp, path.Root("config").AtName("count"))
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -507,3 +507,68 @@ data "doit_report" "test" {
 }
 `, name)
 }
+
+// TestAccReportDataSource_Count verifies the singular report data source reads
+// back the config.count nested object created by the resource.
+func TestAccReportDataSource_Count(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-report-ds-count")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportDataSourceCountConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("id"),
+						knownvalue.StringExact("service_description")),
+					statecheck.ExpectKnownValue(
+						"data.doit_report.test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("type"),
+						knownvalue.StringExact("fixed")),
+				},
+			},
+			// Drift verification.
+			{
+				Config: testAccReportDataSourceCountConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDataSourceCountConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = %q
+    description = "test report with count for data source"
+    config = {
+        metric = {
+          type  = "basic"
+          value = "cost"
+        }
+        aggregation    = "count"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        count = {
+            id   = "service_description"
+            type = "fixed"
+        }
+    }
+}
+
+data "doit_report" "test" {
+    id = doit_report.test.id
+}
+`, name)
+}

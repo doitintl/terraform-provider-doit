@@ -472,3 +472,207 @@ data "doit_report_query" "test" {
 }
 `
 }
+
+// TestAccReportQueryDataSource_Count verifies an ad-hoc count-aggregation query
+// with a count field executes and returns results.
+func TestAccReportQueryDataSource_Count(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceCountConfig(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+// TestAccReportQueryDataSource_CountInvalidAggregation verifies the shared
+// count/aggregation validator also fires for the query data source.
+func TestAccReportQueryDataSource_CountInvalidAggregation(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceCountInvalidConfig(),
+				ExpectError: regexp.MustCompile(`Invalid Count Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceCountConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "count"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        dimensions = [
+          {
+            id   = "year"
+            type = "datetime"
+          },
+          {
+            id   = "month"
+            type = "datetime"
+          }
+        ]
+        count = {
+            id   = "service_description"
+            type = "fixed"
+        }
+    }
+}
+`
+}
+
+func testAccReportQueryDataSourceCountInvalidConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        count = {
+            id   = "service_description"
+            type = "fixed"
+        }
+    }
+}
+`
+}
+
+// TestAccReportQueryDataSource_CountNoAggregation verifies the shared
+// count/aggregation validator rejects count with an omitted aggregation for the
+// query data source too (aggregation does not default to "count").
+func TestAccReportQueryDataSource_CountNoAggregation(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceCountNoAggregationConfig(),
+				ExpectError: regexp.MustCompile(`Invalid Count Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceCountNoAggregationConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        count = {
+            id   = "service_description"
+            type = "fixed"
+        }
+    }
+}
+`
+}
+
+// TestAccReportQueryDataSource_CountRequiredWhenAggregationCount verifies the
+// shared validator also rejects aggregation = "count" without a count block for
+// the query data source.
+func TestAccReportQueryDataSource_CountRequiredWhenAggregationCount(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceCountAggNoBlockConfig(),
+				ExpectError: regexp.MustCompile(`Missing Count Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceCountAggNoBlockConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "count"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+    }
+}
+`
+}

@@ -41,3 +41,6 @@ website/vendor
 .direnv/
 .envrc.local
 custom-gcl
+
+# Compiled provider binary (build artifact)
+/terraform-provider-doit

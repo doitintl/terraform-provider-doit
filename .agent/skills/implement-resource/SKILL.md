@@ -19,6 +19,12 @@ make generate
 
 This generates the schema and model types in `internal/provider/resource_<name>/`.
 
+> **After regenerating**, any new attribute on a nested object makes the generated
+> `NewXxxValue` / `NewConfigValue` constructors require an entry for it. Update every
+> call site — **including internal test helpers** (`*_internal_test.go`) — or they
+> fail with "a missing attribute value was detected" under `make test`. See the
+> [testing](../testing/SKILL.md#unit-tests-run-these-too--ci-does) skill.
+
 ## Step 3: Scaffold the Resource
 
 **Always use the scaffold command** — do NOT write the file from scratch:
@@ -360,6 +366,41 @@ acknowledgeNotClearable(s,
 
 > **Note:** `UseStateForUnknown()` is for **Computed-only** stable fields (`id`, `create_time`), not for Optional+Computed. It is a no-op on Optional+Computed because Terraform Core copies prior state before the modifier runs, so the value is never Unknown.
 
+#### Category C: Replace-on-clear (cannot be cleared in place)
+
+Some Optional+Computed attributes **cannot be cleared by an update at all**: the API
+update is a PATCH that merges config and the field has no null representation (a nil
+pointer just omits it), so the stored value always survives. Leaving such an attribute
+as Category B (prior state sticks) is wrong when removal must actually take effect, or
+when prior-state does **not** stick cleanly — e.g. a **nested** Optional+Computed
+object, which the framework re-marks "known after apply" whenever it is absent from
+config, causing perpetual drift. (A nested `objectplanmodifier` cannot fix this: object
+plan modifiers on custom-typed parents like `config.*` do not fire.)
+
+For these, force replacement when the attribute is removed from config, via
+`ResourceWithModifyPlan` + the `requiresReplaceWhenCleared` helper
+(`requires_replace_when_cleared.go`). Removing the block then destroys+recreates the
+resource instead of drifting or hitting an API error:
+
+```go
+var _ resource.ResourceWithModifyPlan = (*xResource)(nil)
+
+func (r *xResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+    if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+        return // create or destroy — nothing to compare
+    }
+    // T is the attribute's generated custom value type (typed read is required —
+    // reading a custom-typed nested attr into types.Object crashes).
+    requiresReplaceWhenCleared[resource_report.CountValue](ctx, req, resp, path.Root("config").AtName("count"))
+}
+```
+
+`config.count` on `doit_report` is the current example. This is a stopgap until the
+API/schema gains a null/clear representation for the field (then it becomes Category A,
+like `forecast_settings`). The `clearableattr` linter skips container attributes, so a
+Category-C **object** needs no `acknowledgeNotClearable` entry; a Category-C **scalar**
+still does (it is not user-clearable in place).
+
 #### Classification rules
 
 | Question                                                                                             | If yes →                       |
@@ -368,6 +409,7 @@ acknowledgeNotClearable(s,
 | Is the field purely user-authored content with no server-side semantics?                             | **Category A** — clearable     |
 | Does the API assign a non-null default when the field is omitted from the request?                   | **Category B** — not clearable |
 | Does the API always return a value regardless of what was sent?                                      | **Category B** — not clearable |
+| Can the API not clear it at all (PATCH merge, no null repr) AND removal must take effect / it drifts if left? | **Category C** — replace-on-clear |
 
 #### Testing requirements
 
@@ -378,6 +420,15 @@ Every clearable attribute (Category A) must have a clearing lifecycle test:
 // Step 2: Drift check (ExpectEmptyPlan)
 // Step 3: Clear attribute (omit from config) → ExpectResourceAction(..., ResourceActionUpdate)
 // Step 4: Drift check (ExpectEmptyPlan) → confirms cleared value is stable
+```
+
+Every Category C (replace-on-clear) attribute must have a removal test:
+
+```go
+// Step 1: Create with attribute SET
+// Step 2: Remove it from config → ExpectResourceAction(..., ResourceActionDestroyBeforeCreate)
+//         + assert the recreated resource no longer has the value (knownvalue.Null())
+// Step 3: Drift check (ExpectEmptyPlan)
 ```
 
 For omitted clearable lists, verify the state is an empty list (not null):
