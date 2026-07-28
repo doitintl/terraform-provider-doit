@@ -718,25 +718,20 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	// "count". Children are Required, so no per-field unknown guards are needed once
 	// the object itself is known.
 	//
-	// NOTE: count cannot be cleared once set. The report update is a PATCH that
+	// NOTE: count cannot be cleared in place. The report update is a PATCH that
 	// MERGES config, and count is *ExternalConfigCount (omitempty) with no null
 	// representation — a nil pointer omits the field entirely (we never send an
 	// explicit null), so the server's stored copy survives the merge. Removing the
-	// count block from config manifests in one of two ways, neither of which clears
-	// it:
-	//   - keeping aggregation = "count": count is a nested Optional+Computed object,
-	//     which the framework marks "known after apply" whenever it is absent from
-	//     config (it does not copy the prior nested value the way it does for
-	//     top-level O+C scalars), so every plan proposes an update — perpetual drift.
-	//     A nested objectplanmodifier (UseStateForUnknown / a clearing modifier) does
-	//     NOT fire on config.* here, so it cannot override this.
-	//   - switching aggregation away from "count": the API rejects the merged config
-	//     (400 "count field is only valid when aggregation is 'count'").
-	// Once set, the count block must stay in config. Making count clearable would
-	// require the upstream schema to mark it nullable (generating nullable.Nullable
-	// so we can send an explicit null, like forecast_settings).
-	// reportCountAggregationValidator catches the in-config misconfiguration (count
-	// set with a non-"count"/omitted aggregation) at plan time.
+	// count block from config is therefore handled by RequiresReplace (see
+	// reportResource.ModifyPlan / requiresReplaceWhenCleared): the resource is
+	// recreated, which honors the removal via destroy+create instead of drifting
+	// (nested O+C count is otherwise re-marked "known after apply" every plan) or
+	// failing at the API (400 when aggregation also changes away from "count").
+	// Making count clearable in place would require the upstream schema to mark it
+	// nullable (generating nullable.Nullable so we can send an explicit null, like
+	// forecast_settings). reportCountAggregationValidator separately catches the
+	// in-config misconfiguration (count set with a non-"count"/omitted aggregation)
+	// at plan time.
 	if !config.Count.IsNull() && !config.Count.IsUnknown() {
 		externalConfig.Count = &models.ExternalConfigCount{
 			Id:   config.Count.Id.ValueString(),

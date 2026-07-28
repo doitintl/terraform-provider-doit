@@ -4880,3 +4880,51 @@ resource "doit_report" "count_noagg" {
 }
 `, i)
 }
+
+// TestAccReport_Count_RemovalForcesReplace verifies that removing count from config
+// forces a destroy+create (RequiresReplace), rather than perpetual drift or an API
+// error. count cannot be cleared in place (PATCH merge + no null representation), so
+// ModifyPlan surfaces its removal as a replacement.
+func TestAccReport_Count_RemovalForcesReplace(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Create with count (aggregation = "count").
+			{
+				Config: testAccReportCount(n, "service_description", "fixed"),
+			},
+			// Remove count and switch aggregation to "total": expect a replacement,
+			// and the recreated report has no count.
+			{
+				Config: testAccReportCountOmitted(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.count_test",
+							plancheck.ResourceActionDestroyBeforeCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count"),
+						knownvalue.Null()),
+				},
+			},
+			// Drift check after replacement.
+			{
+				Config: testAccReportCountOmitted(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
