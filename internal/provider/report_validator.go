@@ -441,10 +441,14 @@ func validateReportMetricFieldsConfig(ctx context.Context, config tfsdk.Config, 
 	}
 }
 
-// reportCountAggregationValidator rejects configurations where config.count is
-// set but config.aggregation is not "count". The count object selects the field
-// whose distinct values are counted and is only meaningful for count aggregation;
-// the API ignores or rejects it otherwise, causing confusion or drift.
+// reportCountAggregationValidator enforces the two-way coupling between
+// config.count and config.aggregation:
+//   - count is only valid when aggregation is "count" (the count object selects
+//     the field whose distinct values are counted; it is meaningless otherwise); and
+//   - aggregation = "count" REQUIRES a count block (the API has no default counted
+//     field).
+//
+// The API rejects either mismatch with a 400, so surface both at plan time.
 //
 // This is a ConfigValidator because attribute-level validators do not fire on
 // attributes inside SingleNestedAttribute with CustomType.
@@ -453,11 +457,11 @@ type reportCountAggregationValidator struct{}
 var _ resource.ConfigValidator = reportCountAggregationValidator{}
 
 func (v reportCountAggregationValidator) Description(_ context.Context) string {
-	return "Validates that count is only set when aggregation is \"count\""
+	return "Validates that count is set if and only if aggregation is \"count\""
 }
 
 func (v reportCountAggregationValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that `count` is only set when `aggregation` is `\"count\"`"
+	return "Validates that `count` is set if and only if `aggregation` is `\"count\"`"
 }
 
 func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -466,27 +470,35 @@ func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, r
 
 // validateReportCountAggregation is the shared body used by both the report
 // resource and the report_query data source, which build the same ExternalConfig
-// from an identical schema. It errors when count is configured without an explicit
-// aggregation of "count". The API rejects count in any other case — including an
-// omitted aggregation, which does NOT default to "count" (verified: it returns
-// 400 "count field is only valid when aggregation is 'count'"). Only an unknown
-// aggregation is deferred, since it may still resolve to "count" after apply.
+// from an identical schema. It enforces the count/aggregation coupling in both
+// directions (the API rejects either mismatch with a 400; verified: an omitted
+// aggregation does NOT default to "count"). Unknown values (e.g. cross-resource
+// references) are deferred, since they may resolve to a valid combination.
 func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
 	var count resource_report.CountValue
 	d := config.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
 	diags.Append(d...)
-	if d.HasError() || count.IsNull() || count.IsUnknown() {
+	if d.HasError() {
 		return
 	}
 
 	var aggregation types.String
 	d = config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
 	diags.Append(d...)
-	if d.HasError() || aggregation.IsUnknown() {
-		return // defer: may resolve to "count" after apply
+	if d.HasError() {
+		return
 	}
 
-	if aggregation.IsNull() || aggregation.ValueString() != "count" {
+	// Defer while either value is unknown — it may resolve to a valid combination.
+	if count.IsUnknown() || aggregation.IsUnknown() {
+		return
+	}
+
+	aggIsCount := !aggregation.IsNull() && aggregation.ValueString() == "count"
+
+	switch {
+	case !count.IsNull() && !aggIsCount:
+		// count set but aggregation is not "count".
 		detail := "`count` is only applicable when `aggregation = \"count\"`. " +
 			"Either set aggregation = \"count\" or remove the count block."
 		if !aggregation.IsNull() {
@@ -497,6 +509,14 @@ func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, di
 			path.Root("config").AtName("count"),
 			"Invalid Count Configuration",
 			detail,
+		)
+	case count.IsNull() && aggIsCount:
+		// aggregation "count" requires a count block.
+		diags.AddAttributeError(
+			path.Root("config").AtName("count"),
+			"Missing Count Configuration",
+			"`aggregation = \"count\"` requires a `count` block specifying the field to count "+
+				"(e.g. count = { id = \"service_description\", type = \"fixed\" }).",
 		)
 	}
 }

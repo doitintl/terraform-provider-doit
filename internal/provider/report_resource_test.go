@@ -4928,3 +4928,42 @@ func TestAccReport_Count_RemovalForcesReplace(t *testing.T) {
 		},
 	})
 }
+
+// TestAccReport_Count_RequiredWhenAggregationCount verifies that aggregation =
+// "count" without a count block is rejected at plan time (the API has no default
+// counted field and returns a 400 otherwise).
+func TestAccReport_Count_RequiredWhenAggregationCount(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportCountAggNoBlock(n),
+				ExpectError: regexp.MustCompile(`Missing Count Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCountAggNoBlock(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "count_aggnoblock" {
+    name = "test-count-aggnoblock-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "count"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}

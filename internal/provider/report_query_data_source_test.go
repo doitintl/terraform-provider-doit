@@ -632,3 +632,47 @@ data "doit_report_query" "test" {
 }
 `
 }
+
+// TestAccReportQueryDataSource_CountRequiredWhenAggregationCount verifies the
+// shared validator also rejects aggregation = "count" without a count block for
+// the query data source.
+func TestAccReportQueryDataSource_CountRequiredWhenAggregationCount(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceCountAggNoBlockConfig(),
+				ExpectError: regexp.MustCompile(`Missing Count Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceCountAggNoBlockConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "count"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+    }
+}
+`
+}
