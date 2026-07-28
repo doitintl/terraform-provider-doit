@@ -444,6 +444,7 @@ func buildReportConfigWithForecastSettings(ctx context.Context, t *testing.T, fu
 		"group":                       types.ListNull(resource_report.GroupValue{}.Type(ctx)),
 		"metrics":                     types.ListNull(resource_report.MetricsValue{}.Type(ctx)),
 		"splits":                      types.ListNull(resource_report.SplitsValue{}.Type(ctx)),
+		"count":                       resource_report.NewCountValueNull(),
 	}
 	configVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
 	if diags.HasError() {
@@ -630,6 +631,7 @@ func buildForecastConfigValue(ctx context.Context, t *testing.T, forecast *bool)
 		"group":                       types.ListNull(resource_report.GroupValue{}.Type(ctx)),
 		"metrics":                     types.ListNull(resource_report.MetricsValue{}.Type(ctx)),
 		"splits":                      types.ListNull(resource_report.SplitsValue{}.Type(ctx)),
+		"count":                       resource_report.NewCountValueNull(),
 	}
 	configVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
 	if diags.HasError() {

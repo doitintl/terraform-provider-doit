@@ -4720,35 +4720,6 @@ func TestAccReport_Count_Lifecycle(t *testing.T) {
 	})
 }
 
-// TestAccReport_Count_AggregationTransitionUnsupported documents an API
-// limitation: the report update is a PATCH that merges config, and count has no
-// null representation (*ExternalConfigCount + omitempty), so a stored count cannot
-// be cleared. Switching aggregation away from "count" once count is set is rejected
-// by the API. This test locks in that behavior; if the API gains count-clearing
-// support, this test will start failing and should be converted into a passing
-// transition lifecycle.
-func TestAccReport_Count_AggregationTransitionUnsupported(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Create with count.
-			{
-				Config: testAccReportCount(n, "service_description", "fixed"),
-			},
-			// Attempt to switch aggregation to "total" and drop count — the API
-			// retains the merged count and rejects it.
-			{
-				Config:      testAccReportCountOmitted(n),
-				ExpectError: regexp.MustCompile(`count field is only valid`),
-			},
-		},
-	})
-}
-
 // TestAccReport_Count_Omitted verifies that omitting count (non-count aggregation)
 // leaves config.count null and produces no drift.
 func TestAccReport_Count_Omitted(t *testing.T) {
@@ -4853,6 +4824,49 @@ resource "doit_report" "count_invalid" {
             value = "cost"
         }
         aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        count = {
+            id   = "service_description"
+            type = "fixed"
+        }
+    }
+}
+`, i)
+}
+
+// TestAccReport_Count_NoAggregation verifies that count with an omitted aggregation
+// is rejected at plan time. The API does not default aggregation to "count" when
+// omitted (verified: it returns 400 "count field is only valid when aggregation is
+// 'count'"), so the validator must catch this before apply.
+func TestAccReport_Count_NoAggregation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportCountNoAggregation(n),
+				ExpectError: regexp.MustCompile(`Invalid Count Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCountNoAggregation(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "count_noagg" {
+    name = "test-count-noagg-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
         time_interval  = "month"
         data_source    = "billing"
         display_values = "actuals_only"

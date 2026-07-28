@@ -718,12 +718,17 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	// "count". Children are Required, so no per-field unknown guards are needed once
 	// the object itself is known.
 	//
-	// NOTE: the report update is a PATCH that merges config, and count is
-	// *ExternalConfigCount (omitempty) with no null representation, so a stored count
-	// cannot be cleared once set. Switching aggregation away from "count" is therefore
-	// not supported (the API returns 400 "count field is only valid when aggregation
-	// is 'count'"). The reportCountAggregationValidator blocks the misconfiguration at
-	// plan time for the cases it can detect.
+	// NOTE: the report update is a PATCH that MERGES config, and count is
+	// *ExternalConfigCount (omitempty) with no null representation — a nil pointer
+	// omits the field entirely (we never send an explicit null). So once a count is
+	// stored, omitting it on update leaves the server's copy in place; it cannot be
+	// cleared. Switching aggregation away from "count" while a count is stored is
+	// therefore rejected by the API (400 "count field is only valid when aggregation
+	// is 'count'"), because the merged config still carries the old count. Making
+	// count clearable would require the upstream schema to mark it nullable (so it
+	// generates as nullable.Nullable and can send an explicit null, like
+	// forecast_settings). reportCountAggregationValidator catches the in-config
+	// misconfiguration (count set with a non-"count"/omitted aggregation) at plan time.
 	if !config.Count.IsNull() && !config.Count.IsUnknown() {
 		externalConfig.Count = &models.ExternalConfigCount{
 			Id:   config.Count.Id.ValueString(),

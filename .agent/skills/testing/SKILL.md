@@ -47,6 +47,43 @@ See `.envrc.example` for the full list. Key variables:
 
 ---
 
+## Unit Tests (run these too — CI does)
+
+`make testacc-run TEST=...` only runs the acceptance tests you name; the `-run`
+filter **skips the package's unit tests** (`*_internal_test.go` and other
+non-`TestAcc` tests). CI runs the full unit suite (`make test`, no `TF_ACC`), so a
+green acceptance run is not enough. **Before pushing, run the unit suite:**
+
+```bash
+make test          # full unit suite (no TF_ACC), same as CI
+```
+
+Targeted unit tests (which need no API env) may use `go test` directly — the
+"use Makefile targets" rule exists for acceptance tests that load `.envrc.local`:
+
+```bash
+go test ./internal/provider/ -run 'TestReportTimestampValidator|TestToExternalConfig'
+```
+
+### Gotcha: adding a field to a generated nested object breaks `NewXxxValue` callers
+
+When you add an attribute to a generated nested object (e.g. a new field under
+`config`) and run `make generate`, the generated `NewXxxValue` / `NewConfigValue`
+constructors start **requiring an entry for the new attribute** — they return a
+`"a missing attribute value was detected"` diagnostic otherwise. Every hand-written
+call site must add the new key, including **internal test helpers** that build these
+values (e.g. `report_validator_internal_test.go`'s `buildConfigWithForecastSettings`
+/ `buildForecastConfigValue`). These only fail under `make test`, not under a
+filtered acceptance run — which is exactly why the unit suite must be run.
+
+After `make generate`, grep for every constructor call and add the new key:
+
+```bash
+grep -rn "NewConfigValue(" internal/provider/   # update each (incl. *_test.go)
+```
+
+---
+
 ## Drift Verification
 
 All acceptance tests for resources should verify that re-applying the same configuration produces no changes:

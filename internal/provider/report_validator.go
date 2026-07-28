@@ -466,9 +466,11 @@ func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, r
 
 // validateReportCountAggregation is the shared body used by both the report
 // resource and the report_query data source, which build the same ExternalConfig
-// from an identical schema. It errors when count is configured alongside an
-// aggregation other than "count". Null/unknown aggregation is deferred to the API
-// (conservative, matching the other report validators).
+// from an identical schema. It errors when count is configured without an explicit
+// aggregation of "count". The API rejects count in any other case — including an
+// omitted aggregation, which does NOT default to "count" (verified: it returns
+// 400 "count field is only valid when aggregation is 'count'"). Only an unknown
+// aggregation is deferred, since it may still resolve to "count" after apply.
 func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
 	var count resource_report.CountValue
 	d := config.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
@@ -480,16 +482,21 @@ func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, di
 	var aggregation types.String
 	d = config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
 	diags.Append(d...)
-	if d.HasError() || aggregation.IsNull() || aggregation.IsUnknown() {
-		return
+	if d.HasError() || aggregation.IsUnknown() {
+		return // defer: may resolve to "count" after apply
 	}
 
-	if aggregation.ValueString() != "count" {
+	if aggregation.IsNull() || aggregation.ValueString() != "count" {
+		detail := "`count` is only applicable when `aggregation = \"count\"`. " +
+			"Either set aggregation = \"count\" or remove the count block."
+		if !aggregation.IsNull() {
+			detail = fmt.Sprintf("`count` is only applicable when `aggregation = \"count\"`, but aggregation is %q. "+
+				"Either set aggregation = \"count\" or remove the count block.", aggregation.ValueString())
+		}
 		diags.AddAttributeError(
 			path.Root("config").AtName("count"),
 			"Invalid Count Configuration",
-			fmt.Sprintf("`count` is only applicable when `aggregation = \"count\"`, but aggregation is %q. "+
-				"Either set aggregation = \"count\" or remove the count block.", aggregation.ValueString()),
+			detail,
 		)
 	}
 }

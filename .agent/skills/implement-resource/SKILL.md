@@ -19,6 +19,12 @@ make generate
 
 This generates the schema and model types in `internal/provider/resource_<name>/`.
 
+> **After regenerating**, any new attribute on a nested object makes the generated
+> `NewXxxValue` / `NewConfigValue` constructors require an entry for it. Update every
+> call site — **including internal test helpers** (`*_internal_test.go`) — or they
+> fail with "a missing attribute value was detected" under `make test`. See the
+> [testing](../testing/SKILL.md#unit-tests-run-these-too--ci-does) skill.
+
 ## Step 3: Scaffold the Resource
 
 **Always use the scaffold command** — do NOT write the file from scratch:
