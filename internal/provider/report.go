@@ -718,17 +718,25 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	// "count". Children are Required, so no per-field unknown guards are needed once
 	// the object itself is known.
 	//
-	// NOTE: the report update is a PATCH that MERGES config, and count is
-	// *ExternalConfigCount (omitempty) with no null representation — a nil pointer
-	// omits the field entirely (we never send an explicit null). So once a count is
-	// stored, omitting it on update leaves the server's copy in place; it cannot be
-	// cleared. Switching aggregation away from "count" while a count is stored is
-	// therefore rejected by the API (400 "count field is only valid when aggregation
-	// is 'count'"), because the merged config still carries the old count. Making
-	// count clearable would require the upstream schema to mark it nullable (so it
-	// generates as nullable.Nullable and can send an explicit null, like
-	// forecast_settings). reportCountAggregationValidator catches the in-config
-	// misconfiguration (count set with a non-"count"/omitted aggregation) at plan time.
+	// NOTE: count cannot be cleared once set. The report update is a PATCH that
+	// MERGES config, and count is *ExternalConfigCount (omitempty) with no null
+	// representation — a nil pointer omits the field entirely (we never send an
+	// explicit null), so the server's stored copy survives the merge. Removing the
+	// count block from config manifests in one of two ways, neither of which clears
+	// it:
+	//   - keeping aggregation = "count": count is a nested Optional+Computed object,
+	//     which the framework marks "known after apply" whenever it is absent from
+	//     config (it does not copy the prior nested value the way it does for
+	//     top-level O+C scalars), so every plan proposes an update — perpetual drift.
+	//     A nested objectplanmodifier (UseStateForUnknown / a clearing modifier) does
+	//     NOT fire on config.* here, so it cannot override this.
+	//   - switching aggregation away from "count": the API rejects the merged config
+	//     (400 "count field is only valid when aggregation is 'count'").
+	// Once set, the count block must stay in config. Making count clearable would
+	// require the upstream schema to mark it nullable (generating nullable.Nullable
+	// so we can send an explicit null, like forecast_settings).
+	// reportCountAggregationValidator catches the in-config misconfiguration (count
+	// set with a non-"count"/omitted aggregation) at plan time.
 	if !config.Count.IsNull() && !config.Count.IsUnknown() {
 		externalConfig.Count = &models.ExternalConfigCount{
 			Id:   config.Count.Id.ValueString(),
