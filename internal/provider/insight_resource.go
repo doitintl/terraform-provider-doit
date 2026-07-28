@@ -108,9 +108,10 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 
 	// Category B: API-assigned identity fields — not clearable.
 	acknowledgeNotClearable(s,
-		"source_id",   // API-assigned import identity (also has UseStateForUnknown above)
-		"insight_key", // API-assigned identity
-		"status",      // API defaults to "dismissed" on create; lifecycle state
+		"source_id",         // API-assigned import identity (also has UseStateForUnknown above)
+		"insight_key",       // API-assigned identity
+		"status",            // API defaults to "dismissed" on create; lifecycle state
+		"dismissal_details", // top-level O+C object, silently preserved (no drift); clearable leaves are Cat A below
 	)
 
 	// Category A: user-authored values — clearable.

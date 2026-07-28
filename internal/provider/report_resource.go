@@ -98,6 +98,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"labels", // preset labels are API-assigned
 
 		// config top-level
+		"config",                             // top-level O+C wrapper, silently preserved (no drift)
 		"config.currency",                    // API defaults to org currency
 		"config.time_interval",               // API defaults time interval
 		"config.data_source",                 // API defaults data source

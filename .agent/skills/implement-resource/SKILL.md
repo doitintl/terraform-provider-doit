@@ -416,13 +416,14 @@ object** attributes (an Optional+Computed object nested inside another object, s
 
 The linter reads the `requiresReplaceWhenCleared` path from `ModifyPlan`, so a
 Category-C **object** needs no `acknowledgeNotClearable` entry; a Category-C **scalar**
-still does (it is not user-clearable in place). The container check is skipped (only
-leaves are checked) for
-top-level single-nested wrappers (e.g. `config` itself, effectively always present),
-list containers, and any object nested inside a **list element** (e.g.
-`config.group[*].limit`) — a list clears as a whole via `[]` and Category C cannot
-target an individual element, so the list, not its element sub-objects, is the
-clearable unit.
+still does (it is not user-clearable in place). The check applies to single-nested
+objects at **any depth, including top level** (e.g. `config` on `doit_report`,
+`dismissal_details` on `doit_insight`, `rule` on `doit_allocation`) — an always-present
+wrapper still needs a conscious `acknowledgeNotClearable("<obj>")`. The container check
+is skipped (only leaves are checked) for list containers and any object nested inside a
+**list element** (e.g. `config.group[*].limit`) — a list clears as a whole via `[]` and
+Category C cannot target an individual element, so the list, not its element
+sub-objects, is the clearable unit.
 
 #### Classification rules
 

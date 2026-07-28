@@ -34,7 +34,7 @@ func (r *badResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 	if attr, ok := s.Attributes["public"].(schema.StringAttribute); ok { // want `Optional\+Computed attribute "public" has no clearable classification`
 		s.Attributes["public"] = attr
 	}
-	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
+	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok { // want `nested Optional\+Computed attribute "config" has no clearable classification`
 		if attr, ok := configAttr.Attributes["currency"].(schema.StringAttribute); ok { // want `Optional\+Computed attribute "config.currency" has no clearable classification`
 			configAttr.Attributes["currency"] = attr
 		}
@@ -83,6 +83,9 @@ func (r *goodResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 		)
 		s.Attributes["public"] = attr
 	}
+
+	// config: top-level O+C wrapper, silently preserved (Cat B).
+	acknowledgeNotClearable(s, "config")
 
 	// config.currency: clearable via direct nested modifier.
 	if attr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
@@ -161,6 +164,7 @@ func (r *acknowledgedResource) Schema(ctx context.Context, _ resource.SchemaRequ
 	acknowledgeNotClearable(s,
 		"folder_id",               // API-assigned
 		"public",                  // API defaults to false
+		"config",                  // top-level O+C wrapper, silently preserved
 		"config.currency",         // API defaults to org currency
 		"results[*].external_id",  // API-assigned identity
 		"results[*].external_url", // API-assigned
@@ -176,6 +180,8 @@ type catANullSendResource struct{}
 
 func (r *catANullSendResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := CatANullSendResourceSchema(ctx)
+
+	acknowledgeNotClearable(s, "config") // top-level wrapper
 
 	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
 		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(schema.SingleNestedAttribute); ok {
@@ -201,6 +207,8 @@ type catAMissingNullResource struct{}
 func (r *catAMissingNullResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := CatAMissingNullResourceSchema(ctx)
 
+	acknowledgeNotClearable(s, "config") // top-level wrapper
+
 	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
 		if bsAttr, ok := configAttr.Attributes["budget_settings"].(schema.SingleNestedAttribute); ok { // want `clearable nested attribute .* must send an explicit null`
 			bsAttr.PlanModifiers = append(bsAttr.PlanModifiers, useNullOrDefaultForForecastSettings())
@@ -218,6 +226,7 @@ type catCResource struct{}
 
 func (r *catCResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := CatCResourceSchema(ctx)
+	acknowledgeNotClearable(s, "config") // top-level wrapper
 	resp.Schema = s
 }
 
@@ -231,6 +240,8 @@ type unclassifiedResource struct{}
 
 func (r *unclassifiedResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := UnclassifiedResourceSchema(ctx)
+
+	acknowledgeNotClearable(s, "config") // top-level wrapper
 
 	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
 		if thresholdAttr, ok := configAttr.Attributes["threshold"].(schema.SingleNestedAttribute); ok { // want `nested Optional\+Computed attribute .* has no clearable classification`
@@ -252,7 +263,7 @@ func (r *catBContainerResource) Schema(ctx context.Context, _ resource.SchemaReq
 	// config.settings is a nested single-nested object that is silently preserved
 	// (no drift), so acknowledging it as not-clearable is sufficient — no object
 	// plan modifier or requiresReplaceWhenCleared needed.
-	acknowledgeNotClearable(s, "config.settings")
+	acknowledgeNotClearable(s, "config", "config.settings")
 
 	resp.Schema = s
 }

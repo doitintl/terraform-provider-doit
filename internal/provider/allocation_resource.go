@@ -135,6 +135,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	// cannot clear these fields on create rules via config removal — they must
 	// explicitly set them to "" instead.
 	acknowledgeNotClearable(s,
+		"rule",                 // top-level O+C object, silently preserved (no drift)
 		"rules[*].id",          // API-assigned on create, preserved when config null
 		"rules[*].name",        // API-computed for select rules
 		"rules[*].description", // API-computed for select rules

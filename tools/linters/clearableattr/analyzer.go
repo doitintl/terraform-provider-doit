@@ -13,11 +13,10 @@
 // empirically) is silently preserved without drift. Some nested O+C objects are
 // re-marked "known after apply" when absent from config and drift perpetually
 // (needing A or C); others behave like a Cat B leaf, so acknowledgement suffices.
-// Top-level
-// single-nested objects (structural wrappers like config, effectively always
-// present), list containers, and any object nested inside a list element (the list
-// clears as a whole via [], and Category C cannot target an individual element)
-// are checked only at their leaves.
+// Single-nested objects are checked at any depth, including top level (e.g.
+// insight.dismissal_details). Only list containers and objects nested inside a
+// list element are checked at their leaves only (the list clears as a whole via
+// [], and Category C cannot target an individual element).
 //
 // Without classification, Optional+Computed attributes silently preserve their
 // prior state value when a user removes them from config, making it impossible
@@ -228,10 +227,10 @@ func messageFor(f finding) string {
 // attributes. Leaf attributes must be Category A (clearing modifier) or Category B
 // (acknowledgeNotClearable). Nested single-nested object containers must be
 // Category A (object plan modifier + explicit null-send) or Category C
-// (requiresReplaceWhenCleared in ModifyPlan). The container check is skipped for
-// top-level single-nested objects (structural wrappers), list containers, and any
-// object with a list ancestor — see the switch cases below. hasListAncestor is
-// true when some enclosing attribute is a list.
+// (requiresReplaceWhenCleared in ModifyPlan). The container check covers
+// single-nested objects at any depth including top level; it is skipped for list
+// containers and any object with a list ancestor — see the switch cases below.
+// hasListAncestor is true when some enclosing attribute is a list.
 func collectUnclassified(attrs map[string]*schemaparser.AttrInfo, prefix, schemaPkg string, hasListAncestor bool, setNulls *setNullIndex, out *[]finding) {
 	for name, info := range attrs {
 		fullPath := name
@@ -246,15 +245,13 @@ func collectUnclassified(attrs map[string]*schemaparser.AttrInfo, prefix, schema
 				if !hasClearableModifier(info.PlanModifiers) && !info.NotClearable {
 					*out = append(*out, finding{path: fullPath, kind: findingLeaf})
 				}
-			case !info.IsList && prefix != "" && !hasListAncestor:
-				// Nested single-nested object container (the count/forecast_settings
-				// shape: an optional sub-block inside another object). Exempt:
-				//   - top-level single-nested objects (prefix == "") — structural
-				//     wrappers (e.g. config), effectively always present;
-				//   - objects with a list ancestor — a list clears as a whole (via
-				//     [] ) and Category C cannot target an individual element, so the
-				//     list, not its element sub-objects, is the clearable unit.
-				// Their leaves are still checked above.
+			case !info.IsList && !hasListAncestor:
+				// Single-nested object container (the count/forecast_settings shape),
+				// at any depth including top level (e.g. insight.dismissal_details).
+				// Exempt only objects with a list ancestor — a list clears as a whole
+				// (via [] ) and Category C cannot target an individual element, so the
+				// list, not its element sub-objects, is the clearable unit. Their
+				// leaves are still checked above.
 				switch {
 				case info.RequiresReplaceOnClear:
 					// Category C — removal forces replacement. OK.
