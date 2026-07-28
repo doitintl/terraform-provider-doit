@@ -4577,16 +4577,6 @@ resource "doit_report" "metric_no_value" {
 `, i)
 }
 
-// TestAccReport_LimitByChangeNotClearable verifies that once limit_by_change is
-// set, it is not accidentally cleared. The API ignores null/omit, so the object is
-// preserved server-side and resolved back into state. A regression that sent null
-// to clear the object would drop it and fail the retention assertion.
-//
-// Note: omitting a previously-set limit_by_change re-plans an update every run
-// (the object is Optional+Computed with Required children, so Terraform cannot
-// copy prior state and marks it "known after apply") — the same limitation as the
-// existing metric_filter, and moot because the API cannot clear it anyway. Hence
-// ExpectNonEmptyPlan; the guarantee under test is retention, not a clean plan.
 // TestAccReport_LimitByChangeNotClearable proves config.limit_by_change cannot be
 // cleared in place (an in-place update perpetually drifts, since the PATCH merge
 // retains the stored value), so ModifyPlan forces a destroy+create (Category C)
@@ -5024,7 +5014,8 @@ resource "doit_report" "count_aggnoblock" {
 // -----------------------------------------------------------------------------
 
 // TestAccReport_AdvancedAnalysis_NotClearable proves config.advanced_analysis
-// cannot be cleared in place: removing it re-plans an update forever.
+// cannot be cleared: removing it is silently preserved (idempotent, no drift) —
+// the prior value sticks in state.
 func TestAccReport_AdvancedAnalysis_NotClearable(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -5219,7 +5210,8 @@ resource "doit_report" "ctr_clear" {
 }
 
 // TestAccReport_DisplaySettings_NotClearable proves config.display_settings
-// cannot be cleared in place: removing it re-plans an update forever.
+// cannot be cleared: removing it is silently preserved (idempotent, no drift) —
+// the prior value sticks in state.
 func TestAccReport_DisplaySettings_NotClearable(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -5477,8 +5469,9 @@ resource "doit_report" "mf_clear" {
 }
 
 // TestAccReport_SecondaryTimeRange_NotClearable proves config.secondary_time_range
-// (and its nested config.secondary_time_range.custom_time_range) cannot be cleared
-// in place: removing the block re-plans an update forever.
+// (and its nested config.secondary_time_range.custom_time_range) cannot be cleared:
+// removing the block is silently preserved (idempotent, no drift) — the prior
+// value sticks in state.
 func TestAccReport_SecondaryTimeRange_NotClearable(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -5579,9 +5572,9 @@ resource "doit_report" "str_clear" {
 `, i)
 }
 
-// TestAccReport_TimeRange_NotClearable proves config.time_range cannot be cleared
-// in place: removing the explicit block leaves the stored range in state and
-// re-plans an update forever.
+// TestAccReport_TimeRange_NotClearable proves config.time_range cannot be cleared:
+// removing the explicit block is silently preserved (idempotent, no drift) — the
+// stored range sticks in state.
 func TestAccReport_TimeRange_NotClearable(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -5661,6 +5654,77 @@ resource "doit_report" "tr_clear" {
         currency       = "USD"
         layout         = "table"
     }
+}
+`, i)
+}
+
+// TestAccReport_Config_NotClearable proves the top-level config wrapper cannot be
+// cleared: removing the entire config block is silently preserved (idempotent, no
+// drift) — the API PATCH-merge keeps the stored config and Terraform copies the
+// prior state. This documents the Category B classification of the top-level
+// config object (clearableattr issue #233).
+func TestAccReport_Config_NotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	present := statecheck.ExpectKnownValue(
+		"doit_report.cfg_clear",
+		tfjsonpath.New("config").AtMapKey("aggregation"),
+		knownvalue.StringExact("total"))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH config.
+			{
+				Config:            testAccReportWithConfigForClear(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 2: omit the entire config block. The API silently preserves it, so
+			// the removal applies idempotently (no error) and config stays in state.
+			{
+				Config:            testAccReportConfigCleared(n),
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 3: drift check — the retained config produces no diff, confirming
+			// removal is silently ignored rather than causing a permadiff.
+			{
+				Config: testAccReportConfigCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithConfigForClear(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cfg_clear" {
+    name = "test-cfg-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportConfigCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cfg_clear" {
+    name = "test-cfg-clear-%d"
 }
 `, i)
 }

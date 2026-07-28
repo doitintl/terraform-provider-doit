@@ -108,10 +108,17 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 
 	// Category B: API-assigned identity fields — not clearable.
 	acknowledgeNotClearable(s,
-		"source_id",         // API-assigned import identity (also has UseStateForUnknown above)
-		"insight_key",       // API-assigned identity
-		"status",            // API defaults to "dismissed" on create; lifecycle state
-		"dismissal_details", // top-level O+C object, silently preserved (no drift); clearable leaves are Cat A below
+		"source_id",   // API-assigned import identity (also has UseStateForUnknown above)
+		"insight_key", // API-assigned identity
+		"status",      // API defaults to "dismissed" on create; lifecycle state
+		// dismissal_details is a top-level O+C object serialized as *T (omitempty, no
+		// nullable), so the provider can't send an explicit null: removing it while
+		// staying "dismissed" preserves reason (Cat B) and clears comment (Cat A); the
+		// API drops the whole object when status leaves "dismissed" (Read maps that
+		// back to null). reason is Cat B because "" is not a valid enum value; its
+		// clearable sibling comment is Cat A below.
+		"dismissal_details",
+		"dismissal_details.reason",
 	)
 
 	// Category A: user-authored values — clearable.
@@ -131,11 +138,9 @@ func (r *insightResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["easy_win_description"] = attr
 	}
+	// Category A: comment (free text) is clearable to "". reason (Cat B above) is an
+	// enum and can't take "".
 	if ddAttr, ok := s.Attributes["dismissal_details"].(schema.SingleNestedAttribute); ok {
-		if attr, ok := ddAttr.Attributes["reason"].(schema.StringAttribute); ok {
-			attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
-			ddAttr.Attributes["reason"] = attr
-		}
 		if attr, ok := ddAttr.Attributes["comment"].(schema.StringAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			ddAttr.Attributes["comment"] = attr
@@ -225,13 +230,26 @@ func overlayInsightComputedFields(ctx context.Context, apiResp *models.InsightRe
 		return diags
 	}
 
-	// Phase 2: Overlay computed-only fields — always from resolved.
+	// Phase 2: Overlay computed-only fields.
+	//
+	// Stable fields (set once / API content that only changes with config) are
+	// assigned unconditionally. Volatile fields — last_updated and
+	// last_status_change — are bumped by the server on write, so they must be guarded
+	// with IsUnknown(): Unknown on Create (filled from the API), Known from prior
+	// state on Update (preserved). Without the guard, a modifier-triggered Update
+	// (e.g. clearing the Cat A dismissal_details.comment) writes a fresh timestamp
+	// that mismatches the plan's known value → "inconsistent result". The next Read
+	// reconciles it. See implement-resource skill (Computed-only volatile).
 	plan.Source = resolved.Source
 	plan.DisplayStatus = resolved.DisplayStatus
-	plan.LastStatusChange = resolved.LastStatusChange
-	plan.LastUpdated = resolved.LastUpdated
 	plan.Summary = resolved.Summary
 	plan.Tags = resolved.Tags
+	if plan.LastStatusChange.IsUnknown() {
+		plan.LastStatusChange = resolved.LastStatusChange //nolint:overlaycheck // volatile: guarded to avoid inconsistent result on Update
+	}
+	if plan.LastUpdated.IsUnknown() {
+		plan.LastUpdated = resolved.LastUpdated //nolint:overlaycheck // volatile: guarded to avoid inconsistent result on Update
+	}
 
 	// Optional+Computed: resolve only when unknown
 	if plan.SourceId.IsUnknown() {
