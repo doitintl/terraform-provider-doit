@@ -50,8 +50,12 @@ validate-docs: docs
 fmt:
 	gofmt -s -w -e .
 
+# Unit suite only. TF_ACC is explicitly cleared so a developer with TF_ACC=1 in
+# their environment (e.g. sourced from .envrc.local) does not accidentally run the
+# acceptance tests against the live tenant here — matching CI, which runs this
+# target without TF_ACC.
 test:
-	go test -v -cover -timeout=120s -parallel=10 ./...
+	TF_ACC= go test -v -cover -timeout=120s -parallel=10 ./...
 
 # gotestsum wraps `go test` and automatically reruns individual failed tests,
 # which tames acceptance-test flakiness caused by the upstream API. Pinned and

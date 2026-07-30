@@ -1,5 +1,47 @@
 # Changelog
 
+## v1.6.0 (2026-07-30)
+
+### FEATURES
+
+- **resource/doit_support_request_tags**: New resource for managing tags on support requests via surgical add/remove ([#246](https://github.com/doitintl/terraform-provider-doit/pull/246))
+- **data-source/doit_cloudconnect_aws_account**: New data source for AWS CloudConnect accounts ([#243](https://github.com/doitintl/terraform-provider-doit/pull/243))
+- **data-source/doit_cloud_diagrams_cost_snapshot**: New data source for cloud diagram cost snapshots (total spend, trend, top resources/services) ([#247](https://github.com/doitintl/terraform-provider-doit/pull/247))
+
+### ENHANCEMENTS
+
+- **resource/doit_report**: Added `forecast_settings` support to the report resource and data sources ([#255](https://github.com/doitintl/terraform-provider-doit/pull/255))
+- **resource/doit_report**: Added support for `limit_by_change`, `limit_aggregation`, and `metric_filter.operand` ([#260](https://github.com/doitintl/terraform-provider-doit/pull/260))
+- **resource/doit_report**: Added support for the `config.count` field ([#268](https://github.com/doitintl/terraform-provider-doit/pull/268))
+- **data-source/doit_anomaly, doit_anomalies**: Added `actual_cost` and `expected_max_cost` fields ([#267](https://github.com/doitintl/terraform-provider-doit/pull/267))
+- **data-source/doit_ava**: Added support for the `error` field from the upstream API ([#245](https://github.com/doitintl/terraform-provider-doit/pull/245))
+- **data-source/doit_support_request, doit_support_requests**: Wired ticket tags into the support request data sources ([#246](https://github.com/doitintl/terraform-provider-doit/pull/246))
+- **provider**: Flattened `allOf` schemas and made filter/scope `mode` optional and clearable ([#242](https://github.com/doitintl/terraform-provider-doit/pull/242))
+- **provider**: DoiT employees now use the `X-Tenant-Id` header instead of the `customerContext` query parameter for tenant context ([#258](https://github.com/doitintl/terraform-provider-doit/pull/258))
+
+### BUG FIXES
+
+- **resource/doit_allocation**: Persist group allocation rule IDs and map the create action to update ([#264](https://github.com/doitintl/terraform-provider-doit/pull/264))
+
+### INTERNAL
+
+- Upgraded Go from 1.26.4 to 1.26.5
+- Upgraded `hashicorp/terraform-plugin-testing` v1.15.0→v1.16.0
+- Upgraded `oapi-codegen/oapi-codegen` v2.7.1→v2.8.0 ([#271](https://github.com/doitintl/terraform-provider-doit/pull/271))
+- Upgraded `oapi-codegen/nullable` v1.1.0→v1.2.0
+- Upgraded `getkin/kin-openapi` v0.135.0→v0.144.0 ([#265](https://github.com/doitintl/terraform-provider-doit/pull/265))
+- Upgraded transitive dependencies: `google.golang.org/grpc` v1.81.1→v1.83.0 ([#262](https://github.com/doitintl/terraform-provider-doit/pull/262)), `hashicorp/terraform-registry-address` v0.4.0→v0.5.0, `hashicorp/terraform-exec` v0.25.0→v0.25.1, `mattn/go-isatty` v0.0.22→v0.0.24, `agext/levenshtein` v1.2.2→v1.2.3
+- Adopted nullable-type code generation and adapted mapping helpers ([#257](https://github.com/doitintl/terraform-provider-doit/pull/257))
+- Bumped codegen-framework: `ValueFromObject` null/unknown guards ([#261](https://github.com/doitintl/terraform-provider-doit/pull/261)) and nested type normalization ([#263](https://github.com/doitintl/terraform-provider-doit/pull/263))
+- Flattened inline `allOf` and handled `$ref` with siblings in codegen ([#248](https://github.com/doitintl/terraform-provider-doit/pull/248), [#249](https://github.com/doitintl/terraform-provider-doit/pull/249))
+- Added custom golangci-lint analyzers: `diagsuppressed` discarded-diagnostics check ([#250](https://github.com/doitintl/terraform-provider-doit/pull/250)), `x/tools` modernize suite ([#253](https://github.com/doitintl/terraform-provider-doit/pull/253)), and nested `Optional+Computed` clearing classification enforcement ([#269](https://github.com/doitintl/terraform-provider-doit/pull/269))
+- Aligned tools and testdata to workspace gofmt styling ([#256](https://github.com/doitintl/terraform-provider-doit/pull/256))
+- Serialized acceptance tests via a concurrency configuration ([#252](https://github.com/doitintl/terraform-provider-doit/pull/252)) and added gotestsum reruns to absorb flaky tests ([#270](https://github.com/doitintl/terraform-provider-doit/pull/270))
+- `make test` now clears `TF_ACC` so the unit suite never runs acceptance tests against the live tenant when `TF_ACC=1` is set in the environment
+- Synced upstream OpenAPI spec and regenerated code ([#251](https://github.com/doitintl/terraform-provider-doit/pull/251), [#254](https://github.com/doitintl/terraform-provider-doit/pull/254), [#266](https://github.com/doitintl/terraform-provider-doit/pull/266))
+- Updated skills documentation to reference the new `X-Tenant-Id` header ([#259](https://github.com/doitintl/terraform-provider-doit/pull/259))
+- Upgraded CI workflow actions: `actions/checkout` v6.0.3→v7.0.1, `actions/setup-go` v6.4.0→v7.0.0, `hashicorp/setup-terraform` v4.0.0→v4.0.1, `golangci/golangci-lint-action` v9.2.1→v9.3.0, `goreleaser/goreleaser-action` v7.2.2→v7.2.3
+
 ## v1.5.0 (2026-06-15)
 
 ### FEATURES
