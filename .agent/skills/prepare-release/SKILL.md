@@ -92,6 +92,15 @@ make generate
 make docs
 ```
 
+### Update the test runner (`gotestsum`)
+
+The acceptance-test suite runs through [`gotestsum`](https://github.com/gotestyourself/gotestsum), which is **pinned by version in two places that must stay in sync**:
+
+- `GNUmakefile` — the `GOTESTSUM := go run gotest.tools/gotestsum@vX.Y.Z` line.
+- `.github/workflows/tests.yml` — the `go install gotest.tools/gotestsum@vX.Y.Z` step.
+
+Check the [latest release](https://github.com/gotestyourself/gotestsum/releases) and, if newer, update the pin in **both** files to the same version. The JUnit output it produces (`test-results.xml`) is consumed by the `mikepenz/action-junit-report` action in `tests.yml` (updated in Step 4).
+
 ---
 
 ## Step 4: Update GitHub Action Versions
@@ -106,6 +115,7 @@ Check for newer versions of all GitHub Actions used in `.github/workflows/`:
 | `goreleaser/goreleaser-action` | Check current pinned hash | [Releases](https://github.com/goreleaser/goreleaser-action/releases) |
 | `crazy-max/ghaction-import-gpg` | Check current pinned hash | [Releases](https://github.com/crazy-max/ghaction-import-gpg/releases) |
 | `golangci/golangci-lint-action` | Check current pinned hash | [Releases](https://github.com/golangci/golangci-lint-action/releases) |
+| `mikepenz/action-junit-report` | Check current pinned hash | [Releases](https://github.com/mikepenz/action-junit-report/releases) |
 
 ### Update procedure for each action:
 1. Find the latest release tag (e.g., `v6.1.0`).
@@ -270,11 +280,15 @@ make generate
 make docs
 git diff --exit-code -- docs/ internal/provider/datasource_* internal/provider/resource_*
 
-# Run unit tests
-go test -v -timeout 120s ./...
+# Run the unit suite (see the `testing` skill). `make test` clears TF_ACC, so it
+# runs only unit tests even when TF_ACC=1 is set in your shell (e.g. from
+# .envrc.local) — do NOT use raw `go test ./...`, which would run the full
+# acceptance suite against the live tenant.
+make test
 ```
 
-If acceptance tests are desired (this makes real API calls):
+If acceptance tests are desired (this makes real API calls against the live
+tenant — see the `testing` skill for interpreting flaky reruns and output):
 ```bash
 make testacc
 ```
