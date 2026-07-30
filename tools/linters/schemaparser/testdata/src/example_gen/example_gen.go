@@ -48,6 +48,23 @@ func ExampleResourceSchema(ctx context.Context) schema.Schema {
 				Computed:    true,
 				Description: "Tags.",
 			},
+			"config": schema.SingleNestedAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Config wrapper.",
+				Attributes: map[string]schema.Attribute{
+					"count": schema.SingleNestedAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "Replace-on-clear nested object (Category C).",
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								Required: true,
+							},
+						},
+					},
+				},
+			},
 			"alerts": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{

@@ -98,6 +98,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"labels", // preset labels are API-assigned
 
 		// config top-level
+		"config",                             // top-level O+C wrapper, silently preserved (no drift)
 		"config.currency",                    // API defaults to org currency
 		"config.time_interval",               // API defaults time interval
 		"config.data_source",                 // API defaults data source
@@ -188,6 +189,21 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.forecast_settings.historical_custom_date_range.to",
 		"config.forecast_settings.future_time_intervals",
 		"config.forecast_settings.historical_time_intervals",
+
+		// Nested single-nested object containers that are silently preserved when
+		// removed (Category B): omitting the block is idempotent — the prior value
+		// sticks with no drift and no error, matching the default Optional+Computed
+		// behavior for unclearable leaves. Verified by the TestAccReport_*_NotClearable
+		// acceptance tests. (The *harmful* containers — count, limit_by_change,
+		// metric_filter, custom_time_range — are handled as Category C via
+		// requiresReplaceWhenCleared in ModifyPlan instead, not acknowledged here.)
+		"config.advanced_analysis",                      // silently preserved on removal
+		"config.display_settings",                       // silently preserved on removal
+		"config.metric",                                 // deprecated; mirrors metrics[0], never clears
+		"config.metric_filter.metric",                   // required child; removal handled by metric_filter (Cat C)
+		"config.secondary_time_range",                   // silently preserved on removal
+		"config.secondary_time_range.custom_time_range", // silently preserved on removal
+		"config.time_range",                             // silently preserved on removal
 	)
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
@@ -233,12 +249,27 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 	}
 }
 
-// ModifyPlan forces replacement for Optional+Computed attributes that the API
-// cannot clear in place when they are removed from config. config.count is the
-// current case: the report update is a PATCH that merges config and count has no
-// null representation, so removing it would otherwise perpetually drift (or, if
-// aggregation also changes away from "count", fail at the API). Replacing the
-// resource honors the removal via destroy+create instead.
+// ModifyPlan forces replacement for Optional+Computed nested objects that the API
+// cannot clear in place when they are removed from config. The report update is a
+// PATCH that merges config and these fields have no null representation, so
+// removing them from config is either impossible or actively harmful:
+//
+//   - config.count: perpetual drift (or a 400 if aggregation also leaves "count").
+//   - config.limit_by_change: perpetual drift (the merge retains the stored value).
+//   - config.metric_filter: the update sends an empty metricFilter and the API
+//     rejects it (400 "invalid number of values: 0").
+//   - config.custom_time_range: the stored range is retained and conflicts with a
+//     changed time_range.mode, so the API rejects the update (400).
+//
+// Replacing the resource honors the removal via destroy+create instead. This is a
+// stopgap (Category C) until the API marks these fields nullable (then they become
+// Category A, cleared with an explicit null like config.forecast_settings).
+//
+// Silently-preserved Optional+Computed objects (advanced_analysis, display_settings,
+// time_range, secondary_time_range, metric, and the forecast_settings custom date
+// ranges) are intentionally NOT listed: removing them is idempotent (the prior
+// value sticks with no drift), matching the default Category B behavior for
+// unclearable leaves, so forcing a replace would be gratuitously destructive.
 func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Skip on create (no prior state) and destroy (no plan).
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
@@ -246,6 +277,9 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	}
 
 	requiresReplaceWhenCleared[resource_report.CountValue](ctx, req, resp, path.Root("config").AtName("count"))
+	requiresReplaceWhenCleared[resource_report.LimitByChangeValue](ctx, req, resp, path.Root("config").AtName("limit_by_change"))
+	requiresReplaceWhenCleared[resource_report.MetricFilterValue](ctx, req, resp, path.Root("config").AtName("metric_filter"))
+	requiresReplaceWhenCleared[resource_report.CustomTimeRangeValue](ctx, req, resp, path.Root("config").AtName("custom_time_range"))
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

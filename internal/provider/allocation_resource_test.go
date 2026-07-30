@@ -3414,3 +3414,125 @@ resource "doit_allocation" "group" {
 		},
 	})
 }
+
+// TestAccAllocation_TypeSwitchForcesReplace proves that switching the allocation
+// type between single (rule) and group (rules) is not an in-place update — the API
+// rejects it (rule->rules: 400, rules->rule: 500) — so ModifyPlan forces a
+// destroy+create in both directions (Category C). Within-type edits are unaffected
+// (covered by the other update tests).
+func TestAccAllocation_TypeSwitchForcesReplace(t *testing.T) {
+	t.Run("rule_to_rules", func(t *testing.T) {
+		rName := acctest.RandomWithPrefix("tf-acc-alloc-switch")
+		resource.ParallelTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+			PreCheck:                 testAccPreCheckFunc(t),
+			TerraformVersionChecks:   testAccTFVersionChecks,
+			Steps: []resource.TestStep{
+				// Step 1: create as single (rule).
+				{Config: testAccAllocationSwitchRule(rName)},
+				// Step 2: switch to group (rules) — forces replacement; recreated
+				// resource has no rule and the configured rules.
+				{
+					Config: testAccAllocationSwitchRules(rName),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectResourceAction(
+								"doit_allocation.switch",
+								plancheck.ResourceActionDestroyBeforeCreate,
+							),
+						},
+					},
+					ConfigStateChecks: []statecheck.StateCheck{
+						statecheck.ExpectKnownValue("doit_allocation.switch",
+							tfjsonpath.New("rule"), knownvalue.Null()),
+						statecheck.ExpectKnownValue("doit_allocation.switch",
+							tfjsonpath.New("rules"), knownvalue.ListSizeExact(1)),
+					},
+				},
+				// Step 3: drift check after replacement.
+				{
+					Config: testAccAllocationSwitchRules(rName),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+					},
+				},
+			},
+		})
+	})
+
+	t.Run("rules_to_rule", func(t *testing.T) {
+		rName := acctest.RandomWithPrefix("tf-acc-alloc-switch")
+		resource.ParallelTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+			PreCheck:                 testAccPreCheckFunc(t),
+			TerraformVersionChecks:   testAccTFVersionChecks,
+			Steps: []resource.TestStep{
+				// Step 1: create as group (rules).
+				{Config: testAccAllocationSwitchRules(rName)},
+				// Step 2: switch to single (rule) — forces replacement; recreated
+				// resource has the rule set.
+				{
+					Config: testAccAllocationSwitchRule(rName),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectResourceAction(
+								"doit_allocation.switch",
+								plancheck.ResourceActionDestroyBeforeCreate,
+							),
+						},
+					},
+					ConfigStateChecks: []statecheck.StateCheck{
+						statecheck.ExpectKnownValue("doit_allocation.switch",
+							tfjsonpath.New("rule").AtMapKey("formula"), knownvalue.StringExact("A")),
+					},
+				},
+				// Step 3: drift check after replacement.
+				{
+					Config: testAccAllocationSwitchRule(rName),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+					},
+				},
+			},
+		})
+	})
+}
+
+func testAccAllocationSwitchRule(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "switch" {
+  name        = "%s"
+  description = "type switch test"
+  rule = {
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["JP"]
+    }]
+  }
+}
+`, rName)
+}
+
+func testAccAllocationSwitchRules(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "switch" {
+  name              = "%s"
+  description       = "type switch test"
+  unallocated_costs = "%s-other"
+  rules = [{
+    action  = "create"
+    name    = "%s-r1"
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["JP"]
+    }]
+  }]
+}
+`, rName, rName, rName)
+}

@@ -735,3 +735,133 @@ resource "doit_insight" "test" {
 }
 `, key)
 }
+
+// TestAccInsightResource_DismissalDetailsClearing exercises the leaf classification
+// when the dismissal_details block is removed while status stays "dismissed":
+// reason (Cat B — enum, "" invalid) is preserved, while comment (Cat A — free text)
+// is cleared to "". The result is stable (no drift). This also regression-guards the
+// overlay: last_updated is a volatile computed-only field guarded with IsUnknown(),
+// so this modifier-triggered Update does not error with "inconsistent result".
+// See: https://github.com/doitintl/terraform-provider-doit/issues/233
+func TestAccInsightResource_DismissalDetailsClearing(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	reasonKept := statecheck.ExpectKnownValue(
+		"doit_insight.test",
+		tfjsonpath.New("dismissal_details").AtMapKey("reason"),
+		knownvalue.StringExact("not relevant"))
+	commentCleared := statecheck.ExpectKnownValue(
+		"doit_insight.test",
+		tfjsonpath.New("dismissal_details").AtMapKey("comment"),
+		knownvalue.StringExact(""))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create dismissed with reason + comment.
+			{
+				Config: testAccInsightResourceDismissedConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					reasonKept,
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("dismissal_details").AtMapKey("comment"),
+						knownvalue.StringExact("Managed by Terraform test")),
+				},
+			},
+			// Step 2: remove the block but stay dismissed — reason (Cat B) preserved,
+			// comment (Cat A) cleared to "". No "inconsistent result" (last_updated is
+			// guarded).
+			{
+				Config:            testAccInsightResourceDismissedNoDetailsConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{reasonKept, commentCleared},
+			},
+			// Step 3: drift check — the resulting state produces no diff.
+			{
+				Config: testAccInsightResourceDismissedNoDetailsConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInsightResource_UndismissClearsDismissalDetails proves the real-world
+// removal path: changing status away from "dismissed" and dropping the block
+// clears dismissal_details to null (the API drops it server-side; Read maps it
+// back to null), with no drift.
+func TestAccInsightResource_UndismissClearsDismissalDetails(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-insight")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create dismissed with details.
+			{
+				Config: testAccInsightResourceDismissedConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("dismissal_details").AtMapKey("reason"),
+						knownvalue.StringExact("not relevant")),
+				},
+			},
+			// Step 2: un-dismiss and drop the block — API clears it to null.
+			{
+				Config: testAccInsightResourceAcknowledgedConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_insight.test",
+						tfjsonpath.New("dismissal_details"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 3: drift check.
+			{
+				Config: testAccInsightResourceAcknowledgedConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// testAccInsightResourceDismissedNoDetailsConfig is testAccInsightResourceDismissedConfig
+// with the dismissal_details block removed but status still "dismissed".
+func testAccInsightResourceDismissedNoDetailsConfig(key string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Dismissed Test"
+  short_description = "Testing dismissal with details"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+  status            = "dismissed"
+}
+`, key)
+}
+
+// testAccInsightResourceAcknowledgedConfig is the same resource un-dismissed
+// (status = "acknowledged") with no dismissal_details.
+func testAccInsightResourceAcknowledgedConfig(key string) string {
+	return fmt.Sprintf(`
+resource "doit_insight" "test" {
+  key               = %[1]q
+  title             = "Dismissed Test"
+  short_description = "Testing dismissal with details"
+  cloud_provider    = "aws"
+  categories        = ["FinOps"]
+  status            = "acknowledged"
+}
+`, key)
+}

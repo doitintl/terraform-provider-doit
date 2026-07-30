@@ -156,6 +156,11 @@ func runModifyPlan(t *testing.T, sch schema.Schema, stateModel, planModel alloca
 	req := resource.ModifyPlanRequest{
 		State: tfsdk.State{Raw: stateRaw, Schema: sch},
 		Plan:  tfsdk.Plan{Raw: planRaw, Schema: sch},
+		// ModifyPlan reads Config (requiresReplaceWhenCleared for the rule<->rules
+		// type switch). These cases are all rules->rules updates, so the plan is a
+		// faithful stand-in for config: rules is set and rule is null, so no
+		// replacement is forced.
+		Config: tfsdk.Config{Raw: planRaw, Schema: sch},
 	}
 	resp := resource.ModifyPlanResponse{
 		Plan: tfsdk.Plan{Raw: planRaw, Schema: sch},

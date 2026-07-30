@@ -135,6 +135,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	// cannot clear these fields on create rules via config removal — they must
 	// explicitly set them to "" instead.
 	acknowledgeNotClearable(s,
+		"rule",                 // top-level O+C object; ExactlyOneOf(rule,rules) fixes the allocation type after create — switching/removing it forces replacement in ModifyPlan (API rejects an in-place switch)
 		"rules[*].id",          // API-assigned on create, preserved when config null
 		"rules[*].name",        // API-computed for select rules
 		"rules[*].description", // API-computed for select rules
@@ -406,6 +407,20 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Skip if state or plan is null (e.g. resource creation or deletion)
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	// The allocation type is fixed after create: rule (single) and rules (group) are
+	// mutually exclusive (ExactlyOneOf) and the API rejects switching between them in
+	// place (rule->rules => 400, rules->rule => 500). Force replacement when one is
+	// cleared from config, so a type switch becomes a clean destroy+create instead of
+	// an API error (Category C, like config.count on doit_report). Within-type edits
+	// (rule->rule, rules->rules add/remove) leave both attributes set and are
+	// unaffected. This runs before the rules-null early return below, since a type
+	// switch always has rules null on one side.
+	requiresReplaceWhenCleared[resource_allocation.RuleValue](ctx, req, resp, path.Root("rule"))
+	requiresReplaceWhenCleared[types.List](ctx, req, resp, path.Root("rules"))
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
