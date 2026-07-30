@@ -19,19 +19,51 @@ make testacc-run TEST=TestAccLabel
 
 Do NOT use `go test` directly.
 
+The targets run tests through [`gotestsum`](https://github.com/gotestyourself/gotestsum),
+which **automatically reruns failed tests** (up to 2 extra attempts) to absorb
+upstream API flakiness. See [Capturing Full Output](#capturing-full-output) for how
+to tell a flaky rerun apart from a real failure.
+
 ### Capturing Full Output
 
-Always capture the full output so you don't have to re-run:
+`gotestsum` prints a clean, de-interleaved failure summary at the end of the run
+(plain `go test -v` output from parallel tests is interleaved and hard to read).
+Still capture the full output so you don't have to re-run:
 
 ```bash
 make testacc-run TEST=TestAccReport 2>&1 | tee /tmp/test-output.txt
 ```
 
-Then search for failures:
+Read results from the summary at the bottom, not by grepping raw `FAIL` lines:
 
 ```bash
-grep -A 20 "FAIL\|Error\|inconsistent" /tmp/test-output.txt
+# gotestsum groups every failed test's output under this block:
+sed -n '/^=== Failed/,$p' /tmp/test-output.txt
+# one-line tally, e.g. "DONE 2 runs, 3 tests, 1 failure":
+grep '^DONE' /tmp/test-output.txt
 ```
+
+**The exit code is the source of truth** for flaky-vs-real:
+
+- **`make` succeeds (exit 0)** = every test ultimately passed. Some may have needed
+  a rerun (flaky), but none is a real failure.
+- A test shown with **`(re-run 1)` / `(re-run 2)`** exhausted its retries → **real failure**.
+- A test that failed once with **no `(re-run N)` entries** recovered on rerun → **flaky**.
+  Not blocking, but worth reporting (see [Known API Issues](#known-api-issues)).
+
+The targets also write a one-line-per-flaky report to `/tmp/testacc-reruns.txt` —
+the quickest way to see exactly which tests were rerun this run (absent or empty if
+none were):
+
+```bash
+cat /tmp/testacc-reruns.txt   # e.g. "doit.TestAccReport_Basic: 2 runs, 1 failures"
+```
+
+**Do NOT trust `test-results.xml` for pass/fail.** gotestsum writes one `<testcase>`
+per *attempt*, so a recovered flaky still carries a `<failure>` node even on a green
+run — a naive parse reports false failures. That file exists only to feed the CI
+JUnit check (which sets `check_retries: true` to compensate). Locally, rely on the
+exit code and the `=== Failed` block.
 
 ### Required Environment Variables
 

@@ -44,3 +44,6 @@ custom-gcl
 
 # Compiled provider binary (build artifact)
 /terraform-provider-doit
+
+# gotestsum JUnit report output
+test-results.xml
