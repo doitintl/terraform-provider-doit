@@ -28,42 +28,47 @@ to tell a flaky rerun apart from a real failure.
 
 `gotestsum` prints a clean, de-interleaved failure summary at the end of the run
 (plain `go test -v` output from parallel tests is interleaved and hard to read).
-Still capture the full output so you don't have to re-run:
+Still capture the full output so you don't have to re-run — use `set -o pipefail`
+so the pipe to `tee` doesn't swallow the test exit code:
 
 ```bash
+set -o pipefail
 make testacc-run TEST=TestAccReport 2>&1 | tee /tmp/test-output.txt
+echo "exit: $?"   # WITHOUT pipefail this prints tee's status (0), not the test result
 ```
 
-Read results from the summary at the bottom, not by grepping raw `FAIL` lines:
+**The exit code is the source of truth** for overall pass/fail:
+
+- **exit 0** = every test ultimately passed. Some may have needed a rerun (flaky),
+  but none is a real failure.
+- **non-zero** = at least one test failed on its *final* attempt.
+
+To tell a genuine failure from a test that merely flaked, read the rerun report —
+the targets write one line per reran test to `/tmp/testacc-reruns.txt`:
 
 ```bash
-# gotestsum groups every failed test's output under this block:
-sed -n '/^=== Failed/,$p' /tmp/test-output.txt
-# one-line tally, e.g. "DONE 2 runs, 3 tests, 1 failure":
-grep '^DONE' /tmp/test-output.txt
+cat /tmp/testacc-reruns.txt   # absent or empty if nothing was rerun
+# doit.TestAccX: 3 runs, 3 failures   <- failures == runs → never passed → REAL failure
+# doit.TestAccY: 3 runs, 1 failures   <- failures  < runs → recovered   → flaky (report, not blocking)
 ```
 
-**The exit code is the source of truth** for flaky-vs-real:
+Flaky (recovered) tests are not blocking, but are worth reporting (see
+[Known API Issues](#known-api-issues)).
 
-- **`make` succeeds (exit 0)** = every test ultimately passed. Some may have needed
-  a rerun (flaky), but none is a real failure.
-- A test shown with **`(re-run 1)` / `(re-run 2)`** exhausted its retries → **real failure**.
-- A test that failed once with **no `(re-run N)` entries** recovered on rerun → **flaky**.
-  Not blocking, but worth reporting (see [Known API Issues](#known-api-issues)).
-
-The targets also write a one-line-per-flaky report to `/tmp/testacc-reruns.txt` —
-the quickest way to see exactly which tests were rerun this run (absent or empty if
-none were):
+Do **not** infer real-vs-flaky from `(re-run N)` markers in the log: a test can fail
+`(re-run 1)` and still pass on `(re-run 2)`. The `=== Failed` block lists every
+failed *attempt*, including attempts of tests that later recovered — use it to read
+failure *output*, not to decide pass/fail:
 
 ```bash
-cat /tmp/testacc-reruns.txt   # e.g. "doit.TestAccReport_Basic: 2 runs, 1 failures"
+sed -n '/^=== Failed/,$p' /tmp/test-output.txt   # failure output (may include recovered flakies)
 ```
 
 **Do NOT trust `test-results.xml` for pass/fail.** gotestsum writes one `<testcase>`
 per *attempt*, so a recovered flaky still carries a `<failure>` node even on a green
 run — a naive parse reports false failures. That file exists only to feed the CI
 JUnit check (which sets `check_retries: true` to compensate). Locally, rely on the
-exit code and the `=== Failed` block.
+exit code and `/tmp/testacc-reruns.txt`.
 
 ### Required Environment Variables
 
