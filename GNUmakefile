@@ -53,14 +53,37 @@ fmt:
 test:
 	go test -v -cover -timeout=120s -parallel=10 ./...
 
+# gotestsum wraps `go test` and automatically reruns individual failed tests,
+# which tames acceptance-test flakiness caused by the upstream API. Pinned and
+# invoked via `go run` so no separate install is needed locally.
+GOTESTSUM := go run gotest.tools/gotestsum@v1.13.0
+
 # Run acceptance tests (loads environment from .envrc.local)
+# --rerun-fails retries each failed test up to N times; --rerun-fails-max-failures
+# is a circuit breaker that skips reruns entirely if the initial run has many
+# failures (i.e. a systemic break rather than flakiness).
 testacc:
-	@test -f .envrc.local && . ./.envrc.local; TF_ACC=1 go test -v -cover -timeout 120m ./...
+	@test -f .envrc.local && . ./.envrc.local; \
+	TF_ACC=1 $(GOTESTSUM) \
+		--format standard-verbose \
+		--rerun-fails=2 \
+		--rerun-fails-max-failures=5 \
+		--rerun-fails-report=/tmp/testacc-reruns.txt \
+		--packages='./...' \
+		--junitfile test-results.xml \
+		-- -cover -timeout 120m
 
 # Run a specific acceptance test
 # Usage: make testacc-run TEST=TestAccBudget
 testacc-run:
-	@test -f .envrc.local && . ./.envrc.local; TF_ACC=1 go test -v -timeout 120m ./internal/provider/... -run '$(TEST)'
+	@test -f .envrc.local && . ./.envrc.local; \
+	TF_ACC=1 $(GOTESTSUM) \
+		--format standard-verbose \
+		--rerun-fails=2 \
+		--rerun-fails-max-failures=5 \
+		--rerun-fails-report=/tmp/testacc-reruns.txt \
+		--packages='./internal/provider/...' \
+		-- -timeout 120m -run '$(TEST)'
 
 # Validate all examples against the provider schema
 validate-examples:
