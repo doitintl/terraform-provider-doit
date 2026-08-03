@@ -254,3 +254,11 @@ data_sources:
     read:
       path: /core/v1/cloudconnect/aws/accounts/{accountID}
       method: GET
+  ps4c_aws_organization:
+    read:
+      path: /ps4commitments/v1/aws/organizations/{managementAccountId}
+      method: GET
+  ps4c_aws_organizations:
+    read:
+      path: /ps4commitments/v1/aws/organizations
+      method: GET

@@ -205,6 +205,30 @@ func (e AnomalyItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for AwsOnboardingStatusEntryStatus.
+const (
+	AwsOnboardingStatusEntryStatusDone       AwsOnboardingStatusEntryStatus = "done"
+	AwsOnboardingStatusEntryStatusError      AwsOnboardingStatusEntryStatus = "error"
+	AwsOnboardingStatusEntryStatusNotStarted AwsOnboardingStatusEntryStatus = "not_started"
+	AwsOnboardingStatusEntryStatusOnboarding AwsOnboardingStatusEntryStatus = "onboarding"
+)
+
+// Valid indicates whether the value is a known member of the AwsOnboardingStatusEntryStatus enum.
+func (e AwsOnboardingStatusEntryStatus) Valid() bool {
+	switch e {
+	case AwsOnboardingStatusEntryStatusDone:
+		return true
+	case AwsOnboardingStatusEntryStatusError:
+		return true
+	case AwsOnboardingStatusEntryStatusNotStarted:
+		return true
+	case AwsOnboardingStatusEntryStatusOnboarding:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BudgetAPIPublic.
 const (
 	BudgetAPIPublicEditor BudgetAPIPublic = "editor"
@@ -4308,6 +4332,198 @@ type AwsAccountResponse struct {
 	TimeLinked *string `json:"timeLinked,omitempty"`
 }
 
+// AwsDailyCoverageEntry One day of commitment-coverage breakdown. Money fields are wrapped objects
+// (`{amount, currency}`).
+type AwsDailyCoverageEntry struct {
+	Date             openapi_types.Date `json:"date"`
+	FlexsaveCost     *Money             `json:"flexsaveCost,omitempty"`
+	OnDemandCost     *Money             `json:"onDemandCost,omitempty"`
+	ReservedInstCost *Money             `json:"reservedInstCost,omitempty"`
+	SavingsPlanCost  *Money             `json:"savingsPlanCost,omitempty"`
+	SpotCost         *Money             `json:"spotCost,omitempty"`
+}
+
+// AwsMonthlyPotentialSavings Estimated monthly additional savings per SP type, taken from the latest PS4C purchase
+// projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking
+// estimate of the monthly savings achievable if the recommended commitments were purchased. For
+// member accounts, the organization figure is attributed by each member account's share of
+// trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest
+// projection is missing, expired, or empty. The field is omitted entirely only for accounts that
+// have never had potential savings computed.
+type AwsMonthlyPotentialSavings struct {
+	Compute  *Money `json:"compute,omitempty"`
+	Database *Money `json:"database,omitempty"`
+}
+
+// AwsMonthlyStatsEntry One calendar-month aggregate for the organization. Money fields are wrapped
+// objects (`{amount, currency}`).
+type AwsMonthlyStatsEntry struct {
+	// CostWithSavings Actual cost after commitments for the month.
+	CostWithSavings Money `json:"costWithSavings"`
+
+	// Esr Effective Savings Rate for the month (0–1).
+	Esr float64 `json:"esr"`
+
+	// Month Example: 2025-06
+	Month string `json:"month"`
+
+	// OnDemandCost Eligible on-demand cost for the month.
+	OnDemandCost Money `json:"onDemandCost"`
+}
+
+// AwsOnboardingStatus PS4C onboarding state grouped by product line. A product line is omitted when it
+// is not onboarded at all.
+type AwsOnboardingStatus struct {
+	// Compute Per-product-line PS4C onboarding state.
+	Compute *AwsOnboardingStatusEntry `json:"compute,omitempty"`
+
+	// Database Per-product-line PS4C onboarding state.
+	Database *AwsOnboardingStatusEntry `json:"database,omitempty"`
+}
+
+// AwsOnboardingStatusEntry Per-product-line PS4C onboarding state.
+type AwsOnboardingStatusEntry struct {
+	// OnboardingStartedAt When PS4C first began tracking commitments for this product line. Used to bound
+	// lifetime savings totals and to render onboarding history in the DoiT Console.
+	OnboardingStartedAt nullable.Nullable[time.Time] `json:"onboardingStartedAt,omitempty"`
+
+	// Status Current onboarding lifecycle stage for this product line.
+	Status AwsOnboardingStatusEntryStatus `json:"status"`
+}
+
+// AwsOnboardingStatusEntryStatus Current onboarding lifecycle stage for this product line.
+type AwsOnboardingStatusEntryStatus string
+
+// AwsOrganization defines model for AwsOrganization.
+type AwsOrganization struct {
+	// DisplayName Human-readable account alias, if available.
+	//
+	// Example: Acme Prod
+	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
+
+	// ManagementAccountId 12-digit account number of the organization's management (payer) account.
+	//
+	// Example: 123456789012
+	ManagementAccountId string `json:"managementAccountId"`
+
+	// MonthlyPotentialSavings Estimated monthly additional savings per SP type for this organization.
+	MonthlyPotentialSavings *AwsMonthlyPotentialSavings `json:"monthlyPotentialSavings,omitempty"`
+
+	// OnboardingStatus Per-product-line PS4C onboarding state for this organization.
+	OnboardingStatus *AwsOnboardingStatus `json:"onboardingStatus,omitempty"`
+
+	// SavingsPlansSyncTime Timestamp of the last successful Savings Plan inventory sync.
+	SavingsPlansSyncTime nullable.Nullable[time.Time] `json:"savingsPlansSyncTime,omitempty"`
+
+	// SavingsTotals Year-to-date and lifetime savings per SP type. Same figures the detail
+	// endpoint returns — surfaced on the list item so callers can compute
+	// customer-level totals (sum across organizations) without an extra
+	// round-trip per organization. Lifetime is bounded by each organization's PS4C
+	// onboarding start.
+	SavingsTotals *AwsOrganizationSavingsTotals `json:"savingsTotals,omitempty"`
+
+	// Stats30d Trailing 30-day aggregate metrics, broken down by SP type.
+	Stats30d *AwsOrganizationStats30d `json:"stats30d,omitempty"`
+}
+
+// AwsOrganizationDetail Single AWS Organization detail. Adds the trailing-window stats that drive the
+// DoiT Console overview screen on top of the list-item shape:
+// - `monthlyStats` — last 6 calendar months per SP type
+// - `dailyCoverage` — last 30 days per SP type
+//
+// `savingsTotals` (precomputed YTD and lifetime savings per SP type) and
+// `monthlyPotentialSavings` (estimated monthly additional savings per SP type) are
+// inherited from the list-item shape (`AwsOrganization`).
+type AwsOrganizationDetail struct {
+	// DailyCoverage Trailing 30 days of commitment coverage, grouped by SP type.
+	DailyCoverage *AwsOrganizationDetailAllOf1DailyCoverage `json:"dailyCoverage,omitempty"`
+
+	// DisplayName Human-readable account alias, if available.
+	//
+	// Example: Acme Prod
+	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
+
+	// ManagementAccountId 12-digit account number of the organization's management (payer) account.
+	//
+	// Example: 123456789012
+	ManagementAccountId string `json:"managementAccountId"`
+
+	// MonthlyPotentialSavings Estimated monthly additional savings per SP type for this organization.
+	MonthlyPotentialSavings *AwsMonthlyPotentialSavings `json:"monthlyPotentialSavings,omitempty"`
+
+	// MonthlyStats Trailing 6 calendar months of organization stats, grouped by SP type.
+	MonthlyStats *AwsOrganizationDetailAllOf1MonthlyStats `json:"monthlyStats,omitempty"`
+
+	// OnboardingStatus Per-product-line PS4C onboarding state for this organization.
+	OnboardingStatus *AwsOnboardingStatus `json:"onboardingStatus,omitempty"`
+
+	// SavingsPlansSyncTime Timestamp of the last successful Savings Plan inventory sync.
+	SavingsPlansSyncTime nullable.Nullable[time.Time] `json:"savingsPlansSyncTime,omitempty"`
+
+	// SavingsTotals Year-to-date and lifetime savings per SP type. Same figures the detail
+	// endpoint returns — surfaced on the list item so callers can compute
+	// customer-level totals (sum across organizations) without an extra
+	// round-trip per organization. Lifetime is bounded by each organization's PS4C
+	// onboarding start.
+	SavingsTotals *AwsOrganizationSavingsTotals `json:"savingsTotals,omitempty"`
+
+	// Stats30d Trailing 30-day aggregate metrics, broken down by SP type.
+	Stats30d *AwsOrganizationStats30d `json:"stats30d,omitempty"`
+}
+
+// AwsOrganizationDetailAllOf1DailyCoverage Trailing 30 days of commitment coverage, grouped by SP type.
+type AwsOrganizationDetailAllOf1DailyCoverage struct {
+	Compute  *[]AwsDailyCoverageEntry `json:"compute,omitempty"`
+	Database *[]AwsDailyCoverageEntry `json:"database,omitempty"`
+}
+
+// AwsOrganizationDetailAllOf1MonthlyStats Trailing 6 calendar months of organization stats, grouped by SP type.
+type AwsOrganizationDetailAllOf1MonthlyStats struct {
+	Compute  *[]AwsMonthlyStatsEntry `json:"compute,omitempty"`
+	Database *[]AwsMonthlyStatsEntry `json:"database,omitempty"`
+}
+
+// AwsOrganizationSavingsTotals Year-to-date and lifetime savings per SP type. Same figures the detail
+// endpoint returns — surfaced on the list item so callers can compute
+// customer-level totals (sum across organizations) without an extra
+// round-trip per organization. Lifetime is bounded by each organization's PS4C
+// onboarding start.
+type AwsOrganizationSavingsTotals struct {
+	// Compute Running savings figures derived server-side from the full monthly stats history
+	// (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
+	// start date and start of year).
+	Compute *AwsSavingsTotals `json:"compute,omitempty"`
+
+	// Database Running savings figures derived server-side from the full monthly stats history
+	// (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
+	// start date and start of year).
+	Database *AwsSavingsTotals `json:"database,omitempty"`
+}
+
+// AwsOrganizationStats30d Trailing 30-day aggregate metrics, broken down by SP type.
+type AwsOrganizationStats30d struct {
+	// Compute Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
+	// Responses are denominated in USD. Used by both AWS organization/member-account and GCP
+	// billing-account list items.
+	Compute *Stats30dSummary `json:"compute,omitempty"`
+
+	// Database Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
+	// Responses are denominated in USD. Used by both AWS organization/member-account and GCP
+	// billing-account list items.
+	Database *Stats30dSummary `json:"database,omitempty"`
+}
+
+// AwsSavingsTotals Running savings figures derived server-side from the full monthly stats history
+// (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
+// start date and start of year).
+type AwsSavingsTotals struct {
+	// Lifetime Lifetime realized savings since onboarding.
+	Lifetime Money `json:"lifetime"`
+
+	// Ytd Year-to-date realized savings.
+	Ytd Money `json:"ytd"`
+}
+
 // AwsSupportedFeature defines model for AwsSupportedFeature.
 type AwsSupportedFeature struct {
 	// HasRequiredPermissions Whether the role has the required permissions for this feature.
@@ -7117,6 +7333,15 @@ type ListAnnotations200Response struct {
 	RowCount *int `json:"rowCount,omitempty"`
 }
 
+// ListAwsOrganizations200Response defines model for ListAwsOrganizations200Response.
+type ListAwsOrganizations200Response struct {
+	Items     []AwsOrganization         `json:"items"`
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+	RowCount nullable.Nullable[int64] `json:"rowCount,omitempty"`
+}
+
 // ListBudgets200Response defines model for ListBudgets200Response.
 type ListBudgets200Response struct {
 	// Budgets Array of Budgets
@@ -7259,6 +7484,17 @@ type MetricFilterText string
 // MetricType Identifier for metric type (e.g., basic, custom, extended).
 type MetricType = string
 
+// Money defines model for Money.
+type Money struct {
+	// Amount Decimal monetary amount at ISO 4217 minor-unit precision (string).
+	Amount string `json:"amount"`
+
+	// Currency ISO 4217 currency code.
+	//
+	// Example: USD
+	Currency string `json:"currency"`
+}
+
 // NotificationEvent A successful notification dispatch for an anomaly.
 // This records that the API/worker sent the notification, not that delivery was confirmed.
 type NotificationEvent struct {
@@ -7297,6 +7533,40 @@ type Pagination struct {
 type PlatformAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
+}
+
+// ProblemDetails RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type ProblemDetails struct {
+	// Code Example: not_found
+	Code string `json:"code"`
+
+	// Detail Example: customer not found
+	Detail  string                       `json:"detail"`
+	Details *[]ProblemDetailsDetailsItem `json:"details,omitempty"`
+	DocsUrl *string                      `json:"docsUrl,omitempty"`
+
+	// Instance Example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+	Instance string `json:"instance"`
+
+	// Retryable Example: false
+	Retryable bool `json:"retryable"`
+
+	// Status Example: 404
+	Status int `json:"status"`
+
+	// Title Example: Resource not found
+	Title string `json:"title"`
+
+	// Type Example: https://developer.doit.com/errors/not_found
+	Type                 string                 `json:"type"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// ProblemDetailsDetailsItem defines model for ProblemDetailsDetailsItem.
+type ProblemDetailsDetailsItem struct {
+	Field                *string                `json:"field,omitempty"`
+	Issue                string                 `json:"issue"`
+	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // ProductAPI Platform/product metadata used by product listing endpoints.
@@ -7681,6 +7951,19 @@ type SlackChannel struct {
 //
 // Example: aws-trusted-advisor, aws-cost-optimization-hub, aws-security-hub, azure-advisor, custom, gcp-recommender
 type Source = string
+
+// Stats30dSummary Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
+// Responses are denominated in USD. Used by both AWS organization/member-account and GCP
+// billing-account list items.
+type Stats30dSummary struct {
+	// Esr Effective Savings Rate over the last 30 days (0–1).
+	//
+	// Example: 0.187
+	Esr nullable.Nullable[float64] `json:"esr,omitempty"`
+
+	// Savings Realized savings amount over the last 30 days.
+	Savings *Money `json:"savings,omitempty"`
+}
 
 // Subscription Subscription details for a G Suite or Office 365 asset.
 type Subscription struct {
@@ -8256,11 +8539,20 @@ type Value1 = float32
 // Value2 defines model for Value.2.
 type Value2 = int
 
+// ManagementAccountId Example: 123456789012
+type ManagementAccountId = string
+
 // MaxResults defines model for maxResults.
 type MaxResults = string
 
 // PageToken defines model for pageToken.
 type PageToken = string
+
+// Ps4cMaxResults defines model for ps4cMaxResults.
+type Ps4cMaxResults = int
+
+// Ps4cPageToken defines model for ps4cPageToken.
+type Ps4cPageToken = string
 
 // ReportId defines model for reportId.
 type ReportId = string
@@ -8273,6 +8565,9 @@ type ResourceType string
 
 // SortOrder defines model for sortOrder.
 type SortOrder string
+
+// TenantId Example: Kp2mN8qL4vR0sT1wX3yZ
+type TenantId = string
 
 // N400 Standard error response structure.
 type N400 = Error
@@ -8300,6 +8595,24 @@ type N502 = Error
 
 // N503 Standard error response structure.
 type N503 = Error
+
+// BadRequest RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type BadRequest = ProblemDetails
+
+// Forbidden RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type Forbidden = ProblemDetails
+
+// InternalServerError RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type InternalServerError = ProblemDetails
+
+// NotFound RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type NotFound = ProblemDetails
+
+// ServiceUnavailable RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type ServiceUnavailable = ProblemDetails
+
+// Unauthorized RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type Unauthorized = ProblemDetails
 
 // ListAlertsParams defines parameters for ListAlerts.
 type ListAlertsParams struct {
@@ -8820,6 +9133,50 @@ type PostInsightResourceResultsParams struct {
 // PostInsightResourceResultsParamsSourceID defines parameters for PostInsightResourceResults.
 type PostInsightResourceResultsParamsSourceID string
 
+// ListAwsOrganizationsParams defines parameters for ListAwsOrganizations.
+type ListAwsOrganizationsParams struct {
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning;
+	// an empty or absent token in a response means there are no more results. Do not parse it.
+	// A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
+	// cursor returns `400` with code `pagination_token_expired` — restart pagination from the
+	// beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
+	// (DoiT API Design Standards §15).
+	//
+	// Resolution when the header is absent:
+	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+	//   optional.
+	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+	//   server does not guess across tenant scopes.
+	//
+	// When the header is present but conflicts with the tenant the key is scoped to, the request is
+	// rejected with `400` and code `tenant_id_mismatch`.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetAwsOrganizationParams defines parameters for GetAwsOrganization.
+type GetAwsOrganizationParams struct {
+	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
+	// (DoiT API Design Standards §15).
+	//
+	// Resolution when the header is absent:
+	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+	//   optional.
+	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+	//   server does not guess across tenant scopes.
+	//
+	// When the header is present but conflicts with the tenant the key is scoped to, the request is
+	// rejected with `400` and code `tenant_id_mismatch`.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
 type GetResourcePermissionParamsResourceType string
 
@@ -8959,6 +9316,261 @@ type IdOfTicketTagsRemoveJSONRequestBody = TagsRequest
 
 // IdOfTicketTagsAddJSONRequestBody defines body for IdOfTicketTagsAdd for application/json ContentType.
 type IdOfTicketTagsAddJSONRequestBody = TagsRequest
+
+// Getter for additional properties for ProblemDetails. Returns the specified
+// element and whether it was found
+func (a ProblemDetails) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ProblemDetails
+func (a *ProblemDetails) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ProblemDetails to handle AdditionalProperties
+func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["code"]; found {
+		err = json.Unmarshal(raw, &a.Code)
+		if err != nil {
+			return fmt.Errorf("error reading 'code': %w", err)
+		}
+		delete(object, "code")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["details"]; found {
+		err = json.Unmarshal(raw, &a.Details)
+		if err != nil {
+			return fmt.Errorf("error reading 'details': %w", err)
+		}
+		delete(object, "details")
+	}
+
+	if raw, found := object["docsUrl"]; found {
+		err = json.Unmarshal(raw, &a.DocsUrl)
+		if err != nil {
+			return fmt.Errorf("error reading 'docsUrl': %w", err)
+		}
+		delete(object, "docsUrl")
+	}
+
+	if raw, found := object["instance"]; found {
+		err = json.Unmarshal(raw, &a.Instance)
+		if err != nil {
+			return fmt.Errorf("error reading 'instance': %w", err)
+		}
+		delete(object, "instance")
+	}
+
+	if raw, found := object["retryable"]; found {
+		err = json.Unmarshal(raw, &a.Retryable)
+		if err != nil {
+			return fmt.Errorf("error reading 'retryable': %w", err)
+		}
+		delete(object, "retryable")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &a.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+		delete(object, "title")
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ProblemDetails to handle AdditionalProperties
+func (a ProblemDetails) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["code"], err = json.Marshal(a.Code)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'code': %w", err)
+	}
+
+	object["detail"], err = json.Marshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	if a.Details != nil {
+		object["details"], err = json.Marshal(a.Details)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'details': %w", err)
+		}
+	}
+
+	if a.DocsUrl != nil {
+		object["docsUrl"], err = json.Marshal(a.DocsUrl)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'docsUrl': %w", err)
+		}
+	}
+
+	object["instance"], err = json.Marshal(a.Instance)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'instance': %w", err)
+	}
+
+	object["retryable"], err = json.Marshal(a.Retryable)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'retryable': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	object["title"], err = json.Marshal(a.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
+	object["type"], err = json.Marshal(a.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ProblemDetailsDetailsItem. Returns the specified
+// element and whether it was found
+func (a ProblemDetailsDetailsItem) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ProblemDetailsDetailsItem
+func (a *ProblemDetailsDetailsItem) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ProblemDetailsDetailsItem to handle AdditionalProperties
+func (a *ProblemDetailsDetailsItem) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["field"]; found {
+		err = json.Unmarshal(raw, &a.Field)
+		if err != nil {
+			return fmt.Errorf("error reading 'field': %w", err)
+		}
+		delete(object, "field")
+	}
+
+	if raw, found := object["issue"]; found {
+		err = json.Unmarshal(raw, &a.Issue)
+		if err != nil {
+			return fmt.Errorf("error reading 'issue': %w", err)
+		}
+		delete(object, "issue")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ProblemDetailsDetailsItem to handle AdditionalProperties
+func (a ProblemDetailsDetailsItem) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Field != nil {
+		object["field"], err = json.Marshal(a.Field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'field': %w", err)
+		}
+	}
+
+	object["issue"], err = json.Marshal(a.Issue)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'issue': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
 
 // AsCloudDiagramsGetRequestTemplate0 returns the union data inside the CloudDiagramsGetRequest_Template as a CloudDiagramsGetRequestTemplate0
 func (t CloudDiagramsGetRequest_Template) AsCloudDiagramsGetRequestTemplate0() (CloudDiagramsGetRequestTemplate0, error) {
@@ -10293,6 +10905,29 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results (the `PostInsightResourceResults` operationId).
 	PostInsightResourceResults(ctx context.Context, sourceID PostInsightResourceResultsParamsSourceID, insightKey string, params *PostInsightResourceResultsParams, body PostInsightResourceResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListAwsOrganizations List AWS organizations
+	//
+	// Returns all AWS Organizations accessible to the authenticated tenant.
+	// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
+	// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
+	// client-side by summing across organizations, and estimated monthly potential
+	// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+	//
+	// Corresponds with GET /ps4commitments/v1/aws/organizations (the `ListAwsOrganizations` operationId).
+	ListAwsOrganizations(ctx context.Context, params *ListAwsOrganizationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAwsOrganization Get an AWS organization
+	//
+	// Returns a single AWS Organization including metadata, 30-day aggregates,
+	// and the trailing-window stats that drive the customer Overview screen:
+	// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
+	// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
+	// - `savingsTotals` — year-to-date and lifetime savings per SP type.
+	// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+	//
+	// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
+	GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetResourcePermission Get resource permissions
 	//
@@ -12824,6 +13459,49 @@ func (c *Client) PostInsightResourceResultsWithBody(ctx context.Context, sourceI
 // Corresponds with POST /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results (the `PostInsightResourceResults` operationId).
 func (c *Client) PostInsightResourceResults(ctx context.Context, sourceID PostInsightResourceResultsParamsSourceID, insightKey string, params *PostInsightResourceResultsParams, body PostInsightResourceResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInsightResourceResultsRequest(c.Server, sourceID, insightKey, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListAwsOrganizations List AWS organizations
+//
+// Returns all AWS Organizations accessible to the authenticated tenant.
+// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
+// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
+// client-side by summing across organizations, and estimated monthly potential
+// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+//
+// Corresponds with GET /ps4commitments/v1/aws/organizations (the `ListAwsOrganizations` operationId).
+func (c *Client) ListAwsOrganizations(ctx context.Context, params *ListAwsOrganizationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAwsOrganizationsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetAwsOrganization Get an AWS organization
+//
+// Returns a single AWS Organization including metadata, 30-day aggregates,
+// and the trailing-window stats that drive the customer Overview screen:
+// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
+// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
+// - `savingsTotals` — year-to-date and lifetime savings per SP type.
+// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+//
+// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
+func (c *Client) GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAwsOrganizationRequest(c.Server, managementAccountId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -18285,6 +18963,136 @@ func NewPostInsightResourceResultsRequestWithBody(server string, sourceID PostIn
 	return req, nil
 }
 
+// NewListAwsOrganizationsRequest constructs an http.Request for the ListAwsOrganizations method
+func NewListAwsOrganizationsRequest(server string, params *ListAwsOrganizationsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/aws/organizations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetAwsOrganizationRequest constructs an http.Request for the GetAwsOrganization method
+func NewGetAwsOrganizationRequest(server string, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "managementAccountId", managementAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/aws/organizations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewGetResourcePermissionRequest constructs an http.Request for the GetResourcePermission method
 func NewGetResourcePermissionRequest(server string, resourceType GetResourcePermissionParamsResourceType, resourceId ResourceId) (*http.Request, error) {
 	var err error
@@ -20036,6 +20844,33 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /insights/v1/results/source/{sourceID}/insight/{insightKey}/resource-results (the `PostInsightResourceResults` operationId).
 	PostInsightResourceResultsWithResponse(ctx context.Context, sourceID PostInsightResourceResultsParamsSourceID, insightKey string, params *PostInsightResourceResultsParams, body PostInsightResourceResultsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInsightResourceResultsResp, error)
+
+	// ListAwsOrganizationsWithResponse List AWS organizations
+	//
+	// Returns all AWS Organizations accessible to the authenticated tenant.
+	// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
+	// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
+	// client-side by summing across organizations, and estimated monthly potential
+	// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/aws/organizations (the `ListAwsOrganizations` operationId).
+	ListAwsOrganizationsWithResponse(ctx context.Context, params *ListAwsOrganizationsParams, reqEditors ...RequestEditorFn) (*ListAwsOrganizationsResp, error)
+
+	// GetAwsOrganizationWithResponse Get an AWS organization
+	//
+	// Returns a single AWS Organization including metadata, 30-day aggregates,
+	// and the trailing-window stats that drive the customer Overview screen:
+	// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
+	// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
+	// - `savingsTotals` — year-to-date and lifetime savings per SP type.
+	// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
+	GetAwsOrganizationWithResponse(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*GetAwsOrganizationResp, error)
 
 	// GetResourcePermissionWithResponse Get resource permissions
 	//
@@ -26651,6 +27486,273 @@ func (r PostInsightResourceResultsResp) ContentType() string {
 	return ""
 }
 
+// ListAwsOrganizationsResp200Headers the declared response headers of an HTTP 200 response for ListAwsOrganizations
+type ListAwsOrganizationsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListAwsOrganizationsResp400Headers the declared response headers of an HTTP 400 response for ListAwsOrganizations
+type ListAwsOrganizationsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListAwsOrganizationsResp401Headers the declared response headers of an HTTP 401 response for ListAwsOrganizations
+type ListAwsOrganizationsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListAwsOrganizationsResp403Headers the declared response headers of an HTTP 403 response for ListAwsOrganizations
+type ListAwsOrganizationsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListAwsOrganizationsResp500Headers the declared response headers of an HTTP 500 response for ListAwsOrganizations
+type ListAwsOrganizationsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListAwsOrganizationsResp503Headers the declared response headers of an HTTP 503 response for ListAwsOrganizations
+type ListAwsOrganizationsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListAwsOrganizationsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListAwsOrganizations200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListAwsOrganizationsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListAwsOrganizationsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListAwsOrganizationsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListAwsOrganizationsResp403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListAwsOrganizationsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListAwsOrganizationsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListAwsOrganizationsResp) GetJSON200() *ListAwsOrganizations200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListAwsOrganizationsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListAwsOrganizationsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListAwsOrganizationsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListAwsOrganizationsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListAwsOrganizationsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListAwsOrganizationsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAwsOrganizationsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAwsOrganizationsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListAwsOrganizationsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetAwsOrganizationResp200Headers the declared response headers of an HTTP 200 response for GetAwsOrganization
+type GetAwsOrganizationResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetAwsOrganizationResp400Headers the declared response headers of an HTTP 400 response for GetAwsOrganization
+type GetAwsOrganizationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetAwsOrganizationResp401Headers the declared response headers of an HTTP 401 response for GetAwsOrganization
+type GetAwsOrganizationResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetAwsOrganizationResp403Headers the declared response headers of an HTTP 403 response for GetAwsOrganization
+type GetAwsOrganizationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetAwsOrganizationResp404Headers the declared response headers of an HTTP 404 response for GetAwsOrganization
+type GetAwsOrganizationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetAwsOrganizationResp500Headers the declared response headers of an HTTP 500 response for GetAwsOrganization
+type GetAwsOrganizationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetAwsOrganizationResp503Headers the declared response headers of an HTTP 503 response for GetAwsOrganization
+type GetAwsOrganizationResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type GetAwsOrganizationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AwsOrganizationDetail
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetAwsOrganizationResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetAwsOrganizationResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetAwsOrganizationResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetAwsOrganizationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetAwsOrganizationResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetAwsOrganizationResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetAwsOrganizationResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetAwsOrganizationResp) GetJSON200() *AwsOrganizationDetail {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetAwsOrganizationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetAwsOrganizationResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetAwsOrganizationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetAwsOrganizationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetAwsOrganizationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetAwsOrganizationResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetAwsOrganizationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAwsOrganizationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAwsOrganizationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetAwsOrganizationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetResourcePermissionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -29376,6 +30478,45 @@ func (c *ClientWithResponses) PostInsightResourceResultsWithResponse(ctx context
 		return nil, err
 	}
 	return ParsePostInsightResourceResultsResp(rsp)
+}
+
+// ListAwsOrganizationsWithResponse List AWS organizations
+//
+// Returns all AWS Organizations accessible to the authenticated tenant.
+// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
+// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
+// client-side by summing across organizations, and estimated monthly potential
+// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/aws/organizations (the `ListAwsOrganizations` operationId).
+func (c *ClientWithResponses) ListAwsOrganizationsWithResponse(ctx context.Context, params *ListAwsOrganizationsParams, reqEditors ...RequestEditorFn) (*ListAwsOrganizationsResp, error) {
+	rsp, err := c.ListAwsOrganizations(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAwsOrganizationsResp(rsp)
+}
+
+// GetAwsOrganizationWithResponse Get an AWS organization
+//
+// Returns a single AWS Organization including metadata, 30-day aggregates,
+// and the trailing-window stats that drive the customer Overview screen:
+// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
+// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
+// - `savingsTotals` — year-to-date and lifetime savings per SP type.
+// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
+func (c *ClientWithResponses) GetAwsOrganizationWithResponse(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*GetAwsOrganizationResp, error) {
+	rsp, err := c.GetAwsOrganization(ctx, managementAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAwsOrganizationResp(rsp)
 }
 
 // GetResourcePermissionWithResponse Get resource permissions
@@ -34672,6 +35813,390 @@ func ParsePostInsightResourceResultsResp(rsp *http.Response) (*PostInsightResour
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListAwsOrganizationsResp parses an HTTP response from a ListAwsOrganizationsWithResponse call
+func ParseListAwsOrganizationsResp(rsp *http.Response) (*ListAwsOrganizationsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAwsOrganizationsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListAwsOrganizations200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListAwsOrganizationsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListAwsOrganizationsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListAwsOrganizationsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListAwsOrganizationsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListAwsOrganizationsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListAwsOrganizationsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetAwsOrganizationResp parses an HTTP response from a GetAwsOrganizationWithResponse call
+func ParseGetAwsOrganizationResp(rsp *http.Response) (*GetAwsOrganizationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAwsOrganizationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AwsOrganizationDetail
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetAwsOrganizationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetAwsOrganizationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetAwsOrganizationResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetAwsOrganizationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetAwsOrganizationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetAwsOrganizationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetAwsOrganizationResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil
