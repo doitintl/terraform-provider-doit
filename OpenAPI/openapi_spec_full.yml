@@ -72,6 +72,8 @@ tags:
     description: Manage cloud insights representing recommendations and findings for cloud resources.
   - name: Cloud Connect
     description: Manage cloud provider connections and check feature availability for connected accounts.
+  - name: Service Quotas
+    description: Monitor cloud service quota usage across connected accounts and projects.
   - name: Connections
     description: Manage cloud provider connections used in CloudFlow workflows (AWS and GCP).
   - name: Templates
@@ -3246,6 +3248,58 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  /core/v1/service-quotas:
+    get:
+      tags:
+        - Service Quotas
+      summary: List service quotas
+      description: |-
+        Returns the latest service quota usage snapshots collected by DoiT for the authenticated customer.
+        Results include only quotas retained by DoiT's monitoring collectors and are not a complete or live inventory from the cloud providers.
+        Results are sorted by utilization percentage in descending order.
+      operationId: listServiceQuotas
+      parameters:
+        - name: provider
+          in: query
+          description: Filter results to a cloud provider. Omit to return all supported providers.
+          schema:
+            type: string
+            enum:
+              - aws
+              - gcp
+        - name: minUtilizationPercent
+          in: query
+          description: Return quotas whose utilization percentage is greater than or equal to this value.
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 100
+        - name: maxResults
+          in: query
+          description: Maximum number of results to return in one page.
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 50
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: OK - Service quotas returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceQuotaList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
   /core/v1/cloudincidents:
     get:
       tags:
@@ -10406,6 +10460,104 @@ components:
           type: string
         workspace:
           type: string
+    ServiceQuotaList:
+      type: object
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          description: Service quotas in this page.
+          items:
+            $ref: "#/components/schemas/ServiceQuota"
+        pageToken:
+          type: string
+          description: Opaque token for the next page. Omitted when there are no more results.
+        rowCount:
+          type: integer
+          format: int64
+          description: Total number of results after filtering and before pagination.
+    ServiceQuota:
+      type: object
+      required:
+        - provider
+        - resource
+        - service
+        - quota
+        - limit
+        - usage
+        - utilizationPercent
+        - status
+        - observedAt
+      properties:
+        provider:
+          type: string
+          description: Cloud provider that owns the quota.
+          enum:
+            - aws
+            - gcp
+        resource:
+          $ref: "#/components/schemas/ServiceQuotaResource"
+        service:
+          type: string
+          description: Cloud service associated with the quota.
+          example: Compute Engine
+        quota:
+          type: string
+          description: Provider quota or metric name.
+          example: CPUS
+        region:
+          type: string
+          description: Cloud region associated with the quota. Omitted for global quotas.
+          example: us-central1
+        limit:
+          type: number
+          format: double
+          description: Current quota limit.
+          example: 100
+        usage:
+          type: number
+          format: double
+          description: Current measured quota usage.
+          example: 85
+        utilizationPercent:
+          type: number
+          format: double
+          description: Usage divided by limit, expressed as a percentage.
+          example: 85
+        status:
+          type: string
+          description: Normalized utilization status. Warning begins at 80 percent; exceeded begins at 100 percent.
+          enum:
+            - ok
+            - warning
+            - exceeded
+        observedAt:
+          type: string
+          format: date-time
+          description: Time when DoiT last updated the provider snapshot.
+          example: "2026-07-17T12:00:00Z"
+    ServiceQuotaResource:
+      type: object
+      required:
+        - type
+        - id
+      properties:
+        type:
+          type: string
+          description: Provider resource scope for the quota.
+          enum:
+            - account
+            - project
+        id:
+          type: string
+          description: AWS account ID or Google Cloud project ID.
+          example: example-project
+        name:
+          type: string
+          description: Human-readable resource name when available.
+          example: Example Project
     SupportedFeaturesResponse:
       type: object
       description: Response containing the supported features for a CloudConnect account.
