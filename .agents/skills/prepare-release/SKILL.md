@@ -11,7 +11,7 @@ This skill guides you through preparing a new release of the terraform-provider-
 
 // turbo-all
 
-1. Read the relevant skills in `.agent/skills/` for context on provider conventions.
+1. Read the relevant skills in `.agents/skills/` for context on provider conventions.
 2. Confirm the target version number with the user (e.g., `v1.3.0`).
 3. Create a release branch from `main`:
    ```bash

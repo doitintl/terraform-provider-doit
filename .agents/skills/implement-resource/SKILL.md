@@ -470,7 +470,7 @@ statecheck.ExpectKnownValue(
 
 The overlay (`IsUnknown()` check) correctly interacts with this modifier: when the modifier sets the plan to `[]` (not unknown), the overlay leaves it as `[]`.
 
-See: [`planmodifier_null_on_config_null_list.go`](internal/provider/planmodifier_null_on_config_null_list.go) and [framework issue #603](https://github.com/hashicorp/terraform-plugin-framework/issues/603).
+See: `internal/provider/planmodifier_null_on_config_null_list.go` and [framework issue #603](https://github.com/hashicorp/terraform-plugin-framework/issues/603).
 
 ### RFC3339 Timestamp Validation
 
