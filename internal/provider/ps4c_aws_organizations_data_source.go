@@ -74,9 +74,11 @@ func (d *ps4cAwsOrganizationsDataSource) Read(ctx context.Context, req datasourc
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any pagination input is unknown, return an unknown list.
+	// If any pagination input is unknown, return unknown for all computed attributes.
 	if data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Items = types.ListUnknown(datasource_ps4c_aws_organizations.ItemsValue{}.Type(ctx))
+		data.RowCount = types.Int64Unknown()
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}

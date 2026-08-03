@@ -74,21 +74,26 @@ func testAccPs4cAwsOrganizationDataSourceConfig() string {
 	return `
 data "doit_ps4c_aws_organizations" "list" {}
 
-# Guard: fail with a clear message if the tenant has no PS4C AWS organizations,
-# rather than an opaque index-out-of-range error on an empty list.
-check "has_organizations" {
-  assert {
-    condition     = length(data.doit_ps4c_aws_organizations.list.items) > 0
-    error_message = "No PS4C AWS organizations returned; cannot run doit_ps4c_aws_organization tests."
-  }
-}
-
 locals {
-  first_org = tolist(data.doit_ps4c_aws_organizations.list.items)[0]
+  organizations = data.doit_ps4c_aws_organizations.list.items
+  # A conditional fallback avoids indexing an empty list directly (Terraform
+  # "check" blocks don't short-circuit other expressions, so a raw items[0]
+  # here would still panic with an opaque index error even with a check
+  # block asserting non-emptiness elsewhere in the config). The lifecycle
+  # precondition below is what actually raises the clear error message,
+  # before doit_ps4c_aws_organization.test is ever read.
+  first_management_account_id = length(local.organizations) > 0 ? local.organizations[0].management_account_id : "000000000000"
 }
 
 data "doit_ps4c_aws_organization" "test" {
-  management_account_id = local.first_org.management_account_id
+  management_account_id = local.first_management_account_id
+
+  lifecycle {
+    precondition {
+      condition     = length(local.organizations) > 0
+      error_message = "No PS4C AWS organizations returned; cannot run doit_ps4c_aws_organization tests."
+    }
+  }
 }
 `
 }
