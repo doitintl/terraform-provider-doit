@@ -24,6 +24,8 @@ tags:
     description: Organize Cloud Analytics resources (reports, allocations) into folders.
   - name: Budgets
     description: Track actual cloud spend against planned spend.
+  - name: Budget Suggestions
+    description: AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
   - name: Dimensions
     description: View available dimensions for analysis.
   - name: Reports
@@ -1343,6 +1345,129 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+      x-codegen-request-body-name: Body
+  /analytics/v1/budget-suggestions:
+    get:
+      tags:
+        - Budget Suggestions
+      summary: List budget suggestions
+      description: |-
+        Returns the pending AI-generated budget suggestions for your account. The set is small (a handful
+        of pending suggestions) and is returned in full. Each suggestion can be accepted (after you create a
+        matching budget via `POST /analytics/v1/budgets`) or dismissed.
+      operationId: listBudgetSuggestions
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    description: Array of pending budget suggestions.
+                    items:
+                      $ref: "#/components/schemas/BudgetSuggestion"
+                  rowCount:
+                    type: integer
+                    description: Number of suggestions returned.
+                    format: int64
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/analytics/v1/budget-suggestions/{id}/actions/accept":
+    post:
+      tags:
+        - Budget Suggestions
+      summary: Accept a budget suggestion
+      description: |-
+        Marks the suggestion as accepted and links it to an existing budget. Create the budget first via
+        `POST /analytics/v1/budgets`, then pass its `id` as `budgetId`. The budget must belong to your account.
+      operationId: acceptBudgetSuggestion
+      parameters:
+        - name: id
+          in: path
+          description: Budget suggestion ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetSuggestionAcceptRequest"
+      responses:
+        "200":
+          description: OK - The suggestion was accepted and linked to the budget.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  budgetId:
+                    type: string
+                    description: ID of the budget the suggestion was linked to.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/budget-suggestions/{id}/actions/dismiss":
+    post:
+      tags:
+        - Budget Suggestions
+      summary: Dismiss a budget suggestion
+      description: Marks the suggestion as dismissed so it no longer appears in the pending list.
+      operationId: dismissBudgetSuggestion
+      parameters:
+        - name: id
+          in: path
+          description: Budget suggestion ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetSuggestionDismissRequest"
+      responses:
+        "200":
+          description: OK - The suggestion was dismissed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: ID of the dismissed suggestion.
+                  status:
+                    type: string
+                    enum:
+                      - dismissed
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
       x-codegen-request-body-name: Body
   /analytics/v1/dimension:
     get:
@@ -8719,6 +8844,92 @@ components:
           description: Use the last period's spend as the target amount for recurring
             budgets
           default: false
+    BudgetSuggestion:
+      type: object
+      description: An AI-generated budget recommendation.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rationale:
+          type: string
+          description: Explanation of why this budget is suggested.
+        confidence:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+        amount:
+          type: object
+          description: Suggested budget amount as a decimal-string value with its currency.
+          properties:
+            amount:
+              type: string
+              description: Decimal string, e.g. "1234.56".
+            currency:
+              type: string
+        timeInterval:
+          type: string
+        alertThresholds:
+          type: array
+          description: Suggested alert thresholds as percentages of the amount.
+          items:
+            type: number
+            format: double
+        scopeChips:
+          type: array
+          description: Human-readable summary of the suggested budget scope.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              values:
+                type: array
+                items:
+                  type: string
+        config:
+          type: object
+          description: Draft budget configuration to merge over the create-budget defaults.
+          additionalProperties: true
+        generatedTime:
+          type: string
+          description: Timestamp when the suggestion was generated.
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - dismissed
+            - skippedDraft
+    BudgetSuggestionAcceptRequest:
+      type: object
+      description: Links a budget suggestion to an existing budget.
+      required:
+        - budgetId
+      properties:
+        budgetId:
+          type: string
+          description: ID of the budget (created via POST /analytics/v1/budgets) to link this suggestion to.
+        editedBeforeAccept:
+          type: boolean
+          description: Whether the customer edited the suggested values before accepting.
+    BudgetSuggestionDismissRequest:
+      type: object
+      description: Optional reason for dismissing a budget suggestion.
+      properties:
+        reason:
+          type: string
+          enum:
+            - not_relevant
+            - wrong_amount
+            - covered_elsewhere
+            - other
     Collaborator:
       type: object
       description: A user or identity that has access to a resource.
