@@ -273,6 +273,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCustomThemeDataSource,
 		NewActiveThemeDataSource,
 		NewCloudconnectAwsAccountDataSource,
+		NewPs4cAwsOrganizationDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
@@ -308,6 +309,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewSharingDataSource,
 		NewInsightsDataSource,
 		NewInsightResourceResultsDataSource,
+		NewPs4cAwsOrganizationsDataSource,
 	}
 }
 
