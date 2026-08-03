@@ -47,3 +47,8 @@ custom-gcl
 
 # gotestsum JUnit report output
 test-results.xml
+
+# Claude Code machine-local settings.
+# The .claude/skills -> ../.agents/skills symlink IS tracked; see .agents/skills/README.md
+.claude/*
+!.claude/skills

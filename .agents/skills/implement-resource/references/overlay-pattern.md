@@ -151,7 +151,7 @@ The Read path detects **real** external changes while ignoring API normalization
 
 2. **Rebuilding nested values after modification.** When modifying fields inside a list element, rebuild the parent list with `types.ListValueFrom()`. List elements are immutable in the framework.
 
-3. **null↔[] consistency between overlay and Read.** When the user omits an Optional+Computed list, the overlay and Read path must agree on the representation. Both non-clearable (Category B) and clearable (Category A) lists use `[]` for omitted values. The `useNullForUnknownListWhenConfigNull` modifier proposes `[]`, the overlay resolves from the API response (which maps to `[]`), and Read maps nil to `[]`. See [Clearable List Attributes](../implement-resource/SKILL.md#clearable-list-attributes).
+3. **null↔[] consistency between overlay and Read.** When the user omits an Optional+Computed list, the overlay and Read path must agree on the representation. Both non-clearable (Category B) and clearable (Category A) lists use `[]` for omitted values. The `useNullForUnknownListWhenConfigNull` modifier proposes `[]`, the overlay resolves from the API response (which maps to `[]`), and Read maps nil to `[]`. See [Clearable List Attributes](../SKILL.md#clearable-list-attributes).
 
 4. **Not testing the Update path separately.** Create and Update can have different API behaviors. Always test both.
 

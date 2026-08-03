@@ -15,7 +15,7 @@ This skill covers the **three registration steps** needed after creating a new a
 
 ## Step 1: Register in `plugin.go`
 
-File: [`tools/linters/plugin.go`](file:///Users/hannes/Desktop/git/terraform-provider-doit/tools/linters/plugin.go)
+File: `tools/linters/plugin.go`
 
 Add two things:
 
@@ -43,7 +43,7 @@ register.Plugin("<name>", func(_ any) (register.LinterPlugin, error) {
 
 ## Step 2: Configure `.golangci.yml`
 
-File: [`.golangci.yml`](file:///Users/hannes/Desktop/git/terraform-provider-doit/.golangci.yml)
+File: `.golangci.yml`
 
 Three sub-sections need updating:
 
@@ -160,4 +160,4 @@ golangci-lint custom
 
 ## Reference: Existing Linters
 
-See [plugin.go](file:///Users/hannes/Desktop/git/terraform-provider-doit/tools/linters/plugin.go) for all registered linters and [.golangci.yml](file:///Users/hannes/Desktop/git/terraform-provider-doit/.golangci.yml) for the full config.
+See `tools/linters/plugin.go` for all registered linters and `.golangci.yml` for the full config.
