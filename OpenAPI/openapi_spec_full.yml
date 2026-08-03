@@ -3668,6 +3668,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /cloudflow/v1/flows/actions/build:
+    post:
+      tags:
+        - CloudFlow
+      summary: Build a new CloudFlow from scratch
+      description: >-
+        Creates a new CloudFlow and generates its nodes and connections based
+        on the provided natural language intent. The operation streams
+        incremental build events, including the ID of the newly created flow,
+        as they are produced.
+      operationId: buildCloudFlow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudFlowBuildRequest"
+      responses:
+        "200":
+          description: OK - Build event stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "406":
+          description: Not Acceptable — the client did not include `text/event-stream` in the Accept header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+        "502":
+          description: Bad Gateway — the upstream build service returned an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /iam/v1/users:
     get:
       tags:
@@ -12870,6 +12914,17 @@ components:
         question:
           type: string
           description: Natural language description of what to refine or modify in the CloudFlow.
+        conversationId:
+          type: string
+          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
+    CloudFlowBuildRequest:
+      type: object
+      required:
+        - question
+      properties:
+        question:
+          type: string
+          description: Natural language description of the CloudFlow to build from scratch.
         conversationId:
           type: string
           description: ID of an existing conversation to continue. When omitted, a new conversation is started.
