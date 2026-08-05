@@ -1,0 +1,18 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile (printf "examples/data-sources/%s/data-source.tf" .Name) }}
+
+-> For details on auto and manual pagination, see the [Pagination Guide](../guides/pagination).
+
+{{ .SchemaMarkdown | trimspace }}

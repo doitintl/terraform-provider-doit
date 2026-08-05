@@ -3261,7 +3261,7 @@ paths:
         Results are sorted by utilization percentage in descending order.
       operationId: listServiceQuotas
       parameters:
-        - name: provider
+        - name: cloudProvider
           in: query
           description: Filter results to a cloud provider. Omit to return all supported providers.
           schema:
@@ -11045,7 +11045,7 @@ components:
     ServiceQuota:
       type: object
       required:
-        - provider
+        - cloudProvider
         - resource
         - service
         - quota
@@ -11055,7 +11055,7 @@ components:
         - status
         - observedAt
       properties:
-        provider:
+        cloudProvider:
           type: string
           description: Cloud provider that owns the quota.
           enum:

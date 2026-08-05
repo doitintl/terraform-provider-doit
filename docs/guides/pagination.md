@@ -83,6 +83,7 @@ The following table shows which data sources support pagination:
 | `doit_invoices`             | ✓               | ✓                 |
 | `doit_labels`               | ✓               | ✓                 |
 | `doit_reports`              | ✓               | ✓                 |
+| `doit_service_quotas`       | ✓               | ✓                 |
 | `doit_support_requests`     | ✓               | ✓                 |
 
 ## Filtering vs Pagination

@@ -262,3 +262,8 @@ data_sources:
     read:
       path: /ps4commitments/v1/aws/organizations
       method: GET
+  # Service Quotas data source
+  service_quotas:
+    read:
+      path: /core/v1/service-quotas
+      method: GET

@@ -310,6 +310,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewInsightsDataSource,
 		NewInsightResourceResultsDataSource,
 		NewPs4cAwsOrganizationsDataSource,
+		NewServiceQuotasDataSource,
 	}
 }
 
