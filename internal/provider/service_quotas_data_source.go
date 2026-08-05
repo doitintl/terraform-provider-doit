@@ -8,8 +8,10 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_service_quotas"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -51,6 +53,16 @@ func (d *serviceQuotasDataSource) Configure(_ context.Context, req datasource.Co
 
 func (d *serviceQuotasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_service_quotas.ServiceQuotasDataSourceSchema(ctx)
+
+	// The generator does not propagate the OpenAPI minimum/maximum bounds for
+	// float64 query parameters (unlike int64, which gets int64validator.Between).
+	// Add the bound here so invalid values are rejected at plan time instead of
+	// reaching the API as an HTTP 400.
+	if minUtilAttr, ok := s.Attributes["min_utilization_percent"].(schema.Float64Attribute); ok {
+		minUtilAttr.Validators = append(minUtilAttr.Validators, float64validator.Between(0, 100))
+		s.Attributes["min_utilization_percent"] = minUtilAttr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }
