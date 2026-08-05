@@ -168,6 +168,7 @@ var (
 
 func getAllocationCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	allocationCountOnce.Do(func() {
 		allocationCount = computeAllocationCount(t)
 	})

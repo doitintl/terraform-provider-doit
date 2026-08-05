@@ -164,6 +164,7 @@ var (
 
 func getAssetCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	assetCountOnce.Do(func() {
 		assetCount = computeAssetCount(t)
 	})
@@ -197,6 +198,7 @@ func computeAssetCount(t *testing.T) int {
 
 func getAssetFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
+	skipIfNoAcc(t)
 	client := getAPIClient(t)
 	ctx := context.Background()
 

@@ -188,6 +188,7 @@ var (
 
 func getAlertCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	alertCountOnce.Do(func() {
 		alertCount = computeAlertCount(t)
 	})

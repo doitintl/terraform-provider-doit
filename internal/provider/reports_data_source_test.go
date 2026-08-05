@@ -168,6 +168,7 @@ var (
 
 func getReportCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	reportCountOnce.Do(func() {
 		reportCount = computeReportCount(t)
 	})

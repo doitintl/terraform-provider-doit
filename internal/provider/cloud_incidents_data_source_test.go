@@ -112,6 +112,7 @@ data "doit_cloud_incidents" "test" {
 
 func getCloudIncidentFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
+	skipIfNoAcc(t)
 	client := getAPIClient(t)
 	ctx := context.Background()
 

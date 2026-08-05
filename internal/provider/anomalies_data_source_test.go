@@ -383,6 +383,7 @@ var (
 
 func getAnomalyCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	anomalyCountOnce.Do(func() {
 		anomalyCount = computeAnomalyCount(t)
 	})
@@ -416,6 +417,7 @@ func computeAnomalyCount(t *testing.T) int {
 
 func getAnomalyFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
+	skipIfNoAcc(t)
 	client := getAPIClient(t)
 	ctx := context.Background()
 

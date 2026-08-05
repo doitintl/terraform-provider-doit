@@ -134,6 +134,19 @@ func testAccPreCheckFunc(t *testing.T) func() {
 	}
 }
 
+// skipIfNoAcc skips the calling test immediately if acceptance tests are
+// disabled. resource.Test/ParallelTest already gate on TF_ACC internally, but
+// sync.Once-cached count helpers (e.g. getAlertCount) run before that gate is
+// reached, making a real API call even during a plain `make test` run. Call
+// this as the first line of any such helper to skip before hitting the
+// network instead of failing or hanging without credentials.
+func skipIfNoAcc(t *testing.T) {
+	t.Helper()
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
+	}
+}
+
 // getAPIClient creates an API client for test helpers that need to call
 // the API directly (e.g., counting resources, deleting a resource mid-test).
 func getAPIClient(t *testing.T) *models.ClientWithResponses {

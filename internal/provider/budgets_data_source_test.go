@@ -173,6 +173,7 @@ var (
 
 func getBudgetCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	budgetCountOnce.Do(func() {
 		budgetCount = computeBudgetCount(t)
 	})
