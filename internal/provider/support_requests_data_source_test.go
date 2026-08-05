@@ -222,6 +222,7 @@ var (
 
 func getSupportRequestCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	supportRequestCountOnce.Do(func() {
 		supportRequestCount = computeSupportRequestCount(t)
 	})
@@ -255,6 +256,7 @@ func computeSupportRequestCount(t *testing.T) int {
 
 func getSupportRequestFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
+	skipIfNoAcc(t)
 	client := getAPIClient(t)
 	ctx := context.Background()
 

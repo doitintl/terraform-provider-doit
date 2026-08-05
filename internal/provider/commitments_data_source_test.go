@@ -233,6 +233,7 @@ var (
 
 func getCommitmentCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	commitmentCountOnce.Do(func() {
 		commitmentCount = computeCommitmentCount(t)
 	})
@@ -266,6 +267,7 @@ func computeCommitmentCount(t *testing.T) int {
 
 func getCommitmentFirstPageToken(t *testing.T, maxResults string) string {
 	t.Helper()
+	skipIfNoAcc(t)
 	client := getAPIClient(t)
 	ctx := context.Background()
 

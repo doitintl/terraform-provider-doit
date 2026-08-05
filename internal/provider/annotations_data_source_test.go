@@ -168,6 +168,7 @@ var (
 
 func getAnnotationCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	annotationCountOnce.Do(func() {
 		annotationCount = computeAnnotationCount(t)
 	})
