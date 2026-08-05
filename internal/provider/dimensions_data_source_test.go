@@ -172,6 +172,7 @@ var (
 
 func getDimensionCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	dimensionCountOnce.Do(func() {
 		dimensionCount = computeDimensionCount(t)
 	})

@@ -164,6 +164,7 @@ var (
 
 func getInvoiceCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	invoiceCountOnce.Do(func() {
 		invoiceCount = computeInvoiceCount(t)
 	})
@@ -197,6 +198,7 @@ func computeInvoiceCount(t *testing.T) int {
 
 func getInvoiceFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
+	skipIfNoAcc(t)
 	client := getAPIClient(t)
 	ctx := context.Background()
 

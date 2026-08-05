@@ -160,6 +160,7 @@ var (
 
 func getInsightCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	insightCountOnce.Do(func() {
 		insightCount = computeInsightCount(t)
 	})

@@ -168,6 +168,7 @@ var (
 
 func getLabelCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	labelCountOnce.Do(func() {
 		labelCount = computeLabelCount(t)
 	})
