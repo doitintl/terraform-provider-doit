@@ -11983,6 +11983,177 @@
 			}
 		},
 		{
+			"name": "service_quotas",
+			"schema": {
+				"attributes": [
+					{
+						"name": "cloud_provider",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter results to a cloud provider. Omit to return all supported providers.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"aws\",\n\"gcp\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "min_utilization_percent",
+						"float64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Return quotas whose utilization percentage is greater than or equal to this value."
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of results to return in one page.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 200)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "cloud_provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud provider that owns the quota."
+										}
+									},
+									{
+										"name": "limit",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Current quota limit."
+										}
+									},
+									{
+										"name": "observed_at",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Time when DoiT last updated the provider snapshot."
+										}
+									},
+									{
+										"name": "quota",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Provider quota or metric name."
+										}
+									},
+									{
+										"name": "region",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud region associated with the quota. Omitted for global quotas."
+										}
+									},
+									{
+										"name": "resource",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "AWS account ID or Google Cloud project ID."
+													}
+												},
+												{
+													"name": "name",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Human-readable resource name when available."
+													}
+												},
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Provider resource scope for the quota."
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud service associated with the quota."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Normalized utilization status. Warning begins at 80 percent; exceeded begins at 100 percent."
+										}
+									},
+									{
+										"name": "usage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Current measured quota usage."
+										}
+									},
+									{
+										"name": "utilization_percent",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Usage divided by limit, expressed as a percentage."
+										}
+									}
+								]
+							},
+							"description": "Service quotas in this page."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of results after filtering and before pagination."
+						}
+					}
+				],
+				"description": "Monitor cloud service quota usage across connected accounts and projects.",
+				"markdown_description": "Monitor cloud service quota usage across connected accounts and projects."
+			}
+		},
+		{
 			"name": "sharing",
 			"schema": {
 				"attributes": [

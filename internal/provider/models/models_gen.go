@@ -600,82 +600,82 @@ func (e CloudDiagramGroupCldType) Valid() bool {
 
 // Defines values for CloudDiagramGroupGroupType.
 const (
-	Account            CloudDiagramGroupGroupType = "account"
-	Aks                CloudDiagramGroupGroupType = "aks"
-	Az                 CloudDiagramGroupGroupType = "az"
-	AzureCdnProfile    CloudDiagramGroupGroupType = "azure_cdn_profile"
-	AzureDnsZone       CloudDiagramGroupGroupType = "azure_dns_zone"
-	AzureResourceGroup CloudDiagramGroupGroupType = "azure_resource_group"
-	AzureSubscription  CloudDiagramGroupGroupType = "azure_subscription"
-	CustomerGateway    CloudDiagramGroupGroupType = "customer_gateway"
-	Ecs                CloudDiagramGroupGroupType = "ecs"
-	Eks                CloudDiagramGroupGroupType = "eks"
-	GcpInstanceGroup   CloudDiagramGroupGroupType = "gcp_instance_group"
-	GcpManagedZone     CloudDiagramGroupGroupType = "gcp_managed_zone"
-	GkeCluster         CloudDiagramGroupGroupType = "gke_cluster"
-	K8sDaemonSet       CloudDiagramGroupGroupType = "k8s_daemon_set"
-	K8sDeployment      CloudDiagramGroupGroupType = "k8s_deployment"
-	K8sNamespace       CloudDiagramGroupGroupType = "k8s_namespace"
-	K8sPod             CloudDiagramGroupGroupType = "k8s_pod"
-	K8sReplicaSet      CloudDiagramGroupGroupType = "k8s_replica_set"
-	K8sStatefulSet     CloudDiagramGroupGroupType = "k8s_stateful_set"
-	Project            CloudDiagramGroupGroupType = "project"
-	Region             CloudDiagramGroupGroupType = "region"
-	SecurityGroup      CloudDiagramGroupGroupType = "security_group"
-	Subnet             CloudDiagramGroupGroupType = "subnet"
-	Vpc                CloudDiagramGroupGroupType = "vpc"
+	CloudDiagramGroupGroupTypeAccount            CloudDiagramGroupGroupType = "account"
+	CloudDiagramGroupGroupTypeAks                CloudDiagramGroupGroupType = "aks"
+	CloudDiagramGroupGroupTypeAz                 CloudDiagramGroupGroupType = "az"
+	CloudDiagramGroupGroupTypeAzureCdnProfile    CloudDiagramGroupGroupType = "azure_cdn_profile"
+	CloudDiagramGroupGroupTypeAzureDnsZone       CloudDiagramGroupGroupType = "azure_dns_zone"
+	CloudDiagramGroupGroupTypeAzureResourceGroup CloudDiagramGroupGroupType = "azure_resource_group"
+	CloudDiagramGroupGroupTypeAzureSubscription  CloudDiagramGroupGroupType = "azure_subscription"
+	CloudDiagramGroupGroupTypeCustomerGateway    CloudDiagramGroupGroupType = "customer_gateway"
+	CloudDiagramGroupGroupTypeEcs                CloudDiagramGroupGroupType = "ecs"
+	CloudDiagramGroupGroupTypeEks                CloudDiagramGroupGroupType = "eks"
+	CloudDiagramGroupGroupTypeGcpInstanceGroup   CloudDiagramGroupGroupType = "gcp_instance_group"
+	CloudDiagramGroupGroupTypeGcpManagedZone     CloudDiagramGroupGroupType = "gcp_managed_zone"
+	CloudDiagramGroupGroupTypeGkeCluster         CloudDiagramGroupGroupType = "gke_cluster"
+	CloudDiagramGroupGroupTypeK8sDaemonSet       CloudDiagramGroupGroupType = "k8s_daemon_set"
+	CloudDiagramGroupGroupTypeK8sDeployment      CloudDiagramGroupGroupType = "k8s_deployment"
+	CloudDiagramGroupGroupTypeK8sNamespace       CloudDiagramGroupGroupType = "k8s_namespace"
+	CloudDiagramGroupGroupTypeK8sPod             CloudDiagramGroupGroupType = "k8s_pod"
+	CloudDiagramGroupGroupTypeK8sReplicaSet      CloudDiagramGroupGroupType = "k8s_replica_set"
+	CloudDiagramGroupGroupTypeK8sStatefulSet     CloudDiagramGroupGroupType = "k8s_stateful_set"
+	CloudDiagramGroupGroupTypeProject            CloudDiagramGroupGroupType = "project"
+	CloudDiagramGroupGroupTypeRegion             CloudDiagramGroupGroupType = "region"
+	CloudDiagramGroupGroupTypeSecurityGroup      CloudDiagramGroupGroupType = "security_group"
+	CloudDiagramGroupGroupTypeSubnet             CloudDiagramGroupGroupType = "subnet"
+	CloudDiagramGroupGroupTypeVpc                CloudDiagramGroupGroupType = "vpc"
 )
 
 // Valid indicates whether the value is a known member of the CloudDiagramGroupGroupType enum.
 func (e CloudDiagramGroupGroupType) Valid() bool {
 	switch e {
-	case Account:
+	case CloudDiagramGroupGroupTypeAccount:
 		return true
-	case Aks:
+	case CloudDiagramGroupGroupTypeAks:
 		return true
-	case Az:
+	case CloudDiagramGroupGroupTypeAz:
 		return true
-	case AzureCdnProfile:
+	case CloudDiagramGroupGroupTypeAzureCdnProfile:
 		return true
-	case AzureDnsZone:
+	case CloudDiagramGroupGroupTypeAzureDnsZone:
 		return true
-	case AzureResourceGroup:
+	case CloudDiagramGroupGroupTypeAzureResourceGroup:
 		return true
-	case AzureSubscription:
+	case CloudDiagramGroupGroupTypeAzureSubscription:
 		return true
-	case CustomerGateway:
+	case CloudDiagramGroupGroupTypeCustomerGateway:
 		return true
-	case Ecs:
+	case CloudDiagramGroupGroupTypeEcs:
 		return true
-	case Eks:
+	case CloudDiagramGroupGroupTypeEks:
 		return true
-	case GcpInstanceGroup:
+	case CloudDiagramGroupGroupTypeGcpInstanceGroup:
 		return true
-	case GcpManagedZone:
+	case CloudDiagramGroupGroupTypeGcpManagedZone:
 		return true
-	case GkeCluster:
+	case CloudDiagramGroupGroupTypeGkeCluster:
 		return true
-	case K8sDaemonSet:
+	case CloudDiagramGroupGroupTypeK8sDaemonSet:
 		return true
-	case K8sDeployment:
+	case CloudDiagramGroupGroupTypeK8sDeployment:
 		return true
-	case K8sNamespace:
+	case CloudDiagramGroupGroupTypeK8sNamespace:
 		return true
-	case K8sPod:
+	case CloudDiagramGroupGroupTypeK8sPod:
 		return true
-	case K8sReplicaSet:
+	case CloudDiagramGroupGroupTypeK8sReplicaSet:
 		return true
-	case K8sStatefulSet:
+	case CloudDiagramGroupGroupTypeK8sStatefulSet:
 		return true
-	case Project:
+	case CloudDiagramGroupGroupTypeProject:
 		return true
-	case Region:
+	case CloudDiagramGroupGroupTypeRegion:
 		return true
-	case SecurityGroup:
+	case CloudDiagramGroupGroupTypeSecurityGroup:
 		return true
-	case Subnet:
+	case CloudDiagramGroupGroupTypeSubnet:
 		return true
-	case Vpc:
+	case CloudDiagramGroupGroupTypeVpc:
 		return true
 	default:
 		return false
@@ -2725,6 +2725,63 @@ func (e RunReportResultResultMlFeatures) Valid() bool {
 	}
 }
 
+// Defines values for ServiceQuotaCloudProvider.
+const (
+	ServiceQuotaCloudProviderAws ServiceQuotaCloudProvider = "aws"
+	ServiceQuotaCloudProviderGcp ServiceQuotaCloudProvider = "gcp"
+)
+
+// Valid indicates whether the value is a known member of the ServiceQuotaCloudProvider enum.
+func (e ServiceQuotaCloudProvider) Valid() bool {
+	switch e {
+	case ServiceQuotaCloudProviderAws:
+		return true
+	case ServiceQuotaCloudProviderGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ServiceQuotaStatus.
+const (
+	Exceeded ServiceQuotaStatus = "exceeded"
+	Ok       ServiceQuotaStatus = "ok"
+	Warning  ServiceQuotaStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the ServiceQuotaStatus enum.
+func (e ServiceQuotaStatus) Valid() bool {
+	switch e {
+	case Exceeded:
+		return true
+	case Ok:
+		return true
+	case Warning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ServiceQuotaResourceType.
+const (
+	ServiceQuotaResourceTypeAccount ServiceQuotaResourceType = "account"
+	ServiceQuotaResourceTypeProject ServiceQuotaResourceType = "project"
+)
+
+// Valid indicates whether the value is a known member of the ServiceQuotaResourceType enum.
+func (e ServiceQuotaResourceType) Valid() bool {
+	switch e {
+	case ServiceQuotaResourceTypeAccount:
+		return true
+	case ServiceQuotaResourceTypeProject:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TicketDetailExtAPIPlatform.
 const (
 	TicketDetailExtAPIPlatformAmazonWebServices   TicketDetailExtAPIPlatform = "amazon_web_services"
@@ -3598,6 +3655,24 @@ func (e GetCloudDiagramResourceRelationshipsParamsKind) Valid() bool {
 	case GetCloudDiagramResourceRelationshipsParamsKindEdges:
 		return true
 	case GetCloudDiagramResourceRelationshipsParamsKindGroupMembers:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListServiceQuotasParamsCloudProvider.
+const (
+	ListServiceQuotasParamsCloudProviderAws ListServiceQuotasParamsCloudProvider = "aws"
+	ListServiceQuotasParamsCloudProviderGcp ListServiceQuotasParamsCloudProvider = "gcp"
+)
+
+// Valid indicates whether the value is a known member of the ListServiceQuotasParamsCloudProvider enum.
+func (e ListServiceQuotasParamsCloudProvider) Valid() bool {
+	switch e {
+	case ListServiceQuotasParamsCloudProviderAws:
+		return true
+	case ListServiceQuotasParamsCloudProviderGcp:
 		return true
 	default:
 		return false
@@ -7929,6 +8004,88 @@ type Seats struct {
 	NumberOfSeats *int64 `json:"numberOfSeats,omitempty"`
 }
 
+// ServiceQuota defines model for ServiceQuota.
+type ServiceQuota struct {
+	// CloudProvider Cloud provider that owns the quota.
+	CloudProvider ServiceQuotaCloudProvider `json:"cloudProvider"`
+
+	// Limit Current quota limit.
+	//
+	// Example: 100
+	Limit float64 `json:"limit"`
+
+	// ObservedAt Time when DoiT last updated the provider snapshot.
+	//
+	// Example: 2026-07-17T12:00:00Z
+	ObservedAt time.Time `json:"observedAt"`
+
+	// Quota Provider quota or metric name.
+	//
+	// Example: CPUS
+	Quota string `json:"quota"`
+
+	// Region Cloud region associated with the quota. Omitted for global quotas.
+	//
+	// Example: us-central1
+	Region   *string              `json:"region,omitempty"`
+	Resource ServiceQuotaResource `json:"resource"`
+
+	// Service Cloud service associated with the quota.
+	//
+	// Example: Compute Engine
+	Service string `json:"service"`
+
+	// Status Normalized utilization status. Warning begins at 80 percent; exceeded begins at 100 percent.
+	Status ServiceQuotaStatus `json:"status"`
+
+	// Usage Current measured quota usage.
+	//
+	// Example: 85
+	Usage float64 `json:"usage"`
+
+	// UtilizationPercent Usage divided by limit, expressed as a percentage.
+	//
+	// Example: 85
+	UtilizationPercent float64 `json:"utilizationPercent"`
+}
+
+// ServiceQuotaCloudProvider Cloud provider that owns the quota.
+type ServiceQuotaCloudProvider string
+
+// ServiceQuotaStatus Normalized utilization status. Warning begins at 80 percent; exceeded begins at 100 percent.
+type ServiceQuotaStatus string
+
+// ServiceQuotaList defines model for ServiceQuotaList.
+type ServiceQuotaList struct {
+	// Items Service quotas in this page.
+	Items []ServiceQuota `json:"items"`
+
+	// PageToken Opaque token for the next page. Omitted when there are no more results.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of results after filtering and before pagination.
+	RowCount int64 `json:"rowCount"`
+}
+
+// ServiceQuotaResource defines model for ServiceQuotaResource.
+type ServiceQuotaResource struct {
+	// Id AWS account ID or Google Cloud project ID.
+	//
+	// Example: example-project
+	Id string `json:"id"`
+
+	// Name Human-readable resource name when available.
+	//
+	// Example: Example Project
+	Name *string `json:"name,omitempty"`
+
+	// Type Provider resource scope for the quota.
+	Type ServiceQuotaResourceType `json:"type"`
+}
+
+// ServiceQuotaResourceType Provider resource scope for the quota.
+type ServiceQuotaResourceType string
+
 // SetActiveThemeRequest Request body for setting the active custom or preset theme for the authenticated user.
 type SetActiveThemeRequest struct {
 	// ThemeId Identifier of the theme to activate. Send the reserved sentinel
@@ -9057,6 +9214,24 @@ type ListKnownIssuesParams struct {
 	// timestamp are returned.
 	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
+
+// ListServiceQuotasParams defines parameters for ListServiceQuotas.
+type ListServiceQuotasParams struct {
+	// CloudProvider Filter results to a cloud provider. Omit to return all supported providers.
+	CloudProvider *ListServiceQuotasParamsCloudProvider `form:"cloudProvider,omitempty" json:"cloudProvider,omitempty"`
+
+	// MinUtilizationPercent Return quotas whose utilization percentage is greater than or equal to this value.
+	MinUtilizationPercent *float64 `form:"minUtilizationPercent,omitempty" json:"minUtilizationPercent,omitempty"`
+
+	// MaxResults Maximum number of results to return in one page.
+	MaxResults *int32 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+}
+
+// ListServiceQuotasParamsCloudProvider defines parameters for ListServiceQuotas.
+type ListServiceQuotasParamsCloudProvider string
 
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
@@ -10697,6 +10872,15 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /core/v1/cloudincidents/{id} (the `GetKnownIssue` operationId).
 	GetKnownIssue(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListServiceQuotas List service quotas
+	//
+	// Returns the latest service quota usage snapshots collected by DoiT for the authenticated customer.
+	// Results include only quotas retained by DoiT's monitoring collectors and are not a complete or live inventory from the cloud providers.
+	// Results are sorted by utilization percentage in descending order.
+	//
+	// Corresponds with GET /core/v1/service-quotas (the `ListServiceQuotas` operationId).
+	ListServiceQuotas(ctx context.Context, params *ListServiceQuotasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListAccountTeam List account team
 	//
@@ -13011,6 +13195,25 @@ func (c *Client) ListKnownIssues(ctx context.Context, params *ListKnownIssuesPar
 // Corresponds with GET /core/v1/cloudincidents/{id} (the `GetKnownIssue` operationId).
 func (c *Client) GetKnownIssue(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetKnownIssueRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListServiceQuotas List service quotas
+//
+// Returns the latest service quota usage snapshots collected by DoiT for the authenticated customer.
+// Results include only quotas retained by DoiT's monitoring collectors and are not a complete or live inventory from the cloud providers.
+// Results are sorted by utilization percentage in descending order.
+//
+// Corresponds with GET /core/v1/service-quotas (the `ListServiceQuotas` operationId).
+func (c *Client) ListServiceQuotas(ctx context.Context, params *ListServiceQuotasParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListServiceQuotasRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -18054,6 +18257,96 @@ func NewGetKnownIssueRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListServiceQuotasRequest constructs an http.Request for the ListServiceQuotas method
+func NewListServiceQuotasRequest(server string, params *ListServiceQuotasParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/service-quotas")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.CloudProvider != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cloudProvider", *params.CloudProvider, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MinUtilizationPercent != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "minUtilizationPercent", *params.MinUtilizationPercent, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "number", Format: "double"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListAccountTeamRequest constructs an http.Request for the ListAccountTeam method
 func NewListAccountTeamRequest(server string) (*http.Request, error) {
 	var err error
@@ -20612,6 +20905,17 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /core/v1/cloudincidents/{id} (the `GetKnownIssue` operationId).
 	GetKnownIssueWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetKnownIssueResp, error)
+
+	// ListServiceQuotasWithResponse List service quotas
+	//
+	// Returns the latest service quota usage snapshots collected by DoiT for the authenticated customer.
+	// Results include only quotas retained by DoiT's monitoring collectors and are not a complete or live inventory from the cloud providers.
+	// Results are sorted by utilization percentage in descending order.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /core/v1/service-quotas (the `ListServiceQuotas` operationId).
+	ListServiceQuotasWithResponse(ctx context.Context, params *ListServiceQuotasParams, reqEditors ...RequestEditorFn) (*ListServiceQuotasResp, error)
 
 	// ListAccountTeamWithResponse List account team
 	//
@@ -26237,6 +26541,75 @@ func (r GetKnownIssueResp) ContentType() string {
 	return ""
 }
 
+type ListServiceQuotasResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceQuotaList
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListServiceQuotasResp) GetJSON200() *ServiceQuotaList {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListServiceQuotasResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListServiceQuotasResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListServiceQuotasResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r ListServiceQuotasResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListServiceQuotasResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListServiceQuotasResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListServiceQuotasResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListServiceQuotasResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListAccountTeamResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -30102,6 +30475,23 @@ func (c *ClientWithResponses) GetKnownIssueWithResponse(ctx context.Context, id 
 		return nil, err
 	}
 	return ParseGetKnownIssueResp(rsp)
+}
+
+// ListServiceQuotasWithResponse List service quotas
+//
+// Returns the latest service quota usage snapshots collected by DoiT for the authenticated customer.
+// Results include only quotas retained by DoiT's monitoring collectors and are not a complete or live inventory from the cloud providers.
+// Results are sorted by utilization percentage in descending order.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /core/v1/service-quotas (the `ListServiceQuotas` operationId).
+func (c *ClientWithResponses) ListServiceQuotasWithResponse(ctx context.Context, params *ListServiceQuotasParams, reqEditors ...RequestEditorFn) (*ListServiceQuotasResp, error) {
+	rsp, err := c.ListServiceQuotas(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListServiceQuotasResp(rsp)
 }
 
 // ListAccountTeamWithResponse List account team
@@ -34830,6 +35220,60 @@ func ParseGetKnownIssueResp(rsp *http.Response) (*GetKnownIssueResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListServiceQuotasResp parses an HTTP response from a ListServiceQuotasWithResponse call
+func ParseListServiceQuotasResp(rsp *http.Response) (*ListServiceQuotasResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListServiceQuotasResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceQuotaList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
