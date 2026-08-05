@@ -240,6 +240,7 @@ var (
 
 func getServiceQuotaCount(t *testing.T) int {
 	t.Helper()
+	skipIfNoAcc(t)
 	serviceQuotaCountOnce.Do(func() {
 		serviceQuotaCount = computeServiceQuotaCount(t)
 	})
