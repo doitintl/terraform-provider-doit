@@ -55,3 +55,37 @@ func (m useEmptyForUnknownWhenConfigNullModifier) PlanModifyString(_ context.Con
 		resp.PlanValue = types.StringValue("")
 	}
 }
+
+// useEmptyForUnknownBoolWhenConfigNull is the Bool analogue of
+// useEmptyForUnknownWhenConfigNull: it proposes the zero value (false) rather
+// than null when the config value is null and a prior state value exists.
+//
+// Use this — not useNullForUnknownBoolWhenConfigNull — when the API clears the
+// field via an explicit false and ignores an explicit null. doit_allocation's
+// anomaly_detection is such a field: PATCH {"anomalyDetection": null} returns
+// 200 but leaves the stored value untouched, while PATCH
+// {"anomalyDetection": false} clears it. Proposing null there would plan a value
+// the API never applies, leaving permanent drift between state and remote.
+//
+// Because the planned value is a known false (not Unknown), the overlay's
+// IsUnknown() guard leaves it in place and the request builder sends it verbatim.
+func useEmptyForUnknownBoolWhenConfigNull() planmodifier.Bool {
+	return useEmptyForUnknownBoolWhenConfigNullModifier{}
+}
+
+type useEmptyForUnknownBoolWhenConfigNullModifier struct{}
+
+func (m useEmptyForUnknownBoolWhenConfigNullModifier) Description(_ context.Context) string {
+	return "Proposes false when the config value is null (omitted or explicitly set) " +
+		"and a prior state value exists, allowing the attribute to be cleared."
+}
+
+func (m useEmptyForUnknownBoolWhenConfigNullModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m useEmptyForUnknownBoolWhenConfigNullModifier) PlanModifyBool(_ context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
+	if req.ConfigValue.IsNull() && !req.StateValue.IsNull() {
+		resp.PlanValue = types.BoolValue(false)
+	}
+}

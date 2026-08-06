@@ -13,10 +13,13 @@ Define how costs are distributed across your organization.
 ## Example Usage
 
 ```terraform
-# Create an allocation for the development environment based on a project label
+# Create an allocation for the development environment based on a project label.
+# anomaly_detection is only valid on single allocations (those using "rule");
+# setting it alongside "rules" is rejected at plan time.
 resource "doit_allocation" "allocation_dev" {
-  name        = "Dev"
-  description = "Development Environment"
+  name              = "Dev"
+  description       = "Development Environment"
+  anomaly_detection = true
   rule = {
     formula = "A"
     components = [{
@@ -247,6 +250,7 @@ resource "doit_allocation" "dynamic_countries" {
 
 ### Optional
 
+- `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
 - `folder_id` (String) Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
 - `rule` (Attributes) Single allocation rule. Components can reference other existing allocation rules by using the "allocation_rule" dimension type. (see [below for nested schema](#nestedatt--rule))
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
@@ -256,7 +260,6 @@ resource "doit_allocation" "dynamic_countries" {
 ### Read-Only
 
 - `allocation_type` (String) Composition type of allocation.
-- `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation.
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
 - `id` (String) Allocation ID.
 - `type` (String) Type of allocation (preset or custom).

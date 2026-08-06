@@ -332,6 +332,13 @@
 			"schema": {
 				"attributes": [
 					{
+						"name": "anomaly_detection",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether anomaly detection is enabled for this allocation. Only applicable to single allocations."
+						}
+					},
+					{
 						"name": "description",
 						"string": {
 							"computed_optional_required": "required",
@@ -654,13 +661,6 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "Composition type of allocation."
-						}
-					},
-					{
-						"name": "anomaly_detection",
-						"bool": {
-							"computed_optional_required": "computed",
-							"description": "Whether anomaly detection is enabled for this allocation."
 						}
 					},
 					{

@@ -28,6 +28,10 @@ func TestAccAllocationsDataSource_MaxResultsOnly(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_allocations.limited", "allocations.#", "2"),
 					resource.TestCheckResourceAttrSet("data.doit_allocations.limited", "page_token"),
+					// anomaly_detection is a newly mapped list-item attribute. The
+					// generated NewAllocationsValue constructor errors at runtime if
+					// the mapping omits it, so assert it is populated.
+					resource.TestCheckResourceAttrSet("data.doit_allocations.limited", "allocations.0.anomaly_detection"),
 				),
 			},
 			{

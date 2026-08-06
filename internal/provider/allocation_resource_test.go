@@ -3536,3 +3536,223 @@ resource "doit_allocation" "switch" {
 }
 `, rName, rName, rName)
 }
+
+// TestAccAllocation_AnomalyDetectionLifecycle covers the full Category A lifecycle for
+// anomaly_detection, which is cleared with an explicit false rather than null: the API
+// returns 200 for a null anomalyDetection but leaves the stored value untouched.
+// Step 6 (omitting the attribute) is the decisive assertion — it must land on false,
+// not null.
+func TestAccAllocation_AnomalyDetectionLifecycle(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	enabled, disabled := true, false
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create with anomaly_detection = true.
+			{
+				Config: testAccAllocationAnomalyDetection(rName, &enabled),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.anomaly",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.anomaly",
+						tfjsonpath.New("anomaly_detection"),
+						knownvalue.Bool(true)),
+				},
+			},
+			// Step 2: drift check.
+			{
+				Config: testAccAllocationAnomalyDetection(rName, &enabled),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Step 3: flip to an explicit false.
+			{
+				Config: testAccAllocationAnomalyDetection(rName, &disabled),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.anomaly",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.anomaly",
+						tfjsonpath.New("anomaly_detection"),
+						knownvalue.Bool(false)),
+				},
+			},
+			// Step 4: drift check.
+			{
+				Config: testAccAllocationAnomalyDetection(rName, &disabled),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Step 5: back to true, so the clear in step 6 is a real transition.
+			{
+				Config: testAccAllocationAnomalyDetection(rName, &enabled),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.anomaly",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.anomaly",
+						tfjsonpath.New("anomaly_detection"),
+						knownvalue.Bool(true)),
+				},
+			},
+			// Step 6: omit the attribute — the clearing modifier plans false and the
+			// API honors it. A null here would mean the modifier is wrong.
+			{
+				Config: testAccAllocationAnomalyDetection(rName, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.anomaly",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.anomaly",
+						tfjsonpath.New("anomaly_detection"),
+						knownvalue.Bool(false)),
+				},
+			},
+			// Step 7: drift check — the cleared value must be stable.
+			{
+				Config: testAccAllocationAnomalyDetection(rName, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Step 8: import.
+			{
+				ResourceName:      "doit_allocation.anomaly",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"update_time", // Computed field that changes on each modification
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_AnomalyDetection_OmittedOnCreate verifies the Optional+Computed
+// resolution on the Create path: the API stores false for a fresh allocation that never
+// mentions the field, and that must not drift.
+func TestAccAllocation_AnomalyDetection_OmittedOnCreate(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationAnomalyDetection(rName, nil),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.anomaly",
+						tfjsonpath.New("anomaly_detection"),
+						knownvalue.Bool(false)),
+				},
+			},
+			{
+				Config: testAccAllocationAnomalyDetection(rName, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_AnomalyDetection_ConflictsWithRules verifies the field is rejected
+// at plan time on group allocations. Without the validator the request reaches the API
+// and fails with a 400 ("group allocation can not have 'anomalyDetection' field").
+func TestAccAllocation_AnomalyDetection_ConflictsWithRules(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupWithAnomalyDetection(rName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+			},
+		},
+	})
+}
+
+// testAccAllocationAnomalyDetection builds a single-allocation config, emitting the
+// anomaly_detection line only when ad is non-nil.
+func testAccAllocationAnomalyDetection(rName string, ad *bool) string {
+	adLine := ""
+	if ad != nil {
+		adLine = fmt.Sprintf("  anomaly_detection = %t\n", *ad)
+	}
+	return fmt.Sprintf(`
+resource "doit_allocation" "anomaly" {
+  name        = "%s"
+  description = "anomaly detection lifecycle test"
+%s  rule = {
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["JP"]
+    }]
+  }
+}
+`, rName, adLine)
+}
+
+func testAccAllocationGroupWithAnomalyDetection(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "anomaly_group" {
+  name              = "%s"
+  description       = "anomaly detection is invalid on group allocations"
+  anomaly_detection = true
+  unallocated_costs = "%s-other"
+  rules = [{
+    action  = "create"
+    name    = "%s-r1"
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["JP"]
+    }]
+  }]
+}
+`, rName, rName, rName)
+}

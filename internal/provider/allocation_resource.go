@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
@@ -118,10 +117,6 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["allocation_type"] = attr
 	}
-	if attr, ok := s.Attributes["anomaly_detection"].(schema.BoolAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, boolplanmodifier.UseStateForUnknown())
-		s.Attributes["anomaly_detection"] = attr
-	}
 	if attr, ok := s.Attributes["type"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["type"] = attr
@@ -148,6 +143,14 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		s.Attributes["unallocated_costs"] = attr
 	}
 
+	// Category A: user-controlled toggle, cleared with an explicit false rather than
+	// null — the API returns 200 for a null anomalyDetection but leaves the stored
+	// value untouched, so planning null would drift permanently.
+	if attr, ok := s.Attributes["anomaly_detection"].(schema.BoolAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownBoolWhenConfigNull())
+		s.Attributes["anomaly_detection"] = attr
+	}
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Read:   true,
@@ -171,6 +174,13 @@ func (r *allocationResource) ConfigValidators(_ context.Context) []resource.Conf
 		resourcevalidator.Conflicting(
 			path.MatchRoot("rule"),
 			path.MatchRoot("unallocated_costs"),
+		),
+		// The API rejects anomalyDetection on group allocations with a 400
+		// ("group allocation can not have 'anomalyDetection' field") on both
+		// create and update. Catch it at plan time instead.
+		resourcevalidator.Conflicting(
+			path.MatchRoot("anomaly_detection"),
+			path.MatchRoot("rules"),
 		),
 	}
 }

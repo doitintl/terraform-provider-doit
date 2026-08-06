@@ -28,9 +28,10 @@ func AllocationResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Composition type of allocation.",
 			},
 			"anomaly_detection": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "Whether anomaly detection is enabled for this allocation.",
-				MarkdownDescription: "Whether anomaly detection is enabled for this allocation.",
+				Description:         "Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.",
+				MarkdownDescription: "Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.",
 			},
 			"create_time": schema.Int64Attribute{
 				Computed:            true,

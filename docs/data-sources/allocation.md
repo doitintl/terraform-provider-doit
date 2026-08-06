@@ -46,7 +46,7 @@ output "allocation_description" {
 ### Read-Only
 
 - `allocation_type` (String) Composition type of allocation.
-- `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation.
+- `anomaly_detection` (Boolean) Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
 - `create_time` (Number) The time when the allocation was created (in UNIX timestamp).
 - `description` (String) Allocation description.
 - `folder_id` (String) Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).

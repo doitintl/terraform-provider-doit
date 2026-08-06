@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### ENHANCEMENTS
+
+- **resource/doit_allocation**: `anomaly_detection` is now writable on single allocations. Removing it from configuration disables it (the API clears the field with an explicit `false`); it is rejected at plan time when used with group allocations (`rules`)
+- **data-source/doit_allocations**: Added the `anomaly_detection` field to listed allocations
+
 ## v1.6.0 (2026-07-30)
 
 ### FEATURES

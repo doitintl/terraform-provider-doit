@@ -585,7 +585,7 @@
 						"name": "anomaly_detection",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Whether anomaly detection is enabled for this allocation."
+							"description": "Whether anomaly detection is enabled for this allocation. Only applicable to single allocations."
 						}
 					},
 					{
@@ -919,6 +919,13 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "Composition type of allocation (single or group)."
+										}
+									},
+									{
+										"name": "anomaly_detection",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether anomaly detection is enabled for this allocation. Only applicable to single allocations."
 										}
 									},
 									{

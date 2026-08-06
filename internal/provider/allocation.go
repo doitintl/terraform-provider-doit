@@ -50,14 +50,23 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	// ── Computed-only fields: always from resolved ──
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
-	plan.UpdateTime = resolved.UpdateTime
-	plan.AnomalyDetection = resolved.AnomalyDetection
+	// Guarded: a modifier-triggered Update (e.g. clearing anomaly_detection) leaves
+	// UpdateTime Known (copied from prior state) rather than Unknown, but the API
+	// always returns a new timestamp — assigning unconditionally would then conflict
+	// with Terraform's planned (stale) value. On Create/normal Update it's Unknown, so
+	// the guard is a no-op there.
+	if plan.UpdateTime.IsUnknown() {
+		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+	}
 	plan.Type = resolved.Type
 	plan.AllocationType = resolved.AllocationType
 
 	// ── Optional+Computed scalar fields: only when Unknown ──
 	if plan.UnallocatedCosts.IsUnknown() {
 		plan.UnallocatedCosts = resolved.UnallocatedCosts
+	}
+	if plan.AnomalyDetection.IsUnknown() {
+		plan.AnomalyDetection = resolved.AnomalyDetection
 	}
 
 	// ── Rule (single nested object): use resolved when Unknown, overlay subfields when Known ──
@@ -128,6 +137,7 @@ func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req m
 	req.FolderId = common.FolderId
 	req.Rule = common.Rule
 	req.Rules = common.Rules
+	req.AnomalyDetection = common.AnomalyDetection
 
 	return req, diags
 }
@@ -181,6 +191,17 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 		if v := plan.UnallocatedCosts.ValueString(); v != "" {
 			req.UnallocatedCosts = valueToNullable(v)
 		}
+	}
+
+	// AnomalyDetection is only valid for "single" allocations — the API returns a
+	// 400 ("group allocation can not have 'anomalyDetection' field") if it is
+	// present at all on a group allocation, so it must be omitted rather than sent
+	// as false. A ConfigValidator keeps it null whenever rules is set.
+	// ValueBoolPointer() is nil when Null/Unknown, which the *bool field omits from
+	// the request — never an explicit JSON null, since the API ignores that anyway
+	// (clearing goes through the plan modifier's explicit false instead).
+	if !plan.AnomalyDetection.IsUnknown() {
+		req.AnomalyDetection = plan.AnomalyDetection.ValueBoolPointer()
 	}
 
 	// Populate single Rule if present
@@ -309,7 +330,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 	state.Id = types.StringPointerValue(resp.Id)
 	state.Type = types.StringPointerValue(resp.Type)
 	state.Description = types.StringPointerValue(resp.Description)
-	state.AnomalyDetection = types.BoolPointerValue(nullableToPointer(resp.AnomalyDetection))
+	state.AnomalyDetection = types.BoolPointerValue(resp.AnomalyDetection)
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
 	state.Name = types.StringPointerValue(resp.Name)

@@ -41,6 +41,10 @@ func TestAccAllocationDataSource(t *testing.T) {
 						"data.doit_allocation.test",
 						tfjsonpath.New("rule").AtMapKey("formula"),
 						knownvalue.StringExact("A")),
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("anomaly_detection"),
+						knownvalue.Bool(true)),
 				},
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -84,8 +88,9 @@ func TestAccAllocationDataSource_Group(t *testing.T) {
 func testAccAllocationDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "test" {
-    name        = %q
-    description = "test allocation for data source"
+    name              = %q
+    description       = "test allocation for data source"
+    anomaly_detection = true
     rule = {
        formula = "A"
        components = [
