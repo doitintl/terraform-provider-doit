@@ -3460,15 +3460,9 @@ func TestAccAllocation_TypeSwitchForcesReplace(t *testing.T) {
 		})
 	})
 
-	// Regression test: prior state's anomaly_detection must not leak into the
-	// replacement's create request. Optional+Computed attributes not set in the
-	// new config carry forward the prior state value (via Terraform's standard
-	// proposed-new-state calculation, which the useEmptyForUnknownBoolWhenConfigNull
-	// modifier makes an explicit Known(false) rather than Unknown), so if the
-	// request builder didn't gate on the allocation shape, this would send
-	// "anomalyDetection" to the group create endpoint, which rejects it with a 400
-	// ("group allocation can not have 'anomalyDetection' field") regardless of the
-	// field's value.
+	// Verifies that a prior true anomaly_detection value doesn't leak into the
+	// group create request on a rule->rules switch: the API rejects the field
+	// unconditionally on group allocations, regardless of its value.
 	t.Run("rule_with_anomaly_detection_to_rules", func(t *testing.T) {
 		rName := acctest.RandomWithPrefix("tf-acc-alloc-switch")
 		resource.ParallelTest(t, resource.TestCase{
@@ -3485,12 +3479,9 @@ func TestAccAllocation_TypeSwitchForcesReplace(t *testing.T) {
 					},
 				},
 				// Step 2: switch to group (rules), omitting anomaly_detection — forces
-				// replacement. Must succeed (no API 400) and must not carry the prior
-				// true value into the new group allocation. The pre-apply
-				// ExpectUnknownValue pins down *why* it's safe: a destroy-before-create
-				// plans the create half from scratch (no prior state carried in), so
-				// this Optional+Computed attribute is Unknown, not a copied-forward
-				// Known(false/true) — the request builder's IsUnknown() guard omits it.
+				// replacement. Must succeed (no API 400), and the pre-apply plan must
+				// show anomaly_detection as unknown rather than a value carried
+				// forward from the destroyed single allocation.
 				{
 					Config: testAccAllocationSwitchRules(rName),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -3513,6 +3504,59 @@ func TestAccAllocation_TypeSwitchForcesReplace(t *testing.T) {
 				// Step 3: drift check after replacement.
 				{
 					Config: testAccAllocationSwitchRules(rName),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+					},
+				},
+			},
+		})
+	})
+
+	// Same as above, but under lifecycle { create_before_destroy = true }, where
+	// the new instance is created while the old one still exists. Names differ
+	// (-single/-group) so the test isn't confounded by a possible
+	// allocation-name-uniqueness constraint on the API side.
+	t.Run("rule_with_anomaly_detection_to_rules_create_before_destroy", func(t *testing.T) {
+		rName := acctest.RandomWithPrefix("tf-acc-alloc-switch")
+		resource.ParallelTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+			PreCheck:                 testAccPreCheckFunc(t),
+			TerraformVersionChecks:   testAccTFVersionChecks,
+			Steps: []resource.TestStep{
+				// Step 1: create as single (rule) with anomaly_detection explicitly true.
+				{
+					Config: testAccAllocationSwitchRuleWithAnomalyDetectionCBD(rName),
+					ConfigStateChecks: []statecheck.StateCheck{
+						statecheck.ExpectKnownValue("doit_allocation.switch",
+							tfjsonpath.New("anomaly_detection"), knownvalue.Bool(true)),
+					},
+				},
+				// Step 2: switch to group (rules) with create_before_destroy — forces
+				// replacement, new instance created before the old one is destroyed.
+				// Must succeed (no API 400) and the pre-apply plan must show
+				// anomaly_detection as Unknown, not a copied-forward Known value.
+				{
+					Config: testAccAllocationSwitchRulesCBD(rName),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectResourceAction(
+								"doit_allocation.switch",
+								plancheck.ResourceActionCreateBeforeDestroy,
+							),
+							plancheck.ExpectUnknownValue(
+								"doit_allocation.switch",
+								tfjsonpath.New("anomaly_detection"),
+							),
+						},
+					},
+					ConfigStateChecks: []statecheck.StateCheck{
+						statecheck.ExpectKnownValue("doit_allocation.switch",
+							tfjsonpath.New("rules"), knownvalue.ListSizeExact(1)),
+					},
+				},
+				// Step 3: drift check after replacement.
+				{
+					Config: testAccAllocationSwitchRulesCBD(rName),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 					},
@@ -3594,6 +3638,52 @@ resource "doit_allocation" "switch" {
   }
 }
 `, rName)
+}
+
+func testAccAllocationSwitchRuleWithAnomalyDetectionCBD(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "switch" {
+  name              = "%s-single"
+  description       = "type switch test (create_before_destroy)"
+  anomaly_detection = true
+  rule = {
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["JP"]
+    }]
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+`, rName)
+}
+
+func testAccAllocationSwitchRulesCBD(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "switch" {
+  name              = "%s-group"
+  description       = "type switch test (create_before_destroy)"
+  unallocated_costs = "%s-other"
+  rules = [{
+    action  = "create"
+    name    = "%s-r1"
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["JP"]
+    }]
+  }]
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+`, rName, rName, rName)
 }
 
 func testAccAllocationSwitchRules(rName string) string {
