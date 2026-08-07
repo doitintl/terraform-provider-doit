@@ -511,8 +511,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 													AttrTypes: MetricValue{}.AttributeTypes(ctx),
 												},
 											},
-											Optional:            true,
-											Computed:            true,
+											Required:            true,
 											Description:         "Metric selector used in reports and filters.",
 											MarkdownDescription: "Metric selector used in reports and filters.",
 										},
@@ -770,8 +769,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										AttrTypes: MetricValue{}.AttributeTypes(ctx),
 									},
 								},
-								Optional:            true,
-								Computed:            true,
+								Required:            true,
 								Description:         "Metric selector used in reports and filters.",
 								MarkdownDescription: "Metric selector used in reports and filters.",
 							},
@@ -789,8 +787,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								Default: stringdefault.StaticString("single_value"),
 							},
 							"operator": schema.StringAttribute{
-								Optional:            true,
-								Computed:            true,
+								Required:            true,
 								Description:         "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
 								MarkdownDescription: "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.\nPossible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`",
 								Validators: []validator.String{
@@ -808,8 +805,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							},
 							"values": schema.ListAttribute{
 								ElementType: types.Float64Type,
-								Optional:    true,
-								Computed:    true,
+								Required:    true,
 							},
 						},
 						CustomType: MetricFilterType{

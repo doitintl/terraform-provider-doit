@@ -64,7 +64,12 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		s.Attributes["description"] = attr
 	}
 
-	// Category A: nested clearable filter/metric_filter values and mode.
+	// Category A: nested clearable filter values and mode.
+	//
+	// metric_filter.values used to be here too, but the spec now marks
+	// metric_filter's metric/operator/values Required (the API rejects a
+	// metric_filter missing any of them), so a clearing modifier there would be
+	// dead code — Terraform requires the value to be present.
 	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
 		if filtersAttr, ok := configAttr.Attributes["filters"].(schema.ListNestedAttribute); ok {
 			if attr, ok := filtersAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
@@ -76,13 +81,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 				filtersAttr.NestedObject.Attributes["mode"] = attr
 			}
 			configAttr.Attributes["filters"] = filtersAttr
-		}
-		if mfAttr, ok := configAttr.Attributes["metric_filter"].(schema.SingleNestedAttribute); ok {
-			if attr, ok := mfAttr.Attributes["values"].(schema.ListAttribute); ok {
-				attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
-				mfAttr.Attributes["values"] = attr
-			}
-			configAttr.Attributes["metric_filter"] = mfAttr
 		}
 		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(schema.SingleNestedAttribute); ok {
 			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullOrDefaultForForecastSettings())
@@ -133,9 +131,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 
 		// config.filters
 		"config.filters[*].inverse", // API defaults to false
-
-		// config.metric_filter
-		"config.metric_filter.operator", // API defaults operator
 
 		// config.group
 		"config.group[*].id",          // API-assigned group ID
@@ -203,7 +198,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.advanced_analysis",                      // silently preserved on removal
 		"config.display_settings",                       // silently preserved on removal
 		"config.metric",                                 // deprecated mirror of metrics[0]; API always derives it, never clears
-		"config.metric_filter.metric",                   // API rejects omission (400 "metric can not be null"); container removal handled by metric_filter (Cat C)
 		"config.secondary_time_range",                   // silently preserved on removal
 		"config.secondary_time_range.custom_time_range", // silently preserved on removal
 		"config.time_range",                             // silently preserved on removal

@@ -4614,18 +4614,29 @@ resource "doit_report" "metric_no_value" {
 //   - Omitting the group block: apply "succeeds" (the API PATCH merge treats an
 //     omitted group as no change), Read puts the group back, and every subsequent
 //     plan diffs again — forever.
-//   - group = [] does not clear it either: the API returns 400
-//     {"field":"filters","message":"filter id is not listed in the rows field:
-//     fixed:cloud_provider"} even though stored filters is null, so a top/bottom
-//     limit appears to imply a server-side filter that is orphaned when the group
-//     goes away.
+//   - group = [] alone does not clear it either, when the group carries a limit:
+//     the API returns 400 {"field":"filters","message":"filter id is not listed
+//     in the rows field: fixed:cloud_provider"}. Sending {"group":[],"filters":[]}
+//     in the same request DOES clear it (200). A group with no limit clears with
+//     group:[] alone. So a top/bottom limit implies a server-side filter on the
+//     grouped dimension that is orphaned when the group goes away — and that
+//     filter is NOT visible in GET .../config (it reports filters: null), so the
+//     provider cannot drop just the offending filter; clearing all filters is the
+//     only lever, which would wipe filters set outside Terraform.
+//
+// Scope: only groups carrying a limit are affected. Without a limit every
+// descendant of group[*] is Optional+Computed (id, type), so
+// optionalValueNotComputable stays false and removal behaves as before. The
+// with-limit permadiff was measured; the without-limit case is inferred from the
+// schema and has not been exercised end to end.
 //
 // Before the metric leaves became Required every descendant of group was Computed,
 // so removal was silently preserved with no drift (Category B). Fixing it is a
-// product decision — genuine clearing (needs the API to accept group=[]),
-// Category C replace-on-removal (destroy+creates the report, changing its ID), or
-// dropping it from state (misrepresents real user data) — and is deferred to the
-// follow-up PR that carries the metric_filter/limit spec fix.
+// product decision — genuine clearing (now known to be possible, but needs the
+// filters coupling resolved), Category C replace-on-removal (destroy+creates the
+// report, changing its ID), or dropping it from state (misrepresents real user
+// data). The API team is investigating the filters coupling; deferred until that
+// lands.
 func TestAccReport_GroupRemoval_Permadiff(t *testing.T) {
 	t.Skip("known regression: removing a group block with limit.metric does not converge; see doc comment")
 }
@@ -4753,23 +4764,24 @@ func TestAccReport_Metric_UpgradeFromBothMirrorsInState(t *testing.T) {
 	})
 }
 
-// TestAccReport_NestedMetricOmitted pins the measured API behaviour for the two
-// metric containers the spec still leaves optional: metric_filter.metric and
-// group[*].limit.metric. Both are rejected at apply time with a 400 when the
-// metric object is omitted, which is why neither is exposed to the phantom-diff
-// that config.metric/config.metrics needed handling for — the API simply never
-// lets such a report exist, so state can never hold an unconfigured-but-echoed
-// metric there.
+// TestAccReport_NestedMetricOmitted covers the nested metric containers whose
+// requirement was previously only enforced by the API.
 //
-// The spec is wrong here: ExternalConfigMetricFilter and Limit should list
-// `metric` as required, the way ExternalLimitByChange already does. That is an
-// upstream fix, not something to work around in the provider. When it lands, the
-// generated schema turns these into plan-time errors and this test will fail —
-// at which point swap the expectations to the Terraform wording used by
-// TestAccReport_MetricFieldsRequired.
+// These were originally added as probes: the API rejected an omitted
+// `metric_filter.metric` / `group[*].limit.metric` with a 400 at apply time
+// ("metric can not be null"), while the spec left both optional. The API team
+// confirmed the requirement and the spec now marks `metric` required on both
+// `Limit` and `ExternalConfigMetricFilter` (which also gained `operator` and
+// `values`), so the generated schema enforces all of it at plan time and the
+// cryptic apply-time 400 is gone.
+//
+// This is also why neither container is exposed to the phantom diff that
+// config.metric/config.metrics needed handling for: the API never lets such a
+// report exist, so state can never hold an unconfigured-but-echoed metric there.
 func TestAccReport_NestedMetricOmitted(t *testing.T) {
-	// Apply-time API rejection, not a plan-time schema error.
-	apiRejects := regexp.MustCompile(`(?s)metric can not be null|MetricFilter\.Metric`)
+	// Terraform's own config decoder rejects these now, before the provider is
+	// called. HCL word-wraps diagnostics, so tolerate a wrap before the name.
+	missingRequiredField := regexp.MustCompile(`attribute\s+"(metric|operator|values)" is required`)
 
 	cases := []struct {
 		name   string
@@ -4777,6 +4789,8 @@ func TestAccReport_NestedMetricOmitted(t *testing.T) {
 	}{
 		{"metric_filter_metric_omitted", testAccReportMetricFilterMetricOmitted},
 		{"group_limit_metric_omitted", testAccReportGroupLimitMetricOmitted},
+		{"metric_filter_operator_omitted", testAccReportMetricFilterOperatorOmitted},
+		{"metric_filter_values_omitted", testAccReportMetricFilterValuesOmitted},
 	}
 
 	for _, tc := range cases {
@@ -4789,7 +4803,7 @@ func TestAccReport_NestedMetricOmitted(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      tc.config(n),
-						ExpectError: apiRejects,
+						ExpectError: missingRequiredField,
 					},
 				},
 			})
@@ -4809,6 +4823,60 @@ resource "doit_report" "mf_metric_omitted" {
         metric_filter = {
             operator = "gt"
             values   = [1]
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricFilterOperatorOmitted(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_operator_omitted" {
+    name = "test-mf-operator-omitted-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            values = [1]
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricFilterValuesOmitted(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_values_omitted" {
+    name = "test-mf-values-omitted-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            operator = "gt"
         }
         aggregation    = "total"
         time_interval  = "month"

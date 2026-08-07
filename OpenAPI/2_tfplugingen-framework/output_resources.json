@@ -2953,7 +2953,7 @@
 															{
 																"name": "metric",
 																"single_nested": {
-																	"computed_optional_required": "computed_optional",
+																	"computed_optional_required": "required",
 																	"attributes": [
 																		{
 																			"name": "type",
@@ -3238,7 +3238,7 @@
 											{
 												"name": "metric",
 												"single_nested": {
-													"computed_optional_required": "computed_optional",
+													"computed_optional_required": "required",
 													"attributes": [
 														{
 															"name": "type",
@@ -3295,7 +3295,7 @@
 											{
 												"name": "operator",
 												"string": {
-													"computed_optional_required": "computed_optional",
+													"computed_optional_required": "required",
 													"description": "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`\u003e`, `\u003e=`, …) instead.",
 													"validators": [
 														{
@@ -3314,7 +3314,7 @@
 											{
 												"name": "values",
 												"list": {
-													"computed_optional_required": "computed_optional",
+													"computed_optional_required": "required",
 													"element_type": {
 														"float64": {}
 													}

@@ -6479,7 +6479,7 @@ type ExternalConfigMetricFilter struct {
 	// Metric Metric selector used in reports and filters.
 	//
 	// Example: {"type":"basic","value":"cost"}
-	Metric *ExternalMetric `json:"metric,omitempty"`
+	Metric ExternalMetric `json:"metric"`
 
 	// Operand Whether the threshold applies to each value (default) or the series total.
 	// Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
@@ -6489,8 +6489,8 @@ type ExternalConfigMetricFilter struct {
 
 	// Operator Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
 	// `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
-	Operator *ExternalConfigMetricFilterOperator `json:"operator,omitempty"`
-	Values   *[]float64                          `json:"values,omitempty"`
+	Operator ExternalConfigMetricFilterOperator `json:"operator"`
+	Values   []float64                          `json:"values"`
 }
 
 // ExternalConfigMetricFilterOperand Whether the threshold applies to each value (default) or the series total.
@@ -7369,7 +7369,7 @@ type Limit struct {
 	// Metric Metric selector used in reports and filters.
 	//
 	// Example: {"type":"basic","value":"cost"}
-	Metric *ExternalMetric `json:"metric,omitempty"`
+	Metric ExternalMetric `json:"metric"`
 
 	// Sort Sort order for ranking results.
 	Sort *LimitSort `json:"sort,omitempty"`

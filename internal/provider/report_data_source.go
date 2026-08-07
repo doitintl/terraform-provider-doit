@@ -390,7 +390,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 			m["limit"] = datasource_report.NewLimitValueNull()
 
 			if g.Limit != nil {
-				metricVal, metricDiags := ds.externalMetricToValue(ctx, g.Limit.Metric)
+				metricVal, metricDiags := ds.externalMetricToValue(ctx, &g.Limit.Metric)
 				diags.Append(metricDiags...)
 				if diags.HasError() {
 					return diags
@@ -460,7 +460,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	// Nested Object: MetricFilter
 	if config.MetricFilter != nil {
 		mfMap := map[string]attr.Value{
-			"operator": types.StringValue(string(*config.MetricFilter.Operator)),
+			"operator": types.StringValue(string(config.MetricFilter.Operator)),
 			// operand has the effective server default "single_value"; mirror the
 			// resource mapper and normalize a nil API response to that default.
 			"operand": types.StringValue("single_value"),
@@ -469,7 +469,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 			mfMap["operand"] = types.StringValue(string(*config.MetricFilter.Operand))
 		}
 
-		metricFilterMetricVal, mfMetricDiags := ds.externalMetricToValue(ctx, config.MetricFilter.Metric)
+		metricFilterMetricVal, mfMetricDiags := ds.externalMetricToValue(ctx, &config.MetricFilter.Metric)
 		diags.Append(mfMetricDiags...)
 		if diags.HasError() {
 			log.Println("Error creating metric value mfMap")
@@ -477,7 +477,7 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		}
 		mfMap["metric"] = metricFilterMetricVal
 		if config.MetricFilter.Values != nil {
-			mfValues, mfValueDiags := types.ListValueFrom(ctx, types.Float64Type, *config.MetricFilter.Values)
+			mfValues, mfValueDiags := types.ListValueFrom(ctx, types.Float64Type, config.MetricFilter.Values)
 			diags.Append(mfValueDiags...)
 			if diags.HasError() {
 				log.Println("Error creating metric filter values mfMap")

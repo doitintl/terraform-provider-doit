@@ -273,19 +273,11 @@ func overlayCustomTimeRange(resolved, plan *resource_report.CustomTimeRangeValue
 // the other config sub-objects.
 func overlayMetric(_, _ *resource_report.MetricValue) {}
 
-func overlayMetricFilter(resolved, plan *resource_report.MetricFilterValue) {
-	if plan.Operator.IsUnknown() {
-		plan.Operator = resolved.Operator
-	}
-	if plan.Values.IsUnknown() {
-		plan.Values = resolved.Values
-	}
-	if plan.Metric.IsUnknown() {
-		plan.Metric = resolved.Metric
-	} else if !plan.Metric.IsNull() {
-		overlayMetric(&resolved.Metric, &plan.Metric)
-	}
-}
+// overlayMetricFilter only has to handle `operand`, which has a schema Default
+// and so is resolved at plan time. metric, operator and values are all Required
+// (the API rejects a metric_filter missing any of them), so their plan values
+// are always known and must be preserved as-is.
+func overlayMetricFilter(_, _ *resource_report.MetricFilterValue) {}
 
 func overlayLimitByChange(resolved, plan *resource_report.LimitByChangeValue) {
 	// change_type, operator, values and include_incomplete_data are Required, so
@@ -878,10 +870,8 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 					if !g.Limit.Value.IsNull() && !g.Limit.Value.IsUnknown() {
 						limit.Value = g.Limit.Value.ValueInt64Pointer()
 					}
-					if !g.Limit.Metric.IsNull() && !g.Limit.Metric.IsUnknown() {
-						metric := baseTypeObjectValueToExternalMetric(g.Limit.Metric)
-						limit.Metric = metric
-					}
+					// limit.metric is Required, so it is always known once limit is set.
+					limit.Metric = *baseTypeObjectValueToExternalMetric(g.Limit.Metric)
 					externalGroups[i].Limit = &limit
 				}
 			}
@@ -929,18 +919,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.MetricFilter.IsNull() && !config.MetricFilter.IsUnknown() {
-		externalConfig.MetricFilter = &models.ExternalConfigMetricFilter{}
-		if !config.MetricFilter.Metric.IsNull() && !config.MetricFilter.Metric.IsUnknown() {
-			metric := baseTypeObjectValueToExternalMetric(config.MetricFilter.Metric)
-			externalConfig.MetricFilter.Metric = metric
-		}
-		if !config.MetricFilter.Values.IsNull() && !config.MetricFilter.Values.IsUnknown() {
-			var values []float64
-			diags.Append(config.MetricFilter.Values.ElementsAs(ctx, &values, false)...)
-			externalConfig.MetricFilter.Values = &values
-		}
-		if !config.MetricFilter.Operator.IsNull() && !config.MetricFilter.Operator.IsUnknown() {
-			externalConfig.MetricFilter.Operator = new(models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString()))
+		// metric, operator and values are all Required, so they are always known
+		// once metric_filter itself is set.
+		var values []float64
+		diags.Append(config.MetricFilter.Values.ElementsAs(ctx, &values, false)...)
+		externalConfig.MetricFilter = &models.ExternalConfigMetricFilter{
+			Metric:   *baseTypeObjectValueToExternalMetric(config.MetricFilter.Metric),
+			Operator: models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString()),
+			Values:   values,
 		}
 		// operand is Optional+Computed with a schema Default ("single_value"), so it
 		// is never Unknown at plan time — guard on IsNull only.
@@ -1515,7 +1501,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			m["limit"] = resource_report.NewLimitValueNull()
 
 			if g.Limit != nil {
-				metricVal, d := externalMetricToBaseTypeObjectValue(ctx, g.Limit.Metric)
+				metricVal, d := externalMetricToBaseTypeObjectValue(ctx, &g.Limit.Metric)
 				diags.Append(d...)
 				if diags.HasError() {
 					return diags
@@ -1619,7 +1605,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	// Nested Object: MetricFilter
 	if config.MetricFilter != nil {
 		mfMap := map[string]attr.Value{
-			"operator": types.StringValue(string(*config.MetricFilter.Operator)),
+			"operator": types.StringValue(string(config.MetricFilter.Operator)),
 			// operand has schema Default "single_value"; map nil to the default.
 			"operand": types.StringValue("single_value"),
 		}
@@ -1627,7 +1613,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			mfMap["operand"] = types.StringValue(string(*config.MetricFilter.Operand))
 		}
 
-		metricFilterMetricVal, mfMetricDiags := externalMetricToBaseTypeObjectValue(ctx, config.MetricFilter.Metric)
+		metricFilterMetricVal, mfMetricDiags := externalMetricToBaseTypeObjectValue(ctx, &config.MetricFilter.Metric)
 		diags.Append(mfMetricDiags...)
 		if diags.HasError() {
 			return diags
@@ -1635,7 +1621,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		mfMap["metric"] = metricFilterMetricVal
 		if config.MetricFilter.Values != nil {
 			var mfValueDiags diag.Diagnostics
-			mfMap["values"], mfValueDiags = types.ListValueFrom(ctx, types.Float64Type, *config.MetricFilter.Values)
+			mfMap["values"], mfValueDiags = types.ListValueFrom(ctx, types.Float64Type, config.MetricFilter.Values)
 			diags.Append(mfValueDiags...)
 			if diags.HasError() {
 				return diags
