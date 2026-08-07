@@ -489,8 +489,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										"metric": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
 												"type": schema.StringAttribute{
-													Optional:            true,
-													Computed:            true,
+													Required:            true,
 													Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 													MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 													Validators: []validator.String{
@@ -502,8 +501,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 													},
 												},
 												"value": schema.StringAttribute{
-													Optional:            true,
-													Computed:            true,
+													Required:            true,
 													Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 													MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 												},
@@ -657,8 +655,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							"metric": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"type": schema.StringAttribute{
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 										MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 										Validators: []validator.String{
@@ -670,8 +667,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									"value": schema.StringAttribute{
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 									},
@@ -720,8 +716,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"metric": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
-								Optional:            true,
-								Computed:            true,
+								Required:            true,
 								Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 								MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 								Validators: []validator.String{
@@ -733,8 +728,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							"value": schema.StringAttribute{
-								Optional:            true,
-								Computed:            true,
+								Required:            true,
 								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 							},
@@ -754,8 +748,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 							"metric": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"type": schema.StringAttribute{
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 										MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 										Validators: []validator.String{
@@ -767,8 +760,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									"value": schema.StringAttribute{
-										Optional:            true,
-										Computed:            true,
+										Required:            true,
 										Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 										MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 									},
@@ -834,8 +826,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"type": schema.StringAttribute{
-									Optional:            true,
-									Computed:            true,
+									Required:            true,
 									Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 									MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
 									Validators: []validator.String{
@@ -847,8 +838,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								"value": schema.StringAttribute{
-									Optional:            true,
-									Computed:            true,
+									Required:            true,
 									Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 									MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
 								},

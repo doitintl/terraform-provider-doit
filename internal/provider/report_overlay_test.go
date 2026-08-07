@@ -164,8 +164,11 @@ func TestOverlayCustomTimeRange_NullResolved(t *testing.T) {
 	}
 }
 
-// TestOverlayMetric_NullResolved verifies the null guard for metric.
-func TestOverlayMetric_NullResolved(t *testing.T) {
+// TestOverlayMetric_PreservesPlanValue verifies overlayMetric never touches
+// type/value: both are Required, so the plan value is always the user's Known
+// configured value and must be preserved verbatim, regardless of what the API
+// resolved (including a null/empty resolved metric).
+func TestOverlayMetric_PreservesPlanValue(t *testing.T) {
 	ctx := context.Background()
 
 	resolved := resource_report.NewMetricValueNull()
@@ -174,7 +177,7 @@ func TestOverlayMetric_NullResolved(t *testing.T) {
 		resource_report.MetricValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
 			"type":  types.StringValue("basic"),
-			"value": types.StringUnknown(),
+			"value": types.StringValue("cost"),
 		},
 	)
 
@@ -183,11 +186,8 @@ func TestOverlayMetric_NullResolved(t *testing.T) {
 	if plan.MetricType.ValueString() != "basic" {
 		t.Errorf("expected MetricType to remain 'basic', got %q", plan.MetricType.ValueString())
 	}
-	if plan.Value.IsUnknown() {
-		t.Error("Value should not be Unknown after overlay with null resolved")
-	}
-	if !plan.Value.IsNull() {
-		t.Errorf("Value should be null when resolved is null, got %v", plan.Value)
+	if plan.Value.ValueString() != "cost" {
+		t.Errorf("expected Value to remain 'cost', got %q", plan.Value.ValueString())
 	}
 }
 
@@ -282,17 +282,19 @@ func TestOverlayListElements_NullResolvedElement(t *testing.T) {
 	}
 }
 
-// TestOverlayLimitByChange_ResolvesMetricSubfields verifies that overlayLimitByChange
-// preserves the user's Known required fields while resolving Unknown metric type/value
-// (Optional+Computed) from the API response.
-func TestOverlayLimitByChange_ResolvesMetricSubfields(t *testing.T) {
+// TestOverlayLimitByChange_PreservesMetricSubfields verifies that
+// overlayLimitByChange never overwrites metric.type/metric.value: both are
+// Required (like the sibling change_type/operator/values fields), so the plan
+// value is always the user's Known configured value and must be preserved
+// verbatim even when the API-resolved metric differs.
+func TestOverlayLimitByChange_PreservesMetricSubfields(t *testing.T) {
 	ctx := context.Background()
 
 	resolvedMetric := resource_report.NewMetricValueMust(
 		resource_report.MetricValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"type":  types.StringValue("basic"),
-			"value": types.StringValue("cost"),
+			"type":  types.StringValue("custom"),
+			"value": types.StringValue("other"),
 		},
 	)
 	resolvedValues, d := types.ListValueFrom(ctx, types.Float64Type, []float64{50})
@@ -310,12 +312,12 @@ func TestOverlayLimitByChange_ResolvesMetricSubfields(t *testing.T) {
 		},
 	)
 
-	// Plan: required fields set by the user; metric type/value Unknown.
+	// Plan: all fields, including metric.type/value, set by the user (Required).
 	planMetric := resource_report.NewMetricValueMust(
 		resource_report.MetricValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"type":  types.StringUnknown(),
-			"value": types.StringUnknown(),
+			"type":  types.StringValue("basic"),
+			"value": types.StringValue("cost"),
 		},
 	)
 	planValues, d := types.ListValueFrom(ctx, types.Float64Type, []float64{50})
@@ -335,11 +337,11 @@ func TestOverlayLimitByChange_ResolvesMetricSubfields(t *testing.T) {
 
 	overlayLimitByChange(&resolved, &plan)
 
-	if plan.Metric.MetricType.IsUnknown() || plan.Metric.MetricType.ValueString() != "basic" {
-		t.Errorf("expected metric.type resolved to basic, got %v", plan.Metric.MetricType)
+	if plan.Metric.MetricType.ValueString() != "basic" {
+		t.Errorf("expected metric.type preserved as basic, got %v", plan.Metric.MetricType)
 	}
-	if plan.Metric.Value.IsUnknown() || plan.Metric.Value.ValueString() != "cost" {
-		t.Errorf("expected metric.value resolved to cost, got %v", plan.Metric.Value)
+	if plan.Metric.Value.ValueString() != "cost" {
+		t.Errorf("expected metric.value preserved as cost, got %v", plan.Metric.Value)
 	}
 	// Required user values must be preserved.
 	if plan.Operator.ValueString() != ">=" {

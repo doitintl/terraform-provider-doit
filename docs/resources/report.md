@@ -558,7 +558,7 @@ Possible values: `a_to_z`, `asc`, `desc`
 <a id="nestedatt--config--group--limit--metric"></a>
 ### Nested Schema for `config.group.limit.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -584,7 +584,7 @@ require two ordered entries.
 <a id="nestedatt--config--limit_by_change--metric"></a>
 ### Nested Schema for `config.limit_by_change.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -596,7 +596,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 <a id="nestedatt--config--metric"></a>
 ### Nested Schema for `config.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -623,7 +623,7 @@ Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 <a id="nestedatt--config--metric_filter--metric"></a>
 ### Nested Schema for `config.metric_filter.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -635,7 +635,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 <a id="nestedatt--config--metrics"></a>
 ### Nested Schema for `config.metrics`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`

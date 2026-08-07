@@ -6614,11 +6614,11 @@ type ExternalLimitByChangeOperator string
 // Example: {"type":"basic","value":"cost"}
 type ExternalMetric struct {
 	// Type Type of metric to use.
-	Type *ExternalMetricType `json:"type,omitempty"`
+	Type ExternalMetricType `json:"type"`
 
 	// Value For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 	// If using custom metrics, the value must refer to an existing custom metric ID.
-	Value *string `json:"value,omitempty"`
+	Value string `json:"value"`
 }
 
 // ExternalMetricType Type of metric to use.

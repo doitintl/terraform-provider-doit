@@ -2958,7 +2958,7 @@
 																		{
 																			"name": "type",
 																			"string": {
-																				"computed_optional_required": "computed_optional",
+																				"computed_optional_required": "required",
 																				"description": "Type of metric to use.",
 																				"validators": [
 																					{
@@ -2977,7 +2977,7 @@
 																		{
 																			"name": "value",
 																			"string": {
-																				"computed_optional_required": "computed_optional",
+																				"computed_optional_required": "required",
 																				"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 																			}
 																		}
@@ -3135,7 +3135,7 @@
 														{
 															"name": "type",
 															"string": {
-																"computed_optional_required": "computed_optional",
+																"computed_optional_required": "required",
 																"description": "Type of metric to use.",
 																"validators": [
 																	{
@@ -3154,7 +3154,7 @@
 														{
 															"name": "value",
 															"string": {
-																"computed_optional_required": "computed_optional",
+																"computed_optional_required": "required",
 																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 															}
 														}
@@ -3203,7 +3203,7 @@
 											{
 												"name": "type",
 												"string": {
-													"computed_optional_required": "computed_optional",
+													"computed_optional_required": "required",
 													"description": "Type of metric to use.",
 													"validators": [
 														{
@@ -3222,7 +3222,7 @@
 											{
 												"name": "value",
 												"string": {
-													"computed_optional_required": "computed_optional",
+													"computed_optional_required": "required",
 													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 												}
 											}
@@ -3243,7 +3243,7 @@
 														{
 															"name": "type",
 															"string": {
-																"computed_optional_required": "computed_optional",
+																"computed_optional_required": "required",
 																"description": "Type of metric to use.",
 																"validators": [
 																	{
@@ -3262,7 +3262,7 @@
 														{
 															"name": "value",
 															"string": {
-																"computed_optional_required": "computed_optional",
+																"computed_optional_required": "required",
 																"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 															}
 														}
@@ -3333,7 +3333,7 @@
 												{
 													"name": "type",
 													"string": {
-														"computed_optional_required": "computed_optional",
+														"computed_optional_required": "required",
 														"description": "Type of metric to use.",
 														"validators": [
 															{
@@ -3352,7 +3352,7 @@
 												{
 													"name": "value",
 													"string": {
-														"computed_optional_required": "computed_optional",
+														"computed_optional_required": "required",
 														"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
 													}
 												}

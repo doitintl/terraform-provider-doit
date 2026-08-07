@@ -157,12 +157,11 @@ func (d *reportQueryDataSource) Configure(_ context.Context, req datasource.Conf
 	d.client = client
 }
 
-// ValidateConfig enforces the same metric-field requirements as the report
-// resource (every metric object must set type and value). report_query reuses the
-// report config schema and toExternalConfig, so without this the query endpoint
-// would receive a metric missing type/value and return a cryptic HTTP 400.
+// ValidateConfig enforces cross-field requirements not expressible in the
+// schema alone. Metric type/value are enforced by the schema itself (both are
+// Required), since report_query's config schema is derived from the report
+// resource schema (which now marks them Required).
 func (d *reportQueryDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
-	validateReportMetricFieldsConfig(ctx, req.Config, &resp.Diagnostics)
 	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
 }
 

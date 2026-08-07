@@ -10262,6 +10262,9 @@ components:
     ExternalMetric:
       description: Metric selector used in reports and filters.
       type: object
+      required:
+        - type
+        - value
       properties:
         type:
           description: Type of metric to use.

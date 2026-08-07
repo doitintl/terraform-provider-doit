@@ -74,6 +74,19 @@ func overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalRe
 		diags.Append(overlayConfigFields(ctx, &resolved.Config, &plan.Config)...)
 	} else if plan.Config.IsUnknown() {
 		plan.Config = resolved.Config
+
+		// The practitioner omitted the whole config block, so they configured
+		// neither metric mirror. The per-attribute modifiers that normally keep an
+		// unconfigured mirror out of state cannot fire here — the framework does
+		// not descend into the children of an Unknown object — so drop the API
+		// echo explicitly. Without this, prior state carries metrics[*].type, which
+		// is Required (non-computed), and Terraform Core then proposes null for the
+		// whole config on the next plan and phantom-diffs the entire resource.
+		// See useNullForUnconfiguredMetricMirror for the mechanism.
+		plan.Config.Metric = resource_report.NewMetricValueNull()
+		emptyMetrics, emptyDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
+		diags.Append(emptyDiags...)
+		plan.Config.Metrics = emptyMetrics
 	}
 
 	return diags
@@ -253,14 +266,12 @@ func overlayCustomTimeRange(resolved, plan *resource_report.CustomTimeRangeValue
 	}
 }
 
-func overlayMetric(resolved, plan *resource_report.MetricValue) {
-	if plan.MetricType.IsUnknown() {
-		plan.MetricType = resolved.MetricType
-	}
-	if plan.Value.IsUnknown() {
-		plan.Value = resolved.Value
-	}
-}
+// overlayMetric is a no-op: type and value are both Required, so the plan
+// value is always known and must be preserved as-is (never overwritten from
+// the API response). Kept as a function so the caller's nested-object
+// overlay pattern (resolve-if-unknown / else recurse) stays consistent with
+// the other config sub-objects.
+func overlayMetric(_, _ *resource_report.MetricValue) {}
 
 func overlayMetricFilter(resolved, plan *resource_report.MetricFilterValue) {
 	if plan.Operator.IsUnknown() {
@@ -479,13 +490,10 @@ func overlayLimit(resolved, plan *resource_report.LimitValue) {
 	}
 }
 
-func overlayMetricsElement(_ context.Context, resolved, plan *resource_report.MetricsValue) diag.Diagnostics {
-	if plan.MetricsType.IsUnknown() {
-		plan.MetricsType = resolved.MetricsType
-	}
-	if plan.Value.IsUnknown() {
-		plan.Value = resolved.Value
-	}
+// overlayMetricsElement is a no-op: type and value are both Required, so the
+// plan value is always known and must be preserved as-is. Kept to match the
+// overlayListElements[T] function signature.
+func overlayMetricsElement(_ context.Context, _, _ *resource_report.MetricsValue) diag.Diagnostics {
 	return nil
 }
 
@@ -883,7 +891,12 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 
 	// metric and metrics are mutually exclusive in the API. On Update, prior state
 	// may carry both (the API response populates both). Prefer metrics (non-deprecated).
-	hasMetrics := !config.Metrics.IsNull() && !config.Metrics.IsUnknown()
+	//
+	// An EMPTY metrics list does not count as "has metrics": that is what
+	// useEmptyForUnconfiguredMetricsMirror proposes when the practitioner
+	// configured `metric` instead, and treating it as present would send neither
+	// field, silently leaving the API on its previous metric.
+	hasMetrics := !config.Metrics.IsNull() && !config.Metrics.IsUnknown() && len(config.Metrics.Elements()) > 0
 	if !config.Metric.IsNull() && !config.Metric.IsUnknown() && !hasMetrics {
 		metric := baseTypeObjectValueToExternalMetric(config.Metric)
 		externalConfig.Metric = metric
@@ -900,12 +913,11 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !diags.HasError() {
 			externalMetrics := make([]models.ExternalMetric, len(metricsValues))
 			for i, m := range metricsValues {
-				externalMetrics[i] = models.ExternalMetric{}
-				if !m.MetricsType.IsNull() && !m.MetricsType.IsUnknown() {
-					externalMetrics[i].Type = new(models.ExternalMetricType(m.MetricsType.ValueString()))
-				}
-				if !m.Value.IsNull() && !m.Value.IsUnknown() {
-					externalMetrics[i].Value = m.Value.ValueStringPointer()
+				// type and value are Required in the schema, so they are always
+				// known here.
+				externalMetrics[i] = models.ExternalMetric{
+					Type:  models.ExternalMetricType(m.MetricsType.ValueString()),
+					Value: m.Value.ValueString(),
 				}
 			}
 			// Only send metrics to API if list is non-empty
@@ -938,16 +950,13 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.LimitByChange.IsNull() && !config.LimitByChange.IsUnknown() {
-		// change_type, operator, values and include_incomplete_data are Required, so
-		// they are always Known here; metric is Required but its type/value are
-		// Optional+Computed (guarded inside baseTypeObjectValueToExternalMetric).
+		// change_type, operator, values, include_incomplete_data and metric (incl.
+		// metric.type/value) are all Required, so they are always Known here.
 		lbc := &models.ExternalLimitByChange{
 			ChangeType:            models.ExternalLimitByChangeChangeType(config.LimitByChange.ChangeType.ValueString()),
 			Operator:              models.ExternalLimitByChangeOperator(config.LimitByChange.Operator.ValueString()),
 			IncludeIncompleteData: config.LimitByChange.IncludeIncompleteData.ValueBool(),
-		}
-		if metric := baseTypeObjectValueToExternalMetric(config.LimitByChange.Metric); metric != nil {
-			lbc.Metric = *metric
+			Metric:                *baseTypeObjectValueToExternalMetric(config.LimitByChange.Metric),
 		}
 		var values []float64
 		diags.Append(config.LimitByChange.Values.ElementsAs(ctx, &values, false)...)
@@ -1552,12 +1561,8 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		metricsVals := make([]attr.Value, len(*config.Metrics))
 		for i, m := range *config.Metrics {
 			mMap := map[string]attr.Value{
-				"value": types.StringPointerValue(m.Value),
-			}
-			if m.Type != nil {
-				mMap["type"] = types.StringValue(string(*m.Type))
-			} else {
-				mMap["type"] = types.StringNull()
+				"type":  types.StringValue(string(m.Type)),
+				"value": types.StringValue(m.Value),
 			}
 			mv, mvDiags := resource_report.NewMetricsValue(resource_report.MetricsValue{}.AttributeTypes(ctx), mMap)
 			diags.Append(mvDiags...)
@@ -1578,6 +1583,37 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		var emptyMetricsDiags diag.Diagnostics
 		configMap["metrics"], emptyMetricsDiags = types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
 		diags.Append(emptyMetricsDiags...)
+	}
+
+	// State-aware read for the metric mirrors.
+	//
+	// `metric` (deprecated) and `metrics` are two views of the same API field and
+	// the API returns BOTH populated regardless of which one was configured. Their
+	// type/value leaves are Required (non-computed), so storing the echo for the
+	// mirror the practitioner never configured makes Terraform Core propose null
+	// for it on the next plan and cascades into a permanent whole-resource diff
+	// (see useNullForUnconfiguredMetricMirror for the full mechanism).
+	//
+	// The plan modifiers keep the unconfigured mirror out of state at plan time;
+	// Read has to agree or a refresh would put the echo straight back and
+	// reintroduce the diff. Preserving the prior null/[] here is what makes
+	// refreshing plans stable. On import there is no prior state, so both mirrors
+	// are populated from the API as usual.
+	if state.Config.IsNull() || state.Config.IsUnknown() {
+		// Import: no prior state to compare against. Populate the canonical
+		// `metrics` from the API and leave the deprecated `metric` mirror null, so
+		// a config written against `metrics` round-trips cleanly. A config still
+		// using `metric` gets one convergent diff after import.
+		configMap["metric"] = resource_report.NewMetricValueNull()
+	} else {
+		if state.Config.Metric.IsNull() {
+			configMap["metric"] = resource_report.NewMetricValueNull()
+		}
+		if priorMetrics := state.Config.Metrics; priorMetrics.IsNull() || len(priorMetrics.Elements()) == 0 {
+			emptyMetrics, emptyDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
+			diags.Append(emptyDiags...)
+			configMap["metrics"] = emptyMetrics
+		}
 	}
 
 	// Nested Object: MetricFilter
@@ -1949,19 +1985,16 @@ func datesEqualUTC(t1, t2 time.Time) bool {
 	return u1.Year() == u2.Year() && u1.Month() == u2.Month() && u1.Day() == u2.Day()
 }
 
-func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) (metric *models.ExternalMetric) {
-	metric = &models.ExternalMetric{}
-	// Guard IsUnknown as well as IsNull (consistent with Value below): an Unknown
-	// type must be omitted, never serialized as an empty string. A plan-time
-	// validator (reportMetricFieldsValidator) rejects a null/omitted type, since
-	// the API requires it on every metric.
-	if !metricValue.MetricType.IsNull() && !metricValue.MetricType.IsUnknown() {
-		metric.Type = new(models.ExternalMetricType(metricValue.MetricType.ValueString()))
+// baseTypeObjectValueToExternalMetric converts a MetricValue to an
+// models.ExternalMetric. type and value are Required in the schema, so callers
+// must only invoke this once the metric object itself is known non-null (the
+// object container may still be Optional+Computed, e.g. config.metric); once
+// present, its type/value are always known.
+func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) *models.ExternalMetric {
+	return &models.ExternalMetric{
+		Type:  models.ExternalMetricType(metricValue.MetricType.ValueString()),
+		Value: metricValue.Value.ValueString(),
 	}
-	if !metricValue.Value.IsNull() && !metricValue.Value.IsUnknown() {
-		metric.Value = new(metricValue.Value.ValueString())
-	}
-	return metric
 }
 
 func externalMetricToBaseTypeObjectValue(ctx context.Context, metric *models.ExternalMetric) (metricValue resource_report.MetricValue, diags diag.Diagnostics) {
@@ -1969,8 +2002,8 @@ func externalMetricToBaseTypeObjectValue(ctx context.Context, metric *models.Ext
 		return resource_report.NewMetricValueNull(), diags
 	}
 	mMap := map[string]attr.Value{
-		"type":  types.StringValue(string(*metric.Type)),
-		"value": types.StringPointerValue(metric.Value),
+		"type":  types.StringValue(string(metric.Type)),
+		"value": types.StringValue(metric.Value),
 	}
 	mv, d := resource_report.NewMetricValue(resource_report.MetricValue{}.AttributeTypes(ctx), mMap)
 	diags = append(diags, d...)

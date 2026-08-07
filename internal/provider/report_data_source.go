@@ -435,15 +435,10 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		metricsVals := make([]attr.Value, len(*config.Metrics))
 		for i, m := range *config.Metrics {
 			// Build MetricsValue directly (not MetricValue - different type!)
+			// type and value are Required in the API response, so always known.
 			mMap := map[string]attr.Value{
-				"type":  types.StringNull(),
-				"value": types.StringNull(),
-			}
-			if m.Type != nil {
-				mMap["type"] = types.StringValue(string(*m.Type))
-			}
-			if m.Value != nil {
-				mMap["value"] = types.StringValue(*m.Value)
+				"type":  types.StringValue(string(m.Type)),
+				"value": types.StringValue(m.Value),
 			}
 			mVal, mDiags := datasource_report.NewMetricsValue(datasource_report.MetricsValue{}.AttributeTypes(ctx), mMap)
 			diags.Append(mDiags...)
@@ -689,8 +684,8 @@ func (ds *reportDataSource) externalMetricToValue(ctx context.Context, metric *m
 		return datasource_report.NewMetricValueNull(), diags
 	}
 	mMap := map[string]attr.Value{
-		"type":  types.StringValue(string(*metric.Type)),
-		"value": types.StringPointerValue(metric.Value),
+		"type":  types.StringValue(string(metric.Type)),
+		"value": types.StringValue(metric.Value),
 	}
 	mv, mvDiags := datasource_report.NewMetricValue(datasource_report.MetricValue{}.AttributeTypes(ctx), mMap)
 	diags.Append(mvDiags...)

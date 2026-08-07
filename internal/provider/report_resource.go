@@ -89,6 +89,26 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
 
+		// The metric mirrors: NOT a clearing classification. `metric` (deprecated)
+		// and `metrics` are two views of the same API field, and the API returns
+		// BOTH populated no matter which one the practitioner configured. Because
+		// their type/value leaves are Required (non-computed), storing the API echo
+		// for the mirror the practitioner did not configure makes Terraform Core
+		// propose null for it on the next plan, which cascades into a whole-resource
+		// "known after apply" diff that never converges. These modifiers keep the
+		// unconfigured mirror out of state; they do NOT clear anything server-side
+		// (the API derives the mirror and always keeps it), which is why both
+		// attributes stay Category B below rather than becoming Category A.
+		// See useNullForUnconfiguredMetricMirror for the full mechanism.
+		if attr, ok := configAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnconfiguredMetricMirror())
+			configAttr.Attributes["metric"] = attr
+		}
+		if attr, ok := configAttr.Attributes["metrics"].(schema.ListNestedAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnconfiguredMetricsMirror())
+			configAttr.Attributes["metrics"] = attr
+		}
+
 		s.Attributes["config"] = configAttr
 	}
 
@@ -114,27 +134,14 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		// config.filters
 		"config.filters[*].inverse", // API defaults to false
 
-		// config.metrics
-		"config.metrics[*].type",  // API requires type (not clearable)
-		"config.metrics[*].value", // API requires value (not clearable)
-
 		// config.metric_filter
-		"config.metric_filter.operator",     // API defaults operator
-		"config.metric_filter.metric.type",  // API requires type (not clearable)
-		"config.metric_filter.metric.value", // API requires value (not clearable)
-
-		// config.limit_by_change.metric.type/value are Optional+Computed leaves the API
-		// requires (not clearable). The object's other children are Required in the schema.
-		"config.limit_by_change.metric.type",  // API requires type (not clearable)
-		"config.limit_by_change.metric.value", // API requires value (not clearable)
+		"config.metric_filter.operator", // API defaults operator
 
 		// config.group
-		"config.group[*].id",                 // API-assigned group ID
-		"config.group[*].type",               // API provides default type
-		"config.group[*].limit.sort",         // API defaults sort direction
-		"config.group[*].limit.value",        // API defaults limit value
-		"config.group[*].limit.metric.type",  // API requires type (not clearable)
-		"config.group[*].limit.metric.value", // API requires value (not clearable)
+		"config.group[*].id",          // API-assigned group ID
+		"config.group[*].type",        // API provides default type
+		"config.group[*].limit.sort",  // API defaults sort direction
+		"config.group[*].limit.value", // API defaults limit value
 
 		// config.advanced_analysis
 		"config.advanced_analysis.forecast",      // API defaults to false
@@ -169,10 +176,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.splits[*].targets[*].type",  // API provides default type
 		"config.splits[*].targets[*].value", // API provides default value
 
-		// config.metric (top-level)
-		"config.metric.type",  // API requires type (not clearable)
-		"config.metric.value", // API requires value (not clearable)
-
 		// config.secondary_time_range
 		"config.secondary_time_range.unit",                   // API defaults unit
 		"config.secondary_time_range.amount",                 // API defaults amount
@@ -199,8 +202,8 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		// requiresReplaceWhenCleared in ModifyPlan instead, not acknowledged here.)
 		"config.advanced_analysis",                      // silently preserved on removal
 		"config.display_settings",                       // silently preserved on removal
-		"config.metric",                                 // deprecated; mirrors metrics[0], never clears
-		"config.metric_filter.metric",                   // required child; removal handled by metric_filter (Cat C)
+		"config.metric",                                 // deprecated mirror of metrics[0]; API always derives it, never clears
+		"config.metric_filter.metric",                   // API rejects omission (400 "metric can not be null"); container removal handled by metric_filter (Cat C)
 		"config.secondary_time_range",                   // silently preserved on removal
 		"config.secondary_time_range.custom_time_range", // silently preserved on removal
 		"config.time_range",                             // silently preserved on removal
@@ -240,8 +243,6 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportForecastConflictValidator{},
 		// custom_time_range.from/to must be valid RFC3339 timestamps.
 		reportTimestampValidator{},
-		// Every configured metric object must set both type and value (API requires them).
-		reportMetricFieldsValidator{},
 		// count is only valid when aggregation is "count".
 		reportCountAggregationValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
