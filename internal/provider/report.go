@@ -147,22 +147,20 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 		overlayCustomTimeRange(&resolved.CustomTimeRange, &plan.CustomTimeRange)
 	}
 
+	// metric, metric_filter and limit_by_change need no sub-overlay: every child
+	// is Required except metric_filter.operand, which has a schema Default and so
+	// is resolved at plan time. Once the object itself is known, all of its
+	// children are known and the plan value must be preserved as-is.
 	if plan.Metric.IsUnknown() {
 		plan.Metric = resolved.Metric
-	} else if !plan.Metric.IsNull() {
-		overlayMetric(&resolved.Metric, &plan.Metric)
 	}
 
 	if plan.MetricFilter.IsUnknown() {
 		plan.MetricFilter = resolved.MetricFilter
-	} else if !plan.MetricFilter.IsNull() {
-		overlayMetricFilter(&resolved.MetricFilter, &plan.MetricFilter)
 	}
 
 	if plan.LimitByChange.IsUnknown() {
 		plan.LimitByChange = resolved.LimitByChange
-	} else if !plan.LimitByChange.IsNull() {
-		overlayLimitByChange(&resolved.LimitByChange, &plan.LimitByChange)
 	}
 
 	// limit_aggregation is Optional+Computed with a Default — never Unknown at plan
@@ -208,10 +206,9 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 		diags.Append(overlayListElements(ctx, &resolved.Group, &plan.Group, overlayGroup)...)
 	}
 
+	// metrics elements need no sub-overlay: type and value are both Required.
 	if plan.Metrics.IsUnknown() {
 		plan.Metrics = resolved.Metrics
-	} else if !plan.Metrics.IsNull() {
-		diags.Append(overlayListElements(ctx, &resolved.Metrics, &plan.Metrics, overlayMetricsElement)...)
 	}
 
 	if plan.Splits.IsUnknown() {
@@ -263,30 +260,6 @@ func overlayCustomTimeRange(resolved, plan *resource_report.CustomTimeRangeValue
 	}
 	if plan.To.IsUnknown() {
 		plan.To = resolved.To
-	}
-}
-
-// overlayMetric is a no-op: type and value are both Required, so the plan
-// value is always known and must be preserved as-is (never overwritten from
-// the API response). Kept as a function so the caller's nested-object
-// overlay pattern (resolve-if-unknown / else recurse) stays consistent with
-// the other config sub-objects.
-func overlayMetric(_, _ *resource_report.MetricValue) {}
-
-// overlayMetricFilter only has to handle `operand`, which has a schema Default
-// and so is resolved at plan time. metric, operator and values are all Required
-// (the API rejects a metric_filter missing any of them), so their plan values
-// are always known and must be preserved as-is.
-func overlayMetricFilter(_, _ *resource_report.MetricFilterValue) {}
-
-func overlayLimitByChange(resolved, plan *resource_report.LimitByChangeValue) {
-	// change_type, operator, values and include_incomplete_data are Required, so
-	// they are always Known. Only the metric's type/value can be Unknown at plan
-	// time (Optional+Computed without Default).
-	if plan.Metric.IsUnknown() {
-		plan.Metric = resolved.Metric
-	} else if !plan.Metric.IsNull() {
-		overlayMetric(&resolved.Metric, &plan.Metric)
 	}
 }
 
@@ -475,18 +448,10 @@ func overlayLimit(resolved, plan *resource_report.LimitValue) {
 	if plan.Value.IsUnknown() {
 		plan.Value = resolved.Value
 	}
+	// metric is Required, so it is always known once limit itself is set.
 	if plan.Metric.IsUnknown() {
 		plan.Metric = resolved.Metric
-	} else if !plan.Metric.IsNull() {
-		overlayMetric(&resolved.Metric, &plan.Metric)
 	}
-}
-
-// overlayMetricsElement is a no-op: type and value are both Required, so the
-// plan value is always known and must be preserved as-is. Kept to match the
-// overlayListElements[T] function signature.
-func overlayMetricsElement(_ context.Context, _, _ *resource_report.MetricsValue) diag.Diagnostics {
-	return nil
 }
 
 func overlaySplit(ctx context.Context, resolved, plan *resource_report.SplitsValue) diag.Diagnostics {

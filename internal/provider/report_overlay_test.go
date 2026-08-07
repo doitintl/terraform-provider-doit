@@ -164,33 +164,6 @@ func TestOverlayCustomTimeRange_NullResolved(t *testing.T) {
 	}
 }
 
-// TestOverlayMetric_PreservesPlanValue verifies overlayMetric never touches
-// type/value: both are Required, so the plan value is always the user's Known
-// configured value and must be preserved verbatim, regardless of what the API
-// resolved (including a null/empty resolved metric).
-func TestOverlayMetric_PreservesPlanValue(t *testing.T) {
-	ctx := context.Background()
-
-	resolved := resource_report.NewMetricValueNull()
-
-	plan := resource_report.NewMetricValueMust(
-		resource_report.MetricValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"type":  types.StringValue("basic"),
-			"value": types.StringValue("cost"),
-		},
-	)
-
-	overlayMetric(&resolved, &plan)
-
-	if plan.MetricType.ValueString() != "basic" {
-		t.Errorf("expected MetricType to remain 'basic', got %q", plan.MetricType.ValueString())
-	}
-	if plan.Value.ValueString() != "cost" {
-		t.Errorf("expected Value to remain 'cost', got %q", plan.Value.ValueString())
-	}
-}
-
 // TestOverlayLimit_NullResolved verifies the null guard for limit.
 func TestOverlayLimit_NullResolved(t *testing.T) {
 	ctx := context.Background()
@@ -279,72 +252,5 @@ func TestOverlayListElements_NullResolvedElement(t *testing.T) {
 	// Known values should be preserved.
 	if result[0].Id.ValueString() != "sku_description" {
 		t.Errorf("Id should remain 'sku_description', got %q", result[0].Id.ValueString())
-	}
-}
-
-// TestOverlayLimitByChange_PreservesMetricSubfields verifies that
-// overlayLimitByChange never overwrites metric.type/metric.value: both are
-// Required (like the sibling change_type/operator/values fields), so the plan
-// value is always the user's Known configured value and must be preserved
-// verbatim even when the API-resolved metric differs.
-func TestOverlayLimitByChange_PreservesMetricSubfields(t *testing.T) {
-	ctx := context.Background()
-
-	resolvedMetric := resource_report.NewMetricValueMust(
-		resource_report.MetricValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"type":  types.StringValue("custom"),
-			"value": types.StringValue("other"),
-		},
-	)
-	resolvedValues, d := types.ListValueFrom(ctx, types.Float64Type, []float64{50})
-	if d.HasError() {
-		t.Fatalf("building resolved values: %v", d)
-	}
-	resolved := resource_report.NewLimitByChangeValueMust(
-		resource_report.LimitByChangeValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"change_type":             types.StringValue("percentage"),
-			"operator":                types.StringValue(">="),
-			"include_incomplete_data": types.BoolValue(false),
-			"metric":                  resolvedMetric,
-			"values":                  resolvedValues,
-		},
-	)
-
-	// Plan: all fields, including metric.type/value, set by the user (Required).
-	planMetric := resource_report.NewMetricValueMust(
-		resource_report.MetricValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"type":  types.StringValue("basic"),
-			"value": types.StringValue("cost"),
-		},
-	)
-	planValues, d := types.ListValueFrom(ctx, types.Float64Type, []float64{50})
-	if d.HasError() {
-		t.Fatalf("building plan values: %v", d)
-	}
-	plan := resource_report.NewLimitByChangeValueMust(
-		resource_report.LimitByChangeValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"change_type":             types.StringValue("percentage"),
-			"operator":                types.StringValue(">="),
-			"include_incomplete_data": types.BoolValue(false),
-			"metric":                  planMetric,
-			"values":                  planValues,
-		},
-	)
-
-	overlayLimitByChange(&resolved, &plan)
-
-	if plan.Metric.MetricType.ValueString() != "basic" {
-		t.Errorf("expected metric.type preserved as basic, got %v", plan.Metric.MetricType)
-	}
-	if plan.Metric.Value.ValueString() != "cost" {
-		t.Errorf("expected metric.value preserved as cost, got %v", plan.Metric.Value)
-	}
-	// Required user values must be preserved.
-	if plan.Operator.ValueString() != ">=" {
-		t.Errorf("expected operator preserved as >=, got %v", plan.Operator)
 	}
 }
