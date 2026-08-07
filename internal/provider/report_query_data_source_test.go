@@ -76,7 +76,9 @@ func TestAccReportQueryDataSource_InvalidConfig(t *testing.T) {
 // TestAccReportQueryDataSource_MetricFieldsRequired verifies that report_query
 // enforces the same metric-field requirement as the resource: a metric object
 // missing type/value is rejected at plan time (not sent to the API as a bad
-// request).
+// request). report_query's config schema is derived from the report resource
+// schema (convertResourceAttrsToDataSource), which now marks metric type/value
+// Required, so Terraform's config decoder rejects the omission itself.
 func TestAccReportQueryDataSource_MetricFieldsRequired(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -85,7 +87,7 @@ func TestAccReportQueryDataSource_MetricFieldsRequired(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccReportQueryDataSourceMissingMetricType(),
-				ExpectError: regexp.MustCompile(`Missing Required Metric Field`),
+				ExpectError: regexp.MustCompile(`attribute "type" is required`),
 			},
 		},
 	})
