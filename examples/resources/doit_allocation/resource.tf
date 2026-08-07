@@ -1,7 +1,10 @@
-# Create an allocation for the development environment based on a project label
+# Create an allocation for the development environment based on a project label.
+# anomaly_detection is only valid on single allocations (those using "rule");
+# setting it alongside "rules" is rejected at plan time.
 resource "doit_allocation" "allocation_dev" {
-  name        = "Dev"
-  description = "Development Environment"
+  name              = "Dev"
+  description       = "Development Environment"
+  anomaly_detection = true
   rule = {
     formula = "A"
     components = [{

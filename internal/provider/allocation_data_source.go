@@ -139,7 +139,7 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 	data.Name = types.StringPointerValue(allocation.Name)
 	data.Description = types.StringPointerValue(allocation.Description)
 	data.Type = types.StringPointerValue(allocation.Type)
-	data.AnomalyDetection = types.BoolPointerValue(nullableToPointer(allocation.AnomalyDetection))
+	data.AnomalyDetection = types.BoolPointerValue(allocation.AnomalyDetection)
 	data.CreateTime = types.Int64PointerValue(allocation.CreateTime)
 	data.UpdateTime = types.Int64PointerValue(allocation.UpdateTime)
 	data.UnallocatedCosts = types.StringPointerValue(nullableToPointer(allocation.UnallocatedCosts))

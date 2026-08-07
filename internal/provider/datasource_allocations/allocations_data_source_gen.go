@@ -28,6 +28,11 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Composition type of allocation (single or group).",
 							MarkdownDescription: "Composition type of allocation (single or group).",
 						},
+						"anomaly_detection": schema.BoolAttribute{
+							Computed:            true,
+							Description:         "Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.",
+							MarkdownDescription: "Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.",
+						},
 						"create_time": schema.Int64Attribute{
 							Computed:            true,
 							Description:         "The time when the allocation was created (in UNIX timestamp).",
@@ -201,6 +206,24 @@ func (t AllocationsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 			fmt.Sprintf(`allocation_type expected to be basetypes.StringValue, was: %T`, allocationTypeAttribute))
 	}
 
+	anomalyDetectionAttribute, ok := attributes["anomaly_detection"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`anomaly_detection is missing from object`)
+
+		return nil, diags
+	}
+
+	anomalyDetectionVal, ok := anomalyDetectionAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`anomaly_detection expected to be basetypes.BoolValue, was: %T`, anomalyDetectionAttribute))
+	}
+
 	createTimeAttribute, ok := attributes["create_time"]
 
 	if !ok {
@@ -368,17 +391,18 @@ func (t AllocationsType) ValueFromObject(ctx context.Context, in basetypes.Objec
 	}
 
 	return AllocationsValue{
-		AllocationType:  allocationTypeVal,
-		CreateTime:      createTimeVal,
-		Description:     descriptionVal,
-		FolderId:        folderIdVal,
-		Id:              idVal,
-		Name:            nameVal,
-		Owner:           ownerVal,
-		AllocationsType: typeVal,
-		UpdateTime:      updateTimeVal,
-		UrlUi:           urlUiVal,
-		state:           attr.ValueStateKnown,
+		AllocationType:   allocationTypeVal,
+		AnomalyDetection: anomalyDetectionVal,
+		CreateTime:       createTimeVal,
+		Description:      descriptionVal,
+		FolderId:         folderIdVal,
+		Id:               idVal,
+		Name:             nameVal,
+		Owner:            ownerVal,
+		AllocationsType:  typeVal,
+		UpdateTime:       updateTimeVal,
+		UrlUi:            urlUiVal,
+		state:            attr.ValueStateKnown,
 	}, diags
 }
 
@@ -463,6 +487,24 @@ func NewAllocationsValue(attributeTypes map[string]attr.Type, attributes map[str
 			fmt.Sprintf(`allocation_type expected to be basetypes.StringValue, was: %T`, allocationTypeAttribute))
 	}
 
+	anomalyDetectionAttribute, ok := attributes["anomaly_detection"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`anomaly_detection is missing from object`)
+
+		return NewAllocationsValueUnknown(), diags
+	}
+
+	anomalyDetectionVal, ok := anomalyDetectionAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`anomaly_detection expected to be basetypes.BoolValue, was: %T`, anomalyDetectionAttribute))
+	}
+
 	createTimeAttribute, ok := attributes["create_time"]
 
 	if !ok {
@@ -630,17 +672,18 @@ func NewAllocationsValue(attributeTypes map[string]attr.Type, attributes map[str
 	}
 
 	return AllocationsValue{
-		AllocationType:  allocationTypeVal,
-		CreateTime:      createTimeVal,
-		Description:     descriptionVal,
-		FolderId:        folderIdVal,
-		Id:              idVal,
-		Name:            nameVal,
-		Owner:           ownerVal,
-		AllocationsType: typeVal,
-		UpdateTime:      updateTimeVal,
-		UrlUi:           urlUiVal,
-		state:           attr.ValueStateKnown,
+		AllocationType:   allocationTypeVal,
+		AnomalyDetection: anomalyDetectionVal,
+		CreateTime:       createTimeVal,
+		Description:      descriptionVal,
+		FolderId:         folderIdVal,
+		Id:               idVal,
+		Name:             nameVal,
+		Owner:            ownerVal,
+		AllocationsType:  typeVal,
+		UpdateTime:       updateTimeVal,
+		UrlUi:            urlUiVal,
+		state:            attr.ValueStateKnown,
 	}, diags
 }
 
@@ -712,26 +755,28 @@ func (t AllocationsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = AllocationsValue{}
 
 type AllocationsValue struct {
-	AllocationType  basetypes.StringValue `tfsdk:"allocation_type"`
-	CreateTime      basetypes.Int64Value  `tfsdk:"create_time"`
-	Description     basetypes.StringValue `tfsdk:"description"`
-	FolderId        basetypes.StringValue `tfsdk:"folder_id"`
-	Id              basetypes.StringValue `tfsdk:"id"`
-	Name            basetypes.StringValue `tfsdk:"name"`
-	Owner           basetypes.StringValue `tfsdk:"owner"`
-	AllocationsType basetypes.StringValue `tfsdk:"type"`
-	UpdateTime      basetypes.Int64Value  `tfsdk:"update_time"`
-	UrlUi           basetypes.StringValue `tfsdk:"url_ui"`
-	state           attr.ValueState
+	AllocationType   basetypes.StringValue `tfsdk:"allocation_type"`
+	AnomalyDetection basetypes.BoolValue   `tfsdk:"anomaly_detection"`
+	CreateTime       basetypes.Int64Value  `tfsdk:"create_time"`
+	Description      basetypes.StringValue `tfsdk:"description"`
+	FolderId         basetypes.StringValue `tfsdk:"folder_id"`
+	Id               basetypes.StringValue `tfsdk:"id"`
+	Name             basetypes.StringValue `tfsdk:"name"`
+	Owner            basetypes.StringValue `tfsdk:"owner"`
+	AllocationsType  basetypes.StringValue `tfsdk:"type"`
+	UpdateTime       basetypes.Int64Value  `tfsdk:"update_time"`
+	UrlUi            basetypes.StringValue `tfsdk:"url_ui"`
+	state            attr.ValueState
 }
 
 func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 10)
+	attrTypes := make(map[string]tftypes.Type, 11)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["allocation_type"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["anomaly_detection"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["create_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["folder_id"] = basetypes.StringType{}.TerraformType(ctx)
@@ -746,7 +791,7 @@ func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 10)
+		vals := make(map[string]tftypes.Value, 11)
 
 		val, err = v.AllocationType.ToTerraformValue(ctx)
 
@@ -755,6 +800,14 @@ func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 		}
 
 		vals["allocation_type"] = val
+
+		val, err = v.AnomalyDetection.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["anomaly_detection"] = val
 
 		val, err = v.CreateTime.ToTerraformValue(ctx)
 
@@ -858,16 +911,17 @@ func (v AllocationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 	var diags diag.Diagnostics
 
 	attributeTypes := map[string]attr.Type{
-		"allocation_type": basetypes.StringType{},
-		"create_time":     basetypes.Int64Type{},
-		"description":     basetypes.StringType{},
-		"folder_id":       basetypes.StringType{},
-		"id":              basetypes.StringType{},
-		"name":            basetypes.StringType{},
-		"owner":           basetypes.StringType{},
-		"type":            basetypes.StringType{},
-		"update_time":     basetypes.Int64Type{},
-		"url_ui":          basetypes.StringType{},
+		"allocation_type":   basetypes.StringType{},
+		"anomaly_detection": basetypes.BoolType{},
+		"create_time":       basetypes.Int64Type{},
+		"description":       basetypes.StringType{},
+		"folder_id":         basetypes.StringType{},
+		"id":                basetypes.StringType{},
+		"name":              basetypes.StringType{},
+		"owner":             basetypes.StringType{},
+		"type":              basetypes.StringType{},
+		"update_time":       basetypes.Int64Type{},
+		"url_ui":            basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -881,16 +935,17 @@ func (v AllocationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"allocation_type": v.AllocationType,
-			"create_time":     v.CreateTime,
-			"description":     v.Description,
-			"folder_id":       v.FolderId,
-			"id":              v.Id,
-			"name":            v.Name,
-			"owner":           v.Owner,
-			"type":            v.AllocationsType,
-			"update_time":     v.UpdateTime,
-			"url_ui":          v.UrlUi,
+			"allocation_type":   v.AllocationType,
+			"anomaly_detection": v.AnomalyDetection,
+			"create_time":       v.CreateTime,
+			"description":       v.Description,
+			"folder_id":         v.FolderId,
+			"id":                v.Id,
+			"name":              v.Name,
+			"owner":             v.Owner,
+			"type":              v.AllocationsType,
+			"update_time":       v.UpdateTime,
+			"url_ui":            v.UrlUi,
 		})
 
 	return objVal, diags
@@ -912,6 +967,10 @@ func (v AllocationsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.AllocationType.Equal(other.AllocationType) {
+		return false
+	}
+
+	if !v.AnomalyDetection.Equal(other.AnomalyDetection) {
 		return false
 	}
 
@@ -964,15 +1023,16 @@ func (v AllocationsValue) Type(ctx context.Context) attr.Type {
 
 func (v AllocationsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"allocation_type": basetypes.StringType{},
-		"create_time":     basetypes.Int64Type{},
-		"description":     basetypes.StringType{},
-		"folder_id":       basetypes.StringType{},
-		"id":              basetypes.StringType{},
-		"name":            basetypes.StringType{},
-		"owner":           basetypes.StringType{},
-		"type":            basetypes.StringType{},
-		"update_time":     basetypes.Int64Type{},
-		"url_ui":          basetypes.StringType{},
+		"allocation_type":   basetypes.StringType{},
+		"anomaly_detection": basetypes.BoolType{},
+		"create_time":       basetypes.Int64Type{},
+		"description":       basetypes.StringType{},
+		"folder_id":         basetypes.StringType{},
+		"id":                basetypes.StringType{},
+		"name":              basetypes.StringType{},
+		"owner":             basetypes.StringType{},
+		"type":              basetypes.StringType{},
+		"update_time":       basetypes.Int64Type{},
+		"url_ui":            basetypes.StringType{},
 	}
 }

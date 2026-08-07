@@ -183,16 +183,17 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 			allocVal, diags := datasource_allocations.NewAllocationsValue(
 				datasource_allocations.AllocationsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"id":              types.StringPointerValue(alloc.Id),
-					"name":            types.StringPointerValue(alloc.Name),
-					"description":     types.StringPointerValue(alloc.Description),
-					"folder_id":       types.StringPointerValue(alloc.FolderId),
-					"owner":           types.StringPointerValue(alloc.Owner),
-					"type":            types.StringPointerValue(alloc.Type),
-					"allocation_type": allocTypeVal,
-					"create_time":     types.Int64PointerValue(alloc.CreateTime),
-					"update_time":     types.Int64PointerValue(alloc.UpdateTime),
-					"url_ui":          types.StringPointerValue(alloc.UrlUI),
+					"id":                types.StringPointerValue(alloc.Id),
+					"name":              types.StringPointerValue(alloc.Name),
+					"description":       types.StringPointerValue(alloc.Description),
+					"folder_id":         types.StringPointerValue(alloc.FolderId),
+					"owner":             types.StringPointerValue(alloc.Owner),
+					"type":              types.StringPointerValue(alloc.Type),
+					"allocation_type":   allocTypeVal,
+					"anomaly_detection": types.BoolPointerValue(alloc.AnomalyDetection),
+					"create_time":       types.Int64PointerValue(alloc.CreateTime),
+					"update_time":       types.Int64PointerValue(alloc.UpdateTime),
+					"url_ui":            types.StringPointerValue(alloc.UrlUI),
 				},
 			)
 			resp.Diagnostics.Append(diags...)

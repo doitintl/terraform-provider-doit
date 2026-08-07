@@ -4007,8 +4007,8 @@ type Allocation struct {
 	// AllocationType Composition type of allocation.
 	AllocationType *AllocationAllocationType `json:"allocationType,omitempty"`
 
-	// AnomalyDetection Whether anomaly detection is enabled for this allocation.
-	AnomalyDetection nullable.Nullable[bool] `json:"anomalyDetection,omitempty"`
+	// AnomalyDetection Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
+	AnomalyDetection *bool `json:"anomalyDetection,omitempty"`
 
 	// CreateTime The time when the allocation was created (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
@@ -4103,6 +4103,9 @@ type AllocationDimensionsTypes string
 type AllocationListItem struct {
 	// AllocationType Composition type of allocation (single or group).
 	AllocationType *AllocationListItemAllocationType `json:"allocationType,omitempty"`
+
+	// AnomalyDetection Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
+	AnomalyDetection *bool `json:"anomalyDetection,omitempty"`
 
 	// CreateTime The time when the allocation was created (in UNIX timestamp).
 	CreateTime *int64 `json:"createTime,omitempty"`
@@ -5936,6 +5939,9 @@ type CreateAccountRoleRequestBody struct {
 
 // CreateAllocationRequest Request body for creating an allocation.
 type CreateAllocationRequest struct {
+	// AnomalyDetection Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
+	AnomalyDetection *bool `json:"anomalyDetection,omitempty"`
+
 	// Description Allocation description.
 	Description string `json:"description"`
 
@@ -8395,6 +8401,9 @@ type TimeSettingsSecondaryCustomTimeRange struct {
 
 // UpdateAllocationRequest Request body for updating an allocation.
 type UpdateAllocationRequest struct {
+	// AnomalyDetection Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
+	AnomalyDetection *bool `json:"anomalyDetection,omitempty"`
+
 	// Description Allocation description
 	Description nullable.Nullable[string] `json:"description,omitempty"`
 
