@@ -289,6 +289,51 @@ func (e BudgetCreateUpdateRequestPublic) Valid() bool {
 	}
 }
 
+// Defines values for BudgetSuggestionConfidence.
+const (
+	BudgetSuggestionConfidenceHigh   BudgetSuggestionConfidence = "high"
+	BudgetSuggestionConfidenceLow    BudgetSuggestionConfidence = "low"
+	BudgetSuggestionConfidenceMedium BudgetSuggestionConfidence = "medium"
+)
+
+// Valid indicates whether the value is a known member of the BudgetSuggestionConfidence enum.
+func (e BudgetSuggestionConfidence) Valid() bool {
+	switch e {
+	case BudgetSuggestionConfidenceHigh:
+		return true
+	case BudgetSuggestionConfidenceLow:
+		return true
+	case BudgetSuggestionConfidenceMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BudgetSuggestionStatus.
+const (
+	BudgetSuggestionStatusAccepted     BudgetSuggestionStatus = "accepted"
+	BudgetSuggestionStatusDismissed    BudgetSuggestionStatus = "dismissed"
+	BudgetSuggestionStatusPending      BudgetSuggestionStatus = "pending"
+	BudgetSuggestionStatusSkippedDraft BudgetSuggestionStatus = "skippedDraft"
+)
+
+// Valid indicates whether the value is a known member of the BudgetSuggestionStatus enum.
+func (e BudgetSuggestionStatus) Valid() bool {
+	switch e {
+	case BudgetSuggestionStatusAccepted:
+		return true
+	case BudgetSuggestionStatusDismissed:
+		return true
+	case BudgetSuggestionStatusPending:
+		return true
+	case BudgetSuggestionStatusSkippedDraft:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Category.
 const (
 	CategoryFinOps                Category = "FinOps"
@@ -4787,6 +4832,52 @@ type BudgetListItem struct {
 	Url          *string                 `json:"url,omitempty"`
 }
 
+// BudgetSuggestion An AI-generated budget recommendation.
+type BudgetSuggestion struct {
+	// AlertThresholds Suggested alert thresholds as percentages of the amount.
+	AlertThresholds *[]float64 `json:"alertThresholds,omitempty"`
+
+	// Amount Suggested budget amount as a decimal-string value with its currency.
+	Amount     *BudgetSuggestionAmount     `json:"amount,omitempty"`
+	Confidence *BudgetSuggestionConfidence `json:"confidence,omitempty"`
+
+	// Config Draft budget configuration to merge over the create-budget defaults.
+	Config      *map[string]interface{} `json:"config,omitempty"`
+	Description *string                 `json:"description,omitempty"`
+
+	// GeneratedTime Timestamp when the suggestion was generated.
+	GeneratedTime *time.Time `json:"generatedTime,omitempty"`
+	Id            *string    `json:"id,omitempty"`
+	Name          *string    `json:"name,omitempty"`
+
+	// Rationale Explanation of why this budget is suggested.
+	Rationale *string `json:"rationale,omitempty"`
+
+	// ScopeChips Human-readable summary of the suggested budget scope.
+	ScopeChips   *[]BudgetSuggestionScopeChipsItem `json:"scopeChips,omitempty"`
+	Status       *BudgetSuggestionStatus           `json:"status,omitempty"`
+	TimeInterval *string                           `json:"timeInterval,omitempty"`
+}
+
+// BudgetSuggestionConfidence defines model for BudgetSuggestion.Confidence.
+type BudgetSuggestionConfidence string
+
+// BudgetSuggestionStatus defines model for BudgetSuggestion.Status.
+type BudgetSuggestionStatus string
+
+// BudgetSuggestionAmount Suggested budget amount as a decimal-string value with its currency.
+type BudgetSuggestionAmount struct {
+	// Amount Decimal string, e.g. "1234.56".
+	Amount   *string `json:"amount,omitempty"`
+	Currency *string `json:"currency,omitempty"`
+}
+
+// BudgetSuggestionScopeChipsItem defines model for BudgetSuggestionScopeChipsItem.
+type BudgetSuggestionScopeChipsItem struct {
+	Key    *string   `json:"key,omitempty"`
+	Values *[]string `json:"values,omitempty"`
+}
+
 // Category The insight category.
 type Category string
 
@@ -7421,6 +7512,15 @@ type ListAwsOrganizations200Response struct {
 
 	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
 	RowCount nullable.Nullable[int64] `json:"rowCount,omitempty"`
+}
+
+// ListBudgetSuggestions200Response defines model for ListBudgetSuggestions200Response.
+type ListBudgetSuggestions200Response struct {
+	// Items Array of pending budget suggestions.
+	Items *[]BudgetSuggestion `json:"items,omitempty"`
+
+	// RowCount Number of suggestions returned.
+	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
 // ListBudgets200Response defines model for ListBudgets200Response.
@@ -10154,6 +10254,15 @@ type ClientInterface interface {
 	// Corresponds with PATCH /analytics/v1/annotations/{id} (the `UpdateAnnotation` operationId).
 	UpdateAnnotation(ctx context.Context, id string, body UpdateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListBudgetSuggestions List budget suggestions
+	//
+	// Returns the pending AI-generated budget suggestions for your account. The set is small (a handful
+	// of pending suggestions) and is returned in full. Each suggestion can be accepted (after you create a
+	// matching budget via `POST /analytics/v1/budgets`) or dismissed.
+	//
+	// Corresponds with GET /analytics/v1/budget-suggestions (the `ListBudgetSuggestions` operationId).
+	ListBudgetSuggestions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListBudgets List budgets
 	//
 	// Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
@@ -11646,6 +11755,25 @@ func (c *Client) UpdateAnnotationWithBody(ctx context.Context, id string, conten
 // Corresponds with PATCH /analytics/v1/annotations/{id} (the `UpdateAnnotation` operationId).
 func (c *Client) UpdateAnnotation(ctx context.Context, id string, body UpdateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateAnnotationRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListBudgetSuggestions List budget suggestions
+//
+// Returns the pending AI-generated budget suggestions for your account. The set is small (a handful
+// of pending suggestions) and is returned in full. Each suggestion can be accepted (after you create a
+// matching budget via `POST /analytics/v1/budgets`) or dismissed.
+//
+// Corresponds with GET /analytics/v1/budget-suggestions (the `ListBudgetSuggestions` operationId).
+func (c *Client) ListBudgetSuggestions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBudgetSuggestionsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -14770,6 +14898,33 @@ func NewUpdateAnnotationRequestWithBody(server string, id string, contentType st
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListBudgetSuggestionsRequest constructs an http.Request for the ListBudgetSuggestions method
+func NewListBudgetSuggestionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/budget-suggestions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -20105,6 +20260,17 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PATCH /analytics/v1/annotations/{id} (the `UpdateAnnotation` operationId).
 	UpdateAnnotationWithResponse(ctx context.Context, id string, body UpdateAnnotationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAnnotationResp, error)
 
+	// ListBudgetSuggestionsWithResponse List budget suggestions
+	//
+	// Returns the pending AI-generated budget suggestions for your account. The set is small (a handful
+	// of pending suggestions) and is returned in full. Each suggestion can be accepted (after you create a
+	// matching budget via `POST /analytics/v1/budgets`) or dismissed.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /analytics/v1/budget-suggestions (the `ListBudgetSuggestions` operationId).
+	ListBudgetSuggestionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBudgetSuggestionsResp, error)
+
 	// ListBudgetsWithResponse List budgets
 	//
 	// Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
@@ -22364,6 +22530,68 @@ func (r UpdateAnnotationResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r UpdateAnnotationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListBudgetSuggestionsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListBudgetSuggestions200Response
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListBudgetSuggestionsResp) GetJSON200() *ListBudgetSuggestions200Response {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListBudgetSuggestionsResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListBudgetSuggestionsResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r ListBudgetSuggestionsResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListBudgetSuggestionsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListBudgetSuggestionsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListBudgetSuggestionsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListBudgetSuggestionsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -29178,6 +29406,23 @@ func (c *ClientWithResponses) UpdateAnnotationWithResponse(ctx context.Context, 
 	return ParseUpdateAnnotationResp(rsp)
 }
 
+// ListBudgetSuggestionsWithResponse List budget suggestions
+//
+// Returns the pending AI-generated budget suggestions for your account. The set is small (a handful
+// of pending suggestions) and is returned in full. Each suggestion can be accepted (after you create a
+// matching budget via `POST /analytics/v1/budgets`) or dismissed.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /analytics/v1/budget-suggestions (the `ListBudgetSuggestions` operationId).
+func (c *ClientWithResponses) ListBudgetSuggestionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBudgetSuggestionsResp, error) {
+	rsp, err := c.ListBudgetSuggestions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListBudgetSuggestionsResp(rsp)
+}
+
 // ListBudgetsWithResponse List budgets
 //
 // Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
@@ -31958,6 +32203,53 @@ func ParseUpdateAnnotationResp(rsp *http.Response) (*UpdateAnnotationResp, error
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListBudgetSuggestionsResp parses an HTTP response from a ListBudgetSuggestionsWithResponse call
+func ParseListBudgetSuggestionsResp(rsp *http.Response) (*ListBudgetSuggestionsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListBudgetSuggestionsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListBudgetSuggestions200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
