@@ -4691,6 +4691,44 @@ resource "doit_report" "grp_clear" {
 `, i)
 }
 
+// TestAccReport_Metric_MirrorsConflict asserts that config.metric and
+// config.metrics cannot both be configured. toExternalConfig sends only metrics
+// when both are set, so differing values would leave state inconsistent and
+// drift on every refresh.
+func TestAccReport_Metric_MirrorsConflict(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithBothMetricMirrors(n),
+				ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Combination`),
+			},
+		},
+	})
+}
+
+func testAccReportWithBothMetricMirrors(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "both_mirrors" {
+    name = "test-both-mirrors-%d"
+    config = {
+        metric  = { type = "basic", value = "usage" }
+        metrics = [{ type = "basic", value = "cost" }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
 // TestAccReport_Metric_MirrorSwitchBackAndForth switches metrics -> metric ->
 // metrics. The configured mirror must survive and the other stay out of state in
 // both directions. Only config can distinguish them — prior state holds both —

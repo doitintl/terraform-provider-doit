@@ -77,6 +77,14 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 		return
 	}
 
+	// doit_report_query derives its config schema from the generated resource
+	// schema, not from reportResource.Schema, so attribute-level validators added
+	// there do not carry over. Re-attach the ones that must hold for both.
+	if attr, ok := dsConfigAttrs["metric"].(dsschema.SingleNestedAttribute); ok {
+		attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
+		dsConfigAttrs["metric"] = attr
+	}
+
 	resp.Schema = dsschema.Schema{
 		Description: "Runs an ad-hoc Cloud Analytics query without persisting a report." +
 			"\n\nThe query is executed with the provided config and results are returned" +

@@ -93,6 +93,47 @@ func TestAccReportQueryDataSource_MetricFieldsRequired(t *testing.T) {
 	})
 }
 
+// TestAccReportQueryDataSource_MirrorsConflict asserts that report_query
+// rejects config.metric alongside config.metrics, matching the resource. Its
+// schema is derived from the generated resource schema rather than from
+// reportResource.Schema, so the validator is attached in both places.
+func TestAccReportQueryDataSource_MirrorsConflict(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceBothMirrors(),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceBothMirrors() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metric  = { type = "basic", value = "usage" }
+        metrics = [{ type = "basic", value = "cost" }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+    }
+}
+`
+}
+
 // --- Test config helpers ---
 
 func testAccReportQueryDataSourceMissingMetricType() string {

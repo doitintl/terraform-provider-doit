@@ -104,8 +104,13 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		// storing the echo permanently diffs the resource. Not a clearing
 		// classification — both stay Category B below, since nothing is cleared
 		// server-side. See useNullForUnconfiguredMetricMirror.
+		//
+		// They are also mutually exclusive: toExternalConfig sends only metrics when
+		// both are set, so differing values would drift on every refresh. Reject the
+		// combination instead of silently discarding one.
 		if attr, ok := configAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnconfiguredMetricMirror())
+			attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
 			configAttr.Attributes["metric"] = attr
 		}
 		if attr, ok := configAttr.Attributes["metrics"].(schema.ListNestedAttribute); ok {
